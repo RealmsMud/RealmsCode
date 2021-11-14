@@ -15,11 +15,12 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
 #include "carry.hpp"
 
-#include <ostream>  // for basic_ostream::operator<<, operator<<, ostringstream
+#include <ostream>      // for basic_ostream::operator<<, operator<<, ostrin...
 
-#include "xml.hpp"  // for getIntProp, newNumProp
+#include "xml.hpp"      // for getIntProp, newNumProp
 
 //*********************************************************************
 //                      Carry

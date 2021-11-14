@@ -15,11 +15,11 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+#include <sstream>  // for basic_ostream::operator<<, operator<<, basic_ostream
+#include <string>   // for char_traits, operator<<, string
+
 #include "range.hpp"
 
-#include <ostream>      // for basic_ostream::operator<<, operator<<, basic_...
-#include <sstream>
-#include <string>       // for char_traits, operator<<
 
 //*********************************************************************
 //                      Range

@@ -16,32 +16,36 @@
  *
  */
 
-
-//*********************************************************************
-//                      loadMonster
-//*********************************************************************
-
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlFr...
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <compare>                                  // for operator<, strong...
 #include <cstring>                                  // for strcpy
 #include <ctime>                                    // for time
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <list>                                     // for list, operator==
 #include <ostream>                                  // for basic_ostream::op...
-#include <string>                                   // for operator<, basic_...
+#include <string>                                   // for allocator, operat...
 
 #include "carry.hpp"                                // for Carry
 #include "catRef.hpp"                               // for CatRef
 #include "config.hpp"                               // for Config, gConfig
-#include "creatures.hpp"                            // for Monster, NUM_ASSI...
 #include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
 #include "flags.hpp"                                // for M_TALKS
 #include "global.hpp"                               // for ALLITEMS, FATAL
 #include "lasttime.hpp"                             // for lasttime
 #include "mud.hpp"                                  // for LT_TICK, LT_TICK_...
+#include "mudObjects/creatures.hpp"                 // for NUM_ASSIST_MOB
+#include "mudObjects/monsters.hpp"                  // for Monster
 #include "os.hpp"                                   // for merror
 #include "paths.hpp"                                // for checkDirExists
 #include "proto.hpp"                                // for monsterPath, load...
-#include "quests.hpp"                               // for TalkResponse
+#include "quests.hpp"                               // for TalkResponse, Que...
 #include "server.hpp"                               // for Server, gServer
 #include "xml.hpp"                                  // for toNum, NODE_NAME
+
+//*********************************************************************
+//                      loadMonster
+//*********************************************************************
 
 bool loadMonster(int index, Monster ** pMonster, bool offline) {
     CatRef cr;

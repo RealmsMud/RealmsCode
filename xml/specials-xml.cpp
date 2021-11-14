@@ -16,8 +16,11 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <memory>                                   // for allocator
+#include <ostream>                                  // for basic_ostream::op...
 
+#include "dice.hpp"                                 // for Dice
 #include "specials.hpp"                             // for SpecialAttack
 #include "xml.hpp"                                  // for newStringChild
 

@@ -15,28 +15,35 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstring>        // for strcpy, strcmp, strlen
-#include <string>         // for operator==, basic_string, operator!=
 
-#include "cmd.hpp"        // for cmd
-#include "commands.hpp"   // for cmdProcess, getFullstrText, finishDropObject
-#include "container.hpp"  // for MonsterPtrLess (ptr only), PlayerSet
-#include "creatures.hpp"  // for Player, Creature, Monster, PetList
-#include "exits.hpp"      // for Exit
-#include "flags.hpp"      // for P_SLEEPING, P_SITTING, P_UNCONSCIOUS, P_ALI...
-#include "global.hpp"     // for CreatureClass, CreatureClass::CLERIC, KAMIRA
-#include "hooks.hpp"      // for Hooks
-#include "mud.hpp"        // for DL_DEFEC, SHIT_OBJ
-#include "objects.hpp"    // for Object
-#include "os.hpp"         // for ASSERTLOG
-#include "proto.hpp"      // for broadcast, dec_daily, findExit, log_immort
-#include "random.hpp"     // for Random
-#include "rooms.hpp"      // for BaseRoom
-#include "socket.hpp"     // for Socket
-#include "structs.hpp"    // for daily, Command, SEX_MALE
-#include "xml.hpp"        // for loadObject
+#include <fmt/format.h>              // for format
+#include <cstring>                   // for strcpy, strcmp, strlen
+#include <list>                      // for operator==, _List_iterator, list
+#include <set>                       // for set, operator==, _Rb_tree_const_...
+#include <string>                    // for operator==, string, basic_string
+#include <string_view>               // for string_view
 
-class MudObject;
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for cmdProcess, getFullstrText, fini...
+#include "creatureStreams.hpp"       // for Streamable, ColorOff, ColorOn
+#include "flags.hpp"                 // for P_SLEEPING, P_SITTING, P_UNCONSC...
+#include "global.hpp"                // for CreatureClass, CreatureClass::CL...
+#include "hooks.hpp"                 // for Hooks
+#include "mud.hpp"                   // for DL_DEFEC, SHIT_OBJ
+#include "mudObjects/container.hpp"  // for MonsterPtrLess (ptr only), Playe...
+#include "mudObjects/creatures.hpp"  // for Creature, PetList
+#include "mudObjects/exits.hpp"      // for Exit
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "os.hpp"                    // for ASSERTLOG
+#include "proto.hpp"                 // for broadcast, dec_daily, findExit
+#include "random.hpp"                // for Random
+#include "socket.hpp"                // for Socket
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for daily, Command, SEX_MALE
+#include "xml.hpp"                   // for loadObject
 
 
 //*********************************************************************

@@ -17,49 +17,65 @@
  */
 
 
-// C Includes
 #include <arpa/telnet.h>                            // for IAC, SE, WILL, SB
-#include <cctype>                                   // for isalpha, isdigit
+#include <ext/alloc_traits.h>                       // for __alloc_traits<>:...
 #include <fcntl.h>                                  // for fcntl, F_GETFL
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
-#include <netinet/in.h>                             // for sockaddr_in, htonl
-#include <cstdarg>                                  // for va_end, va_list
-#include <cstdio>                                   // for sprintf
-#include <cstring>                                  // for memmove
+#include <fmt/format.h>                             // for format
+#include <netinet/in.h>                             // for htonl, sockaddr_in
 #include <sys/socket.h>                             // for linger, setsockopt
-#include <ctime>                                    // for time
 #include <unistd.h>                                 // for ssize_t, write
 #include <zconf.h>                                  // for Bytef
 #include <zlib.h>                                   // for z_stream, deflate
+#include <algorithm>                                // for replace
+#include <boost/algorithm/string/predicate.hpp>     // for iequals, istarts_...
+#include <boost/algorithm/string/replace.hpp>       // for replace_all
+#include <boost/iterator/iterator_facade.hpp>       // for operator!=, itera...
+#include <boost/iterator/iterator_traits.hpp>       // for iterator_value<>:...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <boost/token_functions.hpp>                // for char_separator
+#include <boost/token_iterator.hpp>                 // for token_iterator
+#include <boost/tokenizer.hpp>                      // for tokenizer
+#include <cctype>                                   // for isalpha, isdigit
 #include <cerrno>                                   // for EWOULDBLOCK, errno
-#include <cstdlib>                                  // for free, calloc, malloc
+#include <compare>                                  // for operator>=, opera...
+#include <cstdarg>                                  // for va_end, va_list
+#include <cstdio>                                   // for fseek, size_t, ftell
+#include <cstdlib>                                  // for free, atol, calloc
+#include <cstring>                                  // for strlen, strcpy
+#include <ctime>                                    // for time
+#include <deque>                                    // for _Deque_iterator
 #include <iostream>                                 // for operator<<, basic...
+#include <fstream>                                  // for std::ifstream
+#include <list>                                     // for list, operator==
+#include <map>                                      // for map
+#include <memory>                                   // for allocator, alloca...
 #include <queue>                                    // for queue
-#include <fmt/format.h>
-#include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>
-#include <fstream>
+#include <sstream>                                  // for basic_ostringstre...
+#include <string>                                   // for string, basic_string
+#include <string_view>                              // for string_view, basi...
+#include <vector>                                   // for vector
 
+#include "color.hpp"                                // for stripColor
 #include "commands.hpp"                             // for command, changing...
 #include "config.hpp"                               // for Config, gConfig
-#include "color.hpp"                                // for stripColor
-#include "creatures.hpp"                            // for Player
-#include "flags.hpp"                                // for P_SPYING
+#include "flags.hpp"                                // for P_READING_FILE
 #include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for MAXALVL
-#include "login.hpp"                                // for createPlayer, LOG...
+#include "login.hpp"                                // for createPlayer, CON...
+#include "msdp.hpp"                                 // for ReportedMsdpVariable
 #include "mud.hpp"                                  // for StartTime
+#include "mudObjects/players.hpp"                   // for Player
 #include "os.hpp"                                   // for ASSERTLOG
 #include "paths.hpp"                                // for Config
-#include "post.hpp"                                 // for histedit
+#include "post.hpp"                                 // for histedit, postedit
 #include "property.hpp"                             // for Property
-#include "proto.hpp"                                // for stripColor
+#include "proto.hpp"                                // for zero
 #include "security.hpp"                             // for changePassword
 #include "server.hpp"                               // for Server, gServer
 #include "socket.hpp"                               // for Socket, Socket::S...
-#include "utils.hpp"                                // for MAX, MIN
+#include "utils.hpp"                                // for MIN, MAX
 #include "version.hpp"                              // for VERSION
-#include "xml.hpp"                                  // for copyToBool, newNu...
+#include "xml.hpp"                                  // for copyToBool, newBo...
 
 const int MIN_PAGES = 10;
 

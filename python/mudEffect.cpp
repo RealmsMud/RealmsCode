@@ -15,11 +15,11 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <pybind11/pybind11.h>
+#include <pybind11/pybind11.h>          // for class_, module
 
-#include "creatures.hpp"                                       // for Creature
-#include "effects.hpp"                                         // for Effect...
-#include "mudObject.hpp"
+#include "mudObjects/creatures.hpp"     // for Creature
+#include "mudObjects/mudObject.hpp"     // for Object
+#include "effects.hpp"                  // for Effect...
 
 namespace py = pybind11;
 

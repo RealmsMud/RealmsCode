@@ -15,45 +15,57 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cctype>                 // for isspace, isdigit, isalpha
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for atoi, atof
-#include <cstring>                // for strcpy, strcmp, strcat, strncpy
-#include <ctime>                  // for ctime, time
-#include <iomanip>                // for operator<<, setw
-#include <list>                   // for operator==, operator!=
-#include <ostream>                // for operator<<, basic_ostream, basic_os...
-#include <stdexcept>              // for out_of_range
-#include <string>                 // for operator==, char_traits, basic_string
-#include <fmt/format.h>
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/algorithm/string/trim.hpp>
 
-#include "area.hpp"               // for MapMarker, Area (ptr only)
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for getFullstrText, cmdNoAuth, parse
-#include "config.hpp"             // for Config, gConfig
-#include "craft.hpp"              // for Recipe
-#include "creatures.hpp"          // for Player, Creature, Monster
-#include "dm.hpp"                 // for dmAddObj, dmClone, dmCreateObj, dmO...
-#include "effects.hpp"            // for EFFECT_MAX_DURATION, EFFECT_MAX_STR...
-#include "flags.hpp"              // for O_SAVE_FULL, MAX_OBJECT_FLAGS, O_SO...
-#include "global.hpp"             // for PROMPT, FEET, ARMS, BELT, BODY, FACE
-#include "magic.hpp"              // for MAXSPELL, S_ILLUSION
-#include "money.hpp"              // for GOLD, Money
-#include "mud.hpp"                // for LT_ENVEN
-#include "objIncrease.hpp"        // for ObjIncrease, LanguageIncrease, Skil...
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::ARMOR
-#include "os.hpp"                 // for merror
-#include "proto.hpp"              // for log_immort, low, get_spell_name
-#include "raceData.hpp"           // for RaceData
-#include "rooms.hpp"              // for BaseRoom
-#include "server.hpp"             // for Server, gServer, ObjectCache
-#include "skills.hpp"             // for SkillInfo
-#include "unique.hpp"             // for Unique, Lore
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for loadObject
+#include <fmt/format.h>                        // for format
+#include <boost/algorithm/string/replace.hpp>  // for replace_all
+#include <boost/algorithm/string/trim.hpp>     // for trim
+#include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <cctype>                              // for isspace, isdigit, isalpha
+#include <cstdio>                              // for sprintf
+#include <cstdlib>                             // for atoi, atof
+#include <cstring>                             // for strcpy, strcmp, strncpy
+#include <ctime>                               // for ctime, time
+#include <deque>                               // for _Deque_iterator
+#include <iomanip>                             // for operator<<, setw
+#include <list>                                // for list, list<>::const_it...
+#include <ostream>                             // for operator<<, basic_ostream
+#include <stdexcept>                           // for out_of_range
+#include <string>                              // for string, operator==
+
+#include "area.hpp"                            // for MapMarker, Area (ptr o...
+#include "catRef.hpp"                          // for CatRef
+#include "cmd.hpp"                             // for cmd
+#include "commands.hpp"                        // for getFullstrText, cmdNoAuth
+#include "config.hpp"                          // for Config, gConfig
+#include "craft.hpp"                           // for Recipe
+#include "creatureStreams.hpp"                 // for Streamable, ColorOff
+#include "dice.hpp"                            // for Dice
+#include "dm.hpp"                              // for dmAddObj, dmClone, dmC...
+#include "effects.hpp"                         // for EFFECT_MAX_DURATION
+#include "flags.hpp"                           // for O_SAVE_FULL, MAX_OBJEC...
+#include "global.hpp"                          // for PROMPT, FEET, ARMS, BELT
+#include "hooks.hpp"                           // for Hooks
+#include "lasttime.hpp"                        // for lasttime
+#include "magic.hpp"                           // for MAXSPELL, S_ILLUSION
+#include "money.hpp"                           // for GOLD, Money
+#include "mud.hpp"                             // for LT_ENVEN
+#include "mudObjects/creatures.hpp"            // for Creature
+#include "mudObjects/monsters.hpp"             // for Monster
+#include "mudObjects/objects.hpp"              // for Object, ObjectType
+#include "mudObjects/players.hpp"              // for Player
+#include "mudObjects/rooms.hpp"                // for BaseRoom
+#include "objIncrease.hpp"                     // for ObjIncrease, LanguageI...
+#include "oldquest.hpp"                        // for numQuests, quest, ques...
+#include "os.hpp"                              // for merror
+#include "proto.hpp"                           // for log_immort, low, get_s...
+#include "raceData.hpp"                        // for RaceData
+#include "range.hpp"                           // for Range
+#include "server.hpp"                          // for Server, gServer, Objec...
+#include "size.hpp"                            // for getSizeName, getSize
+#include "skills.hpp"                          // for SkillInfo
+#include "unique.hpp"                          // for Unique, Lore
+#include "utils.hpp"                           // for MAX, MIN
+#include "xml.hpp"                             // for loadObject
 
 //*********************************************************************
 //                      dmCreateObj

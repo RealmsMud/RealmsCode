@@ -16,25 +16,30 @@
  *
  */
 
-#include <cstring>                                  // for strcmp
-#include <iomanip>                                  // for operator<<, setw
-#include <map>                                      // for operator==, opera...
-#include <sstream>                                  // for operator<<, basic...
-#include <string>                                   // for allocator, operat...
+#include <cstring>                   // for strcmp
+#include <iomanip>                   // for operator<<, setw, setfill
+#include <locale>                    // for locale
+#include <map>                       // for operator==, _Rb_tree_const_iterator
+#include <sstream>                   // for operator<<, basic_ostream, ostri...
+#include <string>                    // for string, char_traits, operator<<
+#include <utility>                   // for pair
 
-#include "clans.hpp"                                // for Clan
-#include "cmd.hpp"                                  // for cmd
-#include "commands.hpp"                             // for cmdPledge, cmdRes...
-#include "config.hpp"                               // for Config, gConfig
-#include "creatures.hpp"                            // for Player, Monster
-#include "deityData.hpp"                            // for DeityData
-#include "flags.hpp"                                // for P_PLEDGED, M_CAN_...
-#include "global.hpp"                               // for DWARF
-#include "money.hpp"                                // for GOLD, Money
-#include "proto.hpp"                                // for broadcast, logn
-#include "rooms.hpp"                                // for BaseRoom
-#include "server.hpp"                               // for Server, gServer
-#include "utils.hpp"                                // for MIN
+#include "clans.hpp"                 // for Clan
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for cmdPledge, cmdRescind
+#include "config.hpp"                // for Config, ClanMap, gConfig
+#include "deityData.hpp"             // for DeityData
+#include "flags.hpp"                 // for P_PLEDGED, M_CAN_PLEDGE_TO, P_AFK
+#include "global.hpp"                // for DWARF
+#include "money.hpp"                 // for GOLD, Money
+#include "mudObjects/container.hpp"  // for Container
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, logn
+#include "server.hpp"                // for Server, GOLD_IN, GOLD_OUT
+#include "stats.hpp"                 // for Stat
+#include "utils.hpp"                 // for MIN
 
 
 //*********************************************************************

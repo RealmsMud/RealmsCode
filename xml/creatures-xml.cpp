@@ -16,38 +16,50 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
-#include <map>                                      // for operator==, opera...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <compare>                                  // for operator<, strong...
+#include <list>                                     // for list, operator==
+#include <map>                                      // for operator==, map
 #include <ostream>                                  // for basic_ostream::op...
-#include <string>                                   // for operator<, operat...
+#include <set>                                      // for set
+#include <string>                                   // for allocator, string
+#include <utility>                                  // for pair
 
+#include "area.hpp"                                 // for MapMarker
 #include "catRef.hpp"                               // for CatRef
 #include "config.hpp"                               // for Config, gConfig
-#include "container.hpp"                            // for MonsterSet
-#include "creatures.hpp"                            // for Creature, Monster
-#include "effects.hpp"                              // for Effects
+#include "dice.hpp"                                 // for Dice
 #include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
 #include "flags.hpp"                                // for MAX_MONSTER_FLAGS
 #include "global.hpp"                               // for CreatureClass
+#include "hooks.hpp"                                // for Hooks
 #include "lasttime.hpp"                             // for crlasttime, lasttime
+#include "location.hpp"                             // for Location
 #include "magic.hpp"                                // for MAXSPELL, S_SAP_LIFE
+#include "money.hpp"                                // for Money
 #include "mud.hpp"                                  // for TOTAL_LTS, DAILYLAST
-#include "mudObject.hpp"                            // for MudObject
+#include "mudObjects/areaRooms.hpp"                 // for AreaRoom
+#include "mudObjects/container.hpp"                 // for MonsterSet
+#include "mudObjects/creatures.hpp"                 // for Creature, SkillMap
+#include "mudObjects/monsters.hpp"                  // for Monster
+#include "mudObjects/mudObject.hpp"                 // for MudObject
+#include "mudObjects/players.hpp"                   // for Player
+#include "mudObjects/rooms.hpp"                     // for NUM_PERM_SLOTS
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "os.hpp"                                   // for merror
-#include "proto.hpp"                                // for mprofic, whatSize
+#include "proto.hpp"                                // for mprofic, zero
 #include "raceData.hpp"                             // for RaceData
 #include "realm.hpp"                                // for MAX_REALM, COLD
-#include "rooms.hpp"                                // for AreaRoom, NUM_PER...
 #include "server.hpp"                               // for Server, gServer
-#include "size.hpp"                                 // for NO_SIZE
+#include "size.hpp"                                 // for whatSize, NO_SIZE
 #include "skills.hpp"                               // for Skill, SkillInfo
 #include "specials.hpp"                             // for SpecialAttack
+#include "stats.hpp"                                // for Stat
 #include "structs.hpp"                              // for daily, saves
 #include "utils.hpp"                                // for MAX
 #include "xml.hpp"                                  // for newStringChild
 
 class Object;
-
 
 int convertProf(Creature* player, Realm realm) {
     int skill = player->getLevel()*7 + player->getLevel()*3 * mprofic(player, realm) / 100 - 5;

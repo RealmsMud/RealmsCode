@@ -16,16 +16,21 @@
  *
  */
 
-#include <algorithm>              // for find
-#include <iomanip>                // for operator<<, setw
-#include <list>                   // for operator==, operator!=
+#include <algorithm>                 // for find
+#include <iomanip>                   // for operator<<, setw
+#include <list>                      // for operator==, list, _List_iterator
+#include <ostream>                   // for operator<<, basic_ostream, ostri...
+#include <string>                    // for operator<<, char_traits, string
+#include <string_view>               // for string_view
 
-#include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
-#include "creatures.hpp"          // for Creature, Monster, PetList
-#include "flags.hpp"              // for P_DM_INVIS, P_NO_EXTRA_COLOR, P_NO_...
-#include "group.hpp"              // for Group, CreatureList, GROUP_MEMBER
-#include "proto.hpp"              // for keyTxtEqual
-#include "server.hpp"             // for Server, GroupList, gServer
+#include "creatureStreams.hpp"       // for Streamable, ColorOff, ColorOn
+#include "flags.hpp"                 // for P_DM_INVIS, P_NO_EXTRA_COLOR
+#include "group.hpp"                 // for Group, CreatureList, GROUP_MEMBER
+#include "mudObjects/creatures.hpp"  // for Creature, PetList
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "proto.hpp"                 // for keyTxtEqual
+#include "server.hpp"                // for Server, GroupList, gServer
+#include "stats.hpp"                 // for Stat
 
 //################################################################################
 //# Group methods for groups

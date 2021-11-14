@@ -15,29 +15,38 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstring>                                  // for strcmp
-#include <ostream>                                  // for operator<<, basic...
 
-#include "area.hpp"                                 // for Area, AreaZone
-#include "catRef.hpp"                               // for CatRef
-#include "catRefInfo.hpp"                           // for CatRefInfo
-#include "cmd.hpp"                                  // for cmd
-#include "config.hpp"                               // for Config, gConfig
-#include "creatures.hpp"                            // for Player, Monster
-#include "delayedAction.hpp"                        // for ActionFish, Delay...
-#include "fishing.hpp"                              // for FishingItem, Fishing
-#include "flags.hpp"                                // for O_FISHING
-#include "global.hpp"                               // for HELD, DEFAULT_WEA...
-#include "objects.hpp"                              // for Object
-#include "proto.hpp"                                // for broadcast, isDay
-#include "random.hpp"                               // for Random
-#include "rooms.hpp"                                // for AreaRoom, UniqueRoom
-#include "server.hpp"                               // for Server, gServer
-#include "unique.hpp"                               // for Lore, Unique
-#include "utils.hpp"                                // for MAX, MIN
-#include "xml.hpp"                                  // for loadObject
+#include <cstring>                     // for strcmp
+#include <list>                        // for _List_const_iterator, list
+#include <map>                         // for map, operator==, map<>::const_...
+#include <ostream>                     // for operator<<, basic_ostream, cha...
+#include <string>                      // for string, allocator, operator<<
+#include <string_view>                 // for string_view
+#include <utility>                     // for pair
 
-class Socket;
+#include "area.hpp"                    // for Area, AreaZone, TileInfo
+#include "catRef.hpp"                  // for CatRef
+#include "catRefInfo.hpp"              // for CatRefInfo
+#include "cmd.hpp"                     // for cmd
+#include "config.hpp"                  // for Config, gConfig
+#include "delayedAction.hpp"           // for ActionFish, DelayedAction
+#include "fishing.hpp"                 // for FishingItem, Fishing
+#include "flags.hpp"                   // for O_FISHING
+#include "global.hpp"                  // for HELD, DEFAULT_WEAPON_DELAY
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/mudObject.hpp"    // for MudObject
+#include "mudObjects/objects.hpp"      // for Object
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for broadcast, isDay, doGetObject
+#include "random.hpp"                  // for Random
+#include "server.hpp"                  // for Server, gServer
+#include "statistics.hpp"              // for Statistics
+#include "unique.hpp"                  // for Lore, Unique
+#include "utils.hpp"                   // for MAX, MIN
+#include "xml.hpp"                     // for loadObject, loadMonster
 
 //**********************************************************************
 //                      canFish

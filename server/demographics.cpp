@@ -15,32 +15,33 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cctype>                 // for isupper
-#include <dirent.h>               // for closedir, dirent
-#include <fcntl.h>                // for open, O_CREAT
-#include <libxml/parser.h>        // for xmlNode, xmlDocGe...
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for exit
-#include <cstring>                // for strlen, strcat
-#include <ctime>                  // for ctime, time
-#include <unistd.h>               // for write, close, unlink
-#include <ostream>                // for operator<<, ostream
 
-#include "calendar.hpp"           // for cDay, Calendar
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player
-#include "deityData.hpp"          // for DeityData
-#include "global.hpp"             // for STAFF, MAX_PLAYAB...
-#include "lasttime.hpp"           // for lasttime
-#include "mud.hpp"                // for ACC, LT_AGE
-#include "paths.hpp"              // for Sign, Player
-#include "proto.hpp"              // for zero, get_class_s...
-#include "raceData.hpp"           // for RaceData
-#include "server.hpp"             // for Server, gServer
-#include "statistics.hpp"         // for Statistics
-#include "xml.hpp"                // for copyToNum, bad_le...
+#include <dirent.h>                                 // for closedir, dirent
+#include <fcntl.h>                                  // for open, O_CREAT
+#include <libxml/parser.h>                          // for xmlCleanupParser
+#include <unistd.h>                                 // for write, close, unlink
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <cctype>                                   // for isupper
+#include <cstdio>                                   // for sprintf
+#include <cstdlib>                                  // for exit
+#include <cstring>                                  // for strlen, strcat
+#include <ctime>                                    // for ctime, time
+#include <ostream>                                  // for operator<<, ostream
+#include <string>                                   // for allocator, string
 
-class cmd;
+#include "calendar.hpp"                             // for cDay, Calendar
+#include "config.hpp"                               // for Config, gConfig
+#include "deityData.hpp"                            // for DeityData
+#include "global.hpp"                               // for STAFF, MAX_PLAYAB...
+#include "lasttime.hpp"                             // for lasttime
+#include "mud.hpp"                                  // for ACC, LT_AGE
+#include "mudObjects/players.hpp"                   // for Player
+#include "paths.hpp"                                // for Sign, Player
+#include "proto.hpp"                                // for zero, get_class_s...
+#include "raceData.hpp"                             // for RaceData
+#include "server.hpp"                               // for Server
+#include "statistics.hpp"                           // for Statistics
+#include "xml.hpp"                                  // for copyToNum, bad_le...
 
 #define MINIMUM_LEVEL   3
 

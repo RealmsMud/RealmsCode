@@ -15,33 +15,43 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstring>        // for strcpy
-#include <ctime>          // for time
-#include <string>          // for operator!=, operator==, basic_string
 
-#include "creatures.hpp"   // for Monster, Player, Creature, ATTACK_BLOCK
-#include "damage.hpp"      // for Damage
-#include "effects.hpp"     // for EffectInfo
-#include "exits.hpp"       // for Exit
-#include "fighters.hpp"    // for FOCUS_DAMAGE_IN, FOCUS_DAMAGE_OUT
-#include "flags.hpp"       // for M_WILL_YELL_FOR_HELP, M_YELLED_FOR_HELP
-#include "global.hpp"      // for WIELD, HELD, SPL, DEA, POI, CreatureClass
-#include "mud.hpp"         // for LT_SAVES, LT_AGGRO_ACTION, LT, LT_STEAL
-#include "objects.hpp"     // for Object, ObjectType, ObjectType::ARMOR, Obj...
-#include "os.hpp"          // for ASSERTLOG
-#include "proto.hpp"       // for broadcast, bonus, broadcastGroup, crtWisdom
-#include "random.hpp"      // for Random
-#include "rooms.hpp"       // for BaseRoom, ExitList, UniqueRoom
-#include "server.hpp"      // for Server, gServer
-#include "socket.hpp"      // for Socket
-#include "specials.hpp"    // for SpecialAttack
-#include "statistics.hpp"  // for Statistics
-#include "stats.hpp"       // for Stat, MOD_CUR_MAX
-#include "structs.hpp"     // for saves
-#include "unique.hpp"      // for isLimited, remove
-#include "utils.hpp"       // for MIN, MAX
-#include "wanderInfo.hpp"  // for WanderInfo
-#include "xml.hpp"         // for loadMonster
+#include <cstring>                     // for strcpy
+#include <ctime>                       // for time
+#include <list>                        // for operator==, list, _List_iterator
+#include <set>                         // for operator==, _Rb_tree_const_ite...
+#include <string>                      // for allocator, string, operator==
+
+#include "catRef.hpp"                  // for CatRef
+#include "damage.hpp"                  // for Damage
+#include "effects.hpp"                 // for EffectInfo
+#include "fighters.hpp"                // for FOCUS_DAMAGE_IN, FOCUS_DAMAGE_OUT
+#include "flags.hpp"                   // for M_WILL_YELL_FOR_HELP, M_YELLED...
+#include "global.hpp"                  // for WIELD, HELD, SPL, DEA, POI
+#include "lasttime.hpp"                // for lasttime
+#include "mud.hpp"                     // for LT_SAVES, LT_AGGRO_ACTION, LT
+#include "mudObjects/container.hpp"    // for MonsterSet, ObjectSet
+#include "mudObjects/creatures.hpp"    // for Creature, ATTACK_BLOCK, CHECK_...
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "os.hpp"                      // for ASSERTLOG
+#include "proto.hpp"                   // for broadcast, bonus, broadcastGroup
+#include "random.hpp"                  // for Random
+#include "server.hpp"                  // for Server, gServer
+#include "socket.hpp"                  // for Socket
+#include "specials.hpp"                // for SpecialAttack
+#include "statistics.hpp"              // for Statistics
+#include "stats.hpp"                   // for Stat, MOD_CUR_MAX
+#include "structs.hpp"                 // for saves
+#include "unique.hpp"                  // for isLimited, remove
+#include "utils.hpp"                   // for MIN, MAX
+#include "wanderInfo.hpp"              // for WanderInfo
+#include "xml.hpp"                     // for loadMonster
+
 
 //*********************************************************************
 //                      doLagProtect
@@ -54,7 +64,7 @@ bool Creature::doLagProtect() {
     if(!pThis)
         return(false);
 
-    if(pThis->flagIsSet(P_LAG_PROTECTION_SET) && pThis->flagIsSet(P_LAG_PROTECTION_ACTIVE))
+    if(pThis                ->flagIsSet(P_LAG_PROTECTION_SET) && pThis->flagIsSet(P_LAG_PROTECTION_ACTIVE))
         if(pThis->lagProtection())
             return(true);
 

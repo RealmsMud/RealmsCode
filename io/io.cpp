@@ -16,34 +16,46 @@
  *
  */
 
-#include <cctype>         // for tolower, isalpha, isprint
-#include <netinet/in.h>   // for in_addr, INADDR_ANY, ntohl
-#include <cstdarg>        // for va_list, va_start, va_end
-#include <cstdlib>        // for atoi, exit
-#include <cstring>        // for strcat, strcpy, strlen
-#include <csignal>        // for signal, SIGCHLD
-#include <cstdio>         // for size_t, sprintf, NULL
-#include <sstream>        // for operator<<, basic_ostream, ostringstream
-#include <boost/algorithm/string/predicate.hpp>
+#include <netinet/in.h>                          // for in_addr, ntohl, INAD...
+#include <boost/algorithm/string/predicate.hpp>  // for istarts_with
+#include <cctype>                                // for tolower, isalpha
+#include <cstdarg>                               // for va_list, va_start
+#include <cstdio>                                // for size_t, sprintf, NULL
+#include <cstdlib>                               // for atoi, exit
+#include <cstring>                               // for strcat, strcpy, strlen
+#include <list>                                  // for operator==, _List_it...
+#include <map>                                   // for operator==, _Rb_tree...
+#include <set>                                   // for set
+#include <sstream>                               // for operator<<, char_traits
+#include <string>                                // for string, allocator
+#include <string_view>                           // for string_view, basic_s...
+#include <utility>                               // for pair
 
-#include "clans.hpp"      // for Clan
-#include "config.hpp"     // for Config, gConfig
-#include "container.hpp"  // for Container, PlayerSet
-#include "creatures.hpp"  // for Player, Creature, Monster
-#include "deityData.hpp"  // for DeityData
-#include "exits.hpp"      // for Exit
-#include "flags.hpp"      // for P_DM_INVIS, P_NO_BROADCASTS, P_UNCONSCIOUS
-#include "global.hpp"     // for CreatureClass, CreatureClass::BUILDER, Crea...
-#include "group.hpp"      // for CreatureList, Group
-#include "location.hpp"   // for Location
-#include "mud.hpp"        // for GUILD_PEON
-#include "objects.hpp"    // for Object
-#include "os.hpp"         // for ASSERTLOG
-#include "proto.hpp"      // for broadcast, activation, getGuildName, get_la...
-#include "raceData.hpp"   // for RaceData
-#include "rooms.hpp"      // for UniqueRoom, BaseRoom, AreaRoom, ExitList
-#include "server.hpp"     // for Server, gServer, PlayerMap, SocketList
-#include "socket.hpp"     // for Socket
+#include "area.hpp"                              // for MapMarker
+#include "catRef.hpp"                            // for CatRef
+#include "clans.hpp"                             // for Clan
+#include "config.hpp"                            // for Config, gConfig
+#include "creatureStreams.hpp"                   // for Streamable
+#include "deityData.hpp"                         // for DeityData
+#include "flags.hpp"                             // for P_DM_INVIS, P_NO_BRO...
+#include "global.hpp"                            // for CreatureClass, Creat...
+#include "group.hpp"                             // for CreatureList, Group
+#include "location.hpp"                          // for Location
+#include "mud.hpp"                               // for GUILD_PEON
+#include "mudObjects/areaRooms.hpp"              // for AreaRoom
+#include "mudObjects/container.hpp"              // for Container, PlayerSet
+#include "mudObjects/creatures.hpp"              // for Creature
+#include "mudObjects/exits.hpp"                  // for Exit
+#include "mudObjects/monsters.hpp"               // for Monster
+#include "mudObjects/objects.hpp"                // for Object
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"            // for UniqueRoom
+#include "os.hpp"                                // for ASSERTLOG
+#include "proto.hpp"                             // for broadcast, getGuildName
+#include "raceData.hpp"                          // for RaceData
+#include "server.hpp"                            // for Server, gServer, Pla...
+#include "socket.hpp"                            // for Socket
 
 
 // Communication.cpp

@@ -15,15 +15,22 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include "container.hpp"
-#include "creatures.hpp"                                       // for Creature
-#include "fishing.hpp"
-#include "mudObject.hpp"
-#include "objects.hpp"
-#include "rooms.hpp"
-#include "socket.hpp"
+
+#include <pybind11/pybind11.h>       // for class_, module
+#include <string>                    // for string
+
+#include "fishing.hpp"               // for Fishing
+#include "mudObjects/container.hpp"  // for MonsterSet, PlayerSet, Container
+#include "mudObjects/creatures.hpp"  // for Creature, Creature::constitution
+#include "mudObjects/exits.hpp"      // for Exit
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/mudObject.hpp"  // for MudObject
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "socket.hpp"                // for Socket
+#include "stats.hpp"                 // for Stat
+
 
 namespace py = pybind11;
 using namespace pybind11::literals;

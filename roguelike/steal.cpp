@@ -16,22 +16,30 @@
  *
  */
 
-#include <ctime>           // for time
+#include <ctime>                     // for time
+#include <set>                       // for operator==, _Rb_tree_const_iterator
+#include <string>                    // for allocator, string
 
-#include "cmd.hpp"         // for cmd
-#include "config.hpp"      // for Config, gConfig
-#include "creatures.hpp"   // for Player, Creature, Monster
-#include "flags.hpp"       // for P_OUTLAW, P_HIDDEN, P_CHAOTIC, P_DM_INVIS
-#include "global.hpp"      // for CreatureClass, CreatureClass::THIEF, Creat...
-#include "money.hpp"       // for Money, GOLD
-#include "mud.hpp"         // for LT_STEAL, LT, LT_SPELL
-#include "objects.hpp"     // for Object
-#include "proto.hpp"       // for bonus, crtAwareness, broadcast, isCt, log_...
-#include "random.hpp"      // for Random
-#include "rooms.hpp"       // for BaseRoom
-#include "server.hpp"      // for GOLD_IN, Server, gServer
-#include "unique.hpp"      // for Unique, transferOwner, Lore
-#include "utils.hpp"       // for MAX, MIN
+#include "cmd.hpp"                   // for cmd
+#include "config.hpp"                // for Config, gConfig
+#include "flags.hpp"                 // for P_OUTLAW, P_HIDDEN, P_CHAOTIC
+#include "global.hpp"                // for CreatureClass, CreatureClass::THIEF
+#include "lasttime.hpp"              // for lasttime
+#include "money.hpp"                 // for Money, GOLD
+#include "mud.hpp"                   // for LT_STEAL, LT, LT_SPELL
+#include "mudObjects/container.hpp"  // for MonsterSet, PlayerSet
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for bonus, crtAwareness, broadcast
+#include "random.hpp"                // for Random
+#include "server.hpp"                // for GOLD_IN, Server
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "unique.hpp"                // for Unique, transferOwner, Lore
+#include "utils.hpp"                 // for MAX, MIN
 
 //*********************************************************************
 //                      steal_gold

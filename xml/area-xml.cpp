@@ -15,20 +15,29 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
 #include <dirent.h>                                 // for closedir, opendir
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
-#include <cstdio>                                  // for sprintf
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <cstdio>                                   // for sprintf
+#include <list>                                     // for list, list<>::con...
+#include <map>                                      // for map, operator==
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for string, allocator
+#include <utility>                                  // for pair
 
 #include "area.hpp"                                 // for Area, TileInfo
 #include "catRef.hpp"                               // for CatRef
 #include "flags.hpp"                                // for MAX_ROOM_FLAGS
 #include "global.hpp"                               // for FATAL
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include "mudObjects/areaRooms.hpp"                 // for AreaRoom
 #include "os.hpp"                                   // for merror
 #include "paths.hpp"                                // for AreaRoom, AreaData
 #include "proto.hpp"                                // for file_exists
-#include "rooms.hpp"                                // for AreaRoom
 #include "season.hpp"                               // for Season
 #include "server.hpp"                               // for Server
+#include "wanderInfo.hpp"                           // for WanderInfo
 #include "xml.hpp"                                  // for saveNonZeroNum
 
 class Creature;

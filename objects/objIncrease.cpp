@@ -15,7 +15,10 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for allocator, string
 
 #include "objIncrease.hpp"                          // for ObjIncrease, Unkn...
 #include "xml.hpp"                                  // for saveNonZeroNum

@@ -20,8 +20,13 @@
 #define _RANGE_H
 
 #include <libxml/parser.h>  // for xmlNodePtr
+#include <string>           // for string
+#include <string_view>      // for string_view
+#include <string>
+#include <string_view>
 
-#include "catRef.hpp"
+#include "catRef.hpp"       // for CatRef
+
 
 class Range {
 public:

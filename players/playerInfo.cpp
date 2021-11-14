@@ -16,33 +16,39 @@
  *
  */
 
-#include <cstdio>         // for sprintf
-#include <ctime>          // for ctime
-#include <iomanip>         // for operator<<, setw, setfill
-#include <ostream>         // for operator<<, basic_ostream, ostringstream
-#include <string>          // for char_traits, operator<<, basic_string, ope...
+#include <cstdio>                  // for sprintf
+#include <ctime>                   // for ctime
+#include <iomanip>                 // for operator<<, setw, setfill
+#include <locale>                  // for locale
+#include <ostream>                 // for operator<<, basic_ostream, ostring...
+#include <string>                  // for char_traits, allocator, operator<<
 
-#include "clans.hpp"       // for Clan
-#include "cmd.hpp"         // for cmd
-#include "commands.hpp"    // for spellsUnder, cmdDaily, cmdScore
-#include "config.hpp"      // for Config, gConfig
-#include "creatures.hpp"   // for Player
-#include "deityData.hpp"   // for DeityData
-#include "effects.hpp"     // for EffectInfo
-#include "flags.hpp"       // for P_AFK, P_PTESTER, P_CHAOTIC, P_CHARMED
-#include "free_crt.hpp"    // for free_crt
-#include "global.hpp"      // for CreatureClass, CreatureClass::CLERIC, Crea...
-#include "location.hpp"    // for Location
-#include "magic.hpp"       // for S_HEAL, S_TELEPORT, S_TRACK
-#include "money.hpp"       // for Money, GOLD
-#include "mud.hpp"         // for DL_RESURRECT, DL_HANDS, DL_BROAD, DL_ENCHA
-#include "proto.hpp"       // for up, getClassName, getSizeName
-#include "raceData.hpp"    // for RaceData
-#include "rooms.hpp"       // for BaseRoom
-#include "server.hpp"      // for Server, gServer
-#include "socket.hpp"      // for Socket
-#include "utils.hpp"       // for MIN
-#include "xml.hpp"         // for loadPlayer
+#include "catRef.hpp"              // for CatRef
+#include "clans.hpp"               // for Clan
+#include "cmd.hpp"                 // for cmd
+#include "commands.hpp"            // for spellsUnder, cmdDaily, cmdScore
+#include "config.hpp"              // for Config, gConfig
+#include "deityData.hpp"           // for DeityData
+#include "effects.hpp"             // for EffectInfo
+#include "flags.hpp"               // for P_AFK, P_PTESTER, P_CHAOTIC, P_CHA...
+#include "free_crt.hpp"            // for free_crt
+#include "global.hpp"              // for CreatureClass, CreatureClass::CLERIC
+#include "location.hpp"            // for Location
+#include "magic.hpp"               // for S_HEAL, S_TELEPORT, S_TRACK
+#include "money.hpp"               // for Money, GOLD
+#include "mud.hpp"                 // for DL_RESURRECT, DL_HANDS, DL_BROAD
+#include "mudObjects/players.hpp"  // for Player
+#include "mudObjects/rooms.hpp"    // for BaseRoom
+#include "proto.hpp"               // for up, getClassName, get_class_string
+#include "raceData.hpp"            // for RaceData
+#include "server.hpp"              // for Server, gServer
+#include "size.hpp"                // for getSizeName
+#include "socket.hpp"              // for Socket
+#include "statistics.hpp"          // for Statistics
+#include "stats.hpp"               // for Stat
+#include "structs.hpp"             // for daily, saves
+#include "utils.hpp"               // for MIN
+#include "xml.hpp"                 // for loadPlayer
 
 class Object;
 

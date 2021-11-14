@@ -15,38 +15,53 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdio>                 // for sprintf
-#include <cstring>                // for memset, strcat, strcpy
-#include <ctime>                  // for time
-#include <unistd.h>               // for unlink
-#include <algorithm>              // for find
-#include <sstream>                // for operator<<, basic_ostream, ostrings...
 
-#include "area.hpp"               // for MapMarker, Area, AreaZone, TileInfo
-#include "catRef.hpp"             // for CatRef
-#include "catRefInfo.hpp"         // for CatRefInfo, CatRefInfo::limbo, CatR...
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for PlayerSet, MonsterSet, ObjectSet
-#include "creatures.hpp"          // for Player, Creature, Monster
-#include "enums/loadType.hpp"     // for LoadType, LoadType::LS_BACKUP
-#include "exits.hpp"              // for Exit
-#include "flags.hpp"              // for R_LIMBO, R_VAMPIRE_COVEN, R_DARK_AL...
-#include "global.hpp"             // for HELD, ARACHNUS, ARAMON, ARES, CERIS
-#include "hooks.hpp"              // for Hooks
-#include "location.hpp"           // for Location
-#include "move.hpp"               // for deletePortal
-#include "mud.hpp"                // for MAX_MOBS_IN_ROOM
-#include "objects.hpp"            // for Object
-#include "proto.hpp"              // for link_rom, isDay, broadcast, getReal...
-#include "random.hpp"             // for Random
-#include "realm.hpp"              // for Realm
-#include "rooms.hpp"              // for AreaRoom, BaseRoom, UniqueRoom, Exi...
-#include "server.hpp"             // for Server, gServer, RoomCache
-#include "size.hpp"               // for Size, NO_SIZE, SIZE_COLOSSAL
-#include "socket.hpp"             // for Socket
-#include "utils.hpp"              // for MAX
-#include "wanderInfo.hpp"         // for WanderInfo
-#include "xml.hpp"                // for NODE_NAME, copyToBool, newStringChild
+#include <stdarg.h>                    // for va_list, va_end, va_start
+#include <unistd.h>                    // for unlink
+#include <algorithm>                   // for find
+#include <compare>                     // for operator<, strong_ordering
+#include <cstring>                     // for memset, strcpy
+#include <ctime>                       // for time
+#include <list>                        // for operator==, list<>::iterator
+#include <map>                         // for operator==, _Rb_tree_const_ite...
+#include <set>                         // for set, set<>::iterator
+#include <sstream>                     // for char_traits, operator<<, basic...
+#include <string>                      // for string, allocator, operator<<
+#include <string_view>                 // for string_view, operator==, basic...
+
+#include "area.hpp"                    // for MapMarker, Area, AreaZone, Til...
+#include "catRef.hpp"                  // for CatRef
+#include "catRefInfo.hpp"              // for CatRefInfo, CatRefInfo::limbo
+#include "config.hpp"                  // for Config, gConfig
+#include "effects.hpp"                 // for Effects
+#include "enums/loadType.hpp"          // for LoadType, LoadType::LS_BACKUP
+#include "flags.hpp"                   // for R_LIMBO, R_VAMPIRE_COVEN, R_DA...
+#include "free_crt.hpp"                // for free_crt
+#include "global.hpp"                  // for HELD, ARACHNUS, ARAMON, ARES
+#include "hooks.hpp"                   // for Hooks
+#include "lasttime.hpp"                // for lasttime, crlasttime
+#include "location.hpp"                // for Location
+#include "move.hpp"                    // for deletePortal
+#include "mud.hpp"                     // for MAX_MOBS_IN_ROOM
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/container.hpp"    // for ObjectSet, MonsterSet, PlayerSet
+#include "mudObjects/creatures.hpp"    // for Creature
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for link_rom, isDay, broadcast
+#include "random.hpp"                  // for Random
+#include "realm.hpp"                   // for Realm
+#include "server.hpp"                  // for Server, gServer, RoomCache
+#include "size.hpp"                    // for Size, NO_SIZE, SIZE_COLOSSAL
+#include "socket.hpp"                  // for Socket
+#include "utils.hpp"                   // for MAX
+#include "wanderInfo.hpp"              // for WanderInfo
+#include "xml.hpp"                     // for loadRoom
+
 
 
 BaseRoom::BaseRoom() {

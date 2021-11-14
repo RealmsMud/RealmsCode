@@ -86,6 +86,7 @@ enum class ObjectType {
 };
 
 #include "objIncrease.hpp"
+#include "mudObjects/players.hpp"
 
 class DroppedBy {
     friend class Object;

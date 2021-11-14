@@ -16,17 +16,17 @@
  *
  */
 
-#include <cstdio>         // for fgets, feof, fclose, fopen, sprintf, FILE
-#include <cstdlib>        // for atoi
-#include <cstring>        // for strcpy, strlen
+#include <cstdio>                    // for fgets, feof, fclose, fopen, sprintf, FILE
+#include <cstdlib>                   // for atoi
+#include <cstring>                   // for strcpy, strlen
 
-#include "creatures.hpp"  // for Creature
-#include "flags.hpp"      // for M_LOGIC_MONSTER
-#include "global.hpp"     // for FATAL, NONFATAL
-#include "os.hpp"         // for merror
-#include "paths.hpp"      // for Talk
-#include "proto.hpp"      // for logn, loadCreature_actions
-#include "structs.hpp"    // for ttag
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "flags.hpp"                 // for M_LOGIC_MONSTER
+#include "global.hpp"                // for FATAL, NONFATAL
+#include "os.hpp"                    // for merror
+#include "paths.hpp"                 // for Talk
+#include "proto.hpp"                 // for logn, loadCreature_actions
+#include "structs.hpp"               // for ttag
 
 
 int loadCreature_actions( Creature* creature ) {

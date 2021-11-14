@@ -15,21 +15,32 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstring>       // for strncmp
-#include <sstream>        // for operator<<, basic_ostream, char_traits, ost...
-#include <boost/algorithm/string/case_conv.hpp>
 
-#include "cmd.hpp"        // for cmd
-#include "creatures.hpp"  // for Creature, Player
-#include "color.hpp"      // for stripColor
-#include "effects.hpp"    // for EffectInfo, EffectList, Effects
-#include "exits.hpp"      // for Exit, Direction, NoDirection, East, North
-#include "flags.hpp"      // for X_CLAN_1, X_CLAN_10, X_CLAN_11, X_CLAN_12
-#include "global.hpp"     // for CreatureClass, NEUTRAL, BARBARIAN, CAMBION
-#include "mudObject.hpp"  // for MudObject
-#include "proto.hpp"      // for zero, removeColor, broadcast, findExit, isCt
-#include "rooms.hpp"      // for BaseRoom, ExitList, AreaRoom, UniqueRoom
-#include "size.hpp"       // for NO_SIZE, Size
+#include <boost/algorithm/string/case_conv.hpp>  // for to_lower
+#include <cstring>                               // for strncmp, size_t
+#include <list>                                  // for operator==, _List_it...
+#include <sstream>                               // for operator<<, char_traits
+#include <string>                                // for string, allocator
+#include <string_view>                           // for string_view, operator<<
+
+#include "area.hpp"                              // for MapMarker
+#include "catRef.hpp"                            // for CatRef
+#include "cmd.hpp"                               // for cmd
+#include "color.hpp"                             // for stripColor
+#include "effects.hpp"                           // for EffectInfo, Effects
+#include "flags.hpp"                             // for X_CLAN_1, X_CLAN_10
+#include "global.hpp"                            // for CreatureClass, NEUTRAL
+#include "hooks.hpp"                             // for Hooks
+#include "location.hpp"                          // for Location
+#include "mudObjects/areaRooms.hpp"              // for AreaRoom
+#include "mudObjects/creatures.hpp"              // for Creature
+#include "mudObjects/exits.hpp"                  // for Exit, Direction, NoD...
+#include "mudObjects/mudObject.hpp"              // for MudObject
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"            // for UniqueRoom
+#include "proto.hpp"                             // for zero, broadcast, fin...
+#include "size.hpp"                              // for NO_SIZE, Size
 
 //*********************************************************************
 //                      Exit

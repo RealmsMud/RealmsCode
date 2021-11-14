@@ -16,10 +16,14 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlFreeDoc, xmlNode
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <list>                                     // for list, list<>::con...
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for allocator, string
 
-#include "craft.hpp"                                // for Recipe, operator<<
-#include "xml.hpp"                                  // for NODE_NAME, loadOb...
+#include "catRef.hpp"                               // for CatRef
+#include "craft.hpp"                                // for Recipe
+#include "xml.hpp"                                  // for NODE_NAME, saveNo...
 
 //*********************************************************************
 //                      save

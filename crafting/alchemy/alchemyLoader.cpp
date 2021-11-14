@@ -15,12 +15,12 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <map>
+#include <map>                          // for allocator
+#include <utility>                      // for move
 
-
-#include "config.hpp"
-#include "alchemy.hpp"
-#include "builders/alchemyBuilder.hpp"
+#include "alchemy.hpp"                  // for AlchemyInfo
+#include "builders/alchemyBuilder.hpp"  // for AlchemyBuilder
+#include "config.hpp"                   // for Config, AlchemyMap
 
 void addToMap(AlchemyInfo &&alc, AlchemyMap &alchemyMap) {
     alchemyMap.emplace(alc.getName(), std::move(alc));

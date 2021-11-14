@@ -15,21 +15,27 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdio>         // for sprintf
-#include <cstring>        // for strlen, strcpy, strcat, strcmp
-#include <ctime>          // for time
-#include <string>          // for operator==, basic_string
 
-#include "creatures.hpp"   // for Player
-#include "exits.hpp"       // for Exit
-#include "flags.hpp"       // for O_LOGIN_FILE, X_CLOSED, X_LOCKED
-#include "global.hpp"      // for SP_COMBO, SP_MAPSC, ZAPPED
-#include "objects.hpp"     // for Object
-#include "paths.hpp"       // for Sign
-#include "proto.hpp"       // for broadcast
-#include "random.hpp"      // for Random
-#include "rooms.hpp"       // for BaseRoom, ExitList
-#include "socket.hpp"      // for Socket
+#include <cstdio>                  // for sprintf
+#include <cstring>                 // for strlen, strcpy, strcat, strcmp
+#include <ctime>                   // for time
+#include <list>                    // for operator==, _List_iterator, list
+#include <string>                  // for allocator, operator==, string
+
+#include "dice.hpp"                // for Dice
+#include "flags.hpp"               // for O_UNPAGED_FILE, X_CLOSED, X_LOCKED
+#include "global.hpp"              // for SP_COMBO, SP_MAPSC, ZAPPED
+#include "lasttime.hpp"            // for lasttime
+#include "mudObjects/exits.hpp"    // for Exit
+#include "mudObjects/objects.hpp"  // for Object
+#include "mudObjects/players.hpp"  // for Player
+#include "mudObjects/rooms.hpp"    // for BaseRoom, ExitList
+#include "paths.hpp"               // for Sign
+#include "proto.hpp"               // for broadcast
+#include "random.hpp"              // for Random
+#include "socket.hpp"              // for Socket
+#include "statistics.hpp"          // for Statistics
+#include "stats.hpp"               // for Stat
 
 //*********************************************************************
 //                      doSpecial

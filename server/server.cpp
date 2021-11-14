@@ -16,53 +16,77 @@
  *
  */
 
+#include <assert.h>                                 // for assert
 #include <bits/types/struct_tm.h>                   // for tm
-#include <libxml/parser.h>                          // for xmlFreeDoc, xmlNode
-#include <netdb.h>                                  // for gethostbyaddr
-#include <netinet/in.h>                             // for sockaddr_in, in_addr
-#include <cstdio>                                   // for snprintf, sprintf
-#include <cstring>                                  // for memset, strcpy
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlDo...
+#include <netdb.h>                                  // for getnameinfo, EAI_...
+#include <netinet/in.h>                             // for sockaddr_in, htons
+#include <poll.h>                                   // for pollfd, poll, POL...
+#include <signal.h>                                 // for sigaction, signal
 #include <sys/resource.h>                           // for rlimit, setrlimit
 #include <sys/select.h>                             // for FD_ZERO, FD_ISSET
 #include <sys/socket.h>                             // for AF_INET, accept
 #include <sys/stat.h>                               // for umask
-#include <sys/types.h>                              // for time_t
+#include <sys/time.h>                               // for timeval
 #include <sys/wait.h>                               // for wait3, waitpid
-#include <ctime>                                    // for time, ctime, diff...
 #include <unistd.h>                                 // for close, unlink, read
-#include <algorithm>                                // for find, copy
+#include <algorithm>                                // for find
+#include <boost/algorithm/string/replace.hpp>       // for replace_all
+#include <boost/iterator/iterator_traits.hpp>       // for iterator_value<>:...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cerrno>                                   // for EWOULDBLOCK, errno
+#include <compare>                                  // for operator<, strong...
+#include <cstdio>                                   // for snprintf, sprintf
 #include <cstdlib>                                  // for exit, abort, srand
+#include <cstring>                                  // for memset, strcpy
+#include <ctime>                                    // for time, time_t, ctime
+#include <deque>                                    // for _Deque_iterator
 #include <iomanip>                                  // for operator<<, setw
 #include <iostream>                                 // for operator<<, basic...
-#include <poll.h>
-#include <boost/algorithm/string/replace.hpp>
+#include <list>                                     // for operator==, list
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <map>                                      // for operator==, map
+#include <set>                                      // for set
+#include <string>                                   // for string, allocator
+#include <string_view>                              // for operator<<, strin...
+#include <utility>                                  // for pair
+#include <vector>                                   // for vector
 
 #include "area.hpp"                                 // for MapMarker, Area
 #include "calendar.hpp"                             // for Calendar
 #include "catRef.hpp"                               // for CatRef
-#include "config.hpp"                               // for Config, gConfig
 #include "color.hpp"                                // for stripColor
-#include "creatures.hpp"                            // for Monster, Player
+#include "config.hpp"                               // for Config, gConfig
+#include "delayedAction.hpp"                        // for DelayedAction
 #include "factions.hpp"                             // for Faction
 #include "flags.hpp"                                // for M_PERMENANT_MONSTER
+#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for FATAL, ALLITEMS
+#include "lasttime.hpp"                             // for lasttime
 #include "login.hpp"                                // for CON_DISCONNECTING
 #include "magic.hpp"                                // for S_CURE_POISON
 #include "money.hpp"                                // for Money, GOLD
 #include "mud.hpp"                                  // for Port, LT, StartTime
-#include "mudObject.hpp"                            // for MudObject
-#include "objects.hpp"                              // for Object, DroppedBy
+#include "mudObjects/areaRooms.hpp"                 // for AreaRoom
+#include "mudObjects/container.hpp"                 // for MonsterSet, Playe...
+#include "mudObjects/creatures.hpp"                 // for Creature, ATTACK_...
+#include "mudObjects/monsters.hpp"                  // for Monster
+#include "mudObjects/mudObject.hpp"                 // for MudObject
+#include "mudObjects/objects.hpp"                   // for Object, DroppedBy
+#include "mudObjects/players.hpp"                   // for Player
+#include "mudObjects/rooms.hpp"                     // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "os.hpp"                                   // for merror, ASSERTLOG
 #include "paths.hpp"                                // for Config, Game, Are...
-#include "proc.hpp"                                 // for childProcess, CHI...
-#include "proto.hpp"                                // for broadcast, free_crt
-#include "pythonHandler.hpp"
+#include "proc.hpp"                                 // for childProcess, Chi...
+#include "proto.hpp"                                // for broadcast, isDay
+#include "pythonHandler.hpp"                        // for PythonHandler
 #include "random.hpp"                               // for Random
-#include "rooms.hpp"                                // for UniqueRoom, BaseRoom
-#include "server.hpp"                               // for Server, MonsterList
+#include "server.hpp"                               // for Server, Server::c...
 #include "serverTimer.hpp"                          // for ServerTimer
-#include "socket.hpp"                               // for Socket, nonBlock
+#include "socket.hpp"                               // for Socket, xmlNode
+#include "stats.hpp"                                // for Stat
+#include "structs.hpp"                              // for daily
 #include "version.hpp"                              // for VERSION
 #include "wanderInfo.hpp"                           // for WanderInfo
 #include "xml.hpp"                                  // for copyToNum, newNum...

@@ -16,22 +16,27 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
+#include <bits/types/struct_tm.h>                   // for tm
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cstdio>                                   // for sprintf
 #include <cstring>                                  // for memset, strcmp
 #include <ctime>                                    // for ctime, localtime
+#include <list>                                     // for list, operator==
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for allocator, string
 
 #include "cmd.hpp"                                  // for cmd
 #include "config.hpp"                               // for Config, gConfig
-#include "creatures.hpp"                            // for Player
 #include "factions.hpp"                             // for Faction
 #include "flags.hpp"                                // for O_NO_DROP, R_LOTT...
 #include "money.hpp"                                // for GOLD, Money
 #include "mud.hpp"                                  // for TICKET_OBJ
-#include "objects.hpp"                              // for Object, ObjectType
+#include "mudObjects/objects.hpp"                   // for Object, ObjectType
+#include "mudObjects/players.hpp"                   // for Player
+#include "mudObjects/rooms.hpp"                     // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "proto.hpp"                                // for broadcast, logn
 #include "random.hpp"                               // for Random
-#include "rooms.hpp"                                // for BaseRoom, UniqueRoom
 #include "server.hpp"                               // for GOLD_IN, Server
 #include "utils.hpp"                                // for MIN
 #include "xml.hpp"                                  // for newStringChild

@@ -16,32 +16,41 @@
  *
  */
 
-#include <cctype>          // for isspace
-#include <cstdio>          // for sprintf
-#include <cstdlib>         // for atoi
-#include <cstring>         // for strtok, strcpy, strcat, strdup, strstr
+#include <fmt/format.h>              // for format
+#include <cctype>                    // for isspace
+#include <cstdio>                    // for sprintf
+#include <cstdlib>                   // for atoi
+#include <cstring>                   // for strtok, strcpy, strcat, strdup
+#include <map>                       // for map
+#include <string>                    // for string, allocator, operator+
 
-#include "catRef.hpp"       // for CatRef
-#include "catRefInfo.hpp"   // for CatRefInfo
-#include "cmd.hpp"          // for cmd
-#include "commands.hpp"     // for cmdAction
-#include "config.hpp"       // for Config, gConfig
-#include "creatures.hpp"    // for Player, Creature
-#include "exits.hpp"        // for Exit
-#include "flags.hpp"        // for M_UNKILLABLE
-#include "global.hpp"       // for CreatureClass, CON, CreatureClass::LICH
-#include "levelGain.hpp"    // for LevelGain
-#include "monType.hpp"      // for INVALID, PLAYER, mType
-#include "objects.hpp"      // for Object
-#include "os.hpp"           // for merror
-#include "playerClass.hpp"  // for PlayerClass
-#include "proto.hpp"        // for broadcast, getRandomMonster, getRandomPlayer
-#include "raceData.hpp"     // for RaceData
-#include "random.hpp"       // for Random
-#include "rooms.hpp"        // for BaseRoom, UniqueRoom (ptr only)
-#include "structs.hpp"      // for vstat
-#include "utils.hpp"        // for MAX, MIN
-#include "xml.hpp"          // for loadRoom
+#include "catRef.hpp"                // for CatRef
+#include "catRefInfo.hpp"            // for CatRefInfo
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for cmdAction, cmdDice, cmdVisible
+#include "config.hpp"                // for Config, gConfig
+#include "dice.hpp"                  // for Dice
+#include "flags.hpp"                 // for M_UNKILLABLE
+#include "global.hpp"                // for CreatureClass, CON, CreatureClas...
+#include "levelGain.hpp"             // for LevelGain
+#include "location.hpp"              // for Location
+#include "monType.hpp"               // for INVALID, PLAYER, mType
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/exits.hpp"      // for Exit
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "os.hpp"                    // for merror
+#include "playerClass.hpp"           // for PlayerClass
+#include "proto.hpp"                 // for broadcast, getRandomMonster, get...
+#include "raceData.hpp"              // for RaceData
+#include "random.hpp"                // for Random
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for vstat
+#include "utils.hpp"                 // for MAX, MIN
+#include "xml.hpp"                   // for loadRoom
+
+class UniqueRoom;
 
 //********************************************************************
 //                      calcStats

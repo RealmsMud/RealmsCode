@@ -17,15 +17,15 @@
  */
 
 
-#include <libxml/parser.h>  // for xmlFreeDoc, xmlNode, xmlDocGetRootElement
+#include <libxml/parser.h>  // for xmlCleanupParser, xmlFreeDoc, xmlDocGetRo...
 #include <cstdio>           // for sprintf
-#include <map>              // for operator==
+#include <string>           // for string
 #include <utility>          // for pair
 
-#include "config.hpp"       // for Config, stringMap, MxpElementMap
+#include "config.hpp"       // for Config, MxpElementMap, stringMap
 #include "mxp.hpp"          // for MxpElement
 #include "paths.hpp"        // for Code
-#include "xml.hpp"          // for copyToString, NODE_NAME, copyToBool, loa...
+#include "xml.hpp"          // for copyToString, NODE_NAME, copyToBool, load...
 
 //*********************************************************************
 //                      loadMxpElements

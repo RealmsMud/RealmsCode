@@ -16,9 +16,13 @@
  *
  */
 
-#include <pybind11/pybind11.h>
+#include <pybind11/pybind11.h>       // for class_, module
+#include <pybind11/cast.h>           // for arg
+#include <pybind11/detail/common.h>  // for constexpr_sum, pybind11
+#include <pybind11/detail/descr.h>   // for operator+
+#include <pybind11/pytypes.h>        // for getattr
 
-#include "stats.hpp"                                           // for Stat
+#include "stats.hpp"                 // for Stat
 
 namespace py = pybind11;
 

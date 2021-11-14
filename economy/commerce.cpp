@@ -15,40 +15,59 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <boost/utility.hpp>      // for next
-#include <cstdlib>                // for atoi, atol
-#include <cstring>                // for strncmp, strcmp, strlen, strcpy
-#include <ctime>                  // for time
 
-#include "bank.hpp"               // for guildLog
-#include "carry.hpp"              // for Carry
-#include "catRef.hpp"             // for CatRef
-#include "color.hpp"              // for padColor
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for getFullstrText, cmdHelp, cmdProperties
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for ObjectSet, Container
-#include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
-#include "creatures.hpp"          // for Player, Creature, Monster
-#include "dm.hpp"                 // for findRoomsWithFlag
-#include "exits.hpp"              // for Exit
-#include "factions.hpp"           // for Faction, Faction::INDIFFERENT
-#include "flags.hpp"              // for P_AFK, R_SHOP, O_PERM_ITEM, R_BUILD...
-#include "global.hpp"             // for CreatureClass, MAG, PROP_SHOP, BUY
-#include "guilds.hpp"             // for Guild, shopStaysWithGuild
-#include "hooks.hpp"              // for Hooks
-#include "money.hpp"              // for Money, GOLD
-#include "mud.hpp"                // for MINSHOPLEVEL, GUILD_MASTER
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::LOT...
-#include "os.hpp"                 // for merror
-#include "property.hpp"           // for Property, PartialOwner
-#include "proto.hpp"              // for broadcast, logn, link_rom, needUniq...
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for UniqueRoom, BaseRoom, ExitList
-#include "server.hpp"             // for Server, gServer, GOLD_OUT, GOLD_IN
-#include "unique.hpp"             // for Lore, addOwner, isLimited, Unique
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for loadRoom, loadObject, loadPlayer
+#include <fmt/format.h>                // for format
+#include <algorithm>                   // for replace
+#include <cstdlib>                     // for atoi, atol
+#include <cstring>                     // for strncmp, strcmp, strlen, strcpy
+#include <ctime>                       // for time
+#include <iterator>                    // for next
+#include <list>                        // for list, operator==, list<>::cons...
+#include <map>                         // for operator==, _Rb_tree_const_ite...
+#include <memory>                      // for allocator, allocator_traits<>:...
+#include <set>                         // for set<>::iterator, set
+#include <string>                      // for string, operator==, char_traits
+#include <string_view>                 // for operator==, basic_string_view
+#include <type_traits>                 // for enable_if<>::type
+#include <utility>                     // for pair
+
+#include "bank.hpp"                    // for guildLog
+#include "carry.hpp"                   // for Carry
+#include "catRef.hpp"                  // for CatRef
+#include "cmd.hpp"                     // for cmd
+#include "color.hpp"                   // for padColor
+#include "commands.hpp"                // for getFullstrText, cmdHelp, cmdPr...
+#include "config.hpp"                  // for Config, gConfig
+#include "creatureStreams.hpp"         // for Streamable, ColorOff, ColorOn
+#include "dm.hpp"                      // for findRoomsWithFlag
+#include "factions.hpp"                // for Faction, Faction::INDIFFERENT
+#include "flags.hpp"                   // for P_AFK, R_SHOP, O_PERM_ITEM
+#include "free_crt.hpp"                // for free_crt
+#include "global.hpp"                  // for CreatureClass, MAG, PROP_SHOP
+#include "guilds.hpp"                  // for Guild, shopStaysWithGuild
+#include "hooks.hpp"                   // for Hooks
+#include "lasttime.hpp"                // for lasttime
+#include "location.hpp"                // for Location
+#include "money.hpp"                   // for Money, GOLD
+#include "mud.hpp"                     // for MINSHOPLEVEL, GUILD_MASTER
+#include "mudObjects/container.hpp"    // for ObjectSet, Container
+#include "mudObjects/creatures.hpp"    // for Creature
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "os.hpp"                      // for merror
+#include "property.hpp"                // for Property, PartialOwner
+#include "proto.hpp"                   // for broadcast, logn, link_rom, nee...
+#include "random.hpp"                  // for Random
+#include "range.hpp"                   // for Range
+#include "server.hpp"                  // for Server, GOLD_OUT, GOLD_IN, gSe...
+#include "structs.hpp"                 // for saves
+#include "unique.hpp"                  // for Lore, addOwner, isLimited, Unique
+#include "utils.hpp"                   // for MAX, MIN
+#include "xml.hpp"                     // for loadRoom, loadObject, loadPlayer
 
 #define TAX .06
 

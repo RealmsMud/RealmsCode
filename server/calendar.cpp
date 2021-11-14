@@ -15,22 +15,25 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
 #include "calendar.hpp"
 
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for system
-#include <ctime>                  // for time
-#include <ostream>                // for operator<<, basic_ostream, ostrings...
+#include <cstdio>                  // for sprintf
+#include <cstdlib>                 // for system
+#include <ctime>                   // for time
+#include <map>                     // for operator==, _Rb_tree_iterator, map
+#include <ostream>                 // for operator<<, char_traits, basic_ost...
+#include <utility>                 // for pair
 
-#include "catRefInfo.hpp"         // for CatRefInfo
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player
-#include "flags.hpp"              // for R_ALWAYS_WINTER, R_WINTER_COLD
-#include "mud.hpp"                // for StartTime, SUNRISE, SUNSET
-#include "paths.hpp"              // for Game, PlayerData
-#include "proto.hpp"              // for getOrdinal, file_exists, checkBirth...
-#include "rooms.hpp"              // for BaseRoom
-#include "server.hpp"             // for PlayerMap, Server, gServer
+#include "catRefInfo.hpp"          // for CatRefInfo
+#include "config.hpp"              // for Config, gConfig
+#include "flags.hpp"               // for R_ALWAYS_WINTER, R_WINTER_COLD
+#include "mud.hpp"                 // for StartTime, SUNRISE, SUNSET
+#include "mudObjects/players.hpp"  // for Player
+#include "mudObjects/rooms.hpp"    // for BaseRoom
+#include "paths.hpp"               // for Game, PlayerData
+#include "proto.hpp"               // for getOrdinal, file_exists, isDay
+#include "server.hpp"              // for PlayerMap, Server, gServer
 
 class cmd;
 

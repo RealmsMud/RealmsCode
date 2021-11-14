@@ -21,7 +21,7 @@
 
 #include "lasttime.hpp"
 #include "location.hpp"
-#include "mudObject.hpp"
+#include "mudObjects/mudObject.hpp"
 #include "swap.hpp"
 
 enum Direction {

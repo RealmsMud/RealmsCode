@@ -16,35 +16,49 @@
  *
  */
 
-#include <cctype>                 // for isdigit
-#include <csignal>                // for signal, SIG_DFL, kill, SIGALRM, SIGFPE
-#include <cstdlib>                // for free, exit, atoi
-#include <cstring>                // for strcpy, strlen
-#include <ctime>                  // for time, ctime
-#include <unistd.h>               // for getpid
-#include <boost/algorithm/string/case_conv.hpp>
+#include <unistd.h>                              // for getpid
+#include <boost/algorithm/string/case_conv.hpp>  // for to_lower_copy
+#include <boost/iterator/iterator_facade.hpp>    // for operator!=
+#include <cctype>                                // for isdigit
+#include <csignal>                               // for signal, SIG_DFL, kill
+#include <cstdlib>                               // for free, exit, atoi
+#include <cstring>                               // for strcpy, strlen
+#include <ctime>                                 // for time, ctime
+#include <list>                                  // for operator==, _List_it...
+#include <map>                                   // for operator==, _Rb_tree...
+#include <ostream>                               // for operator<<, basic_os...
+#include <set>                                   // for set
+#include <string>                                // for string, allocator
+#include <utility>                               // for pair
 
-#include "area.hpp"               // for Area
-#include "calendar.hpp"           // for Calendar, cWeather, cSeason
-#include "catRefInfo.hpp"         // for CatRefInfo
-#include "cmd.hpp"                // for cmd
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Monster, Player, Creature
-#include "flags.hpp"              // for M_LOGIC_MONSTER, M_OUTLAW_AGGRO
-#include "global.hpp"             // for DEFAULT_WEAPON_DELAY
-#include "mud.hpp"                // for Weather, DL_BROAD, Shutdown, last_d...
-#include "proto.hpp"              // for broadcast, logn, isDay, loge, isDm
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, UniqueRoom
-#include "server.hpp"             // for Server, gServer, MonsterList, Playe...
-#include "ships.hpp"              // for Ship, ShipStop, shipBroadcastRange
-#include "socket.hpp"             // for Socket, InBytes, OutBytes
-#include "structs.hpp"            // for ttag, daily
-#include "threat.hpp"             // for ThreatTable
-#include "weather.hpp"            // for WEATHER_SUNRISE, WEATHER_SUNSET
-#include "web.hpp"                // for webCrash
+#include "area.hpp"                              // for Area
+#include "calendar.hpp"                          // for Calendar, cWeather
+#include "catRef.hpp"                            // for CatRef
+#include "catRefInfo.hpp"                        // for CatRefInfo
+#include "cmd.hpp"                               // for cmd
+#include "config.hpp"                            // for Config, gConfig
+#include "flags.hpp"                             // for M_LOGIC_MONSTER, M_O...
+#include "global.hpp"                            // for DEFAULT_WEAPON_DELAY
+#include "hooks.hpp"                             // for Hooks
+#include "lasttime.hpp"                          // for lasttime
+#include "libxml/parser.h"                       // for xmlCleanupParser
+#include "mud.hpp"                               // for Weather, DL_BROAD
+#include "mudObjects/container.hpp"              // for PlayerSet, MonsterSet
+#include "mudObjects/creatures.hpp"              // for Creature
+#include "mudObjects/monsters.hpp"               // for Monster
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"            // for UniqueRoom
+#include "proto.hpp"                             // for broadcast, logn, isDay
+#include "random.hpp"                            // for Random
+#include "server.hpp"                            // for Server, gServer, Mon...
+#include "ships.hpp"                             // for Ship, ShipStop, ship...
+#include "socket.hpp"                            // for Socket, InBytes, Out...
+#include "structs.hpp"                           // for ttag, daily
+#include "threat.hpp"                            // for ThreatTable
+#include "weather.hpp"                           // for WEATHER_SUNRISE, WEA...
+#include "web.hpp"                               // for webCrash
 
-class Object;
 
 bool            firstLoop=true;
 long            last_track_update=0;

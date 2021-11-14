@@ -22,6 +22,7 @@
 #include "effects.hpp"
 
 #include "fluentBuilder.hpp"
+
 #define BUILDER(name, type) GENERIC_BUILDER(EffectBuilder, effect, name, type)
 
 

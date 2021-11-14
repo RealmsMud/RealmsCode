@@ -15,37 +15,50 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cctype>                                  // for isdigit
-#include <libxml/parser.h>                          // for xmlFreeDoc, xmlNode
-#include <cmath>                                   // for log, abs
-#include <cstdio>                                  // for snprintf, sprintf
-#include <cstdlib>                                 // for atoi, abs
-#include <cstring>                                 // for strlen, strncmp
-#include <ctime>                                   // for time
-#include <iomanip>                                  // for operator<<, setw
-#include <sstream>                                  // for operator<<, basic...
 
-#include "catRef.hpp"                               // for CatRef
-#include "cmd.hpp"                                  // for cmd
-#include "commands.hpp"                             // for getFullstrText
-#include "config.hpp"                               // for Config, gConfig
-#include "color.hpp"                                // for padColor
-#include "container.hpp"                            // for ObjectSet, Monste...
-#include "craft.hpp"                                // for Recipe, operator<<
-#include "creatures.hpp"                            // for Player, Monster
-#include "factions.hpp"                             // for Faction
-#include "flags.hpp"                                // for O_BEING_PREPARED
-#include "global.hpp"                               // for INV, MAG
-#include "mud.hpp"                                  // for LT_MOVED, LT_SPELL
-#include "objects.hpp"                              // for Object, ObjectType
-#include "paths.hpp"                                // for Game
-#include "proto.hpp"                                // for log_immort, broad...
-#include "random.hpp"                               // for Random
-#include "rooms.hpp"                                // for BaseRoom
-#include "size.hpp"                                 // for Size, NO_SIZE
-#include "unique.hpp"                               // for Lore, Unique
-#include "utils.hpp"                                // for MAX
-#include "xml.hpp"                                  // for loadObject
+#include <fmt/format.h>              // for format
+#include <libxml/parser.h>           // for xmlFreeDoc, xmlCleanupParser
+#include <cctype>                    // for isdigit
+#include <cmath>                     // for log, abs
+#include <cstdio>                    // for snprintf, sprintf
+#include <cstdlib>                   // for atoi, abs
+#include <cstring>                   // for strlen, strncmp, strcmp
+#include <ctime>                     // for time
+#include <iomanip>                   // for operator<<, setw
+#include <list>                      // for list, operator==, list<>::const_...
+#include <map>                       // for operator==, _Rb_tree_const_iterator
+#include <set>                       // for set, set<>::iterator
+#include <sstream>                   // for operator<<, basic_ostream, char_...
+#include <string>                    // for string, operator==, operator<<
+#include <string_view>               // for operator==, string_view, basic_s...
+#include <utility>                   // for pair
+
+#include "catRef.hpp"                // for CatRef
+#include "cmd.hpp"                   // for cmd
+#include "color.hpp"                 // for padColor
+#include "commands.hpp"              // for getFullstrText, cmdNoAuth, cmdCraft
+#include "config.hpp"                // for Config, RecipeMap, gConfig
+#include "craft.hpp"                 // for Recipe, operator<<
+#include "factions.hpp"              // for Faction
+#include "flags.hpp"                 // for O_BEING_PREPARED, O_HOT
+#include "global.hpp"                // for INV, MAG
+#include "lasttime.hpp"              // for lasttime
+#include <libxml/xmlstring.h>        // for BAD_CAST
+#include "mud.hpp"                   // for LT_MOVED, LT_SPELL
+#include "mudObjects/container.hpp"  // for ObjectSet, MonsterSet
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object, ObjectType, ObjectType::...
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "paths.hpp"                 // for Game
+#include "proto.hpp"                 // for log_immort, broadcast, low, doGe...
+#include "random.hpp"                // for Random
+#include "size.hpp"                  // for Size, getSize, NO_SIZE
+#include "statistics.hpp"            // for Statistics
+#include "structs.hpp"               // for Command
+#include "unique.hpp"                // for Lore, Unique
+#include "utils.hpp"                 // for MAX
+#include "xml.hpp"                   // for loadObject, getIntProp, loadFile
 
 #define RECIPE_WIDTH    40
 

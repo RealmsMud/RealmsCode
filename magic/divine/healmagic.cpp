@@ -16,27 +16,37 @@
  *
  */
 
-#include <cctype>          // for toupper
-#include <cstring>         // for strcpy
-#include <strings.h>       // for strcasecmp
-#include <ctime>           // for time
+#include <strings.h>                 // for strcasecmp
+#include <cctype>                    // for toupper
+#include <cstring>                   // for strcpy
+#include <ctime>                     // for time
+#include <set>                       // for operator==, _Rb_tree_const_iterator
+#include <string>                    // for allocator, string
 
-#include "cmd.hpp"         // for cmd
-#include "config.hpp"      // for Config, gConfig
-#include "creatures.hpp"   // for Creature, Player, Monster
-#include "deityData.hpp"   // for DeityData
-#include "effects.hpp"     // for EffectInfo
-#include "flags.hpp"       // for P_NO_TICK_MP, P_OUTLAW, P_KILLED_BY_MOB
-#include "global.hpp"      // for CastType, CreatureClass, CastType::CAST
-#include "magic.hpp"       // for SpellData, S_MEND_WOUNDS, S_REJUVENATE
-#include "move.hpp"        // for tooFarAway
-#include "mud.hpp"         // for DL_RESURRECT, LT_SPELL, DL_FHEAL, LT_NOMPTICK
-#include "proto.hpp"       // for broadcast, bonus, dec_daily, dice, up, log...
-#include "random.hpp"      // for Random
-#include "rooms.hpp"       // for BaseRoom
-#include "server.hpp"      // for Server, gServer
-#include "utils.hpp"       // for MAX
-#include "web.hpp"         // for updateRecentActivity
+#include "cmd.hpp"                   // for cmd
+#include "config.hpp"                // for Config, gConfig
+#include "deityData.hpp"             // for DeityData
+#include "effects.hpp"               // for EffectInfo
+#include "flags.hpp"                 // for P_NO_TICK_MP, P_OUTLAW, P_KILLED...
+#include "global.hpp"                // for CastType, CreatureClass, CastTyp...
+#include "lasttime.hpp"              // for lasttime
+#include "location.hpp"              // for Location
+#include "magic.hpp"                 // for SpellData, S_MEND_WOUNDS, S_REJU...
+#include "move.hpp"                  // for tooFarAway
+#include "mud.hpp"                   // for DL_RESURRECT, LT_SPELL, DL_FHEAL
+#include "mudObjects/container.hpp"  // for Container, MonsterSet, PlayerSet
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, bonus, dec_daily, dice
+#include "random.hpp"                // for Random
+#include "server.hpp"                // for Server, gServer
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for daily
+#include "utils.hpp"                 // for MAX
+#include "web.hpp"                   // for updateRecentActivity
 
 
 //*********************************************************************

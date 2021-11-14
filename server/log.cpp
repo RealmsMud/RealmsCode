@@ -15,18 +15,19 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
 #include <fcntl.h>    // for open, O_RDWR, O_CREAT
-#include <iostream>
+#include <unistd.h>   // for close, lseek, write
 #include <cstdarg>    // for va_end, va_list, va_start
 #include <cstdio>     // for sprintf, vsnprintf, fclose, fopen, fprintf, snp...
 #include <cstdlib>    // for free
 #include <cstring>    // for strlen, strcpy
 #include <ctime>      // for ctime, time, time_t
-#include <unistd.h>   // for close, lseek, write
-#include <ostream>    // for operator<<, basic_ostream, char_traits, ostream
+#include <iostream>   // for std::clog
+#include <ostream>    // for operator<<, basic_ostream, char_traits, ostream.
 
 #include "mud.hpp"    // for ACC
-#include "paths.hpp"  // for Path
+#include "paths.hpp"  // for Log
 
 // TODO: Rework these to avoid redundant code
 

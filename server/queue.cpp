@@ -16,10 +16,16 @@
  *
  */
 
-#include "area.hpp"               // for Area
-#include "rooms.hpp"              // for AreaRoom, UniqueRoom
-#include "objects.hpp"            // for Object
-#include "server.hpp"             // for Server, RoomCache, gServer, Monster...
+#include <list>                        // for list, _List_iterator, operator==
+#include <map>                         // for operator==, _Rb_tree_iterator
+#include <unordered_map>               // for _Node_iterator, operator==
+#include <utility>                     // for pair
+
+#include "area.hpp"                    // for Area
+#include "lru/lru-cache.hpp"           // for lru_cache
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "server.hpp"                  // for Server, RoomCache, gServer
 
 
 //*********************************************************************

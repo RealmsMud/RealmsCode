@@ -15,17 +15,23 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "cmd.hpp"        // for cmd
-#include "creatures.hpp"  // for Player, Creature
-#include "flags.hpp"      // for P_SLEEPING, R_LIMBO, R_NO_CLAIR_ROOM, R_SHO...
-#include "global.hpp"     // for CreatureClass, CastType, CastType::CAST
-#include "magic.hpp"      // for splGeneric, SpellData, splClairvoyance, spl...
-#include "move.hpp"       // for tooFarAway
-#include "proto.hpp"      // for bonus, broadcast, display_rom, lowercize, up
-#include "random.hpp"     // for Random
-#include "rooms.hpp"      // for BaseRoom
-#include "server.hpp"     // for Server, gServer
-#include "utils.hpp"      // for MIN, MAX
+
+#include <memory>                    // for allocator
+
+#include "cmd.hpp"                   // for cmd
+#include "flags.hpp"                 // for P_SLEEPING, R_LIMBO, R_NO_CLAIR_...
+#include "global.hpp"                // for CastType, CreatureClass, CastTyp...
+#include "magic.hpp"                 // for splGeneric, SpellData, splClairv...
+#include "move.hpp"                  // for tooFarAway
+#include "mudObjects/container.hpp"  // for Container
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for bonus, broadcast, display_rom
+#include "random.hpp"                // for Random
+#include "server.hpp"                // for Server, gServer
+#include "stats.hpp"                 // for Stat
+#include "utils.hpp"                 // for MAX, MIN
 
 
 //*********************************************************************

@@ -15,45 +15,61 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-// C includes
-#include <fcntl.h>                // for open, O_NONBLOCK, O_RDONLY, O_WRONLY
-#include <libxml/parser.h>        // for xmlDocSetRootElement, xmlNewDocNode
-#include <libxml/xmlstring.h>     // for BAD_CAST
-#include <cstdio>                 // for snprintf, sprintf
-#include <cstdlib>                // for exit, free, system
-#include <sys/stat.h>             // for stat, mkfifo
-#include <ctime>                  // for time, ctime, timespec
-#include <unistd.h>               // for unlink, close, fork, read, write
-#include <cerrno>                 // for errno
-#include <cstring>                // for strcat, strerror, strchr
-#include <stdexcept>              // for runtime_error
-#include <fmt/format.h>
-#include <boost/algorithm/string/case_conv.hpp>
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/algorithm/string/replace.hpp>
 
-#include "catRef.hpp"             // for CatRef
-#include "clans.hpp"              // for Clan
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for getFullstrText, doFinger, cmdForum
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for ObjectSet
-#include "creatures.hpp"          // for Player, Monster
-#include "deityData.hpp"          // for DeityData
-#include "enums/loadType.hpp"     // for LoadType, LoadType::LS_FULL
-#include "flags.hpp"              // for P_CHAOTIC, P_DM_INVIS, P_AFK, P_DIE...
-#include "global.hpp"             // for ALLITEMS, CreatureClass, CreatureCl...
-#include "guilds.hpp"             // for Guild
-#include "mud.hpp"                // for GUILD_PEON
-#include "objects.hpp"            // for Object
-#include "paths.hpp"              // for Game, Wiki
-#include "proto.hpp"              // for broadcast, free_crt, up, isDm, view...
-#include "raceData.hpp"           // for RaceData
-#include "rooms.hpp"              // for UniqueRoom, BaseRoom
-#include "server.hpp"             // for Server, gServer, MonsterCache, Obje...
-#include "socket.hpp"             // for Socket
-#include "web.hpp"                // for WebInterface, callWebserver, update...
-#include "xml.hpp"                // for copyToString, loadPlayer, NODE_NAME
+#include <fcntl.h>                               // for open, O_NONBLOCK
+#include <fmt/format.h>                          // for format
+#include <libxml/parser.h>                       // for xmlDocSetRootElement
+#include <libxml/xmlstring.h>                    // for BAD_CAST
+#include <sys/stat.h>                            // for stat, mkfifo, S_IFIFO
+#include <unistd.h>                              // for unlink, close, fork
+#include <algorithm>                             // for replace
+#include <boost/algorithm/string/case_conv.hpp>  // for to_lower, to_lower_copy
+#include <boost/algorithm/string/replace.hpp>    // for replace_all
+#include <boost/algorithm/string/trim.hpp>       // for trim
+#include <boost/iterator/iterator_facade.hpp>    // for operator!=
+#include <boost/iterator/iterator_traits.hpp>    // for iterator_value<>::type
+#include <cerrno>                                // for errno
+#include <cstdio>                                // for snprintf, sprintf
+#include <cstdlib>                               // for exit, free, system
+#include <cstring>                               // for strcat, strerror
+#include <ctime>                                 // for time, ctime, timespec
+#include <deque>                                 // for _Deque_iterator
+#include <list>                                  // for operator==, list
+#include <map>                                   // for operator==, _Rb_tree...
+#include <ostream>                               // for operator<<, basic_os...
+#include <set>                                   // for set
+#include <stdexcept>                             // for runtime_error
+#include <string>                                // for string, allocator
+#include <string_view>                           // for operator==, string_view
+#include <utility>                               // for pair
+
+#include "catRef.hpp"                            // for CatRef
+#include "clans.hpp"                             // for Clan
+#include "cmd.hpp"                               // for cmd
+#include "commands.hpp"                          // for getFullstrText, doFi...
+#include "config.hpp"                            // for Config, gConfig, Eff...
+#include "creatureStreams.hpp"                   // for Streamable
+#include "deityData.hpp"                         // for DeityData
+#include "effects.hpp"                           // for Effect
+#include "enums/loadType.hpp"                    // for LoadType, LoadType::...
+#include "flags.hpp"                             // for P_CHAOTIC, P_DM_INVIS
+#include "free_crt.hpp"                          // for free_crt
+#include "global.hpp"                            // for ALLITEMS, CreatureClass
+#include "guilds.hpp"                            // for Guild
+#include "mud.hpp"                               // for GUILD_PEON
+#include "mudObjects/container.hpp"              // for ObjectSet
+#include "mudObjects/monsters.hpp"               // for Monster
+#include "mudObjects/objects.hpp"                // for Object
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"            // for UniqueRoom
+#include "paths.hpp"                             // for Game, Wiki
+#include "proto.hpp"                             // for broadcast, up, isDm
+#include "raceData.hpp"                          // for RaceData
+#include "server.hpp"                            // for Server, gServer, Mon...
+#include "socket.hpp"                            // for Socket, xmlNode, xml...
+#include "web.hpp"                               // for WebInterface, callWe...
+#include "xml.hpp"                               // for copyToString, loadPl...
 
 
 int lastmod = 0;

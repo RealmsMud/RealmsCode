@@ -16,52 +16,69 @@
  *
  */
 
-// C includes
-#include <arpa/telnet.h>          // for IAC, EOR, GA
-#include <cstdio>                // for sprintf, rename
-#include <cstdlib>               // for free, abs
-#include <cstring>               // for strcpy, strlen, strcat
-#include <ctime>                 // for time, ctime
-#include <unistd.h>               // for unlink
-#include <iomanip>                // for operator<<, setw
+#include <arpa/telnet.h>               // for IAC, EOR, GA
+#include <fmt/format.h>                // for format
+#include <math.h>                      // for abs
+#include <unistd.h>                    // for unlink
+#include <commands.hpp>                // for cmdSave
+#include <cstdio>                      // for sprintf, rename
+#include <cstdlib>                     // for free, abs
+#include <cstring>                     // for strcpy, strlen, strcat
+#include <ctime>                       // for time, ctime
+#include <iomanip>                     // for operator<<, setw
+#include <list>                        // for list, operator==, list<>::cons...
+#include <locale>                      // for locale
+#include <map>                         // for operator==, _Rb_tree_const_ite...
+#include <ostream>                     // for operator<<, basic_ostream, ost...
+#include <set>                         // for set
+#include <string>                      // for string, allocator, char_traits
+#include <string_view>                 // for string_view
+#include <utility>                     // for pair
 
-#include "area.hpp"               // for Area, MapMarker, MAX_VISION
-#include "catRef.hpp"             // for CatRef
-#include "catRefInfo.hpp"         // for CatRefInfo
-#include "clans.hpp"              // for Clan
-#include "commands.hpp"           // for cmdSave
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Creature, Monster, PetList
-#include "deityData.hpp"          // for DeityData
-#include "dice.hpp"               // for Dice
-#include "effects.hpp"            // for EffectInfo
-#include "flags.hpp"              // for P_DM_INVIS, P_CHAOTIC, O_DARKNESS
-#include "global.hpp"             // for CreatureClass, CreatureClass::CLERIC
-#include "guilds.hpp"             // for Guild
-#include "hooks.hpp"              // for Hooks
-#include "location.hpp"           // for Location
-#include "magic.hpp"              // for S_ARMOR, S_REJUVENATE
-#include "money.hpp"              // for GOLD, Money
-#include "move.hpp"               // for getRoom
-#include "mud.hpp"                // for LT, LT_PLAYER_SEND, LT_AGE, LT_PLAY...
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
-#include "paths.hpp"              // for Help, Bank, DMHelp, History, Player
-#include "property.hpp"           // for Property
-#include "proto.hpp"              // for bonus, broadcast, abortFindRoom
-#include "raceData.hpp"           // for RaceData
-#include "random.hpp"             // for Random
-#include "realm.hpp"              // for Realm
-#include "rooms.hpp"              // for UniqueRoom, BaseRoom, AreaRoom, Exi...
-#include "server.hpp"             // for Server, gServer, PlayerMap
-#include "size.hpp"               // for NO_SIZE, SIZE_MEDIUM
-#include "skillGain.hpp"          // for SkillGain
-#include "socket.hpp"             // for Socket
-#include "startlocs.hpp"          // for StartLoc
-#include "stats.hpp"              // for Stat, MOD_CUR
-#include "unique.hpp"             // for remove, deleteOwner
-#include "utils.hpp"              // for MIN, MAX
-#include "xml.hpp"                // for loadRoom
-
+#include "area.hpp"                    // for Area, MapMarker, MAX_VISION
+#include "catRef.hpp"                  // for CatRef
+#include "catRefInfo.hpp"              // for CatRefInfo
+#include "clans.hpp"                   // for Clan
+#include "config.hpp"                  // for Config, gConfig
+#include "deityData.hpp"               // for DeityData
+#include "dice.hpp"                    // for Dice
+#include "effects.hpp"                 // for EffectInfo
+#include "flags.hpp"                   // for P_DM_INVIS, P_CHAOTIC, O_DARKNESS
+#include "free_crt.hpp"                // for free_crt
+#include "global.hpp"                  // for CreatureClass, CreatureClass::...
+#include "guilds.hpp"                  // for Guild
+#include "hooks.hpp"                   // for Hooks
+#include "lasttime.hpp"                // for lasttime
+#include "location.hpp"                // for Location
+#include "magic.hpp"                   // for S_ARMOR, S_BLOODFUSION, S_MAGI...
+#include "money.hpp"                   // for GOLD, Money
+#include "move.hpp"                    // for getRoom
+#include "mud.hpp"                     // for LT, LT_PLAYER_SEND, LT_AGE
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/container.hpp"    // for ObjectSet, PlayerSet
+#include "mudObjects/creatures.hpp"    // for Creature, PetList
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "paths.hpp"                   // for Help, Bank, DMHelp, History
+#include "property.hpp"                // for Property
+#include "proto.hpp"                   // for bonus, broadcast, abortFindRoom
+#include "raceData.hpp"                // for RaceData
+#include "random.hpp"                  // for Random
+#include "realm.hpp"                   // for Realm
+#include "server.hpp"                  // for Server, gServer, PlayerMap
+#include "size.hpp"                    // for NO_SIZE, SIZE_MEDIUM
+#include "skillGain.hpp"               // for SkillGain
+#include "socket.hpp"                  // for Socket
+#include "startlocs.hpp"               // for StartLoc
+#include "statistics.hpp"              // for Statistics
+#include "stats.hpp"                   // for Stat, MOD_CUR
+#include "structs.hpp"                 // for daily
+#include "unique.hpp"                  // for remove, deleteOwner
+#include "utils.hpp"                   // for MIN, MAX
+#include "xml.hpp"                     // for loadRoom
 
 //********************************************************************
 //              fixLts

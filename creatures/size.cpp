@@ -15,21 +15,28 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstring>        // for strncmp, strcmp
-#include <ostream>        // for basic_ostream::operator<<, operator<<, basi...
 
-#include "cmd.hpp"        // for cmd
-#include "commands.hpp"   // for getFullstrText
-#include "creatures.hpp"  // for Creature, Player
-#include "effects.hpp"    // for EffectInfo
-#include "flags.hpp"      // for O_CURSED
-#include "global.hpp"     // for CastType, CastType::CAST, CreatureClass
-#include "magic.hpp"      // for SpellData, checkRefusingMagic, splEnlarge
-#include "objects.hpp"    // for Object
-#include "proto.hpp"      // for broadcast, bonus, up, getSize, getSizeName
-#include "rooms.hpp"      // for BaseRoom
-#include "size.hpp"       // for NO_SIZE, SIZE_COLOSSAL, SIZE_DIMINUTIVE
-#include "utils.hpp"      // for MIN, MAX
+#include <fmt/format.h>              // for format
+#include <cstring>                   // for strncmp, strcmp
+#include <map>                       // for map, operator==, map<>::const_it...
+#include <ostream>                   // for basic_ostream::operator<<, opera...
+#include <string>                    // for string, allocator, operator==
+
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for getFullstrText
+#include "effects.hpp"               // for EffectInfo
+#include "flags.hpp"                 // for O_CURSED
+#include "global.hpp"                // for CastType, CastType::CAST, Creatu...
+#include "magic.hpp"                 // for SpellData, checkRefusingMagic
+#include "mudObjects/container.hpp"  // for Container
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, bonus, up
+#include "size.hpp"                  // for Size, NO_SIZE, SIZE_COLOSSAL
+#include "stats.hpp"                 // for Stat
+#include "utils.hpp"                 // for MIN, MAX
 
 //*********************************************************************
 //                      getSize

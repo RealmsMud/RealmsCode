@@ -16,10 +16,14 @@
  *
  */
 
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <map>                                      // for map<>::mapped_type
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for allocator, string
+
 #include "alchemy.hpp"                              // for AlchemyEffect
-#include "config.hpp"                               // for Config, AlchemyMap
-#include "objects.hpp"                              // for Object, AlchemyEf...
-#include "xml.hpp"                                  // for NODE_NAME, copyTo...
+#include "mudObjects/objects.hpp"                   // for Object, AlchemyEf...
+#include "xml.hpp"                                  // for copyToNum, newNum...
 
 
 //*********************************************************************

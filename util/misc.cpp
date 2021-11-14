@@ -16,42 +16,53 @@
  *
  */
 
-#include <bits/types/struct_tm.h>  // for tm
-#include <cctype>                  // for isdigit, tolower, toupper
-#include <fcntl.h>                 // for open, O_RDONLY, SEEK_SET, O_RDWR
-#include <cmath>                   // for pow
-#include <cstdarg>                 // for va_end, va_list, va_start
-#include <cstdio>                  // for sprintf, fclose, fseek, fopen, ftell
-#include <cstdlib>                 // for atol, free, ldiv_t, abort, labs, ldiv
-#include <cstring>                 // for strlen, strstr, strcpy, strcmp
-#include <unistd.h>                // for close, read, lseek, off_t, write
-#include <ctime>                   // for time, localtime, ctime
-#include <ostream>                 // for operator<<, basic_ostream::operator<<
-#include <string>                  // for char_traits, operator==, basic_string
-#include <boost/algorithm/string/predicate.hpp>
+#include <bits/types/struct_tm.h>                // for tm
+#include <fcntl.h>                               // for open, O_RDONLY
+#include <fmt/format.h>                          // for format
+#include <unistd.h>                              // for close
+#include <boost/algorithm/string/predicate.hpp>  // for icontains
+#include <cctype>                                // for isdigit, tolower
+#include <cmath>                                 // for pow
+#include <cstdio>                                // for fclose, feof, fopen
+#include <cstdlib>                               // for free, ldiv_t, abort
+#include <cstring>                               // for strlen, strcmp, strdup
+#include <ctime>                                 // for time, localtime
+#include <initializer_list>                      // for initializer_list
+#include <list>                                  // for operator==, _List_it...
+#include <map>                                   // for operator==, _Rb_tree...
+#include <ostream>                               // for operator<<, basic_os...
+#include <set>                                   // for set
+#include <string>                                // for string, char_traits
+#include <string_view>                           // for string_view, basic_s...
+#include <utility>                               // for pair
 
-#include "catRef.hpp"              // for CatRef
-#include "config.hpp"              // for Config, gConfig
-#include "container.hpp"           // for MonsterSet, PlayerSet, Container
-#include "creatures.hpp"           // for Creature, Player, Monster
-#include "exits.hpp"               // for Exit
-#include "flags.hpp"               // for P_READING_FILE, P_BUGGED
-#include "global.hpp"              // for MAXALVL, FATAL, FIND_EXIT, FIND_MO...
-#include "group.hpp"               // for CreatureList, Group
-#include "money.hpp"               // for GOLD, Money
-#include "mud.hpp"                 // for dmname, LT_KICK, LT_PLAYER_STUNNED
-#include "objects.hpp"             // for Object
-#include "os.hpp"                  // for merror
-#include "paths.hpp"               // for BugLog, Config
-#include "proto.hpp"               // for keyTxtEqual, broadcast, findExit
-#include "random.hpp"              // for Random
-#include "rooms.hpp"               // for BaseRoom
-#include "server.hpp"              // for Server, gServer, PlayerMap
-#include "socket.hpp"              // for Socket
-#include "structs.hpp"             // for daily
-#include "utils.hpp"               // for MAX, MIN
+#include "catRef.hpp"                            // for CatRef
+#include "config.hpp"                            // for Config, gConfig
+#include "flags.hpp"                             // for P_STUNNED
+#include "global.hpp"                            // for MAXALVL, FATAL, FIND...
+#include "group.hpp"                             // for CreatureList, Group
+#include "lasttime.hpp"                          // for lasttime
+#include "money.hpp"                             // for GOLD, Money
+#include "mud.hpp"                               // for dmname, LT_KICK, LT_...
+#include "mudObjects/container.hpp"              // for MonsterSet, PlayerSet
+#include "mudObjects/creatures.hpp"              // for Creature
+#include "mudObjects/exits.hpp"                  // for Exit
+#include "mudObjects/monsters.hpp"               // for Monster
+#include "mudObjects/objects.hpp"                // for Object
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom
+#include "os.hpp"                                // for merror
+#include "paths.hpp"                             // for Config
+#include "proto.hpp"                             // for keyTxtEqual, findExit
+#include "random.hpp"                            // for Random
+#include "server.hpp"                            // for PlayerMap, Server
+#include "socket.hpp"                            // for Socket
+#include "stats.hpp"                             // for Stat
+#include "structs.hpp"                           // for daily
+#include "utils.hpp"                             // for MAX, MIN
 
 class MudObject;
+
 bool isClass(std::string_view str);
 bool isTitle(std::string_view str);
 

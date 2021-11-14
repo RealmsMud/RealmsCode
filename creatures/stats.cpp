@@ -16,21 +16,28 @@
  *
  */
 
-#include <cmath>                  // for ceil, floor, round
-#include <ctime>                  // for time
-#include <map>                    // for map
-#include <ostream>                // for operator<<, basic_ostream, basic_os...
+#include <fmt/format.h>              // for format
+#include <cmath>                     // for ceil, floor, round
+#include <ctime>                     // for time
+#include <map>                       // for allocator, operator==, _Rb_tree_...
+#include <ostream>                   // for operator<<, basic_ostream, char_...
+#include <string>                    // for operator==, string, basic_string
+#include <string_view>               // for operator==, string_view, basic_s...
+#include <utility>                   // for pair
 
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Creature, Monster
-#include "effects.hpp"            // for EffectInfo
-#include "flags.hpp"              // for P_PTESTER, P_JUST_STAT_MOD
-#include "global.hpp"             // for CreatureClass, CON, CreatureClass::...
-#include "levelGain.hpp"          // for LevelGain
-#include "playerClass.hpp"        // for PlayerClass
-#include "statistics.hpp"         // for Statistics, LevelInfo
-#include "stats.hpp"              // for Stat, StatModifier, ModifierMap
-#include "utils.hpp"              // for MAX, MIN
+#include "config.hpp"                // for Config, gConfig
+#include "creatureStreams.hpp"       // for Streamable
+#include "effects.hpp"               // for EffectInfo
+#include "flags.hpp"                 // for P_PTESTER, P_JUST_STAT_MOD
+#include "global.hpp"                // for CreatureClass, CON, CreatureClas...
+#include "levelGain.hpp"             // for LevelGain
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/players.hpp"    // for Player
+#include "playerClass.hpp"           // for PlayerClass
+#include "statistics.hpp"            // for Statistics, LevelInfo
+#include "stats.hpp"                 // for Stat, StatModifier, ModifierMap
+#include "utils.hpp"                 // for MAX, MIN
 
 
 

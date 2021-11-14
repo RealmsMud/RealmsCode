@@ -15,18 +15,28 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include "catRef.hpp"     // for CatRef
-#include "cmd.hpp"        // for cmd
-#include "commands.hpp"   // for lose_all
-#include "creatures.hpp"  // for Player, Creature
-#include "dm.hpp"         // for dmMax, builderMob, builderObj, dmMakeBuilder
-#include "flags.hpp"      // for P_BUILDER_MOBS, P_BUILDER_OBJS, P_DM_INVIS
-#include "free_crt.hpp"    // for free_crt
-#include "global.hpp"     // for CreatureClass, CreatureClass::BUILDER, Crea...
-#include "proto.hpp"      // for log_immort, lowercize, up
-#include "rooms.hpp"      // for UniqueRoom, BaseRoom
-#include "server.hpp"     // for Server, gServer
-#include "xml.hpp"        // for loadPlayer, loadRoom
+
+#include <fmt/format.h>                // for format
+#include <string>                      // for allocator, string
+#include <string_view>                 // for string_view
+
+#include "area.hpp"                    // for MapMarker
+#include "catRef.hpp"                  // for CatRef
+#include "cmd.hpp"                     // for cmd
+#include "commands.hpp"                // for lose_all
+#include "dm.hpp"                      // for dmMax, builderMob, builderObj
+#include "flags.hpp"                   // for P_BUILDER_MOBS, P_BUILDER_OBJS
+#include "free_crt.hpp"                // for free_crt
+#include "global.hpp"                  // for CreatureClass, CreatureClass::...
+#include "location.hpp"                // for Location
+#include "mudObjects/creatures.hpp"    // for Creature
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for log_immort, lowercize, up
+#include "range.hpp"                   // for Range
+#include "server.hpp"                  // for Server, gServer
+#include "xml.hpp"                     // for loadPlayer, loadRoom
 
 
 //*********************************************************************

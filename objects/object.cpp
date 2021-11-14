@@ -16,32 +16,46 @@
  *
  */
 
-#include <cstdio>                 // for snprintf, sprintf
-#include <cstring>                // for strcpy, strtok, strcat, strcmp, strlen
-#include <ctime>                  // for time
+#include <fmt/format.h>                // for format
+#include <cstdio>                      // for sprintf
+#include <cstring>                     // for strcpy, strtok, strcat, strcmp
+#include <ctime>                       // for time
+#include <map>                         // for operator==, _Rb_tree_const_ite...
+#include <ostream>                     // for operator<<, basic_ostream, ost...
+#include <set>                         // for set, set<>::iterator
+#include <string>                      // for string, operator<<, char_traits
+#include <string_view>                 // for string_view
+#include <type_traits>                 // for enable_if<>::type
+#include "catRef.hpp"                  // for CatRef
 
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for timestr
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for ObjectSet, Container, MonsterSet
-#include "craft.hpp"              // for operator<<, Recipe (ptr only)
-#include "creatures.hpp"          // for Player, Monster, Creature
-#include "flags.hpp"              // for O_KEEP, O_DARKMETAL, O_BEING_PREPARED
-#include "global.hpp"             // for CAP, CreatureClass, CreatureClass::...
-#include "hooks.hpp"              // for Hooks
-#include "mud.hpp"                // for LT_ENVEN, ospell, scrollDesc, scrol...
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::WEAPON
-#include "paths.hpp"              // for Sign
-#include "proto.hpp"              // for broadcast, getSizeName, keyTxtEqual
-#include "random.hpp"             // for Random
-#include "realm.hpp"              // for EARTH, COLD, WATER
-#include "rooms.hpp"              // for BaseRoom, UniqueRoom
-#include "size.hpp"               // for NO_SIZE, Size
-#include "skills.hpp"             // for getSkillLevelStr
-#include "socket.hpp"             // for Socket
-#include "unique.hpp"             // for Unique, Lore
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for loadObject
+#include "cmd.hpp"                     // for cmd
+#include "commands.hpp"                // for timestr, cmdKeep, cmdUnkeep
+#include "config.hpp"                  // for Config, gConfig
+#include "craft.hpp"                   // for operator<<, Recipe (ptr only)
+#include "flags.hpp"                   // for O_KEEP, O_DARKMETAL, O_BEING_P...
+#include "global.hpp"                  // for CAP, CreatureClass, CreatureCl...
+#include "hooks.hpp"                   // for Hooks
+#include "lasttime.hpp"                // for lasttime
+#include "mud.hpp"                     // for LT_ENVEN, ospell, scrollDesc
+#include "mudObjects/container.hpp"    // for ObjectSet, Container, MonsterSet
+#include "mudObjects/creatures.hpp"    // for Creature
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, Material
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "paths.hpp"                   // for Sign
+#include "proto.hpp"                   // for broadcast, keyTxtEqual, cantDr...
+#include "random.hpp"                  // for Random
+#include "realm.hpp"                   // for EARTH, COLD, WATER
+#include "size.hpp"                    // for getSizeName, NO_SIZE, Size
+#include "skills.hpp"                  // for getSkillLevelStr
+#include "socket.hpp"                  // for Socket
+#include "stats.hpp"                   // for Stat
+#include "structs.hpp"                 // for osp_t
+#include "unique.hpp"                  // for Unique, Lore
+#include "utils.hpp"                   // for MAX, MIN
+#include "xml.hpp"                     // for loadObject
 
 class MudObject;
 

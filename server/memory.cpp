@@ -16,18 +16,26 @@
  *
  */
 
-#include <cstdio>                 // for sprintf
-#include <cstring>                // for strlen, strcmp
+#include <cstdio>                      // for sprintf
+#include <cstring>                     // for strlen, strcmp
+#include <list>                        // for _List_iterator
+#include <set>                         // for operator==, _Rb_tree_const_ite...
+#include <string>                      // for operator+, to_string, string
+#include <unordered_map>               // for _Node_iterator, operator==
+#include <utility>                     // for pair
 
-#include "cmd.hpp"                // for cmd
-#include "creatures.hpp"          // for Monster, Player
-#include "flags.hpp"              // for M_LOGIC_MONSTER, M_TALKS
-#include "objects.hpp"            // for Object
-#include "proto.hpp"              // for loge
-#include "rooms.hpp"              // for UniqueRoom
-#include "server.hpp"             // for Server, gServer, RoomCache, Monster...
-#include "socket.hpp"             // for Socket
-#include "structs.hpp"            // for ttag
+#include "cmd.hpp"                     // for cmd
+#include "flags.hpp"                   // for M_LOGIC_MONSTER, M_TALKS
+#include "lru/lru-cache.hpp"           // for lru_cache
+#include "mudObjects/container.hpp"    // for ObjectSet, MonsterSet
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for loge
+#include "server.hpp"                  // for Server, gServer, RoomCache
+#include "socket.hpp"                  // for Socket
+#include "structs.hpp"                 // for ttag
 
 //*********************************************************************
 //                      sizeInfo

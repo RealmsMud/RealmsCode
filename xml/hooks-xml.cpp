@@ -16,11 +16,12 @@
  *
  */
 
-#include <libxml/parser.h>  // for xmlNodePtr, xmlNode
-#include <utility>          // for pair
+#include <map>          // for map, operator==, _Rb_tree_const_iterator, _Rb...
+#include <string>       // for allocator, string
+#include <utility>      // for pair
 
-#include "hooks.hpp"        // for Hooks
-#include "xml.hpp"          // for newStringChild, copyPropToString, copyTo...
+#include "hooks.hpp"    // for Hooks
+#include "xml.hpp"      // for newStringChild, copyPropToString, copyToString
 
 //*********************************************************************
 //                      load

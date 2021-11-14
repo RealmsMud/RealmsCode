@@ -16,25 +16,43 @@
  *
  */
 
-#include <boost/algorithm/string/replace.hpp>  // for replace_all_copy
-#include <boost/filesystem.hpp>                // for directory_iterator, path
 #include <libxml/parser.h>                     // for xmlDocGetRootElement
 #include <algorithm>                           // for copy, sort
+#include <boost/algorithm/string/replace.hpp>  // for replace_all, replace_a...
+#include <boost/filesystem/directory.hpp>      // for directory_iterator
+#include <boost/filesystem/operations.hpp>     // for is_directory, is_regul...
+#include <boost/filesystem/path.hpp>           // for path, operator<, swap
+#include <boost/filesystem/path_traits.hpp>    // for filesystem
+#include <boost/iterator/iterator_facade.hpp>  // for operator!=
+#include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <deque>                               // for _Deque_iterator
 #include <iostream>                            // for operator<<, basic_ostream
+#include <iterator>                            // for back_insert_iterator
+#include <list>                                // for operator==
+#include <map>                                 // for map, operator==
+#include <string>                              // for string, operator<<
+#include <vector>                              // for vector
 
-#include "creatures.hpp"                       // for Monster
+#include "catRef.hpp"                          // for CatRef
+#include "config.hpp"                          // for Config, gConfig
+#include "dice.hpp"                            // for Dice
+#include "effects.hpp"                         // for EffectList, operator<<
 #include "join.hpp"                            // for join, mjoin
+#include "lasttime.hpp"                        // for operator<<, crlasttime
 #include "money.hpp"                           // for GOLD, Money
-#include "objects.hpp"                         // for Object
-#include "rooms.hpp"                           // for UniqueRoom
+#include "mudObjects/monsters.hpp"             // for Monster
+#include "mudObjects/objects.hpp"              // for Object
+#include "mudObjects/uniqueRooms.hpp"          // for UniqueRoom
+#include "objIncrease.hpp"                     // for ObjIncrease
+#include "server.hpp"                          // for Server, gServer
 #include "statistics.hpp"                      // for Statistics
+#include "stats.hpp"                           // for Stat
+#include "wanderInfo.hpp"                      // for WanderInfo
 #include "xml.hpp"                             // for loadFile
 
 
-namespace fs = boost::filesystem;
 
-#include "config.hpp"                          // for Config
-#include "server.hpp"                          // for Server
+namespace fs = boost::filesystem;
 
 
 int list_rooms() {

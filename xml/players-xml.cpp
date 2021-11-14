@@ -16,6 +16,42 @@
  *
  */
 
+#include <fmt/format.h>                             // for format
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <stdio.h>                                  // for sprintf, snprintf
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <compare>                                  // for operator<, strong...
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <list>                                     // for list, operator==
+#include <map>                                      // for operator==, map
+#include <ostream>                                  // for operator<<, char_...
+#include <string>                                   // for string, allocator
+#include <string_view>                              // for operator<<, opera...
+#include <utility>                                  // for pair, make_pair
+
+#include "anchor.hpp"                               // for Anchor
+#include "calendar.hpp"                             // for cDay
+#include "catRef.hpp"                               // for CatRef
+#include "config.hpp"                               // for Config, gConfig
+#include "dice.hpp"                                 // for Dice
+#include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
+#include "global.hpp"                               // for MAX_DIMEN_ANCHORS
+#include "levelGain.hpp"                            // for LevelGain
+#include "location.hpp"                             // for Location
+#include "money.hpp"                                // for Money
+#include "mudObjects/players.hpp"                   // for Player, Player::Q...
+#include "paths.hpp"                                // for Player, PlayerBackup
+#include "playerClass.hpp"                          // for PlayerClass
+#include "playerTitle.hpp"                          // for PlayerTitle
+#include "proto.hpp"                                // for file_exists
+#include "proxy.hpp"                                // for ProxyAccess, Prox...
+#include "quests.hpp"                               // for QuestCompleted
+#include "range.hpp"                                // for Range
+#include "server.hpp"                               // for Server, gServer
+#include "skillGain.hpp"                            // for SkillGain
+#include "statistics.hpp"                           // for Statistics
+#include "xml.hpp"                                  // for NODE_NAME, newStr...
+
 // TODO: Make a function that will use an xml reader to only parse the player to find
 // name and password
 
@@ -24,28 +60,6 @@
 //*********************************************************************
 // Attempt to load the player named 'name' into the address given
 // return 0 on success, -1 on failure
-
-#include <libxml/parser.h>          // for xmlNode, xmlNodePtr
-#include <ostream>                  // for operator<<, basic...
-
-#include "anchor.hpp"               // for Anchor
-#include "calendar.hpp"             // for cDay
-#include "catRef.hpp"               // for CatRef
-#include "config.hpp"               // for Config, gConfig
-#include "creatures.hpp"            // for Player, Player::Q...
-#include "enums/loadType.hpp"       // for LoadType, LoadTyp...
-#include "global.hpp"               // for MAX_DIMEN_ANCHORS
-#include "levelGain.hpp"            // for LevelGain
-#include "paths.hpp"                // for Player, PlayerBackup
-#include "playerClass.hpp"          // for PlayerClass
-#include "playerTitle.hpp"          // for PlayerTitle
-#include "proxy.hpp"                // for ProxyAccess, ProxyManager
-#include "proto.hpp"                // file_exists
-#include "quests.hpp"               // for QuestCompleted
-#include "server.hpp"               // for Server, gServer
-#include "skillGain.hpp"            // for SkillGain
-#include "xml.hpp"                  // for NODE_NAME, newStr...
-
 
 bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType) {
     xmlDocPtr   xmlDoc;

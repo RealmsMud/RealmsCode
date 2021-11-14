@@ -16,48 +16,60 @@
  *
  */
 
-#include <cctype>                 // for isspace, tolower
-#include <cstdio>                 // for sprintf
-#include <cstring>                // for strcmp, strlen, strcpy, strcat, strchr
-#include <ctime>                  // for time
-#include <unistd.h>               // for getpid
-#include <iomanip>                // for operator<<, setw
-#include <list>                   // for operator==, operator!=
-#include <map>                    // for operator==, operator!=, map
-#include <sstream>                // for operator<<, basic_ostream, ostrings...
-#include <string>                 // for operator<<, operator!=, operator==
-#include <utility>                // for pair
-#include <fmt/format.h>
+#include <fmt/format.h>                             // for format
+#include <unistd.h>                                 // for getpid
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <cctype>                                   // for tolower
+#include <cstdio>                                   // for sprintf
+#include <cstring>                                  // for strcmp, strlen
+#include <ctime>                                    // for time
+#include <iomanip>                                  // for operator<<, setw
+#include <list>                                     // for list, operator==
+#include <locale>                                   // for locale
+#include <map>                                      // for operator==, map
+#include <set>                                      // for set
+#include <sstream>                                  // for operator<<, basic...
+#include <string>                                   // for string, allocator
+#include <type_traits>                              // for add_const<>::type
+#include <utility>                                  // for pair
 
-#include "area.hpp"               // for MapMarker, Area
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdNoAuth, getFullstrText, dmStatDe...
-#include "config.hpp"             // for Config, gConfig, AlchemyMap
-#include "color.hpp"              // for stripColor
-#include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
-#include "creatures.hpp"          // for Player, Creature, Monster
-#include "dm.hpp"                 // for stat_rom, dmLastCommand, dmListbans
-#include "flags.hpp"              // for P_DM_INVIS, P_OUTLAW, P_NO_SUMMON
-#include "global.hpp"             // for CreatureClass, PROMPT, CreatureClas...
-#include "lasttime.hpp"           // for lasttime, crlasttime
-#include "location.hpp"           // for Location
-#include "magic.hpp"              // for S_ANNUL_MAGIC, S_AURA_OF_FLAME, S_B...
-#include "mud.hpp"                // for StartTime, LT_OUTLAW, LT_FREE_ACTION
-#include "objects.hpp"            // for Object
-#include "oldquest.hpp"           // for quest, questPtr
-#include "os.hpp"                 // for merror
-#include "paths.hpp"              // for Log, BuilderHelp, DMHelp, Post
-#include "proto.hpp"              // for get_spell_name, broadcast, log_immort
-#include "quests.hpp"             // for QuestInfo
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for UniqueRoom, BaseRoom, AreaRoom, NUM...
-#include "server.hpp"             // for Server, gServer, SocketList, Monste...
-#include "socket.hpp"             // for Socket, OutBytes, UnCompressedBytes
-#include "utils.hpp"              // for MAX
-#include "weather.hpp"            // for WEATHER_BEAUTIFUL_DAY, WEATHER_BRIG...
-#include "xml.hpp"                // for iToYesNo, loadRoom, loadObject
-#include "toNum.hpp"
+#include "area.hpp"                                 // for MapMarker, Area
+#include "carry.hpp"                                // for Carry
+#include "catRef.hpp"                               // for CatRef
+#include "cmd.hpp"                                  // for cmd
+#include "color.hpp"                                // for stripColor
+#include "commands.hpp"                             // for cmdNoAuth, getFul...
+#include "config.hpp"                               // for Config, gConfig
+#include "creatureStreams.hpp"                      // for Streamable, ColorOff
+#include "dm.hpp"                                   // for stat_rom, dmLastC...
+#include "flags.hpp"                                // for P_DM_INVIS, P_OUTLAW
+#include "global.hpp"                               // for CreatureClass
+#include "lasttime.hpp"                             // for crlasttime, lasttime
+#include "location.hpp"                             // for Location
+#include "magic.hpp"                                // for S_ANNUL_MAGIC
+#include "mud.hpp"                                  // for StartTime, LT_OUTLAW
+#include "mudObjects/areaRooms.hpp"                 // for AreaRoom
+#include "mudObjects/container.hpp"                 // for Container, PlayerSet
+#include "mudObjects/creatures.hpp"                 // for Creature
+#include "mudObjects/monsters.hpp"                  // for Monster
+#include "mudObjects/objects.hpp"                   // for Object
+#include "mudObjects/players.hpp"                   // for Player
+#include "mudObjects/rooms.hpp"                     // for BaseRoom, NUM_PER...
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
+#include "oldquest.hpp"                             // for quest, questPtr
+#include "os.hpp"                                   // for merror
+#include "paths.hpp"                                // for Log, BuilderHelp
+#include "proto.hpp"                                // for get_spell_name
+#include "quests.hpp"                               // for QuestInfo
+#include "random.hpp"                               // for Random
+#include "server.hpp"                               // for Server, gServer
+#include "socket.hpp"                               // for Socket, OutBytes
+#include "stats.hpp"                                // for Stat
+#include "toNum.hpp"                                // for toNum
+#include "track.hpp"                                // for Track
+#include "utils.hpp"                                // for MAX
+#include "weather.hpp"                              // for WEATHER_BEAUTIFUL...
+#include "xml.hpp"                                  // for iToYesNo, loadRoom
 
 
 long        last_dust_output;
@@ -290,17 +302,12 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
             gConfig->saveGuilds();
         }
     }
-    else if(!strcmp(cmnd->str[1], "socials")) {
-        if(load) {
-            gConfig->clearSocials();
-            gConfig->loadSocials();
-            gConfig->writeSocialFile();
+    else if(!strcmp(cmnd->str[1], "socials") && load) {
+        gConfig->clearSocials();
+        gConfig->loadSocials();
+        gConfig->writeSocialFile();
 
-            *player << "Socials reloaded.\n";
-        } else {
-            gConfig->saveSocials();
-            *player << "Socials saved\n";
-        }
+        *player << "Socials reloaded.\n";
     }
     else if(!strcmp(cmnd->str[1], "recipes")) {
         if(load) {

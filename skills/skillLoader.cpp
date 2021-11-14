@@ -16,11 +16,13 @@
  *
  */
 
-#include <map>
-#include "config.hpp"
-#include "creatures.hpp"               // for Creature, Player
-#include "skills.hpp"
-#include "builders/skillBuilder.hpp"
+#include <map>                        // for allocator, map
+#include <string>                     // for string, operator<=>
+#include <utility>                    // for move
+
+#include "builders/skillBuilder.hpp"  // for SkillInfoBuilder
+#include "config.hpp"                 // for Config, SkillInfoMap
+#include "skills.hpp"                 // for SkillGainType, MEDIUM, HARD
 
 bool Config::loadSkillGroups() {
     skillGroups.emplace("general", "General Skills");

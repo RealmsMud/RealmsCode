@@ -15,30 +15,36 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <boost/algorithm/string/join.hpp>          // join
-#include <cstdlib>                                  // for qsort
-#include <cstring>                                  // for memcpy, strcpy
-#include <list>                                     // for operator==, opera...
-#include <ostream>                                  // for basic_ostream::op...
-#include <fmt/format.h>
-#include <boost/algorithm/string/case_conv.hpp>
 
-#include "anchor.hpp"                               // for Anchor
-#include "cmd.hpp"                                  // for cmd
-#include "commands.hpp"                             // for cmdSpells, spells...
-#include "config.hpp"                               // for Config, gConfig
-#include "color.hpp"                                // for stripColor
-#include "creatures.hpp"                            // for Creature, Player
-#include "effects.hpp"                              // for EffectList, Effect
-#include "flags.hpp"                                // for P_AFK, P_FREE_ACTION
-#include "global.hpp"                               // for CreatureClass
-#include "magic.hpp"                                // for SpellData, Divine
-#include "proto.hpp"                                // for zero, free_crt
-#include "server.hpp"                               // for Server, gServer
-#include "structs.hpp"                              // for Spell, PFNCOMPARE
-#include "xml.hpp"                                  // for copyToString
+#include <fmt/format.h>                          // for format
+#include <boost/algorithm/string/case_conv.hpp>  // for to_lower_copy
+#include <boost/algorithm/string/join.hpp>       // for join
+#include <boost/iterator/iterator_facade.hpp>    // for operator!=
 
-class Object;
+#include <cstdlib>                               // for qsort
+#include <cstring>                               // for memcpy, strcpy, strcmp
+#include <list>                                  // for list, operator==
+#include <set>                                   // for operator==, _Rb_tree...
+#include <string>                                // for string, allocator
+#include "anchor.hpp"                            // for Anchor
+#include "area.hpp"                              // for MapMarker
+#include "catRef.hpp"                            // for CatRef
+#include "cmd.hpp"                               // for cmd
+#include "color.hpp"                             // for stripColor
+#include "commands.hpp"                          // for cmdSpells, spellsUnder
+#include "config.hpp"                            // for Config, gConfig, Spe...
+#include "creatureStreams.hpp"                   // for Streamable, ColorOn
+#include "effects.hpp"                           // for Effect, EffectInfo
+#include "flags.hpp"                             // for P_AFK, P_FREE_ACTION
+#include "free_crt.hpp"                          // for free_crt
+#include "global.hpp"                            // for CreatureClass, Creat...
+#include "magic.hpp"                             // for SpellData, Divine
+#include "mudObjects/creatures.hpp"              // for Creature
+#include "mudObjects/players.hpp"                // for Player
+#include "proto.hpp"                             // for zero, get_spell_list...
+#include "server.hpp"                            // for Server, gServer
+#include "structs.hpp"                           // for Spell, PFNCOMPARE
+#include "xml.hpp"                               // for loadPlayer
 
 
 //*********************************************************************

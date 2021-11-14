@@ -21,9 +21,10 @@
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <iosfwd>           // for ostream
-#include <map>              // for operator==, operator!=
-#include <vector>           // for allocator
-#include <string>
+#include <map>              // for map, map<>::value_compare
+#include <string>           // for string, operator<=>, basic_string
+#include <string_view>      // for string_view
+#include <vector>           // for vector
 
 class Creature;
 class Object;

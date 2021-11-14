@@ -18,10 +18,13 @@
 
 #pragma once
 
+#include <fmt/format.h>
 #include <string>
+
 #include "songs.hpp"
 
 #include "fluentBuilder.hpp"
+
 #define BUILDER(name, type) GENERIC_BUILDER(SongBuilder, song, name, type)
 
 class SongBuilder {

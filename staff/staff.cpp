@@ -16,17 +16,18 @@
  *
  */
 
-#include <cstdarg>       // for va_end, va_list, va_start
-#include <cstdio>        // for sprintf, vasprintf
-#include <cstdlib>       // for free
-#include <ostream>        // for operator<<, ostream
-#include <string>         // for operator==, basic_string, basic_string<>::npos
+#include <cstdarg>                   // for va_end, va_list, va_start
+#include <cstdio>                    // for sprintf, vasprintf
+#include <cstdlib>                   // for free
+#include <ostream>                   // for operator<<, ostream
+#include <string>                    // for string, operator==, allocator
 
-#include "creatures.hpp"  // for Player, Creature
-#include "flags.hpp"      // for P_EAVESDROPPER, P_LOG_WATCH, P_PTESTER, P_S...
-#include "global.hpp"     // for CreatureClass, CreatureClass::BUILDER, Crea...
-#include "proto.hpp"      // for broadcast, stripLineFeeds, logn, isAdm, isCt
-#include "socket.hpp"     // for Socket
+#include "flags.hpp"                 // for P_EAVESDROPPER, P_LOG_WATCH, P_P...
+#include "global.hpp"                // for CreatureClass, CreatureClass::BU...
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/players.hpp"    // for Player
+#include "proto.hpp"                 // for broadcast, stripLineFeeds, logn
+#include "socket.hpp"                // for Socket
 
 // *********************************************************
 // log_immort

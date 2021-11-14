@@ -16,35 +16,46 @@
  *
  */
 
-#include <string>
-#include <cstring>               // for strcpy
-#include <ctime>                 // for time
-#include <map>                    // for operator==, operator!=
+#include <cstring>                   // for strcpy
+#include <ctime>                     // for time
+#include <list>                      // for list, operator==, _List_iterator
+#include <map>                       // for operator==, _Rb_tree_iterator
+#include <set>                       // for set
+#include <string>                    // for string, allocator, operator+
+#include <type_traits>               // for enable_if<>::type
+#include <utility>                   // for pair
 
-// Mud includes
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdAttack
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Creature, Monster, ATTACK_BASH
-#include "damage.hpp"             // for Damage, REFLECTED_FIRE_SHIELD
-#include "deityData.hpp"          // for DeityData
-#include "effects.hpp"            // for EffectInfo
-#include "factions.hpp"           // for Faction
-#include "flags.hpp"              // for P_SITTING, M_UNKILLABLE, P_CHAOTIC
-#include "global.hpp"             // for CreatureClass, WIELD, HELD, ARAMON
-#include "magic.hpp"              // for get_spell_function, splOffensive
-#include "monType.hpp"            // for noLivingVulnerabilities, ARACHNID
-#include "mud.hpp"                // for LT_MAUL, ospell, LT
-#include "objects.hpp"            // for Object
-#include "playerClass.hpp"        // for PlayerClass
-#include "proto.hpp"              // for broadcast, bonus, get_spell_lvl, isDm
-#include "raceData.hpp"           // for RaceData
-#include "random.hpp"             // for Random
-#include "realm.hpp"              // for NO_REALM, Realm, FIRE
-#include "rooms.hpp"              // for BaseRoom
-#include "statistics.hpp"         // for Statistics
-#include "structs.hpp"            // for osp_t
-#include "utils.hpp"              // for MAX, MIN
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for cmdAttack
+#include "config.hpp"                // for Config, gConfig, DeityDataMap
+#include "creatureStreams.hpp"       // for Streamable, ColorOff, ColorOn
+#include "damage.hpp"                // for Damage, REFLECTED_FIRE_SHIELD
+#include "deityData.hpp"             // for DeityData
+#include "dice.hpp"                  // for Dice
+#include "effects.hpp"               // for EffectInfo
+#include "factions.hpp"              // for Faction
+#include "flags.hpp"                 // for P_SITTING, M_UNKILLABLE, P_CHAOTIC
+#include "global.hpp"                // for CreatureClass, WIELD, HELD, ARAMON
+#include "lasttime.hpp"              // for lasttime
+#include "magic.hpp"                 // for get_spell_function, splOffensive
+#include "monType.hpp"               // for noLivingVulnerabilities, ARACHNID
+#include "mud.hpp"                   // for LT_MAUL, ospell, LT
+#include "mudObjects/container.hpp"  // for Container, PlayerSet
+#include "mudObjects/creatures.hpp"  // for Creature, ATTACK_BASH, ATTACK_KICK
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "playerClass.hpp"           // for PlayerClass
+#include "proto.hpp"                 // for broadcast, bonus, get_spell_lvl
+#include "raceData.hpp"              // for RaceData
+#include "random.hpp"                // for Random
+#include "realm.hpp"                 // for NO_REALM, Realm, FIRE
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for osp_t
+#include "utils.hpp"                 // for MAX, MIN
+
 
 
 Creature* Creature::findVictim(const std::string &toFind, int num, bool aggressive, bool selfOk, const std::string &noVictim, const std::string &notFound) {

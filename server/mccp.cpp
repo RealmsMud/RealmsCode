@@ -15,11 +15,9 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-// Copyright (c) 1999, Oliver Jowett <icecube@ihug.co.nz>.
-// This code may be freely distributed and used if this copyright notice is retained intact.
 
-#include "creatures.hpp"  // for Player
-#include "socket.hpp"     // for Socket, will_comp1, will_comp2
+#include "mudObjects/players.hpp"  // for Player
+#include "socket.hpp"              // for Socket, will_comp1, will_comp2
 
 class cmd;
 

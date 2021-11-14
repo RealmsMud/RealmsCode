@@ -16,25 +16,36 @@
  *
  */
 
-#include <cstring>            // for strlen
-#include <ctime>              // for time
-#include <string>             // for operator==, basic_string
+#include <cstring>                     // for strlen
+#include <ctime>                       // for time
+#include <string>                      // for allocator, string, operator==
+#include <type_traits>                 // for enable_if<>::type
 
-#include "cmd.hpp"            // for cmd
-#include "creatures.hpp"      // for Player, Creature, Monster, ATTACK_BASH
-#include "delayedAction.hpp"  // for ActionTrack, DelayedAction
-#include "flags.hpp"          // for P_AFK, P_LAG_PROTECTION_ACTIVE, P_LAG_P...
-#include "global.hpp"         // for WIELD, CreatureClass, HELD, CreatureCla...
-#include "mud.hpp"            // for LT_KICK, LT_LAY_HANDS, LT_DISARM, LT_TRACK
-#include "objects.hpp"        // for Object, ObjectType, ObjectType::WEAPON
-#include "proto.hpp"          // for broadcast, bonus, log_immort, getSizeName
-#include "random.hpp"         // for Random
-#include "rooms.hpp"          // for BaseRoom, AreaRoom, UniqueRoom
-#include "server.hpp"         // for Server, gServer
-#include "size.hpp"           // for NO_SIZE, SIZE_HUGE, SIZE_LARGE
-#include "track.hpp"          // for Track
-#include "unique.hpp"         // for Unique
-#include "utils.hpp"          // for MIN, MAX
+#include "area.hpp"                    // for Area
+#include "cmd.hpp"                     // for cmd
+#include "delayedAction.hpp"           // for ActionTrack, DelayedAction
+#include "flags.hpp"                   // for P_AFK, P_LAG_PROTECTION_ACTIVE
+#include "global.hpp"                  // for WIELD, CreatureClass, HELD
+#include "lasttime.hpp"                // for lasttime
+#include "mud.hpp"                     // for LT_KICK, LT_LAY_HANDS, LT_DISARM
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/creatures.hpp"    // for Creature, ATTACK_BASH, ATTACK_...
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/mudObject.hpp"    // for MudObject
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for broadcast, bonus, log_immort
+#include "random.hpp"                  // for Random
+#include "server.hpp"                  // for Server, gServer
+#include "size.hpp"                    // for getSizeName, NO_SIZE, SIZE_HUGE
+#include "statistics.hpp"              // for Statistics
+#include "stats.hpp"                   // for Stat
+#include "track.hpp"                   // for Track
+#include "unique.hpp"                  // for Unique
+#include "utils.hpp"                   // for MIN, MAX
+#include "wanderInfo.hpp"              // for WanderInfo
 
 
 //*********************************************************************

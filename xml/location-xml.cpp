@@ -16,15 +16,18 @@
  *
  */
 
-#include <libxml/parser.h>  // for xmlNodePtr, xmlNode
+#include <string>                      // for allocator, string
 
-#include "area.hpp"         // for MapMarker, Area
-#include "catRef.hpp"       // for CatRef
-#include "creatures.hpp"    // for Player
-#include "location.hpp"     // for Location
-#include "rooms.hpp"        // for AreaRoom, BaseRoom (ptr only), UniqueRoom
-#include "server.hpp"       // for Server, gServer
-#include "xml.hpp"          // for newStringChild, loadRoom, NODE_NAME
+#include "area.hpp"                    // for MapMarker, Area
+#include "catRef.hpp"                  // for CatRef
+#include "location.hpp"                // for Location
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "server.hpp"                  // for Server, gServer
+#include "xml.hpp"                     // for newStringChild, loadRoom, NODE...
+
+class BaseRoom;
 
 void Location::save(xmlNodePtr rootNode, const std::string &name) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, name);

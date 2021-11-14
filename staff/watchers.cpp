@@ -16,15 +16,20 @@
  *
  */
 
-#include <cstring>        // for strcpy
+#include <cstring>                     // for strcpy
+#include <map>                         // for operator==, _Rb_tree_iterator
+#include <string>                      // for allocator, string, char_traits
+#include <utility>                     // for pair
 
-#include "cmd.hpp"        // for cmd
-#include "commands.hpp"   // for cmdNoExist, cmdNoAuth, cmdProcess, getFulls...
-#include "creatures.hpp"  // for Player
-#include "flags.hpp"      // for R_TYPO, P_WATCHER
-#include "proto.hpp"      // for broadcast, up, log_immort, needUniqueRoom
-#include "rooms.hpp"      // for BaseRoom, UniqueRoom
-#include "server.hpp"     // for Server, gServer, PlayerMap
+#include "cmd.hpp"                     // for cmd
+#include "commands.hpp"                // for cmdNoExist, cmdNoAuth, cmdProcess
+#include "flags.hpp"                   // for R_TYPO, P_WATCHER
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for broadcast, up, log_immort, nee...
+#include "server.hpp"                  // for Server, gServer, PlayerMap
+#include "stats.hpp"                   // for Stat
 
 
 //*********************************************************************

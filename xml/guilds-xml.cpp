@@ -16,19 +16,24 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cstdio>                                   // for sprintf
 #include <cstdlib>                                  // for free
 #include <cstring>                                  // for strcmp
-#include <map>                                      // for operator==, opera...
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <list>                                     // for list, list<>::con...
+#include <map>                                      // for allocator, operat...
+#include <ostream>                                  // for basic_ostream::op...
 #include <stdexcept>                                // for runtime_error
+#include <string>                                   // for string, operator<=>
+#include <utility>                                  // for pair
 
-#include "config.hpp"                               // for Config, gConfig
+#include "config.hpp"                               // for Config, GuildMap
 #include "guilds.hpp"                               // for Guild, GuildCreation
+#include "money.hpp"                                // for Money
 #include "paths.hpp"                                // for PlayerData
-#include "utils.hpp"                                // for MAX
 #include "xml.hpp"                                  // for newStringChild
-
 
 
 //*********************************************************************

@@ -16,12 +16,17 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNode, xmlFreeDoc
+#include <libxml/parser.h>                          // for xmlCleanupParser
+#include <stdio.h>                                  // for sprintf
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <map>                                      // for map, operator==
+#include <string>                                   // for string, operator<=>
+#include <utility>                                  // for pair
 
-#include "config.hpp"                               // for Config, gConfig
+#include "config.hpp"                               // for Config
 #include "factions.hpp"                             // for Faction, FactionR...
-#include "paths.hpp"                                // for Path
-#include "xml.hpp"                                  // for copyToNum, NODE_NAME
+#include "paths.hpp"                                // for Game
+#include "xml.hpp"                                  // for copyToString, NOD...
 
 
 

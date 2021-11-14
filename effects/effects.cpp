@@ -16,38 +16,54 @@
  *
  */
 
-#include <ctime>                                    // for time, time_t
+#include <fmt/format.h>                             // for format
+#include <boost/algorithm/string/replace.hpp>       // for replace_all
+#include <boost/iterator/iterator_traits.hpp>       // for iterator_value<>:...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <ctime>                                    // for time_t, time
+#include <deque>                                    // for _Deque_iterator
 #include <iomanip>                                  // for operator<<, setw
-#include <boost/algorithm/string/replace.hpp>
+#include <list>                                     // for operator==, list
+#include <map>                                      // for operator==, _Rb_t...
+#include <ostream>                                  // for operator<<, basic...
+#include <set>                                      // for set
+#include <stdexcept>                                // for runtime_error
+#include <string>                                   // for string, char_traits
+#include <string_view>                              // for operator==, strin...
+#include <type_traits>                              // for add_const<>::type
+#include <utility>                                  // for pair
 
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for getFullstrText
-#include "config.hpp"                               // for Config, gConfig
-#include "container.hpp"                            // for Container, PlayerSet
+#include "config.hpp"                               // for Config, EffectMap
 #include "creatureStreams.hpp"                      // for Streamable, ColorOff
-#include "creatures.hpp"                            // for Creature, Player
 #include "damage.hpp"                               // for Damage
 #include "effects.hpp"                              // for EffectInfo, Effect
-#include "exits.hpp"                                // for Exit
 #include "flags.hpp"                                // for O_WORN
 #include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for CAP, DT_NONE, BURNED
 #include "join.hpp"                                 // for join
-#include "mudObject.hpp"                            // for MudObject
-#include "objects.hpp"                              // for Object
+#include "mudObjects/container.hpp"                 // for Container, PlayerSet
+#include "mudObjects/creatures.hpp"                 // for Creature
+#include "mudObjects/exits.hpp"                     // for Exit
+#include "mudObjects/monsters.hpp"                  // for Monster
+#include "mudObjects/mudObject.hpp"                 // for MudObject
+#include "mudObjects/objects.hpp"                   // for Object
+#include "mudObjects/players.hpp"                   // for Player
+#include "mudObjects/rooms.hpp"                     // for BaseRoom, ExitList
 #include "os.hpp"                                   // for ASSERTLOG
-#include "proto.hpp"                                // for broadcast
-#include "pythonHandler.hpp"                        // for addMudObjectToDic...
+#include "proto.hpp"                                // for broadcast, timeStr
+#include "pythonHandler.hpp"                        // for PythonHandler
 #include "raceData.hpp"                             // for RaceData
 #include "random.hpp"                               // for Random
 #include "realm.hpp"                                // for EARTH, FIRE, Realm
-#include "rooms.hpp"                                // for BaseRoom, ExitList
 #include "server.hpp"                               // for Server, gServer
-#include "socket.hpp"                               // for Socket
+#include "socket.hpp"                               // for Socket, xmlNode
+#include "stats.hpp"                                // for Stat
 #include "structs.hpp"                              // for ALCOHOL_DRUNK
+#include "toNum.hpp"                                // for toNum
 #include "utils.hpp"                                // for MAX, MIN
-#include "xml.hpp"                                  // for copyToString
-#include "toNum.hpp"
+#include "xml.hpp"                                  // for copyToNum, bad_le...
 
 //*********************************************************************
 //                      getDisplayName

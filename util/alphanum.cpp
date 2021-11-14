@@ -33,7 +33,7 @@
 
 #include "alphanum.hpp"
 
-#include <cstdlib>  // for strtoul
+#include <cstdlib>   // for strtoul
 #include <cassert>   // for assert
 #include <cctype>    // for isdigit
 #include <string>    // for string

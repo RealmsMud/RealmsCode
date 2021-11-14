@@ -17,16 +17,19 @@
  */
 
 
-#include <algorithm>              // for find
-#include <iomanip>                // for operator<<, setw
-#include <list>                   // for operator==, operator!=
-#include <ostream>                // for operator<<, basic_ostream, basic_os...
-#include <string>                 // for char_traits, operator<<, basic_string
+#include <algorithm>                 // for find
+#include <iomanip>                   // for operator<<, setw
+#include <list>                      // for list<>::iterator, operator==
+#include <ostream>                   // for operator<<, basic_ostream, ostri...
+#include <string>                    // for char_traits, operator<<, basic_s...
 
-#include "creatures.hpp"          // for Creature, Monster, PetList
-#include "flags.hpp"              // for M_PET, P_NO_EXTRA_COLOR
-#include "proto.hpp"              // for broadcast, isMatch
-#include "rooms.hpp"              // for BaseRoom
+#include "flags.hpp"                 // for M_PET, P_NO_EXTRA_COLOR
+#include "group.hpp"                 // for Group
+#include "mudObjects/creatures.hpp"  // for Creature, PetList
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, isMatch
+#include "stats.hpp"                 // for Stat
 
 void Creature::addPet(Monster* newPet, bool setPetFlag) {
     if(newPet->getMaster())

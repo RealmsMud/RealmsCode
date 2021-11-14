@@ -15,23 +15,29 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cctype>                 // for isalpha
-#include <cstring>                // for strlen, size_t
 
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for getFullstrText
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player
-#include "deityData.hpp"          // for DeityData
-#include "flags.hpp"              // for P_CAN_CHOOSE_CUSTOM_TITLE, P_CHOSEN...
-#include "global.hpp"             // for CreatureClass, CreatureClass::CLERIC
-#include "login.hpp"              // for CON_PLAYING, CON_CONFIRM_SURNAME
-#include "mud.hpp"                // for SURNAME_LEVEL
-#include "playerClass.hpp"        // for PlayerClass
-#include "playerTitle.hpp"        // for PlayerTitle
-#include "proto.hpp"              // for get_class_string, broadcast, low
-#include "socket.hpp"             // for Socket
-#include "structs.hpp"            // for SEX_MALE
+#include <cctype>                  // for isalpha
+#include <cstring>                 // for strlen, size_t
+#include <map>                     // for map, operator==, map<>::const_iter...
+#include <ostream>                 // for ostringstream, basic_ostream, oper...
+#include <string>                  // for string, allocator, char_traits
+#include <string_view>             // for string_view
+#include <utility>                 // for pair
+
+#include "cmd.hpp"                 // for cmd
+#include "commands.hpp"            // for getFullstrText, cmdSurname, cmdTitle
+#include "config.hpp"              // for Config, gConfig
+#include "deityData.hpp"           // for DeityData
+#include "flags.hpp"               // for P_CAN_CHOOSE_CUSTOM_TITLE, P_CHOSE...
+#include "global.hpp"              // for CreatureClass, CreatureClass::CLERIC
+#include "login.hpp"               // for CON_PLAYING, CON_CONFIRM_SURNAME
+#include "mud.hpp"                 // for SURNAME_LEVEL
+#include "mudObjects/players.hpp"  // for Player
+#include "playerClass.hpp"         // for PlayerClass
+#include "playerTitle.hpp"         // for PlayerTitle
+#include "proto.hpp"               // for get_class_string, broadcast, low
+#include "socket.hpp"              // for Socket
+#include "structs.hpp"             // for SEX_MALE
 
 //*********************************************************************
 //                      PlayerTitle

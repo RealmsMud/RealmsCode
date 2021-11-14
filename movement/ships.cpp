@@ -16,30 +16,44 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
-#include <cstdio>                                   // for sprintf
+#include <boost/algorithm/string/replace.hpp>       // for replace_all
+#include <boost/iterator/iterator_traits.hpp>       // for iterator_value<>:...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cstdlib>                                  // for atoi
-#include <sstream>                                  // for basic_ostream::op...
-#include <boost/algorithm/string/replace.hpp>
+#include <deque>                                    // for _Deque_iterator
+#include <list>                                     // for list, operator==
+#include <map>                                      // for operator==, _Rb_t...
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for string, allocator
+#include <utility>                                  // for pair
 
+#include "area.hpp"                                 // for MapMarker
 #include "calendar.hpp"                             // for Calendar
 #include "catRef.hpp"                               // for CatRef
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for getFullstrText
 #include "config.hpp"                               // for Config, gConfig
-#include "creatures.hpp"                            // for Player, Monster
-#include "exits.hpp"                                // for Exit
+#include "creatureStreams.hpp"                      // for Streamable, ColorOff
 #include "flags.hpp"                                // for MAX_EXIT_FLAGS
+#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for CAP, NONUM
+#include "location.hpp"                             // for Location
 #include "move.hpp"                                 // for getString
-#include "proto.hpp"                                // for broadcast, free_crt
+#include "mudObjects/areaRooms.hpp"                 // for AreaRoom
+#include "mudObjects/container.hpp"                 // for MonsterSet
+#include "mudObjects/exits.hpp"                     // for Exit
+#include "mudObjects/monsters.hpp"                  // for Monster
+#include "mudObjects/players.hpp"                   // for Player
+#include "mudObjects/rooms.hpp"                     // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
+#include "proto.hpp"                                // for broadcast, zero
 #include "random.hpp"                               // for Random
 #include "range.hpp"                                // for Range
-#include "rooms.hpp"                                // for BaseRoom, UniqueRoom
 #include "server.hpp"                               // for Server, gServer
 #include "ships.hpp"                                // for ShipStop, ShipRaid
 #include "utils.hpp"                                // for MAX
-#include "xml.hpp"                                  // for copyToString
+#include "wanderInfo.hpp"                           // for WanderInfo
+#include "xml.hpp"                                  // for copyToString, sav...
 
 
 #define PIRATE_QUEST (54 - 1)

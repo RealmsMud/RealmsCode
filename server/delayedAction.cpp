@@ -15,17 +15,20 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <ctime>                  // for time
-#include <list>                   // for operator==, operator!=
-#include <ostream>                // for operator<<, ostringstream, basic_os...
 
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdProcess, parse
-#include "creatures.hpp"          // for Creature
-#include "delayedAction.hpp"      // for DelayedAction, ActionFish, ActionSe...
-#include "mudObject.hpp"          // for MudObject
-#include "proto.hpp"              // for broadcast, lowercize, stripBadChars
-#include "server.hpp"             // for Server, gServer
+#include <ctime>                     // for time
+#include <list>                      // for list, operator==, list<>::iterator
+#include <ostream>                   // for operator<<, ostringstream, basic...
+#include <string>                    // for string, allocator, operator+
+#include <string_view>               // for string_view
+
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for cmdProcess, parse
+#include "delayedAction.hpp"         // for DelayedAction, ActionFish, Actio...
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/mudObject.hpp"  // for MudObject
+#include "proto.hpp"                 // for broadcast, lowercize, stripBadChars
+#include "server.hpp"                // for Server, gServer
 
 
 //*********************************************************************

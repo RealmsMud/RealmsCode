@@ -15,32 +15,40 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
-#include <cstdio>                                  // for sprintf
-#include <cstdlib>                                 // for atoi
-#include <cstring>                                 // for strncmp, strcmp
-#include <ctime>                                   // for time, ctime
-#include <list>                                     // for operator==, opera...
-#include <string>                                   // for operator==, basic...
-#include <boost/algorithm/string/trim.hpp>
+
+#include <fmt/format.h>                             // for format
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <boost/algorithm/string/trim.hpp>          // for trim
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <cstdio>                                   // for sprintf
+#include <cstdlib>                                  // for atoi
+#include <cstring>                                  // for strncmp, strcmp
+#include <ctime>                                    // for time, ctime
+#include <list>                                     // for list, operator==
+#include <ostream>                                  // for basic_ostream::op...
+#include <set>                                      // for operator==, _Rb_t...
+#include <string>                                   // for string, allocator
 
 #include "catRef.hpp"                               // for CatRef
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for getFullstrText
 #include "config.hpp"                               // for Config, gConfig
-#include "container.hpp"                            // for ObjectSet
-#include "creatures.hpp"                            // for Player, Creature
 #include "dm.hpp"                                   // for dmHelp, dmResaveO...
 #include "flags.hpp"                                // for O_UNIQUE, O_LORE
 #include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for PROP_SHOP, PROP_S...
-#include "objects.hpp"                              // for Object, ObjectType
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include "mudObjects/container.hpp"                 // for ObjectSet
+#include "mudObjects/creatures.hpp"                 // for Creature, PetList
+#include "mudObjects/monsters.hpp"                  // for Monster
+#include "mudObjects/objects.hpp"                   // for Object, ObjectType
+#include "mudObjects/players.hpp"                   // for Player
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "paths.hpp"                                // for PlayerData
 #include "property.hpp"                             // for Property
-#include "proto.hpp"                                // for validObjId
+#include "proto.hpp"                                // for validObjId, broad...
 #include "random.hpp"                               // for Random
 #include "range.hpp"                                // for Range
-#include "rooms.hpp"                                // for UniqueRoom
 #include "server.hpp"                               // for Server, gServer
 #include "unique.hpp"                               // for Unique, UniqueOwner
 #include "xml.hpp"                                  // for copyToNum, saveNo...

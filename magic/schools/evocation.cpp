@@ -16,22 +16,31 @@
  *
  */
 
-#include <cstring>                // for strncmp, strlen
-#include <string>                 // for operator==, basic_string
+#include <cstring>                   // for strncmp, strlen, size_t
+#include <map>                       // for operator==, _Rb_tree_const_iterator
+#include <string>                    // for allocator, string, operator+
 
-#include "cmd.hpp"                // for cmd
-#include "creatures.hpp"          // for Creature, Player, Monster, CHECK_DIE
-#include "damage.hpp"             // for Damage
-#include "flags.hpp"              // for M_GREEDY, M_POLICE, M_NO_LEVEL_FOUR
-#include "global.hpp"             // for CastType, CastType::CAST, CreatureC...
-#include "magic.hpp"              // for SpellData, canEnchant, decEnchant
-#include "objects.hpp"            // for Object
-#include "proto.hpp"              // for broadcast, get_spell_name, bonus
-#include "random.hpp"             // for Random
-#include "realm.hpp"              // for NO_REALM
-#include "rooms.hpp"              // for BaseRoom
-#include "structs.hpp"            // for osp_t
-#include "utils.hpp"              // for MAX, MIN
+#include "catRef.hpp"                // for CatRef
+#include "cmd.hpp"                   // for cmd
+#include "creatureStreams.hpp"       // for Streamable, ColorOff, ColorOn
+#include "damage.hpp"                // for Damage
+#include "dice.hpp"                  // for Dice
+#include "flags.hpp"                 // for M_GREEDY, M_POLICE, M_NO_LEVEL_FOUR
+#include "global.hpp"                // for CastType, CastType::CAST, Creatu...
+#include "magic.hpp"                 // for SpellData, canEnchant, decEnchant
+#include "mudObjects/container.hpp"  // for MonsterSet, Container, PlayerSet
+#include "mudObjects/creatures.hpp"  // for Creature, CHECK_DIE
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, get_spell_name, bonus
+#include "random.hpp"                // for Random
+#include "realm.hpp"                 // for NO_REALM
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for osp_t
+#include "utils.hpp"                 // for MAX, MIN
 
 
 //*********************************************************************

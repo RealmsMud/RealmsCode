@@ -16,21 +16,26 @@
  *
  */
 
-#include <libxml/parser.h>        // for xmlFreeDoc, xmlNode, xmlDocGetRootE...
-#include <cstdio>                 // for sprintf, snprintf
-#include <unistd.h>               // for link
-#include <fstream>                // for operator<<, basic_ostream, char_traits
-#include <iomanip>                // for operator<<, setw
-#include <map>                    // for operator==, operator!=, map, map<>:...
-#include <string>                 // for operator<<, operator==, allocator
-#include <fmt/format.h>
-#include <boost/algorithm/string/replace.hpp>
+#include <fmt/format.h>                        // for format
+#include <libxml/parser.h>                     // for xmlFreeDoc, xmlCleanup...
+#include <unistd.h>                            // for link
+#include <boost/algorithm/string/replace.hpp>  // for replace_all
+#include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <cstdio>                              // for sprintf, snprintf
+#include <deque>                               // for _Deque_iterator
+#include <fstream>                             // for operator<<, basic_ostream
+#include <iomanip>                             // for operator<<, setw
+#include <locale>                              // for locale
+#include <map>                                 // for operator==, map<>::con...
+#include <string>                              // for string, operator<<
+#include <string_view>                         // for operator<<, string_view
+#include <utility>                             // for pair
 
-#include "config.hpp"             // for Config, MudFlagMap, gConfig
-#include "paths.hpp"              // for BuilderHelp, DMHelp, Code
-#include "proto.hpp"              // for wrapText
-#include "structs.hpp"            // for MudFlag
-#include "xml.hpp"                // for NODE_NAME, copyPropToString, copyT...
+#include "config.hpp"                          // for Config, MudFlagMap
+#include "paths.hpp"                           // for BuilderHelp, DMHelp, Code
+#include "proto.hpp"                           // for wrapText
+#include "structs.hpp"                         // for MudFlag
+#include "xml.hpp"                             // for NODE_NAME, copyPropToS...
 
 //*********************************************************************
 //                      MudFlag

@@ -17,32 +17,37 @@
  */
 
 
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for exit, system
-#include <cstring>                // for memset, strcpy
-#include <sys/stat.h>             // for stat, mkdir
-#include <ctime>                  // for ctime, time
-#include <map>                    // for map
-#include <ostream>                // for operator<<, endl, basic_ostream
-#include <stdexcept>              // for runtime_error
-#include <fmt/format.h>
+#include <fmt/format.h>        // for format
+#include <sys/stat.h>          // for mkdir, stat
+#include <cstdio>              // for sprintf
+#include <cstdlib>             // for exit, system
+#include <cstring>             // for memset, strcpy
+#include <ctime>               // for ctime, time
+#include <iostream>            // for std::clog
+#include <list>                // for list, operator==, _List_iterator, _Lis...
+#include <map>                 // for operator==, _Rb_tree_iterator, _Rb_tre...
+#include <ostream>             // for operator<<, endl, basic_ostream, ostream
+#include <stdexcept>           // for runtime_error
+#include <string>              // for string, allocator, operator==
+#include <utility>             // for pair
 
-#include "alchemy.hpp"
-#include "calendar.hpp"           // for Calendar, cSeason, cWeather (ptr only)
-#include "catRef.hpp"             // for CatRef
-#include "config.hpp"             // for Config, accountDouble, MudFlagMap
-#include "effects.hpp"            // for Effect
-#include "fishing.hpp"            // for Fishing
-#include "global.hpp"             // for CUSTOM_COLOR_ADMIN, CUSTOM_COLOR_BR...
-#include "mud.hpp"                // for MAXINT
-#include "paths.hpp"              // for checkDirExists, checkPaths
-#include "proxy.hpp"              // for ProxyManager
-#include "skills.hpp"
-#include "socials.hpp"
-#include "structs.hpp"            // for MudFlag
-#include "specials.hpp"           // for SA_MAX_FLAG, SA_NO_FLAG
-#include "utils.hpp"
-#include "version.hpp"            // for VERSION
+#include "alchemy.hpp"         // for AlchemyInfo
+#include "calendar.hpp"        // for Calendar, cSeason, cWeather (ptr only)
+#include "catRef.hpp"          // for CatRef
+#include "config.hpp"          // for Config, accountDouble, MudFlagMap, Dis...
+#include "effects.hpp"         // for Effect
+#include "fishing.hpp"         // for Fishing
+#include "global.hpp"          // for CUSTOM_COLOR_ADMIN, CUSTOM_COLOR_BROAD...
+#include "mud.hpp"             // for MAXINT
+#include "paths.hpp"           // for checkDirExists, checkPaths
+#include "proxy.hpp"           // for ProxyManager
+#include "skills.hpp"          // for SkillCommand, SkillInfo
+#include "socials.hpp"         // for SocialCommand
+#include "specials.hpp"        // for SA_MAX_FLAG, SA_NO_FLAG
+#include "structs.hpp"         // for MudFlag
+#include "swap.hpp"            // for Swap
+#include "utils.hpp"           // for MAX
+#include "version.hpp"         // for VERSION
 
 
 // Globals
@@ -368,14 +373,6 @@ std::string Config::getSpecialFlag(int index) {
 
     return(specialFlags[index].name);
 }
-
-class Ban;
-class CatRefInfo;
-class GuildCreation;
-class Lore;
-class Property;
-class Ship;
-class Unique;
 
 std::string Config::getVersion() {
     return(VERSION);

@@ -16,19 +16,23 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNode, xmlFreeDoc
-#include <cstdlib>                                  // for abs
+#include <fmt/format.h>                             // for format
+#include <stdlib.h>                                 // for abs
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cstring>                                  // for memset, strcpy
 #include <iomanip>                                  // for operator<<, setw
-#include <map>                                      // for operator==, opera...
+#include <locale>                                   // for locale
+#include <map>                                      // for map, operator==
+#include <set>                                      // for set
 #include <sstream>                                  // for operator<<, basic...
-#include <string>                                   // for operator<<, char_...
+#include <string>                                   // for string, operator<<
+#include <string_view>                              // for string_view
+#include <utility>                                  // for pair
 
 #include "clans.hpp"                                // for Clan
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for cmdNoAuth, cmdPro...
 #include "config.hpp"                               // for Config, gConfig
-#include "creatures.hpp"                            // for Player, Monster
 #include "deityData.hpp"                            // for DeityData
 #include "factions.hpp"                             // for Faction, FactionR...
 #include "flags.hpp"                                // for P_UNCONSCIOUS
@@ -36,13 +40,17 @@
 #include "guilds.hpp"                               // for Guild
 #include "monType.hpp"                              // for isIntelligent
 #include "money.hpp"                                // for Money, GOLD
+#include "mudObjects/container.hpp"                 // for Container, PlayerSet
+#include "mudObjects/creatures.hpp"                 // for Creature
+#include "mudObjects/monsters.hpp"                  // for Monster
+#include "mudObjects/players.hpp"                   // for Player
+#include "mudObjects/rooms.hpp"                     // for BaseRoom
 #include "proto.hpp"                                // for getClassAbbrev, up
 #include "raceData.hpp"                             // for RaceData
 #include "random.hpp"                               // for Random
-#include "rooms.hpp"                                // for BaseRoom
 #include "server.hpp"                               // for Server, gServer
 #include "utils.hpp"                                // for MAX, MIN
-#include "xml.hpp"                                  // for copyToNum, NODE_NAME
+#include "xml.hpp"                                  // for copyToNum, bad_le...
 
 //*********************************************************************
 //                      FactionRegard

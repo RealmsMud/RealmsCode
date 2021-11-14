@@ -26,14 +26,20 @@
  *      editor! Either edit the PHP yourself or tell Dominus to make the changes.
  */
 
-#include <cstring>          // for strcpy, strlen
-#include <map>              // for map
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlDo...
+#include <stdio.h>                                  // for snprintf
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <cstring>                                  // for strcpy, strlen
+#include <list>                                     // for list
+#include <map>                                      // for allocator, map
+#include <string>                                   // for string
 
-#include "catRef.hpp"       // for CatRef
-#include "config.hpp"       // for Config
-#include "lasttime.hpp"     // for lasttime
-#include "paths.hpp"        // for Path
-#include "xml.hpp"          // for getIntProp, copyT...
+#include "catRef.hpp"                               // for CatRef
+#include "config.hpp"                               // for accountDouble
+#include "lasttime.hpp"                             // for lasttime
+#include "libxml/parser.h"                          // for xmlCleanupParser
+#include "paths.hpp"                                // for Config
+#include "xml.hpp"                                  // for getIntProp, NODE_...
 
 //*********************************************************************
 //                      loadCatRefArray

@@ -15,39 +15,50 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstdio>                 // for sprintf
-#include <cstring>                // for strcpy, strcmp, strlen, strcat, str...
-#include <strings.h>              // for strncasecmp
-#include <map>                    // for operator==, operator!=, map
-#include <ostream>                // for operator<<, basic_ostream, ostrings...
-#include <boost/algorithm/string/replace.hpp>
-#include <string>
-#include <boost/algorithm/string/predicate.hpp>
 
-#include "clans.hpp"              // for Clan
-#include "cmd.hpp"                // for cmd
-#include "color.hpp"              // for escapeColor
-#include "commands.hpp"           // for cmdNoExist, cmdNoAuth, doGuildSend
-#include "communication.hpp"      // for channelInfo, commInfo, sayInfo, COM...
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for PlayerSet
-#include "creatureStreams.hpp"    // for Streamable, ColorOff, ColorOn
-#include "creatures.hpp"          // for Player, Creature, Monster
-#include "deityData.hpp"          // for DeityData
-#include "exits.hpp"              // for Exit
-#include "flags.hpp"              // for P_AFK, P_GLOBAL_GAG, P_DM_SILENCED
-#include "global.hpp"             // for CreatureClass, CAP, LCOMMON, LUNKNOWN
-#include "group.hpp"              // for CreatureList, GROUP_MEMBER, Group
-#include "move.hpp"               // for getRoom
-#include "playerClass.hpp"        // for PlayerClass
-#include "proto.hpp"              // for get_language_adj, broadcast, escape...
-#include "raceData.hpp"           // for RaceData
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, ExitList
-#include "server.hpp"             // for Server, gServer, PlayerMap
-#include "socket.hpp"             // for Socket, MXP_BEG, MXP_END
-            // for Command
-#include "xml.hpp"                // for loadPlayer
+#include <fmt/format.h>                          // for format
+#include <strings.h>                             // for strncasecmp
+#include <boost/algorithm/string/predicate.hpp>  // for icontains
+#include <boost/algorithm/string/replace.hpp>    // for replace_all
+#include <boost/iterator/iterator_traits.hpp>    // for iterator_value<>::type
+#include <cstdio>                                // for sprintf, size_t
+#include <cstring>                               // for strcpy, strlen, strcmp
+#include <deque>                                 // for _Deque_iterator
+#include <list>                                  // for list, operator==
+#include <map>                                   // for operator==, _Rb_tree...
+#include <set>                                   // for set, set<>::iterator
+#include <sstream>                               // for operator<<, basic_os...
+#include <string>                                // for string, allocator
+#include <string_view>                           // for operator<<, string_view
+#include <utility>                               // for pair
+
+#include "clans.hpp"                             // for Clan
+#include "cmd.hpp"                               // for cmd
+#include "color.hpp"                             // for escapeColor
+#include "commands.hpp"                          // for isPtester, cmdNoExist
+#include "communication.hpp"                     // for channelInfo, commInfo
+#include "config.hpp"                            // for Config, gConfig, Cla...
+#include "creatureStreams.hpp"                   // for Streamable, ColorOff
+#include "deityData.hpp"                         // for DeityData
+#include "flags.hpp"                             // for P_AFK, P_NO_BROADCASTS
+#include "free_crt.hpp"                          // for free_crt
+#include "global.hpp"                            // for CreatureClass, LCOMMON
+#include "group.hpp"                             // for CreatureList, GROUP_...
+#include "move.hpp"                              // for getRoom
+#include "mudObjects/container.hpp"              // for PlayerSet
+#include "mudObjects/creatures.hpp"              // for Creature
+#include "mudObjects/exits.hpp"                  // for Exit
+#include "mudObjects/monsters.hpp"               // for Monster
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom, ExitList
+#include "playerClass.hpp"                       // for PlayerClass
+#include "proto.hpp"                             // for broadcast, get_langu...
+#include "raceData.hpp"                          // for RaceData
+#include "random.hpp"                            // for Random
+#include "server.hpp"                            // for Server, gServer, Pla...
+#include "socket.hpp"                            // for Socket, MXP_BEG, MXP...
+#include "structs.hpp"                           // for Command
+#include "xml.hpp"                               // for loadPlayer
 
 class Guild;
 

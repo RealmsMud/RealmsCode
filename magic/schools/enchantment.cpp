@@ -16,22 +16,32 @@
  *
  */
 
-#include <ctime>           // for time
+#include <ctime>                       // for time
+#include <string>                      // for allocator, string
 
-#include "cmd.hpp"         // for cmd
-#include "config.hpp"      // for Config, gConfig
-#include "creatures.hpp"   // for Creature, Player, Monster
-#include "deityData.hpp"   // for DeityData
-#include "flags.hpp"       // for M_PERMENANT_MONSTER, M_RESIST_STUN_SPELL
-#include "global.hpp"      // for CastType, CreatureClass, CastType::CAST
-#include "magic.hpp"       // for SpellData, checkRefusingMagic, canEnchant
-#include "money.hpp"       // for GOLD, Money
-#include "mud.hpp"         // for DL_SILENCE, LT_ENCHA, LT_SPELL, DL_ENCHA
-#include "objects.hpp"     // for Object, ObjectType, ObjectType::WEAPON
-#include "proto.hpp"       // for broadcast, bonus, crtWisdom, dec_daily, dice
-#include "random.hpp"      // for Random
-#include "rooms.hpp"       // for BaseRoom, UniqueRoom
-#include "utils.hpp"       // for MAX, MIN
+#include "cmd.hpp"                     // for cmd
+#include "config.hpp"                  // for Config, gConfig
+#include "deityData.hpp"               // for DeityData
+#include "flags.hpp"                   // for M_PERMENANT_MONSTER, M_RESIST_...
+#include "global.hpp"                  // for CastType, CreatureClass, CastT...
+#include "lasttime.hpp"                // for lasttime
+#include "magic.hpp"                   // for SpellData, checkRefusingMagic
+#include "money.hpp"                   // for GOLD, Money
+#include "mud.hpp"                     // for DL_SILENCE, LT_ENCHA, LT_SPELL
+#include "mudObjects/container.hpp"    // for Container
+#include "mudObjects/creatures.hpp"    // for Creature
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object, ObjectType, ObjectType...
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for broadcast, bonus, crtWisdom
+#include "random.hpp"                  // for Random
+#include "statistics.hpp"              // for Statistics
+#include "stats.hpp"                   // for Stat
+#include "structs.hpp"                 // for daily, saves
+#include "utils.hpp"                   // for MAX, MIN
+#include "wanderInfo.hpp"              // for WanderInfo
 
 
 //*********************************************************************

@@ -15,24 +15,31 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
+
+#include <fmt/format.h>                             // for format
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <ctime>                                    // for time
+#include <list>                                     // for list, list<>::con...
+#include <map>                                      // for map
+#include <string>                                   // for string, allocator
 
 #include "bank.hpp"                                 // for Bank
 #include "config.hpp"                               // for Config, gConfig
-#include "creatures.hpp"                            // for Player
+#include "creatureStreams.hpp"                      // for Streamable
 #include "deityData.hpp"                            // for DeityData
+#include "dice.hpp"                                 // for Dice
 #include "flags.hpp"                                // for P_CHOSEN_ALIGNMENT
 #include "global.hpp"                               // for CreatureClass, POI
 #include "levelGain.hpp"                            // for LevelGain
 #include "magic.hpp"                                // for S_BLOODFUSION
 #include "money.hpp"                                // for GOLD, Money
 #include "mud.hpp"                                  // for ALIGNMENT_LEVEL
+#include "mudObjects/players.hpp"                   // for Player
+#include "mudObjects/rooms.hpp"                     // for BaseRoom
 #include "os.hpp"                                   // for merror
 #include "playerClass.hpp"                          // for PlayerClass
 #include "proto.hpp"                                // for updateGuild, broa...
 #include "raceData.hpp"                             // for RaceData
-#include "rooms.hpp"                                // for BaseRoom
 #include "server.hpp"                               // for GOLD_OUT, Server
 #include "skillGain.hpp"                            // for SkillGain
 #include "statistics.hpp"                           // for LevelInfo, Statis...
@@ -40,7 +47,7 @@
 #include "structs.hpp"                              // for saves
 #include "utils.hpp"                                // for MIN
 #include "web.hpp"                                  // for updateRecentActivity
-#include "xml.hpp"                                  // for NODE_NAME, copyTo...
+#include "xml.hpp"                                  // for NODE_NAME, copyToNum
 
 class cmd;
 

@@ -23,6 +23,7 @@
 #include "alchemy.hpp"
 
 #include "fluentBuilder.hpp"
+
 #define BUILDER(name, type) GENERIC_BUILDER(AlchemyBuilder, alchemyInfo, name, type)
 
 

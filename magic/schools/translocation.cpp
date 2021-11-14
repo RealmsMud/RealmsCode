@@ -16,35 +16,47 @@
  *
  */
 
-#include <cstring>                // for strcmp, strlen, strcpy
-#include <strings.h>              // for strcasecmp
-#include <ctime>                  // for time
+#include <strings.h>                   // for strcasecmp
+#include <cstring>                     // for strcmp, strlen, strcpy
+#include <ctime>                       // for time
+#include <list>                        // for operator==, list, _List_iterator
 
-#include "anchor.hpp"             // for Anchor
-#include "area.hpp"               // for Area, MapMarker
-#include "catRef.hpp"             // for CatRef
-#include "catRefInfo.hpp"         // for CatRefInfo
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for finishDropObject
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for Container, ObjectSet, PlayerSet
-#include "creatures.hpp"          // for Player, Creature, Monster, DEL_ROOM...
-#include "exits.hpp"              // for Exit
-#include "flags.hpp"              // for R_LIMBO, P_NO_SUMMON, X_PORTAL, P_D...
-#include "global.hpp"             // for CastType, CastType::CAST, CreatureC...
-#include "group.hpp"              // for CreatureList, GROUP_LEADER, Group
-#include "magic.hpp"              // for SpellData, checkRefusingMagic, splG...
-#include "monType.hpp"            // for PLAYER
-#include "move.hpp"               // for tooFarAway, deletePortal, createPortal
-#include "mud.hpp"                // for DL_TELEP, LT_HIDE, LT_SPELL, DL_TRACK
-#include "objects.hpp"            // for Object
-#include "proto.hpp"              // for broadcast, up, dec_daily, isCt, bonus
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom, ExitList, UniqueRoom, Are...
-#include "server.hpp"             // for Server, gServer
-#include "unique.hpp"             // for transferOwner
-#include "utils.hpp"              // for MAX
-#include "xml.hpp"                // for loadRoom
+#include <set>                         // for operator==, _Rb_tree_const_ite...
+#include <string>                      // for allocator, string, operator==
+#include "anchor.hpp"                  // for Anchor
+#include "area.hpp"                    // for Area, MapMarker
+#include "catRef.hpp"                  // for CatRef
+#include "catRefInfo.hpp"              // for CatRefInfo
+#include "cmd.hpp"                     // for cmd
+#include "commands.hpp"                // for finishDropObject
+#include "config.hpp"                  // for Config, gConfig
+#include "flags.hpp"                   // for R_LIMBO, P_NO_SUMMON, X_PORTAL
+#include "global.hpp"                  // for CastType, CastType::CAST, Crea...
+#include "group.hpp"                   // for CreatureList, GROUP_LEADER, Group
+#include "lasttime.hpp"                // for lasttime
+#include "location.hpp"                // for Location
+#include "magic.hpp"                   // for SpellData, checkRefusingMagic
+#include "monType.hpp"                 // for PLAYER
+#include "move.hpp"                    // for tooFarAway, deletePortal, crea...
+#include "mud.hpp"                     // for DL_TELEP, LT_HIDE, LT_SPELL
+#include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/container.hpp"    // for Container, ObjectSet, PlayerSet
+#include "mudObjects/creatures.hpp"    // for Creature, DEL_ROOM_DESTROYED
+#include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/monsters.hpp"     // for Monster
+#include "mudObjects/objects.hpp"      // for Object
+#include "mudObjects/players.hpp"      // for Player
+#include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
+#include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "proto.hpp"                   // for broadcast, up, dec_daily, isCt
+#include "random.hpp"                  // for Random
+#include "server.hpp"                  // for Server, gServer
+#include "statistics.hpp"              // for Statistics
+#include "stats.hpp"                   // for Stat
+#include "structs.hpp"                 // for daily
+#include "unique.hpp"                  // for transferOwner
+#include "utils.hpp"                   // for MAX
+#include "xml.hpp"                     // for loadRoom
 
 
 //*********************************************************************

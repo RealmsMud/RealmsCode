@@ -16,19 +16,26 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlNode, xmlNodePtr
-#include <cstdio>                                  // for snprintf, sprintf
-#include <string>                                   // for operator!=, basic...
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <cstdio>                                   // for snprintf, sprintf
+#include <list>                                     // for list, operator==
+#include <ostream>                                  // for basic_ostream::op...
+#include <string>                                   // for string, allocator
 
 #include "catRef.hpp"                               // for CatRef
 #include "config.hpp"                               // for Config
-#include "exits.hpp"                                // for Exit
 #include "global.hpp"                               // for PROP_STORAGE, Pro...
+#include "location.hpp"                             // for Location
+#include "mudObjects/exits.hpp"                     // for Exit
+#include "mudObjects/rooms.hpp"                     // for ExitList
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "paths.hpp"                                // for PlayerData
 #include "property.hpp"                             // for Property, Partial...
 #include "range.hpp"                                // for Range
-#include "rooms.hpp"                                // for UniqueRoom, ExitList
-#include "xml.hpp"                                  // for copyToString
+#include "xml.hpp"                                  // for copyToString, sav...
+
 
 void PartialOwner::load(xmlNodePtr rootNode) {
     xml::copyPropToString(name, rootNode, "Name");

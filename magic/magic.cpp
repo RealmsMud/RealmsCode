@@ -15,26 +15,32 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <libxml/parser.h>     // for xmlDocSetRootElement, xmlFreeDoc, xmlN...
-#include <cstdio>              // for sprintf
-#include <cstdlib>             // for abort, qsort
-#include <cstring>             // for memcpy, strcpy, strcmp
-#include <unistd.h>            // for link
-#include <fstream>             // for operator<<, ofstream, basic_ostream
-#include <iomanip>             // for operator<<, setw
 
-#include "config.hpp"          // for Config
-#include "creatures.hpp"       // for Creature, Player
-#include "flags.hpp"           // for P_LINKDEAD
-#include "global.hpp"          // for CreatureClass, CreatureClass::LICH
-#include "help.hpp"            // for loadHelpTemplate
-#include "magic.hpp"           // for splOffensive, SpellFn, EVOCATION, DEST...
-#include "os.hpp"              // for ASSERTLOG
-#include "paths.hpp"           // for BuilderHelp, DMHelp, Code, Help
-#include "proto.hpp"           // for zero, getSpellMp, get_spell_list_size
-#include "structs.hpp"         // for PFNCOMPARE
-#include "utils.hpp"           // for MAX, MIN
-#include "xml.hpp"             // for newNumProp, newStringChild, saveFile
+#include <libxml/parser.h>           // for xmlDocSetRootElement, xmlFreeDoc
+#include <unistd.h>                  // for link
+#include <cstdio>                    // for sprintf
+#include <cstdlib>                   // for abort, qsort
+#include <cstring>                   // for memcpy, strcpy, strcmp
+#include <fstream>                   // for operator<<, ofstream, basic_ostream
+#include <iomanip>                   // for operator<<, setw
+#include <locale>                    // for locale
+#include <string>                    // for allocator, string, operator<<
+
+#include "config.hpp"                // for Config
+#include "flags.hpp"                 // for P_LINKDEAD
+#include "global.hpp"                // for CreatureClass, CreatureClass::LICH
+#include "help.hpp"                  // for loadHelpTemplate
+#include <libxml/xmlstring.h>        // for BAD_CAST
+#include "magic.hpp"                 // for splOffensive, EVOCATION, DESTRUC...
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/players.hpp"    // for Player
+#include "os.hpp"                    // for ASSERTLOG
+#include "paths.hpp"                 // for BuilderHelp, DMHelp, Code, Help
+#include "proto.hpp"                 // for zero, getSpellMp, get_spell_list...
+#include "stats.hpp"                 // for Stat
+#include "structs.hpp"               // for PFNCOMPARE
+#include "utils.hpp"                 // for MAX, MIN
+#include "xml.hpp"                   // for newNumProp, newStringChild, save...
 
 
 // Spells with -1 mp will not check mp and will leave it up to

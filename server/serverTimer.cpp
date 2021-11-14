@@ -16,8 +16,10 @@
  *
  */
 
-#include <sys/time.h>
-#include "serverTimer.hpp"
+#include <sys/select.h>     // for select
+#include <sys/time.h>       // for timeval, gettimeofday
+
+#include "serverTimer.hpp"  // for ServerTimer
 
 //*********************************************************************
 //                          timeZero

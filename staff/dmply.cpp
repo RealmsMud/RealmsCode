@@ -16,45 +16,58 @@
  *
  */
 
-#include <cctype>                 // for isspace, isalpha, isdigit
-#include <cstdio>                 // for sprintf, snprintf, fclose, fopen, FILE
-#include <cstdlib>                // for atoi
-#include <cstring>                // for strcmp, strlen, strcpy, strstr
-#include <strings.h>              // for strcasecmp
-#include <sys/stat.h>             // for stat, st_atime, st_ctime
-#include <ctime>                  // for time, ctime
-#include <unistd.h>               // for unlink, link
+#include <fmt/format.h>              // for format
+#include <strings.h>                 // for strcasecmp
+#include <sys/stat.h>                // for stat
+#include <unistd.h>                  // for unlink, link
+#include <cctype>                    // for isspace, isalpha, isdigit
+#include <cstdio>                    // for sprintf, snprintf, fclose, fopen
+#include <cstdlib>                   // for atoi
+#include <cstring>                   // for strcmp, strlen, strcpy, strstr
+#include <ctime>                     // for time, ctime
+#include <map>                       // for operator==, _Rb_tree_iterator, map
+#include <ostream>                   // for operator<<, basic_ostream, ostri...
+#include <string>                    // for string, allocator, char_traits
+#include <string_view>               // for string_view
+#include <utility>                   // for pair
 
-#include "area.hpp"               // for MapMarker, Area (ptr only)
-#include "bank.hpp"               // for Bank
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for getFullstrText, cmdNoAuth, cmdNoExist
-#include "config.hpp"             // for Config, gConfig
-#include "color.hpp"              // for stripColor
-#include "container.hpp"          // for PlayerSet, Container
-#include "creatures.hpp"          // for Player, Creature
-#include "enums/loadType.hpp"     // for LoadType, LoadType::LS_BACKUP
-#include "flags.hpp"              // for P_SPYING, P_BUGGED, P_CANT_BROADCAST
-#include "global.hpp"             // for PROMPT, MAX_STAT_NUM, CreatureClass
-#include "group.hpp"              // for operator<<, Group, GROUP_INVITED
-#include "guilds.hpp"             // for Guild
-#include "login.hpp"              // for PASSWORD_MAX_LENGTH, PASSWORD_MIN_L...
-#include "magic.hpp"              // for MAXSPELL, S_ANIMIATE_DEAD, S_JUDGEMENT
-#include "money.hpp"              // for Money, GOLD
-#include "mud.hpp"                // for LT_NO_BROADCAST, LT_RP_AWARDED, LT
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
-#include "paths.hpp"              // for Config, Player, PlayerBackup, Post
-#include "proto.hpp"              // for broadcast, free_crt, log_immort, up
-#include "random.hpp"             // for Random
-#include "realm.hpp"              // for Realm, MAX_REALM, MIN_REALM
-#include "rooms.hpp"              // for BaseRoom, UniqueRoom (ptr only)
-#include "server.hpp"             // for Server, gServer, PlayerMap
-#include "socket.hpp"             // for Socket
-#include "unique.hpp"             // for addOwner, deleteOwner
-#include "utils.hpp"              // for MAX, MIN
-#include "web.hpp"                // for callWebserver
-#include "xml.hpp"                // for loadPlayer, loadRoom
+#include "area.hpp"                  // for MapMarker, Area (ptr only)
+#include "bank.hpp"                  // for Bank
+#include "catRef.hpp"                // for CatRef
+#include "cmd.hpp"                   // for cmd
+#include "color.hpp"                 // for escapeColor
+#include "commands.hpp"              // for getFullstrText, cmdNoAuth, cmdNo...
+#include "config.hpp"                // for Config, gConfig
+#include "enums/loadType.hpp"        // for LoadType, LoadType::LS_BACKUP
+#include "flags.hpp"                 // for P_SPYING, P_BUGGED, P_CANT_BROAD...
+#include "free_crt.hpp"              // for free_crt
+#include "global.hpp"                // for PROMPT, MAX_STAT_NUM, CreatureClass
+#include "group.hpp"                 // for operator<<, Group, GROUP_INVITED
+#include "guilds.hpp"                // for Guild
+#include "lasttime.hpp"              // for lasttime
+#include "location.hpp"              // for Location
+#include "login.hpp"                 // for PASSWORD_MAX_LENGTH, PASSWORD_MI...
+#include "magic.hpp"                 // for MAXSPELL, S_ANIMIATE_DEAD, S_JUD...
+#include "money.hpp"                 // for Money, GOLD
+#include "mud.hpp"                   // for LT_NO_BROADCAST, LT_RP_AWARDED, LT
+#include "mudObjects/container.hpp"  // for PlayerSet, Container
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/objects.hpp"    // for Object, ObjectType, ObjectType::...
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "paths.hpp"                 // for Config, Player, PlayerBackup, Post
+#include "proto.hpp"                 // for broadcast, log_immort, up, lower...
+#include "random.hpp"                // for Random
+#include "realm.hpp"                 // for Realm, MAX_REALM, MIN_REALM
+#include "server.hpp"                // for Server, gServer, PlayerMap
+#include "socket.hpp"                // for Socket
+#include "stats.hpp"                 // for Stat
+#include "unique.hpp"                // for addOwner, deleteOwner
+#include "utils.hpp"                 // for MAX, MIN
+#include "web.hpp"                   // for callWebserver
+#include "xml.hpp"                   // for loadPlayer, loadRoom
+
+class UniqueRoom;
 
 
 

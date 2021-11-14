@@ -16,20 +16,27 @@
  *
  */
 
-#include <cassert>             // for assert
-#include <string>
-#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/replace.hpp>  // for replace_all
+#include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <cassert>                             // for assert
+#include <deque>                               // for _Deque_iterator
+#include <functional>                          // for function
+#include <set>                                 // for operator==, _Rb_tree_c...
+#include <string>                              // for string, allocator, ope...
+#include <string_view>                         // for string_view
 
-#include "cmd.hpp"              // for cmd
-#include "commands.hpp"         // for orderPet, cmdSocial
-#include "config.hpp"           // for Config, SocialMap
-#include "container.hpp"        // for Container, PlayerSet
-#include "creatureStreams.hpp"  // for Streamable
-#include "creatures.hpp"        // for Creature, Player
-#include "flags.hpp"            // for P_AFK, P_SLEEPING
-#include "global.hpp"           // for CAP
-#include "proto.hpp"            // for socialHooks, actionShow
-#include "socials.hpp"          // for SocialCommand
+#include "cmd.hpp"                             // for cmd
+#include "commands.hpp"                        // for orderPet, cmdSocial
+#include "config.hpp"                          // for Config, SocialSet
+#include "creatureStreams.hpp"                 // for Streamable
+#include "flags.hpp"                           // for P_AFK, P_SLEEPING
+#include "global.hpp"                          // for CAP
+#include "mudObjects/container.hpp"            // for Container, PlayerSet
+#include "mudObjects/creatures.hpp"            // for Creature
+#include "mudObjects/players.hpp"              // for Player
+#include "proto.hpp"                           // for socialHooks, actionShow
+#include "socials.hpp"                         // for SocialCommand
+#include "structs.hpp"                         // for Command
 
 
 void Config::clearSocials() {

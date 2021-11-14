@@ -16,30 +16,31 @@
  *
  */
 
-#include <string>
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for atoi, qsort
-#include <cstring>                // for strcpy, strcat, strlen, strncmp
-#include <ctime>                  // for time
-#include "global.hpp"
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdNoAuth, cmdCharm, cmdIdentify
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Creature, Monster, CHECK_DIE
-#include "effects.hpp"            // for Effect
-#include "flags.hpp"              // for P_AFK, P_CHARMED, M_CHARMED, M_NO_C...
-#include "group.hpp"              // for CreatureList, Group
-#include "mud.hpp"                // for LT_IDENTIFY, LT_SING, LT_HYPNOTIZE
-#include "objIncrease.hpp"        // for ObjIncrease, LanguageIncrease, Skil...
-#include "objects.hpp"            // for Object, ObjectType, ObjectType::CON...
-#include "proto.hpp"              // for broadcast, bonus, get_song_name, up
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom
-#include "server.hpp"             // for Server, gServer
-#include "skills.hpp"             // for SkillInfo
-#include "socket.hpp"             // for Socket
-#include "utils.hpp"              // for MAX, MIN
-#include "effolkronium/random.hpp"
+#include <cstdlib>                 // for atoi
+#include <cstring>                 // for strcpy
+#include <ctime>                   // for time
+#include <string>                  // for string, allocator
+
+#include "cmd.hpp"                 // for cmd
+#include "commands.hpp"            // for cmdNoAuth, cmdIdentify
+#include "config.hpp"              // for Config, gConfig
+#include "dice.hpp"                // for Dice
+#include "effects.hpp"             // for Effect
+#include "flags.hpp"               // for O_CUSTOM_OBJ, O_EQUIPPING_BESTOWS_...
+#include "global.hpp"              // for FINGER, CreatureClass, ARMS, BELT
+#include "lasttime.hpp"            // for lasttime
+#include "money.hpp"               // for Money
+#include "mud.hpp"                 // for LT_IDENTIFY
+#include "mudObjects/objects.hpp"  // for Object, ObjectType, ObjectType::CO...
+#include "mudObjects/players.hpp"  // for Player
+#include "objIncrease.hpp"         // for ObjIncrease, LanguageIncrease, Ski...
+#include "proto.hpp"               // for broadcast, bonus, get_language_adj
+#include "random.hpp"              // for Random
+#include "size.hpp"                // for getSizeName
+#include "skills.hpp"              // for SkillInfo
+#include "stats.hpp"               // for Stat
+#include "utils.hpp"               // for MAX, MIN
+
 
 
 //**********************************************************************

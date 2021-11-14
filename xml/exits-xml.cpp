@@ -16,20 +16,22 @@
  *
  */
 
-#include <exits.hpp>                                // for Exit, Direction
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
-#include <proto.hpp>                                // for whatSize
-#include <rooms.hpp>                                // for BaseRoom, AreaRoom
-#include <xml.hpp>                                  // for NODE_NAME, saveNo...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <compare>                                  // for operator<, strong...
+#include <list>                                     // for operator==, _List...
 #include <ostream>                                  // for basic_ostream::op...
-#include <string>                                   // for operator<, basic_...
+#include <string>                                   // for allocator, string
 
 #include "area.hpp"                                 // for MapMarker
 #include "catRef.hpp"                               // for CatRef
-#include "effects.hpp"                              // for Effects
 #include "flags.hpp"                                // for X_PORTAL, MAX_EXI...
 #include "hooks.hpp"                                // for Hooks
 #include "location.hpp"                             // for Location
+#include "mudObjects/areaRooms.hpp"                 // for AreaRoom
+#include "mudObjects/exits.hpp"                     // for Exit, Direction
+#include "mudObjects/rooms.hpp"                     // for BaseRoom, ExitList
+#include "size.hpp"                                 // for whatSize
+#include "xml.hpp"                                  // for NODE_NAME, saveNo...
 
 
 //*********************************************************************

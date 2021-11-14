@@ -15,44 +15,63 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+
 #include <bits/types/struct_tm.h>                   // for tm
-#include <boost/iterator/iterator_facade.hpp>       // for operator++, itera...
+#include <fmt/format.h>                             // for format
+#include <libxml/parser.h>                          // for xmlCleanupParser
+#include <strings.h>                                // for strncasecmp
+#include <boost/algorithm/string/case_conv.hpp>     // for to_lower_copy
+#include <boost/algorithm/string/predicate.hpp>     // for iequals
+#include <boost/algorithm/string/replace.hpp>       // for replace_all
+#include <boost/iterator/iterator_facade.hpp>       // for operator!=, opera...
+#include <boost/iterator/iterator_traits.hpp>       // for iterator_value<>:...
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <boost/mpl/eval_if.hpp>                    // for eval_if<>::type
+#include <boost/token_functions.hpp>                // for char_delimiters_s...
+#include <boost/token_iterator.hpp>                 // for token_iterator
+#include <boost/tokenizer.hpp>                      // for tokenizer<>::iter...
 #include <cctype>                                   // for ispunct, isspace
-#include <libxml/parser.h>                          // for xmlNodePtr, xmlNode
 #include <cstdio>                                   // for sprintf
 #include <cstring>                                  // for strlen, strncmp
-#include <strings.h>                                // for strncasecmp
-#include <ctime>                                    // for time, time_t, loc...
-#include <ostream>                                  // for operator<<, basic...
+#include <ctime>                                    // for time, localtime_r
+#include <deque>                                    // for _Deque_iterator
+#include <limits>                                   // for numeric_limits
+#include <list>                                     // for list, operator==
+#include <locale>                                   // for locale
+#include <map>                                      // for operator==, map
+#include <set>                                      // for set, set<>::iterator
+#include <sstream>                                  // for operator<<, basic...
 #include <stdexcept>                                // for runtime_error
-#include <string>                                   // for basic_string, cha...
-#include <boost/tokenizer.hpp>
-#include <limits>                                   // for numeric limits
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/case_conv.hpp>
-#include <boost/algorithm/string/replace.hpp>
+#include <string>                                   // for string, basic_string
+#include <string_view>                              // for operator==, strin...
+#include <utility>                                  // for pair, make_pair
 
-#include "fmt/core.h"
 #include "catRef.hpp"                               // for CatRef
 #include "cmd.hpp"                                  // for cmd
 #include "commands.hpp"                             // for getFullstrText
-#include "config.hpp"                               // for Config, gConfig
-#include "container.hpp"                            // for ObjectSet, Container
-#include "creatures.hpp"                            // for Player, Monster
+#include "config.hpp"                               // for Config, QuestInfoMap
+#include "creatureStreams.hpp"                      // for Streamable, ColorOn
 #include "factions.hpp"                             // for Faction
 #include "flags.hpp"                                // for M_TALKS, P_AFK
 #include "global.hpp"                               // for CAP, INV, CAST_RE...
-#include "objects.hpp"                              // for Object, ObjectType
+#include "money.hpp"                                // for Money
+#include "mudObjects/container.hpp"                 // for ObjectSet, Container
+#include "mudObjects/creatures.hpp"                 // for Creature
+#include "mudObjects/monsters.hpp"                  // for Monster
+#include "mudObjects/objects.hpp"                   // for Object, ObjectType
+#include "mudObjects/players.hpp"                   // for Player, Player::Q...
+#include "mudObjects/rooms.hpp"                     // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
+#include "oldquest.hpp"                             // for fulfillQuest
 #include "paths.hpp"                                // for Game
 #include "proto.hpp"                                // for broadcast, get_la...
 #include "quests.hpp"                               // for QuestCompletion
 #include "random.hpp"                               // for Random
-#include "rooms.hpp"                                // for UniqueRoom, BaseRoom
 #include "server.hpp"                               // for GOLD_IN, Server
 #include "structs.hpp"                              // for ttag
-#include "utils.hpp"                                // for MIN
-#include "toNum.hpp"
-#include "xml.hpp"                                  // for NODE_NAME, newStr...
+#include "toNum.hpp"                                // for toNum
+#include "utils.hpp"                                // for MIN, MAX
+#include "xml.hpp"                                  // for loadObject, loadM...
 
 
 QuestCatRef::QuestCatRef() {

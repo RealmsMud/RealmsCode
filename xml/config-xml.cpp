@@ -16,15 +16,19 @@
  *
  */
 
-#include <libxml/parser.h>                          // for xmlFreeDoc, xmlNo...
+#include <fmt/format.h>                             // for format
+#include <libxml/parser.h>                          // for xmlFreeDoc, xmlNe...
+#include <sys/types.h>                              // for time_t
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <libxml/xmlstring.h>                       // for BAD_CAST
+#include <list>                                     // for list, operator==
+#include <map>                                      // for operator==, _Rb_t...
 #include <ostream>                                  // for basic_ostream::op...
-#include <string>                                   // for operator<<
-#include <fmt/format.h>
+#include <string>                                   // for allocator, basic_...
 
-#include "config.hpp"                               // for Config, LottoTicket
-#include "paths.hpp"                                // for Config, Code
+#include "config.hpp"                               // for Config, DiscordTo...
+#include "paths.hpp"                                // for Config
 #include "proto.hpp"                                // for file_exists
-#include "effects.hpp"                              // for Effect
 #include "xml.hpp"                                  // for NODE_NAME, copyTo...
 
 bool Config::loadConfig(bool reload) {

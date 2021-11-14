@@ -15,30 +15,43 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cstring>               // for strncmp
-#include <ctime>                 // for time
-#include <list>                   // for operator==, operator!=
-#include <ostream>                // for operator<<, basic_ostream, basic_os...
-#include <string>                 // for operator==, operator<<, basic_string
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/replace.hpp>
 
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for cmdNoAuth, dmSpecials
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Creature, Player, Monster, ATTACK_B...
-#include "damage.hpp"             // for Damage
-#include "deityData.hpp"          // for DeityData
-#include "flags.hpp"              // for M_NO_CIRCLE, P_UNCONSCIOUS
-#include "global.hpp"             // for CreatureClass, CAP, CreatureClass::...
-#include "proto.hpp"              // for bonus, broadcastGroup, dice, up
-#include "random.hpp"             // for Random
-#include "realm.hpp"              // for Realm
-#include "rooms.hpp"              // for BaseRoom
-#include "server.hpp"             // for Server, gServer
-#include "specials.hpp"           // for SpecialAttack, SA_SINGLE_TARGET
-#include "utils.hpp"              // for MAX, MIN
-#include "xml.hpp"                // for numToStr
+#include <boost/algorithm/string/predicate.hpp>  // for iequals
+#include <boost/algorithm/string/replace.hpp>    // for replace_all
+#include <boost/iterator/iterator_traits.hpp>    // for iterator_value<>::type
+#include <cstring>                               // for strncmp
+#include <ctime>                                 // for time
+#include <deque>                                 // for _Deque_iterator
+#include <list>                                  // for list, operator==
+#include <ostream>                               // for operator<<, basic_os...
+#include <set>                                   // for operator==, _Rb_tree...
+#include <string>                                // for string, char_traits
+#include <string_view>                           // for operator==, basic_st...
+
+#include "catRef.hpp"                            // for CatRef
+#include "cmd.hpp"                               // for cmd
+#include "commands.hpp"                          // for cmdNoAuth, dmSpecials
+#include "config.hpp"                            // for Config, gConfig
+#include "damage.hpp"                            // for Damage
+#include "deityData.hpp"                         // for DeityData
+#include "dice.hpp"                              // for Dice
+#include "flags.hpp"                             // for M_NO_CIRCLE, P_UNCON...
+#include "global.hpp"                            // for CreatureClass, CAP
+#include "lasttime.hpp"                          // for lasttime
+#include "mudObjects/container.hpp"              // for MonsterSet, PlayerSet
+#include "mudObjects/creatures.hpp"              // for Creature, ATTACK_BLOCK
+#include "mudObjects/monsters.hpp"               // for Monster
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom
+#include "proto.hpp"                             // for bonus, broadcastGroup
+#include "random.hpp"                            // for Random
+#include "realm.hpp"                             // for Realm
+#include "server.hpp"                            // for Server, gServer
+#include "specials.hpp"                          // for SpecialAttack, SA_SI...
+#include "stats.hpp"                             // for Stat
+#include "utils.hpp"                             // for MAX, MIN
+#include "xml.hpp"                               // for numToStr
+
 
 bool Creature::runSpecialAttacks(Creature* victim) {
     if(specials.empty())

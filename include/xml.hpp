@@ -21,10 +21,12 @@
 
 #include <map>
 
-#include "boost/lexical_cast.hpp"
+#include <libxml/parser.h>           // for xmlNodePtr
+
+#include <boost/lexical_cast.hpp>
 
 #include "carry.hpp"
-#include "container.hpp"
+#include "mudObjects/container.hpp"
 #include "enums/loadType.hpp"
 
 using boost::lexical_cast;

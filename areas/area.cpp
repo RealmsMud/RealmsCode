@@ -15,36 +15,50 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cctype>                 // for islower, isupper, tolower, toupper
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for abs, atoi
-#include <cstring>                // for strcmp, strlen, strcpy, strncpy
-#include <sys/stat.h>             // for stat
-#include <cmath>                  // for pow, atan
-#include <fstream>                // for operator<<, basic_ostream, ostrings...
-#include <list>                   // for operator==, operator!=
-#include <map>                    // for operator==, operator!=
-#include <stdexcept>              // for out_of_range
-#include <string>                 // for operator<<, operator==, basic_string
+#include <sys/stat.h>                // for stat
+#include <cmath>                     // for abs, atan, pow
+#include <algorithm>                 // for replace
+#include <cctype>                    // for islower, isupper, tolower, toupper
+#include <cstdio>                    // for sprintf
+#include <cstdlib>                   // for abs, atoi
+#include <cstring>                   // for strcmp, strlen, strcpy, strncpy
+#include <fstream>                   // for operator<<, basic_ostream, ostri...
+#include <list>                      // for list, operator==, _List_iterator
+#include <map>                       // for operator==, map, _Rb_tree_iterator
+#include <memory>                    // for allocator_traits<>::value_type
+#include <set>                       // for set
+#include <stdexcept>                 // for out_of_range
+#include <string>                    // for string, basic_string, allocator
+#include <string_view>               // for string_view
+#include <utility>                   // for pair
+#include <vector>                    // for vector
 
-#include "area.hpp"               // for Area, MapMarker, TileInfo, AreaZone
-#include "calendar.hpp"           // for Calendar
-#include "catRef.hpp"             // for CatRef
-#include "cmd.hpp"                // for cmd
-#include "commands.hpp"           // for getFullstrText
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Player, Creature, Monster
-#include "flags.hpp"              // for M_HIDDEN, P_HIDDEN, P_INVERT_AREA_C...
-#include "global.hpp"             // for DARKELF, MAXWEAR
-#include "objects.hpp"            // for Object
-#include "paths.hpp"              // for Paths
-#include "proto.hpp"              // for zero, file_exists, showRoomFlags
-#include "rooms.hpp"              // for AreaRoom, BaseRoom (ptr only)
-#include "season.hpp"             // for NO_SEASON, Season
-#include "server.hpp"             // for Server, gServer
-#include "socket.hpp"             // for Socket
-#include "track.hpp"              // for Track
-#include "utils.hpp"              // for MAX
+#include "area.hpp"                  // for Area, MapMarker, TileInfo, AreaZone
+#include "calendar.hpp"              // for Calendar
+#include "catRef.hpp"                // for CatRef
+#include "cmd.hpp"                   // for cmd
+#include "commands.hpp"              // for getFullstrText
+#include "config.hpp"                // for Config, gConfig
+#include "effects.hpp"               // for EffectInfo
+#include "flags.hpp"                 // for M_HIDDEN, P_HIDDEN, P_INVERT_ARE...
+#include "global.hpp"                // for DARKELF, MAXWEAR
+#include "location.hpp"              // for Location
+#include "mudObjects/areaRooms.hpp"  // for AreaRoom
+#include "mudObjects/container.hpp"  // for MonsterSet, PlayerSet, ObjectSet
+#include "mudObjects/creatures.hpp"  // for Creature
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/objects.hpp"    // for Object
+#include "mudObjects/players.hpp"    // for Player
+#include "paths.hpp"                 // for AreaData
+#include "proto.hpp"                 // for zero, file_exists, showRoomFlags
+#include "season.hpp"                // for Season, NO_SEASON
+#include "server.hpp"                // for Server, gServer
+#include "socket.hpp"                // for Socket
+#include "track.hpp"                 // for Track
+#include "utils.hpp"                 // for MAX
+
+class BaseRoom;
+
 
 class WanderInfo;
 

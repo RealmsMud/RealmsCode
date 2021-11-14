@@ -16,13 +16,13 @@
  *
  */
 
+#include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
+#include <ostream>                                  // for basic_ostream::op...
 #include <stdexcept>                                // for runtime_error
+#include <string>                                   // for allocator, string
 
-#include "skills.hpp"                               // for SkillCommand, Ski...
-#include "xml.hpp"                                  // for NODE_NAME, copyTo...
-
-class Creature;
-class cmd;
+#include "skills.hpp"                               // for Skill
+#include "xml.hpp"                                  // for copyToNum, newNum...
 
 //*********************************************************************
 //                      load

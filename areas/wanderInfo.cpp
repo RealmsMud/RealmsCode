@@ -17,15 +17,20 @@
  */
 
 
-#include <map>                    // for operator==, operator!=, allocator
+#include <map>                      // for map, operator==, map<>::const_ite...
+#include <string>                   // for string
+#include <string_view>              // for string_view
+#include <utility>                  // for pair
 
-#include "catRef.hpp"             // for CatRef
-#include "creatures.hpp"          // for Player, Monster
-#include "free_crt.hpp"           // for free_crt
-#include "random.hpp"             // for Random
-#include "utils.hpp"              // for MAX, MIN
-#include "wanderInfo.hpp"         // for WanderInfo
-#include "xml.hpp"                // for loadMonster
+#include "catRef.hpp"               // for CatRef
+#include "free_crt.hpp"             // for free_crt
+#include "mudObjects/monsters.hpp"  // for Monster
+#include "mudObjects/players.hpp"   // for Player
+#include "random.hpp"               // for Random
+#include "utils.hpp"                // for MAX, MIN
+#include "wanderInfo.hpp"           // for WanderInfo
+#include "xml.hpp"                  // for loadMonster
+
 
 //*********************************************************************
 //                      WanderInfo

@@ -15,43 +15,60 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-// Mud includes
-#include <cstdio>                 // for sprintf
-#include <cstdlib>                // for abs
-#include <cstring>                // for strcpy, strncpy
-#include <ctime>                  // for time
-#include <map>                    // for operator==, map, operator!=
-#include <ostream>                // for operator<<, basic_ostream::operator<<
-#include <boost/algorithm/string/case_conv.hpp>
 
-#include "bank.hpp"               // for guildLog
-#include "commands.hpp"           // for finishDropObject, deletePlayer, los...
-#include "config.hpp"             // for Config, gConfig
-#include "container.hpp"          // for ObjectSet, MonsterSet
-#include "creatures.hpp"          // for Player, Monster, Creature, PetList
-#include "enums/loadType.hpp"     // for LoadType, LoadType::LS_BACKUP
-#include "factions.hpp"           // for Faction
-#include "flags.hpp"              // for P_OUTLAW, O_CURSED, O_STARTING, M_G...
-#include "global.hpp"             // for WIELD, CreatureClass, HELD, POISON_...
-#include "group.hpp"              // for Group, CreatureList, GROUP_SPLIT_EX...
-#include "guilds.hpp"             // for Guild
-#include "hooks.hpp"              // for Hooks
-#include "money.hpp"              // for Money, GOLD
-#include "mud.hpp"                // for LT_MOBDEATH, LT_KILL_DOCTOR, MONEY_OBJ
-#include "objects.hpp"            // for Object
-#include "os.hpp"                 // for ASSERTLOG
-#include "paths.hpp"              // for BugLog
-#include "proto.hpp"              // for logn, broadcast, induel, isCt, exp_...
-#include "random.hpp"             // for Random
-#include "realm.hpp"              // for COLD, EARTH, ELEC, FIRE, WATER, WIND
-#include "rooms.hpp"              // for BaseRoom, UniqueRoom
-#include "server.hpp"             // for Server, gServer, GOLD_OUT
-#include "socket.hpp"             // for Socket
-#include "threat.hpp"             // for ThreatSet, ThreatTable, ThreatEntry
-#include "unique.hpp"             // for Lore
-#include "utils.hpp"              // for MAX, MIN
-#include "web.hpp"                // for updateRecentActivity
-#include "xml.hpp"                // for loadObject
+#include <boost/algorithm/string/case_conv.hpp>  // for to_lower
+#include <cmath>                                 // for abs
+#include <cstdio>                                // for sprintf
+#include <cstdlib>                               // for abs
+#include <cstring>                               // for strcpy, strncpy
+#include <ctime>                                 // for time
+#include <list>                                  // for operator==, _List_it...
+#include <map>                                   // for allocator, operator==
+#include <ostream>                               // for operator<<, basic_os...
+#include <set>                                   // for set<>::iterator, set
+#include <string>                                // for string, operator==
+#include <type_traits>                           // for enable_if<>::type
+#include <utility>                               // for pair
+
+#include "bank.hpp"                              // for guildLog
+#include "catRef.hpp"                            // for CatRef
+#include "commands.hpp"                          // for finishDropObject
+#include "config.hpp"                            // for Config, gConfig
+#include "enums/loadType.hpp"                    // for LoadType, LoadType::...
+#include "factions.hpp"                          // for Faction
+#include "flags.hpp"                             // for P_OUTLAW, O_CURSED
+#include "free_crt.hpp"                          // for free_crt
+#include "global.hpp"                            // for WIELD, CreatureClass
+#include "group.hpp"                             // for Group, CreatureList
+#include "guilds.hpp"                            // for Guild
+#include "hooks.hpp"                             // for Hooks
+#include "lasttime.hpp"                          // for lasttime
+#include "location.hpp"                          // for Location
+#include "money.hpp"                             // for Money, GOLD
+#include "mud.hpp"                               // for LT_MOBDEATH, LT_KILL...
+#include "mudObjects/container.hpp"              // for ObjectSet, MonsterSet
+#include "mudObjects/creatures.hpp"              // for Creature, PetList
+#include "mudObjects/monsters.hpp"               // for Monster
+#include "mudObjects/objects.hpp"                // for Object
+#include "mudObjects/players.hpp"                // for Player
+#include "mudObjects/rooms.hpp"                  // for BaseRoom
+#include "mudObjects/uniqueRooms.hpp"            // for UniqueRoom
+#include "os.hpp"                                // for ASSERTLOG
+#include "paths.hpp"                             // for BugLog
+#include "proto.hpp"                             // for logn, broadcast, induel
+#include "random.hpp"                            // for Random
+#include "realm.hpp"                             // for COLD, EARTH, ELEC, FIRE
+#include "server.hpp"                            // for Server, gServer, GOL...
+#include "socket.hpp"                            // for Socket
+#include "statistics.hpp"                        // for Statistics
+#include "stats.hpp"                             // for Stat
+#include "structs.hpp"                           // for saves
+#include "threat.hpp"                            // for ThreatSet, ThreatTable
+#include "unique.hpp"                            // for Lore
+#include "utils.hpp"                             // for MAX, MIN
+#include "web.hpp"                               // for updateRecentActivity
+#include "xml.hpp"                               // for loadObject
+
 
 class Property;
 

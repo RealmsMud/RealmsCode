@@ -15,27 +15,36 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#include <cmath>                  // for pow
-#include <cstdlib>                // for abs
-#include <ctime>                  // for time
 
-#include "cmd.hpp"                // for cmd
-#include "config.hpp"             // for Config, gConfig
-#include "creatures.hpp"          // for Creature, Player, Monster, NO_CHECK
-#include "damage.hpp"             // for Damage, REFLECTED_MAGIC, REFLECTED_...
-#include "deityData.hpp"          // for DeityData
-#include "effects.hpp"            // for EffectInfo
-#include "exits.hpp"              // for Exit
-#include "flags.hpp"              // for P_DM_SILENCED, P_FREE_ACTION, P_OUTLAW
-#include "global.hpp"             // for CastType, CastType::CAST, CreatureC...
-#include "magic.hpp"              // for SpellData, splGeneric, checkRefusin...
-#include "move.hpp"               // for deletePortal
-#include "mud.hpp"                // for LT_FREE_ACTION
-#include "proto.hpp"              // for broadcast, bonus, up, broadcastGroup
-#include "random.hpp"             // for Random
-#include "rooms.hpp"              // for BaseRoom
-#include "server.hpp"             // for Server, gServer
-#include "utils.hpp"              // for MAX, MIN
+#include <cmath>                     // for pow
+#include <cstdlib>                   // for abs
+#include <ctime>                     // for time
+#include <list>                      // for list, operator==, _List_const_it...
+#include <string>                    // for allocator, string, basic_string
+
+#include "cmd.hpp"                   // for cmd
+#include "config.hpp"                // for Config, gConfig
+#include "damage.hpp"                // for Damage, REFLECTED_MAGIC, REFLECT...
+#include "deityData.hpp"             // for DeityData
+#include "effects.hpp"               // for EffectInfo
+#include "flags.hpp"                 // for P_DM_SILENCED, P_FREE_ACTION
+#include "global.hpp"                // for CastType, CreatureClass, CastTyp...
+#include "lasttime.hpp"              // for lasttime
+#include "magic.hpp"                 // for SpellData, splGeneric, checkRefu...
+#include "move.hpp"                  // for deletePortal
+#include "mud.hpp"                   // for LT_FREE_ACTION
+#include "mudObjects/container.hpp"  // for Container
+#include "mudObjects/creatures.hpp"  // for Creature, NO_CHECK, PetList
+#include "mudObjects/exits.hpp"      // for Exit
+#include "mudObjects/monsters.hpp"   // for Monster
+#include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "proto.hpp"                 // for broadcast, bonus, up, broadcastG...
+#include "random.hpp"                // for Random
+#include "server.hpp"                // for Server, gServer
+#include "statistics.hpp"            // for Statistics
+#include "stats.hpp"                 // for Stat
+#include "utils.hpp"                 // for MAX, MIN
 
 
 //*********************************************************************
