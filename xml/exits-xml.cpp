@@ -37,7 +37,7 @@
 //*********************************************************************
 //                      readFromXml
 //*********************************************************************
-// Reads a exit from the given xml document and root node
+// Reads an exit from the given xml document and root node
 
 int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
     xmlNodePtr curNode;

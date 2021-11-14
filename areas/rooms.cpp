@@ -1143,3 +1143,43 @@ bool BaseRoom::isFastTick() const {
             flagIsSet(R_LIMBO)
     );
 }
+
+//*********************************************************************
+//                      canPortHere
+//*********************************************************************
+
+bool UniqueRoom::canPortHere(const Creature* creature) const {
+    // check creature-specific settings
+    if(creature) {
+        if(size && creature->getSize() && creature->getSize() > size)
+            return(false);
+        if(deityRestrict(creature))
+            return(false);
+        if(getLowLevel() > creature->getLevel())
+            return(false);
+        if(getHighLevel() && creature->getLevel() > getHighLevel())
+            return(false);
+    }
+
+    // check room-specific settings
+    if( flagIsSet(R_NO_TELEPORT) ||
+        flagIsSet(R_LIMBO) ||
+        flagIsSet(R_VAMPIRE_COVEN) ||
+        flagIsSet(R_SHOP_STORAGE) ||
+        flagIsSet(R_JAIL) ||
+        flagIsSet(R_IS_STORAGE_ROOM) ||
+        flagIsSet(R_ETHEREAL_PLANE) ||
+        isConstruction() ||
+        hasTraining()
+            )
+        return(false);
+    if(isFull())
+        return(false);
+    // artificial limits for the misc area
+    if(info.isArea("misc") && info.id <= 1000)
+        return(false);
+    if(exits.empty())
+        return(false);
+
+    return(true);
+}

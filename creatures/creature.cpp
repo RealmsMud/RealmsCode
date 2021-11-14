@@ -36,6 +36,7 @@
 #include "calendar.hpp"                          // for Calendar
 #include "carry.hpp"                             // for Carry
 #include "catRef.hpp"                            // for CatRef
+#include "catRefInfo.hpp"                        // for CatRefInfo
 #include "config.hpp"                            // for Config, gConfig
 #include "creatureStreams.hpp"                   // for Streamable
 #include "dice.hpp"                              // for Dice
@@ -1553,3 +1554,116 @@ std::string Player::getFlagList(std::string_view sep) const {
     else
         return ostr.str();
 }
+
+
+
+//*********************************************************************
+//                      recallWhere
+//*********************************************************************
+// Because of ethereal plane, we don't always know where we're going to
+// recall to. We need a function to figure out where we are going.
+
+BaseRoom* Creature::recallWhere() {
+    // A builder should never get this far, but let's not chance it.
+    // Only continue if they can't load the perm_low_room.
+    if(cClass == CreatureClass::BUILDER) {
+        UniqueRoom* uRoom=nullptr;
+        CatRef cr;
+        cr.setArea("test");
+        cr.id = 1;
+        if(loadRoom(cr, &uRoom))
+            return(uRoom);
+    }
+
+    if( getRoomParent()->flagIsSet(R_ETHEREAL_PLANE) &&
+        (Random::get(1,100) <= 50)
+            ) {
+        return(teleportWhere());
+    }
+
+    BaseRoom* room = getRecallRoom().loadRoom(getAsPlayer());
+    // uh oh!
+    if(!room)
+        return(abortFindRoom(this, "recallWhere"));
+    return(room);
+
+}
+
+
+//*********************************************************************
+//                      teleportWhere
+//*********************************************************************
+// Loops through rooms and finds us a place we can teleport to.
+// This function will always return a room or it will crash trying to.
+
+BaseRoom* Creature::teleportWhere() {
+    BaseRoom *newRoom=nullptr;
+    const CatRefInfo* cri = gConfig->getCatRefInfo(getRoomParent());
+    int     i=0, zone = cri ? cri->getTeleportZone() : 0;
+    Area    *area=nullptr;
+    Location l;
+    bool    found = false;
+
+
+
+    // A builder should never get this far, but let's not chance it.
+    // Only continue if they can't load the perm_low_room.
+    if(cClass == CreatureClass::BUILDER) {
+        CatRef cr;
+        cr.setArea("test");
+        cr.id = 1;
+        UniqueRoom* uRoom =nullptr;
+        if(loadRoom(cr, &uRoom))
+            return(uRoom);
+    }
+
+    do {
+        if(i>250)
+            return(abortFindRoom(this, "teleportWhere"));
+        cri = gConfig->getRandomCatRefInfo(zone);
+
+        // if this fails, we have nowhere to teleport to
+        if(!cri)
+            return(getRoomParent());
+
+        // special area used to signify overland map
+        if(cri->getArea() == "area") {
+            area = gServer->getArea(cri->getId());
+            l.mapmarker.set(area->id, Random::get<short>(0, area->width), Random::get<short>(0, area->height), Random::get<short>(0, area->depth));
+            if(area->canPass(nullptr, &l.mapmarker, true)) {
+                //area->adjustCoords(&mapmarker.x, &mapmarker.y, &mapmarker.z);
+
+                // don't bother sending a creature because we've already done
+                // canPass check here
+                //aRoom = area->loadRoom(0, &mapmarker, false);
+                if(Move::getRoom(this, nullptr, &newRoom, false, &l.mapmarker)) {
+                    if(newRoom->isUniqueRoom()) {
+                        // recheck, just to be safe
+                        found = newRoom->getAsUniqueRoom()->canPortHere(this);
+                        if(!found)
+                            newRoom = nullptr;
+                    } else {
+                        found = true;
+                    }
+                }
+            }
+        } else {
+            l.room.setArea(cri->getArea());
+            // if misc, first 1000 rooms are off-limits
+            l.room.id = Random::get(l.room.isArea("misc") ? 1000 : 1, cri->getTeleportWeight());
+            UniqueRoom* uRoom = nullptr;
+
+            if(loadRoom(l.room, &uRoom))
+                found = uRoom->canPortHere(this);
+            if(found)
+                newRoom = uRoom;
+        }
+
+        i++;
+    } while(!found);
+
+    if(!newRoom)
+        return(abortFindRoom(this, "teleportWhere"));
+    return(newRoom);
+}
+

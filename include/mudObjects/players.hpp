@@ -30,10 +30,10 @@ protected:
     void doCopy(const Player& cr);
     void reset();
 
-    bool inList(const std::list<std::string>* list, const std::string &name) const;
-    std::string showList(const std::list<std::string>* list) const;
-    void addList(std::list<std::string> *list, const std::string &name);
-    void delList(std::list<std::string>* list, const std::string &name);
+    bool inList(const std::list<std::string> &list, const std::string &name) const;
+    std::string showList(const std::list<std::string> &list) const;
+    void addList(std::list<std::string> &list, const std::string &name);
+    void delList(std::list<std::string> &list, const std::string &name);
     int doDeleteFromRoom(BaseRoom* room, bool delPortal);
     void finishAddPlayer(BaseRoom* room);
     long getInterest(long principal, double annualRate, long seconds);

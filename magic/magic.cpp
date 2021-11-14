@@ -597,3 +597,208 @@ bool checkRefusingMagic(Creature* player, Creature* target, bool healing, bool p
     }
     return(false);
 }
+
+
+//*********************************************************************
+//                      mprofic
+//*********************************************************************
+// This function returns the magical realm proficiency as a percentage
+
+int mprofic(const Creature* player, int index) {
+    const Player *pPlayer = player->getAsConstPlayer();
+    long    prof_array[12];
+    int i=0, n=0, prof=0;
+
+    switch(player->getClass()) {
+        case CreatureClass::MAGE:
+            if(pPlayer && (pPlayer->getSecondClass() == CreatureClass::ASSASSIN || pPlayer->getSecondClass() == CreatureClass::THIEF)) {
+                prof_array[0] = 0L;
+                prof_array[1] = 1024L;
+                prof_array[2] = 4092L;
+                prof_array[3] = 8192L;
+                prof_array[4] = 16384L;
+                prof_array[5] = 32768L;
+                prof_array[6] = 70536L;
+                prof_array[7] = 119000L;
+                prof_array[8] = 226410L;
+                prof_array[9] = 709410L;
+                prof_array[10] = 2973307L;
+                prof_array[11] = 500000000L;
+            } else {
+                prof_array[0] = 0L;
+                prof_array[1] = 1024L;
+                prof_array[2] = 2048L;
+                prof_array[3] = 4096L;
+                prof_array[4] = 8192L;
+                prof_array[5] = 16384L;
+                prof_array[6] = 35768L;
+                prof_array[7] = 85536L;
+                prof_array[8] = 140000L;
+                prof_array[9] = 459410L;
+                prof_array[10] = 2073306L;
+                prof_array[11] = 500000000L;
+
+            }
+            break;
+        case CreatureClass::LICH:
+            prof_array[0] = 0L;
+            prof_array[1] = 1024L;
+            prof_array[2] = 2048L;
+            prof_array[3] = 4096L;
+            prof_array[4] = 8192L;
+            prof_array[5] = 16384L;
+            prof_array[6] = 35768L;
+            prof_array[7] = 85536L;
+            prof_array[8] = 140000L;
+            prof_array[9] = 459410L;
+            prof_array[10] = 2073306L;
+            prof_array[11] = 500000000L;
+            break;
+        case CreatureClass::CLERIC:
+            if(pPlayer && (pPlayer->getSecondClass() == CreatureClass::ASSASSIN || pPlayer->getSecondClass() == CreatureClass::FIGHTER)) {
+                prof_array[0] = 0L;
+                prof_array[1] = 1024L;
+                prof_array[2] = 8192L;
+                prof_array[3] = 16384L;
+                prof_array[4] = 32768L;
+                prof_array[5] = 65536L;
+                prof_array[6] = 105000L;
+                prof_array[7] = 165410L;
+                prof_array[8] = 287306L;
+                prof_array[9] = 809410L;
+                prof_array[10] = 3538232L;
+                prof_array[11] = 500000000L;
+            } else {
+                prof_array[0] = 0L;
+                prof_array[1] = 1024L;
+                prof_array[2] = 4092L;
+                prof_array[3] = 8192L;
+                prof_array[4] = 16384L;
+                prof_array[5] = 32768L;
+                prof_array[6] = 70536L;
+                prof_array[7] = 119000L;
+                prof_array[8] = 226410L;
+                prof_array[9] = 709410L;
+                prof_array[10] = 2973307L;
+                prof_array[11] = 500000000L;
+            }
+            break;
+        case CreatureClass::THIEF:
+            if(pPlayer && pPlayer->getSecondClass() == CreatureClass::MAGE) {
+                prof_array[0] = 0L;
+                prof_array[1] = 1024L;
+                prof_array[2] = 8192L;
+                prof_array[3] = 16384L;
+                prof_array[4] = 32768L;
+                prof_array[5] = 65536L;
+                prof_array[6] = 105000L;
+                prof_array[7] = 165410L;
+                prof_array[8] = 287306L;
+                prof_array[9] = 809410L;
+                prof_array[10] = 3538232L;
+                prof_array[11] = 500000000L;
+            } else {
+                prof_array[0] = 0L;
+                prof_array[1] = 1024L;
+                prof_array[2] = 40000L;
+                prof_array[3] = 80000L;
+                prof_array[4] = 120000L;
+                prof_array[5] = 160000L;
+                prof_array[6] = 205000L;
+                prof_array[7] = 222000L;
+                prof_array[8] = 380000L;
+                prof_array[9] = 965410L;
+                prof_array[10] = 5495000;
+                prof_array[11] = 500000000L;
+            }
+            break;
+
+        case CreatureClass::FIGHTER:
+            if(pPlayer && pPlayer->getSecondClass() == CreatureClass::MAGE) {
+                prof_array[0] = 0L;
+                prof_array[1] = 1024L;
+                prof_array[2] = 8192L;
+                prof_array[3] = 16384L;
+                prof_array[4] = 32768L;
+                prof_array[5] = 65536L;
+                prof_array[6] = 105000L;
+                prof_array[7] = 165410L;
+                prof_array[8] = 287306L;
+                prof_array[9] = 809410L;
+                prof_array[10] = 3538232L;
+                prof_array[11] = 500000000L;
+            } else {
+                prof_array[0] = 0L;
+                prof_array[1] = 1024L;
+                prof_array[2] = 40000L;
+                prof_array[3] = 80000L;
+                prof_array[4] = 120000L;
+                prof_array[5] = 160000L;
+                prof_array[6] = 205000L;
+                prof_array[7] = 222000L;
+                prof_array[8] = 380000L;
+                prof_array[9] = 965410L;
+                prof_array[10] = 5495000;
+                prof_array[11] = 500000000L;
+            }
+            break;
+        case CreatureClass::PALADIN:
+        case CreatureClass::BARD:
+        case CreatureClass::PUREBLOOD:
+        case CreatureClass::DRUID:
+            prof_array[0] = 0L;
+            prof_array[1] = 1024L;
+            prof_array[2] = 4092L;
+            prof_array[3] = 8192L;
+            prof_array[4] = 16384L;
+            prof_array[5] = 32768L;
+            prof_array[6] = 70536L;
+            prof_array[7] = 119000L;
+            prof_array[8] = 226410L;
+            prof_array[9] = 709410L;
+            prof_array[10] = 2973307L;
+            prof_array[11] = 500000000L;
+            break;
+        case CreatureClass::DEATHKNIGHT:
+        case CreatureClass::MONK:
+        case CreatureClass::RANGER:
+            prof_array[0] = 0L;
+            prof_array[1] = 1024L;
+            prof_array[2] = 8192L;
+            prof_array[3] = 16384L;
+            prof_array[4] = 32768L;
+            prof_array[5] = 65536L;
+            prof_array[6] = 105000L;
+            prof_array[7] = 165410L;
+            prof_array[8] = 287306L;
+            prof_array[9] = 809410L;
+            prof_array[10] = 3538232L;
+            prof_array[11] = 500000000L;
+            break;
+        default:
+            prof_array[0] = 0L;
+            prof_array[1] = 1024L;
+            prof_array[2] = 40000L;
+            prof_array[3] = 80000L;
+            prof_array[4] = 120000L;
+            prof_array[5] = 160000L;
+            prof_array[6] = 205000L;
+            prof_array[7] = 222000L;
+            prof_array[8] = 380000L;
+            prof_array[9] = 965410L;
+            prof_array[10] = 5495000;
+            prof_array[11] = 500000000L;
+            break;
+    }
+
+    n = player->getRealm((Realm)index);
+    for(i=0; i<11; i++)
+        if(n < prof_array[i+1]) {
+            prof = 10*i;
+            break;
+        }
+
+    prof += ((n - prof_array[i])*10) / (prof_array[i+1] - prof_array[i]);
+
+    return(prof);
+}
