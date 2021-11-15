@@ -108,7 +108,7 @@ struct namableCmp {
 };
 
 typedef std::pair<std::string, std::string> accountDouble;
-typedef std::map<std::string, MxpElement*, comp> MxpElementMap;
+typedef std::map<std::string, MxpElement, comp> MxpElementMap;
 typedef std::map<std::string, std::string, comp> stringMap;
 typedef std::map<std::string, SkillInfo, comp> SkillInfoMap;
 typedef std::map<std::string, Effect, comp> EffectMap;

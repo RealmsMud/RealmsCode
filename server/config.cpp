@@ -39,6 +39,7 @@
 #include "fishing.hpp"         // for Fishing
 #include "global.hpp"          // for CUSTOM_COLOR_ADMIN, CUSTOM_COLOR_BROAD...
 #include "mud.hpp"             // for MAXINT
+#include "mxp.hpp"             // for MxpElement
 #include "paths.hpp"           // for checkDirExists, checkPaths
 #include "proxy.hpp"           // for ProxyManager
 #include "skills.hpp"          // for SkillInfo

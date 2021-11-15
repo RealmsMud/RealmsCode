@@ -21,14 +21,21 @@
 
 #include <libxml/parser.h>  // for xmlNodePtr
 
+class MxpBuilder;
+
 class MxpElement {
 public:
-    MxpElement(xmlNodePtr rootNode);
-    std::string getDefineString();
+    friend class MxpBuilder;
+    MxpElement() = default;
 
-    std::string getName();
-    std::string getColor();
-    bool isColor();
+    MxpElement(const MxpElement&) = delete;  // No Copies
+    MxpElement(MxpElement&&) = default;      // Only Moves
+    
+    std::string getDefineString() const;
+
+    const std::string & getName() const;
+    const std::string & getColor() const;
+    bool isColor() const;
 
 protected:
     std::string name;

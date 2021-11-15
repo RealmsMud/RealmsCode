@@ -60,6 +60,7 @@ set(COMMON_HEADER_FILES
     include/builders/fluentBuilder.hpp
     include/builders/fluentBuilderEnd.hpp
     include/builders/msdpBuilder.hpp
+    include/builders/mxpBuilder.hpp
     include/builders/skillBuilder.hpp
     include/builders/songBuilder.hpp
 
@@ -334,6 +335,7 @@ set(COMMON_SOURCE_FILES
     server/memory.cpp
     server/msdp.cpp
     server/msdpLoader.cpp
+    server/mxpLoader.cpp
     server/mudObject.cpp
     server/mxp.cpp
     server/pythonHandler.cpp
@@ -391,7 +393,6 @@ set(COMMON_SOURCE_FILES
     xml/hooks-xml.cpp
     xml/location-xml.cpp
     xml/monsters-xml.cpp
-    xml/mxp-xml.cpp
     xml/objects-xml.cpp
     xml/players-xml.cpp
     xml/property-xml.cpp
@@ -417,7 +418,7 @@ set(COMMON_SOURCE_FILES
     wip/fighters.cpp
 
 
-    )
+    server/mxpLoader.cpp)
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 #set_property(TARGET RealmsLib PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
