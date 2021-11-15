@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef SKILLS_H_
-#define SKILLS_H_
+
+#pragma once
 
 #include <list>
 
@@ -65,13 +65,6 @@ std::string getSkillLevelStr(int gained);
 // SkillInfo - Class to store base information about skills
 //**********************************************************************
 
-class SkillCost {
-public:
-    SkillCost(xmlNodePtr rootNode);
-    ResourceType resource;  // What type of resource
-    int cost;               // How much of the resource
-
-};
 
 // Generic information for a skill
 class SkillInfo : public virtual Nameable {
@@ -101,48 +94,6 @@ public:
 
 };
 
-//**********************************************************************
-// SkillCommand - Subclass of SkillInfo - A skill that is a command
-//**********************************************************************
-
-class SkillCommand : public virtual SkillInfo, public virtual Command {
-    friend class Config;
-public:
-    SkillCommand();
-    SkillCommand(std::string_view pCmdStr) {
-        name = pCmdStr;
-    }
-    int execute(Creature* player, cmd* cmnd) const;
-
-protected:
-    TargetType targetType;          // What sort of target?
-    bool offensive{};                 // Is this an offensive skill? Default: Yes         // *
-
-    bool usesAttackTimer{};           // Delay/cooldown is also affected by the attack timer (True by default)
-    int cooldown{};                   // Delay/cooldown on this skill * 10.  (10 = 1.0s delay)
-    int failCooldown{};               // Delay/cooldown on this skill on failure
-    std::list<SkillCost> resources; // Resources this skill uses
-    std::string pyScript;                 // Python script for this skillCommand
-
-    std::list<std::string> aliases;
-
-private:
-    int (*fn)(Creature* player, cmd* cmnd){};
-
-public:
-    bool checkResources(Creature* creature) const;
-    void subResources(Creature* creature);
-
-    TargetType getTargetType() const;
-    bool isOffensive() const;
-    bool runScript(Creature* actor, MudObject* target, Skill* skill) const;
-
-    bool getUsesAttackTimer() const;
-    bool hasCooldown() const;
-    int getCooldown() const;
-    int getFailCooldown() const;
-
-};
 
 //**********************************************************************
 // Skill - Keeps track of skill information for a Creature
@@ -192,6 +143,3 @@ public:
     const SkillInfo * getSkillInfo();
 
 };
-
-
-#endif /*SKILLS_H_*/

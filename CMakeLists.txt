@@ -51,7 +51,7 @@ SET(REALMS_SOURCE_FILES
 
 set(LIST_SOURCE_FILES
     main/list.cpp
-        )
+    )
 
 set(COMMON_HEADER_FILES
 
@@ -148,8 +148,9 @@ set(COMMON_HEADER_FILES
     include/serverTimer.hpp
     include/ships.hpp
     include/size.hpp
-    include/skillGain.hpp
     include/skills.hpp
+    include/skillGain.hpp
+    include/skillCommand.hpp
     include/socials.hpp
     include/socket.hpp
     include/songs.hpp
@@ -227,7 +228,10 @@ set(COMMON_SOURCE_FILES
     creatures/creature.cpp
     creatures/creature2.cpp
     creatures/creatureAttr.cpp
+    creatures/creatureEffects.cpp
+    creatures/creatureSkills.cpp
     creatures/creatures.cpp
+    creatures/inventory.cpp
     creatures/lasttime.cpp
     creatures/monType.cpp
     creatures/monsters.cpp
@@ -291,6 +295,7 @@ set(COMMON_SOURCE_FILES
     players/pets.cpp
     players/player.cpp
     players/playerClass.cpp
+    players/playerEffects.cpp
     players/playerInfo.cpp
     players/playerTitle.cpp
     players/players.cpp
@@ -411,7 +416,8 @@ set(COMMON_SOURCE_FILES
 
     wip/fighters.cpp
 
-    players/playerEffects.cpp creatures/inventory.cpp creatures/creatureEffects.cpp creatures/creatureSkills.cpp)
+
+    )
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 #set_property(TARGET RealmsLib PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
