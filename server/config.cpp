@@ -41,7 +41,8 @@
 #include "mud.hpp"             // for MAXINT
 #include "paths.hpp"           // for checkDirExists, checkPaths
 #include "proxy.hpp"           // for ProxyManager
-#include "skills.hpp"          // for SkillCommand, SkillInfo
+#include "skills.hpp"          // for SkillInfo
+#include "skillCommand.hpp"    // for SkillCommand
 #include "socials.hpp"         // for SocialCommand
 #include "specials.hpp"        // for SA_MAX_FLAG, SA_NO_FLAG
 #include "structs.hpp"         // for MudFlag
@@ -81,7 +82,7 @@ Config::Config() {
     listing = false;
 }
 
-Config::~Config() {
+Config::~Config() noexcept(false) {
     if(inUse)
         throw(std::runtime_error("Error, trying to destroy config\n"));
     else

@@ -48,7 +48,7 @@
 #include "paths.hpp"                             // for Help, BuilderHelp
 #include "server.hpp"                            // for Server, gServer
 #include "ships.hpp"                             // for cmdQueryShips
-#include "skills.hpp"                            // for SkillCommand
+#include "skillCommand.hpp"                      // for SkillCommand
 #include "socials.hpp"                           // for SocialCommand
 #include "songs.hpp"                             // for Song
 #include "structs.hpp"                           // for Command, Spell, PlyC...

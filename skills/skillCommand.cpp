@@ -16,6 +16,8 @@
  *
  */
 
+#include "skillCommand.hpp"
+
 #include <fmt/format.h>              // for format
 #include <list>                      // for list, operator==, _List_const_it...
 #include <pybind11/pybind11.h>       // for module
@@ -322,5 +324,6 @@ void SkillCommand::subResources(Creature* creature) {
 }
 
 int SkillCommand::execute(Creature* player, cmd* cmnd) const {
-    return((fn)(player, cmnd));
+
+    return fn(player, cmnd);
 }

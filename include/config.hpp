@@ -157,7 +157,7 @@ public:
     Config(const Config&) = delete;
     Config(Config&&) = delete;
 private:
-    ~Config();
+    ~Config() noexcept(false);
     static Config* myInstance;
     bool inUse;
 

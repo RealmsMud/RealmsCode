@@ -45,6 +45,7 @@
 #include "random.hpp"                // for Random
 #include "server.hpp"                // for Server, gServer
 #include "skills.hpp"                // for Skill, SkillInfo, SkillGainType
+#include "skillCommand.hpp"          // for SkillCommand
 #include "utils.hpp"                 // for MIN, MAX
 #include "xml.hpp"                   // for loadPlayer
 
