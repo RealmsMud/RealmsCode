@@ -24,13 +24,13 @@
 #include "mxp.hpp"     // for MxpElement
 #include "socket.hpp"  // for Socket, MXP_BEG, MXP_END
 
-std::string MxpElement::getName() {
+const std::string & MxpElement::getName() const {
     return(name);
 }
-std::string MxpElement::getColor() {
+const std::string & MxpElement::getColor() const {
     return(color);
 }
-bool MxpElement::isColor() {
+bool MxpElement::isColor() const {
     return(!color.empty());
 }
 
@@ -43,17 +43,14 @@ void Socket::defineMxp() {
 
     bprint(MXP_BEG "VERSION" MXP_END);
     bprint(MXP_BEG "SUPPORT" MXP_END);
-    for(MxpElementMap::value_type p : gConfig->mxpElements) {
-        bprint(p.second->getDefineString());
+    for(const auto& [mxpName, mxpElement] : gConfig->mxpElements) {
+        bprint(mxpElement.getDefineString());
     }
 
 }
 
 
 void Config::clearMxpElements() {
-    for(const MxpElementMap::value_type& p : mxpElements) {
-        delete p.second;
-    }
     mxpElements.clear();
     mxpColors.clear();
 }
@@ -62,7 +59,7 @@ std::string& Config::getMxpColorTag(const std::string &str) {
     return(mxpColors[str]);
 }
 
-std::string MxpElement::getDefineString() {
+std::string MxpElement::getDefineString() const {
     std::ostringstream oStr;
 
     oStr << MXP_BEG;
