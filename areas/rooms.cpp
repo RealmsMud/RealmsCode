@@ -959,10 +959,9 @@ void UniqueRoom::destroy() {
     saveToFile(0, LoadType::LS_BACKUP);
     char    filename[256];
     strcpy(filename, roomPath(info));
-    unlink(filename);
     expelPlayers(true, true, true);
     gServer->roomCache.remove(info);
-    delete this;
+    unlink(filename);
 }
 
 //*********************************************************************
