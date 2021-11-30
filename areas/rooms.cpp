@@ -19,7 +19,6 @@
 #include <stdarg.h>                    // for va_list, va_end, va_start
 #include <unistd.h>                    // for unlink
 #include <algorithm>                   // for find
-#include <compare>                     // for operator<, strong_ordering
 #include <cstring>                     // for memset, strcpy
 #include <ctime>                       // for time
 #include <list>                        // for operator==, list<>::iterator

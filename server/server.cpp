@@ -35,7 +35,6 @@
 #include <boost/iterator/iterator_traits.hpp>       // for iterator_value<>:...
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cerrno>                                   // for EWOULDBLOCK, errno
-#include <compare>                                  // for operator<, strong...
 #include <cstdio>                                   // for snprintf, sprintf
 #include <cstdlib>                                  // for exit, abort, srand
 #include <cstring>                                  // for memset, strcpy

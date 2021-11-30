@@ -17,7 +17,6 @@
  */
 
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
-#include <compare>                                  // for operator<, strong...
 #include <list>                                     // for list, operator==
 #include <map>                                      // for operator==, map
 #include <ostream>                                  // for basic_ostream::op...

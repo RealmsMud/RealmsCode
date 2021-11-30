@@ -24,6 +24,7 @@
 #include "area.hpp"                    // for Area
 #include "lru/lru-cache.hpp"           // for lru_cache
 #include "mudObjects/areaRooms.hpp"    // for AreaRoom
+#include "mudObjects/objects.hpp"      // for Object
 #include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
 #include "server.hpp"                  // for Server, RoomCache, gServer
 

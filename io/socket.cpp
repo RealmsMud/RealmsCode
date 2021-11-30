@@ -37,7 +37,6 @@
 #include <boost/tokenizer.hpp>                      // for tokenizer
 #include <cctype>                                   // for isalpha, isdigit
 #include <cerrno>                                   // for EWOULDBLOCK, errno
-#include <compare>                                  // for operator>=, opera...
 #include <cstdarg>                                  // for va_end, va_list
 #include <cstdio>                                   // for fseek, size_t, ftell
 #include <cstdlib>                                  // for free, atol, calloc

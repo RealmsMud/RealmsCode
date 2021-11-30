@@ -41,9 +41,9 @@ void Config::clearWebhookTokens() {
     webhookTokens.clear();
 }
 
-std::string getUsername(dpp::guild *guild, dpp::user *author) {
-    const auto member = guild->members.find(author->id);
-    return ((member != guild->members.end() && !member->second.nickname.empty()) ? member->second.nickname : author->username);
+std::string getUsername(dpp::guild *guild, const dpp::user& author) {
+    const auto member = guild->members.find(author.id);
+    return ((member != guild->members.end() && !member->second.nickname.empty()) ? member->second.nickname : author.username);
 }
 
 
@@ -102,49 +102,51 @@ bool Server::initDiscordBot() {
     });
 
     discordBot->on_message_create([bot=this->discordBot](const dpp::message_create_t & event) {
-        if (event.msg->author->is_bot()) {
+        if (event.msg.author.is_bot()) {
             // Don't respond to bot messages
             return;
         }
 
-        channelPtr chan = getChannelByDiscordChannel(event.msg->channel_id);
-        auto guild = dpp::find_guild(event.msg->guild_id);
+        channelPtr chan = getChannelByDiscordChannel(event.msg.channel_id);
+        auto guild = dpp::find_guild(event.msg.guild_id);
         if (chan) {
             // Second: See if we have a channel
-            const std::string username = getUsername(guild, event.msg->author) + " [Discord]";
+            const std::string username = getUsername(guild, event.msg.author) + " [Discord]";
             std::ostringstream contentStr;
 
-            if (!event.msg->content.empty()) {
-                std::string content = event.msg->content;
+            if (!event.msg.content.empty()) {
+                std::string content = event.msg.content;
 
                 // Replace all mentions with the actual users
-                for (auto &[user, guildMember]: event.msg->mentions) {
-                    boost::replace_all(content, fmt::format("<@!{}>", guildMember.user_id), fmt::format("@{}", guildMember.nickname) );
+                for (auto &[user, guildMember]: event.msg.mentions) {
+                    const auto &mentionName = !guildMember.nickname.empty() ? guildMember.nickname : user.username;
+                    boost::replace_all(content, fmt::format("<@!{}>", guildMember.user_id), fmt::format("@{}", mentionName) );
                 }
-                for (auto &mention: event.msg->mention_channels) {
+
+                for (auto &mention: event.msg.mention_channels) {
                     boost::replace_all(content, fmt::format("<#{}>", mention.id), fmt::format("#{}", mention.name));
                 }
-                for (auto &mention: event.msg->mention_roles) {
+                for (auto &mention: event.msg.mention_roles) {
                     boost::replace_all(content, fmt::format("<@&{}>", mention), fmt::format("@{}", dpp::find_role(mention)->name));
                 }
                 contentStr << content;
             }
 
-            if (!event.msg->attachments.empty())
-                for (auto& attachment : event.msg->attachments)
+            if (!event.msg.attachments.empty())
+                for (auto& attachment : event.msg.attachments)
                     contentStr << attachment.url;
 
-            if (!event.msg->embeds.empty())
-                for (auto& embed: event.msg->embeds)
+            if (!event.msg.embeds.empty())
+                for (auto& embed: event.msg.embeds)
                     contentStr << embed.url;
 
             sendGlobalComm(nullptr, escapeColor(contentStr.str()), "", 0, chan, "", username, username);
         } else {
             // Third? Generic fallback... or do nothing
-            std::cout << "Got msg " << event.msg->content << " in channel " << event.msg->channel_id << " from "
-                      << event.msg->author->username << " isBot: " << event.msg->author->is_bot() << std::endl;
-            if (event.msg->content == "!ping") {
-                bot->message_create(dpp::message(event.msg->channel_id, "Pong!"));
+            std::cout << "Got msg " << event.msg.content << " in channel " << event.msg.channel_id << " from "
+                      << event.msg.author.username << " isBot: " << event.msg.author.is_bot() << std::endl;
+            if (event.msg.content == "!ping") {
+                bot->message_create(dpp::message(event.msg.channel_id, "Pong!"));
             }
         }
     });
@@ -175,9 +177,7 @@ bool Server::sendDiscordWebhook(long webhookID, int type, const std::string &aut
         myMessage = dpp::message(msg).set_allowed_mentions(true, false, false, false, {}, {});
 
         if(!author.empty()) {
-            auto myAuthor = new dpp::user();
-            myAuthor->username = author;
-            myMessage.author = myAuthor;
+            myMessage.author.username = author;
         }
     }
 

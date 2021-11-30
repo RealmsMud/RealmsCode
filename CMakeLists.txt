@@ -32,7 +32,7 @@ message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} lib/pybind11/include)
 
 include_directories("include")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 if($ENV{LEAK})

@@ -18,7 +18,6 @@
 
 #include <libxml/parser.h>                          // for xmlFreeDoc, xmlCl...
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
-#include <compare>                                  // for operator<, strong...
 #include <cstring>                                  // for strcpy
 #include <ctime>                                    // for time
 #include <libxml/xmlstring.h>                       // for BAD_CAST

@@ -19,10 +19,7 @@
 #include <libxml/parser.h>                     // for xmlDocGetRootElement
 #include <algorithm>                           // for copy, sort
 #include <boost/algorithm/string/replace.hpp>  // for replace_all, replace_a...
-#include <boost/filesystem/directory.hpp>      // for directory_iterator
-#include <boost/filesystem/operations.hpp>     // for is_directory, is_regul...
-#include <boost/filesystem/path.hpp>           // for path, operator<, swap
-#include <boost/filesystem/path_traits.hpp>    // for filesystem
+#include <boost/filesystem.hpp>                // for directory_iterator, path
 #include <boost/iterator/iterator_facade.hpp>  // for operator!=
 #include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
 #include <deque>                               // for _Deque_iterator
