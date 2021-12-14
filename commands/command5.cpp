@@ -650,8 +650,6 @@ int cmdQuit(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdChangeStats(Player* player, cmd* cmnd) {
-    player->print("Disabled\n");
-    return(0);
     player->changeStats();
     return(0);
 }
@@ -768,6 +766,7 @@ void Player::changingStats(std::string str) {
         for(a=0; a<5; a++)
             tstat.num[a] = nstat.num[a];
         tstat.hp = nstat.hp;
+        tstat.mp = nstat.mp;
 
         getSock()->setState(CON_CHANGING_STATS_CONFIRM);
 
@@ -786,8 +785,8 @@ void Player::changingStats(std::string str) {
             piety.setCur((short)tstat.num[4]);
 
             hp.setMax(tstat.hp);
+            mp.setMax(tstat.mp);
 
-            clearFlag(P_CAN_CHANGE_STATS);
             getSock()->setState(CON_PLAYING);
             return;
 
