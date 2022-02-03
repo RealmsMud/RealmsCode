@@ -38,6 +38,7 @@
 #include "mudObjects/monsters.hpp"               // for Monster
 #include "mudObjects/players.hpp"                // for Player
 #include "socket.hpp"                            // for Socket, Socket::Sock...
+#include "utils.hpp"
 
 #define CLEAR       "\033[0m"       // Resets color
 #define C_BLACK     "\033[0;30m"    // Normal colors
@@ -446,7 +447,7 @@ std::string escapeColor(std::string_view colored) {
 
 
 std::string padColor(const std::string &toPad, size_t pad) {
-    pad -= lengthNoColor(toPad);
+    pad -= MAX(lengthNoColor(toPad), pad);
     if(pad <= 0)
         return {toPad};
     else
