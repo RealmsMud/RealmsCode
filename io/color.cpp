@@ -447,7 +447,7 @@ std::string escapeColor(std::string_view colored) {
 
 
 std::string padColor(const std::string &toPad, size_t pad) {
-    pad -= MAX(lengthNoColor(toPad), pad);
+    pad -= MIN(lengthNoColor(toPad), pad);
     if(pad <= 0)
         return {toPad};
     else
