@@ -406,8 +406,14 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->print("You aren't powerful enough to magically unlock that exit.\n");
         return(0);
     }
-    if(exit->flagIsSet(X_UNPICKABLE) || exit->flagIsSet(X_PORTAL)) {
+    if(exit->flagIsSet(X_UNPICKABLE) || exit->flagIsSet(X_PORTAL) {
         player->print("The spell fizzles.\n");
+        return(0);
+    }
+
+    if(exit->flagIsSet(X_NO_KNOCK_SPELL)) {
+        player->print("The %s glows brightly, resisting your magic.\n", exit->getCName());
+        broadcast(player->getSock(), player->getParent(), "The %s glows brightly, resisting %M's magical knock.^x",exit->getCName(), player);
         return(0);
     }
 

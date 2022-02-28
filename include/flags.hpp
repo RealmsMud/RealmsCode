@@ -860,6 +860,7 @@
 #define X_CAN_LOOK                  93      // Can look through this exit (free scout)
 #define X_LOOK_ONLY                 94      // Can only look through this exit (free scout)
 #define X_LOCK_AFTER_USAGE          95      // Exit re-locks after single usage
-#define MAX_EXIT_FLAGS              96      // Incriment when adding... check structs.h for max
+#define X_NO_KNOCK_SPELL            96      // Exit immune to knock spell
+#define MAX_EXIT_FLAGS              97      // Incriment when adding... check structs.h for max
 #endif /*FLAGS_H_*/
 
