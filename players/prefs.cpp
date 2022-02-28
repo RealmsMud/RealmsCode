@@ -112,8 +112,6 @@ prefInfo prefList[] =
 
     { "-Display",   0, nullptr, "", false },
     { "showall",    P_SHOW_ALL_PREFS,       nullptr,      "show all preferences",     false },
-    { "short",      P_NO_SHORT_DESCRIPTION, nullptr,      "short description",        true },
-    { "long",       P_NO_LONG_DESCRIPTION,  nullptr,      "long description",         true },
     { "nlprompt",   P_NEWLINE_AFTER_PROMPT, nullptr,      "newline after prompt",     false },
     { "xpprompt",   P_SHOW_XP_IN_PROMPT,    nullptr,      "show exp in prompt",       false },
     { "prompt",     P_PROMPT,               nullptr,      "descriptive prompt",       false },

@@ -341,6 +341,16 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 addSkill("ring",initialSkill);
             }
         }
+
+         if(isPlayer()) {   
+
+            if(getVersion() < "2.52") {
+    #define P_NO_LONG_DESCRIPTION_OLD      4
+    #define P_NO_SHORT_DESCRIPTION_OLD     5
+                clearFlag(P_NO_LONG_DESCRIPTION_OLD);
+                clearFlag(P_NO_SHORT_DESCRIPTION_OLD);
+            }
+        }
     }
 
     setVersion();
