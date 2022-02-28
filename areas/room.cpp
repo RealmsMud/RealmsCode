@@ -635,10 +635,10 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
             oStr << uRoom->info.str() << " - ";
         oStr << uRoom->getName() << "^x\n\n";
 
-        if(!player->flagIsSet(P_NO_SHORT_DESCRIPTION) && uRoom->getShortDescription() != "")
+        if(uRoom->getShortDescription() != "")
             oStr << uRoom->getShortDescription() << "\n";
 
-        if(!player->flagIsSet(P_NO_LONG_DESCRIPTION) && uRoom->getLongDescription() != "")
+        if(uRoom->getLongDescription() != "")
             oStr << uRoom->getLongDescription() << "\n";
 
     } else {
