@@ -134,8 +134,8 @@
 #define P_HIDDEN                    1        // Hidden
 #define P_HARDCORE                  2        // A hardcore character: death is permanent.
 #define P_NO_BROADCASTS             3        // Don't show broadcasts
-#define P_NO_LONG_DESCRIPTION       4        // Don't show long description
-#define P_NO_SHORT_DESCRIPTION      5        // Don't show short description
+// free                             4
+// free                             5
 #define P_IGNORE_GOSSIP             6        // ignore gossip channel
 #define P_IGNORE_CLAN               7        // ignore clan channel
 #define P_PORTAL                    8        // portal
@@ -862,6 +862,6 @@
 #define X_LOCK_AFTER_USAGE          95      // Exit re-locks after single usage
 #define X_NO_KNOCK_SPELL            96      // Immune to knock spell
 #define X_SEL_KENKU                 97      // race selective: kenku
-#define MAX_EXIT_FLAGS              98      // Incriment when adding... check structs.h for max
+#define MAX_EXIT_FLAGS              98      // Incriment when adding... check structs.h for ma
 #endif /*FLAGS_H_*/
 
