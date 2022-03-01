@@ -190,6 +190,11 @@ void Player::init() {
        addPermEffect("warmth"); 
     }
 
+    //Kenku can speak any language, just like a parrot, even though they may not understand
+     if(race == KENKU) {
+       addPermEffect("tongues"); 
+    }
+
     if(!current_language) {
         initLanguages();
         current_language = LCOMMON;
@@ -1198,6 +1203,9 @@ void Player::initLanguages() {
             learnLanguage(LGOBLINOID);
             learnLanguage(LTIEFLING);
             break;
+        case KENKU:
+            learnLanguage(LKENKU);
+            break;
     } // End switch.
 
     switch(cClass) {
@@ -1423,6 +1431,29 @@ int Player::getSneakChance()  {
         break;
     }
 
+    //Racial quirk sneak bonus %
+    switch(getRace()) { 
+        case KOBOLD:   //+10%
+            chance = (chance*110)/100;
+            break;
+        case KENKU:    //+15%
+            chance = (chance*115)/100;
+            break;
+        case HALFLING: //+20%
+            chance = (chance*120)/100;
+            break;
+        case ELF:      //+25% in forest
+            if(getConstRoomParent()->isForest())
+                chance = (chance*125)/100;
+            break;
+        case DARKELF:  //+10% when underground
+            if(getConstRoomParent()->flagIsSet(R_UNDERGROUND))
+                chance = (chance*110)/100;
+            break;
+        default:
+            break;
+    }
+
     if(isBlind())
         chance = MIN(20, chance);
 
@@ -1432,6 +1463,7 @@ int Player::getSneakChance()  {
         if(cClass == CreatureClass::DRUID && getConstRoomParent()->isForest())
             chance += 5;
     }
+
 
     return(MIN(99, chance));
 }

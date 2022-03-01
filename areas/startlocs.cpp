@@ -163,6 +163,11 @@ bool startingChoices(Player *player, std::string str, char *location, bool choos
 
         options.emplace_back("kataran");
 
+    } else if (race == KENKU) {
+
+        options.emplace_back("kenku");
+        options.emplace_back("highport");
+
     } else if (race == HALFORC) {
 
         // half-breeds can start in more places

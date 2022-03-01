@@ -648,6 +648,7 @@ bool Object::raceRestrict(const Creature* creature) const {
         !flagIsSet(O_SEL_BARBARIAN) &&
         !flagIsSet(O_SEL_KATARAN) &&
         !flagIsSet(O_SEL_TIEFLING) &&
+        !flagIsSet(O_SEL_KENKU) &&
         !flagIsSet(O_RSEL_INVERT)
     )
         return(false);
@@ -673,7 +674,8 @@ bool Object::raceRestrict(const Creature* creature) const {
         (flagIsSet(O_SEL_CAMBION) && creature->isRace(CAMBION)) ||
         (flagIsSet(O_SEL_BARBARIAN) && creature->isRace(BARBARIAN)) ||
         (flagIsSet(O_SEL_KATARAN) && creature->isRace(KATARAN)) ||
-        (flagIsSet(O_SEL_TIEFLING) && creature->isRace(TIEFLING))
+        (flagIsSet(O_SEL_TIEFLING) && creature->isRace(TIEFLING)) ||
+        (flagIsSet(O_SEL_KENKU) && creature->isRace(KENKU))
     );
 
     if(flagIsSet(O_RSEL_INVERT)) pass = !pass;

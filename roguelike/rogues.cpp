@@ -483,15 +483,25 @@ int cmdHide(Player* player, cmd* cmnd) {
         return(0);
     }
 
+
+
     player->lasttime[LT_HIDE].ltime = t;
-    if( player->getClass() == CreatureClass::THIEF ||
-        player->getClass() == CreatureClass::ASSASSIN ||
-        player->getClass() == CreatureClass::ROGUE ||
-        player->getClass() == CreatureClass::RANGER
-    )
-        player->lasttime[LT_HIDE].interval = 5;
+    if (player->getClass() == CreatureClass::THIEF || player->getClass() == CreatureClass::ASSASSIN ||
+        player->getClass() == CreatureClass::ROGUE || player->getClass() == CreatureClass::RANGER) 
+    {
+        if (player->getRace() == HALFLING || player->getRace() == KENKU || player->getRace() == KOBOLD)
+            player->lasttime[LT_HIDE].interval = 4;
+        else
+            player->lasttime[LT_HIDE].interval = 5;
+    }
     else
-        player->lasttime[LT_HIDE].interval = 15;
+    {
+        if (player->getRace() == HALFLING || player->getRace() == KENKU || player->getRace() == KOBOLD)
+            player->lasttime[LT_HIDE].interval = 9;
+        else
+            player->lasttime[LT_HIDE].interval = 15;
+    
+    }
 
 
     if(player->getSecondClass() == CreatureClass::THIEF || player->getSecondClass() == CreatureClass::ASSASSIN || (player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA))
@@ -547,11 +557,6 @@ int cmdHide(Player* player, cmd* cmnd) {
             break;
         }
 
-
-        if(player->isStaff())
-            chance = 101;
-
-
         if(player->isEffected("camouflage") && player->getRoomParent()->isOutdoors())
             chance += 20;
 
@@ -572,11 +577,37 @@ int cmdHide(Player* player, cmd* cmnd) {
             player->print("You have trouble hiding while inside.\n");
         }
 
-        if(player->inCombat())
-            chance = 0;
+        int mult=0;
+
+        //Racial quirk hide bonus %
+        switch(player->getRace()) { 
+            case KOBOLD:   //+10%
+            case KENKU:    
+                chance = (chance*110)/100;
+                break;
+            case HALFLING: //+20%
+                mult=
+                chance = (chance*120)/100;
+                break;
+            case ELF:      //+25% in forest
+                if(player->getConstRoomParent()->isForest())
+                    chance = (chance*125)/100;
+                break;
+            default:
+                break;
+        }
 
         if(player->isBlind())
             chance = MIN(chance, 20);
+
+        if(player->inCombat())
+            chance = 0;
+
+        chance = MIN(99,chance);
+
+        if(player->isStaff())
+            chance = 101;
+
 
         if(Random::get(1,100) <= chance || player->isEffected("mist")) {
             player->setFlag(P_HIDDEN);

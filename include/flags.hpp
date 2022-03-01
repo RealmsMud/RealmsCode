@@ -282,7 +282,7 @@
 #define P_LANG_INFERNAL             148      // Player speaks infernal (cambion)
 #define P_LANG_BARBARIAN            149      // Player speaks barbarian
 #define P_LANG_KATARAN              150      // Player speaks kataran
-// free                             151
+#define P_LANG_KENKU                151      // Player speaks kenku
 // free                             152
 // free                             153
 #define P_LANGUAGE_COLORS           154      // Player sees language colors
@@ -711,7 +711,7 @@
 // free                             114
 // free                             115
 // free                             116
-// free                             117
+#define O_SEL_KENKU                 117      // race selective: kenku
 #define O_NO_PAWN                   118      // Object not pawnable
 #define O_BREAK_ON_DROP             119      // Object breaks when drops
 #define O_LORE                      120      // Lore Item
@@ -860,6 +860,8 @@
 #define X_CAN_LOOK                  93      // Can look through this exit (free scout)
 #define X_LOOK_ONLY                 94      // Can only look through this exit (free scout)
 #define X_LOCK_AFTER_USAGE          95      // Exit re-locks after single usage
-#define MAX_EXIT_FLAGS              96      // Incriment when adding... check structs.h for max
+#define X_NO_KNOCK_SPELL            96      // Immune to knock spell
+#define X_SEL_KENKU                 97      // race selective: kenku
+#define MAX_EXIT_FLAGS              98      // Incriment when adding... check structs.h for max
 #endif /*FLAGS_H_*/
 
