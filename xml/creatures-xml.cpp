@@ -353,8 +353,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             }
         }
 
-    
-        
+
     }
 
     setVersion();
