@@ -125,7 +125,7 @@ channelInfo channelList[] = {
     { "admin",      false,   "*CC:ADMIN*",      "(Admin) *OOC-NAME* sent, \"*TEXT*\"",              -1, -1, false,  isAdm,             nullptr,            isAdm,             0,      0,              0, -1, -1},
     { "*s",         false,   "*CC:SEND*",       "=> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isCt,              nullptr,            isCt,              0,      0,              0, 886677295312568440, 409888057916129281},
     { "*send",      false,   "*CC:SEND*",       "=> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isCt,              nullptr,            isCt,              0,      0,              0, 886677295312568440, -1},
-    { "*msg",       false,   "*CC:MESSAGE*",    "-> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isStaff,           nullptr,            isStaff,           0,      P_NO_MSG,               0, -1, -1},
+    { "*msg",       false,   "*CC:MESSAGE*",    "-> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isStaff,           nullptr,            isStaff,           0,      P_NO_MSG,               0, 948453398078955552, 942225119340822528},
     { "*wts",       false,   "*CC:WATCHER*",    "-> *OOC-NAME* sent, \"*TEXT*\"",                   -1, -1, false,  isWatcher,         nullptr,            isWatcher,         0,      P_NO_WTS,               0, -1, -1},
 
     { "cls",        true,   "*CC:CLASS*",       "### *OOC-NAME* sent, \"*TEXT*\".",                 -1, -1, true,   nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_CLASS_SEND,    COM_CLASS, -1, -1},
