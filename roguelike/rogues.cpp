@@ -577,7 +577,7 @@ int cmdHide(Player* player, cmd* cmnd) {
             player->print("You have trouble hiding while inside.\n");
         }
 
-        int mult=0;
+       
 
         //Racial quirk hide bonus %
         switch(player->getRace()) { 
@@ -586,7 +586,6 @@ int cmdHide(Player* player, cmd* cmnd) {
                 chance = (chance*110)/100;
                 break;
             case HALFLING: //+20%
-                mult=
                 chance = (chance*120)/100;
                 break;
             case ELF:      //+25% in forest
