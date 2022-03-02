@@ -124,8 +124,7 @@ int cmdAttack(Creature* creature, cmd* cmnd) {
             pet->getMaster()->smashInvis();
 
             if(pet->isEnemy(victim)) {
-                pet->getMaster()->print("%M will stop attacking %N.\n", pet, victim);
-                pet->clearEnemy(victim);
+                pet->getMaster()->print("%M is already attacking %N.\n", pet, victim);
             } else {
                 creature->getMaster()->print("%M attacks %N.\n", pet, victim);
                 broadcast(creature->getMaster()->getSock(), pet->getRoomParent(), "%M tells %N to attack %N.",
