@@ -217,6 +217,16 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
     if(getVersion() < "2.46l") {
         upgradeStats();
     }
+    
+    
+    if(getVersion() < "2.53") {
+            #define OLD_MAX_PLAYABLE_RACE    21
+            #define OLD_RACE_COUNT           39
+            if (getRace() >= OLD_MAX_PLAYABLE_RACE && getRace() < OLD_RACE_COUNT)
+                setRace(getRace()+10);
+        }
+
+
 
     if(isPlayer()) {
         if(getVersion() < "2.47b") {
@@ -224,6 +234,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         }
     }
     if(isPlayer()) {
+
         if(getVersion() < "2.47b") {
 #define P_OLD_MISTED                55       // Player is in mist form
             if(flagIsSet(P_OLD_MISTED)) {
@@ -341,6 +352,9 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 addSkill("ring",initialSkill);
             }
         }
+
+    
+        
     }
 
     setVersion();

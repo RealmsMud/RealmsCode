@@ -333,31 +333,32 @@ enum Races {
     TIEFLING = 20,
     KENKU = 21,
 
+    
     MAX_PLAYABLE_RACE = 22,
 
     // non-playable
-    LIZARDMAN = 23,
-    CENTAUR = 24,
+    LIZARDMAN = 31,
+    CENTAUR = 32;
 
     // subraces, currently non-playable
-    HALFFROSTGIANT = 25,
-    HALFFIREGIANT = 26,
-    GREYELF = 27,
-    WILDELF = 28,
-    AQUATICELF = 29,
-    DUERGAR = 30,
-    HILLDWARF = 31,
+    HALFFROSTGIANT = 33,
+    HALFFIREGIANT = 34,
+    GREYELF = 35,
+    WILDELF = 36,
+    AQUATICELF = 37,
+    DUERGAR = 38,
+    HILLDWARF = 39,
 
     // non-playable
-    GNOLL = 32,
-    BUGBEAR = 33,
-    HOBGOBLIN = 34,
-    WEMIC = 35,
-    HYBSIL = 36,
-    RAKSHASA = 37,
-    BROWNIE = 38,
-    FIRBOLG = 39,
-    SATYR = 40,
+    GNOLL = 40,
+    BUGBEAR = 41,
+    HOBGOBLIN = 42,
+    WEMIC = 43,
+    HYBSIL = 44,
+    RAKSHASA = 45,
+    BROWNIE = 46,
+    FIRBOLG = 47,
+    SATYR = 48,
 
     RACE_COUNT
 };
