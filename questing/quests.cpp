@@ -1202,7 +1202,7 @@ bool Monster::doTalkAction(Player* target, std::string action, QuestInfo* quest)
         if(isEnemy(target) && !target->checkStaff("%M refuses to talk to you about that.\n", this))
             return(false);
 
-        if(!canSee(target) && !target->checkStaff("^m%M says, \"I'm not telling you about that unless I can see you!\"\n", this))
+        if(!canSee(target) && !target->checkStaff("^m%M says, \"I'm not telling you anything else useful until I can see you!\"\n", this))
             return(false);
 
         if(!quest->canGetQuest(target, this))
