@@ -466,6 +466,8 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
     if(!oldEffect && show)
         newEffect->add();
 
+    newEffect->apply();
+
     effectList.push_back(newEffect);
     if(newEffect->getParent()->getAsRoom())
         newEffect->getParent()->getAsRoom()->addEffectsIndex();

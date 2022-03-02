@@ -17,6 +17,7 @@
  */
 
 #include <pybind11/pybind11.h>       // for class_, module
+#include <pybind11/stl.h>
 #include <string>                    // for string
 
 #include "fishing.hpp"               // for Fishing
@@ -37,8 +38,13 @@ using namespace pybind11::literals;
 
 void init_module_mudObject(py::module &m) {
 
-    py::class_<MonsterSet> monsterSet(m, "MonsterSet");
-    py::class_<PlayerSet>  playerSet(m, "PlayerSet");
+    py::class_<std::set<Monster*, MonsterPtrLess>> monsterSet(m, "MonsterSet");
+    monsterSet.def("__iter__", [](const MonsterSet &s) { return py::make_iterator(s.begin(), s.end()); },
+                 py::keep_alive<0, 1>() /* Essential: keep object alive while iterator exists */);
+
+    py::class_<std::set<Player*, PlayerPtrLess>>  playerSet(m, "PlayerSet");
+    playerSet.def("__iter__", [](const PlayerSet &s) { return py::make_iterator(s.begin(), s.end()); },
+                 py::keep_alive<0, 1>() /* Essential: keep object alive while iterator exists */);
 
 
     py::class_<MudObject> mudObject( m, "MudObject");

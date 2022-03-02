@@ -406,7 +406,7 @@ int splKnock(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->print("You aren't powerful enough to magically unlock that exit.\n");
         return(0);
     }
-    if(exit->flagIsSet(X_UNPICKABLE) || exit->flagIsSet(X_PORTAL) {
+    if(exit->flagIsSet(X_UNPICKABLE) || exit->flagIsSet(X_PORTAL)) {
         player->print("The spell fizzles.\n");
         return(0);
     }
