@@ -336,8 +336,6 @@ bool Config::initCommands() {
     staffCommands.emplace("*restore", 100, dmRestorePlayer, isDm, "Restore a player's experience.");
     staffCommands.emplace("*bank", 100, dmBank, isCt, "");
     staffCommands.emplace("*assets", 100, dmInventoryValue, isCt, "");
-    staffCommands.emplace("*proxy", 100, dmProxy, isCt, "Allow a player to double log.");
-    staffCommands.emplace("*2x", 100, dm2x, isCt, "Allow two accounts to double log.");
     staffCommands.emplace("*bug", 100, dmBugPlayer, isCt, "Record a player's actions.");
     staffCommands.emplace("*kill", 100, dmKillSwitch, isDm, "Kill a player.");
     staffCommands.emplace("*nomnom", 100, dmKillSwitch, isDm, "Kill a player.");

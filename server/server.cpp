@@ -1915,13 +1915,15 @@ bool Server::checkDuplicateName(Socket &sock, bool dis) {
 bool Server::checkDouble(Socket &sock) {
     if(!gConfig->getCheckDouble())
         return(false);
-    if(sock.getPlayer()->flagIsSet(P_ON_PROXY) || sock.getPlayer()->isCt())
+
+    if(sock.getPlayer() && sock.getPlayer()->isCt())
         return(false);
 
-    if(sock.getHostname().find("localhost") != std::string_view::npos)
-        return(false);
+//    if(sock.getHostname().find("localhost") != std::string_view::npos)
+//        return(false);
 
     Player* player=nullptr;
+    int cnt = 0;
     for(Socket &s : sockets) {
         player = s.getPlayer();
         if(!player || &s == &sock)
@@ -1929,17 +1931,18 @@ bool Server::checkDouble(Socket &sock) {
 
         if(player->isCt())
             continue;
-        if(player->flagIsSet(P_LINKDEAD) || player->flagIsSet(P_ON_PROXY))
+        if(player->flagIsSet(P_LINKDEAD))
             continue;
         if(sock.getIp() != s.getIp())
             continue;
-        if(gConfig->canDoubleLog(sock.getPlayer()->getForum(), s.getPlayer()->getForum()))
-            continue;
 
-        s.printColor("^Y\n\nAnother character (%s) from your IP address has just logged in.\n\n",
-            sock.getPlayer()->getCName());
-        s.disconnect();
-        return(false);
+        cnt++;
+
+        if(cnt >= gConfig->getMaxDouble()) {
+            sock.write("\nMaximum number of connections has been exceeded!\n\n");
+            sock.disconnect();
+            return true;
+        }
     }
     return(false);
 }

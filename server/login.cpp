@@ -2341,82 +2341,9 @@ bool nameIsAllowed(std::string str, Socket* sock) {
         }
     }
 
-
     if(!parse_name(str)) {
         sock->print("That name is not allowed.\n");
         return(false);
     }
     return(true);
-}
-
-//*********************************************************************
-//                      addDouble
-//*********************************************************************
-
-void Config::addDoubleLog(std::string_view forum1, std::string_view forum2) {
-    if(forum1.empty() || forum2.empty())
-        return;
-    if(canDoubleLog(forum1, forum2))
-        return;
-
-    accountDouble pair;
-    pair.first = forum1;
-    pair.second = forum2;
-    accountDoubleLog.push_back(pair);
-
-    gConfig->saveDoubleLog();
-}
-
-//*********************************************************************
-//                      remDouble
-//*********************************************************************
-
-void Config::remDoubleLog(std::string_view forum1, std::string_view forum2) {
-    std::list<accountDouble>::iterator it;
-
-    if(forum1.empty() || forum2.empty())
-        return;
-
-    for(it = accountDoubleLog.begin(); it != accountDoubleLog.end() ; it++) {
-        if( ((*it).first == forum1 && (*it).second == forum2) ||
-            ((*it).first == forum2 && (*it).second == forum1)
-        ) {
-            accountDoubleLog.erase(it);
-            gConfig->saveDoubleLog();
-            return;
-        }
-    }
-}
-
-//*********************************************************************
-//                      canDoubleLog
-//*********************************************************************
-
-bool Config::canDoubleLog(std::string_view forum1, std::string_view forum2) const {
-    std::list<accountDouble>::const_iterator it;
-
-    if(forum1.empty() || forum2.empty())
-        return(false);
-
-    for(it = accountDoubleLog.begin(); it != accountDoubleLog.end() ; it++) {
-        if( ((*it).first == forum1 && (*it).second == forum2) ||
-            ((*it).first == forum2 && (*it).second == forum1)
-        )
-            return(true);
-    }
-
-    return(false);
-}
-
-//*********************************************************************
-//                      listDoubleLog
-//*********************************************************************
-
-void Config::listDoubleLog(const Player* viewer) const {
-    std::list<accountDouble>::const_iterator it;
-
-    viewer->printColor("^YAccounts that may double log:\n");
-    for(it = accountDoubleLog.begin(); it != accountDoubleLog.end() ; it++) {
-        viewer->print("   %-20s %-20s\n", (*it).first.c_str(), (*it).second.c_str());
-    }
 }

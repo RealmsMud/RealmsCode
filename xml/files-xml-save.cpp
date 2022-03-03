@@ -206,28 +206,3 @@ xmlNodePtr saveShortIntArray(xmlNodePtr parentNode, const char* rootName, const 
 //#undef BIT_SET
 //#undef BIT_CLEAR
 
-
-//*********************************************************************
-//                      saveDoubleLog
-//*********************************************************************
-
-void Config::saveDoubleLog() const {
-    std::list<accountDouble>::const_iterator it;
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr      rootNode, curNode;
-    char            filename[80];
-
-    xmlDoc = xmlNewDoc(BAD_CAST "1.0");
-    rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "DoubleLog", nullptr);
-    xmlDocSetRootElement(xmlDoc, rootNode);
-
-    for(it = accountDoubleLog.begin(); it != accountDoubleLog.end() ; it++) {
-        curNode = xml::newStringChild(rootNode, "Accounts");
-        xml::saveNonNullString(curNode, "Forum1", (*it).first);
-        xml::saveNonNullString(curNode, "Forum2", (*it).second);
-    }
-
-    sprintf(filename, "%s/doubleLog.xml", Path::Config);
-    xml::saveFile(filename, xmlDoc);
-    xmlFreeDoc(xmlDoc);
-}

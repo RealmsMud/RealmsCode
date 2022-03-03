@@ -187,7 +187,7 @@ bool Config::loadEffects() {
         .display("^GCamouflage^x")
         .computeScript("effectLib.computeVisibility(actor, effect, applier)")
         .pulsed(true)
-        .pulseScript("effectLib.pulseCamouflage(actor, effect")
+        .pulseScript("effectLib.pulseCamouflage(actor, effect)")
         .pulseDelay(20)
         .type("Positive")
         .selfAddStr("^gYou blend in with your surroundings.^x")

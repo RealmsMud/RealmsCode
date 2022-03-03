@@ -182,7 +182,6 @@ int dmPassword(Player* player, cmd* cmnd);
 int dmRestorePlayer(Player* player, cmd* cmnd);
 int dmBank(Player* player, cmd* cmnd);
 int dmInventoryValue(Player* player, cmd* cmnd);
-int dmProxy(Player* player, cmd* cmnd);
 int dmWarn(Player* player, cmd* cmnd);
 int dmBugPlayer(Player* player, cmd* cmnd);
 int dmKillSwitch(Player* player, cmd* cmnd);
@@ -193,7 +192,6 @@ int dmChangeStats(Player *admin, cmd* cmnd);
 int dmJailPlayer(Player *admin, cmd* cmnd);
 int dmLts(Player* player, cmd* cmnd);
 int dmLtClear(Player* player, cmd* cmnd);
-int dm2x(Player* player, cmd* cmnd);
 
 
 // dmroom.cpp

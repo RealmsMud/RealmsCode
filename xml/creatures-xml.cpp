@@ -345,11 +345,15 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
          if(isPlayer()) {   
 
             if(getVersion() < "2.52") {
-    #define P_NO_LONG_DESCRIPTION_OLD      4
-    #define P_NO_SHORT_DESCRIPTION_OLD     5
+                #define P_NO_LONG_DESCRIPTION_OLD      4
+                #define P_NO_SHORT_DESCRIPTION_OLD     5
                 clearFlag(P_NO_LONG_DESCRIPTION_OLD);
                 clearFlag(P_NO_SHORT_DESCRIPTION_OLD);
             }
+             if(getVersion() < "2.52b") {
+                #define P_CAN_PROXY_OLD 156
+                clearFlag(P_CAN_PROXY_OLD);
+             }
         }
     }
 

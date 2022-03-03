@@ -128,6 +128,7 @@ void Config::loadGeneral(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "ShopNumObjects")) xml::copyToNum(shopNumObjects, curNode);
         else if(NODE_NAME(curNode, "ShopNumLines")) xml::copyToNum(shopNumLines, curNode);
         else if(NODE_NAME(curNode, "CustomColors")) xml::copyToCString(customColors, curNode);
+        else if(NODE_NAME(curNode, "MaxDouble")) xml::copyToNum(maxDouble, curNode);
         else if(!bHavePort && NODE_NAME(curNode, "Port")) xml::copyToNum(portNum, curNode);
 
         curNode = curNode->next;
@@ -210,6 +211,7 @@ bool Config::saveConfig() const {
     if(!bHavePort)
         xml::saveNonZeroNum(curNode, "Port", portNum);
 
+    xml::saveNonZeroNum(curNode, "MaxDouble", maxDouble);
     xml::saveNonNullString(curNode, "MudName", mudName);
     xml::saveNonNullString(curNode, "DmPass", dmPass);
     xml::saveNonNullString(curNode, "Webserver", webserver);

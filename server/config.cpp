@@ -295,7 +295,6 @@ bool Config::loadBeforePython() {
     std::clog << "Loading Alchemy..." << (loadAlchemy() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading MXP Elements..." << (loadMxpElements() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Limited Items..." << (loadLimited() ? "done" : "*** FAILED ***") << std::endl;
-    std::clog << "Loading Double Log Info..." << (loadDoubleLog() ? "done" : "*** FAILED ***") << std::endl;
 
     std::clog << "Loading Calendar...";
     loadCalendar();
@@ -609,6 +608,10 @@ void Config::setNextGuildId(int pNextGuildId) {
 
 bool Config::getCheckDouble() const {
     return checkDouble;
+}
+
+int Config::getMaxDouble() const {
+    return maxDouble;
 }
 
 void Config::setNumGuilds(int guildId) {

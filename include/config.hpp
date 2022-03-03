@@ -387,14 +387,6 @@ public:
     bool swapChecks(const Player* player, const Swap& s);
     bool swapIsInteresting(const MudObject* target) const;
 
-// Double Logging
-    void addDoubleLog(std::string_view forum1, std::string_view forum2);
-    void remDoubleLog(std::string_view forum1, std::string_view forum2);
-    bool canDoubleLog(std::string_view forum1, std::string_view forum2) const;
-    bool loadDoubleLog();
-    void saveDoubleLog() const;
-    void listDoubleLog(const Player* viewer) const;
-
 // Misc
     [[nodiscard]] const RaceData* getRace(std::string race) const;
     [[nodiscard]] const RaceData* getRace(unsigned int id) const;
@@ -520,6 +512,7 @@ private:
     short   supportRequiredForGuild{};
     int     numGuilds{};
     int     nextGuildId{};
+    int     maxDouble = 6; // Defaults to 6, change in config if you want it different
 public:
     [[nodiscard]] int getNextGuildId() const;
     [[nodiscard]] bool getCheckDouble() const;
@@ -688,6 +681,7 @@ public:
     [[nodiscard]] const std::string &getWebhookToken(long webhookID) const;
     void clearWebhookTokens();
 
+    int getMaxDouble() const;
 };
 
 extern Config *gConfig;

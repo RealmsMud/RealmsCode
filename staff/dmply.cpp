@@ -1448,7 +1448,7 @@ int dmRestorePlayer(Player* player, cmd* cmnd) {
 
 #define DM_GEN_BANK     1
 #define DM_GEN_INVVAL   2
-#define DM_GEN_PROXY    3
+// OLD PROXY            3
 #define DM_GEN_WARN     4
 #define DM_GEN_BUG      5
 
@@ -1484,18 +1484,7 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
         player->print("%s's bank balance is: %ldgp.\n", target->getCName(), target->bank[GOLD]);
     else if(what == DM_GEN_INVVAL)
         player->print("%s's total inventory assets: %ldgp.\n", target->getCName(), target->getInventoryValue());
-    else if(what == DM_GEN_PROXY) {
-
-        if(!target->flagIsSet(P_ON_PROXY)) {
-            player->print("%s is now allowed to multi-log for proxy purposes.\n", target->getCName());
-            target->setFlag(P_ON_PROXY);
-        } else {
-            player->print("%s is no longer allowed to multi-log.\n", target->getCName());
-            target->clearFlag(P_ON_PROXY);
-        }
-        target->save(online);
-
-    } else if(what == DM_GEN_WARN) {
+    else if(what == DM_GEN_WARN) {
 
         if(!player->isDm() && target->isDm()) {
             player->print("Don't be silly.\n");
@@ -1592,12 +1581,6 @@ int dmBank(Player* player, cmd* cmnd) {
 //*********************************************************************
 int dmInventoryValue(Player* player, cmd* cmnd) {
     return(dmGeneric(player, cmnd, "*inv", DM_GEN_INVVAL));
-}
-//*********************************************************************
-//                      dmProxy
-//*********************************************************************
-int dmProxy(Player* player, cmd* cmnd) {
-    return(dmGeneric(player, cmnd, "*proxy", DM_GEN_PROXY));
 }
 //*********************************************************************
 //                      dmWarn
@@ -2576,60 +2559,4 @@ int dmLtClear(Player* player, cmd* cmnd) {
     player->print("Last times reset!\n");
     return(0);
 
-}
-
-//*********************************************************************
-//                      dm2x
-//*********************************************************************
-
-int dm2x(Player* player, cmd* cmnd) {
-    std::string forum1;
-    std::string forum2;
-
-    if(cmnd->num == 1) {
-
-        // give them a list
-        player->printColor("Syntax: *2x                          - list accounts that may double log.\n");
-        player->printColor("Syntax: *2x -add ^e<account> <account>^x - allow accounts to double log.\n");
-        player->printColor("Syntax: *2x -del ^e<account> <account>^x - prevent accounts to double log.\n");
-        player->print("\n");
-        gConfig->listDoubleLog(player);
-
-    } else if(!strcmp(cmnd->str[1], "-add")) {
-
-        forum1 = getFullstrText(cmnd->fullstr, 2);
-        forum2 = getFullstrText(cmnd->fullstr, 3);
-        forum1 = forum1.substr(0, forum1.length() - forum2.length() - 1);
-
-        // add a new account pair
-        if(forum1.empty() || forum2.empty()) {
-            player->print("Account names not provided.\n");
-        } else {
-            player->printColor("^G*ADD*^X Accounts \"%s\" and \"%s\" may now double log.\n",
-                forum1.c_str(), forum2.c_str());
-            gConfig->addDoubleLog(forum1, forum2);
-        }
-
-    } else if(!strcmp(cmnd->str[1], "-del") || !strcmp(cmnd->str[1], "-rem")) {
-
-        forum1 = getFullstrText(cmnd->fullstr, 2);
-        forum2 = getFullstrText(cmnd->fullstr, 3);
-        forum1 = forum1.substr(0, forum1.length() - forum2.length() - 1);
-
-        // remove an account pair
-        if(forum1.empty() || forum2.empty()) {
-            player->print("Account names not provided.\n");
-        } else {
-            player->printColor("^R*DEL*^X Accounts \"%s\" and \"%s\" may no longer double log.\n",
-                forum1.c_str(), forum2.c_str());
-            gConfig->remDoubleLog(forum1, forum2);
-        }
-
-    } else {
-        player->printColor("Command not understood.\n");
-        player->printColor("Syntax: *2x                          - list accounts that may double log.\n");
-        player->printColor("Syntax: *2x -add ^e<account> <account>^x - allow accounts to double log.\n");
-        player->printColor("Syntax: *2x -del ^e<account> <account>^x - prevent accounts to double log.\n");
-    }
-    return(0);
 }

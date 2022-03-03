@@ -288,7 +288,7 @@
 #define P_LANGUAGE_COLORS           154      // Player sees language colors
 #define P_LANGUAGE_INITIALIZED      155      // Player language been initialized
 // free                             156
-#define P_ON_PROXY                  157      // Player is allowed to multi-log
+// free (proxy)                     157
 #define P_SECRET_WATCHER            158      // Player does not show up as a watcher
 #define P_GROUP_EXP_ABUSE           159      // No group exp due to abuse
 #define P_WATCHER                   160      // Player is a watcher
