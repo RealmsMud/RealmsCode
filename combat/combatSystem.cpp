@@ -1301,16 +1301,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
         if(computeBonus)
             bonusDamage.set(bonusDamage.get() * mult);
         broadcastGroup(false, victim, "^g%M made a critical %s!\n", this, atk);
-        if( attackType != ATTACK_KICK && weapon && !isDm() && (
-                weapon->flagIsSet(O_ALWAYS_CRITICAL) ||
-                (   !weapon->flagIsSet(O_NEVER_SHATTER) &&
-                    !weapon->flagIsSet(O_STARTING) &&
-                    // using half-percentages here:
-                    // +0 = 3.5%, +1 = 2.5%, +2 = 1.5%, +3 = 0.5%
-                    Random::get(1, 200) <= (7 - weapon->getAdjustment()*2)
-                )
-            )
-        ) {
+        if( attackType != ATTACK_KICK && weapon && !isDm() && weapon->flagIsSet(O_ALWAYS_CRITICAL) && !weapon->flagIsSet(O_NEVER_SHATTER)) {
             printColor("^YYour %s shatters.\n", weapon->getCName());
             broadcast(getSock(), getRoomParent(),"^Y%s %s shattered.", upHisHer(), weapon->getCName());
             retVal = 1;
