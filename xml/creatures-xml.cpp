@@ -354,6 +354,10 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 #define P_CAN_PROXY_OLD 156
                 clearFlag(P_CAN_PROXY_OLD);
              }
+
+             if(getVersion() < "2.52d") {
+                #define P_CAN_MUDMAIL_STAFF_OLD 161
+                clearFlag(P_CAN_MUDMAIL_STAFF_OLD);
         }
     }
 
