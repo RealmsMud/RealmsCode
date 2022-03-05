@@ -292,7 +292,7 @@
 #define P_SECRET_WATCHER            158      // Player does not show up as a watcher
 #define P_GROUP_EXP_ABUSE           159      // No group exp due to abuse
 #define P_WATCHER                   160      // Player is a watcher
-#define P_CAN_MUDMAIL_STAFF         161      // Player can mudmail CTs and DMs
+// free                             161      
 #define P_NO_DUEL_MESSAGES          162      // Player will not see duel death messages
 #define P_BUGGED                    163      // Player is bugged for observation
 #define P_DIED_IN_DUEL              164      // Player just died in a duel - DO NOT SET
