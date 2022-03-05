@@ -358,6 +358,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
              if(getVersion() < "2.52d") {
                 #define P_CAN_MUDMAIL_STAFF_OLD 161
                 clearFlag(P_CAN_MUDMAIL_STAFF_OLD);
+             }
         }
     }
 
