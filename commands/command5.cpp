@@ -650,7 +650,8 @@ int cmdQuit(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdChangeStats(Player* player, cmd* cmnd) {
-    player->changeStats();
+    // player->changeStats();
+    player->print("Disabled\n");
     return(0);
 }
 
