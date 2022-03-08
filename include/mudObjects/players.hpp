@@ -100,7 +100,7 @@ protected:
     std::string lastCommunicate;
     std::string forum;      // forum account this character is associated with
     char songs[32];
-    struct vstat tstat;
+    struct NewStats newStats;
     Anchor *anchor[MAX_DIMEN_ANCHORS];
     cDay *birthday;
     Monster* alias_crt;

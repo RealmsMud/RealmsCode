@@ -1866,7 +1866,7 @@ void Player::validateId() {
 //                      calcStats
 //********************************************************************
 
-void Player::calcStats(vstat sendStat, vstat *toStat) {
+void Player::calcStats(NewStats sendStat, NewStats *toStat) {
     int         i=0, levels = 0, switchNum=0;
     int         lvl=0, r=0;
     int         hptemp=0,mptemp=0;
