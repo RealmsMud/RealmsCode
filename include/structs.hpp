@@ -89,22 +89,14 @@ public:
     char            owner[80]{};
 } etag;
 
-
-typedef struct vstat {
-public:
-    vstat() { num[0] = num[1] = num[2] = num[3] = num[4] = 0;
-            hp = mp = pp = 0; level = race = 0; cls = cls2 = CreatureClass::NONE; };
-    int     num[5]{};
-    int     hp;
-    int     mp;
-    int     pp;
-    int     rp{};
-    char    level;
-    CreatureClass    cls;
-    CreatureClass    cls2;
-    char    race;
-} vstat;
-
+// for changestats
+typedef struct StatsContainer {
+    int st;
+    int de;
+    int co;
+    int in;
+    int pi;
+} StatsContainer;
 
 // Talk effectList tags
 typedef struct tlk_tag {

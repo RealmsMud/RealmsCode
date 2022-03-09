@@ -299,6 +299,9 @@ std::string timeStr(int seconds);
 
 std::string progressBar(int barLength, float percentFull, const std::string &text = "", char progressChar = '=', bool enclosed = true);
 
+std::vector<std::string> splitString(std::string s, std::string delimiter = "");
+std::string joinVector(std::vector<std::string> v, std::string delimiter = "");
+
 bool nameIsAllowed(std::string str, Socket* sock);
 int bonus(unsigned int num);
 int crtWisdom(Creature* creature);

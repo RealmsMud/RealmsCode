@@ -638,8 +638,6 @@ void Player::reset() {
     ansi = 0;
     alias_crt = nullptr;
     scared_of = nullptr;
-    for(i=0; i<5; i++)
-        tnum[i] = 0;
     timeout = 0;
     thirst = 0;
 

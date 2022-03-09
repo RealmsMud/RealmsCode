@@ -61,6 +61,8 @@
 #include "structs.hpp"                           // for daily
 #include "utils.hpp"                             // for MAX, MIN
 
+#include <boost/algorithm/string.hpp>            // split, join
+
 class MudObject;
 
 bool isClass(std::string_view str);
@@ -877,3 +879,21 @@ std::string progressBar(int barLength, float percentFull, const std::string &tex
     return(str);
 }
 
+//*********************************************************************
+//                      splitString
+//*********************************************************************
+
+std::vector<std::string> splitString(std::string s, std::string delimiter)
+{
+    std::vector<std::string> result;
+    return boost::split(result, s, boost::is_any_of(delimiter));
+}
+
+//*********************************************************************
+//                      joinVector
+//*********************************************************************
+
+std::string joinVector(std::vector<std::string> v, std::string delimiter)
+{
+    return boost::join(v, delimiter);
+}
