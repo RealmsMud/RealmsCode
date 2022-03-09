@@ -28,6 +28,7 @@
 #include <ostream>                     // for operator<<, ostringstream, bas...
 #include <string>                      // for string, allocator, operator==
 #include <utility>                     // for pair
+#include <numeric>                     // for accumulate
 
 #include "calendar.hpp"                // for Calendar
 #include "catRef.hpp"                  // for CatRef
@@ -47,13 +48,15 @@
 #include "mudObjects/monsters.hpp"     // for Monster
 #include "mudObjects/players.hpp"      // for Player
 #include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "playerClass.hpp"             // for PlayerClass
+#include "raceData.hpp"                // for RaceData
 #include "os.hpp"                      // for ASSERTLOG
 #include "paths.hpp"                   // for Bank, History, Player, Post
 #include "proto.hpp"                   // for broadcast, low, isCt, lowercize
 #include "server.hpp"                  // for Server, gServer, PlayerMap
 #include "socket.hpp"                  // for Socket
 #include "stats.hpp"                   // for Stat
-#include "structs.hpp"                 // for vstat
+#include "structs.hpp"                 // for StatsContainer
 #include "utils.hpp"                   // for MAX
 #include "web.hpp"                     // for updateRecentActivity, webUnass...
 
@@ -655,27 +658,15 @@ int cmdChangeStats(Player* player, cmd* cmnd) {
 }
 
 void Player::changeStats() {
-    int a=0;
-
     if(!flagIsSet(P_CAN_CHANGE_STATS) && !isCt()) {
         print("You cannot change your stats at this time.\n");
         return;
     } else {
-
-        for(a=0;a<5;a++) {
-            tnum[a] = 0;
-            tstat.num[a] = 0;
-        }
-
-        tstat.hp = 0;
-        tstat.mp = 0;
-        tstat.pp = 0;
-        tstat.rp = 0;
-        tstat.race = 0;
-        tstat.cls = CreatureClass::NONE;
-        tstat.cls2 = CreatureClass::NONE;
-        tstat.level = 0;
-
+        getSock()->getPlayer()->newStats.st = 0;
+        getSock()->getPlayer()->newStats.de = 0;
+        getSock()->getPlayer()->newStats.co = 0;
+        getSock()->getPlayer()->newStats.in = 0;
+        getSock()->getPlayer()->newStats.pi = 0;
 
         broadcast(::isCt, "^y### %s is choosing new stats.", getCName());
         printColor("^yPlease enter a new set of initial stats (56 points):\n");
@@ -693,164 +684,170 @@ void changingStats(Socket* sock, const std::string& str) {
     sock->getPlayer()->changingStats(str);
 }
 void Player::changingStats(std::string str) {
-    int     a, n, i, k, l, sum=0;
-    int     vnum[5];
-    vstat   nstat, sendStat;
+    int sum;
+    std::vector<std::string> inputArgs;
+    std::vector<int> statInput;
+    Socket *sock = getSock();
+    Player *player = sock->getPlayer();
 
-    switch(getSock()->getState()) {
+    switch(sock->getState()) {
     case CON_CHANGING_STATS:
-        n = str.length();
-        l = 0;
-        k = 0;
-        for(i=0; i<=n; i++) {
-            if(str[i]==' ' || str[i]==0) {
-                str[i] = 0;
-                //std::string tmp = str.substr(l);
-                vnum[k++] = atoi(&str[l]);
-                l = i+1;
-            }
-            if(k>4)
-                break;
-        }
-        if(k<5) {
-            print("Please enter all 5 numbers.\n");
-            print("Aborted.\n");
-            getSock()->setState(CON_PLAYING);
-            return;
-        }
-        sum = 0;
-        for(i=0; i<5; i++) {
-            if(vnum[i] < 3 || vnum[i] > 18) {
-                print("No stats < 3 or > 18 please.\n");
-                print("Aborted.\n");
-                getSock()->setState(CON_PLAYING);
-                return;
-            }
-            sum += vnum[i];
-        }
-        if(sum != 56) {
-            print("Stat total must equal 56 points.\n");
-            print("Aborted.\n");
-            getSock()->setState(CON_PLAYING);
+        inputArgs = splitString(str, " ");
+        std::transform(inputArgs.begin(), inputArgs.end(), std::back_inserter(statInput), [](std::string s) { return std::stoi(s); });
+
+        if(statInput.size() < 5) {
+            sock->print("Please enter all 5 numbers.\n");
+            getSock()->print("Aborted.\n");
+            sock->setState(CON_PLAYING);
             return;
         }
 
-        for(a=0;a<5;a++)
-            tnum[a] = vnum[a];
+        if (std::any_of(statInput.begin(), statInput.end(), [](int i){ return i < 3 || i > 18; })){
+            sock->print("No stats < 3 or > 18 please.\n");
+            sock->print("Aborted.\n");
+            sock->setState(CON_PLAYING);
+            return;
+        }
+
+        sum = std::accumulate(statInput.begin(), statInput.end(), 0);
+        if(sum != 56) {
+            sock->print("Stat total must equal 56 points.\n");
+            sock->print("Aborted.\n");
+            sock->setState(CON_PLAYING);
+            return;
+        }
+
+        player->newStats.st = statInput[0];
+        player->newStats.de = statInput[1];
+        player->newStats.co = statInput[2];
+        player->newStats.in = statInput[3];
+        player->newStats.pi = statInput[4];
 
         if(race == HUMAN) {
-            print("Raise which stat?:\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n");
-            getSock()->setState(CON_CHANGING_STATS_RAISE);
+            sock->print("Raise which stat?:\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n");
+            sock->setState(CON_CHANGING_STATS_RAISE);
             return;
         }
 
-        print("Your stats have been calculated.\n");
-        print("Please press [ENTER].\n");
-        getSock()->setState(CON_CHANGING_STATS_CALCULATE);
+        sock->print("Your stats have been calculated.\n");
+        sock->print("Please press [ENTER].\n");
+        sock->setState(CON_CHANGING_STATS_CALCULATE);
         return;
     case CON_CHANGING_STATS_CALCULATE:
+        // keep track of previous stats
+        player->oldStats.st = player->strength.getInitial();
+        player->oldStats.de = player->dexterity.getInitial();
+        player->oldStats.co = player->constitution.getInitial();
+        player->oldStats.in = player->intelligence.getInitial();
+        player->oldStats.pi = player->piety.getInitial();
 
-        for(a=0;a<5;a++) {
-            sendStat.num[a] = tnum[a];
-        }
+        // set new stats
+        player->strength.setInitial(player->newStats.st * 10);
+        player->dexterity.setInitial(player->newStats.de * 10);
+        player->constitution.setInitial(player->newStats.co * 10);
+        player->intelligence.setInitial(player->newStats.in * 10);
+        player->piety.setInitial(player->newStats.pi * 10);
 
-        calcStats(sendStat, &nstat);
+        // make race adjustments
+        player->strength.addInitial( gConfig->getRace(player->getRace())->getStatAdj(STR) );
+        player->dexterity.addInitial( gConfig->getRace(player->getRace())->getStatAdj(DEX) );
+        player->constitution.addInitial( gConfig->getRace(player->getRace())->getStatAdj(CON) );
+        player->intelligence.addInitial( gConfig->getRace(player->getRace())->getStatAdj(INT) );
+        player->piety.addInitial( gConfig->getRace(player->getRace())->getStatAdj(PTY) );
 
-
-        print("Your resulting stats will be as follows:\n");
-        print("STR: %d   DEX: %d   CON: %d   INT: %d   PIE: %d\n", nstat.num[0], nstat.num[1], nstat.num[2], nstat.num[3], nstat.num[4]);
-        print("Hit Points: %d\n", nstat.hp);
-        print("Are these the stats you want? (Y/N)\n");
-
-
-        for(a=0; a<5; a++)
-            tstat.num[a] = nstat.num[a];
-        tstat.hp = nstat.hp;
-        tstat.mp = nstat.mp;
-
-        getSock()->setState(CON_CHANGING_STATS_CONFIRM);
-
-        // confirm y/n
+        sock->print("Your resulting stats will be as follows:\n");
+        sock->print(
+            "STR: %d   DEX: %d   CON: %d   INT: %d   PIE: %d\n",
+            player->strength.getMax(),
+            player->dexterity.getMax(),
+            player->constitution.getMax(),
+            player->intelligence.getMax(),
+            player->piety.getMax()
+        );
+        sock->print("Hit Points: %d\n", player->hp.getMax());
+        sock->print("Magic Points: %d\n", player->mp.getMax());
+        sock->print("Are these the stats you want? (Y/N)\n");
+        sock->setState(CON_CHANGING_STATS_CONFIRM);
         break;
     case CON_CHANGING_STATS_CONFIRM:
         if(low(str[0]) == 'y') {
             broadcast(::isCt, "^y### %s has chosen %s stats.", getCName(), hisHer());
-
-            print("New stats set.\n");
-
-            strength.setCur((short)tstat.num[0]);
-            dexterity.setCur((short)tstat.num[1]);
-            constitution.setCur((short)tstat.num[2]);
-            intelligence.setCur((short)tstat.num[3]);
-            piety.setCur((short)tstat.num[4]);
-
-            hp.setMax(tstat.hp);
-            mp.setMax(tstat.mp);
-
-            getSock()->setState(CON_PLAYING);
+            sock->print("New stats set.\n");
+            sock->setState(CON_PLAYING);
             return;
-
         } else {
+            // revert to old stats
+            player->strength.setInitial(player->oldStats.st);
+            player->dexterity.setInitial(player->oldStats.de);
+            player->constitution.setInitial(player->oldStats.co);
+            player->intelligence.setInitial(player->oldStats.in);
+            player->piety.setInitial(player->oldStats.pi);
+
+            sock->print("Keeping old stats:\n");
+            sock->print(
+                "STR: %d   DEX: %d   CON: %d   INT: %d   PIE: %d\n",
+                player->strength.getMax(),
+                player->dexterity.getMax(),
+                player->constitution.getMax(),
+                player->intelligence.getMax(),
+                player->piety.getMax()
+            );
+
             broadcast(::isCt,"^y### %s aborted choosing new stats.", getCName());
-            print("Aborted.\n");
-            getSock()->setState(CON_PLAYING);
+            sock->print("Aborted.\n");
+            sock->setState(CON_PLAYING);
             return;
         }
     case CON_CHANGING_STATS_RAISE:
         switch (low(str[0])) {
         case 'a':
-            tnum[0]++;
+            player->newStats.st++;
             break;
         case 'b':
-            tnum[1]++;
+            player->newStats.de++;
             break;
         case 'c':
-            tnum[2]++;
+            player->newStats.co++;
             break;
         case 'd':
-            tnum[3]++;
+            player->newStats.in++;
             break;
         case 'e':
-            tnum[4]++;
+            player->newStats.pi++;
             break;
         default:
-            print("\nPlease choose one.\n");
+            sock->print("\nPlease choose one.\n");
             return;
         }
 
-        print("Lower which stat?:\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n");
-        getSock()->setState(CON_CHANGING_STATS_LOWER);
+        sock->print("Lower which stat?:\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n");
+        sock->setState(CON_CHANGING_STATS_LOWER);
         return;
     case CON_CHANGING_STATS_LOWER:
         switch (low(str[0])) {
         case 'a':
-            tnum[0]--;
-            tnum[0] = MAX(1, tnum[0]);
+            player->newStats.st = MAX(1, newStats.st-1);
             break;
         case 'b':
-            tnum[1]--;
-            tnum[1] = MAX(1, tnum[1]);
+            player->newStats.de = MAX(1, newStats.de-1);
             break;
         case 'c':
-            tnum[2]--;
-            tnum[2] = MAX(1, tnum[2]);
+            player->newStats.co = MAX(1, newStats.co-1);
             break;
         case 'd':
-            tnum[3]--;
-            tnum[3] = MAX(1, tnum[3]);
+            player->newStats.in = MAX(1, newStats.in-1);
             break;
         case 'e':
-            tnum[4]--;
-            tnum[4] = MAX(1, tnum[4]);
+            player->newStats.pi = MAX(1, newStats.pi-1);
             break;
         default:
-            print("\nPlease choose one.");
+            sock->print("\nPlease choose one.");
             return;
         }
 
-        print("Your stats have been calculated.\n");
-        print("Please press [ENTER].\n");
-        getSock()->setState(CON_CHANGING_STATS_CALCULATE);
+        sock->print("Your stats have been calculated.\n");
+        sock->print("Please press [ENTER].\n");
+        sock->setState(CON_CHANGING_STATS_CALCULATE);
         break;
     }
 }

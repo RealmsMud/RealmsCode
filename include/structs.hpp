@@ -90,15 +90,13 @@ public:
 } etag;
 
 // for changestats
-typedef struct NewStats {
+typedef struct StatsContainer {
     int st;
     int de;
     int co;
     int in;
     int pi;
-    int hp;
-    int mp;
-} NewStats;
+} StatsContainer;
 
 // Talk effectList tags
 typedef struct tlk_tag {

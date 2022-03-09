@@ -100,7 +100,8 @@ protected:
     std::string lastCommunicate;
     std::string forum;      // forum account this character is associated with
     char songs[32];
-    struct NewStats newStats;
+    struct StatsContainer oldStats;
+    struct StatsContainer newStats;
     Anchor *anchor[MAX_DIMEN_ANCHORS];
     cDay *birthday;
     Monster* alias_crt;
@@ -377,7 +378,6 @@ public:
     void pulseTick(long t);
     int getHpTickBonus() const;
     int getMpTickBonus() const;
-    void calcStats(vstat sendStat, vstat *toStat);
     void changeStats();
     void changingStats(std::string str);
 
