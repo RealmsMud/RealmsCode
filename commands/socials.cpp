@@ -140,6 +140,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
             boost::replace_all(toTarget, "*A-HISHER*", creature->hisHer());
             boost::replace_all(toTarget, "*A-HIMHER*", creature->himHer());
             boost::replace_all(toTarget, "*A-HESHE*", creature->heShe());
+            boost::replace_all(toTarget, "*A-UPHESHE*", creature->upHeShe());
             boost::replace_all(toTarget, "*ACTOR*", creature->getCrtStr(target, CAP));
 
             *target << toTarget << "\n";
@@ -174,6 +175,8 @@ void Container::doSocialEcho(std::string str, const Creature* actor, const Creat
     boost::replace_all(str, "*A-HISHER*", actor->hisHer());
     boost::replace_all(str, "*A-HIMHER*", actor->himHer());
     boost::replace_all(str, "*A-HESHE*", actor->heShe());
+    boost::replace_all(str, "*A-UPHESHE*", actor->upHeShe());
+
 
     for(Player* ply : players) {
         if(ply == actor || ply == target) continue;
