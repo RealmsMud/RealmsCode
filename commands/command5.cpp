@@ -692,6 +692,13 @@ void Player::changingStats(std::string str) {
 
     switch(sock->getState()) {
     case CON_CHANGING_STATS:
+        // empty input would cause crash here
+        if (str.length() < 1) {
+            getSock()->print("Aborted.\n");
+            sock->setState(CON_PLAYING);
+            return;
+        }
+
         inputArgs = splitString(str, " ");
         std::transform(inputArgs.begin(), inputArgs.end(), std::back_inserter(statInput), [](std::string s) { return std::stoi(s); });
 
@@ -773,6 +780,7 @@ void Player::changingStats(std::string str) {
         if(low(str[0]) == 'y') {
             broadcast(::isCt, "^y### %s has chosen %s stats.", getCName(), hisHer());
             sock->print("New stats set.\n");
+            clearFlag(P_CAN_CHANGE_STATS);
             sock->setState(CON_PLAYING);
             return;
         } else {
