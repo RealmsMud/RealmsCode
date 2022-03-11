@@ -1876,7 +1876,7 @@ void Socket::showLoginScreen(bool dnsDone) {
     //*********************************************************************
     print("The Realms of Hell (RoH v" VERSION ")\n\tBased on Mordor by Brett Vickers, Brooke Paul.\n");
     print("Programmed by: Jason Mitchell, Randi Mitchell and Tim Callahan.\n");
-    print("Contributions by: Jonathan Hseu.");
+    print("Contributions by: Jordan Carr, Jonathan Hseu.");
 
 
     viewFile(LOGIN_FILE);
