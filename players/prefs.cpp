@@ -118,6 +118,7 @@ prefInfo prefList[] =
     { "compact",    P_COMPACT,              nullptr,      "compacts most output",     false },
     { "tick",       P_SHOW_TICK,            nullptr,      "shows ticks",              false },
     { "skillprogress", P_SHOW_SKILL_PROGRESS,nullptr,     "show skill progress bar",  false },
+    { "durability", P_SHOW_DURABILITY_INDICATOR,nullptr,  "show durability indicator",  false },
 
     { "-Miscellaneous", 0, nullptr, "", false },
     { "autowear",   P_NO_AUTO_WEAR,         nullptr,      "wear all on login",        true },

@@ -425,7 +425,6 @@ MudObject* Creature::findObjTarget(ObjectSet &set, unsigned int findFlags, const
 //*********************************************************************
 
 int displayObject(Player* player, Object* target) {
-    int percent=0;
     unsigned int i=0;
     char str[2048];
     char filename[256];
@@ -527,66 +526,17 @@ int displayObject(Player* player, Object* target) {
     if(target->flagIsSet(O_COIN_OPERATED_OBJECT))
         oStr << target->getObjStr(nullptr, flags | CAP, 1) << " costs " << target->getCoinCost() << "gold coins per use.\n";
 
-    if(target->getShotsCur() > 0)
-        percent = (100 * (target->getShotsCur())) / (MAX<short>(target->getShotsMax(),1));
-    else
-        percent = -1;
+    if(flags & MAG) {
+        oStr << target->getDurabilityStr(true);
+    } else if (player->isCt() || !Unique::isUnique(target)) {
+        oStr << target->getDurabilityStr();
 
-    if(player->isCt() || !Unique::isUnique(target)) {
-        if( target->getType() == ObjectType::WEAPON ||
-            target->getType() == ObjectType::ARMOR ||
-            target->getType() == ObjectType::LIGHTSOURCE ||
-            target->getType() == ObjectType::WAND ||
-            target->getType() == ObjectType::KEY ||
-            target->getType() == ObjectType::POISON ||
-            target->getType() == ObjectType::BANDAGE
+        if( target->flagIsSet(O_TEMP_ENCHANT) &&
+            (player->getClass() == CreatureClass::MAGE || player->isCt() || player->isEffected("detect-magic"))
         ) {
-            if(percent >= 90)
-                oStr << "It is in pristine condition.\n";
-            else if(percent >= 75)
-                oStr << "It is in excellent condition.\n";
-            else if(percent >= 60)
-                oStr << "It is in good condition.\n";
-            else if(percent >= 45)
-                oStr << "It has a few scratches.\n";
-            else if(percent >= 30)
-                oStr << "It has many scratches and dents.\n";
-            else if(percent >= 10)
-                oStr << "It is in bad condition.\n";
-            else if(target->getShotsCur())
-                oStr << "It looks like it could fall apart any moment now.\n";
-            else
-                oStr << "It is broken or used up.\n";
-        }
-
-        if(target->flagIsSet(O_TEMP_ENCHANT) && (player->getClass() == CreatureClass::MAGE
-                || player->isCt() || player->isEffected("detect-magic")))
             oStr << "It is weakly enchanted.\n";
-
+        }  
     }
-
-    if(target->flagIsSet(O_WEAPON_CASTS) && (flags & MAG)) {
-        if(target->getChargesCur() > 0)
-            percent = (100 * (target->getChargesCur())) / (MAX<short>(target->getChargesMax(),1));
-        else
-            percent = -1;
-
-        if(percent >= 90)
-            oStr << "It shimmers brightly.\n";
-        else if(percent >= 75)
-            oStr << "It has a bright glow about it.\n";
-        else if(percent >= 50)
-            oStr << "It has a glow about it.\n";
-        else if(percent >= 30)
-            oStr << "It has a dull glow about it.\n";
-        else if(percent >= 10)
-            oStr << "It has a faint glow about it.\n";
-        else if(target->getChargesCur())
-            oStr << "It has a very faint glow about it.\n";
-        else
-            oStr << "It no longer glows.\n";
-    }
-
 
     if(target->getSize() != NO_SIZE)
         oStr << "It is ^W" << getSizeName(target->getSize()).c_str() << "^x.\n";
@@ -855,6 +805,75 @@ short Object::getShotsMax() const { return(shotsMax); }
 short Object::getShotsCur() const { return(shotsCur); }
 short Object::getChargesMax() const { return(chargesMax); }
 short Object::getChargesCur() const { return(chargesCur); }
+float Object::getDurabilityPercent(bool charges) const {
+    if(charges) {
+        if(chargesCur > 0) {
+            return chargesCur / MAX<float>(chargesMax,1.0);
+        } else {
+            return 0;
+        }
+    } else {
+        if(shotsCur > 0) {
+            return shotsCur / MAX<float>(shotsMax,1.0);
+        } else {
+            return 0;
+        }
+    }
+}
+std::string Object::getDurabilityStr(bool charges) const {
+    std::string str = "";
+    float percent = getDurabilityPercent();
+
+    if( type == ObjectType::WEAPON ||
+        type == ObjectType::ARMOR ||
+        type == ObjectType::LIGHTSOURCE ||
+        type == ObjectType::WAND ||
+        type == ObjectType::KEY ||
+        type == ObjectType::POISON ||
+        type == ObjectType::BANDAGE
+    ) {
+        if(percent >= 0.9){
+            str += "It is in pristine condition.\n";
+        } else if(percent >= 0.75) {
+            str += "It is in excellent condition.\n";
+        } else if(percent >= 0.6) {
+            str += "It is in good condition.\n";
+        } else if(percent >= 0.45) {
+            str += "It has a few scratches.\n";
+        } else if(percent >= 0.3) {
+            str += "It has many scratches and dents.\n";
+        } else if(percent >= 0.1) {
+            str += "It is in bad condition.\n";
+        } else if(shotsCur) {
+            str += "It looks like it could fall apart any moment now.\n";
+        } else {
+            str += "It is broken or used up.\n";
+        }
+    }
+    
+    if(flagIsSet(O_WEAPON_CASTS) && charges) {
+        percent = getDurabilityPercent(true);
+        if(percent >= 0.9) {
+            str += "It shimmers brightly.\n";
+        } else if(percent >= 0.75) {
+            str += "It has a bright glow about it.\n";
+        } else if(percent >= 0.5){
+            str += "It has a glow about it.\n";
+        } else if(percent >= 0.3) {
+            str += "It has a dull glow about it.\n";
+        } else if(percent >= 0.1) {
+            str += "It has a faint glow about it.\n";
+        } else if(chargesCur){
+            str += "It has a very faint glow about it.\n";
+        } else {
+            str += "It no longer glows.\n";
+        }
+    }
+    return str;
+}
+std::string Object::getDurabilityIndicator() const {
+    return progressBar(5, getDurabilityPercent());
+}
 short Object::getMagicpower() const { return(magicpower); }
 short Object::getLevel() const { return(level); }
 int Object::getRequiredSkill() const { return(requiredSkill); }
