@@ -62,6 +62,7 @@ Exit::Exit() {
     hooks.setParent(this);
     parentRoom = nullptr;
     direction = NoDirection;
+    usedBy = {};
 }
 
 Exit::~Exit() {
@@ -500,6 +501,25 @@ bool Exit::isConcealed(const Creature* viewer) const {
     if(isEffected("concealed") && (!viewer || !viewer->willIgnoreIllusion()))
         return(true);
     return(false);
+}
+
+//*********************************************************************
+//                      isDiscoverable
+//*********************************************************************
+
+bool Exit::isDiscoverable() const {
+    return(flagIsSet(X_SECRET) || flagIsSet(X_DESCRIPTION_ONLY) || flagIsSet(X_CONCEALED));
+}
+
+//**********************************************************************
+//                      hasBeenUsedBy
+//**********************************************************************
+
+bool Exit::hasBeenUsedBy(std::string id) const {
+    return std::find(usedBy.begin(), usedBy.end(), id) != usedBy.end();
+}
+bool Exit::hasBeenUsedBy(Player* player) const {
+    return(hasBeenUsedBy(player->getId()));
 }
 
 //*********************************************************************

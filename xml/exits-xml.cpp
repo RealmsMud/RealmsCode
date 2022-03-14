@@ -39,7 +39,7 @@
 // Reads an exit from the given xml document and root node
 
 int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
-    xmlNodePtr curNode;
+    xmlNodePtr curNode, childNode;
 
     setName(xml::getProp(rootNode, "Name"));
     //xml::copyPropToCString(name, rootNode, "Name");
@@ -75,6 +75,17 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
             // TODO: Use room->getVersion()
         else if(NODE_NAME(curNode, "Room")) target.room.load(curNode);
         else if(NODE_NAME(curNode, "AreaRoom")) target.mapmarker.load(curNode);
+        else if(NODE_NAME(curNode, "UsedBy")) {
+            childNode = curNode->children;
+            while(childNode) {
+                if(NODE_NAME(childNode, "Player")) {
+                    std::string s;
+                    xml::copyToString(s, childNode);
+                    usedBy.push_back(s);
+                }
+                childNode = childNode->next;
+            }
+        }
 
         curNode = curNode->next;
     }
@@ -156,8 +167,16 @@ int Exit::saveToXml(xmlNodePtr parentNode) const {
     xml::saveNonNullString(rootNode, "Description", description);
     xml::saveNonNullString(rootNode, "Enter", enter);
     xml::saveNonNullString(rootNode, "Open", open);
-    effects.save(rootNode, "Effects");
 
+    std::list<std::string>::const_iterator ub;
+    if(!usedBy.empty()) {
+        childNode = xml::newStringChild(rootNode, "UsedBy");
+        for(ub = usedBy.begin() ; ub != usedBy.end() ; ub++) {
+            xml::newStringChild(childNode, "Player", (*ub));
+        }
+    }
+
+    effects.save(rootNode, "Effects");
     saveBits(rootNode, "Flags", MAX_EXIT_FLAGS, flags);
     saveLastTime(curNode, 0, ltime);
     hooks.save(rootNode, "Hooks");

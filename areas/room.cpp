@@ -609,7 +609,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
     int     n=0, m=0, flags = (player->displayFlags() | QUEST), staff=0;
     std::ostringstream oStr;
     std::string str = "";
-    bool    wallOfFire=false, wallOfThorns=false, canSee=false;
+    bool    wallOfFire=false, wallOfThorns=false, canSee=false, hasBeenUsedBy=false;
 
     const UniqueRoom* uRoom = room->getAsConstUniqueRoom();
     const AreaRoom* aRoom = room->getAsConstAreaRoom();
@@ -660,8 +660,9 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
     for(Exit* ext : room->exits) {
         wallOfFire = ext->isWall("wall-of-fire");
         wallOfThorns = ext->isWall("wall-of-thorns");
+        hasBeenUsedBy = ext->hasBeenUsedBy(player);
 
-        canSee = player->showExit(ext, magicShowHidden);
+        canSee = player->showExit(ext, magicShowHidden) || hasBeenUsedBy;
         if(canSee) {
             if(n)
                 oStr << "^g, ";
@@ -717,6 +718,8 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
                     oStr << "(desc)";
                 if(ext->flagIsSet(X_NEEDS_FLY))
                     oStr << "(fly)";
+            } else if(hasBeenUsedBy && ext->isDiscoverable()) {
+                oStr << "(h)";
             }
 
             n++;
