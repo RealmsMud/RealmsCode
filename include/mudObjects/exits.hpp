@@ -89,7 +89,7 @@ public:
 
     bool isDiscoverable() const;
     bool hasBeenUsedBy(std::string id) const;
-    bool hasBeenUsedBy(Player* player) const;
+    bool hasBeenUsedBy(const Player* player) const;
 
 //// Effects
     bool pulseEffects(time_t t);

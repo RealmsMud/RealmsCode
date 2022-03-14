@@ -609,7 +609,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
     int     n=0, m=0, flags = (player->displayFlags() | QUEST), staff=0;
     std::ostringstream oStr;
     std::string str = "";
-    bool    wallOfFire=false, wallOfThorns=false, canSee=false, hasBeenUsedBy=false;
+    bool    wallOfFire=false, wallOfThorns=false, canSee=false;
 
     const UniqueRoom* uRoom = room->getAsConstUniqueRoom();
     const AreaRoom* aRoom = room->getAsConstAreaRoom();
@@ -660,9 +660,8 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
     for(Exit* ext : room->exits) {
         wallOfFire = ext->isWall("wall-of-fire");
         wallOfThorns = ext->isWall("wall-of-thorns");
-        hasBeenUsedBy = ext->hasBeenUsedBy(player);
 
-        canSee = player->showExit(ext, magicShowHidden) || hasBeenUsedBy;
+        canSee = player->showExit(ext, magicShowHidden);
         if(canSee) {
             if(n)
                 oStr << "^g, ";
@@ -718,8 +717,14 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
                     oStr << "(desc)";
                 if(ext->flagIsSet(X_NEEDS_FLY))
                     oStr << "(fly)";
-            } else if(hasBeenUsedBy && ext->isDiscoverable()) {
-                oStr << "(h)";
+            } else {
+                // if player can see the exit and these flags are set, then the player has discovered and used this exit before.
+                if(ext->flagIsSet(X_SECRET) || ext->flagIsSet(X_DESCRIPTION_ONLY) || ext->isConcealed(player))
+                    oStr << "(h)";
+                if(ext->isEffected("invisibility"))
+                    oStr << "(*)";
+                if(ext->flagIsSet(X_NEEDS_FLY))
+                    oStr << "(fly)";
             }
 
             n++;
