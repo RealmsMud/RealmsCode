@@ -1180,7 +1180,7 @@ int cmdGo(Player* player, cmd* cmnd) {
 
     // remember this exit if it is hidden/concealed
     if(exit->isDiscoverable() && !exit->hasBeenUsedBy(player)) {
-        exit->usedBy.push_back(player->getId());
+        exit->usedBy.insert(player->getId());
         oldRoom->saveToFile(1);
     }
 

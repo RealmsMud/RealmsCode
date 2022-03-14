@@ -81,7 +81,7 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
                 if(NODE_NAME(childNode, "Player")) {
                     std::string s;
                     xml::copyToString(s, childNode);
-                    usedBy.push_back(s);
+                    usedBy.insert(s);
                 }
                 childNode = childNode->next;
             }
@@ -170,8 +170,8 @@ int Exit::saveToXml(xmlNodePtr parentNode) const {
 
     if(!usedBy.empty()) {
         childNode = xml::newStringChild(rootNode, "UsedBy");
-        for(auto const& ply: usedBy) {
-            xml::newStringChild(childNode, "Player", (*ply));
+        for(auto const &ply: usedBy) {
+            xml::newStringChild(childNode, "Player", ply);
         }
     }
 

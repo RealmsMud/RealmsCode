@@ -125,7 +125,7 @@ public:
     char        classFlags[4]{};  // class allowed flags
     char        raceFlags[4]{};   // race allowed flags
 
-    std::list<std::string> usedBy; // ids of players that have used this exit
+    std::set<std::string> usedBy; // ids of players that have used this exit
 
     Location target;
 
