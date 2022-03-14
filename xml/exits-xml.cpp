@@ -171,7 +171,7 @@ int Exit::saveToXml(xmlNodePtr parentNode) const {
     std::list<std::string>::const_iterator ub;
     if(!usedBy.empty()) {
         childNode = xml::newStringChild(rootNode, "UsedBy");
-        for(ub = usedBy.begin() ; ub != usedBy.end() ; ub++) {
+        for(auto const& ply: usedBy) {
             xml::newStringChild(childNode, "Player", (*ub));
         }
     }
