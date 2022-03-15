@@ -718,7 +718,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
                 if(ext->flagIsSet(X_NEEDS_FLY))
                     oStr << "(fly)";
             } else {
-                // if player can see the exit and these flags are set, then the player has discovered and used this exit before.
+                // normal player can see the exit
                 if(ext->flagIsSet(X_SECRET) || ext->flagIsSet(X_DESCRIPTION_ONLY) || ext->isConcealed(player))
                     oStr << "(h)";
                 if(ext->isEffected("invisibility"))
