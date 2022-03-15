@@ -1027,6 +1027,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
         mem = newRoom->getAsAreaRoom()->getStayInMemory();
         newRoom->getAsAreaRoom()->setStayInMemory(true);
     }
+
     // we have to run a manual isFull check here because nobody is
     // in the room yet
     (*numPeople)++;
@@ -1176,6 +1177,12 @@ int cmdGo(Player* player, cmd* cmnd) {
         Move::track(oldRoom, oldMarker, exit, player, &followers);
 
     delete oldMarker;
+
+    // remember this exit if it is hidden/concealed
+    if(exit->isDiscoverable() && !exit->hasBeenUsedBy(player)) {
+        exit->usedBy.insert(player->getId());
+        oldRoom->saveToFile(1);
+    }
 
     // for display reasons, we only need to kill objects in
     // the room they're entering

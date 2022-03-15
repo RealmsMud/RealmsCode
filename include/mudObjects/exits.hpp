@@ -87,6 +87,10 @@ public:
     [[nodiscard]] bool isWall(std::string_view name) const;
     bool isConcealed(const Creature* viewer=nullptr) const;
 
+    bool isDiscoverable() const;
+    bool hasBeenUsedBy(std::string id) const;
+    bool hasBeenUsedBy(const Player* player) const;
+
 //// Effects
     bool pulseEffects(time_t t);
     bool doEffectDamage(Creature* target);
@@ -120,6 +124,8 @@ public:
     char        clanFlags[4]{};   // clan allowed flags
     char        classFlags[4]{};  // class allowed flags
     char        raceFlags[4]{};   // race allowed flags
+
+    std::set<std::string> usedBy; // ids of players that have used this exit
 
     Location target;
 

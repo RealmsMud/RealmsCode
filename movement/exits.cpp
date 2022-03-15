@@ -62,6 +62,7 @@ Exit::Exit() {
     hooks.setParent(this);
     parentRoom = nullptr;
     direction = NoDirection;
+    usedBy = {};
 }
 
 Exit::~Exit() {
@@ -436,6 +437,9 @@ std::string Exit::blockedByStr(char color, std::string_view spell, std::string_v
 bool Player::showExit(const Exit* exit, int magicShowHidden) const {
     if(isStaff())
         return(true);
+    if(exit->isDiscoverable() && exit->hasBeenUsedBy(this)){
+        return(true);
+    }
     return( canSee(exit) &&
         (!exit->flagIsSet(X_SECRET) || magicShowHidden) &&
         (!exit->isConcealed(this) || magicShowHidden) &&
@@ -500,6 +504,31 @@ bool Exit::isConcealed(const Creature* viewer) const {
     if(isEffected("concealed") && (!viewer || !viewer->willIgnoreIllusion()))
         return(true);
     return(false);
+}
+
+//*********************************************************************
+//                      isDiscoverable
+//*********************************************************************
+
+bool Exit::isDiscoverable() const {
+    return(
+        flagIsSet(X_SECRET) ||
+        flagIsSet(X_DESCRIPTION_ONLY) ||
+        flagIsSet(X_CONCEALED) ||
+        flagIsSet(X_NEEDS_FLY) ||
+        isEffected("invisibility")
+    );
+}
+
+//**********************************************************************
+//                      hasBeenUsedBy
+//**********************************************************************
+
+bool Exit::hasBeenUsedBy(std::string id) const {
+    return std::find(usedBy.begin(), usedBy.end(), id) != usedBy.end();
+}
+bool Exit::hasBeenUsedBy(const Player* player) const {
+    return(hasBeenUsedBy(player->getId()));
 }
 
 //*********************************************************************
