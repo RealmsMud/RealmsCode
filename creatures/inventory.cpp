@@ -305,51 +305,72 @@ Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool
 //*********************************************************************
 
 void Creature::printEquipList(const Player* viewer) {
-    if(ready[BODY-1])
-        viewer->printColor("On body:   %1P\n", ready[BODY-1]);
-    if(ready[ARMS-1])
-        viewer->printColor("On arms:   %1P\n", ready[ARMS-1]);
-    if(ready[LEGS-1])
-        viewer->printColor("On legs:   %1P\n", ready[LEGS-1]);
-    if(ready[NECK-1])
-        viewer->printColor("On neck:   %1P\n", ready[NECK-1]);
-    if(ready[HANDS-1])
-        viewer->printColor("On hands:  %1P\n", ready[HANDS-1]);
-    if(ready[HEAD-1])
-        viewer->printColor("On head:   %1P\n", ready[HEAD-1]);
-    if(ready[BELT-1])
-        viewer->printColor("On waist:  %1P\n", ready[BELT -1]);
-    if(ready[FEET-1])
-        viewer->printColor("On feet:   %1P\n", ready[FEET-1]);
-    if(ready[FACE-1])
-        viewer->printColor("On face:   %1P\n", ready[FACE-1]);
-    if(ready[FINGER1-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER1-1]);
-    if(ready[FINGER2-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER2-1]);
-    if(ready[FINGER3-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER3-1]);
-    if(ready[FINGER4-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER4-1]);
-    if(ready[FINGER5-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER5-1]);
-    if(ready[FINGER6-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER6-1]);
-    if(ready[FINGER7-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER7-1]);
-    if(ready[FINGER8-1])
-        viewer->printColor("On finger: %1P\n", ready[FINGER8-1]);
+    bool showIndicator = viewer->flagIsSet(P_SHOW_DURABILITY_INDICATOR);
+
+    if(ready[BODY-1]){
+        viewer->printColor("On body:   %1P  %s\n", ready[BODY-1], showIndicator ? ready[BODY-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[ARMS-1]){
+        viewer->printColor("On arms:   %1P  %s\n", ready[ARMS-1], showIndicator ? ready[ARMS-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[LEGS-1]){
+        viewer->printColor("On legs:   %1P  %s\n", ready[LEGS-1], showIndicator ? ready[LEGS-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[NECK-1]){
+        viewer->printColor("On neck:   %1P  %s\n", ready[NECK-1], showIndicator ? ready[NECK-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[HANDS-1]){
+        viewer->printColor("On hands:  %1P  %s\n", ready[HANDS-1], showIndicator ? ready[HANDS-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[HEAD-1]){
+        viewer->printColor("On head:   %1P  %s\n", ready[HEAD-1], showIndicator ? ready[HEAD-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[BELT-1]){
+        viewer->printColor("On waist:  %1P  %s\n", ready[BELT -1], showIndicator ? ready[BELT-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[FEET-1]){
+        viewer->printColor("On feet:   %1P  %s\n", ready[FEET-1], showIndicator ? ready[FEET-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[FACE-1]){
+        viewer->printColor("On face:   %1P  %s\n", ready[FACE-1], showIndicator ? ready[FACE-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[FINGER1-1]){
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER1-1], showIndicator ? ready[FINGER1-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[FINGER2-1]){
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER2-1], showIndicator ? ready[FINGER2-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[FINGER3-1]){
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER3-1], showIndicator ? ready[FINGER3-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[FINGER4-1]){
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER4-1], showIndicator ? ready[FINGER4-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[FINGER5-1]){
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER5-1], showIndicator ? ready[FINGER5-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[FINGER6-1]){
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER6-1], showIndicator ? ready[FINGER6-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[FINGER7-1]){
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER7-1], showIndicator ? ready[FINGER7-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[FINGER8-1]){
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER8-1], showIndicator ? ready[FINGER8-1]->getDurabilityIndicator().c_str() : "");
+    }
     // dual wield
     if(ready[HELD-1]) {
         if(ready[HELD-1]->getWearflag() != WIELD)
-            viewer->printColor("Holding:   %1P\n", ready[HELD-1]);
+            viewer->printColor("Holding:   %1P  %s\n", ready[HELD-1], showIndicator ? ready[HELD-1]->getDurabilityIndicator().c_str() : "");
         else if(ready[HELD-1]->getWearflag() == WIELD)
-            viewer->printColor("In Hand:   %1P\n", ready[HELD-1]);
+            viewer->printColor("In Hand:   %1P  %s\n", ready[HELD-1], showIndicator ? ready[HELD-1]->getDurabilityIndicator().c_str() : "");
     }
-    if(ready[SHIELD-1])
-        viewer->printColor("Shield:    %1P\n", ready[SHIELD-1]);
-    if(ready[WIELD-1])
-        viewer->printColor("Wielded:   %1P\n", ready[WIELD-1]);
+    if(ready[SHIELD-1]){
+        viewer->printColor("Shield:    %1P  %s\n", ready[SHIELD-1], showIndicator ? ready[SHIELD-1]->getDurabilityIndicator().c_str() : "");
+    }
+    if(ready[WIELD-1]){
+        viewer->printColor("Wielded:   %1P  %s\n", ready[WIELD-1], showIndicator ? ready[WIELD-1]->getDurabilityIndicator().c_str() : "");
+    }
 }
 
 

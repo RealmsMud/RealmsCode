@@ -262,6 +262,9 @@ public:
     // Get
     [[nodiscard]] short getDelay() const;
     [[nodiscard]] short getExtra() const;
+    [[nodiscard]] float getDurabilityPercent(bool charges=false) const;
+    [[nodiscard]] std::string getDurabilityStr(bool charges=false) const;
+    [[nodiscard]] std::string getDurabilityIndicator() const;
     [[nodiscard]] short getWeight() const;
     [[nodiscard]] int getActualWeight() const;
     [[nodiscard]] short getBulk() const;
