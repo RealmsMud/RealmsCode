@@ -1278,27 +1278,27 @@ bool Create::getStatsChoice(Socket* sock, std::string str, int mode) {
 
     } else if(mode == Create::doWork) {
         boost::trim(str);
-        if(tolower(str.at(0)) == 'c') {
-            sock->print("You have chosen to select your own stats.\n");
-            Create::getStats(sock, "", Create::doPrint);
-            // We've set the next state so don't change it after we return
-            return(false);
-        } else if(tolower(str.at(0)) == 'u') {
-            PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
-            if(!pClass) {
-                Create::getStats(sock, str, Create::doPrint);
+        if (str.length() > 0) {
+            if(tolower(str.at(0)) == 'c') {
+                sock->print("You have chosen to select your own stats.\n");
+                Create::getStats(sock, "", Create::doPrint);
+                // We've set the next state so don't change it after we return
                 return(false);
-            }
-            pClass->setDefaultStats(sock->getPlayer());
+            } else if(tolower(str.at(0)) == 'u') {
+                PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
+                if(!pClass) {
+                    Create::getStats(sock, str, Create::doPrint);
+                    return(false);
+                }
+                pClass->setDefaultStats(sock->getPlayer());
 
-            // Continue on with character creation
-            return(true);
+                // Continue on with character creation
+                return(true);
+            }
         }
 
         sock->askFor(": ");
-
         sock->setState(CREATE_GET_STATS_CHOICE);
-
     }
     return(false);
 }
