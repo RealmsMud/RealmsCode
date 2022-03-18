@@ -1177,7 +1177,7 @@ int cmdGo(Player* player, cmd* cmnd) {
         Move::track(oldRoom, oldMarker, exit, player, &followers);
 
         // remember this exit if it is hidden/concealed
-        if(exit->isDiscoverable() && !exit->hasBeenUsedBy(player)) {
+        if(oldRoom && exit->isDiscoverable() && !exit->hasBeenUsedBy(player)) {
             exit->usedBy.insert(player->getId());
             oldRoom->getAsUniqueRoom()->saveToFile(1);
         }
