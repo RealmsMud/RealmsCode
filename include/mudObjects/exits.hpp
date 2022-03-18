@@ -33,7 +33,9 @@ enum Direction {
     Northeast = 5,
     Northwest = 6,
     Southeast = 7,
-    Southwest = 8
+    Southwest = 8,
+    Up =        9,
+    Down =      10
 };
 
 Direction getDir(std::string str);
