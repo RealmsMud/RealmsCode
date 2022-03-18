@@ -1173,16 +1173,17 @@ int cmdGo(Player* player, cmd* cmnd) {
     if(!(newRoom = Move::start(player, cmnd, &exit, true, &followers, &numPeople, roomPurged)))
         return(0);
 
-    if(!roomPurged)
+    if(!roomPurged) {
         Move::track(oldRoom, oldMarker, exit, player, &followers);
 
-    delete oldMarker;
-
-    // remember this exit if it is hidden/concealed
-    if(exit->isDiscoverable() && !exit->hasBeenUsedBy(player)) {
-        exit->usedBy.insert(player->getId());
-        oldRoom->saveToFile(1);
+        // remember this exit if it is hidden/concealed
+        if(exit->isDiscoverable() && !exit->hasBeenUsedBy(player)) {
+            exit->usedBy.insert(player->getId());
+            oldRoom->saveToFile(1);
+        }
     }
+
+    delete oldMarker;
 
     // for display reasons, we only need to kill objects in
     // the room they're entering
