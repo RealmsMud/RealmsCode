@@ -268,7 +268,7 @@ void doSearch(Player* player, bool immediate) {
             (ext->isConcealed(player) && Random::get(1,100) <= 5))
         {
             // canSee doesnt handle DescOnly
-            if(player->canSee(ext) && !ext->flagIsSet(X_DESCRIPTION_ONLY)) {
+            if(player->canSee(ext) && !ext->flagIsSet(X_DESCRIPTION_ONLY) && !ext->hasBeenUsedBy(player)) {
                 found = true;
                 player->printColor("You found an exit: %s^x.\n", ext->getCName());
 
