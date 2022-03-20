@@ -218,6 +218,13 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         upgradeStats();
     }
 
+    if (getVersion() < "2.53") {
+        #define OLD_MAX_PLAYABLE_RACE 21
+        #define OLD_RACE_COUNT  39
+        if (getRace() >= OLD_MAX_PLAYABLE_RACE && getRace() < OLD_RACE_COUNT)
+            setRace(getRace()+10);
+    }
+    
     if(isPlayer()) {
         if(getVersion() < "2.47b") {
             pPlayer->recordLevelInfo();

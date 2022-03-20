@@ -189,6 +189,10 @@ void Player::init() {
     if(race == BARBARIAN) {
        addPermEffect("warmth"); 
     }
+    //Kenku can speak any language, acting like parrots, even though not understanding
+    if(race == KENKU) {
+       addPermEffect("tongues");
+    }
 
     if(!current_language) {
         initLanguages();

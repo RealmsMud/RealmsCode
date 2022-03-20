@@ -90,6 +90,7 @@ char lang_color[LANGUAGE_COUNT][3] = {
     "^m",                       // Arcanic (Mages/Lich)
     "^m",                       // Abyssal
     "^r",                       // Tiefling
+    "^y",                       // Kenku
 };
 
 char language_adj[][32] = { "an alien language", "dwarven", "elven", "halfling", "common", "orcish", "giantkin",
@@ -144,7 +145,9 @@ char language_verb[][3][24] = {
     // Abyssal
     {"growl", "snarl", "cough"},
     // Tiefling
-    {"jabber", "spit", "snarl"}
+    {"jabber", "spit", "snarl"},
+    //Kenku
+     {"squawk", "cluck", "chirp"}
 };
 
 

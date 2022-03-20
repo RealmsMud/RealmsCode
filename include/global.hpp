@@ -223,8 +223,9 @@ enum Languages {
     LARCANIC = 21,
     LABYSSAL = 22,
     LTIEFLING = 23,
+    LKENKU = 24,
 
-    LANGUAGE_COUNT = 24
+    LANGUAGE_COUNT = 25
 };
 
 
@@ -330,32 +331,33 @@ enum Races {
     BARBARIAN = 18,
     KATARAN = 19,
     TIEFLING = 20,
+    KENKU = 21,
 
-    MAX_PLAYABLE_RACE = 21,
+    MAX_PLAYABLE_RACE = 22,
 
     // non-playable
-    LIZARDMAN = 21,
-    CENTAUR = 22,
+    LIZARDMAN = 33,
+    CENTAUR = 34,
 
     // subraces, currently non-playable
-    HALFFROSTGIANT = 23,
-    HALFFIREGIANT = 24,
-    GREYELF = 25,
-    WILDELF = 26,
-    AQUATICELF = 27,
-    DUERGAR = 28,
-    HILLDWARF = 29,
+    HALFFROSTGIANT = 35,
+    HALFFIREGIANT = 36,
+    GREYELF = 37,
+    WILDELF = 38,
+    AQUATICELF = 39,
+    DUERGAR = 40,
+    HILLDWARF = 41,
 
     // non-playable
-    GNOLL = 30,
-    BUGBEAR = 31,
-    HOBGOBLIN = 32,
-    WEMIC = 33,
-    HYBSIL = 34,
-    RAKSHASA = 35,
-    BROWNIE = 36,
-    FIRBOLG = 37,
-    SATYR = 38,
+    GNOLL = 42,
+    BUGBEAR = 43,
+    HOBGOBLIN = 44,
+    WEMIC = 45,
+    HYBSIL = 46,
+    RAKSHASA = 47,
+    BROWNIE = 48,
+    FIRBOLG = 49,
+    SATYR = 50,
 
     RACE_COUNT
 };

@@ -256,6 +256,9 @@ int cmdWho(Player* player, cmd* cmnd) {
             case 'a':
                 race = KATARAN;
                 break;
+            case 'e':
+                race = KENKU;
+                break;
             case 'o':
                 race = KOBOLD;
                 break;

@@ -1246,6 +1246,9 @@ int cmdSpeak(Player* player, cmd* cmnd) {
         case 'a':
             lang = LKATARAN;
             break;
+        case 'e':
+            lang = LKENKU;
+            break;
         case 'o':
             lang = LKOBOLD;
             break;
