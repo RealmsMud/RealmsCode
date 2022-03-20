@@ -1172,6 +1172,9 @@ void Player::initLanguages() {
             learnLanguage(LHALFLING);
             learnLanguage(LABYSSAL);
             break;
+        case KENKU:
+            learnLanguage(LKENKU);
+            break;
         case KOBOLD:
             learnLanguage(LKOBOLD);
             learnLanguage(LGNOMISH);
