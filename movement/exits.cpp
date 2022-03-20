@@ -230,6 +230,7 @@ bool Exit::raceRestrict(const Creature* creature) const {
         !flagIsSet(X_SEL_BARBARIAN) &&
         !flagIsSet(X_SEL_KATARAN) &&
         !flagIsSet(X_SEL_TIEFLING) &&
+        !flagIsSet(X_SEL_KENKU) &&
         !flagIsSet(X_RSEL_INVERT) )
         return(false);
 
@@ -254,7 +255,8 @@ bool Exit::raceRestrict(const Creature* creature) const {
         (flagIsSet(X_SEL_CAMBION) && creature->isRace(CAMBION)) ||
         (flagIsSet(X_SEL_BARBARIAN) && creature->isRace(BARBARIAN)) ||
         (flagIsSet(X_SEL_KATARAN) && creature->isRace(KATARAN)) ||
-        (flagIsSet(X_SEL_TIEFLING) && creature->isRace(TIEFLING))
+        (flagIsSet(X_SEL_TIEFLING) && creature->isRace(TIEFLING)) ||
+        (flagIsSet(X_SEL_KENKU) && creature->isRace(KENKU))
     );
 
     if(flagIsSet(X_RSEL_INVERT)) pass = !pass;

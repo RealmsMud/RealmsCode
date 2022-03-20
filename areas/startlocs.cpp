@@ -144,11 +144,12 @@ bool startingChoices(Player *player, std::string str, char *location, bool choos
 
     } else if (race == DWARF) {
 
-        options.emplace_back("ironguard");
+        options.emplace_back("highport");
 
     } else if (race == DARKELF) {
 
         options.emplace_back("oakspire");
+        options.emplace_back("highport");
 
     } else if (race == TIEFLING) {
 
@@ -162,6 +163,11 @@ bool startingChoices(Player *player, std::string str, char *location, bool choos
     } else if (race == KATARAN) {
 
         options.emplace_back("kataran");
+
+    } else if (race == KENKU) {
+
+        options.emplace_back("Tokoki Peak");
+        options.emplace_back("highport");
 
     } else if (race == HALFORC) {
 
