@@ -471,9 +471,10 @@ int Object::getActualWeight() const {
 
     n = weight;
 
-    for(Object* obj : objects) {
-        if(!obj->flagIsSet(O_WEIGHTLESS_CONTAINER))
+    if(!flagIsSet(O_WEIGHTLESS_CONTAINER)) {
+        for(Object* obj : objects) {
             n += obj->getActualWeight();
+        }
     }
 
     return(n);
