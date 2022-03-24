@@ -322,7 +322,6 @@ bool Config::initCommands() {
     staffCommands.emplace("*group", 100, dmGroup, isCt, "See who is grouped with a player.");
     staffCommands.emplace("*dust", 100, dmDust, isCt, "Permanently delete a player.");
     staffCommands.emplace("*tell", 100, dmFlash, isDm, "Send a player a message.");
-    staffCommands.emplace("*award", 100, dmAward, isCt, "Award a player roleplaying exp/gold.");
     staffCommands.emplace("*beep", 100, dmBeep, isDm, "Make the player's terminal beep.");
     staffCommands.emplace("*advance", 100, dmAdvance, isDm, "Change the player's level and adjust stats appropriately.");
     staffCommands.emplace("dmfinger", 100, dmFinger, isDm, "fup an offline player's information.");
@@ -456,6 +455,7 @@ bool Config::initCommands() {
     playerCommands.emplace("*typo", 100, reportTypo, nullptr, "");
     playerCommands.emplace("*gag", 100, dmGag, nullptr, "");
     playerCommands.emplace("*wts", 100, channel, nullptr, "");
+    playerCommands.emplace("*award", 100, dmAward, nullptr, "Award a player roleplaying exp/gold.");
 
     playerCommands.emplace("compare", 90, cmdCompare, nullptr, "Compare two items.");
     playerCommands.emplace("weapons", 100, cmdWeapons, nullptr, "Use weapon trains.");
