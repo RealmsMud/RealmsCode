@@ -511,6 +511,7 @@ bool Monster::zapMp(Creature *victim, SpecialAttack* attack) {
 
 bool Monster::steal(Player *victim) {
     int chance=0, inventory=0, i=0;
+    bool isContainer=false;
     Object* object=nullptr;
 
     ASSERTLOG( victim );
@@ -541,27 +542,65 @@ bool Monster::steal(Player *victim) {
         }
     }
 
-    chance = 4 * level + bonus(dexterity.getCur()) * 3;
-    if(victim->getLevel() > level)
-        chance -= 15 * (victim->getLevel() - level);
-    chance = MIN(chance, 65);
+    if(object->getType() == ObjectType::CONTAINER) {
+       isContainer=true;
+    }
+    // Max chance for a mob to steal a stealable bag no matter what the level difference, is 5%
+    // Impossible to steal any bag if mob is same level or lower than player
+    // Any mob within 10 levels of a player always has at least a 1% chance to steal a stealable non-bag
+    // Any mob has a minimum of 95% to steal a non-bag, despite how much higher level they are than a player
+    //   They always have a 5% chance to fail.
+    if(isContainer)
+        chance = MIN(5,(level * (level - victim->getLevel())));
+    else
+        chance = MIN(95,MAX(1,4 * (level - victim->getLevel())));
+
+    // If a player is 10+ levels higher than a mob, they never have to worry about a mob succeeding in stealing. 
+    // The 1% min chance above for stealing non-bags is nullified. The mob will still try though.
+    if (victim->getLevel() - level >= 10)
+        chance = 0;
+
+    // Check objects in bag; if unstealable object found, bag cannot be stolen
+    if (isContainer) {
+        for(Object *cntObj : object->objects) {
+            if (cntObj->flagIsSet(O_NO_STEAL) ||
+                cntObj->getQuestnum()) {
+                chance = 0;
+                break;
+            }
+        }
+        // The more objects inside a weighted or bulky container, the harder it is to steal it
+        // Slight penalty for the mob the fuller the container is.
+        // Max chance to steal a bag is never more than 5%. This brings that down even further.
+        if (!(object->flagIsSet(O_WEIGHTLESS_CONTAINER) || object->flagIsSet(O_BULKLESS_CONTAINER))) {
+             if (object->countObj(false) >= (object->getShotsMax()*90/100))  // 90%+ full
+                chance -= 3;
+            else if (object->countObj(false) >= (object->getShotsMax()*50/100)) // 50 to 89% full
+                chance -= 2;
+            else if (object->countObj(false) >= 1) // 1 to 49% full
+                chance --; 
+        }
+
+    }
 
     if( object->getQuestnum() ||
         (flagIsSet(M_CANT_BE_STOLEN_FROM) ||
-            object->flagIsSet(O_NO_STEAL))
-    )
+            object->flagIsSet(O_NO_STEAL)) ||
+            object->flagIsSet(O_STARTING) ||
+             object->flagIsSet(O_CUSTOM_OBJ))
         chance = 0;
 
+    chance = MAX(0,chance);
 
     if(Random::get(1, 100) <= chance) {
         victim->delObj(object, false, true);
         addObj(object);
-
+        victim->printColor("^Y%M stole %P^Y from you!\n", this, object);
         logn("log.msteal", "%s(L%d) stole %s from %s(L%d) in room %s.\n",
-            getCName(), level, object->getCName(), victim->getCName(), victim->getLevel(), getRoomParent()->fullName().c_str());
+                 getCName(), level, object->getCName(), victim->getCName(), victim->getLevel(), getRoomParent()->fullName().c_str());
     } else {
-        broadcast(victim->getSock(), getRoomParent(), "%M tried to steal from %N.", this, victim);
-        victim->printColor("^Y%M tried to steal %P^Y from you.\n", this, object);
+            broadcast(victim->getSock(), getRoomParent(), "%M tried to steal from %N.", this, victim);
+            victim->printColor("^Y%M tried to steal %P^Y from you.\n", this, object);
     }
     return(true);
 }
