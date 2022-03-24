@@ -531,7 +531,7 @@ int dmAward(Player* player, cmd* cmnd) {
     long    i=0, t=0, amount=0, gp=0;
     char    temp[80];
 
-    if(!player->flagIsSet(P_CAN_AWARD) && !player->isDm() && !player->flagIsSet(P_WATCHER))
+    if(!player->flagIsSet(P_CAN_AWARD) && !player->isDm() && !player->isWatcher())
         return(cmdNoAuth(player));
 
     if(cmnd->num < 2) {
@@ -603,14 +603,14 @@ int dmAward(Player* player, cmd* cmnd) {
 
 
     target->lasttime[LT_RP_AWARDED].ltime = t;
-    if(player->getClass() == CreatureClass::CARETAKER)
+    if(player->isCt())
         target->lasttime[LT_RP_AWARDED].interval = 300L; // 5 minutes.
     else // We have a watcher
         target->lasttime[LT_RP_AWARDED].interval = 900L; // 15 minutes.
 
     
 
-    if(!strcmp(cmnd->str[2], "-g") && !player->flagIsSet(P_WATCHER)) { // Watchers cannot award gold
+    if(!strcmp(cmnd->str[2], "-g") && !player->isWatcher()) { // Watchers cannot award gold
         gp = MAX(500L, MIN(cmnd->val[2],1000000L));            
         player->print("%ld gold awarded to %s for good roleplaying and/or being greatly helpful.\n", gp, target->getCName());
         target->printColor("^GYou have been awarded ^Y%ld gold^G as well! It was put in your bank account.\n", gp);
