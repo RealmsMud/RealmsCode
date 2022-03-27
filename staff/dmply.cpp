@@ -1625,6 +1625,22 @@ int dmBugPlayer(Player* player, cmd* cmnd) {
 #define DM_MISSILE      12
 #define DM_SUPERNOVA    13
 #define DM_NOMNOM       14
+#define DM_GRENADE      15
+#define DM_HEAD_BOOM    16
+#define DM_STAB         17
+#define DM_SUICIDE      18
+#define DM_ALCOHOL      19
+#define DM_DROWNED      20
+#define DM_DRAGON       21
+#define DM_CHOKE        22
+#define DM_DEMON        23
+#define DM_RATS         24
+#define DM_COMET        25
+#define DM_ABYSS        26
+#define DM_SHARDS       27
+#define DM_FLATULENCE   28
+#define DM_DIARRHEA     29
+#define DM_KINETIC      30
 
 //*********************************************************************
 //                      dmKillAll
@@ -1632,7 +1648,7 @@ int dmBugPlayer(Player* player, cmd* cmnd) {
 // not declared in proto.h, only used below
 // this function handles and *kill commands that kill everyone
 
-int dmKillAll(int type, int silent, int unconscious, int uncon_length) {
+int dmKillAll(int type, int silent, int hpmp_loss, int unconscious, int uncon_length) {
     BaseRoom *room=nullptr;
 
     Player* target;
@@ -1664,7 +1680,6 @@ int dmKillAll(int type, int silent, int unconscious, int uncon_length) {
 
             if(!silent)
                 broadcast("### Sadly, %N was killed by a freak meteor shower.", target);
-
             break;
         case DM_IGMOO:
             target->print("Igmoo the Mad just arrived.\n");
@@ -1692,9 +1707,10 @@ int dmKillAll(int type, int silent, int unconscious, int uncon_length) {
             break;
         }
 
-
-        target->hp.setCur(1);
-        target->mp.setCur(1);
+        if(hpmp_loss) {
+            target->hp.setCur(1);
+            target->mp.setCur(1);
+        }
 
         if(unconscious)
             target->knockUnconscious(uncon_length);
@@ -1715,7 +1731,7 @@ int dmKillAll(int type, int silent, int unconscious, int uncon_length) {
 // not declared in proto.h, only used below
 // handles player-targeted *kills
 
-int dmKill(Player* player, Player *victim, int type, int silent, int unconscious, int uncon_length) {
+int dmKill(Player* player, Player *victim, int type, int silent, int hpmp_loss, int unconscious, int uncon_length) {
     int     kill_room=0, no_limbo=0;
     BaseRoom *newRoom=nullptr;
 
@@ -1782,6 +1798,70 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
             player->print("You tried to make a fearsome monster eat %N!\n", victim);
             victim->printColor("^r%M tried to make a fearsome monster!\n", player);
             break;
+        case DM_GRENADE:
+            player->print("You tried to make %N die from a grenade!\n", victim);
+            victim->printColor("^r%M tried to kill you with a grenade!\n", player);
+            break;
+        case DM_HEAD_BOOM:
+            player->print("You tried to make %N's head explode!\n", victim);
+            victim->printColor("^r%M tried to make your head explode!\n", player);
+            break;
+        case DM_STAB:
+            player->print("You tried to make %N stab %sself to death!\n", victim, victim->himHer());
+            victim->printColor("^r%M tried to make you stab yourself to death!\n", player);
+            break;
+        case DM_SUICIDE:
+            player->print("You tried to make %N kill %sself!\n", victim, victim->himHer());
+            victim->printColor("^r%M tried to make you kill yourself!\n", player);
+            break;
+         case DM_ALCOHOL:
+            player->print("You tried to make %N drink %sself to death!\n", victim, victim->himHer());
+            victim->printColor("^r%M tried to make you drink yourself to death!\n", player);
+            break;
+        case DM_DROWNED:
+            player->print("You tried to drown %N!\n", victim);
+            victim->printColor("^r%M tried to drown you!\n", player);
+            break;
+        case DM_DRAGON:
+            player->print("You tried to kill %N with an ancient dragon!\n", victim);
+            victim->printColor("^r%M tried to send an ancient dragon to kill you!\n", player);
+            break;
+         case DM_CHOKE:
+            player->print("You tried to choke %N to death!\n", victim);
+            victim->printColor("^r%M tried to choke you to death!\n", player);
+            break;
+        case DM_DEMON:
+            player->print("You tried to make an ancient demon kill %N!\n", victim);
+            victim->printColor("^r%M tried to kill you with an ancient demon!\n", player);
+            break;
+        case DM_RATS:
+            player->print("You tried to kill %N with gutter rats!\n", victim);
+            victim->printColor("^r%M tried to kill you with gutter rats!\n", player);
+            break;
+        case DM_COMET:
+            player->print("You tried to kill %N with a firey comet!\n", victim);
+            victim->printColor("^r%M tried to kill you with a firey comet!\n", player);
+            break;
+        case DM_ABYSS:
+            player->print("You tried to send %N's soul to the Abyss!\n", victim);
+            victim->printColor("^r%M tried to suck your soul into the Abyss!\n", player);
+            break;
+        case DM_SHARDS:
+            player->print("You tried to break %N into millions of tiny crystalline shards!\n", victim);
+            victim->printColor("^r%M tried break you into millions of tiny crystalline shards!\n", player);
+            break;
+        case DM_FLATULENCE:
+            player->print("You tried to give %N death by an overabundance of flatulence!\n", victim);
+            victim->printColor("^r%M tried to give you an overabundance of flatulence and kill you!\n", player);
+            break;
+        case DM_DIARRHEA:
+            player->print("You tried to give %N excessive diarreah of the mouth and kill %s!\n", victim, victim->himHer());
+            victim->printColor("^r%M tried to give you excessive diarreah and kill you!\n", player);
+            break;
+        case DM_KINETIC:
+            player->print("You tried to kill %N with a kinetic strike from space!\n", victim);
+            victim->printColor("^r%M tried to kill you with a kinetic strike from space!\n", player);
+            break;
         default:
             player->print("You tried to strike down %N!\n", victim);
             victim->printColor("^r%M tried to strike you down with lightning!\n", player);
@@ -1830,6 +1910,65 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
     case DM_NOMNOM:
         victim->print("A fearsome monster leaps out of the shadows!\n");
         victim->print("It tears off your limbs and greedily devours them!\n");
+        break;
+    case DM_GRENADE:
+        victim->print("You get out a hand grenade and pull the pin.\n");
+        victim->print("You forget to throw it. It explodes.\n");
+        break;
+    case DM_HEAD_BOOM:
+        victim->print("Your head expands inexplicably! It explodes.\n");
+        break;
+    case DM_STAB:
+        victim->print("You pull out a hidden knife.\n");
+        victim->print("You proceed to stab yourself to death.\n");
+        break;
+    case DM_SUICIDE:
+        victim->print("You just can't take it anymore. You kill yourself.\n");
+        break;
+    case DM_ALCOHOL:
+        victim->print("You drink yourself to death.\n");
+        break;
+    case DM_DROWNED:
+        victim->print("You stick your head into a small puddle.\n");
+        victim->print("You drown.\n");
+        break;
+    case DM_DRAGON:
+        victim->print("An ancient great wyrm red dragon just arrived.\n");
+        victim->print("It bites you in half and eats both pieces.\n");
+        break;
+    case DM_CHOKE:
+        victim->print("You feel an overwhelming choking sensation.\n");
+        victim->print("You desperately grab at your throat as you slowly choke to death.\n");
+        break;
+    case DM_DEMON:
+        victim->print("An ancient demon just arrived.\n");
+        victim->print("The ancient demon proceeds to rip you into tiny pieces.\n");
+        break;
+    case DM_RATS:
+        victim->print("10000 gutter rats just arrived.\n");
+        victim->print("They kill you horribly.\n");
+        break;
+    case DM_COMET:
+        victim->print("A firey comet appears from the skies and annihilates you.\n");
+        break;
+    case DM_ABYSS:
+        victim->print("An Abyssal void pocket appears out of nowhere.\n");
+        victim->print("You are promptly sucked into it. You die.\n");
+        break;
+    case DM_SHARDS:
+        victim->print("You spontaneously explode into millions of tiny crystalline shards.\n");
+        break;
+    case DM_FLATULENCE:
+        victim->print("You suddenly have an overabundance of flatulence.\n");
+        victim->print("It gets so bad that you explode. You die horribly.\n");
+        break;
+    case DM_DIARRHEA:
+        victim->print("Excessive diarreah suddenly spurts uncontrollably from your mouth.\n");
+        victim->print("You die in agony from dehydration.\n");
+        break;
+    case DM_KINETIC:
+        victim->print("A small titanium rod hits you from space at nearly the speed of light!\n");
+        victim->print("You were utterly obliterated!\n");
         break;
     default:
         break;
@@ -1881,13 +2020,93 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
             break;
         case DM_MISSILE:
             broadcast(victim->getSock(), victim->getRoomParent(),
-                "^r%s was struck by a cruise missile!\n%s exploded!", victim->getCName(), victim->getCName());
-            broadcast("^r### Sadly, %s was killed by a precision-strike cruise missile.", victim->getCName());
+                "^R%s was struck by a cruise missile!\n%s exploded!", victim->getCName(), victim->getCName());
+            broadcast("^R### Sadly, %s was killed by a precision-strike cruise missile.", victim->getCName());
             break;
         case DM_NOMNOM:
             broadcast(victim->getSock(), victim->getRoomParent(),
-                "A fearsome monster leaps out of the shadows!\nIt tears off %s's limbs and greedily devours them!", victim->getCName());
-            broadcast("### Sadly, %s was devoured by a fearsome monster.", victim->getCName());
+                "^WA fearsome monster leaps out of the shadows!\nIt tears off %s's limbs and greedily devours them!", victim->getCName());
+            broadcast("^W### Sadly, %s was devoured by a fearsome monster.", victim->getCName());
+            break;
+        case DM_GRENADE:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^g%s pulls the pin on a hand grenade. %s forgets to throw it.", victim->getCName(), victim->upHeShe());
+            broadcast("^g### Sadly, %s was killed by an exploding hand grenade.", victim->getCName());
+            break;
+        case DM_HEAD_BOOM:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^y%s's head expands and violently explodes!", victim->getCName());
+            broadcast("^y### Sadly, %s's head exploded. %s died.", victim->getCName(), victim->upHeShe());
+            break;
+        case DM_STAB:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^M%s pulls out a hidden knife and stabs %sself to death. Gory.", victim->getCName(), victim->himHer());
+            broadcast("^M### Sadly, %s stabbed %sself to death.", victim->getCName(), victim->himHer());
+            break;
+        case DM_SUICIDE:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^D%s can't take it anymore. %s simply kills %sself.", victim->getCName(), victim->upHeShe(), victim->himHer());
+            broadcast("^D### Sadly, %s killed %sself. %s won't be missed.", victim->getCName(), victim->himHer(), victim->upHeShe());
+            break;
+        case DM_ALCOHOL:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^C%s drinks %sself to death.", victim->getCName(), victim->himHer());
+            broadcast("^C### Sadly, %s died from alcohol poisoning.", victim->getCName());
+            break;
+        case DM_DROWNED:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^b%s puts %s head in a small puddle of water. %s drowns.", victim->getCName(), victim->hisHer(), victim->upHeShe());
+            broadcast("^b### Sadly, %s drowned in a small puddle of water.", victim->getCName());
+            break;
+        case DM_DRAGON:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^RAn ancient great wyrm red dragon suddenly appears. It bites %s in half and eats both pieces. It leaves to go take a dump.", victim->getCName());
+            broadcast("^R### Sadly, %s was bitten in half by an ancient great wyrm red dragon and eaten. %s died horribly.", victim->getCName(), victim->upHeShe());
+            break;
+        case DM_CHOKE:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^c%s grabs at %s throat. %s inexplicably chokes to death.", victim->getCName(), victim->hisHer(), victim->upHeShe());
+            broadcast("^c### Sadly, %s was choked to death by the gods.", victim->getCName());
+            break;
+        case DM_DEMON:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^DAn ancient demon just arrived.\nThe ancient demon gruesomely rips %s apart and vanishes.", victim->getCName());
+            broadcast("^D### Sadly, %s was ripped into tiny pieces by an ancient demon.", victim->getCName());
+            break;
+        case DM_RATS:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^y10000 gutter rats just arrived.\nThe gutter rats horribly kill %s and then disappear.", victim->getCName());
+            broadcast("^y### Sadly, %s was horribly killed by 10000 gutter rats.", victim->getCName());
+            break;
+        case DM_COMET:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^YA cataclysmic firey comet suddenly appears from the skies and annihilates %s.", victim->getCName());
+            broadcast("^Y### Sadly, %s was annihilated by a cataclysmic firey comet.", victim->getCName());
+            break;
+        case DM_ABYSS:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^DAn Abyssal void pocket appears out of nowhere. %s is promptly sucked into it.\n%s is never heard from again.", victim->getCName(), victim->upHeShe());
+            broadcast("^D### Sadly, %s was sucked into an Abyssal void pocket and has been lost forever.", victim->getCName());
+            break;
+        case DM_SHARDS:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^W%s spontaneously shatters into millions of tiny crystalline shards.", victim->getCName());
+            broadcast("^W### Sadly, %s spontaneously exploded into millions of tiny crystalline shards.", victim->getCName());
+            break;
+        case DM_FLATULENCE:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^m%s is overcome by an overabundance of flatulence. It gets so bad it causes %s to explode.", victim->getCName(), victim->himHer());
+            broadcast("^m### Sadly, %s exploded due to an overabundance of flatulence.", victim->getCName());
+            break;
+        case DM_DIARRHEA:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^yExcessive diarreah suddenly spurts uncontrollably from %s's mouth.\n%s dies in agony from dehydration.", victim->getCName(), victim->upHeShe());
+            broadcast("^y### Sadly, %s died suddenly from excessive diarreah of the mouth.", victim->getCName());
+            break;
+        case DM_KINETIC:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^cA small titanium rod hits %s from space at nearly the speed of light!\n%s was utterly obliterated.", victim->getCName(), victim->upHeShe());
+            broadcast("^c### Sadly, %s was killed by a kinetic strike from space.", victim->getCName());
             break;
         default:
             break;
@@ -1930,6 +2149,54 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
         case DM_NOMNOM:
             broadcast(isStaff, "^G### Sadly, %s was devoured by a fearsome monster.", victim->getCName());
             break;
+        case DM_GRENADE:
+            broadcast(isStaff, "^g### Sadly, %s was killed by an exploding hand grenade.", victim->getCName());
+            break;
+        case DM_HEAD_BOOM:
+            broadcast(isStaff, "^y### Sadly, %s's head exploded. %s died.", victim->getCName(), victim->upHeShe());
+            break;
+        case DM_STAB:
+            broadcast(isStaff, "^M### Sadly, %s stabbed %sself to death.", victim->getCName(), victim->hisHer());
+            break;
+        case DM_SUICIDE:
+            broadcast(isStaff, "^D### Sadly, %s killed %sself. %s won't be missed.", victim->getCName(), victim->himHer(), victim->upHeShe());
+            break;
+        case DM_ALCOHOL:
+            broadcast(isStaff, "^C### Sadly, %s died from alcohol poisoning.", victim->getCName());
+            break;
+        case DM_DROWNED:
+            broadcast(isStaff, "^b### Sadly, %s drowned in a small puddle of water.", victim->getCName());
+            break;
+        case DM_DRAGON:
+            broadcast(isStaff, "^R### Sadly, %s was bitten in half by an ancient great wyrm red dragon and eaten. %s died horribly.", victim->getCName(), victim->upHeShe());
+            break;
+        case DM_CHOKE:
+            broadcast(isStaff, "^c### Sadly, %s was choked to death by the gods.", victim->getCName());
+            break;
+        case DM_DEMON:
+            broadcast(isStaff, "^D### Sadly, %s was ripped into tiny pieces by an ancient demon.", victim->getCName());
+            break;
+        case DM_RATS:
+            broadcast(isStaff, "^y### Sadly, %s was horribly killed by 10000 gutter rats.", victim->getCName());
+            break;
+        case DM_COMET:
+            broadcast(isStaff, "^Y### Sadly, %s was annihilated by a cataclysmic firey comet.", victim->getCName());
+            break;
+        case DM_ABYSS:
+            broadcast(isStaff, "^D### Sadly, %s was sucked into an Abyssal void pocket and has been lost forever.", victim->getCName());
+            break;
+        case DM_SHARDS:
+            broadcast(isStaff, "^W### Sadly, %s spontaneously exploded into millions of tiny crystalline shards.", victim->getCName());
+            break;
+        case DM_FLATULENCE:
+            broadcast(isStaff, "^m### Sadly, %s exploded due to an overabundance of flatulence.", victim->getCName());
+            break;
+        case DM_DIARRHEA:
+            broadcast(isStaff, "^y### Sadly, %s died suddenly from excessive diarreah of the mouth.", victim->getCName());
+            break;
+        case DM_KINETIC:
+            broadcast(isStaff, "^r### Sadly, %s was killed by a kinetic strike from space.", victim->getCName());
+            break;
         default:
             break;
         }
@@ -1957,8 +2224,10 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
                 }
             }
 
-            player->hp.setCur(1);
-            player->mp.setCur(1);
+            if (hpmp_loss || no_limbo) {
+                player->hp.setCur(1);
+                player->mp.setCur(1);
+            }
 
             if(unconscious)
                 player->knockUnconscious(uncon_length);
@@ -1984,20 +2253,28 @@ int dmKill(Player* player, Player *victim, int type, int silent, int unconscious
 // and dmKill are passed the appropriate arguments
 
 int dmKillSwitch(Player* player, cmd* cmnd) {
-    int     i, silent=0, unconscious=0, uncon_length=0, type=DM_KILL;
+    int     i, silent=0, unconscious=0, uncon_length=0, hpmp_loss=0, type=DM_KILL;
     Player  *victim;
 
-    // -s and -u can be in any position, so we have to look for them
+    if(player->getClass() == CreatureClass::CARETAKER && !player->flagIsSet(P_CT_CAN_KILL)) {
+        player->print("You don't have the authorization to use that command.\n");
+        return(0);
+    }
+
+    // -s and -u and -l can be in any position, so we have to look for them
     for(i=1; i<cmnd->num; i++) {
-        if(!strcmp(cmnd->str[i], "-s"))
+        if(!strcmp(cmnd->str[i], "-s") && !(type==DM_ARMAGEDDON || type==DM_SUPERNOVA || type==DM_IGMOO))
             silent=1;
+
         if(!strcmp(cmnd->str[i], "-u")) {
             unconscious=1;
             if(i < cmnd->num)
                 uncon_length = atoi(cmnd->str[i+1]);
 
-            uncon_length = MIN(600, MAX(15, uncon_length ) );
+            uncon_length = MIN(120, MAX(15, uncon_length ) );
         }
+        if(!strcmp(cmnd->str[i], "-l"))
+            hpmp_loss=1;
     }
 
 
@@ -2022,8 +2299,9 @@ int dmKillSwitch(Player* player, cmd* cmnd) {
 
 
     // if it's a world-killer
-    if(type != DM_KILL)
-        return(dmKillAll(type, silent, unconscious, uncon_length));
+    if(type != DM_KILL) {
+        return(dmKillAll(type, silent, hpmp_loss, unconscious, uncon_length));
+    }
 
 
     // if it won't kill everyone, who will it kill?
@@ -2059,6 +2337,38 @@ int dmKillSwitch(Player* player, cmd* cmnd) {
         type = DM_MISSILE;
     else if(!strcasecmp(cmnd->str[0], "*nomnom"))
         type = DM_NOMNOM;
+    else if(!strcasecmp(cmnd->str[0], "*grenade"))
+        type = DM_GRENADE;
+    else if(!strcasecmp(cmnd->str[0], "*head"))
+        type = DM_HEAD_BOOM;
+    else if(!strcasecmp(cmnd->str[0], "*stab"))
+        type = DM_STAB;
+    else if(!strcasecmp(cmnd->str[0], "*suicide"))
+        type = DM_SUICIDE;
+    else if(!strcasecmp(cmnd->str[0], "*alcohol"))
+        type = DM_ALCOHOL;
+    else if(!strcasecmp(cmnd->str[0], "*drown"))
+        type = DM_DROWNED;
+    else if(!strcasecmp(cmnd->str[0], "*dragon"))
+        type = DM_DRAGON;
+    else if(!strcasecmp(cmnd->str[0], "*choke"))
+        type = DM_CHOKE;
+    else if(!strcasecmp(cmnd->str[0], "*demon"))
+        type = DM_DEMON;
+    else if(!strcasecmp(cmnd->str[0], "*rats"))
+        type = DM_RATS;
+    else if(!strcasecmp(cmnd->str[0], "*comet"))
+        type = DM_COMET;
+    else if(!strcasecmp(cmnd->str[0], "*abyss"))
+        type = DM_ABYSS;
+    else if(!strcasecmp(cmnd->str[0], "*shard"))
+        type = DM_SHARDS;
+    else if(!strcasecmp(cmnd->str[0], "*flatulence"))
+        type = DM_FLATULENCE;
+    else if(!strcasecmp(cmnd->str[0], "*diarreah"))
+        type = DM_DIARRHEA;
+     else if(!strcasecmp(cmnd->str[0], "*kinetic"))
+        type = DM_KINETIC;
 
     if(cmnd->num >  2) {
         if(!strcasecmp(cmnd->str[2], "-combust"))
@@ -2083,9 +2393,41 @@ int dmKillSwitch(Player* player, cmd* cmnd) {
             type = DM_MISSILE;
         else if(!strcasecmp(cmnd->str[2], "-nomnom"))
             type = DM_NOMNOM;
+        else if(!strcasecmp(cmnd->str[2], "-grenade"))
+            type = DM_GRENADE;
+        else if(!strcasecmp(cmnd->str[2], "-head"))
+            type = DM_HEAD_BOOM;
+        else if(!strcasecmp(cmnd->str[2], "-stab"))
+            type = DM_STAB;
+        else if(!strcasecmp(cmnd->str[2], "-suicide"))
+            type = DM_SUICIDE;
+        else if(!strcasecmp(cmnd->str[2], "-alcohol"))
+            type = DM_ALCOHOL;
+        else if(!strcasecmp(cmnd->str[2], "-drown"))
+            type = DM_DROWNED;
+        else if(!strcasecmp(cmnd->str[2], "-dragon"))
+            type = DM_DRAGON;
+        else if(!strcasecmp(cmnd->str[2], "-choke"))
+            type = DM_CHOKE;
+        else if(!strcasecmp(cmnd->str[2], "-demon"))
+            type = DM_DEMON;
+        else if(!strcasecmp(cmnd->str[2], "-rats"))
+            type = DM_RATS;
+        else if(!strcasecmp(cmnd->str[2], "-comet"))
+            type = DM_COMET;
+        else if(!strcasecmp(cmnd->str[2], "-abyss"))
+            type = DM_ABYSS;
+        else if(!strcasecmp(cmnd->str[2], "-shard"))
+            type = DM_SHARDS;
+        else if(!strcasecmp(cmnd->str[2], "-flatulence"))
+            type = DM_FLATULENCE;
+        else if(!strcasecmp(cmnd->str[2], "-diarreah"))
+            type = DM_DIARRHEA;
+         else if(!strcasecmp(cmnd->str[2], "-kinetic"))
+            type = DM_KINETIC;
     }
 
-    dmKill(player, victim, type, silent, unconscious, uncon_length);
+    dmKill(player, victim, type, silent, hpmp_loss, unconscious, uncon_length);
     return(0);
 }
 

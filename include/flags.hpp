@@ -197,7 +197,7 @@
 #define P_COMPACT                   63       // show compact output
 #define P_SHOW_TICK                 64       // Show ticks
 #define P_JUST_REFUNDED             65       // No haggling until they leave the room!
-// free                             66       // +PTY
+#define P_CT_CAN_KILL               66       // CT Can use *kill command
 // free                             67
 // free                             68
 // free                             69
