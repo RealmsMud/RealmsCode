@@ -314,28 +314,39 @@ void Player::upLevel() {
             addStatModifier("mp", modName, mpAmt, MOD_CUR_MAX );
         }
 
-
+        
+             
 
         switch (saveGain) {
         case POI:
+            logn("log.saveswtf", "upLevel():%s %s[L%d]'s POI save just went up. Prev: %d%, New: %d%, Gains: %d\n", 
+                                relevel ? "[RE-LEVEL]":"", getCName(), level, saves[POI].chance, saves[POI].chance+3, relevel ? saves[POI].gained:0);
             saves[POI].chance += 3;
-            print("You are now more resistant to poison.\n");
+            printColor("^GYou are now more resistant to poison.\n");
             break;
         case DEA:
+            logn("log.saveswtf", "upLevel():%s %s[L%d]'s DEA save just went up. Prev: %d%, New: %d%, Gains: %d\n", 
+                                relevel ? "[RE-LEVEL]":"", getCName(), level, saves[DEA].chance, saves[DEA].chance+3, relevel ? saves[DEA].gained:0);
             saves[DEA].chance += 3;
-            print("You are now more able to resist traps and death.\n");
+            printColor("^DYou are now more able to resist traps and death.\n");
             break;
         case BRE:
+             logn("log.saveswtf", "upLevel():%s %s[L%d]'s BRE save just went up. Prev: %d%, New: %d%, Gains: %d\n", 
+                                relevel ? "[RE-LEVEL]":"", getCName(), level, saves[BRE].chance, saves[BRE].chance+3, relevel ? saves[BRE].gained:0);
             saves[BRE].chance += 3;
-            print("You are now more resistant to breath weapons and explosions.\n");
+            printColor("^RYou are now more resistant to breath weapons and explosions.\n");
             break;
         case MEN:
+            logn("log.saveswtf", "upLevel():%s %s[L%d]'s MEN save just went up. Prev: %d%, New: %d%, Gains: %d\n", 
+                                relevel ? "[RE-LEVEL]":"", getCName(), level, saves[MEN].chance, saves[MEN].chance+3, relevel ? saves[MEN].gained:0);
             saves[MEN].chance += 3;
-            print("You are now more resistant to mind dominating attacks.\n");
+            print("^YYou are now more resistant to mind dominating attacks.\n");
             break;
         case SPL:
+            logn("log.saveswtf", "upLevel():%s %s[L%d]'s SPL save just went up. Prev: %d%, New: %d%, Gains: %d\n", 
+                                relevel ? "[RE-LEVEL]":"", getCName(), level, saves[SPL].chance, saves[SPL].chance+3, relevel ? saves[SPL].gained:0);
             saves[SPL].chance += 3;
-            print("You are now more resistant to magical spells.\n");
+            print("^MYou are now more resistant to magical spells.\n");
             break;
         }
 
@@ -344,8 +355,10 @@ void Player::upLevel() {
 
             // Saving throw bug fix: Spells and mental saving throws will now be
             // properly reset so they can increase like the other ones  -Bane
-            for(a=POI; a<= SPL;a++)
+            for(a=POI; a<= SPL;a++) 
                 saves[a].gained = 0;
+
+            logn("log.saveswtf", "upLevel(): %s[%d] - all saves gained reset to 0\n", getCName(), level);
         }
 
         // Give out skills here
@@ -367,18 +380,18 @@ void Player::upLevel() {
     }
 
     if(cClass == CreatureClass::LICH && !relevel) {
-        if(level == 7)
+        if(level == 10)
             print("Your body has deteriorated slightly.\n");
-        if(level == 13)
+        if(level == 20)
             print("Your body has decayed immensely.\n");
-        if(level == 19)
+        if(level == 30)
             print("What's left of your flesh hangs on your bones.\n");
-        if(level == 25)
+        if(level == 40)
             print("You are now nothing but a dried up and brittle set of bones.\n");
     }
 
 
-    if((cClass == CreatureClass::MAGE || cClass2 == CreatureClass::MAGE) && level == 7 && !relevel) {
+    if((cClass == CreatureClass::MAGE || cClass2 == CreatureClass::MAGE) && level == 7 && !relevel && !spellIsKnown(S_ARMOR)) {
         print("You have learned the armor spell.\n");
         learnSpell(S_ARMOR);
     }
@@ -496,30 +509,40 @@ void Player::downLevel() {
 
     switch (saveLost) {
     case POI:
+        logn("log.saveswtf", "downLevel(): %s[L%d]'s POI save just went down. Prev: %d%, New: %d%, Gains: %d\n", 
+                                getCName(), level, saves[POI].chance, saves[POI].chance-3, negativeLevels ? saves[POI].gained:0);
         saves[POI].chance -= 3;
         if(!negativeLevels)
             saves[POI].gained = 0;
         print("You are now less resistant to poison.\n");
         break;
     case DEA:
+        logn("log.saveswtf", "downLevel(): %s[L%d]'s DEA save just went down. Prev: %d%, New: %d%, Gains: %d\n", 
+                                getCName(), level, saves[DEA].chance, saves[DEA].chance-3, negativeLevels ? saves[DEA].gained:0);
         saves[DEA].chance -= 3;
         if(!negativeLevels)
             saves[DEA].gained = 0;
         print("You are now less able to resist traps and death.\n");
         break;
     case BRE:
+        logn("log.saveswtf", "downLevel(): %s[L%d]'s BRE save just went down. Prev: %d%, New: %d%, Gains: %d\n", 
+                                getCName(), level, saves[BRE].chance, saves[BRE].chance-3, negativeLevels ? saves[BRE].gained:0);
         saves[BRE].chance -= 3;
         if(!negativeLevels)
             saves[BRE].gained = 0;
         print("You are now less resistant to breath weapons and explosions.\n");
         break;
     case MEN:
+        logn("log.saveswtf", "downLevel(): %s[L%d]'s MEN save just went down. Prev: %d%, New: %d%, Gains: %d\n", 
+                                getCName(), level, saves[MEN].chance, saves[MEN].chance-3, negativeLevels ? saves[MEN].gained:0);
         saves[MEN].chance -= 3;
         if(!negativeLevels)
             saves[MEN].gained = 0;
         print("You are now less resistant to mind dominating attacks.\n");
         break;
     case SPL:
+       logn("log.saveswtf", "downLevel(): %s[L%d]'s SPL save just went down. Prev: %d%, New: %d%, Gains: %d\n", 
+                                getCName(), level, saves[SPL].chance, saves[SPL].chance-3, negativeLevels ? saves[SPL].gained:0);
         saves[SPL].chance -= 3;
         if(!negativeLevels)
             saves[SPL].gained = 0;
@@ -593,7 +616,7 @@ int cmdTrain(Player* player, cmd* cmnd) {
     if(player->getRace() == HUMAN)
         goldneeded += goldneeded/3/10; // Humans have +10% training costs.
 
-    // Leveling cost temporarily suspended. -TC
+    // Level training cost for levels 1-3 is free
     if(player->getLevel() <= 3)  // Free for levels 1-3 to train.
         goldneeded = 0;
 

@@ -531,11 +531,14 @@ int dmAward(Player* player, cmd* cmnd) {
     long    i=0, t=0, amount=0, gp=0;
     char    temp[80];
 
-    if(!player->flagIsSet(P_CAN_AWARD) && !player->isDm() && !player->isWatcher())
-        return(cmdNoAuth(player));
+
+    if(!(player->isDm() || (player->flagIsSet(P_WATCHER) && !player->isStaff()) || (player->getClass() == CreatureClass::CARETAKER && player->flagIsSet(P_CAN_AWARD)) )) {
+        player->print("The command \"%s\" does not exist.\n", cmnd->str[0]);
+        return(0);
+    }
 
     if(cmnd->num < 2) {
-        player->printColor("^cSyntax: *award (player) %s\n", player->isCt() ? "(xp amount) [-g]":"");
+        player->printColor("^cSyntax: *award (player) %s\n", player->isCt() ? "[xp amount] [-g] [gold amount]":"");
         player->printColor("^c-Default award amount is 1 percent of player's current xp, or 500xp, whichever is higher.\n");
         if (player->isCt())
             player->printColor("^c-Default gold amount is 1 percent of player's current xp, or 500gp, whichever is higher.\n");
@@ -560,6 +563,17 @@ int dmAward(Player* player, cmd* cmnd) {
         return(0);
     }
 
+    if(!player->isCt() && player->isWatcher() && target->getLevel() > 16) {
+        player->print("Only DMs and CTs can *award players greater than level 16.\n");
+        player->print("Please let them know so they can *award %s.\n", target->getCName());
+        return(0);
+    }
+
+     if(!strcmp(cmnd->str[2], "-g") && cmnd->val[2] < 0 && player->isCt()) {
+        player->printColor("^RDon't be a fool. You can't award negative gold.\n");
+        return(0);
+    }
+
     sprintf(temp, "%s", target->getCName());
 
     if(!target->getSock()->canForce()) {
@@ -567,23 +581,18 @@ int dmAward(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if (player->isCt()) // Setting specific award is restricted to staff only.
+    if (player->isCt()) // Setting specific xp award is restricted to CT and DM only.
         amount = cmnd->val[1];
 
 
     if(amount < 2) {
-        amount = target->getExperience() / 100;     // 1% of current xp is award.
-        amount = MAX(amount, 500L);
+        amount = target->getExperience() / 100;     // 1% of current xp is default award.
+        amount = MAX(amount, 500L);                 // or 500XP if it's higher
     }
-
-    
-    if(cmnd->num == 2)
-
 
     i = LT(target, LT_RP_AWARDED);
     t = time(nullptr);
 
-    
     if(i > t && !player->isDm()) { // DMs ignore timer
         if(i - t > 3600)
             player->print("%s cannot be awarded for %02d:%02d:%02d more hours.\n", target->getCName(),(i - t) / 3600L, ((i - t) % 3600L) / 60L, (i - t) % 60L);
@@ -593,26 +602,28 @@ int dmAward(Player* player, cmd* cmnd) {
             player->pleaseWait(i-t);
         return(0);
     }
-    
-
-    gp = MAX(500L, MIN(1000000L, amount));
-
-    player->print("%ld xp awarded to %s for good roleplaying and/or being greatly helpful.\n", amount, target->getCName());
-    target->printColor("^GYou have been awarded %ld xp for good roleplaying and/or being greatly helpful!\n", amount);
-    target->addExperience(amount);
-
 
     target->lasttime[LT_RP_AWARDED].ltime = t;
     if(player->isCt())
-        target->lasttime[LT_RP_AWARDED].interval = 300L; // 5 minutes.
-    else // We have a watcher
-        target->lasttime[LT_RP_AWARDED].interval = 900L; // 15 minutes.
-
+        target->lasttime[LT_RP_AWARDED].interval = 300L; // CTs/DMs always set the timer to 5 minutes
+    // We have a watcher
+    else if (target->getLevel() < 10)
+        target->lasttime[LT_RP_AWARDED].interval = 900L; // 15 minutes between target awards if under level 10
+    else 
+        target->lasttime[LT_RP_AWARDED].interval = 3600L; // everybody else 1 hour between
     
+    player->printColor("^c%ld xp awarded to %s for good roleplaying and/or being greatly helpful.\n", amount, target->getCName());
+    target->printColor("^GYou have been awarded %ld xp for good roleplaying and/or being greatly helpful!\n", amount);
+    if(!player->isCt())
+        logn("log.watchers", "%s awarded %ld xp to %s[L%d].\n", player->getCName(), amount, target->getCName(), target->getLevel());
+    target->addExperience(amount);
 
-    if(!strcmp(cmnd->str[2], "-g") && !player->isWatcher()) { // Watchers cannot award gold
-        gp = MAX(500L, MIN(cmnd->val[2],1000000L));            
-        player->print("%ld gold awarded to %s for good roleplaying and/or being greatly helpful.\n", gp, target->getCName());
+    if(!strcmp(cmnd->str[2], "-g") && player->isCt()) { // Watchers cannot award gold
+        if(cmnd->val[2] > 0)
+            gp = MAX(500L, MIN(cmnd->val[2], player->isDm() ? 5000000L:500000L));
+        else
+            gp = MAX(500L, MIN(player->isDm() ? 5000000L:500000L, amount));         
+        player->printColor("^cYou also awarded ^y%ld gold^c.\n", gp);
         target->printColor("^GYou have been awarded ^Y%ld gold^G as well! It was put in your bank account.\n", gp);
         target->bank.add(gp, GOLD);
         logn("log.bank", "%s was awarded %ld gold for good roleplaying and/or being greatly helpful. (Balance=%s)\n",target->getCName(), gp, target->bank.str().c_str());
@@ -620,7 +631,7 @@ int dmAward(Player* player, cmd* cmnd) {
     }
 
     if (!player->isCt())
-        broadcast(isCt, "^y*** %s awarded %s %ld xp for good roleplaying and/or being greatly helpful.\n", player->getCName(), temp, amount);
+        broadcast(isCt, "^y*** %s awarded %s[L%d] %ld xp for good roleplaying and/or being greatly helpful.\n", player->getCName(), temp, target->getLevel(), amount);
     log_immort(true, player, "%s awarded %s %ld xp for good roleplaying and/or being greatly helpful.\n", player->getCName(), temp, amount);
 
     if(!strcmp(cmnd->str[2], "-g"))
