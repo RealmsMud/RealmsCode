@@ -811,9 +811,9 @@ bool Player::lagProtection() {
 
 bool Creature::chkSave(short savetype, Creature* target, short bns) {
     Player  *pCreature=nullptr;
-    int     chance, gain, i, ringbonus=0, opposing=0, upchance = 0, natural=1;
+    int     chance, gain, i, ringbonus=0, opposing=0, upchance = 0, upchanceRoll=0, natural=1;
     int     roll=0, nogain=0;
-    long    j=0, t=0;
+    long    j=0, t=0, duration=0;
 
 
     pCreature = getAsPlayer();
@@ -821,67 +821,89 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
     if(target && target != this)
         opposing = 1;
 
-
-    chance = saves[savetype].chance;
+    chance = 100*saves[savetype].chance;
     gain = saves[savetype].gained;
 
-
-    for(i=9; i < 17; i++) { // Determine save bonus from any magical rings.
-        if(!ready[i]) // Only the highest + ring is used.
+    // Determine a save bonus from any magical rings. Only one ring of highest + is used.
+    for(i=FINGER1; i < FINGER8+1; i++) {
+        if(!ready[i])       
             continue;
-
         if(ready[i]->getAdjustment() > 0 && ready[i]->getAdjustment() > ringbonus) {
+            if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) printColor("^yHighest worn ring: %s(+%d)\n", ready[i]->getCName() ? ready[i]->getCName():"", ready[i]->getAdjustment());
             ringbonus = ready[i]->getAdjustment();
             continue;
         }
     }
 
-    chance += ringbonus*5;
+    chance += ringbonus*500;
+  
 
     if( ready[HELD-1] && ready[HELD-1]->flagIsSet(O_LUCKY) &&
-        ready[HELD-1]->getType() != ObjectType::WEAPON && ready[HELD-1]->getAdjustment() > 0
-    )
-        chance += ready[HELD-1]->getAdjustment()*5;
+        ready[HELD-1]->getType() != ObjectType::WEAPON && ready[HELD-1]->getAdjustment() > 0) {
+        chance += ready[HELD-1]->getAdjustment()*500;
+        if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) 
+            print("Checking for lucky held item: %s(+%d)\n", ready[HELD-1]->getCName() ? ready[HELD-1]->getCName():"", ready[i]->getAdjustment());
+        }
 
     switch(savetype) {
     case POI:
-        chance += bonus(constitution.getCur());
+        chance += constitution.getCur();
         if(hp.getCur() <= hp.getMax()/3)
             chance /= 2;    // More vulnerable to poison if weakened severely.
         if(pCreature && pCreature->isEffected("berserk"))
-            chance += 15;   // Poison doesn't harm berserk players as much.
-
+            chance += 1500;   // Poison doesn't harm berserk players as much.
         break;
+
     case DEA: // bonuses set for death traps and death saves are sent with the
-        // bonus variable from the calling function.
+              // bonus variable from the calling function.
 
         break;
-    case BRE:
-        chance += bonus(dexterity.getCur()) * 2;
-        if(ready[BODY-1])
-            chance += 5*ready[BODY-1]->getAdjustment();
+    case BRE: // Check armor worn for magical adjustments and add to chance based on armor piece
+        if(ready[BODY-1]) 
+            chance += 50 * ready[BODY-1]->getAdjustment();  
+        if(ready[ARMS-1])
+            chance += 20 * ready[ARMS-1]->getAdjustment();          
+        if(ready[LEGS-1])
+            chance += 25 * ready[LEGS-1]->getAdjustment();
+        if(ready[NECK-1])
+            chance += 5 * ready[NECK-1]->getAdjustment();            
+        if(ready[BELT-1])
+            chance += 5 * ready[BELT-1]->getAdjustment();           
+        if(ready[HANDS-1])
+            chance += 5 * ready[HANDS-1]->getAdjustment();          
+        if(ready[HEAD-1]) 
+            chance += 15 * ready[HEAD-1]->getAdjustment();           
+        if(ready[FEET-1]) 
+            chance += 10 * ready[FEET-1]->getAdjustment();            
+        if(ready[FACE-1])
+            chance += 5 * ready[FACE-1]->getAdjustment();
+        if(ready[SHIELD-1]) {
+            if(ready[SHIELD-1]->flagIsSet(O_SMALL_SHIELD))
+                chance += 10 * ready[SHIELD-1]->getAdjustment();
+            else
+                chance += 40 * ready[SHIELD-1]->getAdjustment();
+        }
+        chance += dexterity.getCur() * 2;
         break;
     case MEN:
         if(opposing)
-            chance -= 5*(crtWisdom(target) - crtWisdom(this));
+            chance -= ( 5*((target->intelligence.getCur()+target->piety.getCur())/2) - ((intelligence.getCur()+piety.getCur())/2));
         else
-            chance += crtWisdom(this);
-
+            chance += (intelligence.getCur()+piety.getCur())/2;
         break;
     case SPL:
         if(opposing)
-            chance -= 2*(bonus(target->intelligence.getCur()) - bonus(intelligence.getCur()));
+            chance -= 2*(target->intelligence.getCur() - intelligence.getCur());
         else
-            chance -= 2*bonus(target->intelligence.getCur());
+            chance += 2*target->intelligence.getCur();
 
         if(pCreature && pCreature->isEffected("resist-magic")) {
             natural = 0;
-            chance += 25;
+            chance += 2500;
         }
-
         break;
     case LCK:
-        chance += ((saves[POI].chance + saves[DEA].chance +
+        chance += 100*((saves[POI].chance + saves[DEA].chance +
                 saves[BRE].chance + saves[MEN].chance +
                 saves[SPL].chance)/5);
         break;
@@ -889,65 +911,112 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
         break;
     }
 
-    chance += bns;
+    if(bns)
+        chance += 100*bns;
 
     if(pCreature && pCreature->getClass() == CreatureClass::CLERIC && pCreature->getDeity() == KAMIRA)
-        chance += 5;
+        chance += 1000;
 
-    chance = MAX(1,MIN(95, chance));
+    chance = MAX(1,MIN(9900, chance)); // always a 1% chance to fail
 
-    roll = Random::get(1,100);
-    if(isCt())
-        print("Roll: %d.\n", roll);
+     // Gaining saves is on a timer so people can't easily spam in/out/in/out room to instantly raise various save types
+     // They can still do it, but it takes a little more work
+     j = LT(this, LT_SAVES);
+     t = time(nullptr);
+     if(j > t) {
+        nogain = 1;
 
+     if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) {
+         duration = j-t;
+         if(duration < 0)
+             duration *=-1;
+         if (duration == 1)
+            printColor("^DSave gain chance delay: 1 more second.\n");
+        else
+            printColor("^DSave gain chance delay: %d more seconds.\n", duration);
+        }
+    }
 
+    roll = Random::get(1,10000);
+    if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) {
+        printColor("^ySave[%d] chance unmodified: %d\n", savetype, 
+            savetype != LCK ? saves[savetype].chance*100 : 100*((saves[POI].chance+saves[DEA].chance+saves[BRE].chance+saves[MEN].chance+saves[SPL].chance)/5));
+        printColor("^ySave[%d] chance modified: %d\n", savetype, chance);
+        printColor("^ySave[%d] roll (1d10000): %d%s %s\n", savetype, roll, ((roll <= chance) && natural)  ? "^g[SUCCESS]":"^r[FAIL]", natural==0 ? "^D(resist-magic)":"");
+        if(saves[savetype].gained == 5) 
+            printColor("^DNo gains for save[%d] remaining this level - save cannot go up.\n", savetype);
+    }
 
-    if((roll >= 95 || roll <= 5) && gain < 5) {
-        upchance = 99 - saves[savetype].chance;
-        if(bns == -1 || savetype == LCK || level < 7 || (target->isPlayer() && savetype == SPL))
+    if((roll >= 8000 || roll <= 3000) && gain < 5) {       // Simulates d20 critical failure roll of 15-20 or critical success roll of 1-5 - essentially 50% chance
+        if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) {
+            if(roll >=8000) printColor("^RCritical save failure!! ^y(%d >= 8000)\n", roll);
+            if(roll <=3000) printColor("^GCritical save success!! ^y(%d <= 3000)\n", roll);
+        }
+        else
+        {
+            if(roll >=8000 || roll <=3000) 
+                printColor("^GCritical save failure/success!!\n");
+        }
+
+        upchance = MAX(20,(99 - saves[savetype].chance)); // Always at least a 20% chance save will go up
+        if(bns == -1 ||                                   // Calling function indicates specific circumstance will not raise the save
+           savetype == LCK ||                             // Luck save is an average of all other saves and does not raise
+           level < 10 ||                                  // Won't start raising until level 10; this has to do with the level 40 max and overall spread
+           (target->isPlayer() && savetype == SPL) ||     // Players casting offensive spells on one another won't raise the target's spell save - too ez to abuse
+           saves[savetype].chance >= 99 ||                // If unmodified save chance is already 99+, it will not raise anymore
+           nogain)                                        // nogain == 1, so save gain timer is not ready yet
             upchance = 0;
 
+        upchanceRoll=Random::get(1,100);
 
-        if(Random::get(1,100) <= upchance) {
-            t = time(nullptr);
-            j = LT(this, LT_SAVES);
-            if(t < j) {
-                nogain = 1;
+        if (isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) 
+            printColor("^ySave Upchance: %d%s\nSave UpchanceRoll(1d100): %d%s\n", upchance, (99-saves[savetype].chance) < 20 ? "(MAX)":"", upchanceRoll, upchanceRoll<=upchance ? "^g[SUCCESS]^y":"^r[FAIL]^y");
+        else {
+            if (upchanceRoll<=upchance) 
+                printColor("^cCongratulations!\n");
+        }
+
+        if(upchanceRoll <= upchance) {
+
+            //Timer resets when we successfully raise a save
+            if(pCreature) {
+                pCreature->lasttime[LT_SAVES].ltime = t;
+                if(isCt())
+                    pCreature->lasttime[LT_SAVES].interval = 0;
+                else
+                    pCreature->lasttime[LT_SAVES].interval = 30L; 
             }
-            else
-            {
-                if(pCreature) {
-                    lasttime[LT_SAVES].ltime = t;
-                    lasttime[LT_SAVES].interval = 60L;
-                }
-            }
 
-            // This keeps people from abusing traps to
-            // increase their saves. -TC
-
-            if(!nogain) {
-                switch(savetype) {
+            switch(savetype) {
                 case POI:
                     if(!opposing || (!(opposing && target->isPlayer()))) {
                         if(!immuneToPoison() || !immuneToDisease()) {
-                            printColor("^BYour resistance against poison and disease has increased.\n");
+                            printColor("^GYour resistance against poison and disease has increased.\n");
+                            if (pCreature) logn("log.saveswtf", "chkSave(): %s[L%d]'s POI save just went up. Upchance: %d, UpChanceRoll: %d, Prev: %d%, New: %d%, Gains: %d\n", 
+                                pCreature->getCName(),pCreature->getLevel(), upchance, upchanceRoll, saves[POI].chance, saves[POI].chance+2, saves[POI].gained+1);
                             saves[POI].chance += 2;
                             saves[POI].gained += 1;
                         }
                     }
                     break;
                 case DEA:
-                    printColor("^BYour chances of avoiding deadly traps and death magic have increased.\n");
+                    printColor("^DYour chances of avoiding deadly traps and death magic have increased.\n");
+                    if (pCreature) logn("log.saveswtf", "chkSave(): %s[L%d]'s DEA save just went up. Upchance: %d, UpChanceRoll: %d, Prev: %d%, New: %d%, Gains: %d\n", 
+                        pCreature->getCName(), pCreature->getLevel(), upchance, upchanceRoll, saves[DEA].chance, saves[DEA].chance+2, saves[DEA].gained+1);
                     saves[DEA].chance += 2;
                     saves[DEA].gained += 1;
                     break;
                 case BRE:
-                    printColor("^BYour ability to avoid breath weapons and explosions has increased.\n");
+                    printColor("^RYour ability to avoid breath weapons and explosions has increased.\n");
+                     if (pCreature) logn("log.saveswtf", "chkSave(): %s[L%d]'s BRE save just went up. Upchance: %d, UpChanceRoll: %d, Prev: %d%, New: %d%, Gains: %d\n", 
+                        pCreature->getCName(), pCreature->getLevel(), upchance, upchanceRoll, saves[BRE].chance, saves[BRE].chance+2, saves[BRE].gained+1);
                     saves[BRE].chance += 2;
                     saves[BRE].gained += 1;
                     break;
                 case MEN:
-                    printColor("^BYou are better able to avoid mental attacks.\n");
+                    printColor("^YYou are better able to avoid mental attacks.\n");
+                    if (pCreature) logn("log.saveswtf", "chkSave(): %s[L%d]'s MEN save just went up. Upchance: %d, UpChanceRoll: %d, Prev: %d%, New: %d%, Gains: %d\n", 
+                        pCreature->getCName(), pCreature->getLevel(), upchance, upchanceRoll, saves[MEN].chance, saves[MEN].chance+2, saves[MEN].gained+1);
                     saves[MEN].chance += 2;
                     saves[MEN].gained += 1;
                     break;
@@ -956,7 +1025,9 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
                     if(opposing) {
                         if(target->isMonster()) {
                             if(natural == 1) {
-                                printColor("^BYour resistance against spells and magical attacks has increased.\n");
+                                printColor("^MYour ability to avoid or withstand spells and magical attacks has increased.\n");
+                                if (pCreature) logn("log.saveswtf", "chkSave(): %s[L%d]'s SPL save just went up. (OPPOSING) Upchance: %d, UpChanceRoll: %d, Prev: %d%, New: %d%, Gains: %d\n", 
+                                    pCreature->getCName(), pCreature->getLevel(), upchance, upchanceRoll, saves[SPL].chance, saves[SPL].chance+2, saves[SPL].gained+1);
                                 saves[SPL].chance += 2;
                                 saves[SPL].gained += 1;
                             }
@@ -964,7 +1035,9 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
                             break;
                     } else {
                         if(natural == 1) {
-                            printColor("^BYour resistance against spells and magical attacks has increased.\n");
+                            printColor("^MYour resistance against spells and magical attacks has increased.\n");
+                            if (pCreature) logn("log.saveswtf", "chkSave(): %s[L%d]'s SPL save just went up. Upchance: %d, UpChanceRoll: %d, Prev: %d%, New: %d%, Gains: %d\n", 
+                                pCreature->getCName(), pCreature->getLevel(), upchance, upchanceRoll, saves[SPL].chance, saves[SPL].chance+2, saves[SPL].gained+1);
                             saves[SPL].chance += 2;
                             saves[SPL].gained += 1;
                         }
@@ -973,11 +1046,14 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
 
                 default:
                     break;
-                }
+                }//end switch
 
-            }//end nogain check
+                if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER)))
+                     printColor("^YSave[%d] gained so far: %d\n", savetype, saves[savetype].gained);
+
+            }//end upchance check
+
         }
-    }
 
     if(isPlayer())
         getAsPlayer()->statistics.attemptSave();
