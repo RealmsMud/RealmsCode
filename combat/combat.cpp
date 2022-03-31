@@ -895,7 +895,7 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
         if(opposing)
             chance -= 2*(target->intelligence.getCur() - intelligence.getCur());
         else
-            chance += 2*target->intelligence.getCur();
+            chance += 2*intelligence.getCur();
 
         if(pCreature && pCreature->isEffected("resist-magic")) {
             natural = 0;
