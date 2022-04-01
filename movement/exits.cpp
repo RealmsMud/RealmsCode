@@ -183,7 +183,7 @@ Exit *findExit(Creature* creature, const std::string &inStr, int val, BaseRoom* 
         if(!creature->isStaff()) {
             if(!creature->canSee(exit))
                 continue;
-            if( minThree && (exit->flagIsSet(X_CONCEALED) || exit->flagIsSet(X_SECRET)) && name.length() > 2)
+            if( minThree && (exit->flagIsSet(X_CONCEALED) || exit->flagIsSet(X_SECRET)) && name.length() > 2 && !exit->hasBeenUsedBy(creature->getId()))
                 continue;
         }
 
