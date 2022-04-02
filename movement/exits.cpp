@@ -514,11 +514,14 @@ bool Exit::isConcealed(const Creature* viewer) const {
 
 bool Exit::isDiscoverable() const {
     return(
-        flagIsSet(X_SECRET) ||
-        flagIsSet(X_DESCRIPTION_ONLY) ||
-        flagIsSet(X_CONCEALED) ||
-        flagIsSet(X_NEEDS_FLY) ||
-        isEffected("invisibility")
+        !flagIsSet(X_NO_REMEMBER) &&
+        (
+            flagIsSet(X_SECRET) ||
+            flagIsSet(X_DESCRIPTION_ONLY) ||
+            flagIsSet(X_CONCEALED) ||
+            flagIsSet(X_NEEDS_FLY) ||
+            isEffected("invisibility")
+        )
     );
 }
 
