@@ -1012,7 +1012,10 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
         return(nullptr);
     }
 
-
+    // auto open closed but unlocked doors before checking if they can enter
+    if(exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_LOCKED)) {
+        cmdOpen(player, cmnd);
+    }
     if(player && !Move::canEnter(player, exit, leader))
         return(nullptr);
 
