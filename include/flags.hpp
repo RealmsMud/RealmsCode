@@ -765,7 +765,7 @@
 
 // Exit flags
 #define X_SECRET                    0         // Secret
-#define X_NO_REMEMBER               1         // Unable to remember this exit
+// free                             1         // 
 #define X_LOCKED                    2         // Locked
 #define X_CLOSED                    3         // Closed
 #define X_LOCKABLE                  4         // Lockable
@@ -862,6 +862,7 @@
 #define X_LOCK_AFTER_USAGE          95      // Exit re-locks after single usage
 #define X_NO_KNOCK_SPELL            96      // Exit immune to knock spell
 #define X_SEL_KENKU                 97      // race selective: kenku
-#define MAX_EXIT_FLAGS              98      // Incriment when adding... check structs.h for max
+#define X_NO_REMEMBER               98      // Unable to remember this exit
+#define MAX_EXIT_FLAGS              99      // Incriment when adding... check structs.h for max
 #endif /*FLAGS_H_*/
 
