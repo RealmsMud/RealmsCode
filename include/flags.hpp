@@ -765,7 +765,7 @@
 
 // Exit flags
 #define X_SECRET                    0         // Secret
-// Free                             1
+#define X_NO_REMEMBER               1         // Unable to remember this exit
 #define X_LOCKED                    2         // Locked
 #define X_CLOSED                    3         // Closed
 #define X_LOCKABLE                  4         // Lockable
