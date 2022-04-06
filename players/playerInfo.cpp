@@ -537,7 +537,7 @@ int cmdChecksaves(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->isDm() && cmnd->num > 1) {
+    if(player->isCt() && cmnd->num > 1) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         if(!target) {
@@ -563,9 +563,8 @@ int cmdChecksaves(Player* player, cmd* cmnd) {
 
 
 
+    *player << ColorOn << oStr.str() << "\n" << ColorOff;
     
-    player->printColor("%s", oStr.str().c_str());
-    player->print("\n");
 
     if(!online)
         free_crt(target);
