@@ -337,7 +337,7 @@
 #define P_BUILDER_MOBS              203      // Builder can make mobs
 #define P_BUILDER_OBJS              204      // Builder can make objs
 #define P_DARKMETAL                 205      // Player has a darkmetal item (DONT SET)
-// free                             206
+#define P_SAVE_DEBUG                206
 // free                             207
 // free                             208
 // free                             209
