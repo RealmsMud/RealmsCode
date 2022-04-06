@@ -366,6 +366,14 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 #define P_CAN_MUDMAIL_STAFF_OLD 161
                 clearFlag(P_CAN_MUDMAIL_STAFF_OLD);
              }
+
+             //reset all saves to max of 99
+              if(getVersion() < "2.54c") {
+                for(int a=POI; a<=SPL;a++)
+                    saves[a].chance = MIN<short>(99,saves[a].chance);
+             }
+
+
         }
     }
 

@@ -93,6 +93,7 @@ int cmdPress(Player* player, cmd* cmnd);
 // command4.c
 int cmdScore(Player* player, cmd* cmnd);
 int cmdDaily(Player* player, cmd* cmnd);
+int cmdChecksaves(Player* player, cmd* cmnd);
 int cmdHelp(Player* player, cmd* cmnd);
 int cmdWiki(Player* player, cmd* cmnd);
 int cmdWelcome(Player* player, cmd* cmnd);

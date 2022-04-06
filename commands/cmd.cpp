@@ -696,7 +696,8 @@ bool Config::initCommands() {
     playerCommands.emplace("scout", 100, cmdScout, nullptr, "");
     playerCommands.emplace("berserk", 100, cmdBerserk, nullptr, "");
     playerCommands.emplace("transmute", 100, cmdTransmute, nullptr, "");
-    playerCommands.emplace("daily", 100, cmdDaily, nullptr, "See our usage of daily-limited abilities.");
+    playerCommands.emplace("daily", 100, cmdDaily, nullptr, "See your usage of daily-limited abilities.");
+    playerCommands.emplace("checksaves", 100, cmdChecksaves, nullptr, "See your current saves and saves gained.");
     playerCommands.emplace("description", 100, cmdDescription, nullptr, "Change your character's description.");
     playerCommands.emplace("bsacrifice", 100, cmdBloodsacrifice, nullptr, "");
     playerCommands.emplace("bloodsacrifice", 100, cmdBloodsacrifice, nullptr, "");

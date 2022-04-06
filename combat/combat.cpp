@@ -1053,6 +1053,9 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
                 if(isCt() || (pCreature && pCreature->flagIsSet(P_SAVE_DEBUG)))
                      printColor("^YSave[%d] gained so far: %d\n", savetype, saves[savetype].gained);
 
+                if(saves[savetype].gained == 5)
+                    printColor("^DYou must level up in order to raise this save further.\n");
+
             }//end upchance check
 
         }
