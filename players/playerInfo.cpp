@@ -69,10 +69,7 @@ int cmdScore(Player* player, cmd* cmnd) {
         player->print("You are brain-dead. You can't do that.\n");
         return(0);
     }
-    if(player->isBlind()) {
-        player->printColor("^CYou're blind!\n");
-        return(0);
-    }
+    
     player->clearFlag(P_AFK);
 
 
@@ -245,6 +242,11 @@ void Player::score(const Player* viewer) {
         viewer->printColor("^RError:^x Your stats do not add up.\n");
 }
 
+
+
+
+
+
 //*********************************************************************
 //                      cmdDaily
 //*********************************************************************
@@ -347,6 +349,7 @@ std::string showSavingThrow(const Player* viewer, const Player* player, std::str
     }
     return(text);
 }
+
 
 //*********************************************************************
 //                      information
@@ -515,4 +518,55 @@ void Player::information(const Player* viewer, bool online) {
             viewer->print("Currently logged on.\n");
     }
 
+}
+
+//*********************************************************************
+//                      cmdChecksaves
+//*********************************************************************
+
+int cmdChecksaves(Player* player, cmd* cmnd) {
+    Player* target = player;
+    bool online = true;
+   
+   std::ostringstream oStr;
+
+    player->clearFlag(P_AFK);
+
+    if(player->isBraindead()) {
+        *player << "You are brain-dead. You can't do that!\n";
+        return(0);
+    }
+
+    if(player->isCt() && cmnd->num > 1) {
+        cmnd->str[1][0] = up(cmnd->str[1][0]);
+        target = gServer->findPlayer(cmnd->str[1]);
+        if(!target) {
+            loadPlayer(cmnd->str[1], &target);
+            online = false;
+        }
+        if(!target) {
+            *player << "That player does not exist.\n";
+            return(0);
+        }
+    }
+
+    oStr << "^c" << (!online ? target->getCName() : "Your") << (!online ? "'s": "") << " current saving throws and amounts gained this level:\n\n";
+    oStr << "^xSave                        Gained          Rating^x\n";
+    oStr << "-------------------------------------------------------------------\n"; 
+    oStr << (target->saves[POI].gained == 5 ? "^R":"") << "Poison/Disease              " << target->saves[POI].gained << "               " << showSavingThrow(player, target, " ", POI) << "\n";
+    oStr << (target->saves[DEA].gained == 5 ? "^R":"") << "Death/Traps                 " << target->saves[DEA].gained << "               " << showSavingThrow(player, target, " ", DEA) << "\n";
+    oStr << (target->saves[BRE].gained == 5 ? "^R":"") << "Breath/Explosions           " << target->saves[BRE].gained << "               " << showSavingThrow(player, target, " ", BRE) << "\n";
+    oStr << (target->saves[MEN].gained == 5 ? "^R":"") << "Mental Attacks              " << target->saves[MEN].gained << "               " << showSavingThrow(player, target, " ", MEN) << "\n";
+    oStr << (target->saves[SPL].gained == 5 ? "^R":"") << "Spells                      " << target->saves[SPL].gained << "               " << showSavingThrow(player, target, " ", SPL) << "\n";
+    oStr << "-------------------------------------------------------------------\n";
+    oStr << "^RRED^x indicates that the save currently has gains maxed out.\nTraining to the next level resets gains to 0.\n";
+
+
+
+    *player << ColorOn << oStr.str() << "\n" << ColorOff;
+    
+
+    if(!online)
+        free_crt(target);
+    return(0);
 }
