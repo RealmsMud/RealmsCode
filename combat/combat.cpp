@@ -829,7 +829,7 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
         if(!ready[i])       
             continue;
         if(ready[i]->getAdjustment() > 0 && ready[i]->getAdjustment() > ringbonus) {
-            if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) printColor("^yHighest worn ring: %s(+%d)\n", ready[i]->getCName() ? ready[i]->getCName():"", ready[i]->getAdjustment());
+            if(isCt() || (pCreature && pCreature->flagIsSet(P_SAVE_DEBUG))) printColor("^yHighest worn ring: %s(+%d)\n", ready[i]->getCName() ? ready[i]->getCName():"", ready[i]->getAdjustment());
             ringbonus = ready[i]->getAdjustment();
             continue;
         }
@@ -841,7 +841,7 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
     if( ready[HELD-1] && ready[HELD-1]->flagIsSet(O_LUCKY) &&
         ready[HELD-1]->getType() != ObjectType::WEAPON && ready[HELD-1]->getAdjustment() > 0) {
         chance += ready[HELD-1]->getAdjustment()*500;
-        if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) 
+        if(isCt() || (pCreature && pCreature->flagIsSet(P_SAVE_DEBUG))) 
             print("Checking for lucky held item: %s(+%d)\n", ready[HELD-1]->getCName() ? ready[HELD-1]->getCName():"", ready[i]->getAdjustment());
         }
 
@@ -926,7 +926,7 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
      if(j > t) {
         nogain = 1;
 
-     if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) {
+     if(isCt() || (pCreature && pCreature->flagIsSet(P_SAVE_DEBUG))) {
          duration = j-t;
          if(duration < 0)
              duration *=-1;
@@ -938,7 +938,7 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
     }
 
     roll = Random::get(1,10000);
-    if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) {
+    if(isCt() || (pCreature && pCreature->flagIsSet(P_SAVE_DEBUG))) {
         printColor("^ySave[%d] chance unmodified: %d\n", savetype, 
             savetype != LCK ? saves[savetype].chance*100 : 100*((saves[POI].chance+saves[DEA].chance+saves[BRE].chance+saves[MEN].chance+saves[SPL].chance)/5));
         printColor("^ySave[%d] chance modified: %d\n", savetype, chance);
@@ -947,17 +947,12 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
             printColor("^DNo gains for save[%d] remaining this level - save cannot go up.\n", savetype);
     }
 
-    if((roll >= 8000 || roll <= 3000) && gain < 5) {       // Simulates d20 critical failure roll of 15-20 or critical success roll of 1-5 - essentially 50% chance
-        if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) {
-            if(roll >=8000) printColor("^RCritical save failure!! ^y(%d >= 8000)\n", roll);
-            if(roll <=3000) printColor("^GCritical save success!! ^y(%d <= 3000)\n", roll);
+    if((roll >= 8500 || roll <= 2000) && gain < 5) {       // Simulates d20 critical failure roll of 17-20 or critical success roll of 1-4 - essentially 40% chance
+        if( savetype != LCK && (isCt() || (pCreature && pCreature->flagIsSet(P_SAVE_DEBUG)))) {
+            if(roll >=8500) printColor("^RCritical save failure!! ^y(%d >= 8500)\n", roll);
+            if(roll <=2000) printColor("^GCritical save success!! ^y(%d <= 2000)\n", roll);
         }
-        else
-        {
-            if(roll >=8000 || roll <=3000) 
-                printColor("^GCritical save failure/success!!\n");
-        }
-
+          
         upchance = MAX(20,(99 - saves[savetype].chance)); // Always at least a 20% chance save will go up
         if(bns == -1 ||                                   // Calling function indicates specific circumstance will not raise the save
            savetype == LCK ||                             // Luck save is an average of all other saves and does not raise
@@ -969,11 +964,18 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
 
         upchanceRoll=Random::get(1,100);
 
-        if (isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER))) 
+        if (isCt() || (pCreature && pCreature->flagIsSet(P_SAVE_DEBUG))) 
             printColor("^ySave Upchance: %d%s\nSave UpchanceRoll(1d100): %d%s\n", upchance, (99-saves[savetype].chance) < 20 ? "(MAX)":"", upchanceRoll, upchanceRoll<=upchance ? "^g[SUCCESS]^y":"^r[FAIL]^y");
         else {
-            if (upchanceRoll<=upchance) 
-                printColor("^cCongratulations!\n");
+
+            if ((upchanceRoll<=upchance) && savetype != LCK) {
+                
+                if (roll >= 8500)
+                    printColor("^RCritical save failure!!\n");
+                else
+                    printColor("^GCritical save success!!\n");
+
+            }
         }
 
         if(upchanceRoll <= upchance) {
@@ -984,7 +986,7 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
                 if(isCt())
                     pCreature->lasttime[LT_SAVES].interval = 0;
                 else
-                    pCreature->lasttime[LT_SAVES].interval = 30L; 
+                    pCreature->lasttime[LT_SAVES].interval = 60L; 
             }
 
             switch(savetype) {
@@ -1048,7 +1050,7 @@ bool Creature::chkSave(short savetype, Creature* target, short bns) {
                     break;
                 }//end switch
 
-                if(isCt() || (pCreature && pCreature->flagIsSet(P_PTESTER)))
+                if(isCt() || (pCreature && pCreature->flagIsSet(P_SAVE_DEBUG)))
                      printColor("^YSave[%d] gained so far: %d\n", savetype, saves[savetype].gained);
 
             }//end upchance check
