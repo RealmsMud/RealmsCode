@@ -454,7 +454,8 @@ int Creature::getWeight() const {
 // hold in their inventory.
 
 int Creature::maxWeight() {
-    int n = 20 + strength.getCur();
+    int n = (3*(20 + strength.getCur())/2);
+    
     if(cClass == CreatureClass::BERSERKER || isCt())
         n += level*10;
     return(n);
@@ -508,24 +509,24 @@ int Creature::getTotalBulk() const {
 int Creature::getMaxBulk() const {
     switch(size) {
     case SIZE_FINE:
-        return(10);
+        return(15);
     case SIZE_DIMINUTIVE:
-        return(30);
+        return(45);
     case SIZE_TINY:
-        return(60);
+        return(90);
     case SIZE_SMALL:
-        return(105);
+        return(158);
     case SIZE_LARGE:
         return(185);
     case SIZE_HUGE:
-        return(215);
+        return(278);
     case SIZE_GARGANTUAN:
-        return(245);
+        return(368);
     case SIZE_COLOSSAL:
-        return(275);
+        return(413);
     case SIZE_MEDIUM:
     default:
-        return(140);
+        return(210);
     }
 }
 
