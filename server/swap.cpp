@@ -186,7 +186,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
         getCatRef(getFullstrText(cmnd->fullstr, 3), &s.target, nullptr);
 
         player->printColor("^YRS: ^xLooking to swap %s ranges starting at %s to %s.\n", swapType.c_str(),
-            s.origin.rstr().c_str(), s.target.id == -1 ? s.target.area.c_str() : s.target.rstr().c_str());
+                           s.origin.str().c_str(), s.target.id == -1 ? s.target.area.c_str() : s.target.str().c_str());
 
         int loop=0;
         std::string::size_type pos = o.find(":");
@@ -298,10 +298,10 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
 
         if(player->getConstUniqueRoomParent()->flagIsSet(R_SHOP))
             player->printColor("^YRS: ^GThis room is a shop - don't forget to swap the storage room: %s.\n",
-                shopStorageRoom(player->getConstUniqueRoomParent()).rstr().c_str());
+                               shopStorageRoom(player->getConstUniqueRoomParent()).str().c_str());
         else if(player->getConstUniqueRoomParent()->getTrapExit().id)
             player->printColor("^YRS: ^GThis room has a trap exit set: %s.\n",
-                player->getConstUniqueRoomParent()->getTrapExit().rstr().c_str());
+                               player->getConstUniqueRoomParent()->getTrapExit().str().c_str());
     }
 
     if(gConfig->isSwapping()) {
@@ -363,7 +363,7 @@ bool Server::swap(const Swap& s) {
 
         Async async;
         if(async.branch(player, ChildType::SWAP_FIND) == AsyncExternal) {
-            output = findNextEmpty("room", s.target.area).rstr();
+            output = findNextEmpty("room", s.target.area).str();
             printf("%s", output.c_str());
             exit(0);
         } else {
@@ -415,7 +415,7 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
         if(!toProcess.empty()) {
             getCatRef(toProcess, &currentSwap.target, nullptr);
             if(player)
-                player->printColor("^YRS: ^eRoom found: %s.\n", currentSwap.target.rstr().c_str());
+                player->printColor("^YRS: ^eRoom found: %s.\n", currentSwap.target.str().c_str());
         }
     }
 
@@ -493,7 +493,8 @@ void Config::finishSwap(const std::string &mover) {
     // no moving the builder waiting room!
     if(currentSwap.origin.isArea("test") && currentSwap.origin.id == 1) {
         if(online)
-            player->printColor("^YRS: ^RError: ^xSorry, you cannot swap this room (%s) (Builder Waiting Room).\n", currentSwap.origin.str().c_str());
+            player->printColor("^YRS: ^RError: ^xSorry, you cannot swap this room (%s) (Builder Waiting Room).\n",
+                               currentSwap.origin.displayStr().c_str());
         else
             free_crt(player);
         endSwap();
@@ -501,7 +502,8 @@ void Config::finishSwap(const std::string &mover) {
     }
     if(currentSwap.target.isArea("test") && currentSwap.target.id == 1) {
         if(online)
-            player->printColor("^YRS: ^RError: ^xSorry, you cannot swap that room (%s) (Builder Waiting Room).\n", currentSwap.target.str().c_str());
+            player->printColor("^YRS: ^RError: ^xSorry, you cannot swap that room (%s) (Builder Waiting Room).\n",
+                               currentSwap.target.displayStr().c_str());
         else
             free_crt(player);
         endSwap();
@@ -522,8 +524,8 @@ void Config::finishSwap(const std::string &mover) {
     }
 
     player->printColor("^YRS: ^eSwapping %s %s with %s %s.\n",
-        swapName(currentSwap.type).c_str(), currentSwap.origin.str().c_str(),
-        swapName(currentSwap.type).c_str(), currentSwap.target.str().c_str());
+        swapName(currentSwap.type).c_str(), currentSwap.origin.displayStr().c_str(),
+        swapName(currentSwap.type).c_str(), currentSwap.target.displayStr().c_str());
     gServer->finishSwap(player, online, currentSwap.origin, currentSwap.target);
 }
 
@@ -535,7 +537,8 @@ void Server::finishSwap(Player* player, bool online, const CatRef& origin, const
         return;
     }
 
-    log_immort(true, player, "%s has begun swapping %s with %s.\n", player->getCName(), origin.str().c_str(), target.str().c_str());
+    log_immort(true, player, "%s has begun swapping %s with %s.\n", player->getCName(), origin.displayStr().c_str(),
+               target.displayStr().c_str());
 
 
     Async async;
@@ -548,8 +551,8 @@ void Server::finishSwap(Player* player, bool online, const CatRef& origin, const
             player->printColor("^YRS: ^eThis may take several minutes.\n");
         } else
             free_crt(player);
-        gConfig->swapLog((std::string)"r" + origin.rstr(), false);
-        gConfig->swapLog((std::string)"r" + target.rstr(), false);
+        gConfig->swapLog((std::string)"r" + origin.str(), false);
+        gConfig->swapLog((std::string)"r" + target.str(), false);
     }
 }
 
@@ -645,7 +648,7 @@ void Config::offlineSwap() {
                         uRoom->info != currentSwap.target &&
                         uRoom->swap(currentSwap)
                     ) {
-                        output = uRoom->info.rstr();
+                        output = uRoom->info.str();
                         printf("r%s%s", output.c_str(), sepType);
                     }
 
@@ -680,7 +683,7 @@ void Config::offlineSwap() {
 
                     // we check origin and target already, so forget about it here
                     if(monster->swap(currentSwap)) {
-                        output = monster->info.rstr();
+                        output = monster->info.str();
                         printf("m%s%s", output.c_str(), sepType);
                     }
 
@@ -858,9 +861,12 @@ void Config::swap(Player* player, std::string_view name) {
         loadPlayer(name, &player);
 
     if(player)
-        log_immort(true, player, fmt::format("{} has finished swapping {} with {}.\n", name, currentSwap.origin.str(), currentSwap.target.str()).c_str());
+        log_immort(true, player, fmt::format("{} has finished swapping {} with {}.\n", name,
+                                             currentSwap.origin.displayStr(),
+                                             currentSwap.target.displayStr()).c_str());
     else
-        broadcast(isStaff, fmt::format("^y{} has finished swapping {} with {}.", name, currentSwap.origin.str(), currentSwap.target.str()).c_str());
+        broadcast(isStaff, fmt::format("^y{} has finished swapping {} with {}.", name, currentSwap.origin.displayStr(),
+                                       currentSwap.target.displayStr()).c_str());
 
     if(!found && player)
         free_crt(player);
@@ -928,12 +934,14 @@ bool Config::swapChecks(const Player* player, const Swap& s) {
     } else if(s.type == SwapObject) {
         if(moveObjectRestricted(s.origin)) {
             if(player)
-                player->printColor("^YRS: ^RError: ^x""%s"" is a hardcoded object and cannot be swapped.\n", s.origin.rstr().c_str());
+                player->printColor("^YRS: ^RError: ^x""%s"" is a hardcoded object and cannot be swapped.\n",
+                                   s.origin.str().c_str());
             return(false);
         }
         if(moveObjectRestricted(s.target)) {
             if(player)
-                player->printColor("^YRS: ^RError: ^x""%s"" is a hardcoded object and cannot be swapped.\n", s.target.rstr().c_str());
+                player->printColor("^YRS: ^RError: ^x""%s"" is a hardcoded object and cannot be swapped.\n",
+                                   s.target.str().c_str());
             return(false);
         }
     }
@@ -995,7 +1003,7 @@ bool Config::checkSpecialArea(const CatRef& origin, const CatRef& target, int (C
     if(t || target == l.room) {
         if(online) {
             player->bPrint(fmt::format("^YRS: ^RError: ^xRoom ({}) room is set as a {} Room under CatRefInfo.\n",
-                t ? origin.str() : target.str(), type));
+                                       t ? origin.displayStr() : target.displayStr(), type));
             player->print("It cannot be moved out of its area.\n");
         } else
             free_crt(player);
@@ -1192,8 +1200,8 @@ void Config::swapInfo(const Player* player) {
     player->print("   The Queue:\n");
     for(qIt = swapQueue.begin() ; qIt != swapQueue.end() ; qIt++) {
         player->printColor("      %d) Player: ^e%s^x   Origin: ^e%s^x   Target: ^e%s\n", ++id,
-            (*qIt).player.c_str(), (*qIt).origin.str().c_str(),
-            (*qIt).target.id == -1 ? (*qIt).target.area.c_str() : (*qIt).target.str().c_str());
+            (*qIt).player.c_str(), (*qIt).origin.displayStr().c_str(),
+            (*qIt).target.id == -1 ? (*qIt).target.area.c_str() : (*qIt).target.displayStr().c_str());
     }
 }
 

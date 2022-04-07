@@ -18,6 +18,7 @@
 #ifndef AREA_H
 #define AREA_H
 
+#include <libxml/parser.h>  // for xmlNodePtr
 #include <list>
 #include <map>
 #include <vector>

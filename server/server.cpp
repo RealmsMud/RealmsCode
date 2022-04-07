@@ -794,10 +794,10 @@ void Server::updateRandom(long t) {
             if(!uRoom->info.id)
                 continue;
 
-            if(check.find(uRoom->info.str()) != check.end())
+            if(check.find(uRoom->info.displayStr()) != check.end())
                 continue;
 
-            check[uRoom->info.str()] = true;
+            check[uRoom->info.displayStr()] = true;
             wander = &uRoom->wander;
         } else {
             // handle monsters arriving in area rooms
@@ -901,7 +901,7 @@ void Server::updateActive(long t) {
 
         if(!monster->inRoom()) {
             broadcast(isStaff, "^y%s without a parent/area room on the active list. Info: %s. Deleting.",
-                monster->getCName(), monster->info.str().c_str());
+                monster->getCName(), monster->info.displayStr().c_str());
             monster->deleteFromRoom();
             gServer->delActive(monster);
             free_crt(monster);
@@ -2289,7 +2289,7 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
         targetStr = stripColor(target->getName());
         Object* oTarget = target->getAsObject();
         if(oTarget) {
-            targetStr += "(" + oTarget->info.str() + ")";
+            targetStr += "(" + oTarget->info.displayStr() + ")";
             if(dir == GOLD_IN) {
                 source = oTarget->droppedBy.str();
             }
@@ -2298,7 +2298,8 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
     std::string room = "";
     if(player->getRoomParent()) {
         if(player->getRoomParent()->getAsUniqueRoom()) {
-            room = std::string(player->getRoomParent()->getName()) + "(" + player->getRoomParent()->getAsUniqueRoom()->info.str() + ")";
+            room = std::string(player->getRoomParent()->getName()) + "(" +
+                    player->getRoomParent()->getAsUniqueRoom()->info.displayStr() + ")";
         } else if (player->getRoomParent()->getAsAreaRoom()) {
             room = player->getRoomParent()->getAsAreaRoom()->area->name + "(" + player->getRoomParent()->getAsAreaRoom()->mapmarker.str() + ")";
         }
@@ -2358,7 +2359,7 @@ bool Server::reloadRoom(BaseRoom* room) {
 UniqueRoom* Server::reloadRoom(const CatRef& cr) {
     UniqueRoom  *room=nullptr, *oldRoom=nullptr;
 
-    std::string str = cr.str();
+    std::string str = cr.displayStr();
     oldRoom = roomCache.fetch(cr);
     if(!oldRoom)
     	return nullptr;

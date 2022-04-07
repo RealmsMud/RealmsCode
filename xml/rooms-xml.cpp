@@ -118,7 +118,7 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode, bool offline) {
     info.load(rootNode);
     info.id = xml::getIntProp(rootNode, "Num");
 
-    setId(std::string("R") + info.rstr());
+    setId(std::string("R") + info.str());
 
     xml::copyPropToString(version, rootNode, "Version");
     curNode = rootNode->children;
@@ -272,7 +272,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
 
     // record rooms saved during swap
     if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((std::string)"r" + info.rstr(), false);
+        gConfig->swapLog((std::string)"r" + info.str(), false);
 
     xml::newNumProp(rootNode, "Num", info.id);
     xml::newProp(rootNode, "Version", gConfig->getVersion());

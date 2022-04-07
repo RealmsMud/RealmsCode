@@ -255,7 +255,7 @@ void broadcastLogin(Player* player, BaseRoom* inRoom, int login) {
 
     if(inRoom) {
         if(inRoom->isUniqueRoom())
-            room << " (" << inRoom->getAsUniqueRoom()->info.str() << ")";
+            room << " (" << inRoom->getAsUniqueRoom()->info.displayStr() << ")";
         else if(inRoom->isAreaRoom())
             room << " " << inRoom->getAsAreaRoom()->mapmarker.str();
     }

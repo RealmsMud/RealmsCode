@@ -913,7 +913,7 @@ void Player::doCopy(const Player& cr) {
     weaponTrains = cr.weaponTrains;
     attackTimer = cr.attackTimer;
 
-    for(auto p : cr.questsInProgress) {
+    for(const auto& p : cr.questsInProgress) {
         questsInProgress[p.first] = new QuestCompletion(*(p.second));
     }
 

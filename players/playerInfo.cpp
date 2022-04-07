@@ -511,7 +511,7 @@ void Player::information(const Player* viewer, bool online) {
         if(getRoomParent())
             viewer->print("Room: %s  \n", getRoomParent()->fullName().c_str());
         else
-            viewer->print("Room: %s  \n", currentLocation.room.str().c_str());
+            viewer->print("Room: %s  \n", currentLocation.room.displayStr().c_str());
         if(!online)
             viewer->print("Last login:  \n%s", ctime(&lastLogin));
         else

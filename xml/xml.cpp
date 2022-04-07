@@ -147,6 +147,10 @@ namespace xml {
         return(toNum<int>((char *)xmlGetProp( (node) , BAD_CAST (name) )));
     }
 
+    short getShortProp(xmlNodePtr node, const char *name) {
+        return(toNum<short>((char *)xmlGetProp( (node) , BAD_CAST (name) )));
+    }
+
     //#define getIntProp(node, name)    )
     xmlDocPtr loadFile(const char *filename, const char *expectedRoot) {
         xmlDocPtr doc;

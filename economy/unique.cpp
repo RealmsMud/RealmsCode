@@ -155,7 +155,7 @@ void UniqueOwner::show(const Player* player) {
     std::string t = ctime(&time);
     boost::trim(t);
     player->printColor("      Time: ^c%s^x   Owner: ^c%s^x   Object: ^c%s\n",
-        t.c_str(), owner.c_str(), item.str().c_str());
+        t.c_str(), owner.c_str(), item.displayStr().c_str());
 }
 
 //*********************************************************************
@@ -942,7 +942,7 @@ void Config::listLimited(const Player* player) {
                 player->printColor("^c%s\n", object->getCName());
                 delete object;
             } else
-                player->printColor("^c%s\n", cr.str().c_str());
+                player->printColor("^c%s\n", cr.displayStr().c_str());
         }
         id++;
     }
@@ -950,7 +950,7 @@ void Config::listLimited(const Player* player) {
     player->printColor("\n\n^yLore:\n");
     for(lt = lore.begin() ; lt != lore.end() ; lt++) {
         player->printColor("   Limit: ^c%-2d^x   Object: ^c%s\n",
-            (*lt)->getLimit(), (*lt)->getInfo().str().c_str());
+            (*lt)->getLimit(), (*lt)->getInfo().displayStr().c_str());
     }
 
     player->print("\n");
@@ -981,7 +981,7 @@ void Unique::show(const Player* player) {
     std::list<UniqueObject>::const_iterator ct;
 
     for(ct = objects.begin() ; ct != objects.end() ; ct++) {
-        player->printColor("      ^c%s", (*ct).item.str().c_str());
+        player->printColor("      ^c%s", (*ct).item.displayStr().c_str());
 
         if(loadObject((*ct).item, &object)) {
             player->printColor(", ^c%s", object->getCName());
@@ -1161,7 +1161,7 @@ int dmUnique(Player* player, cmd* cmnd) {
             getCatRef(getFullstrText(cmnd->fullstr, 3), &cr, nullptr);
 
             if(!unique->setObjectLimit(cr, id)) {
-                player->printColor("^c%s^x is not in that unique group.\n", cr.str().c_str());
+                player->printColor("^c%s^x is not in that unique group.\n", cr.displayStr().c_str());
                 return(0);
             }
 

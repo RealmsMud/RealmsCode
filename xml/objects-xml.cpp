@@ -351,7 +351,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                 cr.load(childNode);
                 cr.id = xml::getIntProp(childNode, "Num");
                 if(!validObjId(cr)) {
-                    std::clog <<  "Invalid object " << cr.str() << std::endl;
+                    std::clog << "Invalid object " << cr.displayStr() << std::endl;
                 } else {
                     if(loadObject(cr, &object)) {
                         // These two flags might be cleared on the reference object, so let that object set them if it wants to
@@ -498,7 +498,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 
     // record objects saved during swap
     if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((std::string)"o" + info.rstr(), false);
+        gConfig->swapLog((std::string)"o" + info.str(), false);
 
     xml::newNumProp(rootNode, "Num", info.id);
     xml::newProp(rootNode, "Area", info.area);
