@@ -152,9 +152,10 @@ int dmMobInventory(Player* player, cmd* cmnd) {
                 continue;
 
             if(player->getClass() == CreatureClass::BUILDER && player->checkRangeRestrict(object->info))
-                player->print("Carry slot %d: %sout of range(%s).\n", i+1, i < 9 ? " " : "", object->info.str().c_str());
+                player->print("Carry slot %d: %sout of range(%s).\n", i+1, i < 9 ? " " : "", object->info.displayStr().c_str());
             else
-                player->printColor("Carry slot %d: %s%s(%s).\n", i+1, i < 9 ? " " : "", object->getCName(), object->info.str().c_str());
+                player->printColor("Carry slot %d: %s%s(%s).\n", i+1, i < 9 ? " " : "", object->getCName(),
+                                   object->info.displayStr().c_str());
 
             delete object;
         }
@@ -682,7 +683,7 @@ int dmUsers(Player* player, cmd* cmnd) {
             oStr << "^m" << std::setw(58) << host.substr(0, 58);
         } else {
             if(user->inUniqueRoom()) {
-                sprintf(str, "%s: ^b%s", user->getUniqueRoomParent()->info.str(cr, 'b').c_str(), stripColor(user->getUniqueRoomParent()->getCName()).c_str());
+                sprintf(str, "%s: ^b%s", user->getUniqueRoomParent()->info.displayStr(cr, 'b').c_str(), stripColor(user->getUniqueRoomParent()->getCName()).c_str());
                 oStr << std::setw(22 + (str[0] == '^' ? 4 : 0)) << std::string(str).substr(0, 22 + (str[0] == '^' ? 4 : 0));
             } else if(user->inAreaRoom()){
                 //sprintf(str, "%s", user->area_room->mapmarker.str(true).c_str());
@@ -905,9 +906,9 @@ int dmPerm(Player* player, cmd* cmnd) {
         player->getUniqueRoomParent()->permObjects[x].interval = (long)cmnd->val[2];
 
         log_immort(true, player, "%s permed %s^g in room %s.\n", player->getCName(),
-            object->getCName(), player->getUniqueRoomParent()->info.str().c_str());
+            object->getCName(), player->getUniqueRoomParent()->info.displayStr().c_str());
 
-        player->printColor("%s^x (%s) permed with timeout of %d.\n", object->getCName(), object->info.str().c_str(), cmnd->val[2]);
+        player->printColor("%s^x (%s) permed with timeout of %d.\n", object->getCName(), object->info.displayStr().c_str(), cmnd->val[2]);
 
         return(0);
         // perm Creature
@@ -965,9 +966,9 @@ int dmPerm(Player* player, cmd* cmnd) {
         player->getUniqueRoomParent()->permMonsters[x].interval = (long)cmnd->val[2];
 
         log_immort(true, player, "%s permed %s in room %s.\n", player->getCName(),
-            target->getCName(), player->getUniqueRoomParent()->info.str().c_str());
+            target->getCName(), player->getUniqueRoomParent()->info.displayStr().c_str());
 
-        player->print("%s (%s) permed with timeout of %d.\n", target->getCName(), target->info.str().c_str(), cmnd->val[2]);
+        player->print("%s (%s) permed with timeout of %d.\n", target->getCName(), target->info.displayStr().c_str(), cmnd->val[2]);
 
         return(0);
         // perm tracks
@@ -1286,7 +1287,7 @@ int dmQuestList(Player* player, cmd* cmnd) {
         return(0);
     } else if(!output.empty()) {
         output.erase(0, output.find_first_not_of('#')); // trimleft("#")
-        int questId = toNum<int>(output);
+        CatRef questId = QuestInfo::getQuestId(output);
         *player << "Looking for quest " << questId << ".\n";
         auto qPair = gConfig->quests.find(questId);
         if(qPair == gConfig->quests.end()) {
@@ -1301,7 +1302,7 @@ int dmQuestList(Player* player, cmd* cmnd) {
 
     player->printPaged("New style Quests:");
     for(auto& [questId, quest] : gConfig->quests) {
-        player->printPaged(fmt::format("{}) {}\n", questId, (all ? quest->getDisplayString() : quest->getDisplayName())));
+        player->printPaged(fmt::format("{}) {}\n", questId.str(), (all ? quest->getDisplayString() : quest->getDisplayName())));
     }
     player->donePaging();
 
@@ -2313,7 +2314,7 @@ int dmStat(Player* player, cmd* cmnd) {
                 uRoom = player->getUniqueRoomParent();
             else {
                 if(!loadRoom(cr, &uRoom)) {
-                    player->print("Error (%s)\n", cr.str().c_str());
+                    player->print("Error (%s)\n", cr.displayStr().c_str());
                     return(0);
                 }
             }

@@ -1261,6 +1261,6 @@ void Creature::unApplyTongues() {
 }
 
 std::ostream& operator<<(std::ostream& out, const crlasttime& crl) {
-    out << crl.cr.rstr() << "(" << crl.interval << ")";
+    out << crl.cr.str() << "(" << crl.interval << ")";
     return out;
 }

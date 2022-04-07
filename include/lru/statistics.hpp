@@ -81,7 +81,7 @@ public:
 	std::string detail_status() {
 	    std::ostringstream oStr;
 	    for(auto it : _hit_map) {
-	    	oStr << it.first.rstr() << ":" << it.second.hits << "/" << it.second.accesses() << '|';
+	    	oStr << it.first.str() << ":" << it.second.hits << "/" << it.second.accesses() << '|';
 	    }
 	    oStr << std::endl;
 	    return(oStr.str());

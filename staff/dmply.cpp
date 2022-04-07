@@ -1147,7 +1147,7 @@ int dmMove(Player* player, cmd* cmnd) {
     if(creature->currentLocation.mapmarker.getArea() != 0)
         log << creature->currentLocation.mapmarker.str(false);
     else
-        log << creature->currentLocation.room.str();
+        log << creature->currentLocation.room.displayStr();
 
     log << " to room ";
 
@@ -1172,8 +1172,8 @@ int dmMove(Player* player, cmd* cmnd) {
             return(0);
         }
         *&creature->currentLocation.room = *&cr;
-        log << cr.str();
-        player->print("Player %s moved to location %s.\n", creature->getCName(), cr.str().c_str());
+        log << cr.displayStr();
+        player->print("Player %s moved to location %s.\n", creature->getCName(), cr.displayStr().c_str());
     }
 
     log_immort(true, player, "%s.\n", log.str().c_str());
@@ -2813,7 +2813,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 
     if(player->isWatcher())
         logn("log.wjail", "%s jailed %s(%s) for %d minutes. Reason: %s\n",
-            player->getCName(), target->getCName(), target->currentLocation.room.str().c_str(), tm, reason);
+             player->getCName(), target->getCName(), target->currentLocation.room.displayStr().c_str(), tm, reason);
 
     CatRef  cr;
     cr.setArea("jail");
@@ -2831,7 +2831,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
     } else {
 
         if(!loadRoom(cr, &newRoom)) {
-            player->print("Problem loading room %s.\nAborting.\n", cr.str().c_str());
+            player->print("Problem loading room %s.\nAborting.\n", cr.displayStr().c_str());
             return(0);
         } else {
             player->print("%s is now jailed.\n", target->getCName());

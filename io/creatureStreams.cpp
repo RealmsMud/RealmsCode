@@ -106,6 +106,10 @@ Streamable& Streamable::operator<< (Stat& stat) {
     doPrint(stat.toString());
     return(*this);
 }
+Streamable& Streamable::operator<< (const CatRef& cr) {
+    doPrint(cr.str());
+    return(*this);
+}
 void Streamable::setColorOn() {
     streamColor = true;
 }

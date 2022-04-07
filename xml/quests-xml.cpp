@@ -58,9 +58,9 @@ xmlNodePtr QuestCatRef::save(xmlNodePtr rootNode, const std::string& saveName) c
 }
 
 QuestInfo::QuestInfo(xmlNodePtr rootNode) {
-    std::string faction = "";
+    std::string faction;
 
-    questId = xml::getIntProp(rootNode, "Num");
+    questId = QuestInfo::getQuestId(rootNode);
     repeatable = sharable = false;
     expReward = minLevel = minFaction = alignmentChange = level = 0;
     repeatFrequency = QuestRepeatFrequency::REPEAT_NEVER;
@@ -81,12 +81,12 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "MinFaction")) xml::copyToNum(minFaction, curNode);
         else if(NODE_NAME(curNode, "Prerequisites")) {
             xmlNodePtr childNode = curNode->children;
-            int preReq=0;
+            CatRef preReq;
             while(childNode) {
-                if(NODE_NAME(childNode, "Prerequisite"))
-                    if((preReq = xml::toNum<int>(childNode)) != 0)
-                        preRequisites.push_back(preReq);
-
+                if(NODE_NAME(childNode, "Prerequisite")) {
+                    preReq = QuestInfo::getQuestId(childNode);
+                    preRequisites.push_back(preReq);
+                }
                 childNode = childNode->next;
             }
         }
@@ -146,9 +146,10 @@ QuestCompleted::QuestCompleted(xmlNodePtr rootNode) {
     }
 }
 
-xmlNodePtr QuestCompleted::save(xmlNodePtr rootNode, int id) const {
+xmlNodePtr QuestCompleted::save(xmlNodePtr rootNode, const CatRef& questId) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, "QuestCompleted");
-    xml::newNumProp(curNode, "ID", id);
+
+    QuestInfo::saveQuestId(curNode, questId);
     xml::newNumChild(curNode, "Times", times);
     xml::newNumChild(curNode, "LastCompleted", lastCompleted);
 

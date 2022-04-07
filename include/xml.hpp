@@ -69,8 +69,11 @@ namespace xml {
     // getProp -- You MUST free the return value
     std::string getProp(xmlNodePtr node, const char *name);
 
-    // getIntProp -- Properly frees the return valueusing toInt
+    // getIntProp -- Properly frees the return value using toNum
     int getIntProp(xmlNodePtr node, const char *name);
+
+    // getIntProp -- Properly frees the return value using toNum
+    short getShortProp(xmlNodePtr node, const char *name);
 
     // getCString -- You MUST free the return value
     char* getCString(xmlNodePtr node);

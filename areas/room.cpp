@@ -220,9 +220,9 @@ void Player::addToRoom(UniqueRoom* uRoom) {
             checkBuilder(uRoom);
             printColor("^yYou are illegally out of your assigned area. This has been logged.\n");
             broadcast(::isCt, "^y### %s is illegally out of %s assigned area. (%s)",
-                getCName(), hisHer(), uRoom->info.str().c_str());
+                getCName(), hisHer(), uRoom->info.displayStr().c_str());
             logn("log.builders", "%s illegally entered room %s - (%s).\n", getCName(),
-                uRoom->info.str().c_str(), uRoom->getCName());
+                 uRoom->info.displayStr().c_str(), uRoom->getCName());
         }
     }
 
@@ -547,7 +547,8 @@ void UniqueRoom::addPermObj() {
             if(obj->flagIsSet(O_PERM_ITEM)) {
                 if(obj->getName() == object->getName() && obj->info == object->info)
                     m++;
-                else if( object->getName() == obj->droppedBy.getName() && object->info.rstr() == obj->droppedBy.getIndex()) 
+                else if( object->getName() == obj->droppedBy.getName() &&
+                        object->info.str() == obj->droppedBy.getIndex())
                     m++;
                 }
         }
@@ -632,7 +633,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
     if(uRoom) {
 
         if(staff)
-            oStr << uRoom->info.str() << " - ";
+            oStr << uRoom->info.displayStr() << " - ";
         oStr << uRoom->getName() << "^x\n\n";
 
         if(uRoom->getShortDescription() != "")
@@ -985,9 +986,9 @@ void UniqueRoom::validatePerms() {
         if(crtm->ltime > t) {
             crtm->ltime = t;
             logn("log.validate", "Perm #%d(%s) in Room %s (%s): Time has been revalidated.\n",
-                (*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
+                (*it).first+1, crtm->cr.displayStr().c_str(), info.displayStr().c_str(), getCName());
             broadcast(isCt, "^yPerm Mob #%d(%s) in Room %s (%s) has been revalidated",
-                (*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
+                (*it).first+1, crtm->cr.displayStr().c_str(), info.displayStr().c_str(), getCName());
         }
     }
     for(it = permObjects.begin(); it != permObjects.end() ; it++) {
@@ -995,10 +996,10 @@ void UniqueRoom::validatePerms() {
         if(crtm->ltime > t) {
             crtm->ltime = t;
             logn("log.validate", "Perm Obj #%d(%s) in Room %s (%s): Time has been revalidated.\n",
-                (*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
+                (*it).first+1, crtm->cr.displayStr().c_str(), info.displayStr().c_str(), getCName());
 
             broadcast(isCt, "^yPerm Obj #%d(%s) in Room %s (%s) has been revalidated.",
-                (*it).first+1, crtm->cr.str().c_str(), info.str().c_str(), getCName());
+                (*it).first+1, crtm->cr.displayStr().c_str(), info.displayStr().c_str(), getCName());
         }
     }
 }

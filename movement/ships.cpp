@@ -815,7 +815,7 @@ int dmQueryShips(Player* player, cmd* cmnd) {
             for(xt = stop->exits.begin() ; xt != stop->exits.end() ; xt++) {
                 exit = (*xt);
                 player->print("     Exit: %d - %s, room %s %s\n", mod, exit->getName().c_str(),
-                    exit->origin.room.str().c_str(), exit->origin.mapmarker.getArea() ? exit->origin.mapmarker.str().c_str() : "");
+                              exit->origin.room.displayStr().c_str(), exit->origin.mapmarker.getArea() ? exit->origin.mapmarker.str().c_str() : "");
                 mod++;
             }
 
@@ -856,8 +856,8 @@ int dmQueryShips(Player* player, cmd* cmnd) {
             player->print("Raid Info:\n-----------------------\n");
             player->print("Record:          %s\n", stop->raid->getRecord() ? "Yes" : "No");
             player->print("Search Mob:      %d\n", stop->raid->getSearchMob());
-            player->print("Dump Room:       %s\n", stop->raid->getDump().str().c_str());
-            player->print("Prison Room:     %s\n", stop->raid->getPrison().str().c_str());
+            player->print("Dump Room:       %s\n", stop->raid->getDump().displayStr().c_str());
+            player->print("Prison Room:     %s\n", stop->raid->getPrison().displayStr().c_str());
             if(!stop->raid->getDumpTalk().empty())
                 player->print("Dump Talk:       %s\n", stop->raid->getDumpTalk().c_str());
             if(!stop->raid->getPrisonTalk().empty())
@@ -881,9 +881,9 @@ int dmQueryShips(Player* player, cmd* cmnd) {
         for(xt = stop->exits.begin() ; xt != stop->exits.end() ; xt++) {
             exit = (*xt);
             player->print("  Exit:    %d - %s\n", mod, exit->getName().c_str());
-            player->print("  uOrigin: %s   aOrigin: %s\n", exit->origin.room.str().c_str(),
+            player->print("  uOrigin: %s   aOrigin: %s\n", exit->origin.room.displayStr().c_str(),
                 exit->origin.mapmarker.str().c_str());
-            player->print("  uTarget: %s   aTarget: %s\n", exit->target.room.str().c_str(),
+            player->print("  uTarget: %s   aTarget: %s\n", exit->target.room.displayStr().c_str(),
                 exit->target.mapmarker.str().c_str());
             player->print("  Raid:    %s\n", exit->getRaid() ? "Yes" : "No");
             if(!exit->getArrives().empty())

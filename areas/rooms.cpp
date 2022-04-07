@@ -85,7 +85,7 @@ std::string BaseRoom::fullName() const {
     const AreaRoom* aRoom = getAsConstAreaRoom();
 
     if(uRoom) {
-        oStr << uRoom->info.str() << "(" << uRoom->getName() << ")";
+        oStr << uRoom->info.displayStr() << "(" << uRoom->getName() << ")";
     } else if(aRoom) {
         oStr << aRoom->mapmarker.str();
     } else

@@ -367,7 +367,7 @@ void infoSpells(const Player* viewer, Creature* target, bool notSelf) {
                     anchor->getRoomName().c_str());
 
                 if(viewer->isStaff())
-                    viewer->print("  %s", (anchor->getMapMarker() ? anchor->getMapMarker()->str() : anchor->getRoom().str()).c_str());
+                    viewer->print("  %s", (anchor->getMapMarker() ? anchor->getMapMarker()->str() : anchor->getRoom().displayStr()).c_str());
 
                 viewer->print("\n");
             }
