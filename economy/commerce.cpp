@@ -567,7 +567,7 @@ int cmdShop(Player* player, cmd* cmnd) {
             return(0);
         }
 
-        logn("log.shop", "%s just founded a shop! (%s - %s).\n", player->getCName(), xname.c_str(), cr.str().c_str());
+        logn("log.shop", "%s just founded a shop! (%s - %s).\n", player->getCName(), xname.c_str(), cr.displayStr().c_str());
 
         shop = new UniqueRoom;
         shop->info = cr;
@@ -605,7 +605,7 @@ int cmdShop(Player* player, cmd* cmnd) {
 
         player->print("Congratulations! You are now the owner of a brand new shop.\n");
         logn("log.shops", "*** %s just built a shop! (%s - %s) (Shop %s).\n",
-            player->getCName(), room->info.str().c_str(), xname.c_str(), shop->info.str().c_str());
+             player->getCName(), room->info.displayStr().c_str(), xname.c_str(), shop->info.displayStr().c_str());
         broadcast(player->getSock(), player->getParent(), "%M just opened a shop!", player );
         if(!player->flagIsSet(P_DM_INVIS))
             broadcast("### %s just opened a shop! It's located at: %s.", player->getCName(), room->getCName());
@@ -787,7 +787,7 @@ int cmdShop(Player* player, cmd* cmnd) {
         p->setName(name);
         p->appendLog(player->getName(), "%s renamed the shop to %s.", player->getCName(), player->getUniqueRoomParent()->getCName());
         logn("log.shops", "%s renamed shop %s to %s.\n",
-            player->getCName(), player->getUniqueRoomParent()->info.str().c_str(), player->getUniqueRoomParent()->getCName());
+             player->getCName(), player->getUniqueRoomParent()->info.displayStr().c_str(), player->getUniqueRoomParent()->getCName());
         player->print("Shop renamed to '%s'.\n", player->getUniqueRoomParent()->getCName());
         player->getUniqueRoomParent()->saveToFile(0);
 
@@ -1392,7 +1392,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
         if(!owner) {
             if(!loadPlayer(p->getOwner().c_str(), &owner)) {
                 loge("Shop (%s) without a valid owner (%s).\n",
-                    room->info.str().c_str(), p->getOwner().c_str());
+                     room->info.displayStr().c_str(), p->getOwner().c_str());
                 player->save(true);
                 return(0);
             }
@@ -1638,7 +1638,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
             player->print("You have %s left.\n", player->coins.str().c_str());
             broadcast(player->getSock(), player->getParent(), "%M just bought a storage room.", player);
             logn("log.storage", "%s bought storage room %s.\n",
-                player->getCName(), cr.str().c_str());
+                player->getCName(), cr.displayStr().c_str());
 
             createStorage(cr, player);
 

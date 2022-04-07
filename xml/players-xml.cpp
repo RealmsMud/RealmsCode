@@ -227,8 +227,8 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
             // Old format
             while(childNode) {
                 if(NODE_NAME(childNode, "Quest")) {
-                    int questNum = xml::toNum<int>(childNode);
-                    questsCompleted.insert(std::make_pair(questNum, new QuestCompleted(1)));
+                    CatRef questId = QuestInfo::getQuestId(childNode);
+                    questsCompleted.insert(std::make_pair(questId, new QuestCompleted(1)));
                 }
                 childNode = childNode->next;
             }
@@ -237,18 +237,16 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
             xmlNodePtr subNode;
             while(childNode) {
                 if(NODE_NAME(childNode, "Quest")) {
-                    int questNum = -1;
+                    CatRef questId;
                     int numCompletions = 1;
                     subNode = childNode->children;
                     while(subNode) {
                         if(NODE_NAME(subNode, "Id")) {
-                            questNum = xml::toNum<int>(subNode);
+                            questId = QuestInfo::getQuestId(subNode);
                         } else if(NODE_NAME(subNode, "Num")) {
                             numCompletions = xml::toNum<int>(subNode);
                         }
-                        if(questNum != -1) {
-                            questsCompleted.insert(std::make_pair(questNum, new QuestCompleted(numCompletions)));
-                        }
+                        questsCompleted.insert(std::make_pair(questId, new QuestCompleted(numCompletions)));
                         subNode = subNode->next;
                     }
                 }
@@ -256,12 +254,12 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
             }
         } else {
             // New - New format!
-            int id;
+            CatRef questId;
             while(childNode) {
                 if(NODE_NAME(childNode, "QuestCompleted")) {
-                    id = xml::getIntProp(childNode, "ID");
+                    questId = QuestInfo::getQuestId(childNode);
 
-                    questsCompleted.insert(std::make_pair(id, new QuestCompleted(childNode)));
+                    questsCompleted.insert(std::make_pair(questId, new QuestCompleted(childNode)));
 
                 }
                 childNode = childNode->next;
@@ -520,14 +518,14 @@ void Player::saveQuests(xmlNodePtr rootNode) const {
     xmlNodePtr questNode;
 
     questNode = xml::newStringChild(rootNode, "QuestsInProgress");
-    for(std::pair<int, QuestCompletion*> p : questsInProgress) {
-        p.second->save(questNode);
+    for(const auto&[questId, questCompletion] : questsInProgress) {
+        questCompletion->save(questNode);
     }
 
     questNode = xml::newStringChild(rootNode, "QuestsCompleted");
     if(!questsCompleted.empty()) {
-        for(auto qp : questsCompleted) {
-            qp.second->save(questNode, qp.first);
+        for(const auto& [questId, quest] : questsCompleted) {
+            quest->save(questNode, questId);
         }
     }
 }

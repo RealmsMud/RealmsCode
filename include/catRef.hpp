@@ -27,30 +27,37 @@ class Creature;
 
 class CatRef {
 public:
+    friend std::ostream& operator<<(std::ostream& out, const CatRef& group);
+
     CatRef();
     void    setDefault(const Creature* target);
     void    clear();
-    xmlNodePtr save(xmlNodePtr curNode, const char* childName, bool saveNonZero, int pos=0) const;
     void    load(xmlNodePtr curNode);
+
+    xmlNodePtr save(xmlNodePtr curNode, const char* childName, bool saveNonZero, int pos=0) const;
     CatRef& operator=(const CatRef& cr);
     bool    operator==(const CatRef& cr) const;
     bool    operator!=(const CatRef& cr) const;
-    [[nodiscard]] std::string rstr() const;
-    [[nodiscard]] std::string str(std::string_view current = "", char color = '\0') const;
-    void    setArea(std::string c);
+    [[nodiscard]] std::string str() const;
+    [[nodiscard]] std::string displayStr(std::string_view current = "", char color = '\0') const;
     [[nodiscard]] bool    isArea(std::string_view c) const;
 
+    void    setArea(std::string c);
     std::string area;
     short   id{};
 };
 
 namespace std {
-    template <>
-        struct hash<CatRef>{
-        public :
-            size_t operator()(const CatRef &cr ) const {
-                return hash<string>()(cr.str());
-            }
+    template <> struct hash<CatRef>{
+        size_t operator()(const CatRef &cr ) const {
+            return hash<string>()(cr.str());
+        }
+    };
+
+    template<> struct less<CatRef>{
+        bool operator() (const CatRef& lhs, const CatRef& rhs) const {
+            return std::tie(lhs.area, lhs.id) < std::tie(rhs.area, rhs.id);
+        }
     };
 };
 

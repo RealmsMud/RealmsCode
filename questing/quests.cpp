@@ -73,6 +73,27 @@
 #include "utils.hpp"                                // for MIN, MAX
 #include "xml.hpp"                                  // for loadObject, loadM...
 
+CatRef QuestInfo::getQuestId(xmlNodePtr curNode) {
+    CatRef toReturn;
+    toReturn.id = xml::getShortProp(curNode, "ID");
+    if(toReturn.id == 0)
+        toReturn.id = xml::getShortProp(curNode, "Num");
+
+    xml::copyPropToString(toReturn.area, curNode, "Area");
+
+    return toReturn;
+}
+CatRef QuestInfo::getQuestId(std::string strId) {
+    CatRef toReturn;
+    getCatRef(std::move(strId), &toReturn, nullptr);
+
+    return toReturn;
+}
+
+void QuestInfo::saveQuestId(xmlNodePtr curNode, const CatRef& questId) {
+    xml::newNumProp(curNode, "ID", questId.id);
+    xml::newProp(curNode, "Area", questId.area);
+}
 
 QuestCatRef::QuestCatRef() {
     area = gConfig->getDefaultArea();
@@ -100,7 +121,7 @@ QuestCompletion::QuestCompletion(QuestInfo* parent, Player* player) {
 
 
 QuestCompletion::QuestCompletion(xmlNodePtr rootNode, Player* player) {
-    questId = xml::getIntProp(rootNode, "ID");
+    questId = QuestInfo::getQuestId(rootNode);
     resetParentQuest();
 
     parentPlayer = player;
@@ -139,9 +160,9 @@ QuestCompletion::QuestCompletion(xmlNodePtr rootNode, Player* player) {
 
 xmlNodePtr QuestCompletion::save(xmlNodePtr rootNode) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, "QuestCompletion");
-    xml::newNumProp(curNode, "ID", questId);
+    QuestInfo::saveQuestId(curNode, questId);
 
-    // We don't actually read this in, but we'll save it for reference incase
+    // We don't actually read this in, but we'll save it for reference in case
     // someone edits the file and wants to know this info
     xml::newStringChild(curNode, "QuestName", parentQuest->getName());
     xml::newStringChild(curNode, "Revision", revision);
@@ -168,7 +189,7 @@ QuestCompleted::QuestCompleted(const QuestCompleted &qc) {
 
 void QuestCompletion::resetParentQuest() {
     if((parentQuest = gConfig->getQuest(questId)) == nullptr) {
-        throw(std::runtime_error("Unable to find parent quest - " + std::to_string(questId)));
+        throw(std::runtime_error("Unable to find parent quest - " + questId.str()));
     }
 }
 
@@ -197,14 +218,14 @@ void TalkResponse::parseQuest() {
         if(it == tok.end())
             return;
 
-        // Find the quest number
-        std::string num = *it++;
-        int questNum = toNum<int>(num);
-
-        if(questNum < 1)
+        // Find the quest id (area.##)
+        std::string questIdStr = *it++;
+        if(questIdStr.empty())
             return;
 
-        QuestInfo* questInfo = gConfig->getQuest(questNum);
+        CatRef questId = QuestInfo::getQuestId(questIdStr);
+
+        QuestInfo* questInfo = gConfig->getQuest(questId);
         if(!questInfo)
             return;
 
@@ -212,7 +233,7 @@ void TalkResponse::parseQuest() {
 
     }
 
-    }
+}
 
 bool QuestInfo::isRepeatable() const {
     return(repeatable);
@@ -230,12 +251,12 @@ const QuestCatRef& QuestInfo::getTurnInMob() const {
 std::string QuestInfo::getName() const {
     return(name);
 }
-int QuestInfo::getId() const {
+CatRef QuestInfo::getId() const {
     return(questId);
 }
 std::string QuestInfo::getDisplayName() const {
     std::ostringstream displayStr;
-    displayStr << "^Y#" << questId << " - " << name << "^x";
+    displayStr << "^Y#" << questId.str() << " - " << name << "^x";
     return(displayStr.str());
 }
 
@@ -277,7 +298,7 @@ std::string QuestInfo::getDisplayString() const {
         QuestInfo* q=nullptr;
         int t = 0;
         displayStr << "^WPrerequisites:^x";
-        for(const int & preReq : preRequisites) {
+        for(const CatRef & preReq : preRequisites) {
             q = gConfig->getQuest(preReq);
             if(q) {
                 if(t++ > 0)
@@ -302,7 +323,7 @@ std::string QuestInfo::getDisplayString() const {
     } else {
         displayStr << "ERROR: Monster doesn't exit!";
     }
-    displayStr << "(" << turnInMob.str() << ")\n";
+    displayStr << "(" << turnInMob.displayStr() << ")\n";
 
 
     if(!initialItems.empty()) {
@@ -310,7 +331,7 @@ std::string QuestInfo::getDisplayString() const {
         displayStr << "\t^WInitial Items:^x\n";
         i = 1;
         for(const QuestCatRef & obj : initialItems) {
-            displayStr << "\t\t^W" << i++ << ")^x #" << obj.str() << " - ";
+            displayStr << "\t\t^W" << i++ << ")^x #" << obj.displayStr() << " - ";
             if(loadObject(obj, &object)) {
                  displayStr << object->getName();
                  delete object;
@@ -327,7 +348,7 @@ std::string QuestInfo::getDisplayString() const {
         displayStr << "\t^WMonsters To Kill:^x\n";
         i = 1;
         for(const QuestCatRef & mob : mobsToKill) {
-            displayStr << "\t\t^W" << i++ << ")^x #" << mob.str() << " - ";
+            displayStr << "\t\t^W" << i++ << ")^x #" << mob.displayStr() << " - ";
             if(loadMonster(mob, &monster)) {
                 displayStr << monster->getName();
                 delete monster;
@@ -342,7 +363,7 @@ std::string QuestInfo::getDisplayString() const {
         displayStr << "\t^WObjects To Obtain:^x\n";
         i = 1;
         for(const QuestCatRef & obj : itemsToGet) {
-            displayStr << "\t\t^W" << i++ << ")^x #" << obj.str() << " - ";
+            displayStr << "\t\t^W" << i++ << ")^x #" << obj.displayStr() << " - ";
             if(loadObject(obj, &object)) {
                  displayStr << object->getName();
                  delete object;
@@ -357,7 +378,7 @@ std::string QuestInfo::getDisplayString() const {
         displayStr << "\t^WRooms To Visit:^x\n";
         i = 1;
         for(const QuestCatRef & rom : roomsToVisit) {
-            displayStr << "\t\t^W" << i++ << ")^x #" << rom.str() << " - ";
+            displayStr << "\t\t^W" << i++ << ")^x #" << rom.displayStr() << " - ";
             if(loadRoom(rom, &room)) {
                 displayStr << room->getName() << std::endl;
             } else {
@@ -377,7 +398,7 @@ std::string QuestInfo::getDisplayString() const {
         i = 1;
         displayStr << "\t\t^WItems:^x" << std::endl;
         for(const QuestCatRef & obj : itemRewards) {
-            displayStr << "\t\t\t^W" << i++ << ")^x #" << obj.str() << " - ";
+            displayStr << "\t\t\t^W" << i++ << ")^x #" << obj.displayStr() << " - ";
             if(loadObject(obj, &object)) {
                  displayStr << object->getName();
                  delete object;
@@ -420,20 +441,17 @@ bool Config::loadQuests() {
 
     xmlNodePtr rootNode = xmlDocGetRootElement(xmlDoc);
     xmlNodePtr curNode = rootNode->children;
-    int questId = 0;
 
     while(curNode) {
         if(NODE_NAME(curNode, "QuestInfo")) {
-            questId = xml::getIntProp(curNode, "Num");
-            if(questId > 0) {
-                auto* tmpQuest = new QuestInfo(curNode);
+            CatRef questId = QuestInfo::getQuestId(curNode);
+            auto* tmpQuest = new QuestInfo(curNode);
 
-                if(quests[questId] == nullptr){
-                    quests[questId] = tmpQuest;
-                } else {
-                    (*quests[questId]) = *tmpQuest;
-                    delete tmpQuest;
-                }
+            if(quests[questId] == nullptr){
+                quests[questId] = tmpQuest;
+            } else {
+                (*quests[questId]) = *tmpQuest;
+                delete tmpQuest;
             }
         }
         curNode = curNode->next;
@@ -443,8 +461,8 @@ bool Config::loadQuests() {
     return(true);
 }
 
-QuestInfo* Config::getQuest(unsigned int questNum) {
-    auto questIt = quests.find(questNum);
+QuestInfo* Config::getQuest(const CatRef& questId) {
+    auto questIt = quests.find(questId);
     if(questIt != quests.end())
         return(questIt->second);
     else
@@ -459,7 +477,7 @@ bool Player::addQuest(QuestInfo* toAdd) {
     *this << ColorOn << fmt::format("^W{}^x has been added to your quest book.\n", toAdd->getName()) << ColorOff;
     return(true);
 }
-bool Player::hasQuest(int questId) const {
+bool Player::hasQuest(const CatRef& questId) const {
     return(questsInProgress.find(questId) != questsInProgress.end());
 }
 
@@ -467,7 +485,7 @@ bool Player::hasQuest(const QuestInfo *quest) const {
     return(quest && hasQuest(quest->getId()));
 }
 
-bool Player::hasDoneQuest(int questId) const {
+bool Player::hasDoneQuest(const CatRef& questId) const {
     return(questsCompleted.find(questId) != questsCompleted.end());
 }
 
@@ -551,7 +569,7 @@ QuestTurninStatus Monster::checkQuestTurninStatus(const Creature* viewer) const 
     return QuestTurninStatus::NO_TURNINS;
 }
 
-QuestCompleted* Player::getQuestCompleted(const int questId) const {
+QuestCompleted* Player::getQuestCompleted(const CatRef& questId) const {
     auto completion = questsCompleted.find(questId);
     if (completion != questsCompleted.end()) {
         return completion->second;
@@ -561,21 +579,18 @@ QuestCompleted* Player::getQuestCompleted(const int questId) const {
 }
 
 void Player::updateMobKills(Monster* monster) {
-    for(std::pair<int, QuestCompletion*> p : questsInProgress) {
-        QuestCompletion* quest = p.second;
+    for(const auto&[questId, quest] : questsInProgress) {
         quest->updateMobKills(monster);
     }
 }
 
 void Player::updateItems(Object* object) {
-    for(std::pair<int, QuestCompletion*> p : questsInProgress) {
-        QuestCompletion* quest = p.second;
+    for(const auto&[questId, quest] : questsInProgress) {
         quest->updateItems(object);
     }
 }
 void Player::updateRooms(UniqueRoom* room) {
-    for(std::pair<int, QuestCompletion*> p : questsInProgress) {
-        QuestCompletion* quest = p.second;
+    for(const auto&[questId, quest] : questsInProgress) {
         quest->updateRooms(room);
     }
 }
@@ -682,7 +697,7 @@ bool QuestCompletion::checkQuestCompletion(bool showMessage) {
 
 bool QuestCompletion::hasRequiredMobs() const {
     // Assume completion, and test for non completion
-    for(const QuestCatRef & mob : mobsKilled) {
+    for(const QuestCatRef& mob : mobsKilled) {
         if(mob.curNum != mob.reqNum) {
             return(false);
         }
@@ -1400,7 +1415,7 @@ QuestEligibility QuestInfo::getEligibility(const Player *player, const Monster *
     }
 
     if(!preRequisites.empty()) {
-        for(const int & preReq : preRequisites) {
+        for(const CatRef& preReq : preRequisites) {
             if(!player->hasDoneQuest(preReq)){
                 return QuestEligibility::INELIGIBLE_UNCOMPLETED_PREREQUISITES;
             }
@@ -1455,7 +1470,7 @@ bool QuestInfo::canGetQuest(const Player* player, const Monster* giver) const {
     }
 
     if(eligibility == QuestEligibility::INELIGIBLE_UNCOMPLETED_PREREQUISITES) {
-        for(const int & preReq : preRequisites) {
+        for(const CatRef & preReq : preRequisites) {
             if(!player->hasDoneQuest(preReq) &&
                 !player->checkStaff("^m%M says, \"You're not ready for that information yet! Return when you have finished ^W%s^m.\"\n",
                     giver, gConfig->getQuest(preReq)->getName().c_str())
@@ -1710,8 +1725,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
         *player << "None!\n";
     }
 
-    for(std::pair<int, QuestCompletion*> p : target->questsInProgress) {
-        QuestCompletion* quest = p.second;
+    for(const auto& [questId, quest] : target->questsInProgress) {
         *player << i++ << ") " << ColorOn << quest->getStatusDisplay() << ColorOff;
     }
 

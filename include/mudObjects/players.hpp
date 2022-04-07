@@ -127,8 +127,10 @@ public:
 
     std::list<CatRef> lore;
     std::list<int> recipes;
-    typedef std::map<int, QuestCompletion*> QuestCompletionMap;
-    typedef std::map<int, QuestCompleted*> QuestCompletedMap;
+
+    // TODO: emplace
+    typedef std::map<CatRef, QuestCompletion*> QuestCompletionMap;
+    typedef std::map<CatRef, QuestCompleted*> QuestCompletedMap;
 
     QuestCompletionMap questsInProgress;
     QuestCompletedMap questsCompleted;    // List of all quests we've finished and how many times
@@ -235,10 +237,10 @@ public:
 
 // Quests
     bool addQuest(QuestInfo* toAdd);
-    bool hasQuest(int questId) const;
+    bool hasQuest(const CatRef& questId) const;
     bool hasQuest(const QuestInfo *quest) const;
-    bool hasDoneQuest(int questId) const;
-    QuestCompleted* getQuestCompleted(const int questId) const;
+    bool hasDoneQuest(const CatRef& questId) const;
+    QuestCompleted* getQuestCompleted(const CatRef& questId) const;
     void updateMobKills(Monster* monster);
     int countItems(const QuestCatRef& obj);
     void updateItems(Object* object);

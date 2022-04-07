@@ -830,21 +830,21 @@ bool WebInterface::handleInput() {
             std::string newArea = xml::getProp(rootNode, "Area");
             // Make sure they're sending us the proper index!
             if(num != cr.id || newArea != cr.area) {
-                std::clog << "WebInterface: MisMatched save - Got " << num << " - " << newArea << " Expected " << cr.str() << "\n";
+                std::clog << "WebInterface: MisMatched save - Got " << num << " - " << newArea << " Expected " << cr.displayStr() << "\n";
                 return(false);
             }
             if(type == "CRT") {
                 auto* monster = new Monster();
                 monster->readFromXml(rootNode);
                 monster->saveToFile();
-                broadcast(isDm, "^y*** Monster %s - %s^y updated by %s.", monster->info.str().c_str(), monster->getCName(), monster->last_mod);
+                broadcast(isDm, "^y*** Monster %s - %s^y updated by %s.", monster->info.displayStr().c_str(), monster->getCName(), monster->last_mod);
                 gServer->monsterCache.insert(monster->info, &monster);
             }
             else if(type == "OBJ") {
                 auto* object = new Object();
                 object->readFromXml(rootNode);
                 object->saveToFile();
-                broadcast(isDm, "^y*** Object %s - %s^y updated by %s.", object->info.str().c_str(), object->getCName(), object->lastMod.c_str());
+                broadcast(isDm, "^y*** Object %s - %s^y updated by %s.", object->info.displayStr().c_str(), object->getCName(), object->lastMod.c_str());
                 gServer->objectCache.insert(object->info, &object);
             }
             else if(type == "ROM") {
@@ -853,9 +853,9 @@ bool WebInterface::handleInput() {
                 room->saveToFile(0);
 
                 gServer->reloadRoom(room);
-                broadcast(isDm, "^y*** Room %s - %s^y updated by %s.", room->info.str().c_str(), room->getCName(), room->last_mod);
+                broadcast(isDm, "^y*** Room %s - %s^y updated by %s.", room->info.displayStr().c_str(), room->getCName(), room->last_mod);
             }
-            std::clog << "WebInterface: Saved " << type << " " << cr.str() << "\n";
+            std::clog << "WebInterface: Saved " << type << " " << cr.displayStr() << "\n";
         }
     }
 

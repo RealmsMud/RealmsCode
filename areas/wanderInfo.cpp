@@ -95,7 +95,7 @@ void WanderInfo::show(const Player* player, std::string_view area) const {
         loadMonster((*it).second, &monster);
 
         player->printColor("^c%2d) ^x%14s ^c::^x %s\n", (*it).first+1,
-            (*it).second.str("", 'c').c_str(), monster ? monster->getCName() : "");
+                           (*it).second.displayStr("", 'c').c_str(), monster ? monster->getCName() : "");
 
         if(monster) {
             free_crt(monster);

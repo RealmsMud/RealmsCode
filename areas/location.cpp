@@ -34,7 +34,7 @@ Location::Location() = default;
 
 std::string Location::str() const {
     if(room.id)
-        return(room.str());
+        return(room.displayStr());
     return(mapmarker.str());
 }
 

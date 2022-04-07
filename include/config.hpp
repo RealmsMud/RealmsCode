@@ -37,63 +37,51 @@
 
 #include "oldquest.hpp"
 
-class SkillInfo;
 class AlchemyInfo;
-class CatRefInfo;
-class QuestInfo;
-class MudFlag;
-class cWeather;
-
-class Lore;
-class Unique;
-class PlayerClass;
-class GuildCreation;
 class Ban;
-class Property;
-class Ship;
-class Effect;
-class Calendar;
-
-class ProxyManager;
-
-class MsdpVariable;
-class MxpElement;
-
-class CatRef;
-class MapMarker;
-class StartLoc;
-
-class Server;
-class Socket;
-
-class Guild;
-class Faction;
-class Clan;
-
 class BaseRoom;
+class Calendar;
+class CatRef;
+class CatRefInfo;
+class Clan;
+class ClassData;
 class Creature;
+class CrtCommand;
+class DeityData;
+class Effect;
+class Faction;
+class Fishing;
+class Guild;
+class GuildCreation;
+class Lore;
+class MapMarker;
 class Monster;
+class MsdpVariable;
+class MudFlag;
 class MudObject;
+class MxpElement;
 class Object;
 class Player;
-class UniqueRoom;
-
-class Spell;
-class Song;
-
+class PlayerClass;
 class PlyCommand;
-class CrtCommand;
-class SkillCommand;
-class SocialCommand;
-
-class Fishing;
-class Recipe;
-
-class ClassData;
-class DeityData;
+class Property;
+class ProxyManager;
+class QuestInfo;
 class RaceData;
-
+class Recipe;
+class Server;
+class Ship;
+class SkillCommand;
+class SkillInfo;
+class SocialCommand;
+class Socket;
+class Song;
+class Spell;
+class StartLoc;
 class Swap;
+class Unique;
+class UniqueRoom;
+class cWeather;
 
 struct comp {
     bool operator() (const std::string& lhs, const std::string& rhs) const {
@@ -127,7 +115,7 @@ typedef std::map<unsigned int, DeityData*> DeityDataMap;
 typedef std::map<unsigned int, Recipe*> RecipeMap;
 typedef std::map<unsigned int, Clan*> ClanMap;
 typedef std::map<unsigned int, Guild*> GuildMap;
-typedef std::map<unsigned int, QuestInfo*> QuestInfoMap;
+typedef std::map<CatRef, QuestInfo*> QuestInfoMap;
 typedef std::map<long, std::string> DiscordTokenMap; // webhookId --> token
 
 // Case insensitive
@@ -578,10 +566,11 @@ private:
 
     // Quests
 public:
+    // Global pointer to quests; quests are allocated in the individual zones
     QuestInfoMap quests;
     MxpElementMap mxpElements;
     stringMap mxpColors;
-    QuestInfo* getQuest(unsigned int questNum);
+    QuestInfo* getQuest(const CatRef& questNum);
 
 public:
     // Misc
