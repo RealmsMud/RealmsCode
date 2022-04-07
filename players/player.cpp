@@ -312,10 +312,10 @@ void Player::init() {
         UniqueRoom  *uRoom=nullptr;
         if(!loadRoom(currentLocation.room, &uRoom)) {
             loge(fmt::format("{}: {} ({}) Attempted logon to bad or missing room!\n", getName(),
-                getSock()->getHostname(), currentLocation.room.str()).c_str());
+                getSock()->getHostname(), currentLocation.room.displayStr()).c_str());
             // NOTE: Using ::isCt to use the global function, not the local function
             broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room (normal)!", getName(),
-                getSock()->getHostname(), currentLocation.room.str()).c_str());
+                getSock()->getHostname(), currentLocation.room.displayStr()).c_str());
             newRoom = abortFindRoom(this, "init_ply");
             uRoom = newRoom->getAsUniqueRoom();
         }
@@ -324,7 +324,8 @@ void Player::init() {
         if(uRoom && !isStaff() && !gServer->isRebooting()) {
             if( (   uRoom->flagIsSet(R_LOG_INTO_TRAP_ROOM) || uRoom->flagIsSet(R_SHOP_STORAGE) || uRoom->hasTraining()) &&
                 uRoom->getTrapExit().id && !loadRoom(uRoom->getTrapExit(), &uRoom)) {
-                broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room!", getName(), getSock()->getHostname(), uRoom->getTrapExit().str()).c_str());
+                broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room!", getName(), getSock()->getHostname(),
+                                              uRoom->getTrapExit().displayStr()).c_str());
                 newRoom = abortFindRoom(this, "init_ply");
                 uRoom = newRoom->getAsUniqueRoom();
             }

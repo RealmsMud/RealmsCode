@@ -115,7 +115,7 @@ std::string Recipe::getResultName(bool appendCr) {
     std::ostringstream oStr;
     oStr << resultName;
     if(appendCr)
-        oStr << " (" << result.rstr() << ")";
+        oStr << " (" << result.str() << ")";
     return(oStr.str());
 }
 std::string Recipe::getSkill() const { return(skill); }
@@ -823,9 +823,9 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
                     recipe->setResult(object->info);
                 }
             }
-            player->print("Recipe #%d's Result set to %s.\n", recipe->getId(), recipe->getResult().str().c_str());
+            player->print("Recipe #%d's Result set to %s.\n", recipe->getId(), recipe->getResult().displayStr().c_str());
             log_immort(true, player, "%s set recipe #%d's %s to %s.\n",
-                player->getCName(), recipe->getId(), "Result", recipe->getResult().str().c_str());
+                player->getCName(), recipe->getId(), "Result", recipe->getResult().displayStr().c_str());
         }
         break;
     case 's':
@@ -904,7 +904,7 @@ int dmRecipes(Player* player, cmd* cmnd) {
                 if(i)
                     oStr << ", ";
                 i = true;
-                oStr << "^c" << (*lIt).rstr() << "^x";
+                oStr << "^c" << (*lIt).str() << "^x";
             }
         }
 
@@ -915,7 +915,7 @@ int dmRecipes(Player* player, cmd* cmnd) {
                 if(i)
                     oStr << ", ";
                 i = true;
-                oStr << "^c" << (*lIt).rstr() << "^x";
+                oStr << "^c" << (*lIt).str() << "^x";
             }
         }
 
@@ -926,11 +926,11 @@ int dmRecipes(Player* player, cmd* cmnd) {
                 if(i)
                     oStr << ", ";
                 i = true;
-                oStr << "^c" << (*lIt).rstr() << "^x";
+                oStr << "^c" << (*lIt).str() << "^x";
             }
         }
 
-        oStr << "\nResult: ^c" << recipe->getResult().rstr() << "^x\n"
+        oStr << "\nResult: ^c" << recipe->getResult().str() << "^x\n"
              << "Creator: ^c" << recipe->getCreator().c_str() << "^x\n"
              << "Experience: ^c" << recipe->getExperience() << "^x\n"
              << "MinSkill: ^c" << recipe->getMinSkill() << "^x\n"

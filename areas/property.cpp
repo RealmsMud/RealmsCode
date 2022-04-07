@@ -1367,7 +1367,7 @@ std::string Property::show(bool isOwner, std::string_view player, int *i) {
         oStr << "Ranges:\n";
         std::list<Range>::const_iterator rt;
         for(rt = ranges.begin() ; rt != ranges.end() ; rt++)
-            oStr << "Low: ^c" << (*rt).low.str() << "^x  High: ^c" << (*rt).high << "^x\n";
+            oStr << "Low: ^c" << (*rt).low.displayStr() << "^x  High: ^c" << (*rt).high << "^x\n";
 
         oStr << "Log Type: ^c" << getLogTypeStr() << "^x\n";
         if(!log.empty()) {

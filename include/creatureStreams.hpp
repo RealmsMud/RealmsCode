@@ -26,6 +26,7 @@
 
 class MudObject;
 class Socket;
+class CatRef;
 
 class Streamable {
 public:
@@ -37,6 +38,7 @@ public:
     Streamable& operator<< (std::string_view str);
     Streamable& operator<< (int num);
     Streamable& operator<< (Stat& stat);
+    Streamable& operator<< (const CatRef& cr);
 
     // This is to allow simple function based manipulators (like ColorOn, ColorOff)
     Streamable& operator <<( Streamable& (*op)(Streamable&));

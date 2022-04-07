@@ -80,16 +80,16 @@ int dmCreateObj(Player* player, cmd* cmnd) {
     getCatRef(getFullstrText(cmnd->fullstr, 1), &cr, player);
 
     if(!player->checkBuilder(cr)) {
-        player->print("Error: %s out of your allowed range.\n", cr.str().c_str());
+        player->print("Error: %s out of your allowed range.\n", cr.displayStr().c_str());
         return(0);
     }
 
     if(!loadObject(cr, &object)) {
-        player->print("Error (%s)\n", cr.str().c_str());
+        player->print("Error (%s)\n", cr.displayStr().c_str());
         return(0);
     }
     if(!object->getCName()[0] || object->getCName()[0] == ' ') {
-        player->printColor("Error (%s)\n", cr.str().c_str());
+        player->printColor("Error (%s)\n", cr.displayStr().c_str());
         delete object;
         return(0);
     }
@@ -133,7 +133,7 @@ std::string Object::statObj(unsigned int statFlags) {
         objStr << "^y - Unique this (In Game: ^Y" << unique->getInGame()
                << "^y, Global Limit: ^Y" << unique->getGlobalLimit()<< "^y)^x\n";
 
-    objStr << "Index: " << info.str();
+    objStr << "Index: " << info.displayStr();
     if(statFlags & ISDM && !droppedBy.name.empty())
         objStr << "\nDropped By: " << droppedBy << "\n";
 
@@ -289,8 +289,8 @@ std::string Object::statObj(unsigned int statFlags) {
     objStr << "   Bulk: " << bulk << " (" << getActualBulk() << ")";
 
     if(type == ObjectType::CONTAINER) {
-        objStr << "\nLoadable inside: [" << in_bag[0].str() << "] [" << in_bag[1].str()
-                << "] [" << in_bag[2].str() << "]\n";
+        objStr << "\nLoadable inside: [" << in_bag[0].displayStr() << "] [" << in_bag[1].displayStr()
+               << "] [" << in_bag[2].displayStr() << "]\n";
     }
 
     if(flagIsSet(O_COIN_OPERATED_OBJECT) && coinCost)
@@ -377,7 +377,7 @@ std::string Object::statObj(unsigned int statFlags) {
         for(it = randomObjects.begin(); it != randomObjects.end(); it++) {
             loadObject(*it, &object);
 
-            objStr << "    " << std::setw(14) << (*it).str("", 'y') << " ^y::^x "
+            objStr << "    " << std::setw(14) << (*it).displayStr("", 'y') << " ^y::^x "
                    << (object ? object->getCName() : "") << "\n";
 
             if(object) {
@@ -439,7 +439,7 @@ int stat_obj(Player* player, Object* object) {
 
     if(!player->isDm())
         log_immort(false,player, "%s statted object %s(%s).\n",
-            player->getCName(), object->getCName(), object->info.str().c_str());
+            player->getCName(), object->getCName(), object->info.displayStr().c_str());
 
     unsigned int statFlags = 0;
     if(player->isCt())
@@ -1019,9 +1019,9 @@ int dmSetObj(Player* player, cmd* cmnd) {
 
             object->setShotsMax(MAX((short)num, object->getShotsMax()));
             player->print("Loadable container object %s set to item number %s.\n",
-                object->info.str().c_str(), object->in_bag[num-1].str().c_str());
+                          object->info.displayStr().c_str(), object->in_bag[num - 1].displayStr().c_str());
             log_immort(2, player, "%s set container %s(%s) to load object %s.\n",
-                player->getCName(), objname, object->info.str().c_str(), object->in_bag[num-1].str().c_str());
+                       player->getCName(), objname, object->info.displayStr().c_str(), object->in_bag[num - 1].displayStr().c_str());
 
         } else {
             return(setWhich(player, "objects"));
@@ -1518,17 +1518,17 @@ void dmSaveObj(Player* player, cmd* cmnd, const CatRef& cr) {
     }
 
     if(object->info.id && !player->checkBuilder(object->info, false)) {
-        player->print("Error: %s out of your allowed range.\n", object->info.str().c_str());
+        player->print("Error: %s out of your allowed range.\n", object->info.displayStr().c_str());
         return;
     }
     if(!player->checkBuilder(cr, false)) {
-        player->print("Error: %s out of your allowed range.\n", cr.str().c_str());
+        player->print("Error: %s out of your allowed range.\n", cr.displayStr().c_str());
         return;
     }
 
     object->clearFlag(O_BEING_PREPARED);
     object->clearFlag(O_SAVE_FULL);
-    logn("log.bane", "%s saved %s to %s.\n", player->getCName(), object->getCName(), cr.str().c_str());
+    logn("log.bane", "%s saved %s to %s.\n", player->getCName(), object->getCName(), cr.displayStr().c_str());
 
     object->info = cr;
 
@@ -1548,7 +1548,7 @@ void dmResaveObject(const Player* player, Object* object, bool flush) {
         loge("Error saving object in dmResaveObject()");
         player->print("Error: object was not saved.\n");
     } else
-        player->print("Object %s updated.\n", object->info.str().c_str());
+        player->print("Object %s updated.\n", object->info.displayStr().c_str());
 
 
     // swap this new Object if its in the queue
@@ -1635,10 +1635,10 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
     else
         newObj->clearFlag(O_TWO_HANDED);
 
-    player->printColor("Saving %s to %s... ", newObj->getCName(), cr->str("", 'W').c_str());
+    player->printColor("Saving %s to %s... ", newObj->getCName(), cr->displayStr("", 'W').c_str());
     dmResaveObject(player, newObj);
     log_immort(2, player, "%s cloned %s into %s.\n",
-        player->getCName(), newObj->getCName(), cr->str().c_str());
+        player->getCName(), newObj->getCName(), cr->displayStr().c_str());
 
     if(addToInventory)
         player->addObj(newObj);
@@ -1704,10 +1704,10 @@ void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int w
     newObj->info = *cr;
     random->randomObjects.push_back(newObj->info);
 
-    player->printColor("Saving %s to %s... ", newObj->getCName(), cr->str("", 'W').c_str());
+    player->printColor("Saving %s to %s... ", newObj->getCName(), cr->displayStr("", 'W').c_str());
     dmResaveObject(player, newObj);
     log_immort(2, player, "%s cloned %s into %s.\n",
-        player->getCName(), newObj->getCName(), cr->str().c_str());
+        player->getCName(), newObj->getCName(), cr->displayStr().c_str());
 
     if(addToInventory)
         player->addObj(newObj);
@@ -1745,7 +1745,7 @@ int dmClone(Player* player, cmd* cmnd) {
     player->printColor("^yCloning %s.\n", object->getCName());
 
     if(object->info.id && !player->checkBuilder(object->info, false)) {
-        player->print("Error: %s out of your allowed range.\n", object->info.str().c_str());
+        player->print("Error: %s out of your allowed range.\n", object->info.displayStr().c_str());
         return(0);
     }
 
@@ -1775,7 +1775,7 @@ int dmClone(Player* player, cmd* cmnd) {
     }
 
     if(!player->checkBuilder(cr, false)) {
-        player->print("Error: %s out of your allowed range.\n", cr.str().c_str());
+        player->print("Error: %s out of your allowed range.\n", cr.displayStr().c_str());
         return(0);
     }
 
@@ -1958,10 +1958,10 @@ int dmClone(Player* player, cmd* cmnd) {
     random->setType(ObjectType::MISC);
     random->setAdjustment(object->getAdjustment());
 
-    player->printColor("Saving %s to %s... ", random->getCName(), cr.str("", 'W').c_str());
+    player->printColor("Saving %s to %s... ", random->getCName(), cr.displayStr("", 'W').c_str());
     dmResaveObject(player, random);
     log_immort(2, player, "%s cloned %s into %s.\n",
-        player->getCName(), random->getCName(), cr.str().c_str());
+        player->getCName(), random->getCName(), cr.displayStr().c_str());
 
     player->addObj(random);
 

@@ -88,7 +88,7 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
         cr.id = 1;
 
         if(!loadRoom(cr, &uRoom)) {
-            player->print("Error: could not load Builder Waiting Room (%s)\n", cr.str().c_str());
+            player->print("Error: could not load Builder Waiting Room (%s)\n", cr.displayStr().c_str());
             return(0);
         }
         BaseRoom* oldRoom = target->getRoomParent();

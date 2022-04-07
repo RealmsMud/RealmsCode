@@ -130,7 +130,7 @@ namespace Alchemy {
     std::string getEffectString(Object* obj, std::string_view effect) {
         if(!obj || effect.empty())
             return("*invalid*");
-        return fmt::format("{}|{}", obj->info.rstr(), effect);
+        return fmt::format("{}|{}", obj->info.str(), effect);
     }
 
     int numEffectsVisisble(const int skillLevel) {

@@ -1414,7 +1414,7 @@ int dmListArea(Player* player, cmd* cmnd) {
                     player->printColor("   Display: ^c%s\n", zone->display.c_str());
                     player->printColor("   TerRestrict: ^c%s^x  MapRestrict: ^c%s\n",
                         zone->terRestrict, zone->mapRestrict);
-                    player->printColor("   Unique: ^c%s\n", zone->unique.str().c_str());
+                    player->printColor("   Unique: ^c%s\n", zone->unique.displayStr().c_str());
                     player->printColor("   Min: (X:^c%d^x Y:^c%d^x Z:^c%d^x) Max: (X:^c%d^x Y:^c%d^x Z:^c%d^x)\n",
                         zone->min.getX(), zone->min.getY(), zone->min.getZ(),
                         zone->max.getX(), zone->max.getY(), zone->max.getZ());

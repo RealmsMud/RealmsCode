@@ -33,6 +33,11 @@
 #include "xml.hpp"                                  // for copyPropToString
 
 
+std::ostream& operator<<(std::ostream& out, const CatRef& cr) {
+    out << cr.str();
+    return(out);
+}
+
 //*********************************************************************
 //                      CatRef
 //*********************************************************************
@@ -94,11 +99,11 @@ bool CatRef::operator!=(const CatRef& cr) const {
 }
 
 //*********************************************************************
-//                      rstr
+//                      str
 //*********************************************************************
 
 // version of string for reloading
-std::string CatRef::rstr() const {
+std::string CatRef::str() const {
     std::ostringstream oStr;
     oStr << area << "." << id;
     return(oStr.str());
@@ -108,21 +113,18 @@ std::string CatRef::rstr() const {
 //                      str
 //*********************************************************************
 
-std::string CatRef::str(std::string_view current, char color) const {
+std::string CatRef::displayStr(std::string_view current, char color) const {
     std::ostringstream oStr;
     // if we're in an area already, we can chop off some text because they
     // already know what the area is
-    if( id &&
-        !area.empty() &&
-        (current.empty() || area != current)
-    ) {
-        if(color)
+    if (id && !area.empty() && (current.empty() || area != current)) {
+        if (color)
             oStr << "^" << color << area << ":^x" << id;
         else
             oStr << id << " - " << area;
     } else
         oStr << id;
-    return(oStr.str());
+    return (oStr.str());
 }
 
 //*********************************************************************
@@ -160,7 +162,7 @@ xmlNodePtr CatRef::save(xmlNodePtr curNode, const char* childName, bool saveNonZ
     if(!saveNonZero && !id)
         return(nullptr);
     curNode = xml::newNumChild(curNode, childName, id);
-    xml::newProp(curNode, "Area", area.c_str());
+    xml::newProp(curNode, "Area", area);
     if(pos)
         xml::newNumProp(curNode, "Num", pos);
     return(curNode);

@@ -149,7 +149,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
     }
 
     if(!loadMonster(cr, &monster)) {
-        player->print("Error (%s)\n", cr.str().c_str());
+        player->print("Error (%s)\n", cr.displayStr().c_str());
         return(0);
     }
 
@@ -158,7 +158,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 
     if(!monster->getName()[0] || monster->getName()[0] == ' ') {
         free_crt(monster);
-        player->print("Error (%s)\n", cr.str().c_str());
+        player->print("Error (%s)\n", cr.displayStr().c_str());
         return(0);
     }
 
@@ -263,7 +263,7 @@ std::string Creature::statCrt(int statFlags) {
 
         // Stop the comma for index
         crtStr.imbue(std::locale("C"));
-        crtStr << "\nIndex: " << mTarget->info.str("", 'y')
+        crtStr << "\nIndex: " << mTarget->info.displayStr("", 'y')
                << "                Toughness: " << Statistics::calcToughness(this) << "\n";
         crtStr.imbue(std::locale(""));
 
@@ -291,7 +291,7 @@ std::string Creature::statCrt(int statFlags) {
         // stop the comma
         crtStr.imbue(std::locale("C"));
         if(mTarget->jail.id)
-            crtStr << "\nJail Room: " <<  mTarget->jail.str() << "\n";
+            crtStr << "\nJail Room: " << mTarget->jail.displayStr() << "\n";
         crtStr.imbue(std::locale(""));
         crtStr << "Aggro String: " << mTarget->aggroString << "\n";
         if(mTarget->flagIsSet(M_LEVEL_RESTRICTED))
@@ -498,7 +498,7 @@ std::string Creature::statCrt(int statFlags) {
                     crtStr << "None";
                 else {
                     n++;
-                    crtStr << mTarget->rescue[i].str();
+                    crtStr << mTarget->rescue[i].displayStr();
                 }
                 crtStr << "   ";
             }
@@ -511,7 +511,7 @@ std::string Creature::statCrt(int statFlags) {
             if(mTarget->enemy_mob[i].id) {
                 crtStr << "Enemy Creatures: ";
                 for(i=0; i<NUM_ENEMY_MOB; i++)
-                    crtStr << "[" << std::setw(4) << mTarget->enemy_mob[i].str() << "]";
+                    crtStr << "[" << std::setw(4) << mTarget->enemy_mob[i].displayStr() << "]";
                 crtStr << "\n";
                 break;
             }
@@ -521,7 +521,7 @@ std::string Creature::statCrt(int statFlags) {
             if(mTarget->assist_mob[i].id) {
                 crtStr << "Will Assist: ";
                 for(i=0; i<NUM_ASSIST_MOB; i++)
-                    crtStr << "[" << std::setw(4) << mTarget->assist_mob[i].str() << "]";
+                    crtStr << "[" << std::setw(4) << mTarget->assist_mob[i].displayStr() << "]";
                 crtStr << "\n";
                 break;
             }
@@ -647,7 +647,7 @@ std::string Creature::statCrt(int statFlags) {
             for(it = pTarget->lore.begin() ; it != pTarget->lore.end() ; it++) {
                 if(i)
                     crtStr << ", ";
-                crtStr << "^y" << (*it).str() << "^x";
+                crtStr << "^y" << (*it).displayStr() << "^x";
                 i++;
             }
         }
@@ -845,10 +845,11 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         }
 
         getCatRef(getFullstrText(cmnd->fullstr, 4), &mTarget->assist_mob[num-1], mTarget);
-        player->print("%M's assist mob #%d set to creature %s.\n", mTarget, num, mTarget->assist_mob[num-1].str().c_str());
+        player->print("%M's assist mob #%d set to creature %s.\n", mTarget, num,
+                      mTarget->assist_mob[num - 1].displayStr().c_str());
 
         log_immort(true, player, "%s set %s %s's AssistMob#%d to %s.\n",
-            player->getCName(), PLYCRT(mTarget), mTarget->getCName(), num, mTarget->assist_mob[num-1].str().c_str());
+            player->getCName(), PLYCRT(mTarget), mTarget->getCName(), num, mTarget->assist_mob[num - 1].displayStr().c_str());
         break;
 
     case 'b':
@@ -1180,9 +1181,9 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         }
 
         getCatRef(getFullstrText(cmnd->fullstr, 4), &mTarget->enemy_mob[num-1], mTarget);
-        player->print("%M's enemy mob #%d set to creature %s.\n", mTarget, num, mTarget->enemy_mob[num-1].str().c_str());
+        player->print("%M's enemy mob #%d set to creature %s.\n", mTarget, num, mTarget->enemy_mob[num - 1].displayStr().c_str());
         log_immort(true, player, "%s set %s %s's EnemyMob#%d to %s.\n",
-            player->getCName(), PLYCRT(mTarget), mTarget->getCName(), num, mTarget->enemy_mob[num-1].str().c_str());
+            player->getCName(), PLYCRT(mTarget), mTarget->getCName(), num, mTarget->enemy_mob[num - 1].displayStr().c_str());
         break;
 
 
@@ -1446,9 +1447,9 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             }
 
             mTarget->carry[inv-1].info = object->info;
-            player->print("Carry slot %d set to object %s.\n", inv, object->info.str().c_str());
+            player->print("Carry slot %d set to object %s.\n", inv, object->info.displayStr().c_str());
             log_immort(true, player, "%s set %s %s's carry slot %d to %s.\n",
-                player->getCName(), PLYCRT(mTarget), mTarget->getCName(), inv, object->info.str().c_str());
+                player->getCName(), PLYCRT(mTarget), mTarget->getCName(), inv, object->info.displayStr().c_str());
             break;
         }
     case 'j':
@@ -1459,9 +1460,9 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
         getCatRef(getFullstrText(cmnd->fullstr, 4), &mTarget->jail, player);
 
-        player->print("Jail room set to %s.\n", mTarget->jail.str().c_str());
+        player->print("Jail room set to %s.\n", mTarget->jail.displayStr().c_str());
         log_immort(true, player, "%s set %s %s's jail room to %s.\n",
-            player->getCName(), PLYCRT(mTarget), mTarget->getCName(), mTarget->jail.str().c_str());
+            player->getCName(), PLYCRT(mTarget), mTarget->getCName(), mTarget->jail.displayStr().c_str());
         break;
     case 'l':
         //target->getLevel() = MAX(1, MIN(cmnd->val[3], 30));
@@ -1797,9 +1798,9 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             getCatRef(getFullstrText(cmnd->fullstr, 4), &mTarget->rescue[rnum], mTarget);
 
             player->print("%s's rescue mob #%d set to %s.\n", mTarget->getCName(), rnum+1,
-                mTarget->rescue[rnum].str().c_str());
+                          mTarget->rescue[rnum].displayStr().c_str());
             log_immort(true, player, "%s set %s's rescue mob #%d to %s.\n",
-                player->getCName(), mTarget->getCName(), rnum+1, mTarget->rescue[rnum].str().c_str());
+                player->getCName(), mTarget->getCName(), rnum+1, mTarget->rescue[rnum].displayStr().c_str());
 
             break;
             /*
@@ -2339,7 +2340,7 @@ int dmCrtName(Player* player, cmd* cmnd) {
     player->print("done.\n");
 
     log_immort(true, player, "%s modified %s of creature %s(%s).\n",
-        player->getCName(), modstr, target->getCName(), target->info.str().c_str());
+        player->getCName(), modstr, target->getCName(), target->info.displayStr().c_str());
 
     target->escapeText();
     strcpy(target->last_mod, player->getCName());
@@ -2618,12 +2619,12 @@ void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr) {
         return;
     }
     if(!player->checkBuilder(cr, false)) {
-        player->print("Error: %s out of your allowed range.\n", cr.str().c_str());
+        player->print("Error: %s out of your allowed range.\n", cr.displayStr().c_str());
         return;
     }
 
     log_immort(true, player, "%s saved %s to %s.\n",
-        player->getCName(), target->getCName(), cr.str().c_str());
+        player->getCName(), target->getCName(), cr.displayStr().c_str());
 
     target->clearMobInventory();
     player->print("Monster inventory cleaned before saving.\n");
@@ -2681,13 +2682,13 @@ void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr) {
 
     sprintf(file, "%s", monsterPath(target->info));
     if(file_exists(file))
-        player->print( "Monster %s might already exist.\n", cr.str().c_str());
+        player->print( "Monster %s might already exist.\n", cr.displayStr().c_str());
 
     if(target->saveToFile()!= 0) {
         loge("Error saving monster in dmSaveMob()");
         player->print("Error: monster was not saved\n" );
     } else
-        player->print("Monster %s updated.\n", cr.str().c_str());
+        player->print("Monster %s updated.\n", cr.displayStr().c_str());
 
     if(player->flagIsSet(P_NO_FLUSHCRTOBJ))
         gServer->monsterCache.insert(target->info, &target);

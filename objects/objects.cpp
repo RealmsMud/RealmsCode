@@ -129,11 +129,11 @@ void Object::setDroppedBy(MudObject* dropper, std::string_view pDropType) {
     auto* aDropper = dynamic_cast<AreaRoom*>(dropper);
 
     if(mDropper) {
-        droppedBy.index = mDropper->info.rstr();
+        droppedBy.index = mDropper->info.str();
     } else if(oDropper) {
-        droppedBy.index = oDropper->info.rstr();
+        droppedBy.index = oDropper->info.str();
     } else if(rDropper) {
-        droppedBy.index = rDropper->info.rstr();
+        droppedBy.index = rDropper->info.str();
     } else if(aDropper) {
         droppedBy.index = aDropper->area->name + aDropper->fullName();
     }

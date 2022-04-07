@@ -528,7 +528,7 @@ int dmFishing(Player* player, cmd* cmnd) {
         for(ft = list->items.begin() ; ft != list->items.end() ; ft++) {
             item = &(*ft);
 
-            oStr << "      ^c" << item->getFish().str();
+            oStr << "      ^c" << item->getFish().displayStr();
 
 
             name = "";

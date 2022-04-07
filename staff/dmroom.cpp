@@ -412,7 +412,7 @@ void stat_rom_exits(Creature* player, BaseRoom* room) {
             player->print("  %s(L%d): ", exit->getCName(), exit->getLevel());
 
         if(!exit->target.mapmarker.getArea())
-            player->printColor("%s ", exit->target.room.str(uRoom ? uRoom->info.area : "", 'y').c_str());
+            player->printColor("%s ", exit->target.room.displayStr(uRoom ? uRoom->info.area : "", 'y').c_str());
         else
             player->print(" A:%d X:%d Y:%d Z:%d  ",
                 exit->target.mapmarker.getArea(), exit->target.mapmarker.getX(),
@@ -712,7 +712,7 @@ int stat_rom(Player* player, AreaRoom* room) {
 
     player->printColor("Generic Room: %s\n", room->canSave() ? "^rNo" : "^gYes");
     if(room->unique.id) {
-        player->printColor("Links to unique room ^y%s^x.\n", room->unique.str().c_str());
+        player->printColor("Links to unique room ^y%s^x.\n", room->unique.displayStr().c_str());
         player->printColor("needsCompass: %s^x    decCompass: %s",
             room->getNeedsCompass() ? "^gYes" : "^rNo", room->getDecCompass() ? "^gYes" : "^rNo");
     }
@@ -757,9 +757,12 @@ void validateShop(const Player* player, const UniqueRoom* shop, const UniqueRoom
     name += shop->getName();
 
     if(cr != storage->info)
-        player->printColor("^rThe shop's storage room of %s does not match the storage room %s.\n", cr.str().c_str(), storage->info.str().c_str());
+        player->printColor("^rThe shop's storage room of %s does not match the storage room %s.\n", cr.displayStr().c_str(),
+                           storage->info.displayStr().c_str());
     if(storage->getTrapExit() != shop->info)
-        player->printColor("^yThe storage room's trap exit of %s does not match the shop room %s.\n", storage->info.str().c_str(), shop->info.str().c_str());
+        player->printColor("^yThe storage room's trap exit of %s does not match the shop room %s.\n",
+                           storage->info.displayStr().c_str(),
+                           shop->info.displayStr().c_str());
 
     if(!shop->flagIsSet(R_SHOP))
         player->printColor("^rThe shop's flag 1-Shoppe is not set.\n");
@@ -811,7 +814,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
     if(player->getClass() == CreatureClass::CARETAKER)
         log_immort(false,player, "%s statted room %s.\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 
-    player->printColor("Room: %s", room->info.str("", 'y').c_str());
+    player->printColor("Room: %s", room->info.displayStr("", 'y').c_str());
     if(gConfig->inSwapQueue(room->info, SwapRoom, true))
         player->printColor("        ^eThis room is being swapped.");
 
@@ -854,7 +857,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
         loadObject((*it).second.cr, &object);
 
         player->printColor("^y%2d) ^x%14s ^y::^x %-30s ^yInterval:^x %-5d  ^yTime Until Spawn:^x %-5d", (*it).first+1,
-            crtm->cr.str("", 'y').c_str(), object ? object->getCName() : "", crtm->interval, MAX<long>(0, crtm->ltime + crtm->interval-t));
+                           crtm->cr.displayStr("", 'y').c_str(), object ? object->getCName() : "", crtm->interval, MAX<long>(0, crtm->ltime + crtm->interval - t));
 
         if(room->flagIsSet(R_SHOP_STORAGE) && object)
             player->printColor(" ^yCost:^x %s", object->value.str().c_str());
@@ -878,7 +881,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
         loadMonster((*it).second.cr, &monster);
 
         player->printColor("^m%2d) ^x%14s ^m::^x %-30s ^mInterval:^x %d  ^yTime until Spawn:^x %-5d\n", (*it).first+1,
-            crtm->cr.str("", 'm').c_str(), monster ? monster->getCName() : "", crtm->interval, MAX<long>(0, crtm->ltime + crtm->interval-t));
+                           crtm->cr.displayStr("", 'm').c_str(), monster ? monster->getCName() : "", crtm->interval, MAX<long>(0, crtm->ltime + crtm->interval - t));
 
         if(monster) {
             free_crt(monster);
@@ -904,7 +907,8 @@ int stat_rom(Player* player, UniqueRoom* room) {
         room->hasTraining()
     ) {
         if(room->getTrapExit().id)
-            player->print("Players will relog into room %s from here.\n", room->getTrapExit().str(room->info.area).c_str());
+            player->print("Players will relog into room %s from here.\n",
+                          room->getTrapExit().displayStr(room->info.area).c_str());
         else
             player->printColor("^rTrap exit needs to be set to %s room number.\n", room->flagIsSet(R_SHOP_STORAGE) ? "shop" : "relog");
     }
@@ -921,7 +925,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
     // isShopValid
     if(room->flagIsSet(R_SHOP)) {
         cr = shopStorageRoom(room);
-        player->print("Shop storage room: %s (%s)\n", cr.str().c_str(),
+        player->print("Shop storage room: %s (%s)\n", cr.displayStr().c_str(),
             cr.id == room->info.id+1 && cr.isArea(room->info.area) ? "default" : "trapexit");
 
         if(room->getFaction().empty() && room->info.area != "shop")
@@ -945,7 +949,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
         player->print("Trap type: ");
         switch(room->getTrap()) {
         case TRAP_PIT:
-            player->print("Pit Trap (exit rm %s)\n", room->getTrapExit().str(room->info.area).c_str());
+            player->print("Pit Trap (exit rm %s)\n", room->getTrapExit().displayStr(room->info.area).c_str());
             break;
         case TRAP_DART:
             player->print("Poison Dart Trap\n");
@@ -969,7 +973,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
             player->print("Arrow Trap\n");
             break;
         case TRAP_SPIKED_PIT:
-            player->print("Spiked Pit Trap (exit rm %s)\n", room->getTrapExit().str(room->info.area).c_str());
+            player->print("Spiked Pit Trap (exit rm %s)\n", room->getTrapExit().displayStr(room->info.area).c_str());
             break;
         case TRAP_WORD:
             player->print("Word of Recall Trap\n");
@@ -1011,19 +1015,19 @@ int stat_rom(Player* player, UniqueRoom* room) {
             player->print("Mud Trap\n");
             break;
         case TRAP_DISP:
-            player->print("Room Displacement Trap (exit rm %s)\n", room->getTrapExit().str(room->info.area).c_str());
+            player->print("Room Displacement Trap (exit rm %s)\n", room->getTrapExit().displayStr(room->info.area).c_str());
             break;
         case TRAP_FALL:
-            player->print("Deadly Fall Trap (exit rm %s)\n", room->getTrapExit().str(room->info.area).c_str());
+            player->print("Deadly Fall Trap (exit rm %s)\n", room->getTrapExit().displayStr(room->info.area).c_str());
             break;
         case TRAP_CHUTE:
-            player->print("Chute Trap (exit rm %s)\n", room->getTrapExit().str(room->info.area).c_str());
+            player->print("Chute Trap (exit rm %s)\n", room->getTrapExit().displayStr(room->info.area).c_str());
             break;
         case TRAP_ALARM:
-            player->print("Alarm Trap (guard rm %s)\n", room->getTrapExit().str(room->info.area).c_str());
+            player->print("Alarm Trap (guard rm %s)\n", room->getTrapExit().displayStr(room->info.area).c_str());
             break;
         case TRAP_BONEAV:
-            player->print("Bone Avalanche Trap (exit rm %s)\n", room->getTrapExit().str(room->info.area).c_str());
+            player->print("Bone Avalanche Trap (exit rm %s)\n", room->getTrapExit().displayStr(room->info.area).c_str());
             break;
         case TRAP_PIERCER:
             player->print("Piercer trap (%d piercers)\n", room->getTrapStrength());
@@ -1041,7 +1045,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
     }
 
     if(room->flagIsSet(R_CAN_SHOPLIFT))
-        player->print("Store guardroom: rm %s\n", cr.str(room->info.area).c_str());
+        player->print("Store guardroom: rm %s\n", cr.displayStr(room->info.area).c_str());
 
     showRoomFlags(player, room, nullptr, nullptr);
 
@@ -1121,8 +1125,8 @@ int dmAddRoom(Player* player, cmd* cmnd) {
 
         delete newRoom;
 
-        log_immort(true, player, "%s created room %s.\n", player->getCName(), cr.str().c_str());
-        player->print("Room %s created.\n", cr.str().c_str());
+        log_immort(true, player, "%s created room %s.\n", player->getCName(), cr.displayStr().c_str());
+        player->print("Room %s created.\n", cr.displayStr().c_str());
         checkTeleportRange(player, cr);
         cr.id++;
     }
@@ -1373,9 +1377,9 @@ int dmSetRoom(Player* player, cmd* cmnd) {
                         (!shop->getTrapExit().id || shop->getTrapExit() == cr)
                     ) {
                         player->printColor("^ySetting up this storage room for you...\n");
-                        player->printColor("^y * ^xSetting the trap exit to %s...\n", cr.str().c_str());
+                        player->printColor("^y * ^xSetting the trap exit to %s...\n", cr.displayStr().c_str());
                         player->getUniqueRoomParent()->setTrapExit(cr);
-                        player->printColor("^y * ^xCreating exit ""out"" to %s...\n", cr.str().c_str());
+                        player->printColor("^y * ^xCreating exit ""out"" to %s...\n", cr.displayStr().c_str());
                         link_rom(player->getUniqueRoomParent(), cr, "out");
                         player->getUniqueRoomParent()->setTrapExit(cr);
                         player->printColor("^y * ^xNaming this room...\n");
@@ -1451,11 +1455,11 @@ int dmSetRoom(Player* player, cmd* cmnd) {
             player->print("Random #%d has been cleared.\n", num);
         } else {
             player->getUniqueRoomParent()->wander.random[num-1] = cr;
-            player->print("Random #%d is now %s.\n", num, cr.str().c_str());
+            player->print("Random #%d is now %s.\n", num, cr.displayStr().c_str());
         }
 
         log_immort(false,player, "%s set mob slot %d to mob %s in room %s.\n",
-            player->getCName(), num, cr.str().c_str(),
+            player->getCName(), num, cr.displayStr().c_str(),
             room->fullName().c_str());
 
         break;
@@ -1477,7 +1481,7 @@ int dmSetRoom(Player* player, cmd* cmnd) {
         }
         player->getUniqueRoomParent()->wander.setTraffic(cmnd->val[2]);
         log_immort(true, player, "%s set room %s's traffic to %ld.\n", player->getCName(),
-            player->getUniqueRoomParent()->info.str().c_str(), player->getUniqueRoomParent()->wander.getTraffic());
+                   player->getUniqueRoomParent()->info.displayStr().c_str(), player->getUniqueRoomParent()->wander.getTraffic());
         player->print("Traffic is now %d%%.\n", player->getUniqueRoomParent()->wander.getTraffic());
 
         break;
@@ -1494,9 +1498,9 @@ int dmSetRoom(Player* player, cmd* cmnd) {
                 return(0);
             }
             player->getUniqueRoomParent()->setTrapExit(cr);
-            player->print("Room's trap exit is now %s.\n", player->getUniqueRoomParent()->getTrapExit().str().c_str());
+            player->print("Room's trap exit is now %s.\n", player->getUniqueRoomParent()->getTrapExit().displayStr().c_str());
             log_immort(true, player, "%s set trapexit to %s in room %s.\n", player->getCName(),
-                player->getUniqueRoomParent()->getTrapExit().str().c_str(), room->fullName().c_str());
+                       player->getUniqueRoomParent()->getTrapExit().displayStr().c_str(), room->fullName().c_str());
         } else if(low(cmnd->str[2][1]) == 'w') {
             num = (int)cmnd->val[2];
             if(num < 0 || num > 5000) {
@@ -1534,12 +1538,12 @@ int dmSetRoom(Player* player, cmd* cmnd) {
         getCatRef(getFullstrText(cmnd->fullstr, 3), &cr, player);
 
         player->getAreaRoomParent()->unique = cr;
-        player->print("Unique room set to %s.\n", player->getAreaRoomParent()->unique.str().c_str());
+        player->print("Unique room set to %s.\n", player->getAreaRoomParent()->unique.displayStr().c_str());
         if(player->getAreaRoomParent()->unique.id)
             player->print("You'll need to use *teleport to get to this room in the future.\n");
 
         log_immort(true, player, "%s set unique room to %s in room %s.\n",
-            player->getCName(), player->getAreaRoomParent()->unique.str().c_str(),
+            player->getCName(), player->getAreaRoomParent()->unique.displayStr().c_str(),
             room->fullName().c_str());
 
         break;
@@ -1855,7 +1859,7 @@ int dmSetExit(Player* player, cmd* cmnd) {
             return(0);
 
         if(!loadRoom(cr, &uRoom)) {
-            player->print("Room %s does not exist.\n", cr.str().c_str());
+            player->print("Room %s does not exist.\n", cr.displayStr().c_str());
             return(0);
         }
 
@@ -2261,7 +2265,7 @@ int dmDelete(Player* player, cmd* cmnd) {
     } // *del -A
 
     log_immort(true, player, "%s deleted description in room %s.\n", player->getCName(),
-        player->getUniqueRoomParent()->info.str().c_str());
+               player->getUniqueRoomParent()->info.displayStr().c_str());
 
     player->print("Deleted.\n");
     return(0);
@@ -2366,7 +2370,7 @@ int dmDescription(Player* player, cmd* cmnd, bool append) {
 
     player->getUniqueRoomParent()->escapeText();
     log_immort(true, player, "%s descripted in room %s.\n", player->getCName(),
-        player->getUniqueRoomParent()->info.str().c_str());
+               player->getUniqueRoomParent()->info.displayStr().c_str());
     return(0);
 }
 
@@ -2453,7 +2457,7 @@ void showMobList(Player* player, WanderInfo *wander, std::string_view type) {
 
         oStr << "Slot " << std::setw(2) << (*it).first+1 << ": " << monster->getName() << " "
              << "[" << monType::getName(monster->getType()) << ":" << monType::getHitdice(monster->getType()) << "HD]\n"
-             << "         ^x[I:" << monster->info.str() << " L:" << monster->getLevel()
+             << "         ^x[I:" << monster->info.displayStr() << " L:" << monster->getLevel()
              << " X:" << monster->getExperience() << " G:" << monster->coins[GOLD]
              << " H:" << monster->hp.getMax() << " M:" << monster->mp.getMax()
              << " N:" << (monster->getNumWander() ? monster->getNumWander() : 1)
@@ -2908,7 +2912,7 @@ void findRoomsWithFlag(const Player* player, const Range& range, int flag) {
 
                 if(room->flagIsSet(flag)) {
                     if(player->isStaff())
-                        oStr << room->info.rstr() << " - ";
+                        oStr << room->info.str() << " - ";
                     oStr << room->getName() << "^x\n";
                     found = true;
                 }
@@ -2952,7 +2956,7 @@ void findRoomsWithFlag(const Player* player, CatRef area, int flag) {
 
                 if(room->flagIsSet(flag)) {
                     if(player->isStaff())
-                        oStr << room->info.rstr() << " - ";
+                        oStr << room->info.str() << " - ";
                     oStr << room->getName() << "^x\n";
                     found = true;
                 }
@@ -3021,7 +3025,7 @@ int dmFind(Player* player, cmd* cmnd) {
         if(cr.id == -1)
             std::cout << "No empty %ss found.", type.c_str();
         else {
-            std::cout << cr.rstr();
+            std::cout << cr.str();
         }
         exit(0);
     } else {

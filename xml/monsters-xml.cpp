@@ -278,7 +278,7 @@ void Monster::saveXml(xmlNodePtr curNode) const {
 
     // record monsters saved during swap
     if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((std::string)"m" + info.rstr(), false);
+        gConfig->swapLog((std::string)"m" + info.str(), false);
 
     xml::saveNonNullString(curNode, "Plural", plural);
     xml::saveNonZeroNum(curNode, "SkillLevel", skillLevel);
