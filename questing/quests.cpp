@@ -1563,86 +1563,111 @@ int cmdQuests(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(cmnd->num > 1 && (!strncmp(cmnd->str[1], "complete", strlen(cmnd->str[1])) ||
-                         !strncmp(cmnd->str[1], "finish", strlen(cmnd->str[1]))) )
-    {
-        // We're trying to complete a quest here, lets see if we have one that matches
-        // the user's input
+    if(cmnd->num > 1) {
         std::string questName = getFullstrText(cmnd->fullstr, 2);
         QuestCompletion* quest;
-        for(std::pair<int, QuestCompletion*> p : player->questsInProgress) {
-            quest = p.second;
-            if(questName.empty() || !strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())) {
-                // Make sure the quest is completed!!
-                if(!quest->checkQuestCompletion(false)) {
-                    // No name was specified, so continue to next quest and try to complete that
-                    if(questName.empty()) continue;
 
-                    *player << ColorOn <<"But you haven't met all of the requirements for ^W" << quest->getParentQuest()->getName() << "^x yet!\n" << ColorOff;
-                    return(0);
-                }
+        if (!strncmp(cmnd->str[1], "complete", strlen(cmnd->str[1])) ||
+            !strncmp(cmnd->str[1], "finish", strlen(cmnd->str[1])))
+        {
+            // We're trying to complete a quest here, lets see if we have one that matches input
+            for(std::pair<int, QuestCompletion*> p : player->questsInProgress) {
+                quest = p.second;
+                if(questName.empty() || !strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())) {
+                    // Make sure the quest is completed!!
+                    if(!quest->checkQuestCompletion(false)) {
+                        // No name was specified, so continue to next quest and try to complete that
+                        if(questName.empty()) continue;
 
-                // We've found the quest that matches the string the user put in, now lets see if we can
-                // find the finishing monster
-                for(Monster* mons : player->getRoomParent()->monsters) {
-                    if( mons->info == quest->getParentQuest()->getTurnInMob() ) {
-                        // We have a turn in monster, lets complete the quest
-                        if(mons->isEnemy(player)) {
-                            *player << setf(CAP) << mons << " refuses to deal with you right now!\n";
-                            return(0);
-                        }
-
-                        std::string name = quest->getParentQuest()->getName();
-                        *player << ColorOn << "Completing quest ^W" << name << "^x.\n";
-
-                        // NOTE: After quest->complete, quest is INVALID, do not attempt to access it
-                        if(quest->complete(mons)) {
-                            broadcast(player->getSock(), player->getParent(), "%M just completed ^W%s^x.",
-                                player, name.c_str());
-                        } else {
-                            //player->print("Quest completion failed.\n");
-                            broadcast(player->getSock(), player->getParent(), "%M tried to complete ^W%s^x.",
-                                player, name.c_str());
-                        }
-
+                        *player << ColorOn <<"But you haven't met all of the requirements for ^W" << quest->getParentQuest()->getName() << "^x yet!\n" << ColorOff;
                         return(0);
                     }
 
-                }
+                    // We've found the quest that matches the string the user put in, now lets see if we can
+                    // find the finishing monster
+                    for(Monster* mons : player->getRoomParent()->monsters) {
+                        if( mons->info == quest->getParentQuest()->getTurnInMob() ) {
+                            // We have a turn in monster, lets complete the quest
+                            if(mons->isEnemy(player)) {
+                                *player << setf(CAP) << mons << " refuses to deal with you right now!\n";
+                                return(0);
+                            }
 
-                if(!questName.empty()) {
-                    // Name was specified, so stop
-                    *player << "Could not find a turn in monster!\n";
-                    return(0);
+                            std::string name = quest->getParentQuest()->getName();
+                            *player << ColorOn << "Completing quest ^W" << name << "^x.\n";
+
+                            // NOTE: After quest->complete, quest is INVALID, do not attempt to access it
+                            if(quest->complete(mons)) {
+                                broadcast(player->getSock(), player->getParent(), "%M just completed ^W%s^x.",
+                                    player, name.c_str());
+                            } else {
+                                //player->print("Quest completion failed.\n");
+                                broadcast(player->getSock(), player->getParent(), "%M tried to complete ^W%s^x.",
+                                    player, name.c_str());
+                            }
+
+                            return(0);
+                        }
+
+                    }
+
+                    if(!questName.empty()) {
+                        // Name was specified, so stop
+                        *player << "Could not find a turn in monster!\n";
+                        return(0);
+                    }
+                    // No name was specified, so continue to next quest and try to complete that
                 }
-                // No name was specified, so continue to next quest and try to complete that
             }
-        }
-        *player <<"No quests were found that could be completed right now.\n";
-        return(0);
-    } else if(cmnd->num > 1 && (!strncmp(cmnd->str[1], "quit", strlen(cmnd->str[1])) ||
-             !strncmp(cmnd->str[1], "abandon", strlen(cmnd->str[1]))) )
-    {
-        // We're trying to abandon a quest here, lets see if we have one that matches
-        // the user's input
-        std::string questName = getFullstrText(cmnd->fullstr, 2);
-        QuestCompletion* quest;
-        if(questName.empty()) {
-            *player << "Abandon which quest?\n";
+            *player <<"No quests were found that could be completed right now.\n";
             return(0);
-        }
-        for(std::pair<int, QuestCompletion*> p : player->questsInProgress) {
-            quest = p.second;
-            if(!strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())) {
-                *player << ColorOn << "Abandoning ^W" << quest->getParentQuest()->getName() << "^x.\n";
-                player->questsInProgress.erase(quest->getParentQuest()->getId());
-                delete quest;
+        } else if(  !strncmp(cmnd->str[1], "quit", strlen(cmnd->str[1])) ||
+                    !strncmp(cmnd->str[1], "abandon", strlen(cmnd->str[1])) )
+        {
+            // We're trying to abandon a quest here, lets see if we have one that matches
+            if(questName.empty()) {
+                *player << "Abandon which quest?\n";
                 return(0);
             }
+            for(std::pair<int, QuestCompletion*> p : player->questsInProgress) {
+                quest = p.second;
+                if(!strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())) {
+                    *player << ColorOn << "Abandoning ^W" << quest->getParentQuest()->getName() << "^x.\n";
+                    player->questsInProgress.erase(quest->getParentQuest()->getId());
+                    delete quest;
+                    return(0);
+                }
+            }
+            *player << "Could not find any quests that matched the name ^W" << questName << "^x.\n";
+            return(0);
+        } else if(  !strncmp(cmnd->str[1], "view", strlen(cmnd->str[1])) ||
+                    !strncmp(cmnd->str[1], "find", strlen(cmnd->str[1])) ||
+                    !strncmp(cmnd->str[1], "search", strlen(cmnd->str[1])) )
+        {
+            // search for and display only quests matching keyword
+            if(questName.empty()) {
+                *player << "View which quest?\n";
+                return(0);
+            }
+
+            *player << "Quests matching the name ^W" << questName << "^x:\n";
+            *player << PagerOn;
+
+            i = 1;
+            for(std::pair<int, QuestCompletion*> p : player->questsInProgress) {
+                quest = p.second;
+                if(!strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())){
+                    *player << i++ << ") " << ColorOn << quest->getStatusDisplay() << ColorOff;
+                }
+            }
+
+            if (i == 1) {
+                *player << "None!\n";
+            }
+            *player << PagerOff;
+            return(0);
         }
-        *player << "Could not find any quests that matched the name ^W" << questName << "^x.\n";
-        return(0);
-    } 
+    }
 
     sprintf(str, "^WOld Quests Completed:^x\n");
     for(i=1, j=0; i<MAX_QUEST; i++)
@@ -1677,13 +1702,13 @@ int cmdQuests(Player* player, cmd* cmnd) {
         *player << ColorOn << displayStr.str() << ColorOff;
     }
 
-
     Player* target = player;
     i = 1;
-    *player << ColorOn << "^WQuests in Progress:\n" << ColorOff;
+    *player << ColorOn << "^WQuests in Progress:\n";
 
-    if(target->questsInProgress.empty())
-        player->printColor("None!\n");
+    if(target->questsInProgress.empty()) {
+        *player << "None!\n";
+    }
 
     for(std::pair<int, QuestCompletion*> p : target->questsInProgress) {
         QuestCompletion* quest = p.second;
