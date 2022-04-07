@@ -1606,7 +1606,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
                         }
 
                         std::string name = quest->getParentQuest()->getName();
-                        *player << ColorOn << "Completing quest ^W" << name << "^x.\n";
+                        *player << ColorOn << "Completing quest ^W" << name << "^x." << ColorOff;
 
                         // NOTE: After quest->complete, quest is INVALID, do not attempt to access it
                         if(quest->complete(mons)) {
@@ -1647,7 +1647,7 @@ int cmdQuests(Player* player, cmd* cmnd) {
         for(std::pair<CatRef, QuestCompletion*> p : player->questsInProgress) {
             quest = p.second;
             if(!strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())) {
-                *player << ColorOn << "Abandoning ^W" << quest->getParentQuest()->getName() << "^x.\n";
+                *player << ColorOn << "Abandoning ^W" << quest->getParentQuest()->getName() << "^x." << ColorOff;
                 player->questsInProgress.erase(quest->getParentQuest()->getId());
                 delete quest;
                 return(0);
@@ -1655,7 +1655,34 @@ int cmdQuests(Player* player, cmd* cmnd) {
         }
         *player << "Could not find any quests that matched the name ^W" << questName << "^x.\n";
         return(0);
-    } 
+    }  else if(cmnd->num > 1 &&
+                (!strncmp(cmnd->str[1], "view", strlen(cmnd->str[1])) ||
+                !strncmp(cmnd->str[1], "find", strlen(cmnd->str[1])) ||
+                !strncmp(cmnd->str[1], "search", strlen(cmnd->str[1]))) )
+    {
+        std::string questName = getFullstrText(cmnd->fullstr, 2);
+        // search for and display only quests matching keyword
+        if(questName.empty()) {
+            *player << "View which quest?\n";
+            return(0);
+        }
+
+        *player << "Quests matching the name ^W" << questName << "^x:\n";
+        *player << PagerOn;
+
+        i = 1;
+        for(const auto& [questId, quest] : player->questsInProgress) {
+            if(!strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())){
+                *player << i++ << ") " << ColorOn << quest->getStatusDisplay() << ColorOff;
+            }
+        }
+
+        if (i == 1) {
+            *player << "None!\n";
+        }
+        *player << PagerOff;
+        return(0);
+    }
 
     sprintf(str, "^WOld Quests Completed:^x\n");
     for(i=1, j=0; i<MAX_QUEST; i++)
@@ -1693,10 +1720,10 @@ int cmdQuests(Player* player, cmd* cmnd) {
 
     Player* target = player;
     i = 1;
-    *player << ColorOn << "^WQuests in Progress:\n" << ColorOff;
+    *player << ColorOn << "^WQuests in Progress:^x\n";
 
     if(target->questsInProgress.empty())
-        player->printColor("None!\n");
+        *player << "None!\n";
 
     for(const auto& [questId, quest] : target->questsInProgress) {
         *player << i++ << ") " << ColorOn << quest->getStatusDisplay() << ColorOff;
