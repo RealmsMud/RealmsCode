@@ -75,9 +75,12 @@
 
 CatRef QuestInfo::getQuestId(xmlNodePtr curNode) {
     CatRef toReturn;
+    // Because we've got like 3 different ways these get stored...
     toReturn.id = xml::getShortProp(curNode, "ID");
     if(toReturn.id == 0)
         toReturn.id = xml::getShortProp(curNode, "Num");
+    if(toReturn.id == 0)
+        toReturn.id = xml::toNum<short>(curNode);
 
     xml::copyPropToString(toReturn.area, curNode, "Area");
 
