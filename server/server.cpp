@@ -1916,7 +1916,7 @@ bool Server::checkDouble(Socket &sock) {
     if(!gConfig->getCheckDouble())
         return(false);
 
-    if(sock.getPlayer() && sock.getPlayer()->isCt())
+    if(sock.getPlayer() && sock.getPlayer()->isStaff())
         return(false);
 
 //    if(sock.getHostname().find("localhost") != std::string_view::npos)
