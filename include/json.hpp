@@ -1,6 +1,6 @@
 /*
- * toNum.hpp
- *   toNum template functions
+ * json.hpp
+ *   Realms JSON functions
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -18,18 +18,21 @@
 
 #pragma once
 
-#include <string>
-#include <boost/lexical_cast.hpp>
+#include <nlohmann/json.hpp>
+#include <list>
 
+
+/**
+ * Construct a Json List from the given std::list<Type> if the list is not empty
+ */
 template <class Type>
-Type toNum(const std::string &fromStr) {
-    Type toReturn = static_cast<Type>(0);
+void toJsonList(const char* name, nlohmann::json &j, const std::list<Type>& myList) {
+    if(myList.empty())
+        return;
 
-    try {
-        toReturn = boost::lexical_cast<Type>(fromStr);
-    } catch (boost::bad_lexical_cast &) {
-        // And do nothing
+    auto &jp = j[name] = nlohmann::json();
+
+    for (const auto& item : myList) {
+        jp.push_back(nlohmann::json(item));
     }
-
-    return (toReturn);
 }

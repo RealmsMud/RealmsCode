@@ -20,7 +20,7 @@
 #define _MONEY_H
 
 #include <libxml/parser.h>  // for xmlNodePtr
-
+#include <nlohmann/json.hpp>
 
 enum Coin {
     MIN_COINS = 0,
@@ -63,6 +63,12 @@ public:
     static std::string coinNames(Coin c);
 protected:
     unsigned long m[MAX_COINS+1]{};
+
+public:
+    friend void to_json(const char* name, nlohmann::json &j, const Money &money);
+    friend void to_json(nlohmann::json &j, const Money &money);
+    friend void from_json(const char* name, const nlohmann::json &j, Money &money);
+    friend void from_json(const nlohmann::json &j, Money &money);
 };
 
 
