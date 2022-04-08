@@ -221,11 +221,9 @@ bool ShipExit::createExit() {
 
     for(Exit* ext : newRoom->exits) {
         if(ext->getName() == name) {
-            zero(ext->flags, sizeof(ext->flags));
+            ext->flags.reset();
+            ext->flags = flags;
 
-            // TODO: Dom: needs to use getFlags() and setFlags()
-            for(i=sizeof(ext->flags)-1; i>=0; i--)
-                ext->flags[i] = flags[i];
             ext->setFlag(X_MOVING);
 
             if(!arrives.empty())
@@ -522,7 +520,7 @@ bool ShipRaid::getUnconInPrison() const {
 
 ShipExit::ShipExit() {
     raid = false;
-    zero(flags, sizeof(flags));
+    flags.reset();
     name = "";
     arrives = "";
     departs = "";
@@ -532,23 +530,13 @@ std::string ShipExit::getName() const { return(name); }
 bool ShipExit::getRaid() const { return(raid); }
 std::string ShipExit::getArrives() const { return(arrives); }
 std::string ShipExit::getDeparts() const { return(departs); }
-const char *ShipExit::getFlags() const { return(flags); }
-
-void ShipExit::setFlags(char f) {
-    int i = sizeof(flags);
-    char tmp[i];
-    zero(tmp, i);
-    *(tmp) = f;
-    for(i--; i>=0; i--)
-        flags[i] = tmp[i];
-}
 
 
 void ShipExit::save(xmlNodePtr curNode) const {
     xml::saveNonNullString(curNode, "Name", name);
     origin.save(curNode, "Origin");
     target.save(curNode, "Target");
-    saveBits(curNode, "Flags", MAX_EXIT_FLAGS, flags);
+    saveBitset(curNode, "Flags", MAX_EXIT_FLAGS, flags);
     xml::saveNonNullString(curNode, "Arrives", arrives);
     xml::saveNonNullString(curNode, "Departs", departs);
     xml::saveNonZeroNum(curNode, "Raid", raid);
@@ -563,7 +551,7 @@ void ShipExit::load(xmlNodePtr curNode) {
         else if(NODE_NAME(childNode, "Target")) target.load(childNode);
         else if(NODE_NAME(childNode, "Arrives")) xml::copyToString(arrives, childNode);
         else if(NODE_NAME(childNode, "Departs")) xml::copyToString(departs, childNode);
-        else if(NODE_NAME(childNode, "Flags")) loadBits(childNode, flags);
+        else if(NODE_NAME(childNode, "Flags")) loadBitset(childNode, flags);
         else if(NODE_NAME(childNode, "Raid")) raid = true;
         childNode = childNode->next;
     }

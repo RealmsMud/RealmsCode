@@ -20,6 +20,7 @@
 #include <fcntl.h>                                  // for open, O_CREAT
 #include <libxml/parser.h>                          // for xmlCleanupParser
 #include <unistd.h>                                 // for write, close, unlink
+#include <boost/dynamic_bitset.hpp>
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cctype>                                   // for isupper
 #include <cstdio>                                   // for sprintf
@@ -145,7 +146,8 @@ void doDemographics() {
     struct      dirent *dirp=nullptr;
     struct      lasttime lasttime[128];
     DIR         *dir=nullptr;
-    char        highest[HIGHEST_END][80], name[80], outstr[120], *str, spells[32];
+    boost::dynamic_bitset<> spells{256};
+    char        highest[HIGHEST_END][80], name[80], outstr[120], *str;;
     char        percent1[10], percent2[10];
     long        exp;
     int         highnum[HIGHEST_END], breakdown[DEITY_END], level=0, numRooms=0;
@@ -215,7 +217,7 @@ void doDemographics() {
 
 
         // reset some variables
-        zero(spells, sizeof(spells));
+        spells.reset();
         exp = level = cClass = cClass2 = race = deity = age = cgold = numRooms = 0;
         birthday = new cDay;
         statistics.reset();
@@ -258,7 +260,7 @@ void doDemographics() {
                     money[i] = 0;
             }
             else if(NODE_NAME(curNode, "Statistics")) statistics.load(curNode);
-            else if(NODE_NAME(curNode, "Spells")) loadBits(curNode, spells);
+            else if(NODE_NAME(curNode, "Spells")) loadBitset(curNode, spells);
             else if(NODE_NAME(curNode, "RoomExp")) {
                 childNode = curNode->children;
                 while(childNode) {
@@ -310,9 +312,10 @@ void doDemographics() {
         }
 
         n=0;
-        for(i=0; i < get_spell_list_size() ; i++)
-            if(spells[i/8] & 1<<(i%8))
-                n++;
+        n = spells.count();
+//        for(i=0; i < get_spell_list_size() ; i++)
+//            if(spells.test(i))
+//                n++;
         if(n > highnum[MOST_SPELLS]) {
             highnum[MOST_SPELLS] = n;
             //sprintf(highest[MOST_SPELLS], "%s, %d", name, level);

@@ -82,7 +82,7 @@ void AreaZone::save(xmlNodePtr curNode) const {
     xml::saveNonNullString(curNode, "TerRestrict", terRestrict);
     xml::saveNonNullString(curNode, "MapRestrict", mapRestrict);
     unique.save(curNode, "Unique", false);
-    saveBits(curNode, "Flags", MAX_ROOM_FLAGS, flags);
+    saveBitset(curNode, "Flags", MAX_ROOM_FLAGS, flags);
     wander.save(curNode);
 
     childNode = xml::newStringChild(curNode, "Coords");
@@ -110,7 +110,7 @@ void AreaZone::load(xmlNodePtr curNode) {
         else if(NODE_NAME(childNode, "TerRestrict")) xml::copyToCString(terRestrict, childNode);
         else if(NODE_NAME(childNode, "MapRestrict")) xml::copyToCString(mapRestrict, childNode);
         else if(NODE_NAME(childNode, "Unique")) unique.load(childNode);
-        else if(NODE_NAME(childNode, "Flags")) loadBits(childNode, flags);
+        else if(NODE_NAME(childNode, "Flags")) loadBitset(childNode, flags);
         else if(NODE_NAME(childNode, "Wander")) wander.load(childNode);
         else if(NODE_NAME(childNode, "Coords")) {
             mNode = childNode->children;
@@ -175,7 +175,7 @@ void TileInfo::load(xmlNodePtr curNode) {
             xml::copyToCString(temp, childNode);
             display = temp[0];
         }
-        else if(NODE_NAME(childNode, "Flags")) loadBits(childNode, flags);
+        else if(NODE_NAME(childNode, "Flags")) loadBitset(childNode, flags);
         else if(NODE_NAME(childNode, "Fly")) xml::copyToNum(fly, childNode);
         else if(NODE_NAME(childNode, "Water")) water = true;
         else if(NODE_NAME(childNode, "Road")) road = true;
@@ -222,7 +222,7 @@ void TileInfo::save(xmlNodePtr curNode) const {
     xml::saveNonNullString(curNode, "Style", std::to_string(style));
     xml::saveNonNullString(curNode, "Display", std::to_string(display));
 
-    saveBits(curNode, "Flags", MAX_ROOM_FLAGS, flags);
+    saveBitset(curNode, "Flags", MAX_ROOM_FLAGS, flags);
 
     xml::saveNonZeroNum(curNode, "Fly", fly);
     xml::saveNonZeroNum(curNode, "Road", road);

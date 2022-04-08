@@ -19,9 +19,9 @@
 #define OBJECTS_H_
 
 #define OBJ_KEY_LENGTH          20
-#define OBJ_FLAG_ARRAY_SIZE     32
 
 #include <list>
+#include <boost/dynamic_bitset.hpp>
 
 #include "alchemy.hpp"
 #include "catRef.hpp"
@@ -167,7 +167,7 @@ protected:
     //          For Weapons - The weapon class it is, sword, dagger, etc
     //          For Alchemy - The type of device it is, mortar and pestle, etc
     std::string subType;
-    char flags[OBJ_FLAG_ARRAY_SIZE]{};  // Max object flags - 256
+    boost::dynamic_bitset<> flags{256};
     short delay;
     short extra;
     std::string questOwner;

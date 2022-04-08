@@ -160,7 +160,7 @@ Object::Object() {
     weight = adjustment = shotsMax = shotsCur = armor =
         wearflag = magicpower = level = requiredSkill = clan =
         special = delay = quality = effectStrength = effectDuration = chargesCur = chargesMax = 0;
-    memset(flags, 0, sizeof(flags));
+    flags.reset();
     questnum = 0;
     numAttacks = bulk = maxbulk = lotteryCycle = 0;
     coinCost = shopValue = 0;
@@ -268,8 +268,7 @@ void Object::doCopy(const Object& o) {
     requiredSkill = o.requiredSkill;
     clan = o.clan;
     special = o.special;
-    for(i=0; i<OBJ_FLAG_ARRAY_SIZE; i++)
-        flags[i] = o.flags[i];
+    flags = o.flags;
     questnum = o.questnum;
 //  parent = o.parent;
     for(i=0; i<4; i++)
@@ -416,9 +415,8 @@ bool Object::operator==(const Object& o) const {
     for(i=0; i<3; i++)
         if(strcmp(key[i], o.key[i]) != 0)
             return(false);
-    for(i=0; i<OBJ_FLAG_ARRAY_SIZE; i++)
-        if(flags[i] != o.flags[i])
-            return(false);
+    if(flags != o.flags)
+        return(false);
     for(i=0; i<4; i++) {
         if( lasttime[i].interval != o.lasttime[i].interval ||
             lasttime[i].ltime != o.lasttime[i].ltime ||

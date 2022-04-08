@@ -49,7 +49,7 @@ SpecialAttack::SpecialAttack(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "SaveType")) saveType = (SpecialSaveType)xml::toNum<int>(xml::getCString(curNode));
         else if(NODE_NAME(curNode, "SaveBonus")) saveBonus = (SaveBonus)xml::toNum<int>(xml::getCString(curNode));
         else if(NODE_NAME(curNode, "Type")) type = (SpecialType)xml::toNum<int>(xml::getCString(curNode));
-        else if(NODE_NAME(curNode, "Flags")) loadBits(curNode, flags);
+        else if(NODE_NAME(curNode, "Flags")) loadBitset(curNode, flags);
         else if(NODE_NAME(curNode, "LastTime")) loadLastTime(curNode, &ltime);
         else if(NODE_NAME(curNode, "Dice")) damage.load(curNode);
 
@@ -81,7 +81,7 @@ bool SpecialAttack::save(xmlNodePtr rootNode) const {
     xml::newNumChild(attackNode, "SaveBonus", saveBonus);
     xml::newNumChild(attackNode, "MaxBonus", maxBonus);
 
-    saveBits(attackNode, "Flags", SA_MAX_FLAG, flags);
+    saveBitset(attackNode, "Flags", SA_MAX_FLAG, flags);
     saveLastTime(attackNode, 0, ltime);
     damage.save(attackNode, "Dice");
 

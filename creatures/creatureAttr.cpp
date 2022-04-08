@@ -502,11 +502,11 @@ void Creature::crtReset() {
 
     int i;
     coins.zero();
+    flags.reset();
     zero(realm, sizeof(realm));
-    zero(flags, sizeof(flags));
-    zero(spells, sizeof(spells));
-    zero(old_quests, sizeof(old_quests));
-    zero(languages, sizeof(languages));
+    spells.reset();
+    old_quests.reset();
+    languages.reset();
     questnum = 0;
 
     strength.setName("Strength");
@@ -591,9 +591,9 @@ void Monster::reset() {
     jail.clear();
 
     primeFaction = "";
-    memset(cClassAggro, 0, sizeof(cClassAggro));
-    memset(raceAggro, 0, sizeof(raceAggro));
-    memset(deityAggro, 0, sizeof(deityAggro));
+    cClassAggro.reset();
+    raceAggro.reset();
+    deityAggro.reset();
 
     std::list<TalkResponse*>::iterator tIt;
     for(tIt = responses.begin() ; tIt != responses.end() ; tIt++) {
@@ -622,7 +622,7 @@ void Player::reset() {
     lastPassword = afflictedBy = forum = "";
     tickDmg = pkwon = pkin = lastLogin = lastInterest = uniqueObjId = 0;
 
-    memset(songs, 0, sizeof(songs));
+    songs.reset();
     guild = guildRank = 0;
     cClass2 = CreatureClass::NONE;
 
@@ -699,8 +699,7 @@ void Creature::CopyCommon(const Creature& cr) {
     for(Realm r = MIN_REALM; r<MAX_REALM; r = (Realm)((int)r + 1))
         setRealm(cr.getRealm(r), r);
 
-    for(i=0; i<CRT_FLAG_ARRAY_SIZE; i++)
-        flags[i] = cr.flags[i];
+    flags = cr.flags;
 
     poison_dur = cr.poison_dur;
     poison_dmg = cr.poison_dmg;
@@ -743,12 +742,10 @@ void Creature::CopyCommon(const Creature& cr) {
 
     for(i=0; i<6; i++)
         saves[i] = cr.saves[i];
-    for(i=0; i<16; i++)
-        languages[i] = cr.languages[i];
-    for(i=0; i<32; i++) {
-        spells[i] = cr.spells[i];
-        old_quests[i] = cr.old_quests[i];
-    }
+
+    languages = cr.languages;
+    spells = cr.spells;
+    old_quests = cr.old_quests;
 
     coins.set(cr.coins);
 
@@ -874,8 +871,7 @@ void Player::doCopy(const Player& cr) {
     bound = cr.bound;
     statistics = cr.statistics;
 
-    for(i=0; i<32; i++)
-        songs[i] = cr.songs[i];
+    songs = cr.songs;
 
     guild = cr.guild;
     guildRank = cr.guildRank;
@@ -1211,7 +1207,7 @@ bool Creature::isAdm() const {
 //*********************************************************************
 
 bool Creature::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 bool Creature::pFlagIsSet(int flag) const {
     return(isPlayer() && flagIsSet(flag));
@@ -1224,7 +1220,7 @@ bool Creature::mFlagIsSet(int flag) const {
 //*********************************************************************
 
 void Creature::setFlag(int flag) {
-    flags[flag/8] |= 1<<(flag%8);
+    flags.set(flag);
     if(flag == P_NO_TRACK_STATS && isPlayer())
         getAsPlayer()->statistics.track = false;
 }
@@ -1243,7 +1239,7 @@ void Creature::mSetFlag(int flag) {
 //*********************************************************************
 
 void Creature::clearFlag(int flag) {
-    flags[flag/8] &= ~(1<<(flag%8));
+    flags.reset(flag);
     if(flag == P_NO_TRACK_STATS && isPlayer())
         getAsPlayer()->statistics.track = true;
 }
@@ -1264,10 +1260,7 @@ void Creature::mClearFlag(int flag) {
 //*********************************************************************
 
 bool Creature::toggleFlag(int flag) {
-    if(flagIsSet(flag))
-        clearFlag(flag);
-    else
-        setFlag(flag);
+    flags.flip(flag);
     return(flagIsSet(flag));
 }
 
@@ -1276,7 +1269,7 @@ bool Creature::toggleFlag(int flag) {
 //*********************************************************************
 
 bool Creature::languageIsKnown(int lang) const {
-    return(languages[lang/8] & 1<<(lang%8));
+    return(languages.test(lang));
 }
 
 //*********************************************************************
@@ -1284,7 +1277,7 @@ bool Creature::languageIsKnown(int lang) const {
 //*********************************************************************
 
 void Creature::learnLanguage(int lang) {
-    languages[lang/8] |= 1<<(lang%8);
+    languages.set(lang);
 }
 
 //*********************************************************************
@@ -1292,7 +1285,7 @@ void Creature::learnLanguage(int lang) {
 //*********************************************************************
 
 void Creature::forgetLanguage(int lang) {
-    languages[lang/8] &= ~(1<<(lang%8));
+    languages.reset(lang);
 }
 
 //*********************************************************************
@@ -1300,7 +1293,7 @@ void Creature::forgetLanguage(int lang) {
 //*********************************************************************
 
 bool Creature::spellIsKnown(int spell) const {
-    return(spells[spell/8] & 1<<(spell%8));
+    return(spells.test(spell));
 }
 
 //*********************************************************************
@@ -1314,7 +1307,7 @@ void Creature::learnSpell(int spell) {
         broadcast(::isDm, "^G*** Trying to set invalid spell %d on %s.  Spell List Size: %d\n", spell, getCName(), spllist_size);
         return;
     }
-    spells[spell/8] |= 1<<(spell%8);
+    spells.set(spell);
 }
 
 //*********************************************************************
@@ -1322,7 +1315,7 @@ void Creature::learnSpell(int spell) {
 //*********************************************************************
 
 void Creature::forgetSpell(int spell) {
-    spells[spell/8] &= ~(1<<(spell%8));
+    spells.reset(spell);
 }
 
 //*********************************************************************
@@ -1330,7 +1323,7 @@ void Creature::forgetSpell(int spell) {
 //*********************************************************************
 
 bool Player::questIsSet(int quest) const {
-    return(old_quests[quest/8] & 1<<(quest%8));
+    return(old_quests.test(quest));
 }
 
 //*********************************************************************
@@ -1338,7 +1331,7 @@ bool Player::questIsSet(int quest) const {
 //*********************************************************************
 
 void Player::setQuest(int quest) {
-    old_quests[quest/8] |= 1<<(quest%8);
+    old_quests.set(quest);
 }
 
 //*********************************************************************
@@ -1346,7 +1339,7 @@ void Player::setQuest(int quest) {
 //*********************************************************************
 
 void Player::clearQuest(int quest) {
-    old_quests[quest/8] &= ~(1<<(quest%8));
+    old_quests.reset(quest);
 }
 
 //*********************************************************************
@@ -1354,7 +1347,7 @@ void Player::clearQuest(int quest) {
 //*********************************************************************
 
 bool Player::songIsKnown(int song) const {
-    return(songs[song/8] & 1<<(song%8));
+    return(songs.test(song));
 }
 
 //*********************************************************************
@@ -1362,7 +1355,7 @@ bool Player::songIsKnown(int song) const {
 //*********************************************************************
 
 void Player::learnSong(int song) {
-    songs[song/8] |= 1<<(song%8);
+    songs.set(song);
 }
 
 //*********************************************************************
@@ -1370,7 +1363,7 @@ void Player::learnSong(int song) {
 //*********************************************************************
 
 void Player::forgetSong(int song) {
-    songs[song/8] &= ~(1<<(song%8));
+    songs.reset(song);
 }
 
 //*********************************************************************

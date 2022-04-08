@@ -21,9 +21,11 @@
 
 #include <map>
 
+
 #include <libxml/parser.h>           // for xmlNodePtr
 
 #include <boost/lexical_cast.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 #include "carry.hpp"
 #include "mudObjects/container.hpp"
@@ -52,10 +54,6 @@ class Creature;
 #define PLY     2
 #define CRT     3
 #define ROOM    4
-
-#define BIT_ISSET(p,f)    ((p)[(f)/8] & 1<<((f)%8))
-#define BIT_SET(p,f)      ((p)[(f)/8] |= 1<<((f)%8))
-#define BIT_CLEAR(p,f)      ((p)[(f)/8] &= ~(1<<((f)%8)))
 
 #define NODE_NAME(pNode, pName)         (!strcmp((char *)(pNode)->name, (pName) ))
 
@@ -222,7 +220,7 @@ void loadCarryArray(xmlNodePtr curNode, Carry array[], const char* name, int max
 void loadCatRefArray(xmlNodePtr curNode, std::map<int, CatRef>& array, const char* name, int maxProp);
 void loadCatRefArray(xmlNodePtr curNode, CatRef array[], const char* name, int maxProp);
 void loadStringArray(xmlNodePtr curNode, void* array, int size, const char* name, int maxProp);
-void loadBits(xmlNodePtr curNode, char *bits);
+void loadBitset(xmlNodePtr curNode, boost::dynamic_bitset<>& bits);
 void loadDaily(xmlNodePtr curNode, struct daily* pDaily);
 void loadDailys(xmlNodePtr curNode, struct daily* pDailys);
 void loadCrLastTime(xmlNodePtr curNode, struct crlasttime* pCrLastTime);
@@ -246,7 +244,7 @@ xmlNodePtr saveDaily(xmlNodePtr parentNode, int i, struct daily pDaily);
 xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, const struct crlasttime& pCrLastTime);
 xmlNodePtr saveLastTime(xmlNodePtr parentNode, int i, struct lasttime pLastTime);
 xmlNodePtr saveSavingThrow(xmlNodePtr parentNode, int i, struct saves pSavingThrow);
-xmlNodePtr saveBits(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits);
+xmlNodePtr saveBitset(xmlNodePtr parentNode, const char* name, int maxBit, const boost::dynamic_bitset<>& bits);
 xmlNodePtr saveBit(xmlNodePtr parentNode, int bit);
 xmlNodePtr saveLongArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const long array[], int arraySize);
 xmlNodePtr saveULongArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const unsigned long array[], int arraySize);

@@ -27,6 +27,7 @@
  *      editor! Either edit the PHP yourself or tell Dominus to make the changes.
  */
 
+#include <boost/dynamic_bitset.hpp>
 #include <libxml/parser.h>     // for xmlDocSetRootElement, xmlFreeDoc, xmlN...
 #include <stdio.h>             // for sprintf
 #include <list>                // for list, list<>::const_iterator, operator==
@@ -65,14 +66,14 @@ xmlNodePtr saveLastTime(xmlNodePtr parentNode, int i, struct lasttime pLastTime)
 //                      saveBits
 //*********************************************************************
 
-xmlNodePtr saveBits(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits) {
+xmlNodePtr saveBitset(xmlNodePtr parentNode, const char* name, int maxBit, const boost::dynamic_bitset<>& bits) {
     xmlNodePtr curNode=nullptr;
     // this nested loop means we won't create an xml node if we don't have to
     for(int i=0; i<maxBit; i++) {
-        if(BIT_ISSET(bits, i)) {
+        if(bits.test(i)) {
             curNode = xml::newStringChild(parentNode, name);
             for(; i<maxBit; i++) {
-                if(BIT_ISSET(bits, i))
+                if(bits.test(i))
                     saveBit(curNode, i);
             }
             return(curNode);
@@ -86,9 +87,7 @@ xmlNodePtr saveBits(xmlNodePtr parentNode, const char* name, int maxBit, const c
 //*********************************************************************
 
 xmlNodePtr saveBit(xmlNodePtr parentNode, int bit) {
-    xmlNodePtr curNode;
-
-    curNode = xml::newStringChild(parentNode, "Bit");
+    xmlNodePtr curNode = xml::newStringChild(parentNode, "Bit");
     xml::newNumProp(curNode, "Num", bit);
     return(curNode);
 }
@@ -201,8 +200,3 @@ xmlNodePtr saveShortIntArray(xmlNodePtr parentNode, const char* rootName, const 
     }
     return(curNode);
 }
-//
-//#undef BIT_ISSET
-//#undef BIT_SET
-//#undef BIT_CLEAR
-

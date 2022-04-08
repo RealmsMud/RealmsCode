@@ -30,6 +30,7 @@
 #ifndef SPECIALS_H_
 #define SPECIALS_H_
 
+#include <boost/dynamic_bitset.hpp>
 #include <libxml/parser.h>  // for xmlNodePtr
 
 #include "dice.hpp"
@@ -170,7 +171,7 @@ private:
     lasttime ltime;     // When we last used it, when we can use it again, etc
     int stunLength{};
     SpecialType type;   // Fire, water, general breath, weapon attack, etc
-    char flags[8]{};      // 8*8 flags
+    boost::dynamic_bitset<> flags{64};
     Dice damage;
 
     int limit{};          // Max number of times this attack can be used in a monster's lifetime

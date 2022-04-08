@@ -129,7 +129,7 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
     else if(NODE_NAME(curNode, "Wimpy")) setWimpy(xml::toNum<unsigned short>(curNode));
 
     else if(NODE_NAME(curNode, "Songs")) {
-        loadBits(curNode, songs);
+        loadBitset(curNode, songs);
     }
     else if(NODE_NAME(curNode, "Anchors")) {
         loadAnchors(curNode);
@@ -432,7 +432,7 @@ void Player::saveXml(xmlNodePtr curNode) const {
 
     xml::saveNonNullString(curNode, "CustomColors", customColors);
     xml::saveNonZeroNum(curNode, "Thirst", thirst);
-    saveBits(curNode, "Songs", gConfig->getMaxSong(), songs);
+    saveBitset(curNode, "Songs", gConfig->getMaxSong(), songs);
 
     std::list<CatRef>::const_iterator it;
 

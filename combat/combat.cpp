@@ -132,7 +132,6 @@ bool Monster::updateCombat() {
 
     target->checkTarget(this);
 
-    NUMHITS++;
     n = 20;
     if(flagIsSet(M_CAST_PRECENT))
         n = cast;

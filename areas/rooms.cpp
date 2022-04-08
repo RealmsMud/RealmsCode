@@ -102,7 +102,7 @@ UniqueRoom::UniqueRoom() {
     short_desc = "";
     long_desc = "";
     lowLevel = highLevel = maxmobs = trap = trapweight = trapstrength = 0;
-    memset(flags, 0, sizeof(flags));
+    flags.reset();
     roomExp = 0;
     size = NO_SIZE;
     beenhere = 0;
@@ -544,19 +544,16 @@ void AreaRoom::setFlag(int flag) {
     std::clog << "Trying to set a flag on an area room!" << std::endl;
 }
 bool UniqueRoom::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 void UniqueRoom::setFlag(int flag) {
-    flags[flag/8] |= 1<<(flag%8);
+    flags.set(flag);
 }
 void UniqueRoom::clearFlag(int flag) {
-    flags[flag/8] &= ~(1<<(flag%8));
+    flags.reset(flag);
 }
 bool UniqueRoom::toggleFlag(int flag) {
-    if(flagIsSet(flag))
-        clearFlag(flag);
-    else
-        setFlag(flag);
+flags.flip(flag);
     return(flagIsSet(flag));
 }
 

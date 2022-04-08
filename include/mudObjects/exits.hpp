@@ -19,6 +19,7 @@
 #ifndef _EXITS_H
 #define _EXITS_H
 
+#include <boost/dynamic_bitset.hpp>
 #include "lasttime.hpp"
 #include "location.hpp"
 #include "mudObjects/mudObject.hpp"
@@ -118,15 +119,15 @@ protected:
 public:
     // almost ready to be made protected - just need to get
     // loading of flags done
-    char        flags[16]{};      // Max exit flags 128 now
+    boost::dynamic_bitset<> flags{128};
 
     struct      lasttime ltime; // Timed open/close
 
     char        desc_key[3][EXIT_KEY_LENGTH]{}; // Exit keys
 
-    char        clanFlags[4]{};   // clan allowed flags
-    char        classFlags[4]{};  // class allowed flags
-    char        raceFlags[4]{};   // race allowed flags
+    boost::dynamic_bitset<> clanFlags{32};  // clan allowed flags
+    boost::dynamic_bitset<> classFlags{32}; // class allowed flags
+    boost::dynamic_bitset<> raceFlags{32};  // race allowed flags
 
     std::set<std::string> usedBy; // ids of players that have used this exit
 

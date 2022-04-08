@@ -340,7 +340,7 @@ AreaZone::AreaZone() {
     max.setY(-1000);
     max.setZ(-1000);
 
-    zero(flags, sizeof(flags));
+    flags.reset();
 }
 
 AreaZone::~AreaZone() {
@@ -430,7 +430,7 @@ bool AreaZone::inRestrict(char tile, const char *list) const {
 
 
 bool AreaZone::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 
 //*********************************************************************
@@ -443,7 +443,7 @@ TileInfo::TileInfo() {
     name = description = fishing = "";
     trackDur = cost = fly = 0;
     vision = 0.0;
-    zero(flags, sizeof(flags));
+    flags.reset();
     water = road = false;
     herbs.clear();
 }
@@ -457,7 +457,7 @@ float TileInfo::getVision() const { return(vision); }
 char TileInfo::getDisplay() const { return(display); }
 short TileInfo::getTrackDur() const { return(trackDur); }
 bool TileInfo::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 bool TileInfo::isWater() const { return(water); }
 bool TileInfo::isRoad() const { return(road); }

@@ -65,7 +65,7 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
         else if(NODE_NAME(curNode, "Enter")) { xml::copyToString(enter, curNode); }
         else if(NODE_NAME(curNode, "Flags")) {
             // No need to clear flags, no exit refs
-            loadBits(curNode, flags);
+            loadBitset(curNode, flags);
         }
         else if(NODE_NAME(curNode, "Target")) target.load(curNode);
         else if(NODE_NAME(curNode, "Effects")) effects.load(curNode, this);
@@ -176,7 +176,7 @@ int Exit::saveToXml(xmlNodePtr parentNode) const {
     }
 
     effects.save(rootNode, "Effects");
-    saveBits(rootNode, "Flags", MAX_EXIT_FLAGS, flags);
+    saveBitset(rootNode, "Flags", MAX_EXIT_FLAGS, flags);
     saveLastTime(curNode, 0, ltime);
     hooks.save(rootNode, "Hooks");
 
