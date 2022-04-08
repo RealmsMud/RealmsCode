@@ -81,9 +81,10 @@ public:
     char aggroString[80];
     char attack[3][CRT_ATTACK_LENGTH];
     std::list<TalkResponse*> responses;
-    char cClassAggro[4]; // 32 max
-    char raceAggro[4]; // 32 max
-    char deityAggro[4]; // 32 max
+    boost::dynamic_bitset<> cClassAggro{32};
+    boost::dynamic_bitset<> raceAggro{32};
+    boost::dynamic_bitset<> deityAggro{32};
+
     CatRef info;
     CatRef assist_mob[NUM_ASSIST_MOB];
     CatRef enemy_mob[NUM_ENEMY_MOB];

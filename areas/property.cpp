@@ -77,7 +77,7 @@
 
 PartialOwner::PartialOwner() {
     name = "";
-    zero(flags, sizeof(flags));
+    flags.reset();
 }
 
 void PartialOwner::defaultFlags(PropType type) {
@@ -94,19 +94,16 @@ std::string PartialOwner::getName() const { return(name); }
 void PartialOwner::setName(std::string_view str) { name = str; }
 
 bool PartialOwner::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 void PartialOwner::setFlag(int flag) {
-    flags[flag/8] |= 1<<(flag%8);
+    flags.set(flag);
 }
 void PartialOwner::clearFlag(int flag) {
-    flags[flag/8] &= ~(1<<(flag%8));
+    flags.reset(flag);
 }
 bool PartialOwner::toggleFlag(int flag) {
-    if(flagIsSet(flag))
-        clearFlag(flag);
-    else
-        setFlag(flag);
+    flags.flip(flag);
     return(flagIsSet(flag));
 }
 
@@ -119,26 +116,23 @@ Property::Property() {
     owner = dateFounded = location = "";
     logType = LOG_PARTIAL;
     type = PROP_NONE;
-    zero(flags, sizeof(flags));
+    flags.reset();
 }
 
 bool Property::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 
 void Property::setFlag(int flag) {
-    flags[flag/8] |= 1<<(flag%8);
+    flags.set(flag);
 }
 
 void Property::clearFlag(int flag) {
-    flags[flag/8] &= ~(1<<(flag%8));
+    flags.reset(flag);
 }
 
 bool Property::toggleFlag(int flag) {
-    if(flagIsSet(flag))
-        clearFlag(flag);
-    else
-        setFlag(flag);
+    flags.flip(flag);
     return(flagIsSet(flag));
 }
 

@@ -19,6 +19,7 @@
 #pragma once
 
 #include <string>
+#include <boost/dynamic_bitset.hpp>
 
 #include "mudObjects/rooms.hpp"
 
@@ -71,7 +72,7 @@ public:
 
     std::string getMsdp(bool showExits = true) const;
 protected:
-    char    flags[16]{};  // Max flags - 128
+    boost::dynamic_bitset<> flags{128};
     std::string fishing;
 
     std::string short_desc;     // Descriptions

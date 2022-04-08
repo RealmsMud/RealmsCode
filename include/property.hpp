@@ -19,6 +19,7 @@
 #ifndef PROPERTY_H_
 #define PROPERTY_H_
 
+#include <boost/dynamic_bitset.hpp>
 #include <list>
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -60,7 +61,7 @@ public:
     bool toggleFlag(int flag);
 protected:
     std::string name;
-    char    flags[4]{};       // 32 max
+    boost::dynamic_bitset<> flags{32};
 };
 
 
@@ -162,7 +163,7 @@ protected:
 
     // for guildhalls and shops, points to guild
     int     guild;
-    char    flags[4]{};       // 32 max
+    boost::dynamic_bitset<> flags{32};
 };
 
 

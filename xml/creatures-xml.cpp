@@ -68,7 +68,6 @@ int convertProf(Creature* player, Realm realm) {
 
 int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
     xmlNodePtr curNode;
-    int i;
     CreatureClass c = CreatureClass::NONE;
 
     Player *pPlayer = getAsPlayer();
@@ -169,18 +168,17 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         }
         else if(NODE_NAME(curNode, "Flags")) {
             // Clear flags before loading incase we're loading a reference creature
-            for(i=0; i<CRT_FLAG_ARRAY_SIZE; i++)
-                flags[i] = 0;
-            loadBits(curNode, flags);
+            flags.reset();
+            loadBitset(curNode, flags);
         }
         else if(NODE_NAME(curNode, "Spells")) {
-            loadBits(curNode, spells);
+            loadBitset(curNode, spells);
         }
         else if(NODE_NAME(curNode, "Quests")) {
-            loadBits(curNode, old_quests);
+            loadBitset(curNode, old_quests);
         }
         else if(NODE_NAME(curNode, "Languages")) {
-            loadBits(curNode, languages);
+            loadBitset(curNode, languages);
         }
         else if(NODE_NAME(curNode, "DailyTimers")) {
             loadDailys(curNode, daily);
@@ -798,14 +796,14 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
             saveSavingThrow(curNode, i, saves[i]);
 
         // Perhaps change this into saveInt/CharArray
-        saveBits(rootNode, "Spells", MAXSPELL, spells);
-        saveBits(rootNode, "Quests", MAXSPELL, old_quests);
+        saveBitset(rootNode, "Spells", MAXSPELL, spells);
+        saveBitset(rootNode, "Quests", MAXSPELL, old_quests);
         xml::saveNonZeroNum(rootNode, "CurrentLanguage", current_language);
-        saveBits(rootNode, "Languages", LANGUAGE_COUNT, languages);
+        saveBitset(rootNode, "Languages", LANGUAGE_COUNT, languages);
     }
 
     // Saved for LoadType::LS_FULL and LoadType::LS_REF
-    saveBits(rootNode, "Flags", pPlayer ? MAX_PLAYER_FLAGS : MAX_MONSTER_FLAGS, flags);
+    saveBitset(rootNode, "Flags", pPlayer ? MAX_PLAYER_FLAGS : MAX_MONSTER_FLAGS, flags);
 
     // Save lasttimes
     for(i=0; i<TOTAL_LTS; i++) {

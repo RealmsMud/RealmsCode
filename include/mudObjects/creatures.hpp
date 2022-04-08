@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <boost/dynamic_bitset.hpp>
 #include <map>
 #include <string>
 #include <fmt/format.h>
@@ -93,7 +94,6 @@ class SpellData;
 #define CRT_ATTACK_LENGTH       30
 #define CRT_KEY_LENGTH          20
 #define CRT_MOVETYPE_LENGTH     52
-#define CRT_FLAG_ARRAY_SIZE     32
 
 #define NUM_ASSIST_MOB          8
 #define NUM_ENEMY_MOB           4
@@ -200,10 +200,10 @@ protected:
     unsigned short poison_dmg{};
     std::string description;
     std::string version; // Version of the mud this creature was saved under
-    char flags[CRT_FLAG_ARRAY_SIZE]{}; // Max flags - 256
+    boost::dynamic_bitset<> flags{256};
     unsigned long realm[MAX_REALM-1]{}; // Magic Spell realms
-    char spells[32]{}; // more spells
-    char old_quests[32]{}; // more quests
+    boost::dynamic_bitset<> spells{256};
+    boost::dynamic_bitset<> old_quests{256};
     static const short OFFGUARD_REMOVE;
     static const short OFFGUARD_NOREMOVE;
     static const short OFFGUARD_NOPRINT;
@@ -292,14 +292,13 @@ public:
     Dice damage;
     Money coins;
     //CatRef room;
-#define                 NUMHITS old_quests[0]
     short questnum{}; // Quest fulfillment number (M)
     Object *ready[MAXWEAR]{};// Worn/readied items
     //etag *first_enm; // List of enemies
     ttag *first_tlk{}; // List of talk responses
 
     struct saves saves[6]; // Saving throws struct. POI, DEA, BRE, MEN, SPL, x, x
-    char languages[16]{};
+    boost::dynamic_bitset<> languages{128};
     char movetype[3][CRT_MOVETYPE_LENGTH]{}; // Movement types..."flew..oozed...etc.."
     Stat strength;
     Stat dexterity;

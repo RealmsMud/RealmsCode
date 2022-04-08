@@ -504,13 +504,13 @@ bool SpecialAttack::isAreaAttack() const {
     return(flagIsSet(SA_AE_ENEMY) || flagIsSet(SA_AE_ALL) || flagIsSet(SA_AE_PLAYER) || flagIsSet(SA_AE_MONSTER));
 }
 bool SpecialAttack::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 void SpecialAttack::setFlag(int flag) {
-    flags[flag/8] |= 1<<(flag%8);
+    flags.set(flag);
 }
 void SpecialAttack::clearFlag(int flag) {
-    flags[flag/8] &= ~(1<<(flag%8));
+    flags.reset(flag);
 }
 
 std::string SpecialAttack::modifyAttackString(std::string_view input, Creature* viewer, Creature* attacker, Creature* target, int dmg) {
@@ -594,9 +594,7 @@ void SpecialAttack::reset() {
     saveType = SAVE_NONE;
     saveBonus = BONUS_NONE;
     ltime.interval = ltime.ltime = ltime.misc = 0;
-    int i;
-    for(i = 0 ; i < 8 ; i++)
-        flags[i] = 0;
+    flags.reset();
 }
 std::string Creature::getSpecialsFullList() const {
     std::ostringstream specialsStr;

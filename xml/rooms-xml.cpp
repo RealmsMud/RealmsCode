@@ -147,7 +147,7 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode, bool offline) {
         else if(NODE_NAME(curNode, "RoomExp")) xml::copyToNum(roomExp, curNode);
         else if(NODE_NAME(curNode, "Flags")) {
             // No need to clear flags, no room refs
-            loadBits(curNode, flags);
+            loadBitset(curNode, flags);
         }
         else if(NODE_NAME(curNode, "PermMobs")) {
             loadCrLastTimes(curNode, permMonsters);
@@ -303,7 +303,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
     xml::saveNonZeroNum(rootNode, "BeenHere", beenhere);
     xml::saveNonZeroNum(rootNode, "RoomExp", roomExp);
 
-    saveBits(rootNode, "Flags", MAX_ROOM_FLAGS, flags);
+    saveBitset(rootNode, "Flags", MAX_ROOM_FLAGS, flags);
 
     curNode = xml::newStringChild(rootNode, "Wander");
     wander.save(curNode);

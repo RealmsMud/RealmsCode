@@ -39,15 +39,15 @@
 
 void PartialOwner::load(xmlNodePtr rootNode) {
     xml::copyPropToString(name, rootNode, "Name");
-    loadBits(rootNode, flags);
+    loadBitset(rootNode, flags);
 }
 
 void PartialOwner::save(xmlNodePtr rootNode) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, "Owner") ;
 
-    xml::newProp(curNode, "Name", name.c_str());
+    xml::newProp(curNode, "Name", name);
     for(int i=0; i<32; i++) {
-        if(BIT_ISSET(flags, i))
+        if(flags.test(i))
             saveBit(curNode, i);
     }
 }
@@ -69,7 +69,7 @@ void Property::load(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "Location")) xml::copyToString(location, curNode);
         else if(NODE_NAME(curNode, "Guild")) xml::copyToNum(guild, curNode);
         else if(NODE_NAME(curNode, "Type")) type = (PropType)xml::toNum<int>(curNode);
-        else if(NODE_NAME(curNode, "Flags")) loadBits(curNode, flags);
+        else if(NODE_NAME(curNode, "Flags")) loadBitset(curNode, flags);
 
         else if(NODE_NAME(curNode, "Ranges")) {
             childNode = curNode->children;
@@ -142,7 +142,7 @@ void Property::save(xmlNodePtr rootNode) const {
     xml::saveNonNullString(curNode, "Location", location.c_str());
     xml::saveNonZeroNum(curNode, "Guild", guild);
     xml::saveNonZeroNum(curNode, "Type", (int)type);
-    saveBits(curNode, "Flags", 32, flags);
+    saveBitset(curNode, "Flags", 32, flags);
 
     if(!ranges.empty()) {
         std::list<Range>::const_iterator rt;

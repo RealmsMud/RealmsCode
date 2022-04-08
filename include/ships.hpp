@@ -19,6 +19,7 @@
 #define SHIPS_H_
 
 #include <list>
+#include <boost/dynamic_bitset.hpp>
 #include <libxml/parser.h>  // for xmlNodePtr
 
 #include "catRef.hpp"
@@ -76,7 +77,7 @@ protected:
     std::string name;
 
     bool    raid;
-    char    flags[16]{};
+    boost::dynamic_bitset<> flags{128};
     std::string arrives;
     std::string departs;
 
@@ -93,14 +94,12 @@ public:
     void spawnRaiders(ShipRaid* sRaid);
     BaseRoom* getRoom(bool useOrigin);
     bool swap(const Swap& s);
+
+    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] bool getRaid() const;
+    [[nodiscard]] std::string getArrives() const;
+    [[nodiscard]] std::string getDeparts() const;
     
-    std::string getName() const;
-    bool getRaid() const;
-    std::string getArrives() const;
-    std::string getDeparts() const;
-    
-    const char *getFlags() const;
-    void setFlags(char f);
 };
 
 

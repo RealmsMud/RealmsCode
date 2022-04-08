@@ -50,12 +50,12 @@ Exit::Exit() {
 
     level = trap = 0;
     zero(desc_key, sizeof(desc_key));
-    zero(clanFlags, sizeof(clanFlags));
-    zero(classFlags, sizeof(classFlags));
-    zero(raceFlags, sizeof(raceFlags));
+    clanFlags.reset();
+    classFlags.reset();
+    raceFlags.reset();
     key = toll = 0;
     size = NO_SIZE;
-    zero(flags, sizeof(flags));
+    flags.reset();
     keyArea = passphrase = open = enter = description = "";
     passlang = 0;
     size = NO_SIZE;
@@ -141,19 +141,16 @@ void Exit::checkReLock(Creature* creature, bool sneaking) {
 }
 
 bool Exit::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 void Exit::setFlag(int flag) {
-    flags[flag/8] |= 1<<(flag%8);
+    flags.set(flag);
 }
 void Exit::clearFlag(int flag) {
-    flags[flag/8] &= ~(1<<(flag%8));
+    flags.reset(flag);
 }
 bool Exit::toggleFlag(int flag) {
-    if(flagIsSet(flag))
-        clearFlag(flag);
-    else
-        setFlag(flag);
+    flags.flip(flag);
     return(flagIsSet(flag));
 }
 

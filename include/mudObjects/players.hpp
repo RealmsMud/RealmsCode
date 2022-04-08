@@ -99,7 +99,7 @@ protected:
     std::string lastCommand;
     std::string lastCommunicate;
     std::string forum;      // forum account this character is associated with
-    char songs[32];
+    boost::dynamic_bitset<> songs{256};
     struct StatsContainer oldStats;
     struct StatsContainer newStats;
     Anchor *anchor[MAX_DIMEN_ANCHORS];

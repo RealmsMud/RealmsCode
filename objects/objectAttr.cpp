@@ -90,22 +90,19 @@ void Object::clearEffect() {
     setEffectStrength(0);
 }
 bool Object::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 
 void Object::setFlag(int flag) {
-    flags[flag/8] |= 1<<(flag%8);
+    flags.set(flag);
 }
 
 void Object::clearFlag(int flag) {
-    flags[flag/8] &= ~(1<<(flag%8));
+    flags.reset(flag);
 }
 
 bool Object::toggleFlag(int flag) {
-    if(flagIsSet(flag))
-        clearFlag(flag);
-    else
-        setFlag(flag);
+    flags.flip(flag);
     return(flagIsSet(flag));
 }
 

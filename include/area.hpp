@@ -18,6 +18,7 @@
 #ifndef AREA_H
 #define AREA_H
 
+#include <boost/dynamic_bitset.hpp>
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <list>
 #include <map>
@@ -125,7 +126,7 @@ public:
 
     ~AreaZone();
 
-    std::string getFishing() const;
+    [[nodiscard]] std::string getFishing() const;
 
     bool inside(const Area *area, const MapMarker *mapmarker) const;
 
@@ -137,7 +138,7 @@ public:
 
     bool swap(const Swap &s);
 
-    bool flagIsSet(int flag) const;
+    [[nodiscard]] bool flagIsSet(int flag) const;
 
 
     std::string name;           // for staff identification
@@ -149,7 +150,7 @@ public:
     WanderInfo wander;      // Random monster info
     CatRef unique;         // does this zone lead to a unique room
 
-    char flags[16]{};
+    boost::dynamic_bitset<> flags{128};
 
     MapMarker min;
     MapMarker max;
@@ -194,7 +195,7 @@ protected:
     char style;
     char display;
     short trackDur;       // duration of tracks in game minutes
-    char flags[16]{};
+    boost::dynamic_bitset<> flags{128};
 
     bool water;
     bool road;

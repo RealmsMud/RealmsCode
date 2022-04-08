@@ -581,19 +581,16 @@ bool isGuardLoot(BaseRoom *inRoom, Creature* player, const char *fmt) {
 //*********************************************************************
 
 bool Monster::isRaceAggro(int x, bool checkInvert) const {
-    x--;
-    bool set = (raceAggro[x/8] & 1<<(x%8));
+    bool set = raceAggro.test(x-1);
     if(!checkInvert)
         return(set);
     return(set ? !flagIsSet(M_RACE_AGGRO_INVERT) : flagIsSet(M_RACE_AGGRO_INVERT));
 }
 void Monster::setRaceAggro(int x) {
-    x--;
-    raceAggro[x/8] |= 1<<(x%8);
+    raceAggro.set(x-1);
 }
 void Monster::clearRaceAggro(int x) {
-    x--;
-    raceAggro[x/8] &= ~(1<<(x%8));
+    raceAggro.reset(x-1);
 }
 
 
@@ -602,19 +599,16 @@ void Monster::clearRaceAggro(int x) {
 //*********************************************************************
 
 bool Monster::isClassAggro(int x, bool checkInvert) const {
-    x--;
-    bool set = (cClassAggro[x/8] & 1<<(x%8));
+    bool set = cClassAggro.test(x-1);
     if(!checkInvert)
         return(set);
     return(set ? !flagIsSet(M_CLASS_AGGRO_INVERT) : flagIsSet(M_CLASS_AGGRO_INVERT));
 }
 void Monster::setClassAggro(int x) {
-    x--;
-    cClassAggro[x/8] |= 1<<(x%8);
+    cClassAggro.set(x-1);
 }
 void Monster::clearClassAggro(int x) {
-    x--;
-    cClassAggro[x/8] &= ~(1<<(x%8));
+    cClassAggro.reset(x-1);
 }
 
 
@@ -623,17 +617,14 @@ void Monster::clearClassAggro(int x) {
 //*********************************************************************
 
 bool Monster::isDeityAggro(int x, bool checkInvert) const {
-    x--;
-    bool set = (deityAggro[x/8] & 1<<(x%8));
+    bool set = deityAggro.test(x-1);
     if(!checkInvert)
         return(set);
     return(set ? !flagIsSet(M_DEITY_AGGRO_INVERT) : flagIsSet(M_DEITY_AGGRO_INVERT));
 }
 void Monster::setDeityAggro(int x) {
-    x--;
-    deityAggro[x/8] |= 1<<(x%8);
+    deityAggro.set(x-1);
 }
 void Monster::clearDeityAggro(int x) {
-    x--;
-    deityAggro[x/8] &= ~(1<<(x%8));
+    deityAggro.reset(x-1);
 }

@@ -234,7 +234,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
         }
         else if(NODE_NAME(curNode, "Dice")) damage.load(curNode);
         else if(NODE_NAME(curNode, "Flags")) {
-            loadBits(curNode, flags);
+            loadBitset(curNode, flags);
         }
         else if(NODE_NAME(curNode, "LastTimes")) {
             loadLastTimes(curNode, lasttime);
@@ -421,7 +421,7 @@ void DroppedBy::load(xmlNodePtr rootNode) {
     }
 }
 
-xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits);
+xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const boost::dynamic_bitset<>& bits);
 
 //*********************************************************************
 //                      saveObject
@@ -584,7 +584,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     }
 
     if(saveType == LoadType::LS_FULL || saveType == LoadType::LS_PROTOTYPE) {
-        saveBits(rootNode, "Flags", MAX_OBJECT_FLAGS, flags);
+        saveBitset(rootNode, "Flags", MAX_OBJECT_FLAGS, flags);
         // These are only saved for full objects
         if(type != ObjectType::LOTTERYTICKET)
             xml::saveNonNullString(rootNode, "Description", description);
@@ -722,14 +722,14 @@ void DroppedBy::save(xmlNodePtr rootNode) const {
 //                      saveObjRefFlags
 //*********************************************************************
 
-xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits) {
+xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const boost::dynamic_bitset<>& bits) {
     xmlNodePtr curNode=nullptr;
     // this nested loop means we won't create an xml node if we don't have to
     for(int i=0; objRefSaveFlags[i] != -1; i++) {
-        if(BIT_ISSET(bits, objRefSaveFlags[i])) {
+        if(bits.test(objRefSaveFlags[i])) {
             curNode = xml::newStringChild(parentNode, name);
             for(; objRefSaveFlags[i] != -1; i++) {
-                if(BIT_ISSET(bits, objRefSaveFlags[i]))
+                if(bits.test(objRefSaveFlags[i]))
                     saveBit(curNode, objRefSaveFlags[i]);
             }
             return(curNode);

@@ -147,13 +147,13 @@ void Monster::readXml(xmlNodePtr curNode, bool offline) {
 
     else if(NODE_NAME(curNode, "SkillLevel")) setSkillLevel(xml::toNum<int>(curNode));
     else if(NODE_NAME(curNode, "ClassAggro")) {
-        loadBits(curNode, cClassAggro);
+        loadBitset(curNode, cClassAggro);
     }
     else if(NODE_NAME(curNode, "RaceAggro")) {
-        loadBits(curNode, raceAggro);
+        loadBitset(curNode, raceAggro);
     }
     else if(NODE_NAME(curNode, "DeityAggro")) {
-        loadBits(curNode, deityAggro);
+        loadBitset(curNode, deityAggro);
     }
     else if(NODE_NAME(curNode, "Attacks")) {
         loadStringArray(curNode, attack, CRT_ATTACK_LENGTH, "Attack", 3);
@@ -316,9 +316,9 @@ void Monster::saveXml(xmlNodePtr curNode) const {
     xml::saveNonZeroNum(curNode, "Cast", cast);
     saveCatRefArray(curNode, "Rescue", "Mob", rescue, NUM_RESCUE);
 
-    saveBits(curNode, "ClassAggro", 32, cClassAggro);
-    saveBits(curNode, "RaceAggro", 32, raceAggro);
-    saveBits(curNode, "DeityAggro", 32, deityAggro);
+    saveBitset(curNode, "ClassAggro", 32, cClassAggro);
+    saveBitset(curNode, "RaceAggro", 32, raceAggro);
+    saveBitset(curNode, "DeityAggro", 32, deityAggro);
 }
 
 //*********************************************************************
