@@ -1,18 +1,21 @@
 cmake_minimum_required(VERSION 3.15...3.19)
 
 project(RealmsCode)
+include(FetchContent)
 
 add_subdirectory(lib/pybind11)
 
 set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
-#find_program(iwyu_path NAMES include-what-you-use iwyu REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(DPP_LIB_NAME "dpp")
+
+set(JSON_LIB_NAME "nlohmann_json::nlohmann_json")
+set(JSON_MultipleHeaders ON)
 
 set(Python_ADDITIONAL_VERSIONS 3.8)
 
@@ -32,7 +35,8 @@ message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} lib/pybind11/include)
 
 include_directories("include")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++ -fmodules")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 if($ENV{LEAK})
@@ -42,6 +46,9 @@ ELSE()
 ENDIF()
 
 message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz)
+FetchContent_MakeAvailable(json)
 
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -g" )
 
@@ -112,6 +119,7 @@ set(COMMON_HEADER_FILES
     include/help.hpp
     include/hooks.hpp
     include/import.hpp
+    include/json.hpp
     include/lasttime.hpp
     include/levelGain.hpp
     include/location.hpp
@@ -175,6 +183,7 @@ set(COMMON_HEADER_FILES
     include/weather.hpp
     include/web.hpp
     include/xml.hpp
+    include/zone.hpp
     )
 
 set(COMMON_SOURCE_FILES
@@ -190,6 +199,7 @@ set(COMMON_SOURCE_FILES
     areas/rooms.cpp
     areas/startlocs.cpp
     areas/wanderInfo.cpp
+    areas/zone.cpp
 
     bards/creatureSongs.cpp
     bards/identify.cpp
@@ -372,6 +382,11 @@ set(COMMON_SOURCE_FILES
     util/misc.cpp
     util/timer.cpp
 
+    json/catref-json.cpp
+    json/money-json.cpp
+    json/quests-json.cpp
+    json/zones-json.cpp
+
     xml/alchemy-xml.cpp
     xml/area-xml.cpp
     xml/bans-xml.cpp
@@ -416,13 +431,11 @@ set(COMMON_SOURCE_FILES
     python/mudStat.cpp
 
     wip/fighters.cpp
-
-
-    server/mxpLoader.cpp)
+)
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
-#set_property(TARGET RealmsLib PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
-target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES} ${DPP_LIB_NAME})
+
+target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES} ${DPP_LIB_NAME} ${JSON_LIB_NAME})
 
 add_executable(RealmsCode ${REALMS_SOURCE_FILES})
 

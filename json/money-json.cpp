@@ -1,6 +1,6 @@
 /*
- * toNum.hpp
- *   toNum template functions
+ * Money-json.cpp
+ *   Money json
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -16,20 +16,23 @@
  *
  */
 
-#pragma once
+#include <nlohmann/json.hpp>
 
-#include <string>
-#include <boost/lexical_cast.hpp>
+#include "money.hpp"
 
-template <class Type>
-Type toNum(const std::string &fromStr) {
-    Type toReturn = static_cast<Type>(0);
-
-    try {
-        toReturn = boost::lexical_cast<Type>(fromStr);
-    } catch (boost::bad_lexical_cast &) {
-        // And do nothing
-    }
-
-    return (toReturn);
+void to_json(nlohmann::json &j, const Money &money) {
+    to_json("coins", j, money);
 }
+
+void to_json(const char* name, nlohmann::json &j, const Money &money) {
+    j[name] = money.m;
+}
+
+void from_json(const nlohmann::json &j, Money &money) {
+    from_json("coins", j, money);
+}
+
+void from_json(const char* name, const nlohmann::json &j, Money &money) {
+    j.at(name).get_to(money.m);
+}
+

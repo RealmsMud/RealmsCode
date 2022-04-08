@@ -21,6 +21,7 @@
 
 #include <list>
 #include <map>
+#include <nlohmann/json.hpp>
 
 #include "catRef.hpp"
 #include "money.hpp"
@@ -29,16 +30,6 @@ class Player;
 class Monster;
 class Object;
 class UniqueRoom;
-
-class QuestCatRef : public CatRef {
-public:
-    QuestCatRef();
-    QuestCatRef(xmlNodePtr rootNode);
-    xmlNodePtr save(xmlNodePtr rootNode, const std::string& saveName = "QuestCatRef") const;
-
-    int curNum;
-    int reqNum;     // How many
-};
 
 enum class QuestRepeatFrequency {
     REPEAT_NEVER = 0,
@@ -76,7 +67,14 @@ public:
     static void saveQuestId(xmlNodePtr curNode, const CatRef& questId);
 
 public:
+    friend void to_json(nlohmann::json &j, const QuestInfo &quest);
+    friend void from_json(const nlohmann::json &j, QuestInfo &quest);
+
+public:
+    QuestInfo();
     QuestInfo(xmlNodePtr rootNode);
+
+    void reset();
 
     [[nodiscard]] CatRef getId() const;
     [[nodiscard]] std::string getName() const;
@@ -106,7 +104,7 @@ private:
     int timesRepeatable{};                  // Number of times the quest can be repeated.  0 for infinite
     bool sharable;                          // Can this quest be shared with other players?
     int minLevel;                           // Minimum required level to get this quest
-    int minFaction;                         // Minimum requried faction to get this quest (Based on mob's primeFaction)
+    int minFaction;                         // Minimum required faction to get this quest (Based on mob's primeFaction)
     int level;                              // Level of this quest, used to adjust rewards
 
     std::list<CatRef> preRequisites;        // A list of quests that must have been completed before someone is allowed
@@ -123,7 +121,7 @@ private:
     long expReward;                             // Exp reward
     short alignmentChange;			            // Amount alignment changes upon quest completion
     std::list<QuestCatRef> itemRewards;         // Items rewarded on completion
-    std::map<std::string,long> factionRewards;  // Factions to be modified
+    std::map<std::string, long> factionRewards; // Factions to be modified
 
     friend class QuestCompletion;
 };

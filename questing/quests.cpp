@@ -72,6 +72,7 @@
 #include "toNum.hpp"                                // for toNum
 #include "utils.hpp"                                // for MIN, MAX
 #include "xml.hpp"                                  // for loadObject, loadM...
+#include <nlohmann/json.hpp>
 
 CatRef QuestInfo::getQuestId(xmlNodePtr curNode) {
     CatRef toReturn;
@@ -459,6 +460,7 @@ bool Config::loadQuests() {
         }
         curNode = curNode->next;
     }
+
     xmlFreeDoc(xmlDoc);
     xmlCleanupParser();
     return(true);
@@ -1514,6 +1516,17 @@ void QuestInfo::printCompletionString(Player* player, const Monster* giver) cons
     boost::replace_all(toPrint, "*GIVER*", giver->getCrtStr(player, CAP).c_str());
     boost::replace_all(toPrint, "*CR*", "\n");
     *player << ColorOn << toPrint << ColorOff << "\n";
+}
+
+QuestInfo::QuestInfo() {
+    reset();
+}
+
+void QuestInfo::reset() {
+    repeatable = sharable = false;
+    expReward = minLevel = minFaction = alignmentChange = level = 0;
+    repeatFrequency = QuestRepeatFrequency::REPEAT_NEVER;
+
 }
 
 

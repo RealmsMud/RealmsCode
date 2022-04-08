@@ -58,12 +58,10 @@ xmlNodePtr QuestCatRef::save(xmlNodePtr rootNode, const std::string& saveName) c
 }
 
 QuestInfo::QuestInfo(xmlNodePtr rootNode) {
-    std::string faction;
+    reset();
 
+    std::string faction;
     questId = QuestInfo::getQuestId(rootNode);
-    repeatable = sharable = false;
-    expReward = minLevel = minFaction = alignmentChange = level = 0;
-    repeatFrequency = QuestRepeatFrequency::REPEAT_NEVER;
 
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {

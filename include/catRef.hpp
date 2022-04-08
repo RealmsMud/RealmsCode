@@ -16,12 +16,12 @@
  *
  */
 
-#ifndef _CATREF_H
-#define _CATREF_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <iosfwd>           // for size_t
 #include <string>           // for hash, string
+#include <nlohmann/json_fwd.hpp>
 
 class Creature;
 
@@ -45,6 +45,10 @@ public:
     void    setArea(std::string c);
     std::string area;
     short   id{};
+
+public:
+    friend void to_json(nlohmann::json &j, const CatRef &cr);
+    friend void from_json(const nlohmann::json &j, CatRef &cr);
 };
 
 namespace std {
@@ -61,5 +65,18 @@ namespace std {
     };
 };
 
-#endif  /* _CATREF_H */
 
+class QuestCatRef : public CatRef {
+public:
+    QuestCatRef();
+    explicit QuestCatRef(xmlNodePtr rootNode);
+    xmlNodePtr save(xmlNodePtr rootNode, const std::string& saveName = "QuestCatRef") const;
+
+    int curNum;
+    int reqNum;     // How many
+
+public:
+    friend void to_json(nlohmann::json &j, const QuestCatRef &cr);
+    friend void from_json(const nlohmann::json &j, QuestCatRef &cr);
+
+};

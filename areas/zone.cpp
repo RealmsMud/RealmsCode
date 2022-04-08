@@ -1,6 +1,6 @@
 /*
- * toNum.hpp
- *   toNum template functions
+ * Zone.h
+ *   Code for zones .
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -16,20 +16,11 @@
  *
  */
 
-#pragma once
 
-#include <string>
-#include <boost/lexical_cast.hpp>
+#include "catRef.hpp"   // for CatRef
+#include "quests.hpp"   // for QuestInfo
+#include "zone.hpp"
 
-template <class Type>
-Type toNum(const std::string &fromStr) {
-    Type toReturn = static_cast<Type>(0);
-
-    try {
-        toReturn = boost::lexical_cast<Type>(fromStr);
-    } catch (boost::bad_lexical_cast &) {
-        // And do nothing
-    }
-
-    return (toReturn);
+Zone::Zone() {
+    /* TODO: Init */
 }

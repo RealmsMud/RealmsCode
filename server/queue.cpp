@@ -74,21 +74,17 @@ void Server::flushObject() {
 
 void Server::killMortalObjects() {
     std::list<AreaRoom*> toDelete;
-    Area    *area=nullptr;
-    AreaRoom* room=nullptr;
     UniqueRoom* r=nullptr;
 
     for(const auto& it : roomCache) {
         r = it.second->second;
         if(!r)
             continue;
-	    r->killMortalObjects();
+        r->killMortalObjects();
     }
 
-    for(auto it = gServer->areas.begin() ; it != gServer->areas.end() ; it++) {
-        area = (*it);
-        for(auto rt = area->rooms.begin() ; rt != area->rooms.end() ; rt++) {
-            room = (*rt).second;
+    for(auto &area : gServer->areas) {
+        for(auto &[roomId, room] : area->rooms) {
             room->killMortalObjects();
 
             if(room->canDelete())
