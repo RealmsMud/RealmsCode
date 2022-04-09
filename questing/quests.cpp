@@ -249,7 +249,7 @@ int QuestInfo::getTimesRepeatable() const {
         return(timesRepeatable);
 }
 
-const QuestCatRef& QuestInfo::getTurnInMob() const {
+const CatRef & QuestInfo::getTurnInMob() const {
     return(turnInMob);
 }
 std::string QuestInfo::getName() const {

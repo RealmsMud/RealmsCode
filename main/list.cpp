@@ -88,6 +88,7 @@ int list_rooms() {
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
                     lRoom->readFromXml(rootNode, true);
+                    xmlFreeDoc(xmlDoc);
 
                     std::cout << lRoom->info.str() << ","
                               << "\"" << lRoom->getName() << "\"" << ","
@@ -174,6 +175,8 @@ int list_objects() {
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
                     lObject->readFromXml(rootNode, nullptr, true);
+                    xmlFreeDoc(xmlDoc);
+
                     std::string description = lObject->description;
                     boost::replace_all(description, "\n", "\\n");
                     boost::replace_all(description, "\"", "\"\"");
@@ -285,6 +288,7 @@ int list_monsters() {
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
                     lMonster->readFromXml(rootNode, true);
+                    xmlFreeDoc(xmlDoc);
 
                     std::cout << lMonster->info.str() << ","
                               << "\"" << lMonster->getName() << "\"" << ","

@@ -26,13 +26,13 @@ using json = nlohmann::json;
 
 
 void to_json(nlohmann::json &j, const QuestInfo &quest) {
+    j["id"] = quest.questId;
     j["name"] = quest.name;
     j["description"] = quest.description;
     j["receiveString"] = quest.receiveString;
     j["completionString"] = quest.completionString;
     j["revision"] = quest.revision;
 
-    j["repeatable"] = quest.repeatable;
     j["repeatFrequency"] = quest.repeatFrequency;
     j["timesRepeatable"] = quest.timesRepeatable;
 
@@ -41,13 +41,13 @@ void to_json(nlohmann::json &j, const QuestInfo &quest) {
     j["minFaction"] = quest.minFaction;
     j["level"] = quest.level;
 
-    toJsonList<CatRef>("preRequisites", j, quest.preRequisites);
+    if(!quest.preRequisites.empty()) j["preRequisites"] = quest.preRequisites;
 
     auto &req = j["requirements"] = json();
-    toJsonList<QuestCatRef>("initialItems", req, quest.initialItems);
-    toJsonList<QuestCatRef>("mobsToKill", req, quest.mobsToKill);
-    toJsonList<QuestCatRef>("itemsToGet", req, quest.itemsToGet);
-    toJsonList<QuestCatRef>("roomsToVisit", req, quest.roomsToVisit);
+    if(!quest.initialItems.empty()) req["initialItems"] = quest.initialItems;
+    if(!quest.mobsToKill.empty()) req["mobsToKill"] = quest.mobsToKill;
+    if(!quest.itemsToGet.empty()) req["itemsToGet"] = quest.itemsToGet;
+    if(!quest.roomsToVisit.empty()) req["roomsToVisit"] = quest.roomsToVisit;
 
     j["turnInMob"] = quest.turnInMob;
 
@@ -55,19 +55,19 @@ void to_json(nlohmann::json &j, const QuestInfo &quest) {
     to_json("cashReward", rewards, quest.cashReward);
     rewards["expReward"] = quest.expReward;
     rewards["alignmentChange"] = quest.alignmentChange;
-    toJsonList<QuestCatRef>("itemRewards", rewards, quest.itemRewards);
+    if(!quest.itemRewards.empty()) rewards["itemRewards"] = quest.itemRewards;
     if(!quest.factionRewards.empty()) rewards["factionRewards"] = quest.factionRewards;
 
 }
 
 void from_json(const nlohmann::json &j, QuestInfo &quest) {
+    j.at("id").get_to(quest.questId);
     quest.name = j.at("name").get<std::string>();
     quest.description = j.at("description").get<std::string>();
     quest.receiveString = j.at("receiveString").get<std::string>();
     quest.completionString = j.at("completionString").get<std::string>();
     quest.revision = j.at("revision").get<std::string>();
 
-    quest.repeatable = j.at("repeatable").get<bool>();
     quest.repeatFrequency = j.at("repeatFrequency").get<QuestRepeatFrequency>();
     quest.timesRepeatable = j.at("timesRepeatable").get<int>();
 
@@ -92,4 +92,7 @@ void from_json(const nlohmann::json &j, QuestInfo &quest) {
     quest.alignmentChange = rewards.at("alignmentChange").get<short>();
     if(req.contains("itemRewards")) rewards.at("itemRewards").get_to(quest.itemRewards);
     if(req.contains("factionRewards")) rewards.at("factionRewards").get_to(quest.factionRewards);
+
+    if (quest.repeatFrequency != QuestRepeatFrequency::REPEAT_NEVER)
+        quest.repeatable = true;
 }

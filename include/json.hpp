@@ -19,20 +19,3 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include <list>
-
-
-/**
- * Construct a Json List from the given std::list<Type> if the list is not empty
- */
-template <class Type>
-void toJsonList(const char* name, nlohmann::json &j, const std::list<Type>& myList) {
-    if(myList.empty())
-        return;
-
-    auto &jp = j[name] = nlohmann::json();
-
-    for (const auto& item : myList) {
-        jp.push_back(nlohmann::json(item));
-    }
-}
