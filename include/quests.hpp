@@ -83,7 +83,7 @@ public:
     [[nodiscard]] bool isRepeatable() const;
     [[nodiscard]] int getTimesRepeatable() const;
     [[nodiscard]] QuestEligibility getEligibility(const Player *player, const Monster *giver) const;
-    [[nodiscard]] const QuestCatRef& getTurnInMob() const;
+    [[nodiscard]] const CatRef & getTurnInMob() const;
     [[nodiscard]] bool canGetQuest(const Player* player, const Monster* giver) const;
 
     void printReceiveString(Player* player, const Monster* giver) const;
@@ -116,7 +116,7 @@ private:
     std::list<QuestCatRef> roomsToVisit;    // Rooms they need to visit before they can finish this quest
 
     // Completion Info
-    QuestCatRef turnInMob;                      // Monster that we turn this quest into for completion
+    CatRef turnInMob;                           // Monster that we turn this quest into for completion
     Money cashReward;                           // Coin Reward
     long expReward;                             // Exp reward
     short alignmentChange;			            // Amount alignment changes upon quest completion

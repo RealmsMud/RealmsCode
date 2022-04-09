@@ -60,6 +60,10 @@ set(LIST_SOURCE_FILES
     main/list.cpp
     )
 
+set(UPDATER_SOURCE_FILES
+    main/updater.cpp
+    )
+
 set(COMMON_HEADER_FILES
 
     include/builders/alchemyBuilder.hpp
@@ -443,3 +447,6 @@ target_link_libraries(RealmsCode RealmsLib pybind11::embed)
 
 add_executable(List ${LIST_SOURCE_FILES})
 target_link_libraries(List RealmsLib)
+
+add_executable(Updater ${UPDATER_SOURCE_FILES})
+target_link_libraries(Updater RealmsLib)
