@@ -21,7 +21,7 @@
 
 #include "enums/bits.hpp"
 
-#define MAX_DIMEN_ANCHORS   3
+#define MAX_DIMEN_ANCHORS   5
 
 // Size of exp array, also highest you can train
 const int MAXALVL = 40;

@@ -373,7 +373,15 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                     saves[a].chance = MIN<short>(99,saves[a].chance);
              }
 
+              if(getVersion() < "2.54f") {
+                if (level < 15)
+                    daily[DL_TELEP].cur = 1;
+                else
+                    daily[DL_TELEP].cur = 3;
+                if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
+                    daily[DL_TELEP].cur = MIN(10, (int)getSkillLevel("translocation")/5);
 
+             }
         }
     }
 

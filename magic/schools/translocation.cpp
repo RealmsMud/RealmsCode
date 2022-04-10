@@ -609,7 +609,8 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     strcpy(dest, "");
 
-    if(spellData->how == CastType::CAST && !player->checkMp(50))
+
+    if(spellData->how == CastType::CAST && !player->checkMp(30))
         return(0);
 
     if(spellData->how == CastType::CAST) {
@@ -634,8 +635,6 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
         ) {
             player->print("The spell fizzles.\n");
             player->print("You cannot cast that spell in this room.\n");
-            if(spellData->how == CastType::CAST)
-                player->subMp(50);
             return(0);
         }
     }
@@ -848,7 +847,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
                 if(target->getSock())
                     target->print("%M tried to teleport you.\n", player);
                 if(spellData->how == CastType::CAST)
-                    player->subMp(50);
+                    player->subMp(30);
                 return(1);
             }
         }
@@ -866,7 +865,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
             newRoom = player->teleportWhere();
             if(spellData->how == CastType::CAST)
-                player->subMp(50);
+                player->subMp(30);
 
             if(pTarget) {
                 pTarget->deleteFromRoom();
