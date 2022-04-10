@@ -102,6 +102,7 @@ prefInfo prefList[] =
     { "killaggros", P_KILL_AGGROS,          nullptr,      "attack aggros first",      false },
     { "mobnums",    P_NO_NUMBERS,           nullptr,      "monster ordinal numbers",  true },
     { "autotarget", P_NO_AUTO_TARGET,       nullptr,      "automatic targeting",      true },
+    { "fleetarget", P_CLEAR_TARGET_ON_FLEE, nullptr,      "clear target on flee",     false },
 
     { "-Group",     0, nullptr, "", false },
     { "group",      P_IGNORE_GROUP_BROADCAST,nullptr,     "group combat messages",    true },
@@ -220,7 +221,7 @@ int cmdPrefs(Player* player, cmd* cmnd) {
     bool    toggle = cmnd->str[0][0]=='t' || cmnd->str[0][0]=='p';
     bool    show=false;
     bool all = !strcmp(cmnd->str[1], "-all") || (len == 0 && player->flagIsSet(P_SHOW_ALL_PREFS));
-    std::string prefName="";
+    std::string prefName;
 
     if(!player->ableToDoCommand())
         return(0);

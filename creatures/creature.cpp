@@ -1415,6 +1415,9 @@ bool Creature::doFlee(bool magicTerror) {
         Move::update(pThis);
         pThis->statistics.flee();
 
+        if(pThis->flagIsSet(P_CLEAR_TARGET_ON_FLEE))
+            pThis->clearTarget();
+
         if(cClass == CreatureClass::PALADIN && deity != GRADIUS && !magicTerror && level >= 10) {
             n = level * 8;
             n = MIN<long>(experience, n);

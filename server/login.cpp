@@ -1889,6 +1889,7 @@ void Create::done(Socket* sock, const std::string &str, int mode) {
 //      player->adjustStats();
 
         player->setFlag(P_LAG_PROTECTION_SET);
+        player->setFlag(P_CLEAR_TARGET_ON_FLEE);
         player->clearFlag(P_NO_AUTO_WEAR);
 
         if(player->getClass() == CreatureClass::BARD)

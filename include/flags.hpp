@@ -185,7 +185,7 @@
 #define P_NEWLINE_AFTER_PROMPT      52       // Print NL after prompt
 #define P_BERSERKED_OLD             53       // Player is berserked
 #define P_LOG_WATCH                 54       // DM is watching the log channel
-// free                             55
+#define P_CLEAR_TARGET_ON_FLEE      55       // Clear target on flee
 #define P_NO_AUTO_TARGET            56       // Don't Automatically target anything you attack if you don't already have a target
 // free                             56       // UNUSED
 #define P_IGNORE_CLASS_SEND         57       // Player is ignoring class sends
