@@ -52,6 +52,13 @@ class Socket;
 class Song;
 
 
+enum GameMode {
+    EasyMode=1,
+    NormalMode=2,
+    HardMode=3,
+    PermaDeathMode=4,
+};
+
 enum AttackType {
     ATTACK_NORMAL,
     ATTACK_BACKSTAB,

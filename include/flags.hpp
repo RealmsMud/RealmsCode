@@ -137,7 +137,7 @@
 // Player flags
 // free                             0
 #define P_HIDDEN                    1        // Hidden
-#define P_HARDCORE                  2        // A hardcore character: death is permanent.
+// free                             2
 #define P_NO_BROADCASTS             3        // Don't show broadcasts
 // free                             4
 #define P_IGNORE_SPORTS             5        // ignore sports channel

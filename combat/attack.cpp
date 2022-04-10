@@ -438,7 +438,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
     std::shared_ptr<Object> weapon = nullptr;
     int attacks = 1, attacked = 0;//, enchant=0;
     int loc = -1;
-    EffectInfo *deathSickness = getEffect("death-sickness");
+
     Damage attackDamage;
 
     long t = time(nullptr);
@@ -474,11 +474,6 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
         if(isEffected("slow") && !isEffected("haste") && !isEffected("frenzy"))
             setAttackDelay( (int)((getAttackDelay()*4.0)/3.0));
 
-
-        if(deathSickness && Random::get(1,100) < deathSickness->getStrength()) {
-            *this << ColorOn << "^yYou cough heavily as you attack.\n" << ColorOff;
-            modifyAttackDelay(10);
-        }
 
         if(isEffected("lycanthropy")) {
             if(LT(this, LT_MAUL) <= t) {
@@ -698,7 +693,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 if(!meKilled && drain && victim->hp.getCur() > attackDamage.get()) {
 
                     drain = std::min<int>(victim->hp.getCur() - attackDamage.get(), drain);
-                    *this << ColorOn << "Your aura of evil drained an extra " << customColorize("*CC:DAMAGE*").c_str() << drain << " ^xhit point" << (drain == 1 ? "" : "s") << " of damage!\n" << ColorOff; 
+                    *this << ColorOn << "Your aura of evil drained an extra " << customColorize("*CC:DAMAGE*").c_str() << drain << " ^xhit point" << (drain == 1 ? "" : "s") << " of damage!\n" << ColorOff;
                     *victim << ColorOn << "^r" << this << "'s aura of evil drained " << victim->customColorize("*CC:DAMAGE*").c_str() << drain << " ^rhit point" << (drain == 1 ? "" : "s") << " from you.\n" << ColorOff;
                     attackDamage.add(drain);
                     if(!pVictim)
@@ -1130,10 +1125,10 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
     }
     //Check for magical armor spell effects and update them...stoneskin, armor, etc..
     //Updates damage too if necessary...
-    //Weird logic is in order to stop this from being called twice due to computing 
+    //Weird logic is in order to stop this from being called twice due to computing
     //bonus damage. Mob's don't pass computeBonus in their computeDamage() function
     //call, whereas players do.
-    if (((player && computingBonus)) || ((enemy && enemy->isMonster())))  
+    if (((player && computingBonus)) || ((enemy && enemy->isMonster())))
         applyMagicalArmor(attackDamage,dmgType);
 
     attackDamage.set(std::max<int>(0, attackDamage.get()));

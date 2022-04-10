@@ -155,6 +155,7 @@ void doTrain(std::shared_ptr<Player> player) {
     player->setFlag(P_JUST_TRAINED);
     broadcast("### %s just made a level!", player->getCName());
     player->print("Congratulations, you made a level!\n\n");
+    // player->setDeathCost(0); // Reset death cost
 
     if(player->canChooseCustomTitle()) {
         player->setFlag(P_CAN_CHOOSE_CUSTOM_TITLE);
@@ -407,20 +408,20 @@ void Player::upLevel() {
     if( cClass == CreatureClass::CLERIC &&
         level >= 19 &&
         deity == CERIS &&
-        !spellIsKnown(S_RESURRECT)
+        !spellIsKnown(S_OLD_RESURRECT)
     ) {
         print("%s has granted you the resurrect spell.\n", gConfig->getDeity(deity)->getName().c_str());
-        learnSpell(S_RESURRECT);
+        learnSpell(S_OLD_RESURRECT);
     }
 
     if( cClass == CreatureClass::CLERIC &&
         !hasSecondClass() &&
         level >= 22 &&
         deity == ARAMON &&
-        !spellIsKnown(S_BLOODFUSION)
+        !spellIsKnown(S_OLD_BLOODFUSION)
     ) {
         print("%s has granted you the bloodfusion spell.\n", gConfig->getDeity(deity)->getName().c_str());
-        learnSpell(S_BLOODFUSION);
+        learnSpell(S_OLD_BLOODFUSION);
     }
 
     if( (cClass == CreatureClass::RANGER || cClass == CreatureClass::DRUID) &&
@@ -610,6 +611,8 @@ int cmdTrain(const std::shared_ptr<Player>& player, cmd* cmnd) {
         maxgold = ((player->getLevel()-22)*500000) + 3000000;
 
     goldneeded = std::min(maxgold, expneeded / 2L);
+    unsigned long deathCost = std::min<long>(player->getDeathCost(), goldneeded);
+    goldneeded += deathCost;
 
     if(player->getRace() == HUMAN)
         goldneeded += goldneeded/3/10; // Humans have +10% training costs.
@@ -626,7 +629,12 @@ int cmdTrain(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if((goldneeded > (player->coins[GOLD] + player->bank[GOLD])) && !player->flagIsSet(P_FREE_TRAIN)) {
         player->print("You don't have enough gold.\n");
-        player->print("You need %ld gold to train.\n", goldneeded);
+        player->print("You need %ld gold to train.", goldneeded);
+        if(deathCost >= 0)
+            player->print(" (%ld payable to the greedy church)", deathCost);
+        if(deathCost != player->getDeathCost())
+            player->print(" [Discounted from %ld!]", player->getDeathCost());
+        player->print("\n");
         return(0);
     }
 

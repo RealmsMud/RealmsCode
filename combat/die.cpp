@@ -74,8 +74,8 @@ class Property;
 //********************************************************************
 // Return: true if player is flagged as Hardcore (death = permanent)
 
-bool Player::isHardcore() const {
-    return(flagIsSet(P_HARDCORE) && !isStaff());
+bool Player::isPermaDeath() const {
+    return(gameMode == GameMode::PermaDeathMode && !isStaff());
 }
 
 //********************************************************************
@@ -85,7 +85,7 @@ bool canDrop(const std::shared_ptr<Player>& player, const std::shared_ptr<Object
 bool delete_drop_obj(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Object>&  object, bool factionCanRecycle);
 
 void Player::hardcoreDeath() {
-    if(!isHardcore())
+    if(!isPermaDeath())
         return;
     auto pThis = Containable::downcasted_shared_from_this<Player>();
     bool factionCanRecycle = !inUniqueRoom() || Faction::willDoBusinessWith(pThis, getUniqueRoomParent()->getFaction());
@@ -132,6 +132,7 @@ void Player::hardcoreDeath() {
     printColor("^RAs a hardcore character, this death is permanent.\n");
     print("\n\n");
     statistics.display(pThis, true);
+    // TODO: Drop a turd... err a statue
     print("\n");
     broadcast("^#^R### %s's soul is lost forever.", getCName());
     hooks.execute("postHardcoreDeath");
@@ -1164,7 +1165,7 @@ void Player::resetPlayer(const std::shared_ptr<Creature>& killer) {
     }
 
     // a hardcore player about to die doesnt need to worry about room movement
-    if(isHardcore() && !killer->isStaff())
+    if(isPermaDeath() && !killer->isStaff())
         same = true;
 
     if(!same) {
@@ -1202,7 +1203,7 @@ void Player::resetPlayer(const std::shared_ptr<Creature>& killer) {
         updateAttackTimer(true, 300);
         pKiller->delDueling(getName());
         delDueling(killer->getName());
-    } else if(isHardcore() && !killer->isStaff()) {
+    } else if(isPermaDeath() && !killer->isStaff()) {
         hardcoreDeath();
         // the player is invalid after this
         return;
@@ -1345,7 +1346,7 @@ void Monster::logDeath(const std::shared_ptr<Creature>& killer) {
 // Handles experience/realms loss & death effects
 
 void Player::loseExperience(const std::shared_ptr<Monster>& killer) {
-    float   xploss=0.0;
+    double   xploss=0.0;
     long    n=0;
     int     count=0;
 
@@ -1357,22 +1358,43 @@ void Player::loseExperience(const std::shared_ptr<Monster>& killer) {
     if(killer->flagIsSet(M_NO_EXP_LOSS) || (killer->isPet() && killer->getMaster()->isStaff()))
         return;
 
-    if(level >= 7)
-        addEffect("death-sickness");
 
-    if(level < 10) {
-        // Under level 10, 10% exp loss
-        xploss = ((float)experience / 10.0);
-        statistics.experienceLost((long)xploss);
-        experience -= (long)xploss;
+    double lossPercentage, goldPercentage;
 
-    } else {
-        // Level 10 and over, 2% exp loss with a minimum of 10k
-        xploss = std::max<long>((long)( (float)experience * 0.02), 10000);
-        statistics.experienceLost((long)xploss);
-        experience -= (long)xploss;
+    switch(getGameMode()) {
+        case GameMode::EasyMode:
+            lossPercentage = 0.40;
+            goldPercentage = 10.0;
+            break;
+        case GameMode::NormalMode:
+        default:
+            lossPercentage = 2.0;
+            goldPercentage = 33.0;
+            break;
+        case GameMode::HardMode:
+            lossPercentage = 20.0;
+            goldPercentage = 100.0;
+            break;
+        case GameMode::PermaDeathMode:
+            // Shouldn't get here
+            lossPercentage = 100.0;
+            goldPercentage = 0.0;
+            break;
+
     }
+    xploss = (double)experience * (lossPercentage/100.0);
+    statistics.experienceLost((long)xploss);
+    experience -= (long)xploss;
+
     print("You have lost %ld experience.\n", (long)xploss);
+
+    if(level >= 7) {
+        long goldCost = (long)(xploss * (goldPercentage/100.0));
+
+        deathCost += goldCost;
+        print("It's too bad this is going to cost you (%ld) when it comes time for training....\n", goldCost);
+    }
+
     n = level - exp_to_lev(experience);
 
     if(n > 1) {
@@ -1383,9 +1405,6 @@ void Player::loseExperience(const std::shared_ptr<Monster>& killer) {
     }
 
     checkLevel();
-//  n = exp_to_lev(experience);
-//  while(level > n)
-//      down_level(this);
 
     for(count=0; count < 6; count++) {      // Random loss to saving throws due to death.
         if(Random::get(1,100) <= 25) {
@@ -1557,9 +1576,6 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
         else // and 25% below 30
             expAmount = (expAmount*3)/4;
     }
-//  // All experience is multiplied by 3/4 for a multi-classed player
-//  if(player->hasSecondClass())
-//      expAmount = (expAmount*3)/4;
 
     int levelDiff = abs((int)player->getLevel() - (int)victim->getLevel());
     float multiplier=1.0;
@@ -1581,9 +1597,22 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
     } // 26+ = 10%
     else
         multiplier = 0.10;
+    switch(getGameMode()) {
+        case GameMode::HardMode:
+        case GameMode::PermaDeathMode:
+            multiplier *= 2;
+            break;
+        default:
+            /* Nothing */;
+    }
+
+    if(player->getGameMode() == GameMode::HardMode) {
+        multiplier *= 2;
+    }
+
     if(multiplier < 1.0) {
 //      player->printColor("^YExp Adjustment: %d%% (%d level difference) %d -> %d\n", (int)(multiplier*100), levelDiff, expAmount, (int)(expAmount*multiplier));
-        expAmount = (int)(expAmount * multiplier);
+        expAmount = (float)(expAmount * multiplier);
         expAmount = std::max(1, expAmount);
     }
 
@@ -2096,7 +2125,7 @@ void Player::die(DeathType dt) {
         curePoison();
 
     // only drop all if killed by player
-    dropEquipment(killedByPlayer && (!killer || !killer->isStaff()), killer);
+    dropEquipment(killedByPlayer && (!killer || !killer->isStaff()), killer ? killer->getSock() : nullptr);
 
     checkDarkness();
     computeAC();
@@ -2106,19 +2135,7 @@ void Player::die(DeathType dt) {
 
     int xploss = 0;
     if(!killedByPlayer) {
-        if(level >= 5)
-            addEffect("death-sickness");
-
-        if(level < 10) {
-            // Under level 10, 10% exp loss
-            xploss = (int)((float)experience / 10.0);
-        } else {
-            // Level 10 and over, 2% exp loss with a minimum of 10k
-            xploss = std::max<long>((long)( (float)experience * 0.02), 10000);
-            print("You have lost %ld experience.\n", (long)xploss);
-        }
-        subExperience((long)xploss);
-
+        loseExperience(nullptr);
     }
 
 
@@ -2158,7 +2175,7 @@ void Player::die(DeathType dt) {
         oldxp, xploss, oldlvl, level, getRoomParent()->fullName().c_str());
 
     if(isHardcore()) {
-        hardcoreDeath();
+        hardcoreDeath(this);
     // if you die in jail, you stay in jail
     } else if(!inJail()) {
         std::shared_ptr<BaseRoom> newRoom = getLimboRoom().loadRoom(Containable::downcasted_shared_from_this<Player>());

@@ -77,7 +77,7 @@ void Player::pulseTick(long t) {
     bool fastTick = room && room->isFastTick();
     bool vampAndDay = isDay() && isNewVampire();
     bool vampAndSunlight = vampAndDay && room && room->isSunlight();
-    bool hardcore = isHardcore();
+    bool hardcore = isPermaDeath();
     bool deathSickness = isEffected("death-sickness");
     bool wounded = isEffected("wounded");
 

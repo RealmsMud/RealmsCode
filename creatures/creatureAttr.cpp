@@ -605,6 +605,7 @@ void Monster::monReset() {
 //*********************************************************************
 
 void Player::plyReset() {
+    gameMode = GameMode::NormalMode;
     wrap = -1;
     cClass2 = CreatureClass::NONE;
     wimpy = 0;
@@ -1630,6 +1631,14 @@ std::shared_ptr<Socket> Player::getSock() const {
 
 void Player::setSock(std::shared_ptr<Socket> pSock) {
     mySock = pSock;
+}
+
+GameMode Player::getGameMode() const {
+    return gameMode;
+}
+
+long Player::getDeathCost() const {
+    return deathCost;
 }
 
 //*********************************************************************

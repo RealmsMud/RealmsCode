@@ -264,59 +264,6 @@ def computeNatural(actor: MudObject, effect: EffectInfo, applier: Optional[MudOb
 #	// manually by the caster
 	return True
 
-def computeDeathSickness(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:
-	duration = 0
-	strength = 1
-
-	# Two minutes per level
-	duration = actor.getLevel() * 30
-	# We'll start the strength out at 100 and reduce it each pulse
-	strength = 100
-
-	effect.setStrength(strength)
-	effect.setDuration(int(duration))
-	return True
-	
-def pulseDeathSickness(actor: MudObject, effect: EffectInfo) -> bool:
-	strength = effect.getStrength()
-	duration = effect.getDuration()
-
-	if not actor.isEffected("petrification") and mud.rand(1,100) < (strength/2):
-		actor.wake("^DA strong urge to vomit wakes you!")
-		actor.send("^GYour death-sickness causes you to vomit. EWWW.\n")
-		actor.unhide()
-
-		# Stun then half of the time for 0-2 seconds
-		if(mud.rand(1,100) < 50):
-			actor.stun(mud.rand(0,2))
-			actor.send("^DYou become disoriented.\n")
-
-
-		if actor.getRoom():
-			mudLib.broadcastRoom(actor.getRoom(), "^G*ACTOR* vomits all over the ground.", actor=actor, ignore=actor)
-
-	newStrength = 0
-	if strength != 0:
-		newStrength = float(strength) - ((float(strength)/float(duration))*20.0)
-
-	if strength > 75 and newStrength <= 75:
-		actor.send("^cYou feel a little better.\n")
-		if actor.getRoom():
-			mudLib.broadcastRoom(actor.getRoom(), "^c*ACTOR* looks a little better.", actor=actor, ignore=actor)
-	elif strength > 50 and newStrength <= 50:
-		actor.send("^cYou feel better.\n")
-		if actor.getRoom():
-			mudLib.broadcastRoom(actor.getRoom(), "^c*ACTOR* looks better.", actor=actor, ignore=actor)
-	elif strength > 25 and newStrength <= 25:
-		actor.send("^cYou are nearly recovered.\n")
-		if actor.getRoom():
-			mudLib.broadcastRoom(actor.getRoom(), "^c*ACTOR* looks nearly recovered.", actor=actor, ignore=actor)
-
-	strength = min(max(newStrength,0), 100)
-	#actor.send("DEATH SICKNESS: New Strength " + str(strength) + ", Duration " + str(duration) + "\n")
-	effect.setStrength(int(strength))
-
-
 # Needs: 
 
 #		Creature::poisonedByPlayer
@@ -325,7 +272,7 @@ def pulsePoison(actor: MudObject, effect: EffectInfo) -> bool:
 	if effect.getName() == "poison":
 		actor.wake("Terrible nightmares disturb your sleep!")
 		actor.send("^r^#Poison courses through your veins.\n")
-		mudLib.broadcastRoom(actor.getRoom(), "^cPoison courses through *LOW-ACTOR*'s veins.", actor=actor, ignore=actor)
+		mudLib.broadcastRoom(actor.getRoom(), "^cPoison courses through *LOW-ACTOR*'s veins.", actor=actor, ignore = actor)
 
 		dmg = effect.getStrength() + mud.rand(1,3)
 		if actor.constitution.getCur() > 120:
@@ -344,7 +291,7 @@ def pulsePoison(actor: MudObject, effect: EffectInfo) -> bool:
 				actor.getMonster().addEnmDmg(player, exp)
 
 		if actor.hp.getCur() < 1:
-			mudLib.broadcastRoom(actor.getRoom(), "*ACTOR* drops dead from poison.", actor=actor, ignore=actor)
+			mudLib.broadcastRoom(actor.getRoom(), "*ACTOR* drops dead from poison.", actor=actor, ignore = actor)
 			actor.setDeathType(mud.DeathType.POISON_GENERAL)
 			if actor.isPlayer():
 				if actor.poisonedByPlayer():
@@ -359,7 +306,7 @@ def pulseDisease(actor: MudObject, effect: EffectInfo) -> bool:
 	if effect.getName() == "disease":
 		actor.wake("Terrible nightmares disturb your sleep!")
 		actor.send("^bYou feel nauseous.\n^r^#Fever grips your mind.\n")
-		mudLib.broadcastRoom(actor.getRoom(), "^cFever grips *LOW-ACTOR*.", actor=actor, ignore=actor)
+		mudLib.broadcastRoom(actor.getRoom(), "^cFever grips *LOW-ACTOR*.", actor=actor, ignore = actor)
 
 		dmg = effect.getStrength() + mud.rand(1,3)
 		if actor.constitution.getCur() > 120:
@@ -371,7 +318,7 @@ def pulseDisease(actor: MudObject, effect: EffectInfo) -> bool:
 		actor.hp.decrease(dmg);
 
 		if actor.hp.getCur() < 1:
-			mudLib.broadcastRoom(actor.getRoom(), "*ACTOR* dies from disease.", actor=actor, ignore=actor)
+			mudLib.broadcastRoom(actor.getRoom(), "*ACTOR* dies from disease.", actor=actor, ignore = actor)
 			actor.setDeathType(mud.DeathType.DISEASE)
 			return False
 	return True
