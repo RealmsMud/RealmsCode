@@ -148,12 +148,17 @@ void Player::init() {
         daily[DL_ENCHA].max = 3;
         daily[DL_FHEAL].max = MAX(3, 3 + (level) / 3);
         daily[DL_TRACK].max = MAX(3, 3 + (level) / 3);
-        daily[DL_DEFEC].max = 1;
-        //  daily[DL_TELEP].max = MAX(3, MAX(2, level/4));
-        daily[DL_TELEP].max = 3;
-        if(level < 13)
+        daily[DL_DEFEC].max = 1;    
+        
+         if(level < 15)
             daily[DL_TELEP].max = 1;
-        //  daily[DL_ETRVL].max = MAX(3, MAX(2, level/4));
+        else
+            daily[DL_TELEP].max = 3;
+
+        // Mages and liches get more ports than other classes; dependent on translocation magic skill
+        if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
+            daily[DL_TELEP].max = MIN(10, (int)getSkillLevel("translocation")/5);
+
         daily[DL_RCHRG].max = MAX(7, level / 2);
         daily[DL_HANDS].max = 3;
 
