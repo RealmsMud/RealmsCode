@@ -181,12 +181,23 @@ int update_monsters() {
 
 int update_quests() {
     json allQuests = json();
+    json questOverview = json();
     for(const auto& [questId, quest] : gConfig->quests) {
         allQuests.push_back(*quest);
+        json qSummary = json();
+        qSummary["id"] = questId.id;
+        qSummary["name"] = quest->getName();
+        qSummary["turnInArea"] = quest->getTurnInMob().area;
+        questOverview.push_back(qSummary);
     }
 
-    std::ofstream file("quests.json");
-    file << std::setw(2) << allQuests << std::endl;
+    std::ofstream questFile("quests.json");
+    questFile << std::setw(2) << allQuests << std::endl;
+
+    std::ofstream summaryFile("questSummary.json");
+    summaryFile << std::setw(2) << questOverview << std::endl;
+
+
     return 1;
 }
 
