@@ -517,9 +517,9 @@ int Creature::getMaxBulk() const {
     case SIZE_SMALL:
         return(158);
     case SIZE_LARGE:
-        return(185);
-    case SIZE_HUGE:
         return(278);
+    case SIZE_HUGE:
+        return(323);
     case SIZE_GARGANTUAN:
         return(368);
     case SIZE_COLOSSAL:
