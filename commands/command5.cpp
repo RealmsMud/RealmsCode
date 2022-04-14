@@ -404,11 +404,11 @@ int cmdWho(Player* player, cmd* cmnd) {
 
     whoStr << "\n^BPlayers currently online:\n";
     whoStr << "-------------------------------------------------------------------------------^x\n";
+    auto cmp = [](const Player* a, const Player* b) { return a->getSock()->getHostname() < b->getSock()->getHostname(); };
+    std::multiset<Player*, decltype(cmp)> sortedPlayers;
+    for(const auto& [pId, ply] : gServer->players) sortedPlayers.insert(ply);
 
-    Player* target=0;
-    for(std::pair<std::string, Player*> p : gServer->players) {
-        target = p.second;
-
+    for(const auto& target : sortedPlayers) {
         if(!target->isConnected()) continue;
         if(target->flagIsSet(P_DM_INVIS) && player->getClass() < target->getClass()) continue;
         if(target->isEffected("incognito") && player->getClass() < target->getClass() && player->getParent() != target->getParent()) continue;
