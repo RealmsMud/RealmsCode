@@ -36,6 +36,7 @@
 #include "flags.hpp"                           // for P_DM_INVIS
 #include "mudObjects/players.hpp"              // for Player
 #include "server.hpp"                          // for Server, PlayerMap, gSe...
+#include "socket.hpp"                          // for Socket
 
 void Config::clearWebhookTokens() {
     webhookTokens.clear();
@@ -52,7 +53,11 @@ std::string getWho() {
     std::ostringstream whoStr;
 
     whoStr << "```\n";
-    for(const auto& [pId, player] : gServer->players) {
+    auto cmp = [](const Player* a, const Player* b) { return a->getSock()->getHostname() < b->getSock()->getHostname(); };
+    std::multiset<Player*, decltype(cmp)> sortedPlayers;
+    for(const auto& [pId, ply] : gServer->players) sortedPlayers.insert(ply);
+
+    for(const auto& player : sortedPlayers) {
         if(!player->isConnected()) continue;
         if(player->flagIsSet(P_DM_INVIS)) continue;
         if(player->isEffected("incognito")) continue;

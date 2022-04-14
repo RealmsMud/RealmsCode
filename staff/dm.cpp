@@ -625,16 +625,17 @@ int dmUsers(Player* player, cmd* cmnd) {
         oStr << "Room                 Address             Last Command      Idle";
     oStr << "\n---------------------------------------------------------------------------------------\n";
 
-    //std::pair<std::string, Player*> p;
-    for(Socket &sock : gServer->sockets) {
-        //user = p.second;
-        //sock = user->getSock();
-        user = sock.getPlayer();
+    auto cmp = [](const Socket* a, const Socket* b) { return a->getHostname() < b->getHostname(); };
+    std::multiset<Socket*, decltype(cmp)> sortedSockets;
+    for(auto &sock : gServer->sockets) sortedSockets.insert(&sock);
+
+    for(const auto &sock : sortedSockets) {
+        user = sock->getPlayer();
 
         if(!user || !player->canSee(user))
             continue;
 
-        host = sock.getHostname();
+        host = sock->getHostname();
         if(user->isDm() && !player->isDm())
             host = "mud.rohonline.net";
 
@@ -674,8 +675,8 @@ int dmUsers(Player* player, cmd* cmnd) {
         else
             oStr << std::setw(10) << std::string(user->getName() + "(" + user->getProxyName() + ")").substr(0, 10) << "^w ";
 
-        if(!sock.isConnected()) {
-            sprintf(str, "connecting (Fd: %d)", sock.getFd());
+        if(!sock->isConnected()) {
+            sprintf(str, "connecting (Fd: %d)", sock->getFd());
             oStr << "^Y" << std::setw(20) << str << " ^c" << std::setw(37) << host.substr(0, 37);
         } else if(full) {
             oStr << "^m" << std::setw(58) << host.substr(0, 58);
@@ -701,7 +702,7 @@ int dmUsers(Player* player, cmd* cmnd) {
                 oStr << std::setw(17) << "l";
         }
 
-        sprintf(str, "%02ld:%02ld", (t-sock.ltime)/60L, (t-sock.ltime)%60L);
+        sprintf(str, "%02ld:%02ld", (t-sock->ltime)/60L, (t-sock->ltime)%60L);
         oStr << " ^w" << str << "\n";
     }
 
