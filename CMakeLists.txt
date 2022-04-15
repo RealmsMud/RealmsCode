@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.15...3.19)
 project(RealmsCode)
 include(FetchContent)
 
-add_subdirectory(lib/pybind11)
-
 set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
@@ -17,6 +15,9 @@ set(DPP_LIB_NAME "dpp")
 set(JSON_LIB_NAME "nlohmann_json::nlohmann_json")
 set(JSON_MultipleHeaders ON)
 
+set(HTTP_LIB_NAME "Crow::Crow")
+set(CROW_FEATURES ssl compression)
+
 set(Python_ADDITIONAL_VERSIONS 3.8)
 
 find_package(LibXml2 REQUIRED)
@@ -26,13 +27,12 @@ find_package(PythonLibs 3.8 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
+find_package(OpenSSL REQUIRED)
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
 message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
-
-include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} lib/pybind11/include)
 
 include_directories("include")
 
@@ -47,8 +47,14 @@ ENDIF()
 
 message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
 
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz)
-FetchContent_MakeAvailable(json)
+FetchContent_Declare(json     URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz    )
+FetchContent_Declare(pybind11 GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v2.9.2      )
+FetchContent_Declare(crow     GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.0+1      )
+FetchContent_Declare(dpp      GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.0.6     )
+
+FetchContent_MakeAvailable(pybind11 json crow dpp )
+
+include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR} "include")
 
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -g" )
 
@@ -435,11 +441,22 @@ set(COMMON_SOURCE_FILES
     python/mudStat.cpp
 
     wip/fighters.cpp
-)
+    server/httpServer.cpp)
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 
-target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES} ${DPP_LIB_NAME} ${JSON_LIB_NAME})
+target_link_libraries(
+    RealmsLib
+    ${Boost_LIBRARIES}
+    ${PYTHON_LIBRARIES}
+    ${LIBXML2_LIBRARIES}
+    ${OPENSSL_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${ASPELL_LIBRARIES}
+    ${DPP_LIB_NAME}
+    ${JSON_LIB_NAME}
+    ${HTTP_LIB_NAME}
+)
 
 add_executable(RealmsCode ${REALMS_SOURCE_FILES})
 
