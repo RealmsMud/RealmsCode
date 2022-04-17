@@ -280,41 +280,46 @@ int cmdLayHands(Player* player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->knowsSkill("hands")) {
-        player->print("You don't know how to lay your hands on someone properly.\n");
+        *player << "You do not have the ability to heal with lay on hands.\n";
         return(0);
     }
+
     if(!player->isCt()) {
         if(player->getAdjustedAlignment() < ROYALBLUE) {
-            player->print("You may only do that when your alignment is totally pure.\n");
+            *player << "You may only do that when your alignment is totally pure.\n";
             return(0);
         }
+    }
 
-        i = player->lasttime[LT_LAY_HANDS].ltime + player->lasttime[LT_LAY_HANDS].interval;
+    i = player->lasttime[LT_LAY_HANDS].ltime + player->lasttime[LT_LAY_HANDS].interval;
       
-        if(i > t) {
-            player->pleaseWait(i-t);
-            return(0);
-        }
+    if(i > t && !player->isCt()) {
+        player->pleaseWait(i-t);
+        return(0);
     }
 
 
     // Lay on self
     if(cmnd->num == 1) {
 
-        num = Random::get( (int)(player->getSkillLevel("hands")*4), (int)(player->getSkillLevel("hands")*5) ) + Random::get(2,8);
-        player->print("You heal yourself with the power of %s.\n", gConfig->getDeity(player->getDeity())->getName().c_str());
-        player->print("You regain %d hit points.\n", MIN<int>((player->hp.getMax() - player->hp.getCur()), num));
+        if (player->hp.getCur() >= player->hp.getMax()) {
+            *player << "You are already at full health.\n";
+            return(0);
+        }
+        //TODO: Change heal amount calc to use hands skill level once skill trainers are put in. Until then, use player level
+        num = Random::get( (int)(player->getLevel()*4), (int)(player->getLevel()*5) ) + Random::get(1,10);
 
+        *player << "You regain " << MIN<int>(num,(player->hp.getMax() - player->hp.getCur())) << " hit points.\n";
 
         player->doHeal(player, num);
 
         broadcast(player->getSock(), player->getParent(), "%M heals %sself with the power of %s.",
             player, player->himHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
 
-        player->print("You feel much better now.\n");
+        *player << "You feel much better now.\n";
         player->checkImprove("hands", true);
         player->lasttime[LT_LAY_HANDS].ltime = t;
-        player->lasttime[LT_LAY_HANDS].interval = 1200L;
+        player->lasttime[LT_LAY_HANDS].interval = 600L;
 
     } else {
         // Lay hands on another player or monster
@@ -322,30 +327,36 @@ int cmdLayHands(Player* player, cmd* cmnd) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         creature = player->getParent()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
         if(!creature) {
-            player->print("That person is not here.\n");
+            *player << "That person is not here.\n";
             return(0);
         }
 
         if(creature->pFlagIsSet(P_LINKDEAD) && creature->getClass() !=  CreatureClass::LICH) {
-            player->print("That won't work on %N right now.\n", creature);
+            *player << "That won't work on " << creature << " right now.\n";
             return(0);
         }
 
         if(!player->isCt() && creature->isUndead()) {
-            player->print("That will not work on undead.\n");
+            *player << "That will not work on undead.\n";
+            return(0);
+        }
+
+        if(creature->hp.getCur() >= creature->hp.getMax()) {
+            *player << "That is not necessary, since " << creature << " is already at full health.\n";
             return(0);
         }
 
         if(creature->getAdjustedAlignment() < NEUTRAL) {
-            player->print("%M is not pure enough of heart for that to work.\n", creature);
+            *player << "Unfortunately, " << creature << " is not pure enough of heart right now.\n";
             return(0);
         }
 
-        num = Random::get( (int)(player->getSkillLevel("hands")*4), (int)(player->getSkillLevel("hands")*5) ) + Random::get(2,8);
+        num = Random::get( (int)(player->getLevel()*4), (int)(player->getLevel()*5) ) + Random::get(1,10);
 
-        player->print("You heal %N with the power of %s.\n", creature, gConfig->getDeity(player->getDeity())->getName().c_str());
-        creature->print("%M lays %s hand upon your pate.\n", player, player->hisHer());
-        creature->print("You regain %d hit points.\n", MIN<int>((creature->hp.getMax() - creature->hp.getCur()), num));
+        *player << "You heal " << creature << " with the power of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
+
+        *creature << player << " lays " << player->hisHer() << " hand upon your pate.\n";
+        *creature << "You regain " << (MIN<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
 
 
         player->doHeal(creature, num);
@@ -353,7 +364,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
         broadcast(player->getSock(), creature->getSock(), creature->getRoomParent(), "%M heals %N with the power of %s.",
             player, creature, gConfig->getDeity(player->getDeity())->getName().c_str());
 
-        creature->print("You feel much better now.\n");
+        *creature << "You feel much better now.\n";
 
         player->lasttime[LT_LAY_HANDS].ltime = t;
         player->lasttime[LT_LAY_HANDS].interval = 600L;
@@ -400,11 +411,11 @@ int cmdPray(Player* player, cmd* cmnd) {
         }
     } else {
         if(player->isEffected("prayer")) {
-            player->print("Your spiritual blessing prevents you from praying.\n");
+            player->print("Your current spiritual blessing prevents you from praying.\n");
             return(0);
         }
         if(player->isEffected("damnation")) {
-            player->print("Your spiritual condemnation prevents you from praying.\n");
+            player->print("Your current spiritual damnation prevents you from praying.\n");
             return(0);
         }
     }

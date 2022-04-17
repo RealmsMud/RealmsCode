@@ -84,7 +84,7 @@ void init_module_mud(py::module &m) {
 
 
     py::enum_< religions>(m, "religions")
-            .value("ATHEIST", ATHEIST)
+            .value("ATHEISM", ATHEISM)
             .value("ARAMON", ARAMON)
             .value("CERIS", CERIS)
             .value("ENOCH", ENOCH)
