@@ -73,7 +73,6 @@ void startup_mordor() {
         loge("couldn't create pid file %s: %s\n", buf, strerror(errno));
     }
 
-    std::clog << "Starting Sock Loop\n";
     gServer->run();
 
 }

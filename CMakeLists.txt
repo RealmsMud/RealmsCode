@@ -41,8 +41,9 @@ set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 if($ENV{LEAK})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1 -fsanitize=address -fno-omit-frame-pointer -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/blacklist.txt")
+    message("-- Enabling address sanitizer")
 ELSE()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og")
 ENDIF()
 
 message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
@@ -194,7 +195,7 @@ set(COMMON_HEADER_FILES
     include/web.hpp
     include/xml.hpp
     include/zone.hpp
-    )
+    include/httpServer.hpp)
 
 set(COMMON_SOURCE_FILES
     fmt/format.cc
@@ -348,6 +349,7 @@ set(COMMON_SOURCE_FILES
     server/discordBot.cpp
     server/flags.cpp
     server/global.cpp
+    server/httpServer.cpp
     server/hooks.cpp
     server/log.cpp
     server/login.cpp

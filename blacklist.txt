@@ -1,7 +1,9 @@
 fun:boost::python::handle_exception_impl
+fun:xml*
 src:pythonHandler.cpp
 src:access.cpp
 interceptor_via_lib:libpython3.5m
 interceptor_via_lib:libboost_python-py35
 interceptor_via_lib:libc.so.6
+interceptor_via_lib:libxml2.so.2*
 
