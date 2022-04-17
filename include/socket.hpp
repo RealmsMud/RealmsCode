@@ -334,8 +334,8 @@ protected:
     bool        oneIAC{};
     bool        watchBrokenClient{};
 
-    std::string     output;
-    std::string     processedOutput;   // Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
+    std::stringstream output;
+    std::string       processedOutput;   // Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
 
     std::queue<std::string> input;      // Processed Input buffer
 

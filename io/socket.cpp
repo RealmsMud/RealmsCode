@@ -1417,12 +1417,12 @@ void Socket::appendPaged(std::string_view toAppend) {
 
 void Socket::bprint(std::string_view toPrint) {
     if (!toPrint.empty())
-        output.append(toPrint);
+        output << toPrint;
 }
 
 void Socket::bprintPython(const std::string& toPrint) {
     if (!toPrint.empty())
-        output.append(toPrint);
+        output << toPrint;
 }
 
 //********************************************************************
@@ -1467,9 +1467,9 @@ void Socket::flush() {
     if(!processedOutput.empty()) {
         n = write(processedOutput, false, false);
     } else {
-        if ((n = write(output)) == 0)
+        if ((n = write(output.str())) == 0)
             return;
-        output.clear();
+        output = std::stringstream();
     }
     // If we only wrote OOB data or partial data was written because of EWOULDBLOCK,
     // then n is -2, don't send a prompt in that case
@@ -1729,7 +1729,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
 //********************************************************************
 
 bool Socket::hasOutput() const {
-    return (!processedOutput.empty() || !output.empty());
+    return (!processedOutput.empty() || output.rdbuf()->in_avail());
 }
 
 //********************************************************************

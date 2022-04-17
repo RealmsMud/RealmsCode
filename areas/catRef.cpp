@@ -167,3 +167,8 @@ xmlNodePtr CatRef::save(xmlNodePtr curNode, const char* childName, bool saveNonZ
         xml::newNumProp(curNode, "Num", pos);
     return(curNode);
 }
+
+CatRef::CatRef(std::string& pArea, short pId) {
+    area = pArea;
+    id = pId;
+}

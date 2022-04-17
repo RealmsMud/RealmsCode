@@ -63,6 +63,7 @@ class PythonHandler;
 class ReportedMsdpVariable;
 class Socket;
 class WebInterface;
+class HttpServer;
 
 namespace dpp {
     class cluster;
@@ -164,6 +165,7 @@ private:
     std::list<DelayedAction> delayedActionQueue;
 
     PythonHandler* pythonHandler;
+    HttpServer* httpServer;
 
     std::list<BaseRoom*> effectsIndex;
 
@@ -212,7 +214,10 @@ public:
 // Internal Methods
 private:
     bool initDiscordBot();
+    bool initHttpServer();
+
     void cleanupDiscordBot();
+    void cleanupHttpServer();
 
     size_t getNumSockets() const; // Get number of sockets in the sockets list
 
@@ -356,7 +361,8 @@ public:
     void setRebooting();
     void setValgrind();
 
-    int run(); // Run the server
+    void run(); // Run the server
+    void stop(); // Run the server
     int addListenPort(int); // Add a new port to listen to
 
     // Status

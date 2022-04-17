@@ -61,6 +61,7 @@
 #include "flags.hpp"                                // for M_PERMENANT_MONSTER
 #include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for FATAL, ALLITEMS
+#include "httpServer.hpp"                           // for HttpServer
 #include "lasttime.hpp"                             // for lasttime
 #include "login.hpp"                                // for CON_DISCONNECTING
 #include "magic.hpp"                                // for S_CURE_POISON
@@ -157,6 +158,7 @@ Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCach
     maxPlayerId = maxObjectId = maxMonsterId = 0;
     loadDnsCache();
     pythonHandler = nullptr;
+    httpServer = nullptr;
     idDirty = false;
 
 #ifdef SQL_LOGGER
@@ -182,10 +184,11 @@ Server::~Server() {
     effectsIndex.clear();
     PythonHandler::cleanUpPython();
     cleanupDiscordBot();
+    cleanupHttpServer();
+
 
     clearAreas();
     delete vSockets;
-
 #ifdef SQL_LOGGER
     cleanUpSql();
 #endif // SQL_LOGGER
@@ -250,6 +253,7 @@ bool Server::init() {
     std::clog << "Loading Areas..." << (loadAreas() ? "done" : "*** FAILED ***") << std::endl;
     gConfig->loadAfterPython();
 
+    initHttpServer();
     initDiscordBot();
 
 
@@ -358,13 +362,16 @@ void Server::populateVSockets() {
 //                      run
 //********************************************************************
 
-int Server::run() {
+void Server::run() {
     ServerTimer timer{};
     if(!running) {
         std::cerr << "Not bound to any ports, exiting." << std::endl;
         exit(-1);
     }
 
+    httpServer->run();
+
+    std::clog << "Starting Sock Loop\n";
     while(running) {
         if(!children.empty()) reapChildren();
 
@@ -403,7 +410,6 @@ int Server::run() {
         timer.sleep();
     }
 
-    return(0);
 }
 
 //********************************************************************
@@ -2425,4 +2431,9 @@ int Server::saveStorage(const CatRef& cr) {
     }
 
     return(0);
+}
+
+void Server::stop() {
+    if(httpServer) httpServer->stop();
+
 }

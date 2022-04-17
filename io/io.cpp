@@ -472,8 +472,9 @@ void shutdown_now(int sig) {
     loge("--- Game shutdown via signal\n");
     gServer->resaveAllRooms(1);
     gServer->saveAllPly();
+    gServer->stop();
 
-    std::clog << "Goodbye.\n";
+    std::clog << "Goodbye." << std::endl;
     exit(0);
 }
 
