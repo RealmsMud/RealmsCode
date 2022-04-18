@@ -990,9 +990,9 @@ bool Config::loadEffects() {
         .applyScript("actor.addStatModEffect(effect)")
         .unApplyScript("actor.remStatModEffect(effect)")
         .selfAddStr("^yYou feel extremely pious.^x")
-        .roomAddStr("^y*ACTOR* bows *A-HISHER* head in prayer.^x")
+        .roomAddStr("^y*ACTOR* is more pious.^x")
         .selfDelStr("^yYou feel less pious.^x")
-        .roomDelStr("^y*ACTOR* looks less pious.^x"),
+        .roomDelStr("^y*ACTOR* is less pious.^x"),
       effects
     );
     addToSet(

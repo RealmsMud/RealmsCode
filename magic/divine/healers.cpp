@@ -385,6 +385,8 @@ int cmdPray(Player* player, cmd* cmnd) {
     long    i=0, t=0;
     int     chance=0;
 
+    std::ostringstream failStr, succStr;
+
     player->clearFlag(P_AFK);
 
 
@@ -392,30 +394,31 @@ int cmdPray(Player* player, cmd* cmnd) {
         return(0);
 
     if(!player->knowsSkill("pray")) {
-        player->print("You say a quick prayer.\n");
+        *player << "You say a quick prayer.\n";
         return(0);
     }
+
     if(player->isEffected("pray") || player->isEffected("dkpray")) {
-        player->print("You've already prayed.\n");
+        *player << gConfig->getDeity(player->getDeity())->getName() << " has already answered your prayers.\n";
         return(0);
     }
 
     if(player->getClass() == CreatureClass::DEATHKNIGHT) {
         if(player->isEffected("strength")) {
-            player->print("Your magically enhanced strength prevents you from praying.\n");
+            *player << "Your magically enhanced strength prevents you from praying.\n";
             return(0);
         }
         if(player->isEffected("enfeeblement")) {
-            player->print("Your magically reduced strength prevents you from praying.\n");
+            *player << "Your magically reduced strength prevents you from praying.\n";
             return(0);
         }
     } else {
         if(player->isEffected("prayer")) {
-            player->print("Your current spiritual blessing prevents you from praying.\n");
+            *player << "Your current spiritual blessing prevents you from praying.\n";
             return(0);
         }
         if(player->isEffected("damnation")) {
-            player->print("Your current spiritual damnation prevents you from praying.\n");
+            *player << "Your current spiritual damnation prevents you from praying.\n";
             return(0);
         }
     }
@@ -429,17 +432,97 @@ int cmdPray(Player* player, cmd* cmnd) {
     }
 
     if(player->getClass()==CreatureClass::DEATHKNIGHT)
-        chance = MIN(85, (int)(player->getSkillLevel("pray") * 10) + (bonus(player->strength.getCur()) * 5));
+        chance = MIN<int>(8500, (player->getSkillLevel("pray") * 750) + player->strength.getCur() * 5);
     else
-        chance = MIN(85, (int)(player->getSkillLevel("pray") * 20) + bonus(player->piety.getCur()));
+        chance = MIN<int>(8500, (player->getSkillLevel("pray") * 1500) + player->piety.getCur() );
 
-    if(Random::get(1, 100) <= chance) {
+   if (player->isCt()) {
+        *player << "Pray chance (adjusted): " << chance << "\n";
+        *player << "DKNIGHT (unadjusted): " << (player->getSkillLevel("pray") * 750) + player->strength.getCur() * 5 << ".\n";
+        *player << "OTHERS (unadjusted): " << (player->getSkillLevel("pray") * 1500) + player->piety.getCur()  << ".\n";
+
+   }
+
+    switch(player->getDeity()) {
+            case ARAMON:
+                *player << "You pray for the " << (player->getClass() == CreatureClass::CLERIC ? "wrath":"dark power") << " of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
+                broadcast(player->getSock(),player->getParent(), "%M prays for the %s of %s.", player, player->getClass() == CreatureClass::CLERIC ? "wrath":"dark power", gConfig->getDeity(player->getDeity())->getName().c_str());
+                failStr << gConfig->getDeity(player->getDeity())->getName() << " scoffed at your prayer.\n";
+                succStr << gConfig->getDeity(player->getDeity())->getName() << " has reluctantly granted his " << (player->getClass() == CreatureClass::CLERIC ? "wrath":"dark power") << ". It'd be unwise of you to fail him.\n";
+            break;
+            case CERIS:
+                *player << "You expose yourself and dance, doing a fertility ritual for " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
+                broadcast(player->getSock(),player->getParent(), "%M exposes %sself and dances, doing a fertility ritual for %s.", player, player->himHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                failStr << gConfig->getDeity(player->getDeity())->getName() << " found your exposition dance inadequate.\n";
+                succStr << gConfig->getDeity(player->getDeity())->getName() << " found your exposition dance worthy and granted your prayer.\n";
+            break;
+            case ENOCH:
+                *player << "You pray for the rightenousness of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
+                broadcast(player->getSock(),player->getParent(), "%M prays for the righteousness of %s.", player, gConfig->getDeity(player->getDeity())->getName().c_str());
+                failStr << gConfig->getDeity(player->getDeity())->getName() << " found your worthiness lacking.\n";
+                succStr << gConfig->getDeity(player->getDeity())->getName() << " has granted your prayer. Go forth and smite injustice in his name!\n";
+            break;
+            case GRADIUS:
+                *player << "You rub some dirt between your hands, praying for wisdom from " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
+                broadcast(player->getSock(),player->getParent(), "%M rubs dirt between %s hands, praying for wisdom from %s.", player, player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                failStr << gConfig->getDeity(player->getDeity())->getName() << " is subbornly silent to your prayer.\n";
+                succStr << gConfig->getDeity(player->getDeity())->getName() << " has proudly granted your prayer.\n";
+            break;
+            case ARES:
+                *player << "You smear blood across your face, praying to " << gConfig->getDeity(player->getDeity())->getName() << " for good fortune in battle.\n";
+                 broadcast(player->getSock(),player->getParent(), "%M smears blood across %s face, praying to %s for good fortune in battle.", player, player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                failStr << gConfig->getDeity(player->getDeity())->getName() << " found your blood ritual lacking.\n";
+                succStr << "Rage and violence flow through you as " << gConfig->getDeity(player->getDeity())->getName() << " grants your prayer.\n";
+            break;
+            case KAMIRA:
+                *player << "You slam a shot of whiskey and toss your holy dice, praying for the luck of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
+                broadcast(player->getSock(),player->getParent(), "%M prays to %s, slamming a shot of whiskey and throwing %s holy dice.", player, gConfig->getDeity(player->getDeity())->getName().c_str(), player->hisHer());
+                failStr << "Unfortunately, " << gConfig->getDeity(player->getDeity())->getName() << " didn't like your roll and whimsically refused your prayer.\n";
+                succStr << gConfig->getDeity(player->getDeity())->getName() << " decided your roll was adequate and happily granted your prayer.\n";
+            break;
+            case LINOTHAN:
+                *player << "You begin an intricate sword dancing ritual, praying to " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
+                broadcast(player->getSock(),player->getParent(), "%M does an intricate sword dancing ritual, praying to %s.", player, gConfig->getDeity(player->getDeity())->getName().c_str());
+                failStr << gConfig->getDeity(player->getDeity())->getName() << " found your sword dancing ritual lacking.\n";
+                succStr << gConfig->getDeity(player->getDeity())->getName() << " was impressed by your sword dancing ritual and has granted your prayer.\n";
+            break;
+            case ARACHNUS:
+                *player << "You prostrate yourself and beg to " << gConfig->getDeity(player->getDeity())->getName() << " for favor.\n";
+                broadcast(player->getSock(),player->getParent(), "%M prostrates %sself and begs for the favor of %s.", player, player->himHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                failStr << gConfig->getDeity(player->getDeity())->getName() << " blatantly ignored your pathetic prostration.\n";
+                succStr << gConfig->getDeity(player->getDeity())->getName() << " has whimsically granted you favor.\n";
+            break;
+            case MARA:
+                *player << "You fall to your knees and pray for the guidance of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
+                broadcast(player->getSock(),player->getParent(),"%M falls to %s knees and prays for guidance from %s.", player, player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                failStr << gConfig->getDeity(player->getDeity())->getName() << " refused to answer your prayer.\n";
+                succStr << gConfig->getDeity(player->getDeity())->getName() << " has responded and warmly granted your prayer.\n";
+            break;
+            case JAKAR:
+                *player << "You ritually count your coins, praying for wisdom from " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
+                broadcast(player->getSock(),player->getParent(),"%M ritually counts %s coins, praying for wisdom from %s.", player, player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                failStr << gConfig->getDeity(player->getDeity())->getName() << " ignored your counting ritual and didn't answer your prayer.\n";
+                succStr << gConfig->getDeity(player->getDeity())->getName() << " has answered your prayer. Go forth in the name of profits!\n";
+            break;
+            default:
+                *player << "You rant and rave over the fallacy of the worlds' religions, mockingly pretending to pray.\n";
+                broadcast(player->getSock(), player->getParent(), "%M rants and raves over the fallacy of all the worlds' religions, mockingly pretending to pray.", player);
+                failStr << "Fortunately, the universe refused to listen to you, just as it should be!\n";
+                succStr << "WTF! The universe...or something...answered your prayer!\n";
+            break;
+        }
+
+
+ 
+
+    if(Random::get(1, 10000) <= chance) {
         player->lasttime[LT_PRAY].ltime = t;
 
+        *player << succStr.str();
+
         if(player->getClass() !=  CreatureClass::DEATHKNIGHT) {
-            broadcast(player->getSock(), player->getParent(), "%M bows %s head in prayer.", player, player->hisHer());
             player->addEffect("pray", 450L, 50);
-            player->lasttime[LT_PRAY].interval = 600;
+            player->lasttime[LT_PRAY].interval = 600L;
         } else {
             player->addEffect("dkpray", 240L, 30);
             player->computeAC();
@@ -448,13 +531,9 @@ int cmdPray(Player* player, cmd* cmnd) {
         }
         player->checkImprove("pray", true);
     } else {
-        if(player->getClass() !=  CreatureClass::DEATHKNIGHT) {
-            player->print("Your prayers were not answered.\n");
-        } else {
-            player->print("The evil in your soul fails to aid you.\n");
-        }
+        
+        *player << failStr.str();
         player->checkImprove("pray", false);
-        broadcast(player->getSock(), player->getParent(), "%M prays.", player);
         player->lasttime[LT_PRAY].ltime = t - 590L;
     }
 
