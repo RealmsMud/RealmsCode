@@ -354,8 +354,9 @@ int cmdLayHands(Player* player, cmd* cmnd) {
         num = Random::get( (int)(player->getLevel()*4), (int)(player->getLevel()*5) ) + Random::get(1,10);
 
         *player << "You heal " << creature << " with the power of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
+        *player << creature->upHeShe() <<  " gained " << (MIN<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
 
-        *creature << player << " lays " << player->hisHer() << " hand upon your pate.\n";
+        *creature << setf(CAP) << player << " lays " << player->hisHer() << " hand upon your pate.\n";
         *creature << "You regain " << (MIN<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
 
 

@@ -1046,7 +1046,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 
 
 
-    *creature << player << " touches you with " << player->hisHer() << " malevolent hand!\n";
+    *creature << setf(CAP) << player << " touches you with " << player->hisHer() << " malevolent hand!\n";
     broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M touches %N with %s malevolent hand!", player, creature, player->hisHer());
 
 
@@ -1075,7 +1075,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
         *player << "Your harmful touch did " << ColorOn << player->customColorize("*CC:DAMAGE*") << num << ColorOff << " damage!\n";
         player->checkImprove("harm", true);
         if (creature->isPlayer() && (creature->getClass() != CreatureClass::LICH)) 
-            *creature << player << "'s harmful touch tears through your body for " << ColorOn << creature->customColorize("*CC:DAMAGE*") << num << ColorOff << " damage!\n";
+            *creature << setf(CAP) << player << "'s harmful touch tears through your body for " << ColorOn << creature->customColorize("*CC:DAMAGE*") << num << ColorOff << " damage!\n";
         player->lasttime[LT_LAY_HANDS].interval = 600L;
 
         player->statistics.attackDamage(num,"harm touch");
@@ -1084,7 +1084,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
             if (creature->hp.getCur() < creature->hp.getMax()) {
                 player->doHeal(creature, MIN<int>(num,(creature->hp.getMax() - creature->hp.getCur())));
                 *player << "Your harmful touch healed " << creature << "!\n";
-                *creature << "You are healed by " << player << "'s evil touch.\n";
+                *creature << "You are healed by " << setf(CAP) << player << "'s evil touch.\n";
             }
         } 
         else 
