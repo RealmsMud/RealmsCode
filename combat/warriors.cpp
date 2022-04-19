@@ -1002,26 +1002,25 @@ int cmdTrack(Player* player, cmd* cmnd) {
 
 int cmdHarmTouch(Player* player, cmd* cmnd) {
     Creature* creature=nullptr;
-    int     num=0, chance=0;
+    int     num=0, chance=0, modifier=0;
     long    t=time(nullptr), i=0;
 
 
     player->clearFlag(P_AFK);
 
     if(!player->knowsSkill("harm")) {
-        player->print("You are unable to use harm touch.\n");
+        *player << "You are unable to use harm touch.\n";
         return(0);
     }
 
     if(player->getAdjustedAlignment() != BLOODRED && !player->isCt()) {
-        player->print("The corruption in your soul needs to be more vile.\n");
+        *player << "The corruption in your soul needs to be more vile.\n";
         return(0);
     }
 
-   
     i = player->lasttime[LT_LAY_HANDS].ltime + player->lasttime[LT_LAY_HANDS].interval;
       
-    if(i > t) {
+    if(i > t && !player->isCt()) {
         player->pleaseWait(i-t);
         return(0);
     }
@@ -1036,11 +1035,9 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
     player->smashInvis();
     player->interruptDelayedActions();
 
-    if( (creature->isMonster() && creature->isEffected("resist-magic")) ||
-        (creature->isPlayer() && creature->isEffected("resist-magic"))
-    ) {
+    if (creature->isEffected("resist-magic")) {
         if(!player->isCt() && Random::get(1,100) > 50) {
-            player->print("Your harm touch failed!\n");
+            *player << "Your harm touch failed!\n";
             player->checkImprove("harm", true);
             player->lasttime[LT_LAY_HANDS].interval = 45L;
             return(0);
@@ -1049,47 +1046,55 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 
 
 
-    creature->print("%M hits you with fists shrouded in darkness!\n", player);
-    broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M hits %N with fists shrouded in darkness!", player, creature);
+    *creature << setf(CAP) << player << " touches you with " << player->hisHer() << " malevolent hand!\n";
+    broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M touches %N with %s malevolent hand!", player, creature, player->hisHer());
 
 
-    chance = 65 + ((int)(player->getSkillLevel("harm") - creature->getLevel())*10) +
-            (2*(bonus(player->piety.getCur()) - bonus(creature->piety.getCur())));
-    chance = MIN(95,chance);
+    chance = 6500;
 
-    if(player->isCt())
-        chance = 100;
+    modifier += ((player->getLevel() - creature->getLevel())*100);          //Level difference
+    modifier += 20*(player->piety.getCur() - creature->piety.getCur());     //Piety difference
 
-    //  if(((creature->getClass() == CreatureClass::LICH && creature->getLevel() >= 7) ||
-    //      (creature->isEffected("lycanthropy") && creature->getClass() >=10)) && !player->isCt())
-    //      chance = 0;
+    chance += modifier;
+
+    chance = MIN(9500,chance);
+
+    if(player->isCt()) {
+        *player << "Chance: " << chance << "\n";
+        chance = 10000;
+    }
+
+    
     if(creature->isMonster())
         creature->getAsMonster()->addEnemy(player);
 
-    if(Random::get(1,100) <= chance) {
-
-        num = Random::get( (int)(player->getSkillLevel("harm")*4), (int)(player->getSkillLevel("harm")*5) ) + Random::get(2,8);
-        player->print("The darkness within you flows into %N.\n", creature);
-        player->printColor("Your harm touch did %s%d^x damage!\n", player->customColorize("*CC:DAMAGE*").c_str(), num);
+    if(Random::get(1,10000) <= chance) {
+        //TODO: Adjust damage calc to use harm touch skill level once skill trainers are put in - for now, use player level
+        num = Random::get( (int)(player->getLevel()*4), (int)(player->getLevel()*5) ) + Random::get(1,10);
+        *player << "The darkness within you flows into " << creature << ".\n";
+        *player << "Your harmful touch did " << ColorOn << player->customColorize("*CC:DAMAGE*") << num << ColorOff << " damage!\n";
         player->checkImprove("harm", true);
-        creature->print("%M harm touches you!\n", player);
+        if (creature->isPlayer() && (creature->getClass() != CreatureClass::LICH)) 
+            *creature << setf(CAP) << player << "'s harmful touch tears through your body for " << ColorOn << creature->customColorize("*CC:DAMAGE*") << num << ColorOff << " damage!\n";
         player->lasttime[LT_LAY_HANDS].interval = 600L;
 
-        player->statistics.attackDamage(num, "harm touch");
+        player->statistics.attackDamage(num,"harm touch");
 
         if(creature->getClass() == CreatureClass::LICH) {
-            player->doHeal(creature, num);
-            player->print("Your darkness heals %N!\n", creature);
-            creature->print("You are healed by %N's evil touch.\n", player);
-        } else {
-            creature->printColor("You lose %s%d^x hit points!\n", creature->customColorize("*CC:DAMAGE*").c_str(), num);
+            if (creature->hp.getCur() < creature->hp.getMax()) {
+                player->doHeal(creature, MIN<int>(num,(creature->hp.getMax() - creature->hp.getCur())));
+                *player << "Your harmful touch healed " << creature << "!\n";
+                *creature << "You are healed by " << setf(CAP) << player << "'s evil touch.\n";
+            }
+        } 
+        else 
             player->doDamage(creature, num, CHECK_DIE);
-        }
+
     } else {
-        player->print("Your harm touch failed!\n");
+        *player << "Your harmful touch failed!\n";
         player->checkImprove("harm", false);
-        creature->print("%s's attack had no effect.\n", player->upHisHer());
-        broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M's attack failed.", player);
+        *creature << player->upHisHer() << " harmful touch had no effect.\n";
+        broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M's harmful touch had no effect.", player);
         player->lasttime[LT_LAY_HANDS].interval = 45L;
     }
 
