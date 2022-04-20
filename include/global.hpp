@@ -257,7 +257,7 @@ enum CustomColor {
 
 // Religions
 enum religions {
-    ATHEIST     =   0,
+    ATHEISM     =   0,
     ARAMON      =   1,
     CERIS       =   2,
     ENOCH       =   3,
