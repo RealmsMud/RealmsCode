@@ -922,26 +922,28 @@ int cmdTime(Player* player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(player->isBraindead()) {
-        player->print("You are brain-dead. You can't do that.\n");
+        *player << "You are brain-dead. You can't do that.\n";
         return(0);
     }
 
-    player->printColor("^cThe current time in the world%s:\n", world.c_str());
+    *player << ColorOn << "^cThe current time in the world" << world.c_str() << ":\n" << ColorOff;
+
     gConfig->getCalendar()->printtime(player);
 
     if(gConfig->getCalendar()->isBirthday(player))
-        player->printColor("^yToday is your birthday!\n");
+        *player << ColorOn << "^yToday is your birthday!\n" << ColorOff;
 
     if(player->flagIsSet(P_PTESTER))
-        player->print("Tick Interval: %d.\n", player->lasttime[LT_TICK].interval);
+        *player << "Tick Interval: " << player->lasttime[LT_TICK].interval << ".\n";
 
     if(cmnd->num < 2) {
 
         // for ceris/aramon when they resurrect dead people
         tmp = MAX<long>(0,(LT(player, LT_NOMPTICK) - t));
         if(tmp > 0)
-            player->print("Time until vitality is restored: %s.\n", timestr(tmp));
+            *player << "Time until vitality is restored: " << timestr(tmp) << ".\n";
 
+        *player << "\n";
 
         // CT+ doesn't need to see all this info
         if(!player->isCt()) {
@@ -949,7 +951,7 @@ int cmdTime(Player* player, cmd* cmnd) {
                 TIMEUNTIL("bard song", LT_SING, player->lasttime[LT_SING].interval);
             }
             showAbility(player, "barkskin", "barkskin", LT_BARKSKIN, 600);
-            showAbility(player, "berserk", "berserk", LT_BERSERK, 600);
+            showAbility(player, "berserk", "berserk", LT_BERSERK, player->lasttime[LT_BERSERK].interval);
             showAbility(player, "bite", "bite", LT_PLAYER_BITE, player->lasttime[LT_PLAYER_BITE].interval);
             showAbility(player, "bloodsac", "blood sacrifice", LT_BLOOD_SACRIFICE, 600);
             showAbility(player, "commune", "commune", LT_PRAY, 45);
@@ -986,14 +988,13 @@ int cmdTime(Player* player, cmd* cmnd) {
 
         if(player->flagIsSet(P_OUTLAW)) {
             i = LT(player, LT_OUTLAW);
-            player->print("Outlaw time remaining: ");
+            *player << "Outlaw time remaining: ";
             if(i - t > 3600)
-                player->print("%02d:%02d:%02d more hours.\n",(i - t) / 3600L, ((i - t) % 3600L) / 60L, (i - t) % 60L);
+                *player << ((i-t)/3600L) << ":" << (((i - t) % 3600L) / 60L) << ":" << ((i - t) % 60L) << " more hours.\n";
             else if((i - t > 60) && (i - t < 3600))
-                player->print("%d:%02d more minutes.\n", (i - t) / 60L, (i - t) % 60L);
+                *player << ((i - t) / 60L) << ":" << ((i - t) % 60L) << " more minutes.\n";
             else
-                player->print("%d more seconds.\n", MAX<int>((i - t),0));
-
+                *player << (MAX<int>((i - t),0)) << " more seconds.\n";
         }
 
         if(player->flagIsSet(P_JAILED)) {
@@ -1004,30 +1005,25 @@ int cmdTime(Player* player, cmd* cmnd) {
             else
                 i = LT(player, LT_JAILED);
 
-            player->print("NOTE: 0 Seconds means you're out any second.\n");
-            player->print("Jailtime remaining(Approx): ");
-
-            if(i - t > 3600)
-                player->print("%02d:%02d:%02d more hours.\n",(i - t) / 3600L, ((i - t) % 3600L) / 60L, (i - t) % 60L);
-            else if((i - t > 60) && (i - t < 3600))
-                player->print("%d:%02d more minutes.\n", (i - t) / 60L, (i - t) % 60L);
+            *player << "NOTE: 0 Seconds means you're out any second.\n";
+            *player << "Jailtime remaining(Approx): ";
+            if(i - t > 3600)    
+                *player << ((i-t)/3600L) << ":" << (((i - t) % 3600L) / 60L) << ":" << ((i - t) % 60L) << " more hours.\n";
+            else if((i - t > 60) && (i - t < 3600))  
+                *player << ((i - t) / 60L) << ":" << ((i - t) % 60L) << " more minutes.\n";
             else
-                player->print("%d more seconds.\n", MAX<int>((i - t),0));
+                *player << (MAX<int>((i - t),0)) << " more seconds.\n";
         }
 
-        // All those confusing defines, i'll make up my own code
         i = 0;
         for(Monster* pet : player->pets) {
             if(pet->isMonster() && pet->isPet()) {
                 i = 1;
                 if(pet->isUndead())
-                    player->print("Time left before creature following you leaves/fades: %s\n",
-                        timestr(pet->lasttime[LT_ANIMATE].ltime+pet->lasttime[LT_ANIMATE].interval-t));
+                    *player << "Time left before creature following you leaves/fades: " << (timestr(pet->lasttime[LT_ANIMATE].ltime+pet->lasttime[LT_ANIMATE].interval-t)) << "\n";
                 else
-                    player->print("Time left before creature following you leaves/fades: %s\n",
-                        timestr(pet->lasttime[LT_INVOKE].ltime+pet->lasttime[LT_INVOKE].interval-t));
+                    *player << "Time left before creature following you leaves/fades: " << (timestr(pet->lasttime[LT_INVOKE].ltime+pet->lasttime[LT_INVOKE].interval-t)) << "\n";
 
-                //TIMEUNTIL("hire",LT_INVOKE,player->lasttime[LT_INVOKE].interval);
             }
         }
 

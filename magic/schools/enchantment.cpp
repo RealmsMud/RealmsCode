@@ -236,62 +236,40 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
     Player  *target=nullptr;
     int     bns=0;
     long    t = time(nullptr);
-    Object  *weapon=nullptr, *weapon2=nullptr;
-
-    if(spellData->how == CastType::POTION &&
-        player->getClass() == CreatureClass::PALADIN &&
-        (player->getDeity() == ENOCH || player->getDeity() == LINOTHAN)
-    ) {
-        player->print("Your deity forbids such dishonorable actions!\n");
-        return(0);
-    }
 
     if(player->getClass() !=  CreatureClass::CLERIC && player->getClass() !=  CreatureClass::MAGE &&
         player->getClass() !=  CreatureClass::LICH && player->getClass() !=  CreatureClass::DEATHKNIGHT &&
         player->getClass() !=  CreatureClass::BARD && !player->isEffected("vampirism") &&
         !player->isCt() && spellData->how == CastType::CAST
     ) {
-        player->print("You are unable to cast that spell.\n");
+        *player << "You are unable to cast that spell.\n";
         return(0);
     }
 
     // Cast scare
     if(cmnd->num == 2) {
         if(spellData->how != CastType::POTION) {
-            player->print("On whom?\n");
+            *player << "That player is not here.\n";
             return(0);
         }
 
         if(player->isEffected("berserk")) {
-            player->print("You are too enraged to drink that right now.\n");
+            *player << "You are too enraged to drink that right now.\n";
             return(0);
         }
         if(player->isEffected("courage")) {
-            player->print("You feel a strange tingle.\n");
+            *player << "You feel a strange tingle.\n";
             return(0);
         }
 
-        player->print("You are suddenly terrified to the bone!\n");
+        *player << "You are suddenly terrified to the bone!\n";
         broadcast(player->getSock(), player->getParent(), "%M becomes utterly terrified!", player);
-        if(player->ready[WIELD-1]) {
-            weapon = player->ready[WIELD-1];
-            player->ready[WIELD-1] = nullptr;
-        }
-        if(player->ready[HELD-1]) {
-            weapon2 = player->ready[HELD-1];
-            player->ready[HELD-1] = nullptr;
-        }
 
         target = player->getAsPlayer();
 
         // killed while fleeing?
         if(target->flee(true) == 2)
             return(1);
-
-        if(weapon)
-            player->ready[WIELD-1] = weapon;
-        if(weapon2)
-            player->ready[HELD-1] = weapon2;
 
 
     // Cast scare on another player
@@ -303,92 +281,98 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         target = player->getParent()->findPlayer(player, cmnd, 2);
         if(!target) {
-            player->print("On whom?\n");
+            *player << "That player is not here.\n";
             return(0);
         }
 
+        if (target == player) {
+            *player << "Why would you try to cast a scare spell on yourself? Just flee!\n";
+            return(0);
+        }
 
         if(target->inCombat(false) && !player->flagIsSet(P_OUTLAW)) {
-            player->print("Not in the middle of combat.\n");
+            *player << "Not in the middle of combat.\n";
             return(0);
         }
 
         if(!player->isCt() && target->isCt()) {
-            player->printColor("^yYour spell failed.\n");
+            *player << ColorOn << "^yYour spell failed.\n" << ColorOff;
             return(0);
         }
 
         if(!player->isDm() && target->isDm()) {
-            player->printColor("^yYour spell failed.\n");
+            *player << ColorOn << "^yYour spell failed.\n" << ColorOff;
             return(0);
         }
 
-        if(!player->isCt() && !dec_daily(&player->daily[DL_SCARES])) {
-            player->print("You cannot cast that again today.\n");
+        if(!player->isCt() && !dec_daily(&player->daily[DL_SCARES]) && !player->flagIsSet(P_PTESTER)) {
+            *player << "You cannot cast that again today.\n";
             return(0);
         }
 
 
-        player->print("You cast a scare spell on %N.\n", target);
-        target->print("%M casts a scare spell on you.\n", player);
+        *player << "You cast a scare spell on " << target << ".\n";
+        *target << setf(CAP) << player << " casts a scare spell on you.\n";
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a scare spell on %N.", player, target);
 
 
         if(target->getClass() == CreatureClass::PALADIN) {
-            player->printColor("Paladins are immune to magical fear.\n^yYour spell failed.\n");
+            *player << ColorOn << "^yPaladins are immune to magical fear.\n^yYour spell failed.\n" << ColorOff;
+            *target << ColorOn << setf(CAP) << player << "'s spell failed due to your immunity to fear.\n";
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's spell failed.'", player);
             return(0);
         }
 
         if(target->isEffected("berserk") || target->isUnconscious() || target->isEffected("petrification")) {
-            player->printColor("^yYour spell failed.\n");
+            *player << ColorOn << "^yYour spell had no effect on " << target << ".\n" << ColorOff;
+            if (!target->isUnconscious()) {
+
+                if(target->isEffected("berserk") )
+                    *target << ColorOn << "^rYou shrugged off " << player->hisHer() << " spell due to your rage.\n" << ColorOff;
+                else
+                     *target << setf(CAP) << player << "'s spell had no effect.\n";
+            }
+
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's spell had no effect.", player); 
             return(0);
         }
 
-        if(target->isEffected("courage")) {
-            player->print("Your spell is ineffective against %N right now.\n", target);
+        if(target->isEffected("courage") && !player->isCt()) {
+            *player << ColorOn << "^y" << setf(CAP) << target << "is too courageous for that to work right now.\n";
+            *target << "You shrugged off " << player << "'s spell due to your magical courage.\n";
+             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's spell had no effect.", player); 
             return(0);
         }
 
-        if(Random::get(1,100) <= 50 && target->isEffected("resist-magic")) {
-            player->printColor("^yYour spell failed.\n");
+        if(Random::get(1,100) <= 50 && target->isEffected("resist-magic") && !player->isCt()) {
+            *player << ColorOn << "^mYour spell had no effect.\n" << ColorOff;
+            *target << setf(CAP) << player << "'s spell failed due to your magical resistance.\n";
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's spell had no effect.", player); 
             return(0);
         }
 
         target->wake("Terrible nightmares disturb your sleep!");
 
+        // Spell can only target players. I guess we'll leave this here in a "just in case" type scenario...
         // Pets are immune.
         if(target->isPet()) {
-            player->print("%M's %s is too loyal to be magically scared.\n", target->getMaster(), target->getCName());
+            *player << setf(CAP) << target->getMaster() << "'s " << target->getCName() << " is too loyal to be magically scared.\n";
             return(0);
         }
 
-        bns = 5*((int)target->getLevel() - (int)spellData->level) + crtWisdom(target);
+        bns = 5*((int)target->getLevel() - (int)spellData->level);
         if(!target->chkSave(SPL, player, bns) || player->isCt()) {
 
             if(spellData->how == CastType::CAST && player->isPlayer())
                 player->getAsPlayer()->statistics.offensiveCast();
 
             target->clearFlag(P_SITTING);
-            target->print("You are suddenly terrified to the bone!\n");
+            *target << "You are suddenly terrified to the bone!\n";
             broadcast(target->getSock(), player->getRoomParent(), "%M becomes utterly terrified!", target);
 
             target->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
             target->lasttime[LT_SPELL].ltime = t;
             target->lasttime[LT_SPELL].interval = 3L;
-
-
-            /* the following code keeps jackasses from abusing re-wield triggers */
-            /* to make people drop their weapons. Remove the weapon, store it in */
-            /* temp variable...then have player attempt flee, then put weapons back. */
-            //*********************************************************************
-            if(target->ready[WIELD-1]) {
-                weapon = target->ready[WIELD-1];
-                target->ready[WIELD-1] = nullptr;
-            }
-            if(target->ready[HELD-1]) {
-                weapon2 = target->ready[HELD-1];
-                target->ready[HELD-1] = nullptr;
-            }
 
             // killed while fleeing?
             if(target->flee(true) == 2)
@@ -396,16 +380,10 @@ int splScare(Creature* player, cmd* cmnd, SpellData* spellData) {
 
             target->stun(Random::get(5,8));
 
-            if(weapon)
-                target->ready[WIELD-1] = weapon;
-            if(weapon2)
-                target->ready[HELD-1] = weapon2;
-
-            //*********************************************************************
         } else {
-            player->print("%M resisted your spell.\n", target);
+            *player << setf(CAP) << target << " resisted your spell.\n";
             broadcast(player->getSock(), target->getSock(), target->getRoomParent(), "%M resisted %N's scare spell.",target, player);
-            target->print("%M tried to cast a scare spell on you.\n", player);
+            *target << setf(CAP) << player << " tried to cast a scare spell on you.\n";
         }
     }
     return(1);
@@ -508,13 +486,13 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
     int     dur=0;
 
     if(spellData->how == CastType::CAST) {
-        dur = 600 + Random::get(1, 30) * 10 + bonus(player->intelligence.getCur()) * 150;
+        dur = 300 + (Random::get(1, 30) * 10) + player->intelligence.getCur();
     } else if(spellData->how == CastType::SCROLL)
-        dur = 600 + Random::get(1, 15) * 10 + bonus(player->intelligence.getCur()) * 50;
+        dur = 300 + (Random::get(1, 15) * 10) + (player->intelligence.getCur()/2);
     else
-        dur = 600 + Random::get(1, 30) * 10;
+        dur = 300 + (Random::get(1, 10) * 10);
 
-    if(spellData->how == CastType::POTION)
+    if(spellData->how == CastType::POTION) 
         dur = Random::get(1,120) + 180L;
 
     if(player->spellFail( spellData->how))
@@ -528,17 +506,16 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
             dur /= 2;
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::WAND || spellData->how == CastType::SCROLL) {
-            player->print("You cast a fear spell on yourself.\n");
-            player->print("Nothing happens.\n");
+            *player << "A terrifying magical fear flows into you and then quickly dissipates.\n";
             broadcast(player->getSock(), player->getParent(), "%M casts a fear spell on %sself.", player, player->himHer());
             return(0);
         }
 
         if(spellData->how == CastType::POTION && player->getClass() == CreatureClass::PALADIN) {
-            player->print("You feel a jitter, then shrug it off.\n");
+            *player << "You feel a jitter, then shrug it off.\n";
             return(0);
         } else if(spellData->how == CastType::POTION)
-            player->print("You begin to shake in terror.\n");
+            *player << "You begin to shake in terror.\n";
 
     // fear a monster or player
     } else {
@@ -547,7 +524,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
         if(!target || target == player) {
-            player->print("That's not here.\n");
+            *player << "That's not here.\n";
             return(0);
         }
 
@@ -557,7 +534,7 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
                 player->getRoomParent()->isPkSafe() &&
                 !target->flagIsSet(P_OUTLAW)
             ) {
-                player->print("You cannot cast that spell here.\n");
+                *player << "You cannot cast that spell on " << target << " in this room.\n";
                 return(0);
             }
         }
@@ -567,50 +544,52 @@ int splFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
         if( (target->mFlagIsSet(M_PERMENANT_MONSTER)) ||
-            (target->getClass() == CreatureClass::PALADIN && target->isMonster())
-        ) {
-            player->print("%M seems unaffected by fear.\n", target);
+            (target->getClass() == CreatureClass::PALADIN && target->isMonster()) ) {
+            *player << setf(CAP) << target << " is immune to fear. Your spell had no effect.\n";
             broadcast(player->getSock(), target->getSock(), player->getParent(),
-                "%M casts a fear spell on %N.\n", player, target);
-            broadcast(player->getSock(), target->getSock(), player->getParent(),
-                "%M brushes it off and attacks %N.\n", player, target);
+                             "%M casts a fear spell on %N.\n%M brushes it off and attacks %N.", player, target, target, player);
+         
 
             target->getAsMonster()->addEnemy(player, true);
             return(0);
         }
 
-
-
-        if( (target->isPlayer() && target->isEffected("resist-magic")) ||
-            (target->isMonster() && target->isEffected("resist-magic"))
-        )
+        if (target->isEffected("resist-magic"))
             dur /= 2;
 
         player->smashInvis();
-        target->wake("Terrible nightmares disturb your sleep!");
-
+       
         if(target->isPlayer() && target->getClass() == CreatureClass::PALADIN) {
-            player->print("Fear spell cast on %s.\n", target->getCName());
-            player->print("It doesn't do anything noticeable.\n");
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts fear on %N.",
+            *player << setf(CAP) << target << " is immune to fear. Your spell had no effect.\n";
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a fear spell on %N.",
                 player, target);
-            target->print("%M casts a fear spell on you.\n", player);
-            target->print("It has no apparent effect.\n");
+            *target << setf(CAP) << player << " casts a fear spell on you.\nIt has no apparent effect.\n";
             return(0);
         }
 
+        if(target->isEffected("berserk")) {
+            *player << setf(CAP) << target << "'s violent rage has made " << target->himHer() << " immune to fear!\n";
+            *target << setf(CAP) << player << " tried to cast a fear spell on you.\n";
+            *target << ColorOn << "^rYour violent rage has made you immune.\n" << ColorOff;
+            broadcast(player->getSock(), target->getSock(), player->getParent(), 
+                            "%M tried to cast a fear spell on %N.\n%M's violent rage has made %s immune!", player, target,target, target->himHer());
+            return(0);
+        }
+
+        target->wake("Terrible nightmares disturb your sleep!");
+
         if(target->chkSave(SPL, player, 0) && !player->isCt()) {
-            target->print("%M tried to cast a fear spell on you!\n", player);
+            *target << setf(CAP) << player << " tried to cast a fear spell on you!\n";
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a fear spell on %N!", player, target);
-            player->print("Your spell fizzles.\n");
+            *player << "The spell had no effect.\n";
             return(0);
         }
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("Fear spell cast on %s.\n", target->getCName());
+            *player << "Fear spell cast on " << target << ".\n";
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts fear on %N.",
                 player, target);
-            target->print("%M casts a fear spell on you.\n", player);
+            *target << setf(CAP) << player << " casts a fear spell on you.\n";
         }
 
         if(target->isMonster())
