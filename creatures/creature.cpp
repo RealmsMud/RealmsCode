@@ -1086,15 +1086,6 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
             return(false);
         }
 
-        // blah blah re-submit
-        if( (cClass == CreatureClass::BERSERKER || cClass == CreatureClass::CLERIC) &&
-            isEffected("berserk") )
-        {
-            if(displayFail)
-                printColor("^rYour lust for battle prevents you from fleeing!\n");
-            return(false);
-        }
-
         if(checkTimer && !isEffected("fear") && !isStaff()) {
             t = time(nullptr);
             i = MAX(getLTAttack(), MAX(lasttime[LT_SPELL].ltime,lasttime[LT_READ_SCROLL].ltime)) + 3L;
@@ -1389,6 +1380,7 @@ bool Creature::doFlee(bool magicTerror) {
         break;
     }
 
+    
 
     broadcast(getSock(), oldRoom, "%M flees to the %s^x.", this, exit->getCName());
     if(mThis) {
@@ -1402,8 +1394,15 @@ bool Creature::doFlee(bool magicTerror) {
         pThis->checkDarkness();
         unhide();
 
+
         if(magicTerror)
             printColor("^rYou flee from unnatural fear!\n");
+
+        //Berserk goes away when fleeing
+        if (pThis->isEffected("berserk")) {
+            print("You've lost your lust for battle!\n");
+            pThis->removeEffect("berserk");
+        }
 
         Move::track(getUniqueRoomParent(), &currentLocation.mapmarker, exit, pThis, false);
 

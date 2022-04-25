@@ -403,7 +403,7 @@ int cmdSecond(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdBerserk(Player* player, cmd* cmnd) {
-    long    i=0, t=0;
+    long    i=0, t=time(nullptr), timeBetweenBerserks=480;
     int     chance=0;
 
     player->clearFlag(P_AFK);
@@ -413,77 +413,97 @@ int cmdBerserk(Player* player, cmd* cmnd) {
         return(0);
 
     if(!player->knowsSkill("berserk")) {
-        player->print("You don't know how to go berserk!\n");
-        return(0);
-    }
-
-    if( player->getClass() == CreatureClass::CLERIC &&
-        player->getDeity() == ARES &&
-        (player->getAdjustedAlignment() < PINKISH || player->getAdjustedAlignment() > LIGHTBLUE)
-    ) {
-        player->print("Your soul must be disciplined or you cannot go berserk.\n");
+        *player << "You don't know how to go berserk!\n";
         return(0);
     }
 
     if(player->isEffected("berserk")) {
-        player->print("You are already berserk.\n");
+        *player << "You are already going berserk.\n";
         return(0);
     }
 
-
     if(player->isEffected("strength")) {
-        player->print("Your magically enhanced strength prevents you from going berserk.\n");
+        *player << "Your magically enhanced strength prevents you from going berserk.\n";
         return(0);
     }
     if(player->isEffected("enfeeblement")) {
-        player->print("Your magically reduced strength prevents you from going berserk.\n");
+        *player << "Your magically reduced strength prevents you from going berserk.\n";
         return(0);
     }
     if(player->isEffected("fortitude")) {
-        player->print("Your magically enhanced health prevents you from going berserk.\n");
+        *player << "Your magically enhanced health prevents you from going berserk.\n";
         return(0);
     }
     if(player->isEffected("weakness")) {
-        player->print("Your magically reduced health prevents you from going berserk.\n");
+        *player << "Your magically reduced health prevents you from going berserk.\n";
         return(0);
     }
-
 
     if(player->flagIsSet(P_SITTING)) {
-        player->print("You have to be standing to go berserk.\n");
+        player->clearFlag(P_SITTING);
+        *player << "You stand up.\n";
+    }
+
+    i = player->lasttime[LT_BERSERK].ltime + player->lasttime[LT_BERSERK].interval;
+     
+      
+    if(i > t && !player->isCt()) {
+        player->pleaseWait(i-t);
         return(0);
     }
 
-    i = player->lasttime[LT_BERSERK].ltime;
-    t = time(nullptr);
+    chance = MIN<int>(8500, (player->getSkillLevel("berserk") * 1000) + (player->strength.getCur()) * 5);
 
-    if(t - i < 600L && !player->isCt()) {
-        player->pleaseWait(600L-t+i);
-        return(0);
-    }
+    // At level 7+, the higher skill level at berserk, the less time it takes between berserks
+    if (player->getLevel() >=7) {
+        
+        if (player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARES)
+            timeBetweenBerserks -= ((long)(player->getSkillLevel("berserk") * 3));
+        else
+            timeBetweenBerserks -= ((long)(player->getSkillLevel("berserk") * 4));
+        } 
+    // Never more than every 5 minutes, even if we increase MAX level
+    if (timeBetweenBerserks < 300)
+        timeBetweenBerserks = 300;   
 
-    chance = MIN(85, (int)(player->getSkillLevel("berserk") * 10) + (bonus(player->strength.getCur()) * 5));
-
-    if(Random::get(1, 100) <= chance) {
-        player->print("You go berserk.\n");
+    if(Random::get(1, 10000) <= chance) {
+        *player << ColorOn << "^RYou go berserk! " << ColorOff;
         broadcast(player->getSock(), player->getParent(), "%M goes berserk!", player);
         player->checkImprove("berserk", true);
-        // TODO: SKILLS: Add a modifier based on berserk skill level
-        player->addEffect("berserk", 120L, 30);
+
+        // TODO: SKILLS: Add more modifiers based on berserk skill level - will save for full class overhaul
         if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARES)
-            player->addEffect("berserk", 120L, 30);
+            player->addEffect("berserk", 120L, 50); // 2 min, +5 STR
         else
-            player->addEffect("berserk", 120L, 50);
+            player->addEffect("berserk", 150L, 50); // 2.5 min, +5 STR
+
         player->computeAC();
         player->computeAttackPower();
         player->lasttime[LT_BERSERK].ltime = t;
-        player->lasttime[LT_BERSERK].interval = 600L;
+        player->lasttime[LT_BERSERK].interval = timeBetweenBerserks;
+
+        if(player->isEffected("fear"))
+            player->removeEffect("fear");
+        if(player->isEffected("hold-person"))
+            player->removeEffect("hold-person");
+
+        if(player->flagIsSet(P_STUNNED)) {
+            *player << ColorOn << "^yYou are no longer stunned.\n" << ColorOff;
+            player->clearFlag(P_STUNNED);
+            player->lasttime[LT_MOVED].interval = 0;
+            player->lasttime[LT_PLAYER_STUNNED].interval = 0;
+            player->lasttime[LT_SPELL].interval = 0;
+            player->lasttime[LT_READ_SCROLL].interval = 0;
+            player->setAttackDelay(0);
+        }
+
         player->interruptDelayedActions();
     } else {
-        player->print("You failed to gather your strength.\n");
+        *player << "You failed to channel your rage.\n";
         player->checkImprove("berserk", false);
-        broadcast(player->getSock(), player->getParent(), "%M runs around trying to go berserk.", player);
-        player->lasttime[LT_BERSERK].ltime = t - 590L;
+        broadcast(player->getSock(), player->getParent(), "%M's rage wells up inside %s!", player, player->himHer());
+        player->lasttime[LT_BERSERK].ltime = t;
+        player->lasttime[LT_BERSERK].interval = 10L;
     }
     return(0);
 }
