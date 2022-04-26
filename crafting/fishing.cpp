@@ -396,7 +396,7 @@ const Fishing* AreaRoom::doGetFishing(short y, short x) const {
         return(nullptr);
 
     // zone comes first
-    for(it = area->zones.begin() ; it != area->zones.end() ; it++) {
+    for(it = area->areaZones.begin() ; it != area->areaZones.end() ; it++) {
         zone = (*it);
         if(zone->inside(area, &mapmarker) && !zone->getFishing().empty()) {
             list = gConfig->getFishing(zone->getFishing());

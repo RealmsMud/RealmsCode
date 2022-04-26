@@ -306,7 +306,7 @@ public:
     short flightPower;
 
     std::map<std::string, AreaRoom *> rooms;
-    std::list<AreaZone *> zones;
+    std::list<AreaZone *> areaZones;
     std::list<AreaTrack *> tracks;
 
     std::map<char, TileInfo *> ter_tiles;

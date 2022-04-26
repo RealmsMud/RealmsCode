@@ -64,7 +64,7 @@ void logn(const char *name, const char *fmt, ...) {
 
     va_start(ap, fmt);
 
-    sprintf(filename, "%s/%s.txt", Path::Log, name);
+    sprintf(filename, "%s/%s.txt", Path::Log.c_str(), name);
     fp = fopen(filename, "a");
     
     if(fp == nullptr) {
@@ -98,7 +98,7 @@ void loge(const char *fmt, ...) {
 
     va_start(ap, fmt);
 
-    sprintf(file, "%s/log.txt", Path::Log);
+    sprintf(file, "%s/log.txt", Path::Log.c_str());
     fd = open(file, O_RDWR, 0);
     if(fd < 0) {
         fd = open(file, O_RDWR | O_CREAT, ACC);
@@ -135,7 +135,7 @@ void loga(const char *fmt,...) {
 
     va_start(ap, fmt);
 
-    sprintf(file, "%s/log.active.txt", Path::Log);
+    sprintf(file, "%s/log.active.txt", Path::Log.c_str());
     fd = open(file, O_RDWR, 0);
     if(fd < 0) {
         fd = open(file, O_RDWR | O_CREAT, ACC);

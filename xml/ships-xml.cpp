@@ -26,7 +26,6 @@
 
 #include "config.hpp"                               // for Config
 #include "paths.hpp"                                // for Game
-#include "proto.hpp"                                // for file_exists
 #include "range.hpp"                                // for Range
 #include "ships.hpp"                                // for Ship, ShipStop
 #include "xml.hpp"                                  // for saveNonZeroNum
@@ -141,7 +140,7 @@ void Config::saveShips() const {
     for(it = ships.begin() ; it != ships.end() ; it++)
         (*it)->save(rootNode);
 
-    sprintf(filename, "%s/ships.xml", Path::Game);
+    sprintf(filename, "%s/ships.xml", Path::Game.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }
@@ -158,9 +157,9 @@ bool Config::loadShips() {
     xmlNodePtr  curNode;
     Ship    *lShip;
 
-    sprintf(filename, "%s/ships.xml", Path::Game);
+    sprintf(filename, "%s/ships.xml", Path::Game.c_str());
 
-    if(!file_exists(filename))
+    if(!fs::exists(filename))
         return(false);
 
     if((xmlDoc = xml::loadFile(filename, "Ships")) == nullptr)

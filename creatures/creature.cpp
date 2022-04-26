@@ -283,7 +283,7 @@ void Monster::diePermCrt() {
             if(pName[i] == ' ')
                 pName[i] = '_';
 
-        sprintf(file,"%s/%s_%d", Path::Desc, pName, level);
+        sprintf(file,"%s/%s_%d", Path::Desc.c_str(), pName, level);
         fd = open(file,O_RDONLY,0);
         if(fd) {
             n = read(fd,tmp,2048);

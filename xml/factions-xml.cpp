@@ -37,7 +37,7 @@ bool Config::loadFactions() {
     char        filename[80];
 
     // build an XML tree from the file
-    sprintf(filename, "%s/factions.xml", Path::Game);
+    sprintf(filename, "%s/factions.xml", Path::Game.c_str());
 
     xmlDoc = xml::loadFile(filename, "Factions");
     if(xmlDoc == nullptr)

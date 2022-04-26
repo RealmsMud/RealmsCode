@@ -201,6 +201,12 @@ int update_quests() {
     return 1;
 }
 
+std::list<std::string> zones = {"airship", "alc", "anhoni", "avenger", "azure", "baladus", "bane", "bergen", "bw", "caladon", "cgiant", "craft", "crescent",
+    "dcarnival", "dhold", "dloch", "drakken", "druid", "durgas", "eldinwood", "elec", "et", "events", "fdrake", "gb", "gedge", "gemstone", "ghost", "gren",
+    "guild", "hampton", "hellbog", "hp", "iclad", "ironguard", "jail", "joy", "kael", "kat", "kbtung", "kenku", "kenner", "kesh", "mino", "misc", "morgtala",
+    "nexus", "niamei", "nikola", "oce", "ocean", "orym", "pirate", "plane", "quest", "seawolf", "shadow", "shop", "sigil", "srunner", "stor", "trade", "tut",
+    "voodan", "wave", "wizard", "wolf", "wville", "yuanti"};
+
 int main(int argc, char *argv[]) {
     gConfig = Config::getInstance();
     gServer = Server::getInstance();
@@ -208,9 +214,20 @@ int main(int argc, char *argv[]) {
     gConfig->setListing(true);
     gServer->init();
 
+    // Create Zones
+
     // Update quests first, so we can update the quests on the monsters
     std::cout << "Updating Quests" << std::endl;
     update_quests();
+
+    std::string str(R"(["test", "test2"])");
+    json js = json::parse(str);
+    std::cout << js << std::endl;
+    std::list<std::string> testList = js;
+
+    for (const auto& s : testList)
+        std::cout << s << std::endl;
+
     // MapQuests()
     // SaveQuests()
 //

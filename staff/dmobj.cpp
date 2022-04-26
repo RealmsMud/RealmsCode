@@ -57,6 +57,7 @@
 #include "objIncrease.hpp"                     // for ObjIncrease, LanguageI...
 #include "oldquest.hpp"                        // for numQuests, quest, ques...
 #include "os.hpp"                              // for merror
+#include "paths.hpp"
 #include "proto.hpp"                           // for log_immort, low, get_s...
 #include "raceData.hpp"                        // for RaceData
 #include "range.hpp"                           // for Range
@@ -1533,7 +1534,7 @@ void dmSaveObj(Player* player, cmd* cmnd, const CatRef& cr) {
     object->info = cr;
 
     sprintf(file, "%s", objectPath(object->info));
-    if(file_exists(file))
+    if(fs::exists(file))
         player->print("Object might already exist.\n");
 
     dmResaveObject(player, object);

@@ -391,7 +391,7 @@ WanderInfo* AreaRoom::getRandomWanderInfo() {
     int i=0;
 
     // we want to randomly pick one of the zones
-    for(it = area->zones.begin() ; it != area->zones.end() ; it++) {
+    for(it = area->areaZones.begin() ; it != area->areaZones.end() ; it++) {
         zone = (*it);
         if(zone->wander.getTraffic() && zone->inside(area, &mapmarker)) {
             w[i++] = &zone->wander;

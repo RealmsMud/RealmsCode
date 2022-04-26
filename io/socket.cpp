@@ -1868,7 +1868,7 @@ int nonBlock(int pFd) {
 //*********************************************************************
 //                      showLoginScreen
 //*********************************************************************
-const auto LOGIN_FILE = fmt::format("{}/login_screen.txt", Path::Config);
+const auto LOGIN_FILE = Path::Config / "login_screen.txt";
 
 void Socket::showLoginScreen(bool dnsDone) {
     //*********************************************************************

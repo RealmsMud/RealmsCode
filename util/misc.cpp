@@ -313,22 +313,6 @@ int update_daily(struct daily *dly_ptr) {
 }
 
 
-//*********************************************************************
-//                      file_exists
-//*********************************************************************
-// This function returns 1 if the filename specified by the first
-// parameter exists, 0 if it doesn't.
-
-bool file_exists(const char *filename) {
-    int ff=0;
-    ff = open(filename, O_RDONLY);
-    if(ff > -1) {
-        close(ff);
-        return(true);
-    }
-    return(false);
-}
-
 /*====================================================================*/
 // checks if the given str contains all digits
 bool is_num(char *str ) {
@@ -408,7 +392,7 @@ bool parse_name(std::string_view name) {
     }
 
 
-    fp = fopen(fmt::format("{}/forbidden_name.txt", Path::Config).c_str(), "r");
+    fp = fopen((Path::Config / "forbidden_name.txt").c_str(), "r");
     if(!fp)
         merror("ERROR - forbidden name.txt", NONFATAL);
     else {
@@ -812,7 +796,6 @@ void new_merror(const char *str, char errtype, const char *file, const int line)
     if(errtype == FATAL) {
         abort();
     }
-//  exit(-1);
 }
 
 //*********************************************************************

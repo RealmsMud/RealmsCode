@@ -32,7 +32,7 @@
 #include "mudObjects/players.hpp"  // for Player
 #include "mudObjects/rooms.hpp"    // for BaseRoom
 #include "paths.hpp"               // for Game, PlayerData
-#include "proto.hpp"               // for getOrdinal, file_exists, isDay
+#include "proto.hpp"               // for getOrdinal, isDay
 #include "server.hpp"              // for PlayerMap, Server, gServer
 
 class cmd;
@@ -435,21 +435,17 @@ const Calendar* Config::getCalendar() const {
 //*********************************************************************
 
 int reloadCalendar(Player* player) {
-    char    filename[80], filename2[80], command[255];
+    const auto filename = Path::Game / "calendar.load.xml";
+    const auto filename2 = Path::PlayerData / "calendar.xml";
 
-    sprintf(filename, "%s/calendar.load.xml", Path::Game);
-    sprintf(filename2, "%s/calendar.xml", Path::PlayerData);
-
-    if(!file_exists(filename)) {
-        player->print("File %s does not exist!\n", filename);
+    if(!fs::exists(filename)) {
+        *player << "File " << filename.string() << " does not exist!\n";
         return(0);
     }
 
-    sprintf(command, "cp %s %s", filename, filename2);
-    system(command);
+    fs::copy(filename, filename2, fs::copy_options::overwrite_existing);
     gConfig->loadCalendar();
-
-    player->printColor("^gCalendar reloaded from %s!\n", filename);
+    *player << ColorOn << "^gCalendar reloaded from " << filename.string() << "!\n" << ColorOff;
     return(0);
 }
 

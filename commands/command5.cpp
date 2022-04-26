@@ -593,14 +593,14 @@ void deletePlayer(Player* player) {
     sock->setPlayer(nullptr);
 
     // get rid of any files the player was using
-    sprintf(file, "%s/%s.xml", Path::Player, name.c_str());
+    sprintf(file, "%s/%s.xml", Path::Player.c_str(), name.c_str());
     unlink(file);
 
-    sprintf(file, "%s/%s.txt", Path::Bank, name.c_str());
+    sprintf(file, "%s/%s.txt", Path::Bank.c_str(), name.c_str());
     unlink(file);
-    sprintf(file, "%s/%s.txt", Path::Post, name.c_str());
+    sprintf(file, "%s/%s.txt", Path::Post.c_str(), name.c_str());
     unlink(file);
-    sprintf(file, "%s/%s.txt", Path::History, name.c_str());
+    sprintf(file, "%s/%s.txt", Path::History.c_str(), name.c_str());
     unlink(file);
 
     // handle removing and property this player owned

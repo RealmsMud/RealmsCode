@@ -67,6 +67,11 @@ HttpServer::HttpServer(int pPort) {
                 json questOverview = json(*quest);
                 return to_string(questOverview);
             });
+
+    CROW_ROUTE(app, "/zones/<string>/quests").methods("GET"_method)
+            ([](const crow::request& req, std::string zone){
+                return "not implemented";
+            });
 }
 
 HttpServer::~HttpServer() {

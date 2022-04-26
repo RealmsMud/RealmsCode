@@ -165,7 +165,7 @@ void doDemographics() {
 
     // load the directory all the players are stored in
     std::clog << "Opening " << Path::Player << "...";
-    if((dir = opendir(Path::Player)) == nullptr) {
+    if((dir = opendir(Path::Player.c_str())) == nullptr) {
         std::clog << "Directory could not be opened.\n";
         return;
     }
@@ -207,7 +207,7 @@ void doDemographics() {
             continue;
 
         // is this a readable player file?
-        sprintf(name, "%s/%s", Path::Player, dirp->d_name);
+        sprintf(name, "%s/%s", Path::Player.c_str(), dirp->d_name);
         if((xmlDoc = xml::loadFile(name, "Player")) == nullptr)
             continue;
 
@@ -382,7 +382,7 @@ void doDemographics() {
     std::clog << "Formatting stone scrolls...";
 
     // load the file we will be printing to
-    sprintf(name, "%s/stone_scroll.txt", Path::Sign);
+    sprintf(name, "%s/stone_scroll.txt", Path::Sign.c_str());
     unlink(name);
     ff = open(name, O_CREAT | O_RDWR, ACC);
     if(ff < 0) {
@@ -458,7 +458,7 @@ void doDemographics() {
 
 
     // load the file we will be printing to
-    sprintf(name, "%s/stone_scroll_class.txt", Path::Sign);
+    sprintf(name, "%s/stone_scroll_class.txt", Path::Sign.c_str());
     unlink(name);
     ff = open(name, O_CREAT | O_RDWR, ACC);
     if(ff < 0) {
@@ -490,7 +490,7 @@ void doDemographics() {
 
 
     // load the file we will be printing to
-    sprintf(name, "%s/stone_scroll_race.txt", Path::Sign);
+    sprintf(name, "%s/stone_scroll_race.txt", Path::Sign.c_str());
     unlink(name);
     ff = open(name, O_CREAT | O_RDWR, ACC);
     if(ff < 0) {
@@ -516,7 +516,7 @@ void doDemographics() {
     printEnding(ff);
 
     // load the file we will be printing to
-    sprintf(name, "%s/stone_scroll_deity.txt", Path::Sign);
+    sprintf(name, "%s/stone_scroll_deity.txt", Path::Sign.c_str());
     unlink(name);
     ff = open(name, O_CREAT | O_RDWR, ACC);
     if(ff < 0) {
@@ -541,7 +541,7 @@ void doDemographics() {
     printEnding(ff);
 
     // load the file we will be printing to
-    sprintf(name, "%s/stone_scroll_breakdown.txt", Path::Sign);
+    sprintf(name, "%s/stone_scroll_breakdown.txt", Path::Sign.c_str());
     unlink(name);
     ff = open(name, O_CREAT | O_RDWR, ACC);
     if(ff < 0) {

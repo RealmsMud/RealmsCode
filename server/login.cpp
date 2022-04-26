@@ -894,11 +894,11 @@ bool Create::getRace(Socket* sock, std::string str, int mode) {
         int ff=0;
 
         // show them the race menu header
-        sprintf(file, "%s/race_menu.0.txt", Path::Config);
+        sprintf(file, "%s/race_menu.0.txt", Path::Config.c_str());
         sock->viewFile(file);
 
         // show them the main race menu
-        sprintf(file, "%s/race_menu.1.txt", Path::Config);
+        sprintf(file, "%s/race_menu.1.txt", Path::Config.c_str());
         char    buf[FBUF + 1];
 
         ff = open(file, O_RDONLY, 0);
@@ -1734,7 +1734,7 @@ void Create::done(Socket* sock, const std::string &str, int mode) {
     if(mode == Create::doPrint) {
 
         char file[80];
-        sprintf(file, "%s/policy_login.txt", Path::Config);
+        sprintf(file, "%s/policy_login.txt", Path::Config.c_str());
         sock->viewFile(file);
 
         sock->print("[Press Enter to Continue]");

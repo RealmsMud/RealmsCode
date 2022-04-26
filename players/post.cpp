@@ -34,7 +34,7 @@
 #include "mudObjects/rooms.hpp"    // for BaseRoom
 #include "os.hpp"                  // for merror
 #include "paths.hpp"               // for Post, History
-#include "proto.hpp"               // for file_exists, up, broadcast, isCt, is
+#include "proto.hpp"               // for up, broadcast, isCt, is
 #include "server.hpp"              // for Server, gServer
 #include "socket.hpp"              // for Socket
 #include "xml.hpp"                 // for loadPlayer
@@ -44,13 +44,10 @@
 //*********************************************************************
 
 void Player::hasNewMudmail() const {
-    char    filename[250];
-
     if(!flagIsSet(P_UNREAD_MAIL))
         return;
 
-    sprintf(filename, "%s/%s.txt", Path::Post, getCName());
-    if(file_exists(filename))
+    if(fs::exists(Path::Post / getName() / ".txt"))
         print("\n*** You have new mudmail in the post office.\n");
 }
 
@@ -96,7 +93,6 @@ std::string postText(const std::string &str) {
 
 int cmdSendMail(Player* player, cmd* cmnd) {
     Player  *target=nullptr;
-    char    file[80];
 
     bool    online=false;
 
@@ -150,8 +146,8 @@ int cmdSendMail(Player* player, cmd* cmnd) {
     player->print("Enter your message now. Type '.' or '*' on a line by itself to finish or '\\' to\ncancel. Each line should be NO LONGER THAN 80 CHARACTERS.\n-: ");
     sprintf(player->getSock()->tempstr[0], "%s", cmnd->str[1]);
 
-    sprintf(file, "%s/%s_to_%s.txt", Path::Post, player->getCName(), player->getSock()->tempstr[0]);
-    unlink(file);
+    std::error_code ec;
+    fs::remove(Path::Post / (player->getName() + "_to_" + player->getSock()->tempstr[0] + ".txt"), ec );
 
     player->setFlag(P_READING_FILE);
     gServer->processOutput();
@@ -159,7 +155,6 @@ int cmdSendMail(Player* player, cmd* cmnd) {
     player->getSock()->intrpt &= ~1;
 //  player->getSock()->fn = postedit;
 //  player->getSock()->fnparam = 1;
-
     if(online) {
         if( target != player &&
             !target->flagIsSet(P_NO_SHOW_MAIL) &&
@@ -201,7 +196,7 @@ void sendMail(const std::string &target, const std::string &message) {
     }
 
 
-    ff = open(fmt::format("{}/{}.txt", Path::Post, target).c_str(), O_CREAT | O_APPEND | O_RDWR, ACC);
+    ff = open(((Path::Post / target).replace_extension("txt")).c_str(), O_CREAT | O_APPEND | O_RDWR, ACC);
     if(ff < 0)
         merror("sendMail", FATAL);
 
@@ -243,7 +238,7 @@ void postedit(Socket* sock, const std::string& str) {
     Player* ply = sock->getPlayer();
     
     // use a temp file while we're editting it
-    sprintf(filename, "%s/%s_to_%s.txt", Path::Post, ply->getCName(), sock->tempstr[0]);
+    sprintf(filename, "%s/%s_to_%s.txt", Path::Post.c_str(), ply->getCName(), sock->tempstr[0]);
 
     if((str[0] == '.' || str[0] == '*') && !str[1]) {
         // time to copy the temp file to the real file!
@@ -257,7 +252,7 @@ void postedit(Socket* sock, const std::string& str) {
             return;
         }
 
-        sprintf(postfile, "%s/%s.txt", Path::Post, sock->tempstr[0]);
+        sprintf(postfile, "%s/%s.txt", Path::Post.c_str(), sock->tempstr[0]);
         ff = open(postfile, O_CREAT | O_APPEND | O_RDWR, ACC);
         if(ff < 0)
             merror("postedit", FATAL);
@@ -312,15 +307,14 @@ void postedit(Socket* sock, const std::string& str) {
 // This function allows a player to read their mail.
 
 int cmdReadMail(Player* player, cmd* cmnd) {
-    char    filename[80];
 
     if(!canPost(player))
         return(0);
 
     player->clearFlag(P_UNREAD_MAIL);
-    sprintf(filename, "%s/%s.txt", Path::Post, player->getCName());
+    const auto filename = (Path::Post / player->getName()).replace_extension("txt");
 
-    if(open(filename, O_RDONLY, 0) < 0) {
+    if(!fs::exists(filename)) {
         player->print("You have no mail.\n");
         return(0);
     }
@@ -335,8 +329,6 @@ int cmdReadMail(Player* player, cmd* cmnd) {
 // This function allows a DM to read other peoples' mudmail.
 
 int dmReadmail(Player* player, cmd* cmnd) {
-    char    filename[80];
-
     cmnd->str[1][0] = up(cmnd->str[1][0]);
 
     if(!Player::exists(cmnd->str[1])) {
@@ -344,8 +336,8 @@ int dmReadmail(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(filename, "%s/%s.txt", Path::Post, cmnd->str[1]);
-    if(!file_exists(filename)) {
+    const auto filename = (Path::Post / cmnd->str[1]).replace_extension("txt");
+    if(!fs::exists(filename)) {
         player->print("%s currently has no mudmail.\n", cmnd->str[1]);
         return(PROMPT);
     }
@@ -362,13 +354,10 @@ int dmReadmail(Player* player, cmd* cmnd) {
 // This function allows a player to delete their mail.
 
 int cmdDeleteMail(Player* player, cmd* cmnd) {
-    char    file[80];
-
     if(!canPost(player))
         return(0);
-
-    sprintf(file, "%s/%s.txt", Path::Post, player->getCName());
-    unlink(file);
+    std::error_code ec;
+    fs::remove((Path::Post / player->getName()).replace_extension("txt"), ec);
     player->print("Mail deleted.\n");
 
     player->clearFlag(P_UNREAD_MAIL);
@@ -383,7 +372,6 @@ int cmdDeleteMail(Player* player, cmd* cmnd) {
 
 int dmDeletemail(Player* player, cmd* cmnd) {
     Player  *creature=nullptr;
-    char    str[50];
 
     cmnd->str[1][0] = up(cmnd->str[1][0]);
 
@@ -392,14 +380,14 @@ int dmDeletemail(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(str, "%s/%s.txt", Path::Post, cmnd->str[1]);
+    const auto filename = (Path::Post / cmnd->str[1]).replace_extension("txt");
 
-    if(!file_exists(str)) {
+    if(!fs::exists(filename)) {
         player->print("%s has no mail file to delete.\n", cmnd->str[1]);
         return(PROMPT);
     }
-
-    unlink(str);
+    std::error_code ec;
+    fs::remove(filename, ec);
     player->print("%s's mail deleted.\n", cmnd->str[1]);
 
     creature = gServer->findPlayer(cmnd->str[1]);
@@ -438,12 +426,12 @@ int cmdEditHistory(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(file, "%s/%s.txt", Path::History, player->getCName());
+    sprintf(file, "%s/%s.txt", Path::History.c_str(), player->getCName());
 
     ff = open(file, O_RDONLY, 0);
     close(ff);
 
-    if(file_exists(file)) {
+    if(fs::exists(file)) {
         player->print("%s's history so far:\n\n", player->getCName());
         player->getSock()->viewFile(file);
         player->print("\n\n");
@@ -496,7 +484,6 @@ void histedit(Socket* sock, const std::string& str) {
 //*********************************************************************
 
 int cmdHistory(Player* player, cmd* cmnd) {
-    char    file[80];
     bool    self = false;
 
 
@@ -516,9 +503,9 @@ int cmdHistory(Player* player, cmd* cmnd) {
         }
     }
 
-    sprintf(file, "%s/%s.txt", Path::History, self ? player->getCName() : cmnd->str[1]);
+    const auto filename = (Path::History / (self ? player->getName() : cmnd->str[1])).replace_extension("txt");
 
-    if(!file_exists(file)) {
+    if(!fs::exists(filename)) {
         if(self)
             player->print("You haven't written a character history.\n");
         else
@@ -531,7 +518,7 @@ int cmdHistory(Player* player, cmd* cmnd) {
     else
         player->print("Current History of %s:\n\n", cmnd->str[1]);
 
-    player->getSock()->viewFile(file, true);
+    player->getSock()->viewFile(filename, true);
     return(0);
 }
 
@@ -541,10 +528,10 @@ int cmdHistory(Player* player, cmd* cmnd) {
 // This function allows a player to delete their history.
 
 int cmdDeleteHistory(Player* player, cmd* cmnd) {
-    char    file[80];
 
-    sprintf(file, "%s/%s.txt", Path::History, player->getCName());
-    unlink(file);
+    const auto filename = (Path::History / player->getName()).replace_extension("txt");
+    std::error_code ec;
+    fs::remove(filename, ec);
     player->print("History deleted.\n");
 
     broadcast(isCt, "^y%s just deleted %s history.", player->getCName(), player->hisHer());
@@ -557,8 +544,6 @@ int cmdDeleteHistory(Player* player, cmd* cmnd) {
 // This function allows a DM to delete a player's mail file.
 
 int dmDeletehist(Player* player, cmd* cmnd) {
-    char    file[80];
-
     cmnd->str[1][0] = up(cmnd->str[1][0]);
 
     if(!Player::exists(cmnd->str[1])) {
@@ -566,14 +551,14 @@ int dmDeletehist(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(file, "%s/%s.txt", Path::History, cmnd->str[1]);
+    const auto filename = (Path::History / cmnd->str[1]).replace_extension("txt");
 
-    if(!file_exists(file)) {
+    if(!fs::exists(filename)) {
         player->print("%s has no history to delete.\n", cmnd->str[1]);
         return(PROMPT);
     }
-
-    unlink(file);
+    std::error_code ec;
+    fs::remove(filename, ec);
     player->print("%s's history deleted.\n", cmnd->str[1]);
 
     return(0);

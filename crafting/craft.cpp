@@ -1017,7 +1017,7 @@ bool Config::loadRecipes() {
     int     i=0;
 
     char filename[80];
-    snprintf(filename, 80, "%s/recipes.xml", Path::Game);
+    snprintf(filename, 80, "%s/recipes.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "Recipes");
 
     if(xmlDoc == nullptr)
@@ -1069,7 +1069,7 @@ bool Config::saveRecipes() const {
     for(it = recipes.begin() ; it != recipes.end() ; it++)
         (*it).second->save(rootNode);
 
-    sprintf(filename, "%s/recipes.xml", Path::Game);
+    sprintf(filename, "%s/recipes.xml", Path::Game.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);

@@ -318,7 +318,6 @@ int dec_daily(struct daily *dly_ptr);
 int update_daily(struct daily *dly_ptr);
 void loge(const char *fmt, ...);
 void loga(const char *fmt, ...);
-bool file_exists(const char *filename);
 void pleaseWait(Creature* player, int duration);
 void logn(const char *name, const char *fmt, ...);
 int log_immort(int broad, Player* player, const char *fmt, ...);

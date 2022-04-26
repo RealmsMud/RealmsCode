@@ -38,7 +38,7 @@ bool Config::loadDeities() {
     int     i=0;
 
     char filename[80];
-    snprintf(filename, 80, "%s/deities.xml", Path::Game);
+    snprintf(filename, 80, "%s/deities.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "Deities");
 
     if(xmlDoc == nullptr)

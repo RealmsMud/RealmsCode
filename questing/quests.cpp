@@ -439,7 +439,7 @@ bool Config::loadQuests() {
     xmlDocPtr   xmlDoc;
     char filename[256];
 
-    sprintf(filename, "%s/quests.xml", Path::Game);
+    sprintf(filename, "%s/quests.xml", Path::Game.c_str());
     if((xmlDoc = xml::loadFile(filename, "Quests")) == nullptr)
         return(false);
 

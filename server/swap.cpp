@@ -578,7 +578,7 @@ void Config::offlineSwap() {
     placeholder.id = -1;
 
     // get a list of all players that need updating
-    if((dir = opendir(Path::Player)) != nullptr) {
+    if((dir = opendir(Path::Player.c_str())) != nullptr) {
 
         while((dirp = readdir(dir)) != nullptr) {
             if(dirp->d_name[0] == '.')
@@ -599,7 +599,7 @@ void Config::offlineSwap() {
     }
 
     // check player backups
-    if((dir = opendir(Path::PlayerBackup)) != nullptr) {
+    if((dir = opendir(Path::PlayerBackup.c_str())) != nullptr) {
 
         while((dirp = readdir(dir)) != nullptr) {
             if(dirp->d_name[0] == '.')
@@ -620,7 +620,7 @@ void Config::offlineSwap() {
     }
 
     // get a list of all unique rooms
-    if((dir = opendir(Path::UniqueRoom)) != nullptr) {
+    if((dir = opendir(Path::UniqueRoom.c_str())) != nullptr) {
 
         while((dirp = readdir(dir)) != nullptr) {
             if(dirp->d_name[0] == '.')
@@ -658,7 +658,7 @@ void Config::offlineSwap() {
     }
 
     // get a list of all monsters
-    if((dir = opendir(Path::Monster)) != nullptr) {
+    if((dir = opendir(Path::Monster.c_str())) != nullptr) {
 
         while((dirp = readdir(dir)) != nullptr) {
             if(dirp->d_name[0] == '.')
@@ -1754,7 +1754,7 @@ bool Area::swap(const Swap& s) {
     std::list<AreaZone*>::iterator zIt;
     bool found=false;
 
-    for(zIt = zones.begin() ; zIt != zones.end() ; zIt++) {
+    for(zIt = areaZones.begin() ; zIt != areaZones.end() ; zIt++) {
         if((*zIt)->swap(s))
             found = true;
     }

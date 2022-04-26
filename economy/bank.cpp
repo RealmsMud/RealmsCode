@@ -41,7 +41,7 @@
 #include "mudObjects/players.hpp"    // for Player
 #include "mudObjects/rooms.hpp"      // for BaseRoom
 #include "paths.hpp"                 // for Bank, GuildBank, BankLog, GuildB...
-#include "proto.hpp"                 // for broadcast, file_exists, log_immort
+#include "proto.hpp"                 // for broadcast, log_immort
 #include "server.hpp"                // for Server, GOLD_IN, gServer
 #include "socket.hpp"                // for Socket
 #include "xml.hpp"                   // for loadPlayer
@@ -536,11 +536,11 @@ void Bank::statement(Player* player, bool isGuild) {
 
 
     if(isGuild)
-        sprintf(file, "%s/%d.txt", Path::GuildBank, player->getGuild());
+        sprintf(file, "%s/%d.txt", Path::GuildBank.c_str(), player->getGuild());
     else
-        sprintf(file, "%s/%s.txt", Path::Bank, player->getCName());
+        sprintf(file, "%s/%s.txt", Path::Bank.c_str(), player->getCName());
 
-    if(file_exists(file)) {
+    if(fs::exists(file)) {
         strcpy(player->getSock()->tempstr[3], "\0");
         player->getSock()->viewFileReverse(file);
     } else {
@@ -577,9 +577,9 @@ void Bank::deleteStatement(Player* player, bool isGuild) {
 
 
     if(isGuild)
-        sprintf(file, "%s/%d.txt", Path::GuildBank, player->getGuild());
+        sprintf(file, "%s/%d.txt", Path::GuildBank.c_str(), player->getGuild());
     else
-        sprintf(file, "%s/%s.txt", Path::Bank, player->getCName());
+        sprintf(file, "%s/%s.txt", Path::Bank.c_str(), player->getCName());
 
     player->print("Statement deleted.\n");
     unlink(file);
@@ -706,7 +706,7 @@ void Bank::log(const char *name, const char *fmt, ...) {
 
     va_start(ap, fmt);
 
-    sprintf(file, "%s/%s.txt", Path::Bank, name);
+    sprintf(file, "%s/%s.txt", Path::Bank.c_str(), name);
 
     strcpy(str, ctime(&t));
     str[24] = ':';
@@ -716,7 +716,7 @@ void Bank::log(const char *name, const char *fmt, ...) {
 
     Bank::doLog(file, str);
 
-    sprintf(file, "%s/%s.txt", Path::BankLog, name);
+    sprintf(file, "%s/%s.txt", Path::BankLog.c_str(), name);
     Bank::doLog(file, str);
 }
 
@@ -732,7 +732,7 @@ void Bank::guildLog(int guild, const char *fmt, ...) {
 
     va_start(ap, fmt);
 
-    sprintf(file, "%s/%d.txt", Path::GuildBank, guild);
+    sprintf(file, "%s/%d.txt", Path::GuildBank.c_str(), guild);
 
     strcpy(str, ctime(&t));
     str[24] = ':';
@@ -742,6 +742,6 @@ void Bank::guildLog(int guild, const char *fmt, ...) {
 
     Bank::doLog(file, str);
 
-    sprintf(file, "%s/%d.txt", Path::GuildBankLog, guild);
+    sprintf(file, "%s/%d.txt", Path::GuildBankLog.c_str(), guild);
     Bank::doLog(file, str);
 }

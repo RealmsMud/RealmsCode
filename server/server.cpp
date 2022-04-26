@@ -273,9 +273,8 @@ bool Server::init() {
         finishReboot();
     } else if (!gConfig->isListing()) {
         addListenPort(Port);
-        char filename[80];
-        snprintf(filename, 80, "%s/reboot.xml", Path::Config);
-        unlink(filename);
+        std::error_code ec;
+        fs::remove(Path::Config / "reboot.xml", ec);
     }
     return(true);
 }
@@ -1509,7 +1508,7 @@ void Server::saveDnsCache() {
         xml::newNumChild(curNode, "Time", (long)(*it).time);
     }
 
-    sprintf(filename, "%s/dns.xml", Path::Config);
+    sprintf(filename, "%s/dns.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }
@@ -1523,7 +1522,7 @@ void Server::loadDnsCache() {
     xmlNodePtr curNode, childNode;
 
     char filename[80];
-    snprintf(filename, 80, "%s/dns.xml", Path::Config);
+    snprintf(filename, 80, "%s/dns.xml", Path::Config.c_str());
     xmlDoc = xml::loadFile(filename, "DnsCache");
 
     if(xmlDoc == nullptr)
@@ -1619,9 +1618,8 @@ bool Server::startReboot(bool resetShips) {
 
     execl(path, path, "-r", port, (char *)nullptr);
 
-    char filename[80];
-    snprintf(filename, 80, "%s/config.xml", Path::Config);
-    unlink(filename);
+    std::error_code ec;
+    fs::remove(Path::Config / "config.xml", ec);
 
     merror("dmReboot failed!!!", FATAL);
     return(false);
@@ -1676,7 +1674,7 @@ bool Server::saveRebootFile(bool resetShips) {
     }
 
     char filename[80];
-    snprintf(filename, 80, "%s/reboot.xml", Path::Config);
+    snprintf(filename, 80, "%s/reboot.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);
@@ -1697,7 +1695,7 @@ int Server::finishReboot() {
     rebooting = true;
 
     char filename[80];
-    snprintf(filename, 80, "%s/reboot.xml", Path::Config);
+    snprintf(filename, 80, "%s/reboot.xml", Path::Config.c_str());
     // build an XML tree from a the file
     doc = xml::loadFile(filename, "Reboot");
     unlink(filename);
@@ -1958,8 +1956,7 @@ bool Server::checkDouble(Socket &sock) {
 //*********************************************************************
 
 void Server::sendCrash() {
-    char filename[80];
-    snprintf(filename, 80, "%s/crash.txt", Path::Config);
+    auto filename = Path::Config / "crash.txt";
 
     for(Socket &sock : sockets) {
         sock.viewFile(filename);
@@ -2234,7 +2231,7 @@ void Server::loadIds() {
     xmlNodePtr curNode;
 
     char filename[80];
-    snprintf(filename, 80, "%s/ids.xml", Path::Game);
+    snprintf(filename, 80, "%s/ids.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "Ids");
 
     if(xmlDoc == nullptr)
@@ -2277,7 +2274,7 @@ void Server::saveIds() {
     xml::newNumChild(rootNode, "MaxPlayerId",  maxPlayerId);
     xml::newNumChild(rootNode, "MaxObjectId",  maxObjectId);
 
-    sprintf(filename, "%s/ids.xml", Path::Game);
+    sprintf(filename, "%s/ids.xml", Path::Game.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 
@@ -2340,10 +2337,9 @@ bool Server::reloadRoom(BaseRoom* room) {
 
         AreaRoom* aRoom = room->getAsAreaRoom();
         char    filename[256];
-        sprintf(filename, "%s/%d/%s", Path::AreaRoom, aRoom->area->id,
-            aRoom->mapmarker.filename().c_str());
+        sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), aRoom->area->id, aRoom->mapmarker.filename().c_str());
 
-        if(file_exists(filename)) {
+        if(fs::exists(filename)) {
             xmlDocPtr   xmlDoc;
             xmlNodePtr  rootNode;
 

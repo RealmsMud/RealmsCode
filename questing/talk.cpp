@@ -49,7 +49,7 @@ int loadCreature_tlk( Creature* creature ) {
         if(crt_name[i] == ' ')
             crt_name[i] = '_';
 
-    sprintf(path, "%s/%s-%d.txt", Path::Talk, crt_name, creature->getLevel());
+    sprintf(path, "%s/%s-%d.txt", Path::Talk.c_str(), crt_name, creature->getLevel());
     fp = fopen(path, "r");
     if(!fp)
         return(0);

@@ -1886,10 +1886,10 @@ void Property::manageDesc(Player* player, cmd* cmnd, PropType propType, int x) {
 
     switch(propType) {
     case PROP_GUILDHALL:
-        sprintf(file, "%s/%s_guildhall.txt", Path::Post, player->getCName());
+        sprintf(file, "%s/%s_guildhall.txt", Path::Post.c_str(), player->getCName());
         break;
     case PROP_HOUSE:
-        sprintf(file, "%s/%s_house.txt", Path::Post, player->getCName());
+        sprintf(file, "%s/%s_house.txt", Path::Post.c_str(), player->getCName());
         break;
     default:
         player->print("Error: this property type is not supported.\n");
@@ -1899,7 +1899,7 @@ void Property::manageDesc(Player* player, cmd* cmnd, PropType propType, int x) {
     ff = open(file, O_RDONLY, 0);
     close(ff);
 
-    if(file_exists(file)) {
+    if(fs::exists(file)) {
         player->print("Room description so far:\n\n");
         player->getSock()->viewFile(file);
         player->print("\n\n");

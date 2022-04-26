@@ -36,7 +36,7 @@ bool Config::loadClans() {
     int     i=0;
 
     char filename[80];
-    snprintf(filename, 80, "%s/clans.xml", Path::Game);
+    snprintf(filename, 80, "%s/clans.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "Clans");
 
     if(xmlDoc == nullptr)

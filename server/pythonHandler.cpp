@@ -68,7 +68,7 @@ REALMS_MODULE(mudObject);
 bool PythonHandler::initPython() {
     try {
         // Add in our python lib to the python path for importing modules
-        setenv("PYTHONPATH", Path::Python, 1);
+        setenv("PYTHONPATH", Path::Python.c_str(), 1);
         std::clog << " ====> PythonPath: " << getenv("PYTHONPATH") << std::endl;
 
         gServer->pythonHandler = new PythonHandler();
