@@ -1260,10 +1260,10 @@ void Monster::logDeath(Creature *killer) {
         strcpy(file, "log.perm");
         logType = 2;
     } else if(killer->pFlagIsSet(P_BUGGED) ) {
-        sprintf(file, "%s/%s", Path::BugLog, killer->getCName());
+        sprintf(file, "%s/%s", Path::BugLog.c_str(), killer->getCName());
         logType = 3;
     } else if(killer->pFlagIsSet(P_KILLS_LOGGED) ) {
-        sprintf(file, "%s/%s.kills", Path::BugLog, killer->getCName());
+        sprintf(file, "%s/%s.kills", Path::BugLog.c_str(), killer->getCName());
         logType = 4;
     } else
         return; //Mob's death not logged

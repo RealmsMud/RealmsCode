@@ -413,7 +413,7 @@ std::string doFinger(const Player* player, std::string name, CreatureClass cls) 
              << target->getTitle() << "\n";
     }
 
-    sprintf(tmp, "%s/%s.txt", Path::Post, name.c_str());
+    sprintf(tmp, "%s/%s.txt", Path::Post.c_str(), name.c_str());
     if(stat(tmp, &f_stat))
         oStr << "No mail.\n";
     else if(f_stat.st_atime > f_stat.st_mtime)

@@ -42,7 +42,6 @@
 #include "paths.hpp"                                // for Player, PlayerBackup
 #include "playerClass.hpp"                          // for PlayerClass
 #include "playerTitle.hpp"                          // for PlayerTitle
-#include "proto.hpp"                                // for file_exists
 #include "proxy.hpp"                                // for ProxyAccess, Prox...
 #include "quests.hpp"                               // for QuestCompleted
 #include "range.hpp"                                // for Range
@@ -63,15 +62,15 @@
 bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    std::string     filename;
+    fs::path    filename;
     std::string     pass = "", loadName = "";
 
     if(loadType == LoadType::LS_BACKUP)
-        filename = fmt::format("{}/{}.bak.xml", Path::PlayerBackup, name);
+        filename = (Path::PlayerBackup / name).replace_extension("bak.xml");
     else if(loadType == LoadType::LS_CONVERT)
-        filename = fmt::format("{}/convert/{}.xml", Path::Player, name);
+        filename = (Path::Player / "convert" / name).replace_extension("xml");
     else // LoadType::LS_NORMAL
-        filename = fmt::format("{}/{}.xml", Path::Player, name);
+        filename = (Path::Player / name).replace_extension("xml");
 
     if((xmlDoc = xml::loadFile(filename.c_str(), "Player")) == nullptr)
         return(false);
@@ -375,9 +374,9 @@ int Player::saveToFile(LoadType saveType) {
     saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
 
     if(saveType == LoadType::LS_BACKUP) {
-        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, getCName());
+        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup.c_str(), getCName());
     } else {
-        sprintf(filename, "%s/%s.xml", Path::Player, getCName());
+        sprintf(filename, "%s/%s.xml", Path::Player.c_str(), getCName());
     }
 
     xml::saveFile(filename, xmlDoc);
@@ -634,7 +633,7 @@ bool Config::loadClasses() {
     xmlNodePtr curNode;
 
     char filename[80];
-    snprintf(filename, 80, "%s/classes.xml", Path::Game);
+    snprintf(filename, 80, "%s/classes.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "Classes");
 
     if(xmlDoc == nullptr)
@@ -692,7 +691,7 @@ void ProxyManager::save() {
         p.second.save(rootNode);
     }
 
-    sprintf(filename, "%s/proxies.xml", Path::PlayerData);
+    sprintf(filename, "%s/proxies.xml", Path::PlayerData.c_str());
 
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
@@ -704,9 +703,9 @@ void ProxyManager::loadProxies() {
     xmlNodePtr  curNode;
     char        filename[80];
 
-    sprintf(filename, "%s/proxies.xml", Path::PlayerData);
+    sprintf(filename, "%s/proxies.xml", Path::PlayerData.c_str());
 
-    if(!file_exists(filename))
+    if(!fs::exists(filename))
         return;
 
     if((xmlDoc = xml::loadFile(filename, "Proxies")) == nullptr)

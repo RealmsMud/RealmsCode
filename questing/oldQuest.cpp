@@ -48,7 +48,7 @@ bool Config::loadQuestTable() {
     char    filename[80];
 
     // build an XML tree from a the file
-    sprintf(filename, "%s/questTable.xml", Path::Game);
+    sprintf(filename, "%s/questTable.xml", Path::Game.c_str());
     doc = xml::loadFile(filename, "Quests");
     if(doc == nullptr)
         return(false);

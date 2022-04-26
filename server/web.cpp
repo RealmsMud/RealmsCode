@@ -159,7 +159,7 @@ void WebInterface::openFifos() {
     checkFifo(fifoOut);
 
     char filename[80];
-    snprintf(filename, 80, "%s/%s", Path::Game, fifoIn);
+    snprintf(filename, 80, "%s/%s", Path::Game.c_str(), fifoIn);
     inFd = open(filename, O_RDONLY|O_NONBLOCK);
     if(inFd == -1)
         throw(std::runtime_error("WebInterface: Unable to open " + std::string(filename) + ":" +strerror(errno)));
@@ -212,10 +212,10 @@ void WebInterface::recreateFifos() {
     char filename[80];
     closeFifos();
 
-    snprintf(filename, 80, "%s/%s.xml", Path::Game, fifoIn);
+    snprintf(filename, 80, "%s/%s.xml", Path::Game.c_str(), fifoIn);
     unlink(filename);
 
-    snprintf(filename, 80, "%s/%s.xml", Path::Game, fifoOut);
+    snprintf(filename, 80, "%s/%s.xml", Path::Game.c_str(), fifoOut);
     unlink(filename);
 
     openFifos();
@@ -233,7 +233,7 @@ bool WebInterface::checkFifo(const char* fifoFile) {
     bool needToCreate = false;
 
     char filename[80];
-    snprintf(filename, 80, "%s/%s", Path::Game, fifoFile);
+    snprintf(filename, 80, "%s/%s", Path::Game.c_str(), fifoFile);
     retVal = stat(filename, &statInfo);
     if(retVal == 0) {
         if((statInfo.st_mode & S_IFMT) != S_IFIFO) {
@@ -874,7 +874,7 @@ bool WebInterface::sendOutput() {
     int n=0;
 
     char filename[80];
-    snprintf(filename, 80, "%s/%s", Path::Game, fifoOut);
+    snprintf(filename, 80, "%s/%s", Path::Game.c_str(), fifoOut);
 
     int total = outBuf.length();
     if(outFd == -1)
@@ -1114,7 +1114,7 @@ int cmdWiki(Player* player, cmd* cmnd) {
 
     boost::to_lower(entry);
     boost::replace_all(entry, ":", "_colon_");
-    auto file = fmt::format("{}/{}.txt", Path::Wiki, entry);
+    auto file = (Path::Wiki / entry).replace_extension("txt");
 
     // If the file exists and was modified within the last hour, use the local cache
     if(!stat(file.c_str(), &f_stat) && (time(nullptr) - f_stat.st_mtim.tv_sec) < 3600) {
@@ -1170,7 +1170,7 @@ bool WebInterface::wiki(std::string command, std::string tempBuf) {
     if(!player) {
         outBuf += "That player is not logged on.";
     } else {
-        player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::Wiki, tempBuf), true);
+        player->getSock()->viewFile((Path::Wiki / tempBuf).replace_extension("txt"), true);
     }
     outBuf += EOT;
     return(true);

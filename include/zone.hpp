@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <string>               // for hash, string
+#include <string>                       // for hash, string
 #include <boost/dynamic_bitset.hpp>
 #include <nlohmann/json_fwd.hpp>
 

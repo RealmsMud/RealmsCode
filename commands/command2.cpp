@@ -60,7 +60,7 @@
 
 int stoneScroll(Player* player, cmd* cmnd) {
     char    filename[80];
-    sprintf(filename, "%s/stone_scroll", Path::Sign);
+    sprintf(filename, "%s/stone_scroll", Path::Sign.c_str());
 
     if(!strncmp(cmnd->str[2], "class", strlen(cmnd->str[2])))
         strcat(filename, "_class");

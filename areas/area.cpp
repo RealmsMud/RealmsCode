@@ -50,7 +50,7 @@
 #include "mudObjects/objects.hpp"    // for Object
 #include "mudObjects/players.hpp"    // for Player
 #include "paths.hpp"                 // for AreaData
-#include "proto.hpp"                 // for zero, file_exists, showRoomFlags
+#include "proto.hpp"                 // for zero, showRoomFlags
 #include "season.hpp"                // for Season, NO_SEASON
 #include "server.hpp"                // for Server, gServer
 #include "socket.hpp"                // for Socket
@@ -529,10 +529,10 @@ Area::~Area() {
     }
     rooms.clear();
 
-    for(auto const& zone : zones) {
+    for(auto const& zone : areaZones) {
         delete zone;
     }
-    zones.clear();
+    areaZones.clear();
 
     for (auto const& [tileId, tile] : ter_tiles) {
         delete tile;
@@ -556,7 +556,7 @@ Area::~Area() {
 //*********************************************************************
 
 CatRef Area::getUnique(const MapMarker *mapmarker) const {
-    for (auto const& zone : zones) {
+    for (auto const& zone : areaZones) {
         if(zone->unique.id && zone->inside(this, mapmarker))
             return(zone->unique);
     }
@@ -898,7 +898,7 @@ void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, 
         strcpy(grid[i], "");
 
     // see if there is any zone text to add
-    for (auto const& zone : zones) {
+    for (auto const& zone : areaZones) {
         if(!zone->display.empty() && zone->inside(this, mapmarker)) {
             if(!displayed) {
                 desc += "\n";
@@ -1001,7 +1001,7 @@ std::string Area::showGrid(const Player* player, const MapMarker *mapmarker, boo
                         m.add(x, y, 0);
                         zInside = false;
                         zZone = 0;
-                        for(it = zones.begin() ; it != zones.end() ; it++) {
+                        for(it = areaZones.begin() ; it != areaZones.end() ; it++) {
                             zZone++;
                             if((*it)->inside(this, mapmarker)) {
                                 zHigh = zZone;
@@ -1174,8 +1174,8 @@ void Area::loadTerrain(int minDepth) {
     char    storage[MAX(height, width)+1];
 
     while(k < depth) {
-        sprintf(filename, "%s/%s.%d.ter", Path::AreaData, dataFile, k);
-        if(!file_exists(filename))
+        sprintf(filename, "%s/%s.%d.ter", Path::AreaData.c_str(), dataFile, k);
+        if(!fs::exists(filename))
             return;
 
         checkFileSize(size, filename);
@@ -1197,9 +1197,9 @@ void Area::loadTerrain(int minDepth) {
         t.close();
         aTerrain.data.push_back(vTer);
 
-        sprintf(filename, "%s/%s.%d.map", Path::AreaData, dataFile, k);
+        sprintf(filename, "%s/%s.%d.map", Path::AreaData.c_str(), dataFile, k);
         std::vector< std::vector<char> > vMap;
-        if(file_exists(filename)) {
+        if(fs::exists(filename)) {
             checkFileSize(size, filename);
             std::fstream m(filename, std::ios::in);
             i=0;
@@ -1240,9 +1240,9 @@ void Area::loadTerrain(int minDepth) {
         }
         aMap.data.push_back(vMap);
 
-        sprintf(filename, "%s/%s.%d.sn", Path::AreaData, dataFile, k);
+        sprintf(filename, "%s/%s.%d.sn", Path::AreaData.c_str(), dataFile, k);
         std::vector< std::vector<char> > vSn;
-        if(file_exists(filename)) {
+        if(fs::exists(filename)) {
             checkFileSize(size, filename);
             std::fstream s(filename, std::ios::in);
             i=0;
@@ -1293,7 +1293,7 @@ bool Area::flagIsSet(int flag, const MapMarker* mapmarker) const {
     std::list<AreaZone*>::const_iterator it;
     AreaZone *zone=nullptr;
 
-    for(it = zones.begin() ; it != zones.end() ; it++) {
+    for(it = areaZones.begin() ; it != areaZones.end() ; it++) {
         zone = (*it);
         if(zone->flagIsSet(flag) && zone->inside(this, mapmarker))
             return(true);
@@ -1406,7 +1406,7 @@ int dmListArea(Player* player, cmd* cmnd) {
                 else
                     player->printColor("^yTo show zone wander info, type \"*arealist zones wander\".\n");
             }
-            for(const auto& zone : area->zones) {
+            for(const auto& zone : area->areaZones) {
                 player->printColor("Name: ^c%s\n", zone->name.c_str());
                 if(wander) {
                     showMobList(player, &zone->wander, "zone");

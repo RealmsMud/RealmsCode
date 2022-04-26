@@ -478,7 +478,7 @@ public:
 private:
     bool bHavePort = false;
 public:
-    bool hasPort() const;
+    [[nodiscard]] bool hasPort() const;
 
 private:
 
@@ -659,7 +659,7 @@ private:
 private:
     bool botEnabled = false;
 public:
-    bool isBotEnabled() const;
+    [[nodiscard]] bool isBotEnabled() const;
 
 private:
     std::string botToken;
@@ -670,7 +670,7 @@ public:
     [[nodiscard]] const std::string &getWebhookToken(long webhookID) const;
     void clearWebhookTokens();
 
-    int getMaxDouble() const;
+    [[nodiscard]] int getMaxDouble() const;
 };
 
 extern Config *gConfig;

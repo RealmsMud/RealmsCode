@@ -64,7 +64,7 @@ void startup_mordor() {
     std::clog << "--- Game Up: " << Port << " --- [" << VERSION << "]\n";
     loge("--- Game Up: %d --- [%s]\n", Port, VERSION);
     // record the process ID
-    sprintf(buf, "%s/mordor%d.pid", Path::Log, Port);
+    sprintf(buf, "%s/mordor%d.pid", Path::Log.c_str(), Port);
     out = fopen(buf, "w");
     if(out != nullptr) {
         fprintf(out, "%d", getpid());

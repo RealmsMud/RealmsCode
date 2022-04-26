@@ -270,7 +270,7 @@ void writeSchoolDomainFiles(MagicType type, int min, int max, const char* seeAls
 
 
         // prepare to write the help file
-        sprintf(filename, "%s%s.txt", Path::Help, skill.c_str());
+        sprintf(filename, "%s%s.txt", Path::Help.c_str(), skill.c_str());
         std::ofstream out(filename);
         out.setf(std::ios::left, std::ios::adjustfield);
         out.imbue(std::locale(""));
@@ -310,10 +310,10 @@ bool Config::writeSpellFiles() const {
     char    bhfile[100], bhfileLink[100];
 
     // Figure out pathing information for the helpfiles
-    sprintf(dmfile, "%s/sflags.txt", Path::DMHelp);
-    sprintf(dmfileLink, "%s/sflag.txt", Path::DMHelp);
-    sprintf(bhfile, "%s/sflags.txt", Path::BuilderHelp);
-    sprintf(bhfileLink, "%s/sflag.txt", Path::BuilderHelp);
+    sprintf(dmfile, "%s/sflags.txt", Path::DMHelp.c_str());
+    sprintf(dmfileLink, "%s/sflag.txt", Path::DMHelp.c_str());
+    sprintf(bhfile, "%s/sflags.txt", Path::BuilderHelp.c_str());
+    sprintf(bhfileLink, "%s/sflag.txt", Path::BuilderHelp.c_str());
 
     xmlDoc = xmlNewDoc(BAD_CAST "1.0");
     rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Spells", nullptr);
@@ -332,7 +332,7 @@ bool Config::writeSpellFiles() const {
         out << " " << std::setw(10) << (i+1) << std::setw(20) << spllist[i].splstr << "\n";
     }
 
-    sprintf(filename, "%s/spells.xml", Path::Code);
+    sprintf(filename, "%s/spells.xml", Path::Code.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 

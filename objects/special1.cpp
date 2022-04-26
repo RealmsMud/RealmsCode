@@ -53,7 +53,7 @@ int Object::doSpecial(Player* player) {
         for(i=0; i<strlen(str); i++)
             if(str[i] == ' ')
                 str[i] = '_';
-        sprintf(str2, "%s/%s.txt", Path::Sign, str);
+        sprintf(str2, "%s/%s.txt", Path::Sign.c_str(), str);
         player->getSock()->viewFile(str2, !flagIsSet(O_UNPAGED_FILE));
         break;
         

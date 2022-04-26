@@ -685,7 +685,7 @@ int stat_rom(Player* player, AreaRoom* room) {
         room->area->name.c_str(), room->fullName().c_str());
     tile = room->area->getTile(room->area->getTerrain(nullptr, &room->mapmarker, 0, 0, 0, true), false);
 
-    for(it = room->area->zones.begin() ; it != room->area->zones.end() ; it++) {
+    for(it = room->area->areaZones.begin() ; it != room->area->areaZones.end() ; it++) {
         zone = (*it);
         if(zone->inside(room->area, &room->mapmarker)) {
             player->printColor("^yZone:^x %s\n", zone->name.c_str());
@@ -1105,7 +1105,7 @@ int dmAddRoom(Player* player, cmd* cmnd) {
         }
 
         sprintf(file, "%s", roomPath(cr));
-        if(file_exists(file)) {
+        if(fs::exists(file)) {
             player->print("Room already exists.\n");
             return(0);
         }
@@ -2491,7 +2491,7 @@ int dmMobList(Player* player, cmd* cmnd) {
         std::list<AreaZone*>::iterator it;
         AreaZone *zone=nullptr;
 
-        for(it = area->zones.begin() ; it != area->zones.end() ; it++) {
+        for(it = area->areaZones.begin() ; it != area->areaZones.end() ; it++) {
             zone = (*it);
             if(zone->inside(area, &player->getAreaRoomParent()->mapmarker)) {
                 player->print("Zone: %s\n", zone->name.c_str());
@@ -3084,12 +3084,12 @@ CatRef findNextEmpty(const std::string &type, const std::string &area) {
 void AreaRoom::save(Player* player) const {
     char            filename[256];
 
-    sprintf(filename, "%s/%d/", Path::AreaRoom, area->id);
+    sprintf(filename, "%s/%d/", Path::AreaRoom.c_str(), area->id);
     Path::checkDirExists(filename);
     strcat(filename, mapmarker.filename().c_str());
 
     if(!canSave()) {
-        if(file_exists(filename)) {
+        if(fs::exists(filename)) {
             if(player)
                 player->print("Restoring this room to generic status.\n");
             unlink(filename);

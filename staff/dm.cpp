@@ -1338,7 +1338,7 @@ int dmHelp(Player* player, cmd* cmnd) {
     }
 
     if(cmnd->num < 2) {
-        player->getSock()->viewFile(fmt::format("{}/dmHelpfile.txt", Path::DMHelp), true);
+        player->getSock()->viewFile( Path::DMHelp / "dmHelpfile.txt", true);
         return(DOPROMPT);
     }
     if(strchr(cmnd->str[1], '/')!=nullptr) {
@@ -1346,7 +1346,7 @@ int dmHelp(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::DMHelp, cmnd->str[1]), true);
+    player->getSock()->viewFile((Path::DMHelp / cmnd->str[1]).replace_extension("txt"), true);
     return(DOPROMPT);
 
 }
@@ -1359,7 +1359,7 @@ int dmHelp(Player* player, cmd* cmnd) {
 
 int bhHelp(Player* player, cmd* cmnd) {
     if(cmnd->num < 2) {
-        player->getSock()->viewFile(fmt::format("{}/build_help.txt", Path::BuilderHelp), true);
+        player->getSock()->viewFile((Path::BuilderHelp / "build_help.txt"), true);
         return(DOPROMPT);
     }
     if(strchr(cmnd->str[1], '/')!=nullptr) {
@@ -1367,7 +1367,7 @@ int bhHelp(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::BuilderHelp, cmnd->str[1]), true);
+    player->getSock()->viewFile( (Path::BuilderHelp / cmnd->str[1]).replace_extension("txt"), true);
     return(DOPROMPT);
 
 }
@@ -2089,30 +2089,30 @@ int dmSet(Player* player, cmd* cmnd) {
 // If *log r is typed, then the log file is removed (i.e. cleared).
 
 int dmLog(Player* player, cmd* cmnd) {
-    char filename[80];
+    fs::path filename = Path::Log;
 
     switch(tolower(cmnd->str[1][0])) {
     case 'a':
         if(!player->isDm())
             return(PROMPT);
-        sprintf(filename, "%s/assert.log.txt", Path::Log);
+        filename /= "assert.log.txt";
         break;
     case 'i':
         if(!player->isDm())
             return(PROMPT);
-        sprintf(filename, "%s/log.imm.txt", Path::Log);
+        filename /= "log.imm.txt";
         break;
     case 's':
-        sprintf(filename, "%s/log.suicide.txt", Path::Log);
+        filename /= "log.suicide.txt";
         break;
     case 'w':
         if(!player->isDm())
             return(PROMPT);
-        sprintf(filename, "%s/log.passwd.txt", Path::Log);
+        filename /= "log.passwd.txt";
         break;
     case 'p':
     default:
-        sprintf(filename, "%s/log.txt", Path::Log);
+        filename /= "log.txt";
         break;
     }
 

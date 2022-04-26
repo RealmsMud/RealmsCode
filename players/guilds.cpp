@@ -1852,7 +1852,7 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
 
         if(!online) {
             // Send them a mudmail
-            sprintf(file, "%s/%s.txt", Path::Post, leader->getCName());
+            sprintf(file, "%s/%s.txt", Path::Post.c_str(), leader->getCName());
             ff = open(file, O_CREAT | O_APPEND | O_RDWR, ACC);
             if(ff > 0) {
                 time(&t);

@@ -32,7 +32,7 @@ std::string loadHelpTemplate(const char* filename) {
     char    file[80], line[200];
     std::string str;
 
-    sprintf(file, "%s%s.txt", Path::HelpTemplate, filename);
+    sprintf(file, "%s%s.txt", Path::HelpTemplate.c_str(), filename);
     std::ifstream in(file);
 
     // if there isn't a template

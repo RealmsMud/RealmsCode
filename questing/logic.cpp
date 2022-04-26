@@ -50,7 +50,7 @@ int loadCreature_actions( Creature* creature ) {
             crt_name[i] = '_';
 
 
-    sprintf(filename,"%s/%s-%d-act.txt", Path::Talk, crt_name, creature->getLevel());
+    sprintf(filename,"%s/%s-%d-act.txt", Path::Talk.c_str(), crt_name, creature->getLevel());
 
     fp = fopen(filename,"r");
     if(!fp)

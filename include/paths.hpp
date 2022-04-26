@@ -18,47 +18,51 @@
 #ifndef PATHS_H_
 #define PATHS_H_
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 class CatRef;
 
 namespace Path {
-    extern const char* Bin;
-    extern const char* Log;
-    extern const char* BugLog;
-    extern const char* StaffLog;
-    extern const char* BankLog;
-    extern const char* GuildBankLog;
+    inline fs::path Bin = "/home/realms/realms/bin/";
+    inline fs::path Log = "/home/realms/realms/log/";
+    inline fs::path BugLog = "/home/realms/realms/log/bug/";
+    inline fs::path StaffLog = "/home/realms/realms/log/staff/";
+    inline fs::path BankLog = "/home/realms/realms/log/bank/";
+    inline fs::path GuildBankLog = "/home/realms/realms/log/guildbank/";
 
-    extern const char* UniqueRoom;
-    extern const char* AreaRoom;
-    extern const char* Monster;
-    extern const char* Object;
-    extern const char* Player;
-    extern const char* PlayerBackup;
+    inline fs::path UniqueRoom = "/home/realms/realms/rooms/";
+    inline fs::path AreaRoom = "/home/realms/realms/rooms/area/";
+    inline fs::path Monster = "/home/realms/realms/monsters/";
+    inline fs::path Object = "/home/realms/realms/objects/";
+    inline fs::path Player = "/home/realms/realms/player/";
+    inline fs::path PlayerBackup = "/home/realms/realms/player/backup/";
 
-    extern const char* Config;
+    inline fs::path Config = "/home/realms/realms/config/";
 
-    extern const char* Code;
-    extern const char* Python;
-    extern const char* Game;
-    extern const char* AreaData;
-    extern const char* Talk;
-    extern const char* Desc;
-    extern const char* Sign;
+    inline fs::path Code = "/home/realms/realms/config/code/";
+    // First check the docker install path; then the code directory, and finally fall back to the old place
+    inline fs::path Python = "/build/pythonLib/:/home/realms/realms/RealmsCode/pythonLib:/home/realms/realms/config/code/python/";
+    inline fs::path Game = "/home/realms/realms/config/game/";
+    inline fs::path AreaData = "/home/realms/realms/config/game/area/";
+    inline fs::path Talk = "/home/realms/realms/config/game/talk/";
+    inline fs::path Desc = "/home/realms/realms/config/game/ddesc/";
+    inline fs::path Sign = "/home/realms/realms/config/game/signs/";
 
-    extern const char* PlayerData;
-    extern const char* Bank;
-    extern const char* GuildBank;
-    extern const char* History;
-    extern const char* Post;
+    inline fs::path PlayerData = "/home/realms/realms/config/player/";
+    inline fs::path Bank = "/home/realms/realms/config/player/bank/";
+    inline fs::path GuildBank = "/home/realms/realms/config/player/guildbank/";
+    inline fs::path History = "/home/realms/realms/config/player/history/";
+    inline fs::path Post = "/home/realms/realms/config/player/post/";
 
-    extern const char* BaseHelp;
-    extern const char* Help;
-    extern const char* CreateHelp;
-    extern const char* Wiki;
-    extern const char* DMHelp;
-    extern const char* BuilderHelp;
-    extern const char* HelpTemplate;
+    inline fs::path BaseHelp = "/home/realms/realms/help/";
+    inline fs::path Help = "/home/realms/realms/help/help/";
+    inline fs::path CreateHelp = "/home/realms/realms/help/create/";
+    inline fs::path Wiki = "/home/realms/realms/help/wiki/";
+    inline fs::path DMHelp = "/home/realms/realms/help/dmhelp/";
+    inline fs::path BuilderHelp = "/home/realms/realms/help/bhelp/";
+    inline fs::path HelpTemplate = "/home/realms/realms/help/template/";
 
     bool checkDirExists(const char* filename);
     bool checkDirExists(const std::string &area, char* (*fn)(const CatRef &cr));

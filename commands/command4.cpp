@@ -54,7 +54,7 @@ int cmdHelp(Player* player, cmd* cmnd) {
     }
 
     if(cmnd->num < 2) {
-        sprintf(file, "%s/helpfile.txt", Path::Help);
+        sprintf(file, "%s/helpfile.txt", Path::Help.c_str());
         player->getSock()->viewFile(file, true);
         return(DOPROMPT);
     }
@@ -62,7 +62,7 @@ int cmdHelp(Player* player, cmd* cmnd) {
         player->print("You may not use backslashes.\n");
         return(0);
     }
-    sprintf(file, "%s/%s.txt", Path::Help, cmnd->str[1]);
+    sprintf(file, "%s/%s.txt", Path::Help.c_str(), cmnd->str[1]);
     player->getSock()->viewFile(file, true);
     return(DOPROMPT);
 }
@@ -82,7 +82,7 @@ int cmdWelcome(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(file, "%s/welcomerealms.txt", Path::Help);
+    sprintf(file, "%s/welcomerealms.txt", Path::Help.c_str());
 
     player->getSock()->viewFile(file, true);
     return(0);

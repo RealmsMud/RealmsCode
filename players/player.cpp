@@ -91,7 +91,7 @@
 // logs on.
 
 void Player::init() {
-    char    file[80], str[50];
+    char    str[50];
     BaseRoom *newRoom=nullptr;
     long    t = time(nullptr);
 
@@ -403,27 +403,21 @@ void Player::init() {
     Socket* sock = getSock();
 
     if(!gServer->isRebooting()) {
-        sprintf(file, "%s/news.txt",Path::Help);
-        sock->viewFile(file);
+        sock->viewFile(Path::Help / "news.txt");
 
-        sprintf(file, "%s/newbie_news.txt",Path::Help);
-        sock->viewFile(file);
+        sock->viewFile(Path::Help / "newbie_news.txt");
 
         if(isCt()) {
-            sprintf(file, "%s/news.txt", Path::DMHelp);
-            sock->viewFile(file);
+            sock->viewFile(Path::DMHelp / "news.txt");
         }
         if(isStaff() && getName() != "Bane") {
-            sprintf(file, "%s/news.txt", Path::BuilderHelp);
-            sock->viewFile(file);
+            sock->viewFile(Path::BuilderHelp / "news.txt");
         }
         if(isCt() || flagIsSet(P_WATCHER)) {
-            sprintf(file, "%s/watcher_news.txt", Path::DMHelp);
-            sock->viewFile(file);
+            sock->viewFile(Path::DMHelp / "watcher_news.txt");
         }
 
-        sprintf(file, "%s/latest_post.txt", Path::Help);
-        sock->viewFile(file, false);
+        sock->viewFile(Path::Help / "latest_post.txt", false);
 
         hasNewMudmail();
 
@@ -1666,7 +1660,7 @@ std::string Player::expNeededDisplay() const {
 //*********************************************************************
 
 bool Player::exists(std::string_view name) {
-    return(file_exists(fmt::format("{}/{}.xml", Path::Player, name).c_str()));
+    return fs::exists((Path::Player / name).replace_extension("xml"));
 }
 
 //*********************************************************************
@@ -1819,22 +1813,13 @@ void Player::clearWatching() {
 //*********************************************************************
 
 void renamePlayerFiles(const char *old_name, const char *new_name) {
-    char    file[80], file2[80];
+    std::error_code ec;
 
-    sprintf(file, "%s/%s.xml", Path::Player, old_name);
-    unlink(file);
+    fs::remove((Path::Player / old_name).replace_extension("xml"), ec);
 
-    sprintf(file, "%s/%s.txt", Path::Post, old_name);
-    sprintf(file2, "%s/%s.txt", Path::Post, new_name);
-    rename(file, file2);
-
-    sprintf(file, "%s/%s.txt", Path::History, old_name);
-    sprintf(file2, "%s/%s.txt", Path::History, new_name);
-    rename(file, file2);
-
-    sprintf(file, "%s/%s.txt", Path::Bank, old_name);
-    sprintf(file2, "%s/%s.txt", Path::Bank, new_name);
-    rename(file, file2);
+    fs::rename((Path::Post / old_name).replace_extension("txt"),    (Path::Post / new_name).replace_extension("txt"), ec);
+    fs::rename((Path::History / old_name).replace_extension("txt"), (Path::History / new_name).replace_extension("txt"), ec);
+    fs::rename((Path::Bank / old_name).replace_extension("txt"),    (Path::Bank / new_name).replace_extension("txt"), ec);
 }
 
 //*********************************************************************

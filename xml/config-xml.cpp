@@ -28,7 +28,6 @@
 
 #include "config.hpp"                               // for Config, DiscordTo...
 #include "paths.hpp"                                // for Config
-#include "proto.hpp"                                // for file_exists
 #include "xml.hpp"                                  // for NODE_NAME, copyTo...
 
 bool Config::loadConfig(bool reload) {
@@ -36,9 +35,9 @@ bool Config::loadConfig(bool reload) {
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
 
-    auto filename = fmt::format( "{}/config.xml", Path::Config);
+    auto filename = Path::Config / "config.xml";
 
-    if(!file_exists(filename.c_str()))
+    if(!fs::exists(filename))
         return(false);
 
     if((xmlDoc = xml::loadFile(filename.c_str(), "Config")) == nullptr)
@@ -67,9 +66,9 @@ bool Config::loadDiscordConfig() {
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
 
-    auto filename = fmt::format("{}/discord.xml", Path::Config);
+    auto filename = Path::Config / "discord.xml";
 
-    if(!file_exists(filename.c_str()))
+    if(!fs::exists(filename))
         return(false);
 
     if((xmlDoc = xml::loadFile(filename.c_str(), "Discord")) == nullptr)
@@ -237,7 +236,6 @@ bool Config::saveConfig() const {
     xml::newBoolChild(curNode, "RecordAll", recordAll);
     xml::newBoolChild(curNode, "LogSuicide", logSuicide);
     xml::newBoolChild(curNode, "SaveOnDrop", saveOnDrop);
-    //xml::newBoolChild(curNode, "MaxGuild", maxGuilds);
 
     xml::saveNonZeroNum(curNode, "ShopNumObjects", shopNumObjects);
     xml::saveNonZeroNum(curNode, "ShopNumLines", shopNumLines);
@@ -258,17 +256,7 @@ bool Config::saveConfig() const {
         ticket->saveToXml(ticketsNode);
     }
 
-    // Discord Config
-    curNode = xmlNewChild(rootNode, nullptr, BAD_CAST "Discord", nullptr);
-    xml::saveNonNullString(curNode, "BotToken", botToken);
-    xmlNodePtr webtokenNodes = xml::newStringChild(curNode, "WebhookTokens");
-    for(const auto& [webhookID, token] : webhookTokens) {
-        xmlNodePtr tokenNode = xml::newStringChild(webtokenNodes, "WebhookToken");
-        xml::newNumChild<long>(tokenNode, "ID", webhookID);
-        xml::newStringChild(tokenNode, "Token", token);
-    }
-
-    xml::saveFile(fmt::format("{}/config.xml", Path::Config).c_str(), xmlDoc);
+    xml::saveFile((Path::Config /"config.xml").c_str(), xmlDoc);
     xmlFreeDoc(xmlDoc);
 
     return(true);

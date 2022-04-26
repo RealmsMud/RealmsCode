@@ -754,7 +754,7 @@ int dmFinger(Player* player, cmd* cmnd) {
         target->information(player, true);
     }
 
-    sprintf(tmp, "%s/%s", Path::Post, cmnd->str[1]);
+    sprintf(tmp, "%s/%s", Path::Post.c_str(), cmnd->str[1]);
     if(stat(tmp, &f_stat)) {
         player->print("No mail.\n");
         return(PROMPT);
@@ -1305,7 +1305,7 @@ int dmRename(Player* player, cmd* cmnd) {
         }
 
     // See if a player with the new name exists
-    sprintf(file, "%s/%s.xml", Path::Player, newName.c_str());
+    sprintf(file, "%s/%s.xml", Path::Player.c_str(), newName.c_str());
     fp = fopen(file, "r");
     if(fp) {
         player->print("A player with that name already exists.\n");
@@ -1747,7 +1747,7 @@ int dmKill(Player* player, Player *victim, int type, int silent, int hpmp_loss, 
     BaseRoom *newRoom=nullptr;
 
     char filename[80];
-    snprintf(filename, 80, "%s/crash.txt", Path::Config);
+    snprintf(filename, 80, "%s/crash.txt", Path::Config.c_str());
 
     // room kill or no limbo?
     switch(type) {
@@ -1900,7 +1900,7 @@ int dmKill(Player* player, Player *victim, int type, int silent, int hpmp_loss, 
     case DM_NUCLEAR:
         victim->printColor("^gYou begin to meltdown!\n");
         char filename[80];
-        snprintf(filename, 80, "%s/crash.txt", Path::Config);
+        snprintf(filename, 80, "%s/crash.txt", Path::Config.c_str());
         victim->getSock()->viewFile(filename);
         break;
     case DM_RAPE:
@@ -2575,10 +2575,10 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
 
     if(cmnd->num > 2 && !strcmp(cmnd->str[2], "-r")) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
-        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, cmnd->str[1]);
-        sprintf(restoredFile, "%s/%s.xml", Path::Player, cmnd->str[1]);
+        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup.c_str(), cmnd->str[1]);
+        sprintf(restoredFile, "%s/%s.xml", Path::Player.c_str(), cmnd->str[1]);
 
-        if(file_exists(filename)) {
+        if(fs::exists(filename)) {
 
             target = gServer->findPlayer(cmnd->str[1]);
             if(target) {
@@ -2586,7 +2586,7 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
                 return(0);
             }
 
-            if(file_exists(restoredFile))
+            if(fs::exists(restoredFile))
                 unlink(restoredFile);
 
             link(filename, restoredFile);
@@ -2613,8 +2613,8 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
 
 
     if(cmnd->num > 2 && !strcmp(cmnd->str[2], "-d")) {
-        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, target->getCName());
-        if(file_exists(filename)) {
+        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup.c_str(), target->getCName());
+        if(fs::exists(filename)) {
             unlink(filename);
             broadcast(isDm, "^g*** %s deleted %s's backup file.", player->getCName(), target->getCName());
             player->print("Deleted %s.bak from disk.\n", target->getCName());

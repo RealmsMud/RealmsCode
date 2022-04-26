@@ -65,6 +65,7 @@
 #include "mudObjects/rooms.hpp"                // for BaseRoom
 #include "mudObjects/uniqueRooms.hpp"          // for UniqueRoom
 #include "os.hpp"                              // for merror
+#include "paths.hpp"
 #include "proto.hpp"                           // for log_immort, mprofic
 #include "raceData.hpp"                        // for RaceData
 #include "range.hpp"                           // for Range
@@ -2681,7 +2682,7 @@ void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr) {
     target->info = cr;
 
     sprintf(file, "%s", monsterPath(target->info));
-    if(file_exists(file))
+    if(fs::exists(file))
         player->print( "Monster %s might already exist.\n", cr.displayStr().c_str());
 
     if(target->saveToFile()!= 0) {

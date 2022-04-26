@@ -34,11 +34,11 @@
 #include "mudObjects/areaRooms.hpp"                 // for AreaRoom
 #include "os.hpp"                                   // for merror
 #include "paths.hpp"                                // for AreaRoom, AreaData
-#include "proto.hpp"                                // for file_exists
 #include "season.hpp"                               // for Season
 #include "server.hpp"                               // for Server
 #include "wanderInfo.hpp"                           // for WanderInfo
 #include "xml.hpp"                                  // for saveNonZeroNum
+#include "proto.hpp"                                // for merror
 
 class Creature;
 
@@ -263,9 +263,9 @@ AreaRoom *Area::getRoom(const MapMarker *mapmarker) {
         return(rooms[m.str()]);
 
     char            filename[256];
-    sprintf(filename, "%s/%d/%s", Path::AreaRoom, id, m.filename().c_str());
+    sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), id, m.filename().c_str());
 
-    if(file_exists(filename)) {
+    if(fs::exists(filename)) {
         xmlDocPtr   xmlDoc;
         xmlNodePtr  rootNode;
 
@@ -309,7 +309,7 @@ void Area::save(xmlNodePtr curNode, bool saveRooms) const {
 
     std::list<AreaZone*>::const_iterator zIt;
     childNode = xml::newStringChild(curNode, "Zones");
-    for(zIt = zones.begin() ; zIt != zones.end() ; zIt++) {
+    for(zIt = areaZones.begin() ; zIt != areaZones.end() ; zIt++) {
         subNode = xml::newStringChild(childNode, "Zone");
         (*zIt)->save(subNode);
     }
@@ -393,7 +393,7 @@ void Area::loadZones(xmlNodePtr curNode) {
         if(NODE_NAME(childNode, "Zone")) {
             zone = new AreaZone();
             zone->load(childNode);
-            zones.push_back(zone);
+            areaZones.push_back(zone);
         }
         childNode = childNode->next;
     }
@@ -411,7 +411,7 @@ void Area::loadRooms() {
     xmlNodePtr  rootNode;
     char        filename[256];
 
-    sprintf(filename, "%s/%d", Path::AreaRoom, id);
+    sprintf(filename, "%s/%d", Path::AreaRoom.c_str(), id);
 
     if((dir = opendir(filename)) == nullptr)
         return;
@@ -421,7 +421,7 @@ void Area::loadRooms() {
         if(dirp->d_name[0] == '.')
             continue;
 
-        sprintf(filename, "%s/%d/%s", Path::AreaRoom, id, dirp->d_name);
+        sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), id, dirp->d_name);
 
         if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == nullptr)
             continue;
@@ -489,9 +489,9 @@ bool Server::loadAreas() {
     xmlNodePtr  curNode;
     Area    *area=nullptr;
 
-    sprintf(filename, "%s/areas.xml", Path::AreaData);
+    sprintf(filename, "%s/areas.xml", Path::AreaData.c_str());
 
-    if(!file_exists(filename))
+    if(!fs::exists(filename))
         return(false);
 
     if((xmlDoc = xml::loadFile(filename, "Areas")) == nullptr)
@@ -535,7 +535,7 @@ void Server::saveAreas(bool saveRooms) const {
         (*it)->save(curNode, saveRooms);
     }
 
-    sprintf(filename, "%s/areas2.xml", Path::Config);
+    sprintf(filename, "%s/areas2.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }

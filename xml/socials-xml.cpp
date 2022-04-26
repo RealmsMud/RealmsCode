@@ -38,7 +38,7 @@ bool Config::loadSocials() {
     char        filename[80];
 
     // build an XML tree from the file
-    sprintf(filename, "%s/socials.xml", Path::Code);
+    sprintf(filename, "%s/socials.xml", Path::Code.c_str());
 
     xmlDoc = xml::loadFile(filename, "Socials");
     if(xmlDoc == nullptr)

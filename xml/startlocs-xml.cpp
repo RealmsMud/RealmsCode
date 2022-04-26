@@ -41,7 +41,7 @@ bool Config::loadStartLoc() {
     bool primary=true;
 
     char filename[80];
-    snprintf(filename, 80, "%s/start.xml", Path::Game);
+    snprintf(filename, 80, "%s/start.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "Locations");
 
     if(xmlDoc == nullptr)
@@ -97,7 +97,7 @@ void Config::saveStartLocs() const {
     for(it = start.begin() ; it != start.end() ; it++)
         (*it).second->save(rootNode);
 
-    sprintf(filename, "%s/start.xml", Path::Game);
+    sprintf(filename, "%s/start.xml", Path::Game.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }

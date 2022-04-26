@@ -181,7 +181,7 @@ bool Config::loadProperties() {
     Property *p=nullptr;
 
     char filename[80];
-    snprintf(filename, 80, "%s/properties.xml", Path::PlayerData);
+    snprintf(filename, 80, "%s/properties.xml", Path::PlayerData.c_str());
     xmlDoc = xml::loadFile(filename, "Properties");
 
     if(xmlDoc == nullptr)
@@ -231,7 +231,7 @@ bool Config::saveProperties() const {
         (*it)->save(rootNode);
     }
 
-    sprintf(filename, "%s/properties.xml", Path::PlayerData);
+    sprintf(filename, "%s/properties.xml", Path::PlayerData.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);
