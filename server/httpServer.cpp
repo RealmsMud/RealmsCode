@@ -57,6 +57,16 @@ HttpServer::HttpServer(int pPort) {
             return to_string(j);
         });
 
+    CROW_ROUTE(app, "/authtest").methods("GET"_method)
+    .CROW_MIDDLEWARES(app, AuthMiddleware)
+        ([](const crow::request& req){
+            json j;
+            j["status"] = 200;  
+            j["version"] = VERSION;
+            j["lastCompiled"] = fmt::format("{} {}", __DATE__, __TIME__);
+            return to_string(j);
+        });
+
     CROW_ROUTE(app, "/login").methods("POST"_method)
         ([](const crow::request& req){
             json j;
