@@ -6,7 +6,7 @@ include(FetchContent)
 set(CMAKE_C_COMPILER "/usr/bin/clang")
 set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -17,6 +17,8 @@ set(JSON_MultipleHeaders ON)
 
 set(HTTP_LIB_NAME "Crow::Crow")
 set(CROW_FEATURES ssl compression)
+
+set(JWT_LIB_NAME "jwt-cpp")
 
 set(Python_ADDITIONAL_VERSIONS 3.8)
 
@@ -52,8 +54,9 @@ FetchContent_Declare(json     URL https://github.com/nlohmann/json/releases/down
 FetchContent_Declare(pybind11 GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v2.9.2      )
 FetchContent_Declare(crow     GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.0+1      )
 FetchContent_Declare(dpp      GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.0.6     )
+FetchContent_Declare(jwt-cpp  GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git  GIT_TAG v0.6.0      )
 
-FetchContent_MakeAvailable(pybind11 json crow dpp )
+FetchContent_MakeAvailable(pybind11 json crow dpp jwt-cpp)
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR} "include")
 
@@ -458,6 +461,7 @@ target_link_libraries(
     ${DPP_LIB_NAME}
     ${JSON_LIB_NAME}
     ${HTTP_LIB_NAME}
+    ${JWT_LIB_NAME}
 )
 
 add_executable(RealmsCode ${REALMS_SOURCE_FILES})
