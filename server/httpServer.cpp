@@ -69,29 +69,37 @@ HttpServer::HttpServer(int pPort) {
 
     CROW_ROUTE(app, "/login").methods("POST"_method)
         ([](const crow::request& req){
-            json j;
-            auto body = crow::json::load(req.body);
-            std::string name = std::string(body["name"]);
-            std::string pw = std::string(body["pw"]);
+            json body = json::parse(req.body);
+
+            std::string name = body["name"];
+            std::string pw = body["pw"];
             lowercize(name, 1);
+            bool offline = false, valid=false;
 
-            if (!body) {
-                return crow::response(crow::status::BAD_REQUEST);
+            // TODO: Thread Saftey
+            Player *player = gServer->findPlayer(name);
+            if(!player) {
+                if (!loadPlayer(name, &player)) {
+                    return crow::response(crow::status::NOT_FOUND);
+                }
+                offline = true;
             }
 
-            Player *player = nullptr;
-            if (!loadPlayer(name, &player)) {
-                return crow::response(crow::status::NOT_FOUND);
+            json j;
+            if (player->isPassword(pw)) {
+                valid = true;
+                j["token"] = jwt::create()
+                        .set_issuer("realms")
+                        .set_payload_claim("id", jwt::claim(player->getId()))
+                        .sign(jwt::algorithm::hs256{"not a real secret, replace me"});
             }
 
-            if (!player->isPassword(pw)) {
+            if(offline)
+                free_crt(player, false);
+
+            if(!valid)
                 return crow::response(crow::status::UNAUTHORIZED);
-            }
 
-            j["token"] = jwt::create()
-                .set_issuer("realms")
-                .set_payload_claim("id", jwt::claim(player->getId()))
-                .sign(jwt::algorithm::hs256{"not a real secret, replace me"});
             return crow::response(to_string(j));
         });
 
