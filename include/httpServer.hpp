@@ -19,6 +19,7 @@
 #pragma once
 
 #include <crow.h>
+#include <jwt-cpp/jwt.h>
 
 class HttpServer {
 public:
@@ -28,7 +29,29 @@ public:
     void stop();
 
 private:
-    crow::SimpleApp app;
+    struct AuthMiddleware : crow::ILocalMiddleware {
+        struct context {};
+
+        void before_handle(crow::request& req, crow::response& res, context& ctx) {
+            try {
+                std::string authHeader = req.get_header_value("Authorization");
+                std::string token = authHeader.substr(7);
+                std::clog << "trying..." << std::endl;
+                auto verifier = jwt::verify()
+                    .allow_algorithm(jwt::algorithm::hs256{"not a real secret, replace me"});
+                auto decoded = jwt::decode(token);
+
+                verifier.verify(decoded);
+            } catch(std::system_error e) {
+                res.code = 403;
+                res.end();
+            }
+        }
+
+        void after_handle(crow::request& req, crow::response& res, context& ctx) {} 
+    };
+
+    crow::App<AuthMiddleware> app;
     int port;
     bool appRunning = false;
     std::future<void> appFuture;
