@@ -20,9 +20,9 @@
 #include <libxml/parser.h>                     // for xmlDocGetRootElement
 #include <algorithm>                           // for copy, sort
 #include <boost/algorithm/string/replace.hpp>  // for replace_all, replace_a...
-#include <boost/filesystem.hpp>                // for directory_iterator, path
 #include <boost/iterator/iterator_facade.hpp>  // for operator!=
 #include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <fstream>
 #include <deque>                               // for _Deque_iterator
 #include <iostream>                            // for operator<<, basic_ostream
 #include <iterator>                            // for back_insert_iterator
@@ -42,6 +42,7 @@
 #include "mudObjects/objects.hpp"              // for Object
 #include "mudObjects/uniqueRooms.hpp"          // for UniqueRoom
 #include "objIncrease.hpp"                     // for ObjIncrease
+#include "paths.hpp"
 #include "server.hpp"                          // for Server, gServer
 #include "statistics.hpp"                      // for Statistics
 #include "stats.hpp"                           // for Stat
@@ -49,8 +50,6 @@
 #include "xml.hpp"                             // for loadFile
 
 
-
-namespace fs = boost::filesystem;
 using json = nlohmann::json;
 
 int update_rooms() {
@@ -74,9 +73,8 @@ int update_rooms() {
             for (const fs::path& room : rooms) {
                 if (fs::is_regular_file(room)) {
                     auto *lRoom = new UniqueRoom();
-                    const char *filename = room.string().c_str();
-                    if((xmlDoc = xml::loadFile(filename, "Room")) == nullptr) {
-                        std::cout << "Error loading: " << filename << "\n";
+                    if((xmlDoc = xml::loadFile(room.c_str(), "Room")) == nullptr) {
+                        std::cout << "Error loading: " << room.string() << "\n";
                         continue;
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -116,9 +114,8 @@ int update_objects() {
             for (const fs::path& object : objects) {
                 if (fs::is_regular_file(object)) {
                     auto *lObject = new Object();
-                    const char *filename = object.string().c_str();
-                    if((xmlDoc = xml::loadFile(filename, "Object")) == nullptr) {
-                        std::cout << "Error loading: " << filename << "\n";
+                    if((xmlDoc = xml::loadFile(object.c_str(), "Object")) == nullptr) {
+                        std::cout << "Error loading: " << object.string() << "\n";
                         continue;
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -157,9 +154,8 @@ int update_monsters() {
             for (const fs::path& monster : monsters) {
                 if (fs::is_regular_file(monster)) {
                     auto *lMonster = new Monster();
-                    const char *filename = monster.string().c_str();
-                    if((xmlDoc = xml::loadFile(filename, "Creature")) == nullptr) {
-                        std::cout << "Error loading: " << filename << "\n";
+                    if((xmlDoc = xml::loadFile(monster.c_str(), "Creature")) == nullptr) {
+                        std::cout << "Error loading: " << monster.string() << "\n";
                         continue;
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
@@ -207,6 +203,12 @@ std::list<std::string> zones = {"airship", "alc", "anhoni", "avenger", "azure", 
     "nexus", "niamei", "nikola", "oce", "ocean", "orym", "pirate", "plane", "quest", "seawolf", "shadow", "shop", "sigil", "srunner", "stor", "trade", "tut",
     "voodan", "wave", "wizard", "wolf", "wville", "yuanti"};
 
+void create_zones() {
+    for (const auto& zone : zones) {
+
+    }
+}
+
 int main(int argc, char *argv[]) {
     gConfig = Config::getInstance();
     gServer = Server::getInstance();
@@ -215,6 +217,8 @@ int main(int argc, char *argv[]) {
     gServer->init();
 
     // Create Zones
+    std::cout << "Creating Zones" << std::endl;
+    create_zones();
 
     // Update quests first, so we can update the quests on the monsters
     std::cout << "Updating Quests" << std::endl;

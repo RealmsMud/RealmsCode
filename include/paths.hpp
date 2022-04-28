@@ -24,51 +24,52 @@ namespace fs = std::filesystem;
 
 class CatRef;
 
-namespace Path {
-    inline fs::path Bin = "/home/realms/realms/bin/";
-    inline fs::path Log = "/home/realms/realms/log/";
-    inline fs::path BugLog = "/home/realms/realms/log/bug/";
-    inline fs::path StaffLog = "/home/realms/realms/log/staff/";
-    inline fs::path BankLog = "/home/realms/realms/log/bank/";
-    inline fs::path GuildBankLog = "/home/realms/realms/log/guildbank/";
+struct Path {
+    static inline const fs::path BasePath = "/home/realms/realms";
+    static inline const fs::path Bin = BasePath / "bin";
+    static inline const fs::path Log = BasePath / "log";
+    static inline const fs::path BugLog = BasePath / "log/bug";
+    static inline const fs::path StaffLog = BasePath / "log/staff";
+    static inline const fs::path BankLog = BasePath / "log/bank";
+    static inline const fs::path GuildBankLog = BasePath / "log/guildbank";
 
-    inline fs::path UniqueRoom = "/home/realms/realms/rooms/";
-    inline fs::path AreaRoom = "/home/realms/realms/rooms/area/";
-    inline fs::path Monster = "/home/realms/realms/monsters/";
-    inline fs::path Object = "/home/realms/realms/objects/";
-    inline fs::path Player = "/home/realms/realms/player/";
-    inline fs::path PlayerBackup = "/home/realms/realms/player/backup/";
+    static inline const fs::path UniqueRoom = BasePath / "rooms";
+    static inline const fs::path AreaRoom = BasePath / "rooms/area";
+    static inline const fs::path Monster = BasePath / "monsters";
+    static inline const fs::path Object = BasePath / "objects";
+    static inline const fs::path Player = BasePath / "player";
+    static inline const fs::path PlayerBackup = BasePath / "player/backup";
 
-    inline fs::path Config = "/home/realms/realms/config/";
+    static inline const fs::path Config = BasePath / "config";
 
-    inline fs::path Code = "/home/realms/realms/config/code/";
-    // First check the docker install path; then the code directory, and finally fall back to the old place
-    inline fs::path Python = "/build/pythonLib/:/home/realms/realms/RealmsCode/pythonLib:/home/realms/realms/config/code/python/";
-    inline fs::path Game = "/home/realms/realms/config/game/";
-    inline fs::path AreaData = "/home/realms/realms/config/game/area/";
-    inline fs::path Talk = "/home/realms/realms/config/game/talk/";
-    inline fs::path Desc = "/home/realms/realms/config/game/ddesc/";
-    inline fs::path Sign = "/home/realms/realms/config/game/signs/";
+    static inline const fs::path Code = Config / "code";
+// First check the docker install path; then the code directory, and finally fall back to the old place
+    static inline const fs::path Python = "/build/pythonLib/:/home/realms/realms/RealmsCode/pythonLib:/home/realms/realms/config/code/python/";
+    static inline const fs::path Game = Config / "game";
+    static inline const fs::path AreaData = Game / "area";
+    static inline const fs::path Talk = Game / "talk";
+    static inline const fs::path Desc = Game / "ddesc";
+    static inline const fs::path Sign = Game / "signs";
 
-    inline fs::path PlayerData = "/home/realms/realms/config/player/";
-    inline fs::path Bank = "/home/realms/realms/config/player/bank/";
-    inline fs::path GuildBank = "/home/realms/realms/config/player/guildbank/";
-    inline fs::path History = "/home/realms/realms/config/player/history/";
-    inline fs::path Post = "/home/realms/realms/config/player/post/";
+    static inline const fs::path PlayerData = Config / "player";
+    static inline const fs::path Bank = PlayerData / "bank";
+    static inline const fs::path GuildBank = PlayerData / "guildbank";
+    static inline const fs::path History = PlayerData / "history";
+    static inline const fs::path Post = PlayerData / "post";
 
-    inline fs::path BaseHelp = "/home/realms/realms/help/";
-    inline fs::path Help = "/home/realms/realms/help/help/";
-    inline fs::path CreateHelp = "/home/realms/realms/help/create/";
-    inline fs::path Wiki = "/home/realms/realms/help/wiki/";
-    inline fs::path DMHelp = "/home/realms/realms/help/dmhelp/";
-    inline fs::path BuilderHelp = "/home/realms/realms/help/bhelp/";
-    inline fs::path HelpTemplate = "/home/realms/realms/help/template/";
+    static inline const fs::path BaseHelp = BasePath / "help";
+    static inline const fs::path Help = BaseHelp / "help";
+    static inline const fs::path CreateHelp = BaseHelp / "create";
+    static inline const fs::path Wiki = BaseHelp / "wiki";
+    static inline const fs::path DMHelp = BaseHelp / "dmhelp";
+    static inline const fs::path BuilderHelp = BaseHelp / "bhelp";
+    static inline const fs::path HelpTemplate = BaseHelp / "template";
 
-    bool checkDirExists(const char* filename);
-    bool checkDirExists(const std::string &area, char* (*fn)(const CatRef &cr));
+    static bool checkDirExists(const char* filename);
+    static bool checkDirExists(const std::string &area, char* (*fn)(const CatRef &cr));
 
-    bool checkPaths();
-}
+    static bool checkPaths();
+};
 
 
 #endif /*PATHS_H_*/
