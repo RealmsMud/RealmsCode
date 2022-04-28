@@ -21,12 +21,16 @@
 #include <crow.h>
 #include <nlohmann/json.hpp>
 #include <fmt/format.h>
+#include <jwt-cpp/jwt.h>
 
 #include "config.hpp"
 #include "httpServer.hpp"
 #include "server.hpp"
 #include "version.hpp"
 #include "quests.hpp"
+#include "proto.hpp"                // for lowercize
+#include "mudObjects/players.hpp"   // for Player
+#include "xml.hpp"                  // for loadPlayer
 
 using json = nlohmann::json;
 
@@ -47,10 +51,38 @@ HttpServer::HttpServer(int pPort) {
     CROW_ROUTE(app, "/version").methods("GET"_method)
         ([](const crow::request& req){
             json j;
-            j["status"] = 200;
+            j["status"] = 200;  
             j["version"] = VERSION;
             j["lastCompiled"] = fmt::format("{} {}", __DATE__, __TIME__);
             return to_string(j);
+        });
+
+    CROW_ROUTE(app, "/login").methods("POST"_method)
+        ([](const crow::request& req){
+            json j;
+            auto body = crow::json::load(req.body);
+            std::string name = std::string(body["name"]);
+            std::string pw = std::string(body["pw"]);
+            lowercize(name, 1);
+
+            if (!body) {
+                return crow::response(crow::status::BAD_REQUEST);
+            }
+
+            Player *player = nullptr;
+            if (!loadPlayer(name, &player)) {
+                return crow::response(crow::status::NOT_FOUND);
+            }
+
+            if (!player->isPassword(pw)) {
+                return crow::response(crow::status::UNAUTHORIZED);
+            }
+
+            j["token"] = jwt::create()
+                .set_issuer("realms")
+                .set_payload_claim("id", jwt::claim(player->getId()))
+                .sign(jwt::algorithm::hs256{"not a real secret, replace me"});
+            return crow::response(to_string(j));
         });
 
     CROW_ROUTE(app, "/zones/<string>/quests/<int>").methods("GET"_method)
