@@ -59,12 +59,11 @@ HttpServer::HttpServer(int pPort) {
 
     CROW_ROUTE(app, "/authtest").methods("GET"_method)
     .CROW_MIDDLEWARES(app, AuthMiddleware)
-        ([](const crow::request& req){
+        ([this](const crow::request& req){
             json j;
-            j["status"] = 200;  
-            j["version"] = VERSION;
-            j["lastCompiled"] = fmt::format("{} {}", __DATE__, __TIME__);
-            return to_string(j);
+            auto ctx = app.get_context<AuthMiddleware>(req);
+            j["userId"] = ctx.userId;
+            return crow::response(to_string(j));
         });
 
     CROW_ROUTE(app, "/login").methods("POST"_method)
@@ -90,7 +89,7 @@ HttpServer::HttpServer(int pPort) {
 
             j["token"] = jwt::create()
                 .set_issuer("realms")
-                .set_payload_claim("id", jwt::claim(player->getId()))
+                .set_payload_claim("userId", jwt::claim(player->getId()))
                 .sign(jwt::algorithm::hs256{"not a real secret, replace me"});
             return crow::response(to_string(j));
         });

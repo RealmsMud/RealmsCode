@@ -30,18 +30,22 @@ public:
 
 private:
     struct AuthMiddleware : crow::ILocalMiddleware {
-        struct context {};
+        struct context {
+            std::string userId;
+        };
 
         void before_handle(crow::request& req, crow::response& res, context& ctx) {
             try {
                 std::string authHeader = req.get_header_value("Authorization");
                 std::string token = authHeader.substr(7);
-                std::clog << "trying..." << std::endl;
+
                 auto verifier = jwt::verify()
                     .allow_algorithm(jwt::algorithm::hs256{"not a real secret, replace me"});
                 auto decoded = jwt::decode(token);
 
                 verifier.verify(decoded);
+
+                ctx.userId = decoded.get_payload_claim("userId").as_string();
             } catch(std::system_error e) {
                 res.code = 403;
                 res.end();
