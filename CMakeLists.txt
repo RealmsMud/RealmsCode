@@ -30,7 +30,7 @@ find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
 find_package(OpenSSL REQUIRED)
-find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(Boost COMPONENTS system REQUIRED)
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
