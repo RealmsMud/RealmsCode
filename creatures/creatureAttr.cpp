@@ -69,6 +69,7 @@
 #include "utils.hpp"                           // for MIN, MAX
 #include "version.hpp"                         // for VERSION
 #include "xml.hpp"                             // for copyPropToString
+#include "server.hpp"
 
 //*********************************************************************
 //                      getClass
@@ -484,9 +485,6 @@ void Creature::crtReset() {
         targeter->clearTarget(false);
     }
 
-    // Clear out any skills/factions/etc
-    crtDestroy();
-
     zero(key, sizeof(key));
 
     poisonedBy = description = "";
@@ -666,12 +664,7 @@ void Player::reset() {
 Creature::Creature() {
     hooks.setParent(this);
 }
-
-//*********************************************************************
-//                      CopyCommon
-//*********************************************************************
-
-void Creature::CopyCommon(const Creature& cr) {
+void Creature::doCopy(const Creature &cr) {
     int     i=0;
 
     moCopy(cr);
@@ -802,8 +795,7 @@ void Creature::CopyCommon(const Creature& cr) {
 void Player::doCopy(const Player& cr) {
     // We want a copy of what we're getting, so clear out anything that was here before
     reset();
-    // Copy anything in common with the base class
-    CopyCommon(cr);
+    Creature::doCopy(cr);
 
     // Players have a unique ID, so copy that
     id = cr.id;
@@ -929,8 +921,7 @@ void Player::doCopy(const Player& cr) {
 void Monster::doCopy(const Monster& cr) {
     // We want a copy of what we're getting, so clear out anything that was here before
     reset();
-    // Copy anything in common with the base class
-    CopyCommon(cr);
+    Creature::doCopy(cr);
 
     // Now do monster specific copies
     int i;
@@ -1008,11 +999,11 @@ Monster::Monster() {
     threatTable = new ThreatTable(this);
 }
 
-Monster::Monster(Monster& cr) {
+Monster::Monster(Monster& cr) : Creature(cr)  {
     doCopy(cr);
 }
 
-Monster::Monster(const Monster& cr) {
+Monster::Monster(const Monster& cr) : Creature(cr) {
     doCopy(cr);
 }
 
@@ -1021,7 +1012,8 @@ Monster::Monster(const Monster& cr) {
 //*********************************************************************
 
 Monster& Monster::operator=(const Monster& cr) {
-    doCopy(cr);
+    if(&cr != this)
+        doCopy(cr);
     return(*this);
 }
 
@@ -1032,15 +1024,13 @@ Monster& Monster::operator=(const Monster& cr) {
 Player::Player() {
     reset();
     mySock = nullptr;
-    // initial flags for new characters
-    setFlag(P_NO_AUTO_WEAR);
 }
 
-Player::Player(Player& cr) {
+Player::Player(Player& cr) : Creature(cr) {
     doCopy(cr);
 }
 
-Player::Player(const Player& cr) {
+Player::Player(const Player& cr) : Creature(cr)  {
     doCopy(cr);
 }
 
@@ -1049,54 +1039,19 @@ Player::Player(const Player& cr) {
 //*********************************************************************
 
 Player& Player::operator=(const Player& cr) {
-    doCopy(cr);
+    if(&cr != this)
+        doCopy(cr);
     return(*this);
 }
 
-//*********************************************************************
-//                      crtDestroy
-//*********************************************************************
-
-// Things all subclasses must destroy
-void Creature::crtDestroy() {
-
-    for(Creature* targeter : targetingThis) {
-        targeter->clearTarget(false);
-    }
-
-    clearTarget();
-
-    moDestroy();
-
-    factions.clear();
-
-    Skill* skill;
-    std::map<std::string, Skill*>::iterator csIt;
-    for(csIt = skills.begin() ; csIt != skills.end() ; csIt++) {
-        skill = (*csIt).second;
-        delete skill;
-    }
-    skills.clear();
-
-    effects.removeAll();
-    minions.clear();
-
-    SpecialAttack* attack;
-    std::list<SpecialAttack*>::iterator sIt;
-    for(sIt = specials.begin() ; sIt != specials.end() ; sIt++) {
-        attack = (*sIt);
-        delete attack;
-        (*sIt) = nullptr;
-    }
-    specials.clear();
-}
 
 //*********************************************************************
 //                      Monster
 //*********************************************************************
 
 Monster::~Monster() {
-    crtDestroy();
+    if(gServer->isActive(getAsMonster()))
+        gServer->delActive(getAsMonster());
     for(auto it = responses.begin(); it != responses.end();) {
     	auto response = (*it);
     	it++;
@@ -1115,7 +1070,6 @@ Monster::~Monster() {
 //*********************************************************************
 
 Player::~Player() {
-    crtDestroy();
     int i = 0;
 
     if(birthday) {
@@ -1130,10 +1084,10 @@ Player::~Player() {
         }
     }
 
-    for(auto qp : questsInProgress) {
+    for(const auto& qp : questsInProgress) {
         delete qp.second;
     }
-    for(auto qc : questsCompleted) {
+    for(const auto& qc : questsCompleted) {
         delete qc.second;
     }
 

@@ -35,7 +35,6 @@
 #include "config.hpp"                               // for Config, gConfig
 #include "creatureStreams.hpp"                      // for Streamable, ColorOff
 #include "flags.hpp"                                // for MAX_EXIT_FLAGS
-#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for CAP, NONUM
 #include "location.hpp"                             // for Location
 #include "move.hpp"                                 // for getString
@@ -141,7 +140,7 @@ void ShipExit::spawnRaiders(ShipRaid* sRaid) {
 
     room = getRoom(false);
     if(!room) {
-        free_crt(raider);
+        delete raider;;
         return;
     }
 
@@ -149,7 +148,7 @@ void ShipExit::spawnRaiders(ShipRaid* sRaid) {
         raider->validateAc();
 
     if(!raider->getName()[0] || raider->getName()[0] == ' ') {
-        free_crt(raider);
+        delete raider;;
         return;
     }
 
@@ -278,7 +277,7 @@ void ShipExit::removeExit() {
             gServer->delActive(raider);
             raider->deleteFromRoom();
             raider->clearAsEnemy();
-            free_crt(raider);
+            delete raider;;
         }
     }
 
@@ -410,7 +409,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 
                 broadcast(nullptr, room, "%M was hauled off by %N.", ply, raider);
             }
-            free_crt(raider);
+            delete raider;;
         }
     }
 

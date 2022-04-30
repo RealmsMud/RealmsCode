@@ -40,7 +40,6 @@
 #include "damage.hpp"                               // for Damage
 #include "effects.hpp"                              // for EffectInfo, Effect
 #include "flags.hpp"                                // for O_WORN
-#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for CAP, DT_NONE, BURNED
 #include "join.hpp"                                 // for join
 #include "mudObjects/container.hpp"                 // for Container, PlayerSet
@@ -974,7 +973,7 @@ bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owne
             target->die(killer);
             killer->save(online);
             if(!online)
-                free_crt(killer);
+                delete killer;
         } else {
             if(target->isPlayer())
                 target->getAsPlayer()->die(dt);
@@ -984,7 +983,7 @@ bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owne
         return(true);
     }
     if(killer && !online)
-        free_crt(killer);
+        delete killer;
     return(false);
 }
 

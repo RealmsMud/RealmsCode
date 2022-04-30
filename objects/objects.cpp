@@ -193,7 +193,6 @@ Object::~Object() {
     }
     objects.clear();
     gServer->removeDelayedActions(this);
-    moDestroy();
 }
 
 //*********************************************************************

@@ -79,7 +79,6 @@ public:
     MudObject();
     virtual ~MudObject();
     void moReset();
-    void moDestroy();
 
     void setId(std::string_view newId, bool handleParentSet = true);
 

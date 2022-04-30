@@ -44,7 +44,6 @@
 #include "creatureStreams.hpp"                   // for Streamable, ColorOff
 #include "deityData.hpp"                         // for DeityData
 #include "flags.hpp"                             // for P_HARDCORE, O_STARTING
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for CreatureClass, Creat...
 #include "lasttime.hpp"                          // for lasttime
 #include "location.hpp"                          // for Location
@@ -106,7 +105,8 @@ int cmdReconnect(Player* player, cmd* cmnd) {
     player->save(true);
 
     player->uninit();
-    free_crt(player, true);
+    gServer->clearPlayer(player);
+    delete player;
     sock->setPlayer(nullptr);
 
     sock->reconnect();
@@ -220,16 +220,16 @@ void login(Socket* sock, const std::string& inStr) {
             else {
                 if(!loadPlayer(proxyChar, &proxy)) {
                     sock->println(std::string("Error loading ") + proxyChar + "\n");
-                    free_crt(player, false);
+                    delete player;
                     sock->askFor("Please enter name: ");
                     return;
                 }
             }
             if(!player->checkProxyAccess(proxy)) {
                 sock->println(std::string(proxy->getName()) + " does not have access to " + player->getName());
-                free_crt(player, false);
+                delete player;
                 if(!online)
-                    free_crt(proxy, false);
+                    delete proxy;
                 sock->askFor("Please enter name: ");
                 return;
             }
@@ -242,7 +242,7 @@ void login(Socket* sock, const std::string& inStr) {
                 // Don't free player here or ask for name again because checkDuplicateName does that
                 // We only need to worry about freeing proxy
                 if(!online)
-                    free_crt(proxy, false);
+                    delete proxy;
                 return;
             }
             sock->println(std::string("Trying to log in ") + player->getName() + " using " + proxy->getName() + " as proxy.");
@@ -259,7 +259,7 @@ void login(Socket* sock, const std::string& inStr) {
             player->setProxy(proxy);
 
             if(!online)
-                free_crt(proxy, false);
+                delete proxy;
             sock->setState(LOGIN_GET_PROXY_PASSWORD);
 
             return;
@@ -351,7 +351,7 @@ void Socket::finishLogin() {
     player = getPlayer();
     std::string proxyName = player->getProxyName();
     std::string proxyId = player->getProxyId();
-    free_crt(player, false);
+    delete player;
     setPlayer(nullptr);
 
     if(!loadPlayer(charName, &player)) {
@@ -1886,11 +1886,8 @@ void Create::done(Socket* sock, const std::string &str, int mode) {
 
         sock->print("\n");
 
-//      player->adjustStats();
-
         player->setFlag(P_LAG_PROTECTION_SET);
         player->setFlag(P_CLEAR_TARGET_ON_FLEE);
-        player->clearFlag(P_NO_AUTO_WEAR);
 
         if(player->getClass() == CreatureClass::BARD)
             player->learnSong(SONG_HEAL);

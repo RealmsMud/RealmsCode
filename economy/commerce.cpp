@@ -42,7 +42,6 @@
 #include "dm.hpp"                      // for findRoomsWithFlag
 #include "factions.hpp"                // for Faction, Faction::INDIFFERENT
 #include "flags.hpp"                   // for P_AFK, R_SHOP, O_PERM_ITEM
-#include "free_crt.hpp"                // for free_crt
 #include "global.hpp"                  // for CreatureClass, MAG, PROP_SHOP
 #include "guilds.hpp"                  // for Guild, shopStaysWithGuild
 #include "hooks.hpp"                   // for Hooks
@@ -1423,7 +1422,7 @@ int cmdBuy(Player* player, cmd* cmnd) {
         }
 
         if(!online)
-            free_crt(owner);
+            delete owner;
         player->save(true);
         return(0);
         //*********************************************************************

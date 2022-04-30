@@ -36,7 +36,6 @@ namespace odbc {
 
 #include "catRef.hpp"
 #include "delayedAction.hpp"
-#include "free_crt.hpp"
 #include "money.hpp"
 #include "proc.hpp"
 #include "swap.hpp"
@@ -78,10 +77,6 @@ struct CleanupRoomFn {
 		void operator()( UniqueRoom* r );
 };
 
-struct FreeCrt {
-		void operator()( Monster* mon ) { free_crt((Creature*)mon); }
-};
-
 enum GoldLog {
     GOLD_IN,
     GOLD_OUT
@@ -103,7 +98,7 @@ using SocketVector= std::vector<Socket*>;
 using PlayerMap = std::map<std::string, Player*>;
 
 using RoomCache = LRU::lru_cache<CatRef, UniqueRoom, CleanupRoomFn, CanCleanupRoomFn>;
-using MonsterCache = LRU::lru_cache<CatRef, Monster, FreeCrt>;
+using MonsterCache = LRU::lru_cache<CatRef, Monster>;
 using ObjectCache = LRU::lru_cache<CatRef, Object>;
 
 class Server {

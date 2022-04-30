@@ -73,7 +73,7 @@ public:
 
 
 	// Clear the list and index
-	void clear(void) {
+	void clear() {
 		for(auto m_iter : _items_map) {
 			clean_up_fn()(m_iter.second->second);
 		}
@@ -99,15 +99,15 @@ public:
 	}
 
 	// How big is the cache?
-	size_t size() const noexcept {
+	[[nodiscard]] size_t size() const noexcept {
 		return _items_map.size();
 	}
 
-	size_t capacity() const noexcept {
+	[[nodiscard]] size_t capacity() const noexcept {
 		return _max_size;
 	}
 
-	double utilization() const noexcept {
+	[[nodiscard]] double utilization() const noexcept {
 		return static_cast<double>(size()) / capacity();
 	}
 
@@ -226,7 +226,7 @@ public:
 	}
 
 	// Get a list of all keys - Mainly for debugging
-	inline const key_list_t get_all_keys( void ) {
+	inline const key_list_t get_all_keys( ) {
 		key_list_t ret;
 		for( list_citer_t l_iter : _items_list)
 			ret.push_back(l_iter->first);

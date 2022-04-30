@@ -41,7 +41,6 @@
 #include "config.hpp"                            // for Config, gConfig, Gui...
 #include "creatureStreams.hpp"                   // for Streamable
 #include "flags.hpp"                             // for P_CREATING_GUILD, P_AFK
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for PROP_GUILDHALL, PROP...
 #include "guilds.hpp"                            // for Guild, GuildCreation
 #include "location.hpp"                          // for Location
@@ -708,7 +707,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
 
     gConfig->saveProperties();
     if(!online)
-        free_crt(target);
+        delete target;;
 }
 
 //*********************************************************************
@@ -1518,7 +1517,7 @@ void Guild::recalcLevel() {
         level += member->getLevel();
 
         if(!online)
-            free_crt(member);
+            delete member;
     }
 
     gConfig->saveGuilds();
@@ -1642,7 +1641,7 @@ void updateGuild(Player* player, int what) {
                     Guild::abdicate(player, leader, online);
 
                     if(!online)
-                        free_crt(leader);
+                        delete leader;
                     break;
                 }
 
@@ -1678,7 +1677,7 @@ void updateGuild(Player* player, int what) {
                     if(player->getForum() == target->getForum())
                         removeForum = false;
                     if(!online)
-                        free_crt(target);
+                        delete target;;
                 }
 
                 if(!removeForum)
@@ -1733,7 +1732,7 @@ void Config::creationToGuild(GuildCreation* toApprove) {
             toApprove->name.c_str(), toApprove->leader.c_str());
         removeGuildCreation(leader->getName());
         if(!online)
-            free_crt(leader);
+            delete leader;
         return;
     }
 
@@ -1746,7 +1745,7 @@ void Config::creationToGuild(GuildCreation* toApprove) {
                 toApprove->removeSupporter((*sIt).first);
                 return;
             }
-            free_crt(officer);
+            delete (officer);
         }
     }
 
@@ -1805,14 +1804,14 @@ void Config::creationToGuild(GuildCreation* toApprove) {
         guild->incLevel( officer->getLevel());
         guild->addMember(officer->getName());
         if(!offOnline)
-            free_crt(officer);
+            delete (officer);
         else
             officer->print("You are now an officer of %s.\n", guild->getName().c_str());
     }
 
     removeGuildCreation(leader->getName());
     if(!online)
-        free_crt(leader);
+        delete leader;
 
     callWebserver(url.str());
 }
@@ -1863,7 +1862,7 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
                 close(ff);
                 leader->setFlag(P_UNREAD_MAIL);
             }
-            free_crt(leader);
+            delete leader;
         } else
             leader->print("Your guild %s has been rejected.\nReason: %s\n", toReject->name.c_str(), Reason);
 
@@ -1882,7 +1881,7 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
         officer->clearFlag(P_CREATING_GUILD);
         officer->save(online);
         if(!online)
-            free_crt(officer);
+            delete (officer);
     }
 
     gConfig->removeGuildCreation(leaderName);
@@ -2014,7 +2013,7 @@ bool Config::deleteGuild(int guildId) {
         }
 
         if(!online)
-            free_crt(player);
+            delete player;
     }
 
     std::ostringstream url;

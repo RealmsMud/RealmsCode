@@ -30,7 +30,6 @@
 #include "cmd.hpp"                                 // for cmd
 #include "config.hpp"                              // for Config, gConfig
 #include "creatureStreams.hpp"                     // for Streamable
-#include "free_crt.hpp"                            // for free_crt
 #include "mudObjects/players.hpp"                  // for Player
 #include "proto.hpp"                               // for up
 #include "proxy.hpp"                               // for ProxyAccess, Proxy...
@@ -99,14 +98,14 @@ int cmdProxy(Player* player, cmd* cmnd) {
         }
         if(target->isStaff()) {
             if(!online)
-                free_crt(target);
+                delete target;;
             *player << "You cannot give staff proxy access!.\n";
             return(0);
         }
         if(target->getId() == player->getId()) {
             *player << "That's just silly.\n";
             if(!online)
-                free_crt(target);
+                delete target;;
             return(0);
         }
 
@@ -117,7 +116,7 @@ int cmdProxy(Player* player, cmd* cmnd) {
             if(online)
                 *target << "Your proxy access to " << player->getName() << " has been revoked.\n";
             else
-                free_crt(target);
+                delete target;;
         } else {
             *player << "You grant " << target->getName() << " proxy access to your character.\n";
 
@@ -125,7 +124,7 @@ int cmdProxy(Player* player, cmd* cmnd) {
             if(online)
                 *target << "Your now have been granted proxy access to " << player->getName() << ".\n";
             else
-                free_crt(target);
+                delete target;;
 
         }
     }

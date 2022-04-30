@@ -47,7 +47,6 @@
 #include "dm.hpp"                              // for findNextEmpty, dmMobSwap
 #include "enums/loadType.hpp"                  // for LoadType, LoadType::LS...
 #include "flags.hpp"                           // for R_SHOP, X_LOCKABLE
-#include "free_crt.hpp"                        // for free_crt
 #include "global.hpp"                          // for CreatureClass, Creatur...
 #include "hooks.hpp"                           // for Hooks
 #include "location.hpp"                        // for Location
@@ -476,7 +475,7 @@ void Config::finishSwap(const std::string &mover) {
         if(online)
             player->printColor("^YRS: ^RError: ^x""%s"" is a restricted range. You cannot swap unique rooms into or out that area.\n", currentSwap.target.area.c_str());
         else
-            free_crt(player);
+            delete player;
         endSwap();
         return;
     }
@@ -485,7 +484,7 @@ void Config::finishSwap(const std::string &mover) {
         if(online)
             player->printColor("^YRS: ^RError: ^xRoom number not inside any of your alotted ranges.\n");
         else
-            free_crt(player);
+            delete player;
         endSwap();
         return;
     }
@@ -496,7 +495,7 @@ void Config::finishSwap(const std::string &mover) {
             player->printColor("^YRS: ^RError: ^xSorry, you cannot swap this room (%s) (Builder Waiting Room).\n",
                                currentSwap.origin.displayStr().c_str());
         else
-            free_crt(player);
+            delete player;
         endSwap();
         return;
     }
@@ -505,7 +504,7 @@ void Config::finishSwap(const std::string &mover) {
             player->printColor("^YRS: ^RError: ^xSorry, you cannot swap that room (%s) (Builder Waiting Room).\n",
                                currentSwap.target.displayStr().c_str());
         else
-            free_crt(player);
+            delete player;
         endSwap();
         return;
     }
@@ -533,7 +532,7 @@ void Server::finishSwap(Player* player, bool online, const CatRef& origin, const
     // only one forked process at a time
     if(gServer->swapName() != "Someone") {
         if(!online)
-            free_crt(player);
+            delete player;
         return;
     }
 
@@ -550,7 +549,7 @@ void Server::finishSwap(Player* player, bool online, const CatRef& origin, const
             player->printColor("^YRS: ^eBeginning offline search sequence.\n");
             player->printColor("^YRS: ^eThis may take several minutes.\n");
         } else
-            free_crt(player);
+            delete player;
         gConfig->swapLog((std::string)"r" + origin.str(), false);
         gConfig->swapLog((std::string)"r" + target.str(), false);
     }
@@ -594,7 +593,7 @@ void Config::offlineSwap() {
             if(player->swap(currentSwap))
                 printf("p%s%s", player->getCName(), sepType);
 
-            free_crt(player);
+            delete player;
         }
     }
 
@@ -615,7 +614,7 @@ void Config::offlineSwap() {
             if(player->swap(currentSwap))
                 printf("b%s%s", player->getCName(), sepType);
 
-            free_crt(player);
+            delete player;
         }
     }
 
@@ -687,7 +686,7 @@ void Config::offlineSwap() {
                         printf("m%s%s", output.c_str(), sepType);
                     }
 
-                    free_crt(monster);
+                    delete monster;;
                 }
             }
         }
@@ -736,7 +735,7 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
                 getCatRef(input.substr(1), &cr, nullptr);
                 // this will put monsters in the queue
                 if(loadMonster(cr, &monster))
-                    free_crt(monster);
+                    delete monster;;
             }
         }
     }
@@ -869,7 +868,7 @@ void Config::swap(Player* player, std::string_view name) {
                                        currentSwap.target.displayStr()).c_str());
 
     if(!found && player)
-        free_crt(player);
+        delete player;
 
     endSwap();
 }
@@ -1006,7 +1005,7 @@ bool Config::checkSpecialArea(const CatRef& origin, const CatRef& target, int (C
                                        t ? origin.displayStr() : target.displayStr(), type));
             player->print("It cannot be moved out of its area.\n");
         } else
-            free_crt(player);
+            delete player;
         endSwap();
         return(false);
     }
@@ -1031,7 +1030,7 @@ void Config::swap(std::string str) {
 
         if(player->swap(currentSwap))
             player->save(false, saveType);
-        free_crt(player);
+        delete player;
     } else if(type == 'm') {
         // the monster should have been loaded into the queue by now
         Monster* monster=nullptr;
@@ -1043,7 +1042,7 @@ void Config::swap(std::string str) {
 
         if(monster->swap(currentSwap))
             monster->saveToFile();
-        free_crt(monster);
+        delete monster;;
     } else if(type == 'r') {
         // the room should have been loaded into the queue by now
         UniqueRoom* uRoom=nullptr;

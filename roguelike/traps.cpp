@@ -27,7 +27,6 @@
 #include "commands.hpp"                // for lose_all
 #include "damage.hpp"                  // for Damage
 #include "flags.hpp"                   // for P_PREPARED, O_RESIST_DISOLVE
-#include "free_crt.hpp"                // for free_crt
 #include "global.hpp"                  // for DEA, CreatureClass, MAXWEAR, BRE
 #include "lasttime.hpp"                // for lasttime
 #include "location.hpp"                // for Location
@@ -594,7 +593,7 @@ int Player::doCheckTraps(UniqueRoom* room) {
                             mon->diePermCrt();
                         mon->deleteFromRoom();
 
-                        free_crt(target);
+                        delete target;;
                         continue;
                     }
                 }

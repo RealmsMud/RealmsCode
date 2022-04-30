@@ -150,9 +150,11 @@ void doDemographics() {
     char        highest[HIGHEST_END][80], name[80], outstr[120], *str;;
     char        percent1[10], percent2[10];
     long        exp;
-    int         highnum[HIGHEST_END], breakdown[DEITY_END], level=0, numRooms=0;
+    long        highnum[HIGHEST_END];
+    int         breakdown[DEITY_END], level=0, numRooms=0;
     int         cClass=0, cClass2=0, race=0, deity=0, total=0;
-    int         ff=0, i=0, n=0, age=0;
+    size_t      n=0;
+    int         ff=0, i=0, age=0;
     cDay        *birthday;
     long        money[5], cgold=0, t=0, richest=0;
     float       best_pk=0, percent=0;
@@ -218,7 +220,8 @@ void doDemographics() {
 
         // reset some variables
         spells.reset();
-        exp = level = cClass = cClass2 = race = deity = age = cgold = numRooms = 0;
+        cgold = 0;
+        exp = level = cClass = cClass2 = race = deity = age = numRooms = 0;
         birthday = new cDay;
         statistics.reset();
 

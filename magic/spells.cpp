@@ -36,7 +36,6 @@
 #include "creatureStreams.hpp"                   // for Streamable, ColorOn
 #include "effects.hpp"                           // for Effect, EffectInfo
 #include "flags.hpp"                             // for P_AFK, P_FREE_ACTION
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for CreatureClass, Creat...
 #include "magic.hpp"                             // for SpellData, Divine
 #include "mudObjects/creatures.hpp"              // for Creature
@@ -410,7 +409,7 @@ int cmdSpells(Creature* player, cmd* cmnd) {
                     return(0);
                 }
                 infoSpells(viewer, pTarget, notSelf);
-                free_crt(pTarget);
+                delete target;
                 return(0);
             } else {
                 if(!player->canSee(target)) {

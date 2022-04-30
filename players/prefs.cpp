@@ -122,7 +122,6 @@ prefInfo prefList[] =
     { "durability", P_SHOW_DURABILITY_INDICATOR,nullptr,  "show durability indicator",  false },
 
     { "-Miscellaneous", 0, nullptr, "", false },
-    { "autowear",   P_NO_AUTO_WEAR,         nullptr,      "wear all on login",        true },
     { "summon",     P_NO_SUMMON,            nullptr,      "can be summoned",          true },
     //{ "pkill",        P_NO_PKILL_PERCENT,     0,      "show pkill percentage",    true },
     { "afk",        P_AFK,                  nullptr,      "away from keyboard",       false },

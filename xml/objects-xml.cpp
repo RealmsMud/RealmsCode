@@ -476,8 +476,7 @@ int Object::saveToFile() {
 // in which case it will only save fields that are changed in the
 // ordinary course of the game
 
-int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int quantity, bool saveId, std::list<std::string> *idList) const {
-//  xmlNodePtr  rootNode;
+int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int quantity, bool saveId, const std::list<std::string> *idList) const {
     xmlNodePtr      curNode;
     xmlNodePtr      childNode;
 
@@ -673,7 +672,6 @@ int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet &set, int permOnly) {
     LoadType lt;
     ObjectSet::const_iterator it;
     const Object *obj;
-    std::list<std::string> *idList = nullptr;
     for (it = set.begin(); it != set.end();) {
         obj = (*it++);
         if (obj &&
@@ -690,20 +688,18 @@ int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet &set, int permOnly) {
                 lt = LoadType::LS_REF;
             }
 
-            // TODO: Modify this to work with object ids
             // quantity code reduces filesize for player shops, storage rooms, and
             // inventories (which tend of have a lot of identical items in them)
             quantity = 1;
-            idList = new std::list<std::string>;
-            idList->push_back(obj->getId());
+            std::list<std::string> idList;
+            idList.push_back(obj->getId());
             while (it != set.end() && *(*it) == *obj) {
-                idList->push_back((*it)->getId());
+                idList.push_back((*it)->getId());
                 quantity++;
                 it++;
             }
 
-            obj->saveToXml(curNode, permOnly, lt, quantity, true, idList);
-            delete idList;
+            obj->saveToXml(curNode, permOnly, lt, quantity, true, &idList);
         }
     }
     return (0);

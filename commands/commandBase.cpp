@@ -37,7 +37,6 @@
 #include "config.hpp"                            // for Config, gConfig
 #include "factions.hpp"                          // for Faction
 #include "flags.hpp"                             // for P_AFK, M_TOLLKEEPER
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for CreatureClass, PROMPT
 #include "lasttime.hpp"                          // for lasttime
 #include "location.hpp"                          // for Location
@@ -390,7 +389,7 @@ std::string doFinger(const Player* player, std::string name, CreatureClass cls) 
 
     if(target->isStaff() && cls < target->getClass()) {
         if(!online)
-            free_crt(target);
+            delete target;;
         return("You are currently unable to finger that player.\n");
     }
 
@@ -428,7 +427,7 @@ std::string doFinger(const Player* player, std::string name, CreatureClass cls) 
         oStr << "Currently logged on.\n";
     } else {
         long t = target->getLastLogin();
-        free_crt(target, false);
+        delete target;
         oStr << "Last login: " << ctime(&t);
     }
 

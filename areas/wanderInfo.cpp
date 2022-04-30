@@ -23,7 +23,6 @@
 #include <utility>                  // for pair
 
 #include "catRef.hpp"               // for CatRef
-#include "free_crt.hpp"             // for free_crt
 #include "mudObjects/monsters.hpp"  // for Monster
 #include "mudObjects/players.hpp"   // for Player
 #include "random.hpp"               // for Random
@@ -98,7 +97,7 @@ void WanderInfo::show(const Player* player, std::string_view area) const {
                            (*it).second.displayStr("", 'c').c_str(), monster ? monster->getCName() : "");
 
         if(monster) {
-            free_crt(monster);
+            delete monster;;
             monster = nullptr;
         }
     }

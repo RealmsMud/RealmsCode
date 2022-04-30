@@ -37,7 +37,6 @@
 #include "enums/loadType.hpp"                    // for LoadType, LoadType::...
 #include "factions.hpp"                          // for Faction
 #include "flags.hpp"                             // for P_OUTLAW, O_CURSED
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for WIELD, CreatureClass
 #include "group.hpp"                             // for Group, CreatureList
 #include "guilds.hpp"                            // for Guild
@@ -509,7 +508,7 @@ void Monster::finishMobDeath(Creature *killer) {
 
     deleteFromRoom();
     gServer->delActive(this);
-    free_crt(this);
+    delete this;
 }
 
 

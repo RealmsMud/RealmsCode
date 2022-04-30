@@ -31,7 +31,6 @@
 #include "cmd.hpp"                   // for cmd
 #include "config.hpp"                // for Config, gConfig
 #include "flags.hpp"                 // for R_BANK, R_MAGIC_MONEY_MACHINE
-#include "free_crt.hpp"              // for free_crt
 #include "global.hpp"                // for CreatureClass, CreatureClass::BU...
 #include "guilds.hpp"                // for Guild
 #include "money.hpp"                 // for Money, GOLD
@@ -445,7 +444,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
     if(target->getClass() == CreatureClass::BUILDER) {
         Bank::say(player, "I don't know who that is.");
         if(!online)
-            free_crt(target);
+            delete target;;
         return;
     }
 
@@ -458,7 +457,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
     //if(target->isHardcore()) {
     //  player->print("You cannot transfer money to hardcore characters for the duration of the tournament.\n");
     //  if(!online)
-    //      free_crt(target);
+    //      delete target;;
     //  return;
     //}
 
@@ -492,7 +491,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
     player->save(true);
     target->save(online);
     if(!online)
-        free_crt(target);
+        delete target;;
 
     Bank::balance(player, isGuild);
     broadcast(player->getSock(), player->getParent(), "%s transfers some gold.", player->getCName());
