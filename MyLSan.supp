@@ -1,0 +1,7 @@
+leak:/lib/x86_64-linux-gnu/libpython3.10.so.1.0+0x320c0f
+leak:/lib/x86_64-linux-gnu/libpython3.10.so.1.0
+leak:pybind11_init_impl_mud
+leak:pybind11_init_impl_effects
+leak:pybind11_init_impl_stats
+leak:libpython3.10.so.1.0+0x320c0f
+
