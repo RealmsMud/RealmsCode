@@ -35,7 +35,6 @@
 #include "config.hpp"                               // for Config, gConfig
 #include "dm.hpp"                                   // for dmHelp, dmResaveO...
 #include "flags.hpp"                                // for O_UNIQUE, O_LORE
-#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for PROP_SHOP, PROP_S...
 #include <libxml/xmlstring.h>                       // for BAD_CAST
 #include "mudObjects/container.hpp"                 // for ObjectSet
@@ -187,7 +186,7 @@ void UniqueOwner::doRemove(Player* player, Object* parent, Object* object, bool 
     if(player) {
         player->save(online);
         if(!online)
-            free_crt(player);
+            delete player;
     }
 }
 
@@ -234,7 +233,7 @@ void UniqueOwner::removeUnique(bool destroy) {
         }
 
         if(!online)
-            free_crt(player);
+            delete player;
     }
 
     // for properties, we only have to worry about primary owners

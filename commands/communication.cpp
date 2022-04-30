@@ -41,7 +41,6 @@
 #include "creatureStreams.hpp"                   // for Streamable, ColorOff
 #include "deityData.hpp"                         // for DeityData
 #include "flags.hpp"                             // for P_AFK, P_NO_BROADCASTS
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for CreatureClass, LCOMMON
 #include "group.hpp"                             // for CreatureList, GROUP_...
 #include "move.hpp"                              // for getRoom
@@ -1496,7 +1495,7 @@ int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun,
     } else if(target->isStaff() && target->getClass() > player->getClass()) {
         player->print("You cannot %s that player.\n", noun);
         if(!online)
-            free_crt(target);
+            delete target;;
     } else {
 
         if(!strcmp(noun, "watch")) {
@@ -1506,7 +1505,7 @@ int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun,
             ) {
                 player->print("%M is not a member of your group.\n", target);
                 if(!online)
-                    free_crt(target);
+                    delete target;;
                 return(0);
             }
         }
@@ -1514,7 +1513,7 @@ int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun,
         (player->*add)(cmnd->str[1]);
         player->print("%s added to your %s list.\n", target->getCName(), noun);
         if(!online)
-            free_crt(target);
+            delete target;;
     }
 
     return(0);

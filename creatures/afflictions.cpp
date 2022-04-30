@@ -28,7 +28,6 @@
 #include "deityData.hpp"             // for DeityData
 #include "effects.hpp"               // for Effects, EffectInfo, EffectList
 #include "flags.hpp"                 // for O_CURSED, P_DM_BLINDED, P_POISON...
-#include "free_crt.hpp"              // for free_crt
 #include "global.hpp"                // for CastType, CreatureClass, CastTyp...
 #include "lasttime.hpp"              // for lasttime
 #include "magic.hpp"                 // for SpellData, checkRefusingMagic
@@ -577,7 +576,7 @@ void Creature::makeVampire() {
             }
 
             if(master && !online)
-                free_crt(master);
+                delete  master;
         }
     }
     if(!knowsSkill("mist"))
@@ -677,7 +676,7 @@ void Creature::clearMinions() {
             target->save(online);
         }
         if(!online)
-            free_crt(target);
+            delete target;;
     }
 
     std::list<std::string>::iterator mIt;
@@ -696,7 +695,7 @@ void Creature::clearMinions() {
                 target->save(online);
             }
             if(!online)
-                free_crt(target);
+                delete target;;
         }
     }
 }

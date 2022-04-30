@@ -53,7 +53,6 @@
 #include "effects.hpp"                           // for Effect
 #include "enums/loadType.hpp"                    // for LoadType, LoadType::...
 #include "flags.hpp"                             // for P_CHAOTIC, P_DM_INVIS
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for ALLITEMS, CreatureClass
 #include "guilds.hpp"                            // for Guild
 #include "mud.hpp"                               // for GUILD_PEON
@@ -650,7 +649,7 @@ bool WebInterface::handleInput() {
 
             player->setForum(tempBuf);
             player->save();
-            free_crt(player);
+            delete player;
             outBuf += EOT;
             return(true);
         } else if(command == "UNFORUM") {
@@ -679,7 +678,7 @@ bool WebInterface::handleInput() {
                 } else {
                     player->setForum("");
                     player->save();
-                    free_crt(player);
+                    delete player;
                 }
 
             }
@@ -717,7 +716,7 @@ bool WebInterface::handleInput() {
                     callWebserver((std::string)"mud.php?type=autoguild&guild=" + guild->getName() + "&user=" + player->getForum() + "&char=" + player->getName());
 
                 if(!online)
-                    free_crt(player);
+                    delete player;
             }
 
             outBuf += EOT;
@@ -780,7 +779,7 @@ bool WebInterface::handleInput() {
                 if(loadMonster(cr, &monster)) {
                     monster->saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
                     std::clog << "Generated xml for " << monster->getName() << "\n";
-                    free_crt(monster);
+                    delete monster;;
                 }
             }
             else if(type == "OBJ") {

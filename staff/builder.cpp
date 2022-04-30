@@ -26,7 +26,6 @@
 #include "commands.hpp"                // for lose_all
 #include "dm.hpp"                      // for dmMax, builderMob, builderObj
 #include "flags.hpp"                   // for P_BUILDER_MOBS, P_BUILDER_OBJS
-#include "free_crt.hpp"                // for free_crt
 #include "global.hpp"                  // for CreatureClass, CreatureClass::...
 #include "location.hpp"                // for Location
 #include "mudObjects/creatures.hpp"    // for Creature
@@ -71,7 +70,6 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
     target->setDeity(0);
     target->initBuilder();
     target->setFlag(P_DM_INVIS);
-    target->setFlag(P_NO_AUTO_WEAR);
     lose_all(target, true, "builder-promotion");
 
     target->printColor("\n\n^yYou are now a building member of the staff.\n\n");
@@ -233,7 +231,7 @@ int dmRange(Player* player, cmd* cmnd) {
 
 
     if(offline)
-        free_crt(target);
+        delete target;;
 
     return(0);
 }

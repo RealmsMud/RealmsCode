@@ -233,7 +233,7 @@ public:
     void loadAlchemyEffects(xmlNodePtr curNode);
 
     // Xml - Saving
-    int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType = LoadType::LS_FULL, int quantity = 1, bool saveId = true, std::list<std::string> *idList = nullptr) const;
+    int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType = LoadType::LS_FULL, int quantity = 1, bool saveId = true, const std::list<std::string> *idList = nullptr) const;
     int saveToFile();
 
     void setDroppedBy(MudObject* dropper, std::string_view pDropType);

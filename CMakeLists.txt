@@ -126,7 +126,6 @@ set(COMMON_HEADER_FILES
     include/fighters.hpp
     include/fishing.hpp
     include/flags.hpp
-    include/free_crt.hpp
     include/global.hpp
     include/group.hpp
     include/guilds.hpp

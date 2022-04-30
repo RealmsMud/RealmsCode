@@ -20,7 +20,7 @@
 
 #define GENERIC_BUILDER(builderType, builderTarget, name, varType)      \
     builderType& name(varType name) {                                   \
-        builderTarget.name = name;                                      \
+        (builderTarget).name = name;                                    \
         return *this;                                                   \
     }                                                                   \
 

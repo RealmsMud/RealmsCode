@@ -35,7 +35,6 @@
 #include "color.hpp"                           // for stripColor
 #include "commands.hpp"                        // for cmdLevelHistory, cmdSt...
 #include "creatureStreams.hpp"                 // for Streamable, ColorOff
-#include "free_crt.hpp"                        // for free_crt
 #include "global.hpp"                          // for INV, MAG, MAX_SAVE
 #include "mudObjects/creatures.hpp"            // for Creature
 #include "mudObjects/monsters.hpp"             // for Monster
@@ -802,7 +801,7 @@ int cmdLevelHistory(Player* player, cmd* cmnd) {
     target->statistics.displayLevelHistory(player);
 
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }
 
@@ -847,6 +846,6 @@ int cmdStatistics(Player* player, cmd* cmnd) {
     }
 
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }

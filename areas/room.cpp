@@ -32,7 +32,6 @@
 #include "creatureStreams.hpp"         // for Streamable, operator<<, setf
 #include "effects.hpp"                 // for EffectInfo
 #include "flags.hpp"                   // for M_PERMENANT_MONSTER, O_JUST_BO...
-#include "free_crt.hpp"                // for free_crt
 #include "global.hpp"                  // for MAG, CreatureClass, CAP, Creat...
 #include "hooks.hpp"                   // for Hooks
 #include "lasttime.hpp"                // for crlasttime, lasttime
@@ -480,7 +479,7 @@ void UniqueRoom::addPermCrt() {
                 m++;
         }
 
-        free_crt(creature);
+        delete creature;;
 
         for(j=0; j<n-m; j++) {
 

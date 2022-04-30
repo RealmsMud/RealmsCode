@@ -58,7 +58,6 @@
 #include "commands.hpp"                             // for command, changing...
 #include "config.hpp"                               // for Config, gConfig
 #include "flags.hpp"                                // for P_READING_FILE
-#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for MAXALVL
 #include "login.hpp"                                // for createPlayer, CON...
 #include "msdp.hpp"                                 // for ReportedMsdpVariable
@@ -332,8 +331,11 @@ void Socket::addToPlayerList() {
 //********************************************************************
 
 void Socket::freePlayer() {
-    if (myPlayer)
-        free_crt(myPlayer, inPlayerList);
+    if (myPlayer) {
+        if(inPlayerList)
+            gServer->clearPlayer(myPlayer);
+        delete myPlayer;
+    }
     myPlayer = nullptr;
     inPlayerList = false;
 }

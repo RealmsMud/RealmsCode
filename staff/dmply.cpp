@@ -40,7 +40,6 @@
 #include "config.hpp"                // for Config, gConfig
 #include "enums/loadType.hpp"        // for LoadType, LoadType::LS_BACKUP
 #include "flags.hpp"                 // for P_SPYING, P_BUGGED, P_CANT_BROAD...
-#include "free_crt.hpp"              // for free_crt
 #include "global.hpp"                // for PROMPT, MAX_STAT_NUM, CreatureClass
 #include "group.hpp"                 // for operator<<, Group, GROUP_INVITED
 #include "guilds.hpp"                // for Guild
@@ -747,7 +746,7 @@ int dmFinger(Player* player, cmd* cmnd) {
 
         player->print("\n");
         target->information(player, false);
-        free_crt(target, false);
+        delete target;
 
     } else {
         player->print("\n");
@@ -845,14 +844,14 @@ int dmTake(Player* player, cmd* cmnd) {
         if(!container) {
             player->print("%s doesn't have that container.\n", target->upHeShe());
             if(!online)
-                free_crt(target);
+                delete target;;
             return(0);
         }
 
         if(container->getType() != ObjectType::CONTAINER) {
             player->print("That isn't a container.\n");
             if(!online)
-                free_crt(target);
+                delete target;;
             return(0);
         }
 
@@ -860,7 +859,7 @@ int dmTake(Player* player, cmd* cmnd) {
         if(!object) {
             player->print("That is not in that container.\n");
             if(!online)
-                free_crt(target);
+                delete target;;
             return(0);
         }
 
@@ -876,7 +875,7 @@ int dmTake(Player* player, cmd* cmnd) {
 
         target->save(online);
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
 
@@ -887,7 +886,7 @@ int dmTake(Player* player, cmd* cmnd) {
         player->print("%s doesn't have that.\n", target->upHeShe());
 
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
 
@@ -903,7 +902,7 @@ int dmTake(Player* player, cmd* cmnd) {
 
     target->save(online);
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }
 
@@ -1032,14 +1031,14 @@ int dmPut(Player* player, cmd* cmnd) {
         if(!container) {
             player->print("%s doesn't have that container.\n", target->upHeShe());
             if(!online)
-                free_crt(target);
+                delete target;;
             return(0);
         }
 
         if(container->getType() != ObjectType::CONTAINER) {
             player->print("That isn't a container.\n");
             if(!online)
-                free_crt(target);
+                delete target;;
             return(0);
         }
 
@@ -1047,7 +1046,7 @@ int dmPut(Player* player, cmd* cmnd) {
         if(!object) {
             player->print("You do not have that.\n");
             if(!online)
-                free_crt(target);
+                delete target;;
             return(0);
         }
 
@@ -1056,7 +1055,7 @@ int dmPut(Player* player, cmd* cmnd) {
             player->printColor("You will exceed the maximum allowed items for %P(%d).\n", container->getCName(), container->getShotsMax());
             player->print("Aborted.\n");
             if(!online)
-                free_crt(target);
+                delete target;;
             return(0);
         }
 
@@ -1069,7 +1068,7 @@ int dmPut(Player* player, cmd* cmnd) {
 
         target->save(online);
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
 
@@ -1078,7 +1077,7 @@ int dmPut(Player* player, cmd* cmnd) {
     if(!object) {
         player->print("You don't have that.\n");
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
 
@@ -1094,7 +1093,7 @@ int dmPut(Player* player, cmd* cmnd) {
 
     target->save(online);
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }
 
@@ -1137,7 +1136,7 @@ int dmMove(Player* player, cmd* cmnd) {
     }
     if(creature->isCt() && !player->isDm()) {
         player->print("You cannot move that player.\n");
-        free_crt(creature);
+        delete creature;;
         return(0);
     }
 
@@ -1157,7 +1156,7 @@ int dmMove(Player* player, cmd* cmnd) {
         Area *area = gServer->getArea(mapmarker.getArea());
         if(!area) {
             player->print("That area does not exist.\n");
-            free_crt(creature);
+            delete creature;;
             return(0);
         }
         creature->currentLocation.room.clear();
@@ -1168,7 +1167,7 @@ int dmMove(Player* player, cmd* cmnd) {
     } else {
         if(!validRoomId(cr)) {
             player->print("Can only put players in the range of 1-%d.\n", RMAX);
-            free_crt(creature);
+            delete creature;;
             return(0);
         }
         *&creature->currentLocation.room = *&cr;
@@ -1179,7 +1178,7 @@ int dmMove(Player* player, cmd* cmnd) {
     log_immort(true, player, "%s.\n", log.str().c_str());
 
     creature->save();
-    free_crt(creature);
+    delete creature;;
     return(0);
 }
 
@@ -1398,7 +1397,7 @@ int dmPassword(Player* player, cmd* cmnd) {
 
     target->save(online);
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }
 
@@ -1448,7 +1447,7 @@ int dmRestorePlayer(Player* player, cmd* cmnd) {
 
     target->save(online);
     if(!online)
-        free_crt(target);
+        delete target;
     else
         target->print("Your experience has been restored.\n");
     return(0);
@@ -1504,14 +1503,14 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
         if(!player->isDm() && target->isDm()) {
             player->print("Don't be silly.\n");
             if(!online == 1)
-                free_crt(target);
+                delete target;;
             return(0);
         }
 
         if(cmnd->num < 3) {
             player->print("%M has %d total warning%s.\n", target, target->getWarnings(), (target->getWarnings()==1 ? "":"s") );
             if(!online)
-                free_crt(target);
+                delete target;;
             return(0);
         }
 
@@ -1519,13 +1518,13 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
             if(!player->isCt()) {
                 player->print("You are unable to remove warnings.\n");
                 if(!online)
-                    free_crt(target);
+                    delete target;;
                 return(0);
             }
             if(target->getWarnings() < 1) {
                 player->print("%M has no warnings.\n", target);
                 if(!online)
-                    free_crt(target);
+                    delete target;;
                 return(0);
             } else {
                 target->subWarnings(1);
@@ -1542,7 +1541,7 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
                 player->print("%M already has 3 warnings. %s cannot be warned further.\n",
                       target, target->upHeShe());
                 if(!online)
-                    free_crt(target);
+                    delete target;;
                 return(0);
             } else {
                 target->addWarnings(1);
@@ -1560,7 +1559,7 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
         } else {
             player->print("Syntax: *warn (player) [-r|-a]\n");
             if(!online)
-                free_crt(target);
+                delete target;;
             return(0);
         }
         target->save(online);
@@ -1581,7 +1580,7 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
 
 
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }
 
@@ -2626,7 +2625,7 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
         }
 
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
 
@@ -2634,7 +2633,7 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
     if(target->save(online, LoadType::LS_BACKUP) > 0) {
         player->print("Backup failed.\n");
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
 
@@ -2644,7 +2643,7 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
     log_immort(false,player, "%s backed up player %s to disk.\n", player->getCName(), target->getCName());
 
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }
 
@@ -2724,20 +2723,20 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
     if(target->isStaff()) {
         player->print("Don't use *jail on staff members.\n");
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
     if(player == target) {
         player->print("Do not jail yourself.\n");
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
 
     if(player->isWatcher() && !isCt(player) && target->isWatcher()) {
         player->print("Do not jail other watchers.\n");
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
 
@@ -2778,14 +2777,14 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
     if(!reason && player->isWatcher()) {
         player->print("You must enter a reason. Use the -r option.\n");
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
 
     if(!reason && player->getName() != "Bane") {
         player->print("Use the -r option and enter a reason, assbandit!\n");
         if(!online)
-            free_crt(target);
+            delete target;;
         return(0);
     }
 
@@ -2854,7 +2853,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 
     target->save();
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }
 

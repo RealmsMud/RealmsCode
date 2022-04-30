@@ -38,7 +38,6 @@
 #include "config.hpp"                  // for Config, gConfig
 #include "enums/loadType.hpp"          // for LoadType, LoadType::LS_BACKUP
 #include "flags.hpp"                   // for P_AFK, P_CAN_CHANGE_STATS, P_C...
-#include "free_crt.hpp"                // for free_crt
 #include "global.hpp"                  // for CreatureClass, CreatureClass::...
 #include "guilds.hpp"                  // for GuildCreation
 #include "lasttime.hpp"                // for lasttime
@@ -588,7 +587,8 @@ void deletePlayer(Player* player) {
     // this deletes the player object
     Socket* sock = player->getSock();
     player->uninit();
-    free_crt(player,true);
+    gServer->clearPlayer(player);
+    delete player;
     //gServer->clearPlayer(name);
     sock->setPlayer(nullptr);
 

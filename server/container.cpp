@@ -27,7 +27,6 @@
 #include "catRef.hpp"                               // for CatRef
 #include "cmd.hpp"                                  // for cmd
 #include "flags.hpp"                                // for M_ANTI_MAGIC_AURA
-#include "free_crt.hpp"                             // for free_crt
 #include "location.hpp"                             // for Location
 #include "mudObjects/areaRooms.hpp"                 // for AreaRoom
 #include "mudObjects/container.hpp"                 // for Container, Contai...
@@ -83,7 +82,7 @@ bool Container::purgeMonsters(bool includePets) {
         }
 
         monsters.erase(prevIt);
-        free_crt(mons);
+        delete (mons);
     }
     return(purgedAll);
 }

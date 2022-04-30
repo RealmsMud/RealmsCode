@@ -26,7 +26,6 @@
 
 #include "cmd.hpp"                 // for cmd
 #include "flags.hpp"               // for P_UNREAD_MAIL, P_READING_FILE, P_C...
-#include "free_crt.hpp"            // for free_crt
 #include "global.hpp"              // for DOPROMPT, FATAL, PROMPT, CreatureC...
 #include "login.hpp"               // for CON_EDIT_HISTORY, CON_SENDING_MAIL
 #include "mud.hpp"                 // for ACC
@@ -123,14 +122,14 @@ int cmdSendMail(Player* player, cmd* cmnd) {
     if(!target->isStaff() && player->getClass() == CreatureClass::BUILDER) {
         player->print("You may not mudmail players at this time.\n");
         if(!online)
-            free_crt(target, false);
+            delete target;
         return(0);
     }
 
     if(!player->isStaff() && target->getClass() == CreatureClass::BUILDER) {
         player->print("You may not mudmail that character at this time.\n");
         if(!online)
-            free_crt(target, false);
+            delete target;
         return(0);
     }
 
@@ -141,7 +140,7 @@ int cmdSendMail(Player* player, cmd* cmnd) {
     target->setFlag(P_UNREAD_MAIL);
     target->save(online);
     if(!online)
-        free_crt(target, false);
+        delete target;
 
     player->print("Enter your message now. Type '.' or '*' on a line by itself to finish or '\\' to\ncancel. Each line should be NO LONGER THAN 80 CHARACTERS.\n-: ");
     sprintf(player->getSock()->tempstr[0], "%s", cmnd->str[1]);
@@ -218,7 +217,7 @@ void sendMail(const std::string &target, const std::string &message) {
         player->printColor("^c### You have new mudmail.\n");
 
     if(!online)
-        free_crt(player);
+        delete player;
 }
 
 
@@ -399,7 +398,7 @@ int dmDeletemail(Player* player, cmd* cmnd) {
         } else {
             creature->clearFlag(P_UNREAD_MAIL);
             creature->save();
-            free_crt(creature);
+            delete creature;;
         }
     } else {
         creature->clearFlag(P_UNREAD_MAIL);

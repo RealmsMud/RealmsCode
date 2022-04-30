@@ -38,7 +38,6 @@
 #include "effects.hpp"                         // for Effect
 #include "factions.hpp"                        // for Faction, Faction::INDI...
 #include "flags.hpp"                           // for P_AFK, O_WORN, O_NO_DROP
-#include "free_crt.hpp"                        // for free_crt
 #include "global.hpp"                          // for HELD, WIELD, CreatureC...
 #include "group.hpp"                           // for GROUP_SPLIT_GOLD, Group
 #include "lasttime.hpp"                        // for lasttime, crlasttime
@@ -1645,14 +1644,14 @@ int cmdInventory(Player* player, cmd* cmnd) {
             if(target->isDm() && !player->isDm()) {
                 player->print("You are not allowed to do that.\n");
                 if(!online)
-                    free_crt(target);
+                    delete target;;
                 return(0);
             }
 
             if(cmnd->num > 2) {
                 peek_bag(player, target, cmnd, 1);
                 if(!online)
-                    free_crt(target);
+                    delete target;;
                 return(0);
             }
         }
@@ -1702,7 +1701,7 @@ int cmdInventory(Player* player, cmd* cmnd) {
     player->printColor("%s", oStr.str().c_str());
 
     if(!online)
-        free_crt(target);
+        delete target;;
 
     return(0);
 }

@@ -62,7 +62,7 @@ bool loadMonster(const CatRef& cr, Monster ** pMonster, bool offline) {
         gServer->monsterCache.fetch(cr, pMonster, false);
     } else {
         // Otherwise load the monster and return a pointer to the newly loaded monster
-        // Load the creature from it's file
+        // Load the creature from its file
         if(!loadMonsterFromFile(cr, pMonster, "", offline))
             return(false);
         gServer->monsterCache.insert(cr, pMonster);

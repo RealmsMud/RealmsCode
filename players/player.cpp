@@ -44,7 +44,6 @@
 #include "dice.hpp"                         // for Dice
 #include "effects.hpp"                      // for EffectInfo
 #include "flags.hpp"                        // for P_DM_INVIS, P_CHAOTIC, O_DARKNESS
-#include "free_crt.hpp"                     // for free_crt
 #include "global.hpp"                       // for CreatureClass, CreatureClass::...
 #include "guilds.hpp"                       // for Guild
 #include "lasttime.hpp"                     // for lasttime
@@ -394,8 +393,6 @@ void Player::init() {
 
 
     wearCursed();
-    if(!flagIsSet(P_NO_AUTO_WEAR))
-        wearAll(this, true);
 
     computeLuck();
     update();
@@ -511,7 +508,7 @@ void Player::uninit() {
         if(pet->isPet()) {
             gServer->delActive(pet);
             pet->deleteFromRoom();
-            free_crt(pet);
+            delete (pet);
         } else {
             pet->setMaster(nullptr);
         }

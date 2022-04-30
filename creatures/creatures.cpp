@@ -920,10 +920,6 @@ unsigned long Creature::getInventoryValue() const {
 // memory.
 
 int Player::save(bool updateTime, LoadType saveType) {
-    Player* copy=nullptr;
-    Object  *obj[MAXWEAR];
-    int     i=0, n=0;
-
     // having an update time option, which should be false for offline
     // operations, prevents aging of chars and keeps last login accurate
     if(updateTime) {
@@ -931,34 +927,21 @@ int Player::save(bool updateTime, LoadType saveType) {
         lasttime[LT_AGE].interval += (lastLogin - lasttime[LT_AGE].ltime);
         lasttime[LT_AGE].ltime = lastLogin;
     }
+    // TODO: Save worn equipment
+//    for(i=0; i<MAXWEAR; i++) {
+//        if(copy->ready[i]) {
+//            obj[n] = copy->unequip(i+1, UNEQUIP_ADD_TO_INVENTORY, false, false);
+//            obj[n]->setFlag(O_WORN);
+//            n++;
+//            copy->ready[i] = nullptr;
+//        }
+//    }
 
-    copy = new Player;
-    if(!copy)
-        merror("save", FATAL);
-
-    *copy = *this;
-
-    for(i=0; i<MAXWEAR; i++) {
-        if(copy->ready[i]) {
-            obj[n] = copy->unequip(i+1, UNEQUIP_ADD_TO_INVENTORY, false, false);
-            obj[n]->setFlag(O_WORN);
-            n++;
-            copy->ready[i] = nullptr;
-        }
-    }
-
-    if(copy->getName().empty())
+    if(getName().empty())
         return(1);
-    copy->checkDarkness();
-
-    if(copy->saveToFile(saveType) < 0)
+    if(saveToFile(saveType) < 0)
         std::clog << "*** ERROR: saveXml!\n";
 
-    for(i=0; i<n; i++)
-        copy->delObj(obj[i], false, false, true, false);
-
-    copy->setId("-1");
-    delete copy;
     return(0);
 }
 
@@ -1240,7 +1223,7 @@ void Creature::unApplyTongues() {
     Player* pTarget = getAsPlayer();
     if(pTarget) {
         if(!pTarget->languageIsKnown(LUNKNOWN + pTarget->current_language)) {
-            std::string selfStr = "";
+            std::string selfStr;
             int i;
             selfStr.append("You can no longer speak");
             selfStr.append(get_language_adj(pTarget->current_language));
@@ -1258,6 +1241,13 @@ void Creature::unApplyTongues() {
             }
         }
     }
+}
+
+Creature::Creature(Creature &cr) {
+    doCopy(cr);
+}
+Creature::Creature(const Creature &cr) {
+    doCopy(cr);
 }
 
 std::ostream& operator<<(std::ostream& out, const crlasttime& crl) {

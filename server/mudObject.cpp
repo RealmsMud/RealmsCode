@@ -122,6 +122,7 @@ MudObject::MudObject() {
 
 MudObject::~MudObject() {
     unRegisterMo();
+    moReset();
 }
 //***********************************************************************
 //                      moReset
@@ -141,15 +142,6 @@ void MudObject::moCopy(const MudObject& mo) {
 
     hooks = mo.hooks;
     hooks.setParent(this);
-}
-
-//***********************************************************************
-//                      moDestroy
-//***********************************************************************
-
-void MudObject::moDestroy() {
-    unRegisterMo();
-    moReset();
 }
 
 MudObject* MudObject::getAsMudObject() {

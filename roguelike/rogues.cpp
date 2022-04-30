@@ -31,7 +31,6 @@
 #include "dm.hpp"                      // for dmMobInventory
 #include "factions.hpp"                // for Faction
 #include "flags.hpp"                   // for P_AFK, M_PERMENANT_MONSTER
-#include "free_crt.hpp"                // for free_crt
 #include "global.hpp"                  // for CreatureClass, CreatureClass::...
 #include "hooks.hpp"                   // for Hooks
 #include "lasttime.hpp"                // for lasttime
@@ -179,7 +178,7 @@ int cmdBribe(Player* player, cmd* cmnd) {
 
         creature->deleteFromRoom();
         gServer->delActive(creature);
-        free_crt(creature);
+        delete creature;;
     }
 
     return(0);

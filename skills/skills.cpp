@@ -31,7 +31,6 @@
 #include "commands.hpp"              // for cmdSkills, dmSetSkills
 #include "config.hpp"                // for Config, SkillInfoMap, gConfig
 #include "flags.hpp"                 // for P_DM_INVIS, P_SHOW_SKILL_PROGRESS
-#include "free_crt.hpp"              // for free_crt
 #include "global.hpp"                // for MAXALVL, CreatureClass, Creature...
 #include "lasttime.hpp"              // for lasttime
 #include "levelGain.hpp"             // for LevelGain
@@ -727,7 +726,7 @@ int cmdSkills(Player* player, cmd* cmnd) {
             if (target->isDm() && !player->isDm()) {
                 player->print("You cannot view that player's skills.\n");
                 if (!online)
-                    free_crt(target);
+                    delete target;;
                 return (0);
             }
         }
@@ -735,7 +734,7 @@ int cmdSkills(Player* player, cmd* cmnd) {
 
     showSkills(player, target, magicOnly);
     if (!online)
-        free_crt(target);
+        delete target;;
     return (0);
 }
 // End Skill functions related to Creatures

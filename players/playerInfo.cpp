@@ -31,7 +31,6 @@
 #include "deityData.hpp"           // for DeityData
 #include "effects.hpp"             // for EffectInfo
 #include "flags.hpp"               // for P_AFK, P_PTESTER, P_CHAOTIC, P_CHA...
-#include "free_crt.hpp"            // for free_crt
 #include "global.hpp"              // for CreatureClass, CreatureClass::CLERIC
 #include "location.hpp"            // for Location
 #include "magic.hpp"               // for S_HEAL, S_TELEPORT, S_TRACK
@@ -89,7 +88,7 @@ int cmdScore(Player* player, cmd* cmnd) {
     target->score(player);
 
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }
 
@@ -318,7 +317,7 @@ int cmdDaily(Player* player, cmd* cmnd) {
 
 
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }
 
@@ -567,6 +566,6 @@ int cmdChecksaves(Player* player, cmd* cmnd) {
     
 
     if(!online)
-        free_crt(target);
+        delete target;;
     return(0);
 }

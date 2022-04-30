@@ -59,7 +59,6 @@
 #include "delayedAction.hpp"                        // for DelayedAction
 #include "factions.hpp"                             // for Faction
 #include "flags.hpp"                                // for M_PERMENANT_MONSTER
-#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for FATAL, ALLITEMS
 #include "httpServer.hpp"                           // for HttpServer
 #include "lasttime.hpp"                             // for lasttime
@@ -835,7 +834,7 @@ void Server::updateRandom(long t) {
 
         // if the monster can't go there, they won't wander there
         if(aRoom && !aRoom->area->canPass(monster, &aRoom->mapmarker, true)) {
-            free_crt(monster);
+            delete monster;;
             continue;
         }
 
@@ -843,7 +842,7 @@ void Server::updateRandom(long t) {
             monster->validateAc();
 
         if( ((monster->flagIsSet(M_NIGHT_ONLY) && isDay()) ||(monster->flagIsSet(M_DAY_ONLY) && !isDay())) && !monster->inCombat()) {
-            free_crt(monster);
+            delete monster;;
             continue;
         }
 
@@ -909,7 +908,7 @@ void Server::updateActive(long t) {
                 monster->getCName(), monster->info.displayStr().c_str());
             monster->deleteFromRoom();
             gServer->delActive(monster);
-            free_crt(monster);
+            delete monster;;
             it = activeList.begin();
             continue;
         }
@@ -936,7 +935,7 @@ void Server::updateActive(long t) {
                 broadcast(nullptr, monster->getRoomParent(), "%M wanders slowly away.", monster);
                 monster->deleteFromRoom();
                 gServer->delActive(monster);
-                free_crt(monster);
+                delete monster;;
                 it = activeList.begin();
                 continue;
             }
@@ -1070,7 +1069,7 @@ void Server::updateActive(long t) {
         } if(mobileResult == 2) {
             monster->deleteFromRoom();
             gServer->delActive(monster);
-            free_crt(monster);
+            delete monster;;
             it = activeList.begin();
             continue;
         }
@@ -1596,7 +1595,7 @@ bool Server::startReboot(bool resetShips) {
             player->save(true);
             players[player->getName()] = nullptr;
             player->uninit();
-            free_crt(player);
+            delete player;
             player = nullptr;
             sock.setPlayer(nullptr);
         } else {

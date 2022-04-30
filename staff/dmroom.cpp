@@ -48,7 +48,6 @@
 #include "effects.hpp"                         // for EffectInfo, Effects
 #include "factions.hpp"                        // for Faction
 #include "flags.hpp"                           // for R_TRAINING_ROOM, R_SHO...
-#include "free_crt.hpp"                        // for free_crt
 #include "global.hpp"                          // for CreatureClass, Creatur...
 #include "hooks.hpp"                           // for Hooks
 #include "lasttime.hpp"                        // for crlasttime
@@ -884,7 +883,7 @@ int stat_rom(Player* player, UniqueRoom* room) {
                            crtm->cr.displayStr("", 'm').c_str(), monster ? monster->getCName() : "", crtm->interval, MAX<long>(0, crtm->ltime + crtm->interval - t));
 
         if(monster) {
-            free_crt(monster);
+            delete monster;;
             monster = nullptr;
         }
     }
@@ -2465,7 +2464,7 @@ void showMobList(Player* player, WanderInfo *wander, std::string_view type) {
              << " A:" << monster->getAlignment()
              << "^x D:" << monster->damage.average() << "]\n";
 
-        free_crt(monster);
+        delete monster;;
     }
 
     if(!found)
@@ -3067,7 +3066,7 @@ CatRef findNextEmpty(const std::string &type, const std::string &area) {
             if(!loadMonster(cr, &monster))
                 return(cr);
             else
-                free_crt(monster);
+                delete monster;;
         }
     }
 

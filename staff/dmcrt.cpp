@@ -47,7 +47,6 @@
 #include "effects.hpp"                         // for EffectInfo, EFFECT_MAX...
 #include "factions.hpp"                        // for Faction, Faction::MAX_...
 #include "flags.hpp"                           // for M_DM_FOLLOW, M_CUSTOM
-#include "free_crt.hpp"                        // for free_crt
 #include "global.hpp"                          // for PROMPT, CreatureClass
 #include "hooks.hpp"                           // for Hooks
 #include "lasttime.hpp"                        // for lasttime
@@ -158,7 +157,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
         monster->validateAc();
 
     if(!monster->getName()[0] || monster->getName()[0] == ' ') {
-        free_crt(monster);
+        delete monster;;
         player->print("Error (%s)\n", cr.displayStr().c_str());
         return(0);
     }
@@ -2811,7 +2810,7 @@ int dmForceWander(Player* player, cmd* cmnd) {
     broadcast(nullptr, player->getRoomParent(), "%1M just %s away.", monster, Move::getString(monster).c_str());
 
     monster->deleteFromRoom();
-    free_crt(monster);
+    delete monster;;
 
     log_immort(false,player,"%s forced %s to wander away in room %s.\n",
         player->getCName(), name, player->getRoomParent()->fullName().c_str());

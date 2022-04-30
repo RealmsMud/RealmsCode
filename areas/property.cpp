@@ -45,7 +45,6 @@
 #include "config.hpp"                       // for Config, gConfig, MudFlagMap
 #include "dm.hpp"                           // for isCardinal, findRoomsWith...
 #include "flags.hpp"                        // for P_READING_FILE, R_BUILD_G...
-#include "free_crt.hpp"                     // for free_crt
 #include "global.hpp"                       // for PROP_GUILDHALL, PROP_HOUSE
 #include "guilds.hpp"                       // for Guild
 #include "location.hpp"                     // for Location
@@ -831,7 +830,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
     if((target->isStaff() && !player->isStaff()) || target == player) {
         player->print("That player is not a valid target.\n");
 
-        if(offline) free_crt(target);
+        if(offline) delete target;;
         return;
     }
 
@@ -840,12 +839,12 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
     if(assign && p->getPartialOwner(target->getName())) {
         player->print("%s is already a partial owner of this property.\n", target->getCName());
 
-        if(offline) free_crt(target);
+        if(offline) delete target;;
         return;
     } else if(!assign && !p->getPartialOwner(target->getName())) {
         player->print("%s is not a partial owner of this property.\n", target->getCName());
 
-        if(offline) free_crt(target);
+        if(offline) delete target;;
         return;
     }
 
@@ -853,7 +852,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
     if(assign) {
 
         if(Move::tooFarAway(player, target, "appoint as partial owner of this property")) {
-            if(offline) free_crt(target);
+            if(offline) delete target;;
             return;
         }
 
@@ -863,7 +862,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
             if(cr.id) {
                 player->print("%s may only be affiliated with one storage room at a time.\n", target->getCName());
 
-                if(offline) free_crt(target);
+                if(offline) delete target;;
                 return;
             }
         }
@@ -888,7 +887,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
     }
 
     gConfig->saveProperties();
-    if(offline) free_crt(target);
+    if(offline) delete target;;
 }
 
 //*********************************************************************

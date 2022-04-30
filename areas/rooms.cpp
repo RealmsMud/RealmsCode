@@ -35,7 +35,6 @@
 #include "effects.hpp"                 // for Effects
 #include "enums/loadType.hpp"          // for LoadType, LoadType::LS_BACKUP
 #include "flags.hpp"                   // for R_LIMBO, R_VAMPIRE_COVEN, R_DA...
-#include "free_crt.hpp"                // for free_crt
 #include "global.hpp"                  // for HELD, ARACHNUS, ARAMON, ARES
 #include "hooks.hpp"                   // for Hooks
 #include "lasttime.hpp"                // for lasttime, crlasttime
@@ -169,7 +168,7 @@ void BaseRoom::BaseDestroy() {
     auto mIt = monsters.begin();
     while(mIt != monsters.end()) {
         Monster* mons = (*mIt++);
-        free_crt(mons);
+        delete mons;
     }
     monsters.clear();
 

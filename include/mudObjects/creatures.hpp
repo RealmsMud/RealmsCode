@@ -178,8 +178,6 @@ typedef std::map<std::string, Skill*> SkillMap;
 class Creature: public virtual MudObject, public Streamable, public Container, public Containable {
 
 protected:
-    void CopyCommon(const Creature& cr);
-    void crtDestroy();
     void crtReset();
 
 protected:
@@ -213,14 +211,14 @@ protected:
     Group* group{};
     GroupStatus groupStatus;
 
-
 public:
 // Constructors, Deconstructors, etc
     Creature();
     Creature(Creature& cr);
     Creature(const Creature& cr);
-    Creature& operator=(const Creature& cr);
-    virtual ~Creature() = default;;
+    void doCopy(const Creature& cr);
+    virtual ~Creature();
+
 
 
     virtual void upgradeStats() {};

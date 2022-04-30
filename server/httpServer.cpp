@@ -95,7 +95,7 @@ HttpServer::HttpServer(int pPort) {
             }
 
             if(offline)
-                free_crt(player, false);
+                delete player;
 
             if(!valid)
                 return crow::response(crow::status::UNAUTHORIZED);
@@ -111,11 +111,11 @@ HttpServer::HttpServer(int pPort) {
                     json j;
                     j["status"] = 404;
                     j["message"] = "quest not found";
-                    return to_string(j);
+                    return crow::response(to_string(j));
                 }
 
                 json questOverview = json(*quest);
-                return to_string(questOverview);
+                return crow::response(to_string(questOverview));
             });
 
     CROW_ROUTE(app, "/zones/<string>/quests").methods("GET"_method)

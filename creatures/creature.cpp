@@ -41,7 +41,6 @@
 #include "creatureStreams.hpp"                   // for Streamable
 #include "dice.hpp"                              // for Dice
 #include "flags.hpp"                             // for M_DM_FOLLOW, M_SNEAKING
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for CreatureClass, BRE, DEA
 #include "group.hpp"                             // for Group
 #include "lasttime.hpp"                          // for lasttime, crlasttime
@@ -62,6 +61,7 @@
 #include "proto.hpp"                             // for broadcast, bonus
 #include "raceData.hpp"                          // for RaceData
 #include "random.hpp"                            // for Random
+#include "specials.hpp"                          // for SpecialAttack
 #include "server.hpp"                            // for Server, gServer
 #include "size.hpp"                              // for getSizeName, NO_SIZE
 #include "statistics.hpp"                        // for Statistics
@@ -268,10 +268,10 @@ void Monster::diePermCrt() {
             continue;
         if(temp_mob->getName() == getName()) {
             crtm->ltime = t;
-            free_crt(temp_mob);
+            delete temp_mob;
             break;
         }
-        free_crt(temp_mob);
+        delete temp_mob;
     }
 
     if(flagIsSet(M_DEATH_SCENE) && !flagIsSet(M_FOLLOW_ATTACKER)) {
@@ -1454,48 +1454,64 @@ bool Creature::doFlee(bool magicTerror) {
 }
 
 
+Creature::~Creature() {
+    for(Creature* targeter : targetingThis) {
+        targeter->clearTarget(false);
+    }
 
-//*********************************************************************
-//                      free_crt
-//*********************************************************************
-// This function releases the creature pointed to by the first parameter
-// from memory. All items that creature has readied or carries will
-// also be released. *ASSUMPTION*: This function will only be called
-// from delete room. If it is called from somewhere else, unresolved
-// links may remain and cause a game crash. *EXCEPTION*: This function
-// can be called independently to free a player's information from
-// memory (but not a monster).
+    clearTarget();
 
-void free_crt(Creature* creature, bool remove) {
+    factions.clear();
+
+    Skill* skill;
+    std::map<std::string, Skill*>::iterator csIt;
+    for(csIt = skills.begin() ; csIt != skills.end() ; csIt++) {
+        skill = (*csIt).second;
+        delete skill;
+    }
+    skills.clear();
+
+    effects.removeAll();
+    minions.clear();
+
+    SpecialAttack* attack;
+    std::list<SpecialAttack*>::iterator sIt;
+    for(sIt = specials.begin() ; sIt != specials.end() ; sIt++) {
+        attack = (*sIt);
+        delete attack;
+        (*sIt) = nullptr;
+    }
+    specials.clear();
+
     ttag    *tp=nullptr, *tempt=nullptr;
     int i;
     for(i=0; i<MAXWEAR; i++) {
-        if(creature->ready[i])
-            creature->unequip(i+1, UNEQUIP_DELETE, false);
+        if(ready[i])
+            unequip(i+1, UNEQUIP_DELETE, false);
     }
 
     ObjectSet::iterator it;
     Object* obj;
-    for(it = creature->objects.begin() ; it != creature->objects.end() ; ) {
+    for(it = objects.begin() ; it != objects.end() ; ) {
         obj = (*it++);
         delete obj;
     }
-    creature->objects.clear();
+    objects.clear();
 
-    if(creature->getGroup(false)) {
-        creature->getGroup(false)->remove(creature);
+    if(getGroup(false)) {
+        getGroup(false)->remove(this);
     }
-    for(Monster* mons : creature->pets) {
+    for(Monster* mons : pets) {
         if(mons->isPet()) {
-            free_crt(mons);
+            delete mons;
         } else {
             mons->setMaster(nullptr);
         }
     }
-    creature->pets.clear();
+    pets.clear();
 
-    tp = creature->first_tlk;
-    creature->first_tlk = nullptr;
+    tp = first_tlk;
+    first_tlk = nullptr;
     while(tp) {
         tempt = tp->next_tag;
         delete[] tp->key;
@@ -1507,15 +1523,12 @@ void free_crt(Creature* creature, bool remove) {
     }
 
 
-    gServer->removeDelayedActions(creature);
+    gServer->removeDelayedActions(this);
 
-    if(creature->isMonster()) {
-        if(gServer->isActive(creature->getAsMonster()))
-            gServer->delActive(creature->getAsMonster());
-    }
-    else if(remove)
-        gServer->clearPlayer(creature->getAsPlayer());
-    delete creature;
+
+//    else if(remove)
+//        gServer->clearPlayer(getAsPlayer());
+
 }
 
 

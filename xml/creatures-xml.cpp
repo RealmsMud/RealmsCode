@@ -42,6 +42,7 @@
 #include "mudObjects/creatures.hpp"                 // for Creature, SkillMap
 #include "mudObjects/monsters.hpp"                  // for Monster
 #include "mudObjects/mudObject.hpp"                 // for MudObject
+#include "mudObjects/objects.hpp"                   // for Object
 #include "mudObjects/players.hpp"                   // for Player
 #include "mudObjects/rooms.hpp"                     // for NUM_PERM_SLOTS
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
@@ -192,6 +193,39 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         else if(NODE_NAME(curNode, "Inventory")) {
             readObjects(curNode, offline);
         }
+        else if(NODE_NAME(curNode, "Equipment")) {
+            xmlNodePtr equipNode = curNode->children;
+            Object* obj;
+            CatRef cr;
+            int wearLoc;
+
+            while(equipNode) {
+                obj = nullptr;
+                wearLoc = xml::getIntProp(equipNode, "WearLoc");
+                if(NODE_NAME(equipNode, "Object")) {
+                    obj = new Object;
+                    obj->readFromXml(equipNode, nullptr);
+                } else {
+                    cr.load(equipNode);
+                    cr.id = xml::getIntProp(equipNode, "Num");
+                    if(!validObjId(cr)) {
+                        std::clog << "Invalid object " << cr.displayStr() << std::endl;
+                    } else {
+                        if(loadObject(cr, &obj)) {
+                            // These two flags might be cleared on the reference object, so let that object set them if it wants to
+                            obj->clearFlag(O_HIDDEN);
+                            obj->clearFlag(O_CURSED);
+                            obj->readFromXml(equipNode, nullptr, offline);
+                        }
+                    }
+                }
+                if(obj) {
+                    ready[wearLoc] = obj;
+                }
+                equipNode = equipNode->next;
+            }
+
+        }
         else if(NODE_NAME(curNode, "Pets")) {
             readCreatures(curNode, offline);
         }
@@ -240,6 +274,10 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 addEffect("incognito", -1);
                 clearFlag(P_OLD_INCOGNITO);
             }
+        }
+        if(getVersion() < "2.54h") {
+#define P_OLD_NO_AUTO_WEAR              79       // Player won't wear all when they log on
+            clearFlag(P_OLD_NO_AUTO_WEAR);
         }
         if(getVersion() < "2.47a") {
             // Update weapon skills
@@ -696,6 +734,7 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
             //pPlayer->currentLocation.mapmarker.save(curNode);
         } else
             pPlayer->currentLocation.room.save(rootNode, "Room", true);
+
     }
 
     // Saved for LoadType::LS_REF and LoadType::LS_FULL
@@ -817,6 +856,28 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 
     curNode = xml::newStringChild(rootNode, "Inventory");
     saveObjectsXml(curNode, objects, permOnly);
+
+    curNode = xml::newStringChild(rootNode, "Equipment");
+    Object *obj;
+    xmlNodePtr objNode;
+    LoadType lt;
+    for(i=0; i<MAXWEAR; i++) {
+        obj = ready[i];
+        if(obj && (permOnly == ALLITEMS || (permOnly == PERMONLY && obj->flagIsSet(O_PERM_ITEM)))) {
+            if (obj->flagIsSet(O_CUSTOM_OBJ) || obj->flagIsSet(O_SAVE_FULL) || !obj->info.id) {
+                // If it's a custom or has the save flag set, save the entire object
+                objNode = xml::newStringChild(curNode, "Object");
+                lt = LoadType::LS_FULL;
+            } else {
+                // Just save a reference and any changed fields
+                objNode = xml::newStringChild(curNode, "ObjRef");
+                lt = LoadType::LS_REF;
+            }
+            xml::newNumProp(objNode, "WearLoc", i);
+            obj->saveToXml(objNode, permOnly, lt, 1, true, nullptr);
+        }
+    }
+
 
     // We want quests saved after inventory so when they are loaded we can calculate
     // if the quest is complete or not and store it in the appropriate variables
