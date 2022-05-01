@@ -91,6 +91,7 @@ HttpServer::HttpServer(int pPort) {
                         .set_issuer("realms")
                         .set_payload_claim("userId", jwt::claim(player->getId()))
                         .sign(jwt::algorithm::hs256{"not a real secret, replace me"});
+                j["name"] = player->getName();
             }
 
             if(offline)
