@@ -205,9 +205,7 @@ void ShipStop::spawnRaiders() {
 // it also takes care of announcing the ship's arrival
 
 bool ShipExit::createExit() {
-    std::shared_ptr<BaseRoom> newRoom=nullptr;
-    int     i=0;
-
+    std::shared_ptr<BaseRoom> newRoom;
     if(name.empty() || !origin.getId() || !target.getId())
         return(false);
 
@@ -239,7 +237,7 @@ int shipSetExits(Ship *ship, ShipStop *stop) {
     bool        broad = false;
 
     for(const auto& exit : stop->exits)
-        broad = (exit)->createExit() || broad;
+        broad = exit->createExit() || broad;
 
     if(broad)
         shipBroadcastRange(ship, stop, stop->arrives);
@@ -283,11 +281,9 @@ void ShipExit::removeExit() {
         broadcast(nullptr, newRoom, "%s", departs.c_str());
 
     aRoom = newRoom->getAsAreaRoom();
-    ExitList::iterator xit;
-    for(xit = newRoom->exits.begin() ; xit != newRoom->exits.end() ; ) {
-        std::shared_ptr<Exit> ext = (*xit++);
-        // if we're given an exit, delete it
-        // otherwise delete all exits
+    for(auto xit = newRoom->exits.begin() ; xit != newRoom->exits.end() ; ) {
+        const auto &ext = *xit;
+        // if we're given an exit, delete it; otherwise delete all exits
         if(ext->flagIsSet(X_MOVING) && ext->getName() == name) {
             //oldPrintColor(4, "^rDeleting^w exit %s in room %d.\n", xt->name, room);
             if(i < 8 && aRoom) {
@@ -296,10 +292,13 @@ void ShipExit::removeExit() {
                     ext->clearFlag(n);
                 ext->target.room.id = 0;
                 aRoom->updateExits();
-            } else
-                newRoom->delExit(ext);
+                i++;
+            } else {
+                xit = newRoom->exits.erase(xit);
+                continue;
+            }
         }
-        i++;
+        xit++;
     }
 }
 
