@@ -365,7 +365,6 @@ void AreaRoom::load(xmlNodePtr rootNode) {
             readExitsXml(childNode);
         else if(NODE_NAME(childNode, "MapMarker")) {
             mapmarker.load(childNode);
-            area->rooms[mapmarker.str()] = getAsAreaRoom();
         }
         else if(NODE_NAME(childNode, "Unique")) unique.load(childNode);
         else if(NODE_NAME(childNode, "NeedsCompass")) xml::copyToBool(needsCompass, childNode);

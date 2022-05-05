@@ -254,26 +254,25 @@ std::shared_ptr<AreaRoom> Area::getRoom(const MapMarker *mapmarker) {
     std::shared_ptr<AreaRoom> room=nullptr;
     MapMarker m = *mapmarker;
 
-    // this will modify the mapmarker, but if it's pointing to invalid rooms,
-    // this is desired behavior
+    // this will modify the mapmarker, but if it's pointing to invalid rooms, this is desired behavior
     checkCycle(&m);
 
     if(rooms.find(m.str()) != rooms.end())
         return(rooms[m.str()]);
 
-    char            filename[256];
-    sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), id, m.filename().c_str());
+    auto filename = Path::AreaRoom / std::to_string(id) / m.filename();
 
     if(fs::exists(filename)) {
         xmlDocPtr   xmlDoc;
         xmlNodePtr  rootNode;
 
-        if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == nullptr)
+        if((xmlDoc = xml::loadFile(filename.c_str(), "AreaRoom")) == nullptr)
             throw std::runtime_error("Unable to read arearoom file");
 
         rootNode = xmlDocGetRootElement(xmlDoc);
 
         room = std::make_shared<AreaRoom>(shared_from_this());
+        rooms[m.str()] = room;
         room->load(rootNode);
 
         xmlFreeDoc(xmlDoc);

@@ -631,6 +631,7 @@ std::shared_ptr<AreaRoom> Area::loadRoom(const std::shared_ptr<Creature>& creatu
         room = creature->getAreaRoomParent();
     if(!room) {
         room = std::make_shared<AreaRoom>(shared_from_this(), mapmarker);
+        rooms[mapmarker->str()] = room;
     }
 
     return(room);
