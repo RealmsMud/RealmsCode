@@ -55,7 +55,18 @@ private:
         void after_handle(crow::request& req, crow::response& res, context& ctx) {} 
     };
 
-    crow::App<AuthMiddleware> app;
+    struct CORSMiddleware {
+        struct context { };
+
+        void before_handle(crow::request& req, crow::response& res, context& ctx) { }
+
+        void after_handle(crow::request& req, crow::response& res, context& ctx) {
+            res.add_header("Access-Control-Allow-Origin", "*");
+            res.add_header("Access-Control-Allow-Headers", "*");
+        } 
+    };
+
+    crow::App<AuthMiddleware, CORSMiddleware> app;
     int port;
     bool appRunning = false;
     std::future<void> appFuture;
