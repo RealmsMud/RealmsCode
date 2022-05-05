@@ -38,22 +38,22 @@ using namespace pybind11::literals;
 
 void init_module_mudObject(py::module &m) {
 
-    py::class_<std::set<Monster*, MonsterPtrLess>> monsterSet(m, "MonsterSet");
+    py::class_<std::set<std::shared_ptr<Monster> , MonsterPtrLess>> monsterSet(m, "MonsterSet");
     monsterSet.def("__iter__", [](const MonsterSet &s) { return py::make_iterator(s.begin(), s.end()); },
                  py::keep_alive<0, 1>() /* Essential: keep object alive while iterator exists */);
 
-    py::class_<std::set<Player*, PlayerPtrLess>>  playerSet(m, "PlayerSet");
+    py::class_<std::set<std::shared_ptr<Player>, PlayerPtrLess>>  playerSet(m, "PlayerSet");
     playerSet.def("__iter__", [](const PlayerSet &s) { return py::make_iterator(s.begin(), s.end()); },
                  py::keep_alive<0, 1>() /* Essential: keep object alive while iterator exists */);
 
 
-    py::class_<MudObject> mudObject( m, "MudObject");
+    py::class_<MudObject, std::shared_ptr<MudObject> > mudObject( m, "MudObject");
         mudObject
         .def("getName", &MudObject::getName)
         .def("isEffected", (bool (::MudObject::*) (const std::string&, bool) const)(&MudObject::isEffected), "effect"_a, "exactMatch"_a = false)
         .def("isEffected", (bool (::MudObject::*) (EffectInfo *) const)(&MudObject::isEffected), py::arg("effect"))
         .def("hasPermEffect", &MudObject::hasPermEffect)
-        .def("addEffect", (EffectInfo* (::MudObject::*) (const std::string &, long int, int, MudObject*, bool, const Creature*, bool))&MudObject::addEffect,
+        .def("addEffect", (EffectInfo* (::MudObject::*) (const std::string &, long int, int, const std::shared_ptr<MudObject>&, bool, const std::shared_ptr<Creature> &, bool))&MudObject::addEffect,
              "effect"_a, "duration"_a=-2, "strength"_a=-2, "applier"_a=nullptr, "show"_a=(bool)(true),
              "owner"_a=py::none(), "keepApplier"_a=(bool)(false))
         .def("pulseEffects", &MudObject::pulseEffects)
@@ -66,18 +66,18 @@ void init_module_mudObject(py::module &m) {
         .def("getId", &MudObject::getId)
         ;
 
-    py::class_<Container, MudObject>( m, "Container")
+    py::class_<Container, MudObject, std::shared_ptr<Container> >( m, "Container")
         .def_readwrite("monsters", &Container::monsters)
         .def_readwrite("players", &Container::players)
         .def("wake", &Container::wake)
         ;
 
-    py::class_<Containable, MudObject>( m, "Containable")
+    py::class_<Containable, MudObject, std::shared_ptr<Containable> >( m, "Containable")
         .def("getParent", &Containable::getParent, py::return_value_policy::reference)
         .def("addTo", &Containable::addTo)
         ;
 
-    py::class_<BaseRoom, Container>( m, "BaseRoom")
+    py::class_<BaseRoom, Container, std::shared_ptr<BaseRoom> >( m, "BaseRoom")
         .def("flagIsSet", &BaseRoom::flagIsSet)
         .def("setFlag", &BaseRoom::setFlag)
         .def("findCreature", &BaseRoom::findCreaturePython, py::return_value_policy::reference)
@@ -90,13 +90,13 @@ void init_module_mudObject(py::module &m) {
         .def("getFishing", &BaseRoom::getFishing)
     ;
 
-    py::class_<Exit, MudObject>(m, "Exit")
+    py::class_<Exit, MudObject, std::shared_ptr<Exit> >(m, "Exit")
         .def("getRoom", &Exit::getRoom, py::return_value_policy::reference)
     ;
 
 
 
-    py::class_<Creature, Container, Containable>(m, "Creature")
+    py::class_<Creature, Container, Containable, std::shared_ptr<Creature> >(m, "Creature")
         .def("send", &Creature::bPrintPython)
         .def("getCrtStr", &Creature::getCrtStr, "viewer"_a= nullptr, "ioFlags"_a=(int)(0), "num"_a=(int)(0) )
         .def("getParent", &Creature::getParent, py::return_value_policy::reference)
@@ -216,7 +216,7 @@ void init_module_mudObject(py::module &m) {
     ;
 
 
-    py::class_<Player, Creature> (m, "Player")
+    py::class_<Player, Creature, std::shared_ptr<Player> > (m, "Player")
         .def("getSock", &Player::getSock, py::return_value_policy::reference)
         .def("customColorize", &Player::customColorize, "text"_a, "caret"_a=(bool)(true))
         .def("expToLevel", (unsigned long ( ::Player::* )() const)( &Player::expToLevel ) )
@@ -227,13 +227,13 @@ void init_module_mudObject(py::module &m) {
         .def("getAfflictedBy", &Player::getAfflictedBy)
     ;
 
-    py::class_<Monster, Creature> (m, "Monster")
+    py::class_<Monster, Creature, std::shared_ptr<Monster>> (m, "Monster")
         .def("addEnemy", &Monster::addEnemy)
         .def("adjustThreat", &Monster::adjustThreat)
         .def("customColorize", &Monster::customColorize, "text"_a, "caret"_a=(bool)(true) )
     ;
 
-    py::class_<Object, Container, Containable> (m, "Object")
+    py::class_<Object, Container, Containable, std::shared_ptr<Object> > (m, "Object")
         .def("getType", &Object::getType)
         .def("getWearflag", &Object::getWearflag)
         .def("getShotsmax", &Object::getShotsMax)

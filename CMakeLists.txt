@@ -38,14 +38,16 @@ message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 
 include_directories("include")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++ -fmodules")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++ -fmodules")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g ")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 if($ENV{LEAK})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1 -fsanitize=address -fno-omit-frame-pointer -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/blacklist.txt")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -fsanitize=address,signed-integer-overflow,null,alignment,undefined,dataflow,cfi,safe-check -flto -fno-omit-frame-pointer -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/blacklist.txt")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1 -fsanitize=address,signed-integer-overflow,null,alignment -fno-sanitize-recover=null -fsanitize-trap=alignment -fno-omit-frame-pointer -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/blacklist.txt")
     message("-- Enabling address sanitizer")
 ELSE()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 ENDIF()
 
 message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
@@ -148,7 +150,6 @@ set(COMMON_HEADER_FILES
     include/namable.hpp
     include/objIncrease.hpp
     include/oldquest.hpp
-    include/os.hpp
     include/paths.hpp
     include/playerClass.hpp
     include/playerTitle.hpp
@@ -197,7 +198,9 @@ set(COMMON_HEADER_FILES
     include/web.hpp
     include/xml.hpp
     include/zone.hpp
-    include/httpServer.hpp)
+    include/httpServer.hpp
+    include/commerce.hpp
+    )
 
 set(COMMON_SOURCE_FILES
     fmt/format.cc
@@ -265,6 +268,7 @@ set(COMMON_SOURCE_FILES
 
     economy/bank.cpp
     economy/commerce.cpp
+    economy/playerCommerce.cpp
     economy/lottery.cpp
     economy/money.cpp
     economy/unique.cpp
@@ -390,7 +394,6 @@ set(COMMON_SOURCE_FILES
 
     util/alphanum.cpp
     util/dice.cpp
-    util/errors.cpp
     util/help.cpp
     util/md5.cpp
     util/misc.cpp

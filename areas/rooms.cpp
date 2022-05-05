@@ -16,7 +16,7 @@
  *
  */
 
-#include <stdarg.h>                    // for va_list, va_end, va_start
+#include <cstdarg>                    // for va_list, va_end, va_start
 #include <unistd.h>                    // for unlink
 #include <algorithm>                   // for find
 #include <cstring>                     // for memset, strcpy
@@ -27,6 +27,7 @@
 #include <sstream>                     // for char_traits, operator<<, basic...
 #include <string>                      // for string, allocator, operator<<
 #include <string_view>                 // for string_view, operator==, basic...
+#include <utility>
 
 #include "area.hpp"                    // for MapMarker, Area, AreaZone, Til...
 #include "catRef.hpp"                  // for CatRef
@@ -80,8 +81,8 @@ std::string BaseRoom::fullName() const {
         return(oStr.str());
     }
 
-    const UniqueRoom* uRoom = getAsConstUniqueRoom();
-    const AreaRoom* aRoom = getAsConstAreaRoom();
+    const std::shared_ptr<const UniqueRoom> uRoom = getAsConstUniqueRoom();
+    const std::shared_ptr<const AreaRoom> aRoom = getAsConstAreaRoom();
 
     if(uRoom) {
         oStr << uRoom->info.displayStr() << "(" << uRoom->getName() << ")";
@@ -125,7 +126,7 @@ std::string UniqueRoom::getShortDescription() const { return(short_desc); }
 std::string UniqueRoom::getLongDescription() const { return(long_desc); }
 short UniqueRoom::getLowLevel() const { return(lowLevel); }
 short UniqueRoom::getHighLevel() const { return(highLevel); }
-short UniqueRoom::getMaxMobs() const { return(maxmobs); }
+int UniqueRoom::getMaxMobs() const { return(maxmobs); }
 short UniqueRoom::getTrap() const { return(trap); }
 CatRef UniqueRoom::getTrapExit() const { return(trapexit); }
 short UniqueRoom::getTrapWeight() const { return(trapweight); }
@@ -157,26 +158,14 @@ void UniqueRoom::setSize(Size s) { size = s; }
 
 void BaseRoom::BaseDestroy() {
     clearExits();
-    ObjectSet::iterator it;
-    Object* obj;
-    for(it = objects.begin() ; it != objects.end() ; ) {
-        obj = (*it++);
-        delete obj;
-    }
+
     objects.clear();
-
-    auto mIt = monsters.begin();
-    while(mIt != monsters.end()) {
-        Monster* mons = (*mIt++);
-        delete mons;
-    }
     monsters.clear();
-
     players.clear();
 
     effects.removeAll();
     removeEffectsIndex();
-    gServer->removeDelayedActions(this);
+    gServer->removeDelayedActions(shared_from_this());
 }
 
 UniqueRoom::~UniqueRoom() {
@@ -206,12 +195,6 @@ bool AreaRoom::operator< (const AreaRoom& t) const {
 void AreaRoom::reset() {
     area = nullptr;
     decCompass = needsCompass = stayInMemory = false;
-
-    ExitList::iterator xit;
-    for(xit = exits.begin() ; xit != exits.end(); ) {
-        Exit* exit = (*xit++);
-        delete exit;
-    }
     exits.clear();
 
 }
@@ -220,10 +203,10 @@ void AreaRoom::reset() {
 //                      AreaRoom
 //*********************************************************************
 
-AreaRoom::AreaRoom(Area *a, const MapMarker *m) {
+AreaRoom::AreaRoom(std::shared_ptr<Area> a, const MapMarker *m) {
     reset();
 
-    area = a;
+    area = std::move(a);
     if(m) {
         setMapMarker(m);
         recycle();
@@ -244,12 +227,6 @@ void AreaRoom::setStayInMemory(bool stay) { stayInMemory = stay; }
 //*********************************************************************
 
 void AreaRoom::recycle() {
-    ObjectSet::iterator it;
-    Object* obj;
-    for(it = objects.begin() ; it != objects.end() ; ) {
-        obj = (*it++);
-        delete obj;
-    }
     objects.clear();
 
     updateExits();
@@ -266,7 +243,7 @@ void AreaRoom::setMapMarker(const MapMarker* m) {
     area->rooms.erase(str);
     *&mapmarker = *m;
     str = mapmarker.str();
-    area->rooms[str] = this;
+    area->rooms[str] = std::shared_ptr<AreaRoom>(this);
     setId(std::string("R") + str);
     registerMo();
 }
@@ -278,42 +255,42 @@ void AreaRoom::setMapMarker(const MapMarker* m) {
 bool AreaRoom::updateExit(std::string_view dir) {
     if(dir == "north") {
         mapmarker.add(0, 1, 0);
-        link_rom(this, &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
         mapmarker.add(0, -1, 0);
 
     } else if(dir == "east") {
         mapmarker.add(1, 0, 0);
-        link_rom(this, &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
         mapmarker.add(-1, 0, 0);
 
     } else if(dir == "south") {
         mapmarker.add(0, -1, 0);
-        link_rom(this, &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
         mapmarker.add(0, 1, 0);
 
     } else if(dir == "west") {
         mapmarker.add(-1, 0, 0);
-        link_rom(this, &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
         mapmarker.add(1, 0, 0);
 
     } else if(dir == "northeast") {
         mapmarker.add(1, 1, 0);
-        link_rom(this, &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
         mapmarker.add(-1, -1, 0);
 
     } else if(dir == "northwest") {
         mapmarker.add(-1, 1, 0);
-        link_rom(this, &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
         mapmarker.add(1, -1, 0);
 
     } else if(dir == "southeast") {
         mapmarker.add(1, -1, 0);
-        link_rom(this, &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
         mapmarker.add(-1, 1, 0);
 
     } else if(dir == "southwest") {
         mapmarker.add(-1, -1, 0);
-        link_rom(this, &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
         mapmarker.add(1, 1, 0);
 
     } else
@@ -363,7 +340,7 @@ bool AreaRoom::canSave() const {
         return(true);
 
     if(!exits.empty()) {
-        for(Exit* ext : exits) {
+        for(const auto& ext : exits) {
             if(ext->getName() != exitNameByOrder(i++))
                 return(true);
             // doesnt check rooms leading to other area rooms
@@ -383,9 +360,9 @@ bool AreaRoom::canSave() const {
 //*********************************************************************
 
 WanderInfo* AreaRoom::getRandomWanderInfo() {
-    std::list<AreaZone*>::iterator it;
-    AreaZone *zone=nullptr;
-    TileInfo* tile=nullptr;
+    std::list<std::shared_ptr<AreaZone> >::iterator it;
+    std::shared_ptr<AreaZone> zone=nullptr;
+    std::shared_ptr<TileInfo>  tile=nullptr;
     std::map<int, WanderInfo*> w;
     int i=0;
 
@@ -412,10 +389,10 @@ WanderInfo* AreaRoom::getRandomWanderInfo() {
 //*********************************************************************
 
 WanderInfo* BaseRoom::getWanderInfo() {
-    UniqueRoom* uRoom = getAsUniqueRoom();
+    std::shared_ptr<UniqueRoom> uRoom = getAsUniqueRoom();
     if(uRoom)
         return(&uRoom->wander);
-    AreaRoom* aRoom = getAsAreaRoom();
+    std::shared_ptr<AreaRoom> aRoom = getAsAreaRoom();
     if(aRoom)
         return(aRoom->getRandomWanderInfo());
     return(nullptr);
@@ -425,22 +402,20 @@ WanderInfo* BaseRoom::getWanderInfo() {
 //                      delExit
 //*********************************************************************
 
-bool BaseRoom::delExit(Exit *exit) {
+bool BaseRoom::delExit(const std::shared_ptr<Exit>& exit) {
     if(exit) {
         auto xit = std::find(exits.begin(), exits.end(), exit);
         if(xit != exits.end()) {
             exits.erase(xit);
-            delete exit;
             return(true);
         }
     }
     return(false);
 }
 bool BaseRoom::delExit( std::string_view dir) {
-    for(Exit* ext : exits) {
+    for(const auto& ext : exits) {
         if(ext->getName() == dir) {
             exits.remove(ext);
-            delete ext;
             return(true);
         }
     }
@@ -452,12 +427,11 @@ bool BaseRoom::delExit( std::string_view dir) {
 void BaseRoom::clearExits() {
     ExitList::iterator xit;
     for(xit = exits.begin() ; xit != exits.end(); ) {
-        Exit* exit = (*xit++);
+        std::shared_ptr<Exit> exit = (*xit++);
         if(exit->flagIsSet(X_PORTAL)) {
-            BaseRoom* target = exit->target.loadRoom();
+            std::shared_ptr<BaseRoom> target = exit->target.loadRoom();
             Move::deletePortal(target, exit->getPassPhrase());
         }
-        delete exit;
     }
     exits.clear();
 }
@@ -474,7 +448,7 @@ bool AreaRoom::canDelete() {
         return(false);
     if(!players.empty())
         return(false);
-    for(Object* obj : objects) {
+    for(const auto& obj : objects) {
         if(!obj->flagIsSet(O_DISPOSABLE))
             return(false);
     }
@@ -483,7 +457,7 @@ bool AreaRoom::canDelete() {
         return(false);
     if(!exits.empty()) {
         int     i=0;
-        for(Exit* ext : exits) {
+        for(const auto& ext : exits) {
             if(ext->getName() != exitNameByOrder(i++))
                 return(false);
             // doesnt check rooms leading to other area rooms
@@ -502,22 +476,22 @@ bool AreaRoom::canDelete() {
 // This will determine whether the looker will see anything of
 // interest in the room. This is used by cmdScout.
 
-bool AreaRoom::isInteresting(const Player *viewer) const {
+bool AreaRoom::isInteresting(const std::shared_ptr<Player> viewer) const {
     int     i=0;
 
     if(unique.id)
         return(true);
 
-    for(Player* ply : players) {
+    for(const auto& ply: players) {
         if(!ply->flagIsSet(P_HIDDEN) && viewer->canSee(ply))
             return(true);
     }
-    for(Monster* mons : monsters) {
+    for(const auto& mons : monsters) {
         if(!mons->flagIsSet(M_HIDDEN) && viewer->canSee(mons))
             return(true);
     }
     i = 0;
-    for(Exit* ext : exits) {
+    for(const auto& ext : exits) {
         if(i < 7 && ext->getName() != exitNameByOrder(i))
             return(true);
         if(i >= 8) {
@@ -566,20 +540,20 @@ bool BaseRoom::isMagicDark() const {
         return(true);
 
     // check for darkness spell
-    for(Player* ply : players) {
+    for(const auto& ply: players) {
         // darkness spell on staff does nothing
         if(ply->isEffected("darkness") && !ply->isStaff())
             return(true);
         if(ply->flagIsSet(P_DARKNESS) && !ply->flagIsSet(P_DM_INVIS))
             return(true);
     }
-    for(Monster* mons : monsters) {
+    for(const auto& mons : monsters) {
         if(mons->isEffected("darkness"))
             return(true);
         if(mons->flagIsSet(M_DARKNESS))
             return(true);
     }
-    for(Object *obj : objects) {
+    for(const auto& obj : objects) {
         if(obj->flagIsSet(O_DARKNESS))
             return(true);
     }
@@ -602,8 +576,8 @@ bool BaseRoom::isNormalDark() const {
 }
 
 
-void BaseRoom::addExit(Exit *ext) {
-    ext->setRoom(this);
+void BaseRoom::addExit(std::shared_ptr<Exit> ext) {
+    ext->setRoom(Container::downcasted_shared_from_this<BaseRoom>());
 
     exits.push_back(ext);
 }
@@ -617,7 +591,7 @@ void BaseRoom::addExit(Exit *ext) {
 void BaseRoom::checkExits() {
     long    t = time(nullptr);
 
-    for(Exit* ext : exits) {
+    for(const auto& ext : exits) {
         if( ext->flagIsSet(X_LOCKABLE) && (ext->ltime.ltime + ext->ltime.interval) < t)
         {
             ext->setFlag(X_LOCKED);
@@ -633,7 +607,7 @@ void BaseRoom::checkExits() {
 // if our particular flag is set, fail = 0
 // else if ANY OTHER flags are set, fail = 1
 
-bool BaseRoom::deityRestrict(const Creature* creature) const {
+bool BaseRoom::deityRestrict(const std::shared_ptr<const Creature> & creature) const {
 
     // if no flags are set
     if( !flagIsSet(R_ARAMON) &&
@@ -695,7 +669,7 @@ bool BaseRoom::isFull() const {
 int BaseRoom::countVisPly() const {
     int     num = 0;
 
-    for(Player* ply : players) {
+    for(const auto& ply: players) {
         if(!ply->flagIsSet(P_DM_INVIS))
             num++;
     }
@@ -713,7 +687,7 @@ int BaseRoom::countVisPly() const {
 int BaseRoom::countCrt() const {
     int num = 0;
 
-    for(Monster* mons : monsters) {
+    for(const auto& mons : monsters) {
         if(!mons->isPet())
             num++;
     }
@@ -727,7 +701,7 @@ int BaseRoom::countCrt() const {
 //*********************************************************************
 
 int BaseRoom::getMaxMobs() const {
-    const UniqueRoom* room = getAsConstUniqueRoom();
+    const std::shared_ptr<const UniqueRoom> room = getAsConstUniqueRoom();
     if(!room)
         return(MAX_MOBS_IN_ROOM);
     return(room->getMaxMobs() ? room->getMaxMobs() : MAX_MOBS_IN_ROOM);
@@ -765,11 +739,11 @@ bool BaseRoom::vampCanSleep(Socket* sock) const {
 
 bool BaseRoom::isCombat() const {
 
-    for(Player* ply : players) {
+    for(const auto& ply: players) {
         if(ply->inCombat(true))
             return(true);
     }
-    for(Monster* mons : monsters) {
+    for(const auto& mons : monsters) {
         if(mons->inCombat(true))
             return(true);
     }
@@ -836,7 +810,7 @@ bool AreaRoom::isRoad() const {
 //*********************************************************************
 // creature is allowed to be null
 
-CatRef AreaRoom::getUnique(Creature *creature, bool skipDec) {
+CatRef AreaRoom::getUnique(std::shared_ptr<Creature>creature, bool skipDec) {
     if(!needsCompass)
         return(unique);
     CatRef  cr;
@@ -845,7 +819,7 @@ CatRef AreaRoom::getUnique(Creature *creature, bool skipDec) {
         return(cr);
 
     bool pet = creature->isPet();
-    Player* player = creature->getPlayerMaster();
+    std::shared_ptr<Player> player = creature->getPlayerMaster();
 
     if( !player ||
         !player->ready[HELD-1] ||
@@ -866,7 +840,7 @@ CatRef AreaRoom::getUnique(Creature *creature, bool skipDec) {
 bool BaseRoom::isDropDestroy() const {
     if(!flagIsSet(R_DESTROYS_ITEMS))
         return(false);
-    const AreaRoom* aRoom = getAsConstAreaRoom();
+    const std::shared_ptr<const AreaRoom> aRoom = getAsConstAreaRoom();
     return !(aRoom &&
              aRoom->area->isRoad(aRoom->mapmarker.getX(), aRoom->mapmarker.getY(), aRoom->mapmarker.getZ(), true));
 }
@@ -878,8 +852,8 @@ bool BaseRoom::hasOppositeRealmBonus(Realm realm) const {
 }
 
 
-Monster* BaseRoom::getTollkeeper() const {
-    for(Monster* mons : monsters) {
+std::shared_ptr<Monster>  BaseRoom::getTollkeeper() const {
+    for(const auto& mons : monsters) {
         if(!mons->isPet() && mons->flagIsSet(M_TOLLKEEPER))
             return(mons->getAsMonster());
     }
@@ -922,7 +896,7 @@ bool BaseRoom::isSunlight() const {
     if(!isDay() || !isOutdoors() || isMagicDark())
         return(false);
 
-    const UniqueRoom* uRoom = getAsConstUniqueRoom();
+    const std::shared_ptr<const UniqueRoom> uRoom = getAsConstUniqueRoom();
     const CatRefInfo* cri=nullptr;
     if(uRoom)
         cri = gConfig->getCatRefInfo(uRoom->info.area);
@@ -964,9 +938,9 @@ void UniqueRoom::destroy() {
 //*********************************************************************
 
 void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelStaff) {
-    Player* target=nullptr;
-    BaseRoom* newRoom=nullptr;
-    UniqueRoom* uRoom=nullptr;
+    std::shared_ptr<Player> target=nullptr;
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
 
     // allow them to be sent to the room's trap exit
     if(useTrapExit) {
@@ -974,7 +948,7 @@ void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelS
         if(uRoom) {
             CatRef cr = uRoom->getTrapExit();
             uRoom = nullptr;
-            if(cr.id && loadRoom(cr, &uRoom))
+            if(cr.id && loadRoom(cr, uRoom))
                 newRoom = uRoom;
         }
     }
@@ -989,15 +963,15 @@ void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelS
 
         if(expulsionMessage) {
             target->printColor("^rYou are expelled from this room as it collapses in on itself!\n");
-            broadcast(target->getSock(), this, "^r%M is expelled from the room as it collapses in on itself!", target);
+            broadcast(target->getSock(), shared_from_this(), "^r%M is expelled from the room as it collapses in on itself!", target.get());
         } else {
             target->printColor("^CShifting dimensional forces displace you from this room.\n");
-            broadcast(target->getSock(), this, "^CShifting dimensional forces displace %N from this room.", target);
+            broadcast(target->getSock(), shared_from_this(), "^CShifting dimensional forces displace %N from this room.", target.get());
         }
 
         if(!useTrapExit || !newRoom) {
             newRoom = target->bound.loadRoom(target);
-            if(!newRoom || newRoom == this)
+            if(!newRoom || newRoom.get() == this)
                 newRoom = abortFindRoom(target, "expelPlayers");
         }
 
@@ -1016,7 +990,7 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const CatRef& cr) {
     return(getSpecialArea(toCheck, nullptr, cr.area, cr.id));
 }
 
-Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, std::string_view area, short id) {
+Location getSpecialArea(int (CatRefInfo::*toCheck), const std::shared_ptr<const Creature> & creature, std::string_view area, short id) {
     Location l;
 
     if(creature) {
@@ -1054,7 +1028,7 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const Creature* creature, st
 //*********************************************************************
 
 Location Creature::getLimboRoom() const {
-    return(getSpecialArea(&CatRefInfo::limbo, this, "", 0));
+    return(getSpecialArea(&CatRefInfo::limbo, Containable::downcasted_shared_from_this<Creature>(), "", 0));
 }
 
 //*********************************************************************
@@ -1062,10 +1036,10 @@ Location Creature::getLimboRoom() const {
 //*********************************************************************
 
 Location Creature::getRecallRoom() const {
-    const Player* player = getAsConstPlayer();
+    const std::shared_ptr<const Player> player = getAsConstPlayer();
     if(player && (player->flagIsSet(P_T_TO_BOUND) || player->getClass() == CreatureClass::BUILDER))
         return(player->bound);
-    return(getSpecialArea(&CatRefInfo::recall, this, "", 0));
+    return(getSpecialArea(&CatRefInfo::recall, Containable::downcasted_shared_from_this<Creature>(), "", 0));
 }
 
 
@@ -1073,7 +1047,7 @@ Location Creature::getRecallRoom() const {
 //                      print
 //*********************************************************************
 
-bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool showTo(Socket*));
+bool hearBroadcast(std::shared_ptr<Creature> target, Socket* ignore1, Socket* ignore2, bool showTo(Socket*));
 
 void BaseRoom::print(Socket* ignore, const char *fmt, ...) {
     va_list ap;
@@ -1093,7 +1067,7 @@ void BaseRoom::print(Socket* ignore1, Socket* ignore2, const char *fmt, ...) {
 //*********************************************************************
 
 void BaseRoom::doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const char *fmt, va_list ap) {
-    for(Player* ply : players) {
+    for(const auto& ply: players) {
         if(!hearBroadcast(ply, ignore1, ignore2, showTo))
             continue;
         if(ply->flagIsSet(P_UNCONSCIOUS))
@@ -1142,7 +1116,7 @@ bool BaseRoom::isFastTick() const {
 //                      canPortHere
 //*********************************************************************
 
-bool UniqueRoom::canPortHere(const Creature* creature) const {
+bool UniqueRoom::canPortHere(const std::shared_ptr<Creature> & creature) const {
     // check creature-specific settings
     if(creature) {
         if(size && creature->getSize() && creature->getSize() > size)

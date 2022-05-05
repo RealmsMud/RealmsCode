@@ -34,14 +34,14 @@ public:
     void load(xmlNodePtr curNode);
     [[nodiscard]] std::string display() const;
     void add(std::string_view event, std::string_view code);
-    bool execute(const std::string &event, MudObject* target= nullptr, const std::string &param1="", const std::string &param2="", const std::string &param3="") const;
-    bool executeWithReturn(const std::string &event, MudObject* target=nullptr, const std::string &param1="", const std::string &param2="", const std::string &param3="") const;
+    bool execute(const std::string &event, const std::shared_ptr<MudObject>& target= nullptr, const std::string &param1="", const std::string &param2="", const std::string &param3="") const;
+    bool executeWithReturn(const std::string &event, const std::shared_ptr<MudObject>& target=nullptr, const std::string &param1="", const std::string &param2="", const std::string &param3="") const;
     void setParent(MudObject* target);
 
-    static bool run(MudObject* trigger1, const std::string &event1, MudObject* trigger2, const std::string &event2, const std::string &param1="", const std::string &param2="", const std::string &param3="");
+    static bool run(const std::shared_ptr<MudObject>& trigger1, const std::string &event1, std::shared_ptr<MudObject> trigger2, const std::string &event2, const std::string &param1="", const std::string &param2="", const std::string &param3="");
 
     template<class Type, class Compare>
-    inline static bool run(std::set<Type, Compare>& set, MudObject* trigger, const std::string &event, const std::string &param1= "", const std::string &param2= "", const std::string &param3= "") {
+    inline static bool run(std::set<Type, Compare>& set, std::shared_ptr<MudObject> trigger, const std::string &event, const std::string &param1= "", const std::string &param2= "", const std::string &param3= "") {
         bool ran=false;
         for(Type crt : set) {
             if(crt != trigger) {

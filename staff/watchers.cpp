@@ -36,8 +36,8 @@
 //                      dmCheckStats
 //*********************************************************************
 
-int dmCheckStats(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmCheckStats(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
     if(!player->isStaff() && !player->isWatcher())
         return(cmdNoExist(player, cmnd));
@@ -76,8 +76,8 @@ int dmCheckStats(Player* player, cmd* cmnd) {
 //                      dmLocatePlayer
 //*********************************************************************
 
-int dmLocatePlayer(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmLocatePlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
 
     if(!player->isStaff() && !player->isWatcher())
@@ -112,9 +112,9 @@ int dmLocatePlayer(Player* player, cmd* cmnd) {
 //                      dmWatcherBroad
 //*********************************************************************
 
-int dmWatcherBroad(Player *admin, cmd* cmnd) {
+int dmWatcherBroad(const std::shared_ptr<Player>& admin, cmd* cmnd) {
     std::string text = "";
-    Player  *watcher=nullptr;
+    std::shared_ptr<Player> watcher=nullptr;
     int     found=0;
 
     text = getFullstrText(cmnd->fullstr, 1);
@@ -124,7 +124,7 @@ int dmWatcherBroad(Player *admin, cmd* cmnd) {
     }
 
     found = 0;
-    Player *ply;
+    std::shared_ptr<Player>ply;
     for(const auto& p : gServer->players) {
         ply = p.second;
 
@@ -158,7 +158,7 @@ int dmWatcherBroad(Player *admin, cmd* cmnd) {
 //                      reportTypo
 //*********************************************************************
 
-int reportTypo(Player* player, cmd* cmnd) {
+int reportTypo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isStaff()) {
         player->printColor("^YDon't report typos - fix them!\n");
         return(0);

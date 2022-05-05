@@ -36,7 +36,7 @@
 //                      induel
 //*********************************************************************
 
-bool induel(const Player* player, const Player* target) {
+bool induel(const std::shared_ptr<const Player>& player, const std::shared_ptr<const Player>& target) {
     return(player && target && player->isDueling(target->getName()) && target->isDueling(player->getName()));
 }
 
@@ -54,8 +54,8 @@ bool wantsDuelMessages(Socket* sock) {
 //                      duel
 //*********************************************************************
 
-int cmdDuel(Player* player, cmd* cmnd) {
-    Player  *creature=0;
+int cmdDuel(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> creature=0;
 
     player->clearFlag(P_AFK);
 

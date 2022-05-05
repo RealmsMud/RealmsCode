@@ -36,7 +36,7 @@ Anchor::Anchor() {
     reset();
 }
 
-Anchor::Anchor(std::string_view a, const Player* player) {
+Anchor::Anchor(std::string_view a, const std::shared_ptr<Player> player) {
     reset();
     alias = a;
     bind(player);
@@ -89,18 +89,18 @@ void Anchor::reset() {
 //                      bind
 //*********************************************************************
 
-void Anchor::bind(const Player* player) {
+void Anchor::bind(const std::shared_ptr<const Player> &player) {
 
     if(player->inUniqueRoom())
         bind(player->getConstUniqueRoomParent());
     else
         bind(player->getConstAreaRoomParent());
 }
-void Anchor::bind(const UniqueRoom* uRoom) {
+void Anchor::bind(const std::shared_ptr<const UniqueRoom> &uRoom) {
     roomName = uRoom->getName();
     room = uRoom->info;
 }
-void Anchor::bind(const AreaRoom* aRoom) {
+void Anchor::bind(const std::shared_ptr<const AreaRoom> &aRoom) {
     roomName = aRoom->area->getTile(
             aRoom->area->getTerrain(nullptr, &aRoom->mapmarker, 0, 0, 0, true), false
         )->getName().c_str();
@@ -113,23 +113,23 @@ void Anchor::bind(const AreaRoom* aRoom) {
 //                      is
 //*********************************************************************
 
-bool Anchor::is(const BaseRoom* room) const {
-    const UniqueRoom* uRoom = room->getAsConstUniqueRoom();
+bool Anchor::is(const std::shared_ptr<const BaseRoom> room) const {
+    const std::shared_ptr<const UniqueRoom> uRoom = room->getAsConstUniqueRoom();
     if(uRoom)
         return(is(uRoom));
     else
         return(is(room->getAsConstAreaRoom()));
 }
-bool Anchor::is(const Player* player) const {
+bool Anchor::is(const std::shared_ptr<const Player>& player) const {
     if(player->inUniqueRoom())
         return(is(player->getConstUniqueRoomParent()));
     else
         return(is(player->getConstAreaRoomParent()));
 }
-bool Anchor::is(const UniqueRoom* uRoom) const {
+bool Anchor::is(const std::shared_ptr<const UniqueRoom>& uRoom) const {
     return(room.id && room == uRoom->info);
 }
-bool Anchor::is(const AreaRoom* aRoom) const {
+bool Anchor::is(const std::shared_ptr<const AreaRoom>& aRoom) const {
     return(mapmarker && *mapmarker == *&aRoom->mapmarker);
 }
 

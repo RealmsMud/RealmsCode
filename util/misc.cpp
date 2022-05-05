@@ -51,7 +51,6 @@
 #include "mudObjects/objects.hpp"                // for Object
 #include "mudObjects/players.hpp"                // for Player
 #include "mudObjects/rooms.hpp"                  // for BaseRoom
-#include "os.hpp"                                // for merror
 #include "paths.hpp"                             // for Config
 #include "proto.hpp"                             // for keyTxtEqual, findExit
 #include "random.hpp"                            // for Random
@@ -150,11 +149,11 @@ int bonus(unsigned int num) {
     return( statBonus[MIN<int>(num/10, MAXALVL - 1)] );
 }
 
-int crtWisdom(Creature* creature) {
+int crtWisdom(std::shared_ptr<Creature> creature) {
     return(bonus(creature->intelligence.getCur()) + bonus(creature->piety.getCur()))/2;
 }
 
-int crtAwareness(Creature* creature) {
+int crtAwareness(std::shared_ptr<Creature> creature) {
     return(bonus(creature->intelligence.getCur()) + bonus(creature->dexterity.getCur()))/2;
 }
 //*********************************************************************
@@ -393,9 +392,7 @@ bool parse_name(std::string_view name) {
 
 
     fp = fopen((Path::Config / "forbidden_name.txt").c_str(), "r");
-    if(!fp)
-        merror("ERROR - forbidden name.txt", NONFATAL);
-    else {
+    if(fp) {
         while(!feof(fp)) {
             fscanf(fp, "%s", forbid);
             if(!name.compare(forbid)) {
@@ -419,7 +416,7 @@ bool parse_name(std::string_view name) {
 //*********************************************************************
 
 int dmIson() {
-    Player* player=nullptr;
+    std::shared_ptr<Player> player=nullptr;
     int     idle=0;
     long    t = time(nullptr);
 
@@ -455,9 +452,13 @@ int Player::autosplit(long amount) {
     if(!group)
         return(0);
 
-    for(Creature* crt : group->members) {
-        if(crt->isPlayer() && !crt->isStaff() && crt->inSameRoom(this))
-            party++;
+    for(auto it = group->members.begin() ; it != group->members.end() ; it++) {
+        if(auto crt = it->lock()) {
+            if(crt->isPlayer() && !crt->isStaff() && crt->inSameRoom(getAsPlayer()))
+                party++;
+        }
+    }
+    for(const auto& crt : group->members) {
     }
     // If group is 1, return with no split.
     if(party < 2)
@@ -469,9 +470,10 @@ int Player::autosplit(long amount) {
     remain = amount % party;    // Find remaining odd coins.
     split = ((amount - remain) / party);  // Determine split minus the remaining odd coins.
 
-    for(Creature* crt : group->members) {
-        if(crt->isPlayer() && !crt->isStaff() && crt->inSameRoom(this)) {
-            if(crt == this) {
+    for(auto it = group->members.begin() ; it != group->members.end() ; it++) {
+        auto crt = it->lock();
+        if(crt && crt->isPlayer() && !crt->isStaff() && crt->inSameRoom(getAsPlayer())) {
+            if(crt.get() == this) {
                 crt->print("You received %d gold as your split.\n", split+remain);
                 crt->coins.add(split+remain, GOLD);
             } else {
@@ -571,14 +573,14 @@ void Creature::stun(int delay) {
 //                      numEnemyMonInRoom
 //*********************************************************************
 
-int numEnemyMonInRoom(Creature* player) {
-    int     count=0;
-    for(Monster* mons : player->getRoomParent()->monsters) {
-        if(mons->getAsMonster()->isEnemy(player))
+unsigned int Creature::numEnemyMonInRoom() {
+    unsigned int count = 0;
+    for (const auto &mons: getRoomParent()->monsters) {
+        if (mons->getAsMonster()->isEnemy(getAsCreature()))
             count++;
     }
 
-    return(count);
+    return count;
 }
 
 //*********************************************************************
@@ -695,7 +697,7 @@ char *ltoa(
 //*********************************************************************
 
 template<class SetType>
-MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const char *str, int val, int* match) {
+std::shared_ptr<MudObject> findCrtTarget(std::shared_ptr<Creature> player, SetType& set, int findFlags, const char *str, int val, int* match) {
 
     if(!player || !str || set.empty())
         return(nullptr);
@@ -725,9 +727,9 @@ MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const c
 //                      findTarget
 //*********************************************************************
 
-MudObject* Creature::findTarget(unsigned int findWhere, unsigned int findFlags, const std::string& str, int val) {
+std::shared_ptr<MudObject> Creature::findTarget(unsigned int findWhere, unsigned int findFlags, const std::string& str, int val) {
     int match=0;
-    MudObject* target;
+    std::shared_ptr<MudObject> target;
     do {
         if(findWhere & FIND_OBJ_INVENTORY) {
             if((target = findObjTarget(objects, findFlags, str, val, &match))) {
@@ -763,39 +765,25 @@ MudObject* Creature::findTarget(unsigned int findWhere, unsigned int findFlags, 
         }
 
         if(findWhere & FIND_MON_ROOM) {
-            if((target = findCrtTarget<MonsterSet>(this, getParent()->monsters, findFlags, str.c_str(), val, &match))) {
+            if((target = findCrtTarget<MonsterSet>(getAsCreature(), getParent()->monsters, findFlags, str.c_str(), val, &match))) {
                 break;
             }
         }
 
         if(findWhere & FIND_PLY_ROOM) {
-            if((target = findCrtTarget<PlayerSet>(this, getParent()->players, findFlags, str.c_str(), val, &match))) {
+            if((target = findCrtTarget<PlayerSet>(getAsCreature(), getParent()->players, findFlags, str.c_str(), val, &match))) {
                 break;
             }
         }
 
         if(findWhere & FIND_EXIT) {
-            if((target = findExit(this, str, val, getRoomParent()))) {
+            if((target = findExit(getAsCreature(), str, val, getRoomParent()))) {
                 break;
             }
         }
     } while(false);
 
     return(target);
-}
-
-//**********************************************************************
-//                      new_merror
-//**********************************************************************
-// merror is called whenever an error message should be output to the
-// log file.  If the error is fatal, then the program is aborted
-
-void new_merror(const char *str, char errtype, const char *file, const int line) {
-    std::clog << "\nError: " << str << " @ " << file << " " << line << ".\n";
-    logn("error.log", "Error occured in %s in file %s line %d\n", str, file, line);
-    if(errtype == FATAL) {
-        abort();
-    }
 }
 
 //*********************************************************************

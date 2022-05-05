@@ -75,7 +75,6 @@
 #include "mudObjects/players.hpp"                   // for Player
 #include "mudObjects/rooms.hpp"                     // for BaseRoom
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
-#include "os.hpp"                                   // for merror, ASSERTLOG
 #include "paths.hpp"                                // for Config, Game, Are...
 #include "proc.hpp"                                 // for childProcess, Chi...
 #include "proto.hpp"                                // for broadcast, isDay
@@ -106,11 +105,10 @@ Server* gServer = nullptr;
 // Static initialization
 Server* Server::myInstance = nullptr;
 
-bool CanCleanupRoomFn::operator()( UniqueRoom* r ) { return r->players.empty(); }
+bool CanCleanupRoomFn::operator()( const std::shared_ptr<UniqueRoom>& r ) { return r->players.empty(); }
 
-void CleanupRoomFn::operator()( UniqueRoom* r ) {
+void CleanupRoomFn::operator()(const std::shared_ptr<UniqueRoom>& r ) {
 	r->saveToFile(PERMONLY);
-	delete r;
 }
 
 // Custom comparison operator to sort by the numeric id instead of standard string comparison
@@ -284,14 +282,15 @@ bool Server::init() {
 
 void Server::installSignalHandlers() {
     if (!gConfig->isListing()) {
-        struct sigaction crash_sa{};
-        crash_sa.sa_handler = crash;
-        sigaction(SIGABRT, &crash_sa, nullptr); // abnormal termination triggered by abort call
-        std::clog << ".";
-        sigaction(SIGFPE, &crash_sa, nullptr);  // floating point exception
-        std::clog << ".";
-        sigaction(SIGSEGV, &crash_sa, nullptr); // segment violation
-        std::clog << ".";
+        // TODO(SPT)
+//        struct sigaction crash_sa{};
+//        crash_sa.sa_handler = crash;
+//        sigaction(SIGABRT, &crash_sa, nullptr); // abnormal termination triggered by abort call
+//        std::clog << ".";
+//        sigaction(SIGFPE, &crash_sa, nullptr);  // floating point exception
+//        std::clog << ".";
+//        sigaction(SIGSEGV, &crash_sa, nullptr); // segment violation
+//        std::clog << ".";
     } else {
         std::clog << "Ignoring crash handlers";
     }
@@ -367,7 +366,8 @@ void Server::run() {
         exit(-1);
     }
 
-    httpServer->run();
+    if(httpServer)
+        httpServer->run();
 
     std::clog << "Starting Sock Loop\n";
     while(running) {
@@ -594,7 +594,7 @@ int Server::processCommands() {
 
 int Server::updatePlayerCombat() {
     for(Socket * sock : *vSockets) {
-        Player* player=sock->getPlayer();
+        std::shared_ptr<Player> player=sock->getPlayer();
         if(player) {
             if(player->isFleeing() && player->canFlee(false)) {
                 player->doFlee();
@@ -722,7 +722,7 @@ void Server::pruneDns() {
 void Server::pulseTicks(long t) {
 
     for(Socket* sock : *vSockets) {
-        Player* player=sock->getPlayer();
+        std::shared_ptr<Player> player=sock->getPlayer();
         if(player) {
             player->pulseTick(t);
             if(player->isPlaying())
@@ -743,7 +743,7 @@ void Server::updateUsers(long t) {
 
     for(Socket* sock : *vSockets) {
 
-        Player* player= sock->getPlayer();
+        std::shared_ptr<Player> player= sock->getPlayer();
 
         if(player) {
             if(player->isDm()) tout = INT_MAX;
@@ -772,10 +772,10 @@ void Server::updateUsers(long t) {
 // a room, it is loaded and items it is carrying will be loaded with it.
 
 void Server::updateRandom(long t) {
-    Monster* monster=nullptr;
-    BaseRoom* room=nullptr;
-    UniqueRoom* uRoom=nullptr;
-    AreaRoom* aRoom=nullptr;
+    std::shared_ptr<Monster>  monster=nullptr;
+    std::shared_ptr<BaseRoom> room=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
+    std::shared_ptr<AreaRoom> aRoom=nullptr;
     WanderInfo* wander=nullptr;
     CatRef  cr;
     int     num=0, l=0;
@@ -783,7 +783,7 @@ void Server::updateRandom(long t) {
 
     lastRandomUpdate = t;
 
-    Player* player;
+    std::shared_ptr<Player> player;
     for(Socket * sock : *vSockets) {
         player = sock->getPlayer();
 
@@ -829,12 +829,11 @@ void Server::updateRandom(long t) {
         if(!room->countVisPly())
             continue;
 
-        if(!loadMonster(cr, &monster))
+        if(!loadMonster(cr, monster))
             continue;
 
         // if the monster can't go there, they won't wander there
         if(aRoom && !aRoom->area->canPass(monster, &aRoom->mapmarker, true)) {
-            delete monster;;
             continue;
         }
 
@@ -842,7 +841,6 @@ void Server::updateRandom(long t) {
             monster->validateAc();
 
         if( ((monster->flagIsSet(M_NIGHT_ONLY) && isDay()) ||(monster->flagIsSet(M_DAY_ONLY) && !isDay())) && !monster->inCombat()) {
-            delete monster;;
             continue;
         }
 
@@ -869,7 +867,7 @@ void Server::updateRandom(long t) {
 
             gServer->addActive(monster);
             if(l != num-1)
-                loadMonster(cr, &monster);
+                loadMonster(cr, monster);
         }
     }
 }
@@ -882,13 +880,12 @@ void Server::updateRandom(long t) {
 // for monsters in rooms that are occupied by players.
 
 void Server::updateActive(long t) {
-    Creature* target = nullptr;
-    Monster* monster = nullptr;
-    BaseRoom* room = nullptr;
+    std::shared_ptr<Creature> target = nullptr;
+    std::shared_ptr<BaseRoom> room = nullptr;
 
     long    tt = gConfig->currentHour();
     int     timetowander=0, immort=0;
-    bool    print=false;
+    bool    shouldoPrint=false;
 
     lastActiveUpdate = t;
 
@@ -897,19 +894,20 @@ void Server::updateActive(long t) {
 
     auto it = activeList.begin();
     while(it != activeList.end()) {
+        std::shared_ptr<Monster>  monster;
         // Increment the iterator in case this monster dies during the update and is removed from the active list
-        monster = (*it++);
+        if(!(monster = it->lock())) {
+            it = activeList.erase(it);
+            continue;
+        }
+
 
         // Better be a monster to be on the active list
-        ASSERTLOG(monster);
-
         if(!monster->inRoom()) {
             broadcast(isStaff, "^y%s without a parent/area room on the active list. Info: %s. Deleting.",
                 monster->getCName(), monster->info.displayStr().c_str());
             monster->deleteFromRoom();
-            gServer->delActive(monster);
-            delete monster;;
-            it = activeList.begin();
+            it = activeList.erase(it);
             continue;
         }
 
@@ -924,7 +922,7 @@ void Server::updateActive(long t) {
             (monster->flagIsSet(M_DAY_ONLY) && !isDay()))
         {
 
-            for(Player* ply : room->players) {
+            for(const auto& ply: room->players) {
                 if(ply->isStaff()) {
                     immort = 1;
                     break;
@@ -932,11 +930,9 @@ void Server::updateActive(long t) {
             }
             if(!immort) {
                 timetowander=1;
-                broadcast(nullptr, monster->getRoomParent(), "%M wanders slowly away.", monster);
+                broadcast(nullptr, monster->getRoomParent(), "%M wanders slowly away.", monster.get());
                 monster->deleteFromRoom();
-                gServer->delActive(monster);
-                delete monster;;
-                it = activeList.begin();
+                it = activeList.erase(it);
                 continue;
             }
 
@@ -954,19 +950,19 @@ void Server::updateActive(long t) {
             !monster->flagIsSet(M_PERMENANT_MONSTER) &&
             !monster->flagIsSet(M_AGGRESSIVE))
         {
-            gServer->delActive(monster);
-            it = activeList.begin();
+            it = activeList.erase(it);
             continue;
         }
 
         // Lets see if we'll attack any other monsters in this room
         if(monster->checkEnemyMobs()) {
+            it++;
             continue;
         }
 
 
         if(monster->flagIsSet(M_KILL_PERMS)) {
-            for(Monster* mons : room->monsters) {
+            for(const auto& mons : room->monsters) {
                 if(mons == monster)
                     continue;
                 if( mons->flagIsSet(M_PERMENANT_MONSTER) &&
@@ -978,7 +974,7 @@ void Server::updateActive(long t) {
         }
 
         if(monster->flagIsSet(M_KILL_NON_ASSIST_MOBS)) {
-            for(Monster* mons : room->monsters) {
+            for(const auto& mons : room->monsters) {
                 if(mons == monster)
                     continue;
                 if( !monster->willAssist(mons->getAsMonster()) &&
@@ -999,14 +995,16 @@ void Server::updateActive(long t) {
                 monster->mp.getCur() >=6 &&
                 (Random::get(1,100) < (30+monster->intelligence.getCur()/10)))
             {
-                broadcast(nullptr, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster, monster->himHer());
+                broadcast(nullptr, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster.get(), monster->himHer());
                 monster->mp.decrease(6);
                 monster->curePoison();
+                it++;
                 continue;
             }
         }
 
         if(!monster->checkAttackTimer(false)) {
+            it++;
             continue;
         }
 
@@ -1016,7 +1014,7 @@ void Server::updateActive(long t) {
 
 
         if(monster->doHarmfulAuras()) {
-            it = activeList.begin();
+            it = activeList.erase(it);
             continue;
         }
 
@@ -1025,6 +1023,7 @@ void Server::updateActive(long t) {
             monster->beneficialCaster();
 
         if(monster->petCaster()) {
+            it++;
             continue;
         }
 
@@ -1038,12 +1037,12 @@ void Server::updateActive(long t) {
             (t > LT(monster, LT_INVOKE) || t > LT(monster, LT_ANIMATE)))
         {
             if(monster->isUndead())
-                broadcast(nullptr, room, "%1M wanders away.", monster);
+                broadcast(nullptr, room, "%1M wanders away.", monster.get());
             else
-                broadcast(nullptr, room, "%1M fades away.", monster);
+                broadcast(nullptr, room, "%1M fades away.", monster.get());
 
             monster->die(monster->getMaster());
-            it = activeList.begin();
+            it = activeList.erase(it);
             continue;
         }
 
@@ -1056,8 +1055,6 @@ void Server::updateActive(long t) {
 
         if(monster->flagIsSet(M_WILL_WIELD))
             monster->mobWield();
-        else
-            monster->clearFlag(M_WILL_WIELD);
 
         // Grab some stuff from the room
         monster->checkScavange(t);
@@ -1065,19 +1062,18 @@ void Server::updateActive(long t) {
         // See if we can wander around or away
         int mobileResult = monster->checkWander(t);
         if(mobileResult == 1) {
+            it++;
             continue;
         } if(mobileResult == 2) {
             monster->deleteFromRoom();
-            gServer->delActive(monster);
-            delete monster;;
-            it = activeList.begin();
+            it = activeList.erase(it);
             continue;
         }
 
 
         // Steal from people
         if(monster->flagIsSet(M_STEAL_ALWAYS) && (t - monster->lasttime[LT_STEAL].ltime) > 60 && Random::get<bool>(0.05)) {
-            Player* ply = lowest_piety(room, monster->isEffected("detect-invisible"));
+            std::shared_ptr<Player> ply = lowest_piety(room, monster->isEffected("detect-invisible"));
             if(ply)
                 monster->steal(ply);
         }
@@ -1091,13 +1087,13 @@ void Server::updateActive(long t) {
             monster->canSpeak() &&
             monster->mobDeathScream()
         ) {
-            it = activeList.begin();
+            it = activeList.erase(it);
             continue;
         }
 
         // Update combat here
         if( monster->hasEnemy() && !timetowander && monster->updateCombat()) {
-            it = activeList.begin();
+            it = activeList.erase(it);
             continue;
         }
 
@@ -1115,18 +1111,16 @@ void Server::updateActive(long t) {
         target = monster->whoToAggro();
         if(target) {
 
-            print = (   !monster->flagIsSet(M_HIDDEN) &&
-                        !(monster->isInvisible() &&
-                        target->isEffected("detect-invisible"))
-                    );
+            shouldoPrint = (!monster->flagIsSet(M_HIDDEN) && !(monster->isInvisible() && target->isEffected("detect-invisible")));
 
             monster->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-            monster->addEnemy(target, print);
+            monster->addEnemy(target, shouldoPrint);
 
             if(target->flagIsSet(P_LAG_PROTECTION_SET))
                 target->setFlag(P_LAG_PROTECTION_ACTIVE);
 
         }
+        it++;
     }
 }
 
@@ -1144,23 +1138,14 @@ void Server::updateActive(long t) {
 // This function adds a monster to the active-monster list. A pointer
 // to the monster is passed in the first parameter.
 
-void Server::addActive(Monster* monster) {
+void Server::addActive(const std::shared_ptr<Monster>& monster) {
 
     if(!monster) {
         loga("add_active: tried to activate a null crt!\n");
         return;
     }
-    if(isActive(monster))
+    if(isActive(monster.get()))
         return;
-    // try and guess if the creature is valid
-    {
-        const char *p = monster->getCName();
-        while(*p) {
-            ASSERTLOG(isPrintable((unsigned char)*p));
-            p++;
-        }
-        ASSERTLOG(p - monster->getCName());
-    }
 
     monster->validateId();
 
@@ -1179,8 +1164,12 @@ void Server::delActive(Monster* monster) {
         broadcast(isStaff, "^yAttempting to delete %s from active list with an empty active list.", monster->getCName());
         return;
     }
+    const auto it = std::find_if(activeList.begin(), activeList.end(), [&monster](const std::weak_ptr<Creature>& crt) {
+        auto locked = crt.lock();
+        return locked && locked.get() == monster;
+    });
 
-    auto it = std::find(activeList.begin(), activeList.end(), monster);
+
     if(it == activeList.end()) {
         std::cerr << "Attempting to delete '" << monster->getName() << "' from active list but could not find them on the list." << std::endl;
         broadcast(isStaff, "^yAttempting to delete %s from active list but could not find them on the list.", monster->getCName());
@@ -1188,7 +1177,7 @@ void Server::delActive(Monster* monster) {
     }
 
 
-    activeList.remove(monster);
+    activeList.erase(it);
 }
 
 
@@ -1202,11 +1191,15 @@ bool Server::isActive(Monster* monster) {
     if(activeList.empty())
         return(false);
 
-    auto it = std::find(activeList.begin(), activeList.end(), monster);
+    const auto it = std::find_if(activeList.begin(), activeList.end(), [&monster](const std::weak_ptr<Creature>& crt) {
+        auto locked = crt.lock();
+        return locked && locked.get() == monster;
+    });
+
     if(it == activeList.end())
         return(false);
 
-    return *it == monster;
+    return true;
 
 }
 
@@ -1314,7 +1307,7 @@ int Server::reapChildren() {
                 } else if(myChild.type == ChildType::SWAP_FINISH) {
                     gConfig->offlineSwap(myChild, true);
                 } else if(myChild.type == ChildType::PRINT) {
-                    const Player* player = gServer->findPlayer(myChild.extra);
+                    const std::shared_ptr<Player> player = gServer->findPlayer(myChild.extra);
                     std::string output = gServer->simpleChildRead(myChild);
                     if(player && !output.empty())
                         player->printColor("%s\n", output.c_str());
@@ -1384,7 +1377,7 @@ int Server::processChildren() {
         } else if(child.type == ChildType::SWAP_FINISH) {
             gConfig->offlineSwap(child, false);
         } else if(child.type == ChildType::PRINT) {
-            const Player* player = gServer->findPlayer(child.extra);
+            const std::shared_ptr<Player> player = gServer->findPlayer(child.extra);
             std::string output = gServer->simpleChildRead(child);
             if(player && !output.empty())
                 player->printColor("%s\n", output.c_str());
@@ -1574,7 +1567,7 @@ bool Server::startReboot(bool resetShips) {
     gServer->setRebooting();
     // First give all players a free restore
     for(Socket &sock : sockets) {
-        Player* player = sock.getPlayer();
+        std::shared_ptr<Player> player = sock.getPlayer();
         if(player && player->fd > -1) {
             player->hp.restore();
             player->mp.restore();
@@ -1586,7 +1579,7 @@ bool Server::startReboot(bool resetShips) {
 
     // Now disconnect people that won't make it through the reboot
     for(Socket &sock : sockets) {
-        Player* player = sock.getPlayer();
+        std::shared_ptr<Player> player = sock.getPlayer();
         if(player && player->fd > -1 ) {
             // End the compression, we'll try to restart it after the reboot
             if(sock.mccpEnabled()) {
@@ -1595,7 +1588,6 @@ bool Server::startReboot(bool resetShips) {
             player->save(true);
             players[player->getName()] = nullptr;
             player->uninit();
-            delete player;
             player = nullptr;
             sock.setPlayer(nullptr);
         } else {
@@ -1620,7 +1612,7 @@ bool Server::startReboot(bool resetShips) {
     std::error_code ec;
     fs::remove(Path::Config / "config.xml", ec);
 
-    merror("dmReboot failed!!!", FATAL);
+    throw std::runtime_error("dmReboot failed!!!");
     return(false);
 }
 
@@ -1659,7 +1651,7 @@ bool Server::saveRebootFile(bool resetShips) {
     if(resetShips)
         xml::newStringChild(serverNode, "ResetShips", "true");
     for(Socket &sock : sockets) {
-        Player*player = sock.getPlayer();
+        std::shared_ptr<Player>player = sock.getPlayer();
         if(player && player->fd > -1) {
             curNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Player", nullptr);
             xml::newStringChild(curNode, "Name", player->getCName());
@@ -1701,7 +1693,7 @@ int Server::finishReboot() {
 
     if(doc == nullptr) {
         std::clog << "Unable to loadBeforePython reboot file\n";
-        merror("Loading reboot file", FATAL);
+        throw std::runtime_error("Loading reboot file");
     }
 
     curNode = xmlDocGetRootElement(doc);
@@ -1712,7 +1704,7 @@ int Server::finishReboot() {
     }
     if(curNode == nullptr) {
         xmlFreeDoc(doc);
-        merror("Parsing reboot file", FATAL);
+        throw std::runtime_error("Parsing reboot file");
     }
 
     Numplayers = 0;
@@ -1749,14 +1741,14 @@ int Server::finishReboot() {
             }
         } else if(NODE_NAME(curNode, "Player")) {
             childNode = curNode->children;
-            Player* player=nullptr;
+            std::shared_ptr<Player> player=nullptr;
             Socket* sock=nullptr;
             while(childNode != nullptr) {
                 if(NODE_NAME(childNode, "Name")) {
                     std::string name;
                     xml::copyToString(name, childNode);
-                    if(!loadPlayer(name.c_str(), &player)) {
-                        merror("finishReboot: loadPlayer", FATAL);
+                    if(!loadPlayer(name.c_str(), player)) {
+                        throw std::runtime_error("finishReboot: loadPlayer");
                     }
                 }
                 else if(NODE_NAME(childNode, "Fd")) {
@@ -1764,7 +1756,7 @@ int Server::finishReboot() {
                     xml::copyToNum(fd, childNode);
                     sock = &sockets.emplace_back(fd);
                     if(!player || !sock)
-                        merror("finishReboot: No Sock/Player", FATAL);
+                        throw std::runtime_error("finishReboot: No Sock/Player");
 
                     player->fd = fd;
 
@@ -1795,7 +1787,7 @@ int Server::finishReboot() {
             }
 
             if(!player || !sock)
-                merror("finishReboot: Finished, still no Sock/Player", FATAL);
+                throw std::runtime_error("finishReboot: Finished, still no Sock/Player");
 
             sock->ltime = time(nullptr);
             sock->print("The world comes back into focus!\n");
@@ -1840,7 +1832,7 @@ int Server::finishReboot() {
 //                      findPlayer
 //********************************************************************
 
-Player* Server::findPlayer(const std::string &name) {
+std::shared_ptr<Player> Server::findPlayer(const std::string &name) {
     auto it = players.find(name);
 
     if(it != players.end())
@@ -1855,7 +1847,7 @@ Player* Server::findPlayer(const std::string &name) {
 // This function saves all players currently in memory.
 
 void Server::saveAllPly() {
-    for(std::pair<std::string, Player*> p : players) {
+    for(std::pair<std::string, std::shared_ptr<Player>> p : players) {
         if(!p.second->isConnected())
             continue;
         p.second->save(true);
@@ -1873,7 +1865,7 @@ bool Server::clearPlayer(const std::string &name) {
     return(true);
 }
 
-bool Server::clearPlayer(Player* player) {
+bool Server::clearPlayer(const std::shared_ptr<Player>& player) {
     players.erase(player->getName());
     player->unRegisterMo();
     return(true);
@@ -1883,7 +1875,7 @@ bool Server::clearPlayer(Player* player) {
 //                      addPlayer
 //*********************************************************************
 
-bool Server::addPlayer(Player* player) {
+bool Server::addPlayer(const std::shared_ptr<Player>& player) {
     player->validateId();
     players[player->getName()] = player;
     player->getSock()->addToPlayerList();
@@ -1925,7 +1917,7 @@ bool Server::checkDouble(Socket &sock) {
 //    if(sock.getHostname().find("localhost") != std::string_view::npos)
 //        return(false);
 
-    Player* player=nullptr;
+    std::shared_ptr<Player> player=nullptr;
     int cnt = 0;
     for(Socket &s : sockets) {
         player = s.getPlayer();
@@ -2052,7 +2044,7 @@ std::string Server::getServerTime() {
 
 int Server::getNumPlayers() {
     int numPlayers=0;
-    Player* target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     for(const auto& p : players) {
         target = p.second;
 
@@ -2069,7 +2061,7 @@ int Server::getNumPlayers() {
 // Functions that deal with unique IDs
 // *************************************
 
-bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
+bool Server::registerMudObject(std::shared_ptr<MudObject> toRegister, bool reassignId) {
     assert(toRegister != nullptr);
 
     if(toRegister->getId() =="-1")
@@ -2102,7 +2094,7 @@ bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
     return(true);
 }
 
-bool Server::unRegisterMudObject(MudObject* toUnRegister) {
+bool Server::unRegisterMudObject(std::shared_ptr<MudObject> toUnRegister) {
     assert(toUnRegister != nullptr);
 
     if(toUnRegister->getId() == "-1")
@@ -2147,7 +2139,7 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
     return(true);
 }
 
-Object* Server::lookupObjId(const std::string &toLookup) {
+std::shared_ptr<Object>  Server::lookupObjId(const std::string &toLookup) {
     if(toLookup[0] != 'O')
         return(nullptr);
 
@@ -2160,7 +2152,7 @@ Object* Server::lookupObjId(const std::string &toLookup) {
 
 }
 
-Creature* Server::lookupCrtId(const std::string &toLookup) {
+std::shared_ptr<Creature> Server::lookupCrtId(const std::string &toLookup) {
     if(toLookup[0] != 'M' && toLookup[0] != 'P')
         return(nullptr);
 
@@ -2172,7 +2164,7 @@ Creature* Server::lookupCrtId(const std::string &toLookup) {
         return(((*it).second)->getAsCreature());
 
 }
-Player* Server::lookupPlyId(const std::string &toLookup) {
+std::shared_ptr<Player> Server::lookupPlyId(const std::string &toLookup) {
     if(toLookup[0] != 'P')
         return(nullptr);
     auto it = registeredIds.find(toLookup);
@@ -2280,7 +2272,7 @@ void Server::saveIds() {
     idDirty = false;
 }
 
-void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, std::string_view logType) {
+void Server::logGold(GoldLog dir, std::shared_ptr<Player> player, Money amt, std::shared_ptr<MudObject> target, std::string_view logType) {
     std::string pName = player->getName();
     std::string pId = player->getId();
     // long amt
@@ -2289,7 +2281,7 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
 
     if(target) {
         targetStr = stripColor(target->getName());
-        Object* oTarget = target->getAsObject();
+        std::shared_ptr<Object>  oTarget = target->getAsObject();
         if(oTarget) {
             targetStr += "(" + oTarget->info.displayStr() + ")";
             if(dir == GOLD_IN) {
@@ -2322,8 +2314,8 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
 // allows you to make changes to a room, and then reload it, even if it's
 // already in the memory room queue.
 
-bool Server::reloadRoom(BaseRoom* room) {
-    UniqueRoom* uRoom = room->getAsUniqueRoom();
+bool Server::reloadRoom(std::shared_ptr<BaseRoom> room) {
+    std::shared_ptr<UniqueRoom> uRoom = room->getAsUniqueRoom();
 
     if(uRoom) {
     	CatRef cr = uRoom->info;
@@ -2334,7 +2326,7 @@ bool Server::reloadRoom(BaseRoom* room) {
         }
     } else {
 
-        AreaRoom* aRoom = room->getAsAreaRoom();
+        std::shared_ptr<AreaRoom> aRoom = room->getAsAreaRoom();
         char    filename[256];
         sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), aRoom->area->id, aRoom->mapmarker.filename().c_str());
 
@@ -2343,11 +2335,11 @@ bool Server::reloadRoom(BaseRoom* room) {
             xmlNodePtr  rootNode;
 
             if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == nullptr)
-                merror("Unable to read arearoom file", FATAL);
+                throw std::runtime_error("Unable to read arearoom file");
 
             rootNode = xmlDocGetRootElement(xmlDoc);
 
-            Area *area = aRoom->area;
+            std::shared_ptr<Area> area = aRoom->area;
             aRoom->reset();
             aRoom->area = area;
             aRoom->load(rootNode);
@@ -2357,40 +2349,40 @@ bool Server::reloadRoom(BaseRoom* room) {
     return(false);
 }
 
-UniqueRoom* Server::reloadRoom(const CatRef& cr) {
-    UniqueRoom  *room=nullptr, *oldRoom=nullptr;
+std::shared_ptr<UniqueRoom> Server::reloadRoom(const CatRef& cr) {
+    std::shared_ptr<UniqueRoom> room=nullptr, oldRoom=nullptr;
 
     std::string str = cr.displayStr();
     oldRoom = roomCache.fetch(cr);
     if(!oldRoom)
     	return nullptr;
 
-    if(!loadRoomFromFile(cr, &room))
+    if(!loadRoomFromFile(cr, room))
         return(nullptr);
 
     // Move any current players & monsters into the new room
-    for(Player* ply : oldRoom->players) {
+    for(const auto& ply: oldRoom->players) {
         room->players.insert(ply);
         ply->setParent(room);
     }
     oldRoom->players.clear();
 
     if(room->monsters.empty()) {
-        for(Monster* mons : oldRoom->monsters) {
+        for(const auto& mons : oldRoom->monsters) {
             room->monsters.insert(mons);
             mons->setParent(room);
         }
         oldRoom->monsters.clear();
     }
     if(room->objects.empty()) {
-        for(Object* obj : oldRoom->objects) {
+        for(const auto& obj : oldRoom->objects) {
             room->objects.insert(obj);
             obj->setParent(room);
         }
         oldRoom->objects.clear();
     }
 
-    roomCache.insert(cr, &room);
+    roomCache.insert(cr, room);
 
     room->registerMo();
 
@@ -2404,21 +2396,21 @@ UniqueRoom* Server::reloadRoom(const CatRef& cr) {
 // altering its position on the queue.
 
 int Server::resaveRoom(const CatRef& cr) {
-    UniqueRoom *room = roomCache.fetch(cr);
+    std::shared_ptr<UniqueRoom> room = roomCache.fetch(cr);
     if(room)
         room->saveToFile(ALLITEMS);
     return(0);
 }
 
 
-int Server::saveStorage(UniqueRoom* uRoom) {
+int Server::saveStorage(std::shared_ptr<UniqueRoom> uRoom) {
     if(uRoom->flagIsSet(R_SHOP))
         saveStorage(shopStorageRoom(uRoom));
     return(saveStorage(uRoom->info));
 }
 int Server::saveStorage(const CatRef& cr) {
 
-    UniqueRoom *room = roomCache.fetch(cr);
+    std::shared_ptr<UniqueRoom> room = roomCache.fetch(cr);
     if(room) {
         if(room->saveToFile(ALLITEMS) < 0) {
             return(-1);

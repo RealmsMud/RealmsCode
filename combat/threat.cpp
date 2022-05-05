@@ -39,7 +39,6 @@
 #include "mudObjects/mudObject.hpp"  // for MudObject
 #include "mudObjects/players.hpp"    // for Player
 #include "mudObjects/rooms.hpp"      // for BaseRoom
-#include "os.hpp"                    // for ASSERTLOG
 #include "proto.hpp"                 // for lowercize
 #include "server.hpp"                // for Server, gServer
 #include "stats.hpp"                 // for Stat
@@ -60,8 +59,8 @@ std::ostream& operator<<(std::ostream& out, const ThreatTable& table) {
     return(out);
 }
 
-ThreatTable::ThreatTable(Creature* pParent) {
-    setParent(pParent);
+ThreatTable::ThreatTable(Creature *cParent) {
+    setParent(cParent);
     totalThreat = 0;
 }
 
@@ -80,7 +79,7 @@ void ThreatTable::clear() {
 }
 
 // Returns the size of the threat table
-ThreatMap::size_type ThreatTable::size() {
+ThreatMap::size_type ThreatTable::size() const {
     return(threatMap.size());
 }
 
@@ -88,7 +87,7 @@ long ThreatTable::getTotalThreat() {
     return(totalThreat);
 }
 
-long ThreatTable::getThreat(Creature* target) {
+long ThreatTable::getThreat(const std::shared_ptr<Creature>& target) {
     auto it = threatMap.find(target->getId());
     if(it != threatMap.end()) {
         return((*it).second->getThreatValue());
@@ -104,7 +103,7 @@ long ThreatTable::getThreat(Creature* target) {
 // If target already exists in the list update it, otherwise add it
 // Maintains a map of threat sorted by ID and a multiset sorted by threat amount
 
-long ThreatTable::adjustThreat(Creature* target, long modAmt, double threatFactor) {
+long ThreatTable::adjustThreat(const std::shared_ptr<Creature>& target, long modAmt, double threatFactor) {
     if(target->getId() == myParent->getId()) {
         std::clog << "Attempted to add " << target->getName()  << " to their own threat list!" << std::endl;
         return(0);
@@ -142,7 +141,7 @@ long ThreatTable::adjustThreat(Creature* target, long modAmt, double threatFacto
     return(endThreat);
 }
 
-bool ThreatTable::isEnemy(const Creature *target) {
+bool ThreatTable::isEnemy(const std::shared_ptr<const Creature> &target) {
     if(!target) {
         return(false);
     }
@@ -197,7 +196,7 @@ long ThreatTable::removeThreat(const std::string &pUid) {
     delete threat;
     return(toReturn);
 }
-long ThreatTable::removeThreat(Creature* target) {
+long ThreatTable::removeThreat(const std::shared_ptr<Creature>& target) {
     return(removeThreat(target->getId()));
 }
 
@@ -207,7 +206,7 @@ long ThreatTable::removeThreat(Creature* target) {
 // Returns the Creature to attack based on threat and intelligent of
 // the parent.  Returns null if it's not mad at anybody.
 
-Creature* ThreatTable::getTarget(bool sameRoom) {
+std::shared_ptr<Creature> ThreatTable::getTarget(bool sameRoom) {
     if(threatSet.empty()) {
         return(nullptr);
     }
@@ -217,8 +216,8 @@ Creature* ThreatTable::getTarget(bool sameRoom) {
         return(nullptr);
     }
 
-    Creature* toReturn = nullptr;
-    Creature* crt = nullptr;
+    std::shared_ptr<Creature> toReturn = nullptr;
+    std::shared_ptr<Creature> crt = nullptr;
 
     ThreatSet::reverse_iterator it;
     for(it = threatSet.rbegin() ; it != threatSet.rend() ; ) {
@@ -243,8 +242,8 @@ Creature* ThreatTable::getTarget(bool sameRoom) {
     return(toReturn);
 }
 
-void ThreatTable::setParent(Creature* pParent) {
-    myParent = pParent;
+void ThreatTable::setParent(Creature *cParent) {
+    myParent = cParent;
 }
 
 //################################################################################
@@ -259,7 +258,7 @@ ThreatEntry::ThreatEntry(std::string_view pUid) {
 }
 
 std::ostream& operator<<(std::ostream& out, const ThreatEntry& threat) {
-    MudObject* mo = gServer->lookupCrtId(threat.getUid());
+    std::shared_ptr<MudObject> mo = gServer->lookupCrtId(threat.getUid());
 
     out << "ID: " << threat.uId;
     if(mo)
@@ -278,10 +277,10 @@ std::ostream& operator<<(std::ostream& out, const ThreatEntry* threat) {
     return(out);
 }
 
-long ThreatEntry::getThreatValue() {
+long ThreatEntry::getThreatValue() const {
     return threatValue;
 }
-long ThreatEntry::getContributionValue() {
+long ThreatEntry::getContributionValue() const {
     return contributionValue;
 }
 
@@ -312,24 +311,25 @@ const std::string & ThreatEntry::getUid() const {
 //*********************************************************************
 // Heal a target and dish out threat as needed!
 
-int Creature::doHeal(Creature* target, int amt, double threatFactor) {
+int Creature::doHeal(const std::shared_ptr<Creature>& target, int amt, double threatFactor) {
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
     if(threatFactor < 0.0)
         threatFactor = 1.0;
 
-    int healed = target->hp.increase(amt);
+    unsigned int healed = target->hp.increase(amt);
 
     // If the target is a player/pet and they're in combat
     // then this counts towards the damage done/hatred on that monster
     if((target->isPlayer() || target->isPet()) && target->inCombat(false)) {
-        for(Monster* mons : getRoomParent()->monsters) {
+        for(const auto& mons : getRoomParent()->monsters) {
             if(mons->isEnemy(target)) {
                 // If we're not on the enemy list, put us on at the end
-                if(!mons->isEnemy(this)) {
-                    mons->addEnemy(this);
-                    this->printColor("^R%M gets angry at you!^x\n", mons);
+                if(!mons->isEnemy(cThis)) {
+                    mons->addEnemy(cThis);
+                    *this << ColorOn << setf(CAP) << "^R " << mons << " gets angry at you!^x\n" << ColorOff;
                 }
                 // Add the amount of healing threat done to effort done
-                mons->adjustThreat(this, healed, threatFactor);
+                mons->adjustThreat(cThis, healed, threatFactor);
             }
         }
     }
@@ -343,7 +343,7 @@ int Creature::doHeal(Creature* target, int amt, double threatFactor) {
 // Targeting Functions
 //################################################################################
 
-void Creature::checkTarget(Creature* toTarget) {
+void Creature::checkTarget(const std::shared_ptr<Creature>& toTarget) {
     if(isPlayer() && !flagIsSet(P_NO_AUTO_TARGET) && getTarget() == nullptr) {
         addTarget(toTarget);
     }
@@ -353,7 +353,7 @@ void Creature::checkTarget(Creature* toTarget) {
 //                          addTarget
 //*********************************************************************
 
-Creature* Creature::addTarget(Creature* toTarget) {
+std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& toTarget) {
     if(!toTarget)
         return(nullptr);
 
@@ -363,10 +363,10 @@ Creature* Creature::addTarget(Creature* toTarget) {
 
     clearTarget();
 
-    toTarget->addTargetingThis(this);
+    toTarget->addTargetingThis(Containable::downcasted_shared_from_this<Creature>());
     myTarget = toTarget;
 
-    Player* ply = getAsPlayer();
+    std::shared_ptr<Player> ply = getAsPlayer();
     if(ply) {
         ply->printColor("You are now targeting %s.\n", myTarget->getCName());
     }
@@ -379,10 +379,8 @@ Creature* Creature::addTarget(Creature* toTarget) {
 //                          addTargetingThis
 //*********************************************************************
 
-void Creature::addTargetingThis(Creature* targeter) {
-    ASSERTLOG(targeter);
-
-    Player* ply = getAsPlayer();
+void Creature::addTargetingThis(const std::shared_ptr<Creature>& targeter) {
+    std::shared_ptr<Player> ply = getAsPlayer();
     if(ply) {
         ply->printColor("%s is now targeting you!\n", targeter->getCName());
     }
@@ -397,13 +395,13 @@ void Creature::clearTarget(bool clearTargetsList) {
     if(!myTarget)
         return;
 
-    Player* ply = getAsPlayer();
+    std::shared_ptr<Player> ply = getAsPlayer();
     if(ply) {
         ply->printColor("You are no longer targeting %s!\n", myTarget->getCName());
     }
 
     if(clearTargetsList)
-        myTarget->clearTargetingThis(this);
+        myTarget->clearTargetingThis(Containable::downcasted_shared_from_this<Creature>());
 
     myTarget = nullptr;
 }
@@ -412,10 +410,8 @@ void Creature::clearTarget(bool clearTargetsList) {
 //                          clearTargetingThis
 //*********************************************************************
 
-void Creature::clearTargetingThis(Creature* targeter) {
-    ASSERTLOG(targeter);
-
-    Player* ply = getAsPlayer();
+void Creature::clearTargetingThis(const std::shared_ptr<Creature>& targeter) {
+    std::shared_ptr<Player> ply = getAsPlayer();
     if(ply) {
         ply->printColor("%s is no longer targeting you!\n", targeter->getCName());
     }
@@ -427,20 +423,20 @@ void Creature::clearTargetingThis(Creature* targeter) {
 //                          cmdAssist
 //*********************************************************************
 
-int cmdAssist(Player* player, cmd* cmnd) {
+int cmdAssist(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
         player->print("Who would you like to assist?\n");
 
     }
-    Player* toAssist = player->getParent()->findPlayer(player, cmnd);
+    std::shared_ptr<Player> toAssist = player->getParent()->findPlayer(player, cmnd);
     if(!toAssist) {
         player->print("You don't see that person here.\n");
         return(0);
     }
-    player->print("You assist %M!\n", toAssist);
+    *player << "You assist " << setf(CAP) << toAssist << "!\n";
 
     if(!toAssist->flagIsSet(P_COMPACT))
-        toAssist->print("%M just assisted you!\n", player);
+        *toAssist << setf(CAP) << player << " just assisted you!\n";
     
     player->clearTarget();
     player->addTarget(toAssist->getTarget());
@@ -452,7 +448,7 @@ int cmdAssist(Player* player, cmd* cmnd) {
 //                          cmdTarget
 //*********************************************************************
 
-int cmdTarget(Player* player, cmd* cmnd) {
+int cmdTarget(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
         player->print("You are targeting: ");
         if(player->myTarget)
@@ -463,7 +459,7 @@ int cmdTarget(Player* player, cmd* cmnd) {
         if(player->isCt()) {
             player->print("People targeting you: ");
             int numTargets = 0;
-            for(Creature* targetter : player->targetingThis) {
+            for(const auto& targetter : player->targetingThis) {
                 if(numTargets++ != 0)
                     player->print(", ");
                 player->print("%s", targetter->getCName());
@@ -483,7 +479,7 @@ int cmdTarget(Player* player, cmd* cmnd) {
 
     lowercize(cmnd->str[1], 1);
 
-    Creature* toTarget = player->getParent()->findCreature(player, cmnd);
+    std::shared_ptr<Creature> toTarget = player->getParent()->findCreature(player, cmnd);
     if(!toTarget) {
         player->print("You don't see that here.\n");
         return(0);
@@ -497,7 +493,7 @@ int cmdTarget(Player* player, cmd* cmnd) {
 //                          getTarget
 //*********************************************************************
 
-Creature* Creature::getTarget() {
+std::shared_ptr<Creature> Creature::getTarget() {
     return(myTarget);
 }
 
@@ -506,7 +502,7 @@ Creature* Creature::getTarget() {
 //*********************************************************************
 
 bool Creature::hasAttackableTarget() {
-    return(getTarget() && getTarget() != this && inSameRoom(getTarget()) && canSee(getTarget()));
+    return(getTarget() && getTarget().get() != this && inSameRoom(getTarget()) && canSee(getTarget()));
 }
 
 
@@ -515,15 +511,15 @@ bool Creature::hasAttackableTarget() {
 //*********************************************************************
 
 bool Creature::isAttackingTarget() {
-    Creature* target = getTarget();
+    std::shared_ptr<Creature> target = getTarget();
     if(!target)
         return(false);
 
-    Monster* mTarget = target->getAsMonster();
+    std::shared_ptr<Monster>  mTarget = target->getAsMonster();
 
     // Player auto combat only works vs monsters!
     if(!mTarget)
         return(false);
 
-    return(mTarget->isEnemy(this));
+    return(mTarget->isEnemy(Containable::downcasted_shared_from_this<Creature>()));
 }

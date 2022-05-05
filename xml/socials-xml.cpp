@@ -68,7 +68,7 @@ bool Config::loadSocials() {
     return(true);
 }
 
-int cmdSocial(Creature* creature, cmd* cmnd);
+int cmdSocial(const std::shared_ptr<Creature>& creature, cmd* cmnd);
 SocialCommand::SocialCommand(xmlNodePtr rootNode) {
     rootNode = rootNode->children;
     priority = 100;

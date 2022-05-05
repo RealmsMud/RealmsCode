@@ -46,7 +46,7 @@
 //                      cmdMeditate
 //*********************************************************************
 
-int cmdMeditate(Player* player, cmd* cmnd) {
+int cmdMeditate(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     chance=0,inCombatModifier=0;
     long    i=0, t = time(nullptr);
 
@@ -57,7 +57,7 @@ int cmdMeditate(Player* player, cmd* cmnd) {
 
     if(!player->knowsSkill("meditate") || player->isUndead()) {
         player->print("You meditate.\n");
-        broadcast(player->getSock(), player->getParent(), "%M meditates.", player);
+        broadcast(player->getSock(), player->getParent(), "%M meditates.", player.get());
         return(0);
     }
 
@@ -74,7 +74,7 @@ int cmdMeditate(Player* player, cmd* cmnd) {
 
     int level = MAX(1,(int)player->getSkillLevel("meditate"));
 
-    broadcast(player->getSock(), player->getParent(), "%M meditates.", player);
+    broadcast(player->getSock(), player->getParent(), "%M meditates.", player.get());
 
     if(Random::get(1,100) <= chance) {
 
@@ -122,9 +122,9 @@ int cmdMeditate(Player* player, cmd* cmnd) {
 // If they succeed then the creature is either killed or harmed
 // for approximately half of its hit points.
 
-int cmdTouchOfDeath(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
-    Player  *pCreature=nullptr;
+int cmdTouchOfDeath(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Player> pCreature=nullptr;
     long    i=0, t=time(nullptr);
     int     chance=0;
     Damage damage;
@@ -134,7 +134,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 
     if(!player->knowsSkill("touch")) {
         player->print("You touch yourself.\n");
-        broadcast(player->getSock(), player->getParent(), "%M touches %sself", player, player->himHer());
+        broadcast(player->getSock(), player->getParent(), "%M touches %sself", player.get(), player->himHer());
         return(0);
     }
 
@@ -208,10 +208,10 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
         chance /= 2;
 
     if(Random::get(1,100) > chance) {
-        player->print("You failed to harm %N.\n", creature);
+        player->print("You failed to harm %N.\n", creature.get());
         player->checkImprove("touch", false);
         broadcast(player->getSock(), player->getParent(), "%M failed the touch of death on %N.\n",
-            player, creature);
+            player.get(), creature.get());
         player->lasttime[LT_TOUCH_OF_DEATH].interval = 25L;
         return(0);
     }
@@ -219,9 +219,9 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 
     if(!player->isCt()) {
         if(creature->chkSave(DEA, player, 0)) {
-            player->printColor("^y%M avoided your touch of death!\n", creature);
+            player->printColor("^y%M avoided your touch of death!\n", creature.get());
             player->checkImprove("touch", false);
-            creature->print("You avoided %N's touch of death.\n", player);
+            creature->print("You avoided %N's touch of death.\n", player.get());
             player->lasttime[LT_TOUCH_OF_DEATH].interval = 25L;
             return(0);
         }
@@ -233,12 +233,12 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
                 creature->isPlayer() )) ||
         player->isDm())
     {
-        player->print("You fatally wound %N.\n", creature);
+        player->print("You fatally wound %N.\n", creature.get());
         player->checkImprove("touch", true);
         if(!player->isDm())
             log_immort(false,player, "%s fatally wounds %s.\n", player->getCName(), creature->getCName());
 
-        broadcast(player->getSock(), player->getParent(), "%M fatally wounds %N.", player, creature);
+        broadcast(player->getSock(), player->getParent(), "%M fatally wounds %N.", player.get(), creature.get());
         if(creature->isMonster())
             creature->getAsMonster()->adjustThreat(player, creature->hp.getCur());
 
@@ -253,9 +253,9 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
         creature->modifyDamage(player, ABILITY, damage);
         //player->statistics.attackDamage(dmg, "touch-of-death");
 
-        player->printColor("You touched %N for %s%d^x damage.\n", creature, player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
+        player->printColor("You touched %N for %s%d^x damage.\n", creature.get(), player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
         player->checkImprove("touch", true);
-        broadcast(player->getSock(), player->getParent(), "%M uses the touch of death on %N.", player, creature);
+        broadcast(player->getSock(), player->getParent(), "%M uses the touch of death on %N.", player.get(), creature.get());
 
         player->lasttime[LT_TOUCH_OF_DEATH].interval = 600L;
 
@@ -275,7 +275,7 @@ int cmdTouchOfDeath(Player* player, cmd* cmnd) {
 //                      cmdFocus
 //*********************************************************************
 
-int cmdFocus(Player* player, cmd* cmnd) {
+int cmdFocus(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i=0, t=0;
     int     chance=0;
 
@@ -311,7 +311,7 @@ int cmdFocus(Player* player, cmd* cmnd) {
     if(Random::get(1, 100) <= chance) {
         player->print("You begin to focus your energy.\n");
         player->checkImprove("focus", true);
-        broadcast(player->getSock(), player->getParent(), "%M focuses %s energy.", player, player->hisHer());
+        broadcast(player->getSock(), player->getParent(), "%M focuses %s energy.", player.get(), player->hisHer());
         player->setFlag(P_FOCUSED);
         player->lasttime[LT_FOCUS].ltime = t;
         player->lasttime[LT_FOCUS].interval = 210L;
@@ -321,7 +321,7 @@ int cmdFocus(Player* player, cmd* cmnd) {
         player->print("You failed to focus your energy.\n");
         player->checkImprove("focus", false);
         broadcast(player->getSock(), player->getParent(), "%M tried to focus %s energy.",
-            player, player->hisHer());
+            player.get(), player->hisHer());
         player->lasttime[LT_FOCUS].ltime = t - 590L;
     }
 
@@ -336,7 +336,7 @@ int cmdFocus(Player* player, cmd* cmnd) {
 // This command allows a werewolf to attack in a frenzy (every 2 seconds
 // instead of 3) and get an extra 5 dex.
 
-int cmdFrenzy(Player* player, cmd* cmnd) {
+int cmdFrenzy(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i=0, t=0;
     int     chance=0;
 
@@ -388,14 +388,14 @@ int cmdFrenzy(Player* player, cmd* cmnd) {
     if(Random::get(1, 100) <= chance) {
         player->print("You begin to attack in a frenzy.\n");
         player->checkImprove("frenzy", true);
-        broadcast(player->getSock(), player->getParent(), "%M attacks in a frenzy.", player);
+        broadcast(player->getSock(), player->getParent(), "%M attacks in a frenzy.", player.get());
         player->addEffect("frenzy", 210L, 50);
         player->lasttime[LT_FRENZY].ltime = t;
         player->lasttime[LT_FRENZY].interval = 600 + 210L;
     } else {
         player->print("Your attempt to frenzy failed.\n");
         player->checkImprove("frenzy", false);
-        broadcast(player->getSock(), player->getParent(), "%M tried to attack in a frenzy.", player);
+        broadcast(player->getSock(), player->getParent(), "%M tried to attack in a frenzy.", player.get());
         player->lasttime[LT_FRENZY].ltime = t - 590L;
     }
 
@@ -409,9 +409,9 @@ int cmdFrenzy(Player* player, cmd* cmnd) {
 // doing less damage than a normal attack, but knocking the opponent
 // over for a few seconds, leaving them unable to attack back.
 
-int cmdMaul(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
-    Player  *pCreature=nullptr;
+int cmdMaul(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Player> pCreature=nullptr;
     long    i=0, t=0;
     int     chance=0, not_initial=0;
 
@@ -457,7 +457,7 @@ int cmdMaul(Player* player, cmd* cmnd) {
         }
 
         if(player->vampireCharmed(pCreature) || (pCreature->hasCharm(player->getName()) && player->flagIsSet(P_CHARMED))) {
-            player->print("You like %N too much to do that.\n", pCreature);
+            player->print("You like %N too much to do that.\n", pCreature.get());
             return(0);
         }
     }
@@ -495,7 +495,7 @@ int cmdMaul(Player* player, cmd* cmnd) {
             player->setFlag(P_LAG_PROTECTION_ACTIVE);
 
         if(!player->isCt() && creature->flagIsSet(M_ONLY_HARMED_BY_MAGIC)) {
-            player->print("Your maul has no effect on %N.\n", creature);
+            player->print("Your maul has no effect on %N.\n", creature.get());
             return(0);
         }
 
@@ -526,11 +526,11 @@ int cmdMaul(Player* player, cmd* cmnd) {
             creature->addLycanthropy(player, 5);
         }
     } else {
-        player->print("You failed to maul %N.\n", creature);
+        player->print("You failed to maul %N.\n", creature.get());
         player->checkImprove("maul", false);
-        creature->print("%M tried to maul you.\n", player);
+        creature->print("%M tried to maul you.\n", player.get());
         broadcast(player->getSock(), creature->getSock(), creature->getRoomParent(),
-            "%M tried to maul %N.", player, creature);
+            "%M tried to maul %N.", player.get(), creature.get());
     }
 
     return(0);
@@ -546,17 +546,22 @@ int Player::packBonus() {
 
     Group* group = getGroup();
     if(group) {
-        for(Creature* crt : group->members) {
-            // pack isn't pure
-            if(!crt->isEffected("lycanthropy") || crt->isMonster())
-                return(0);
+        auto it = group->members.begin();
+        while(it != group->members.end()) {
+            if(auto crt = (*it).lock()) {
+                it++;
+                // pack isn't pure
+                if(!crt->isEffected("lycanthropy") || crt->isMonster())
+                    return(0);
 
-            if(!crt->inSameRoom(this)) continue;
+                if(!crt->inSameRoom(Containable::downcasted_shared_from_this<Creature>())) continue;
 
-            // bonus for all within 3 levels.
-            if(crt->isEffected("lycanthropy") && (abs((int)getLevel() - (int)getLevel()) < 4))
-                bns += Random::get(1,2);
-
+                // bonus for all within 3 levels.
+                if(crt->isEffected("lycanthropy") && (abs((int)getLevel() - (int)getLevel()) < 4))
+                    bns += Random::get(1,2);
+            } else {
+                it = group->members.erase(it);
+            }
         }
     }
 
@@ -568,9 +573,9 @@ int Player::packBonus() {
 //                      cmdHowl
 //*********************************************************************
 
-int cmdHowl(Creature* player, cmd* cmnd) {
-    BaseRoom* room = player->getRoomParent();
-    Monster *monster=nullptr;
+int cmdHowl(const std::shared_ptr<Creature>& player, cmd* cmnd) {
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
+    std::shared_ptr<Monster> monster=nullptr;
     long    i=0, t=0, stunTime=0;
     int     maxEffected=0, numEffected=0, bns=0;
 
@@ -581,7 +586,7 @@ int cmdHowl(Creature* player, cmd* cmnd) {
 
     if((!player->knowsSkill("howl") || !player->isEffected("lycanthropy")) && !player->isStaff()) {
         player->print("You howl at the moon!\n");
-        broadcast(player->getSock(), player->getParent(), "%M howls at the moon.", player);
+        broadcast(player->getSock(), player->getParent(), "%M howls at the moon.", player.get());
         return(0);
     }
 
@@ -592,7 +597,7 @@ int cmdHowl(Creature* player, cmd* cmnd) {
         return(0);
     }
 
-    if(numEnemyMonInRoom(player) < 1) {
+    if(player->numEnemyMonInRoom() < 1) {
         player->print("There are no enemies here for your howl to terrify.\n");
         return(0);
     }
@@ -601,7 +606,7 @@ int cmdHowl(Creature* player, cmd* cmnd) {
     room->wake("You awaken suddenly!", true);
     player->print("You let out a blood-curdling supernatural howl!\n");
     player->checkImprove("howl", true);
-    broadcast(player->getSock(), room, "^Y%M lets out a blood-curdling supernatural howl!", player);
+    broadcast(player->getSock(), room, "^Y%M lets out a blood-curdling supernatural howl!", player.get());
     maxEffected = level / 2;
 
     player->lasttime[LT_HOWLS].ltime = t;
@@ -645,7 +650,7 @@ int cmdHowl(Creature* player, cmd* cmnd) {
 
         stunTime = Random::get(5, MAX(6, player->getLevel()/2));
         monster->stun(stunTime);
-        broadcast(nullptr, room, "^b%M is frozen in terror!", monster);
+        broadcast(nullptr, room, "^b%M is frozen in terror!", monster.get());
     }
 
     return(0);

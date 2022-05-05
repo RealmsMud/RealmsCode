@@ -236,7 +236,7 @@ void Monster::adjust(int buffswitch) {
 int Monster::initMonster(bool loadOriginal, bool prototype) {
     int n=0, alnum=0, x=0;
     long t=0;
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
 
     t = time(nullptr);
     // init the timers
@@ -257,9 +257,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     else
         setAttackDelay(20);
 
-    if(flagIsSet(M_FAST_TICK))
-        lasttime[LT_TICK].interval = lasttime[LT_TICK_SECONDARY].interval = 15L;
-    else if(flagIsSet(M_REGENERATES))
+    if(flagIsSet(M_FAST_TICK) || flagIsSet(M_REGENERATES))
         lasttime[LT_TICK].interval = lasttime[LT_TICK_SECONDARY].interval = 15L;
     else
         lasttime[LT_TICK].interval = lasttime[LT_TICK_SECONDARY].interval = 60L - (2*bonus(constitution.getCur()));
@@ -272,9 +270,9 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
             if(alnum == 1)
                 alignment = 0;
             else if(alnum < 51)
-                alignment = Random::get((short)1, (short)std::abs(alignment)) * -1;
+                alignment = Random::get<short>((short)1, (short)std::abs(alignment)) * -1;
             else
-                alignment = Random::get((short)1, (short)std::abs(alignment));
+                alignment = Random::get<short>((short)1, (short)std::abs(alignment));
         }
 
         if(!flagIsSet(M_NO_RANDOM_GOLD) && coins[GOLD])
@@ -282,7 +280,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     }
     // Check for loading of random scrolls
     if(checkScrollDrop()) {
-        n = new_scroll(level, &object);
+        n = new_scroll(level, object);
         if(n > 0) {
             object->value.zero();
             addObj(object);
@@ -293,7 +291,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     // Now load up any always drop objects (Trading perms don't drop inventory items)
     if(!flagIsSet(M_TRADES)) {
         for(x=0;x<10;x++) {
-            if(!loadObject(carry[x].info, &object))
+            if(!loadObject(carry[x].info, object))
                 continue;
             object->init(!prototype);
             if( object->flagIsSet(O_ALWAYS_DROPPED) &&
@@ -303,7 +301,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
                 addObj(object);
                 object->setFlag(O_JUST_LOADED);
             } else {
-                delete object;
+                object.reset();
                 continue;
             }
         }
@@ -312,9 +310,9 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
 
         int numDrops = Random::get(1,100), whichDrop=0;
 
-             if(numDrops<90)    numDrops=1;
-        else if(numDrops<96)    numDrops=2;
-        else                    numDrops=3;
+        if (numDrops < 90) numDrops = 1;
+        else if (numDrops < 96) numDrops = 2;
+        else numDrops = 3;
 
         if(prototype)
             numDrops = 10;
@@ -324,11 +322,10 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
             else
                 whichDrop = Random::get(0,9);
             if(carry[whichDrop].info.id && !flagIsSet(M_TRADES)) {
-                if(!loadObject(carry[whichDrop].info, &object))
+                if(!loadObject(carry[whichDrop].info, object))
                     continue;
-                if( object->getName().empty() || object->getName()[0] == ' ')
-                {
-                    delete object;
+                if( object->getName().empty() || object->getName()[0] == ' ') {
+                    object.reset();
                     continue;
                 }
 
@@ -336,7 +333,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
 
                 // so we don't get more than one always drop item.
                 if(object->flagIsSet(O_ALWAYS_DROPPED)) {
-                    delete object;
+                    object.reset();
                     continue;
                 }
 
@@ -368,13 +365,13 @@ int Monster::getNumMobs() const {
         return(0);
     if(!this->inRoom())
         return(0);
-    const BaseRoom* room = getConstRoomParent();
+    const std::shared_ptr<const BaseRoom> room = getConstRoomParent();
     if(!room)
         return(0);
-    for(Monster* mons : room->monsters) {
+    for(const auto& mons : room->monsters) {
         if(mons->getName() == getName()) {
             i++;
-            if(mons == this)
+            if(mons.get() == this)
                 return(i);
         }
     }
@@ -385,16 +382,16 @@ int Monster::getNumMobs() const {
 //                      getRandomMonster
 //***********************************************************************
 
-Creature *getRandomMonster(BaseRoom *inRoom) {
-    Creature *foundCrt=nullptr;
-    int         count=0, roll=0, num=0;
+std::shared_ptr<Creature>getRandomMonster(const std::shared_ptr<BaseRoom>& inRoom) {
+    std::shared_ptr<Creature>foundCrt=nullptr;
+    int         count=0, roll, num;
 
     num = inRoom->countCrt();
     if(!num)
         return(nullptr);
 
     roll = Random::get(1, num);
-    for(Monster* mons : inRoom->monsters) {
+    for(const auto& mons : inRoom->monsters) {
         if(mons->isPet())
             continue;
         if(++count == roll) {
@@ -412,15 +409,15 @@ Creature *getRandomMonster(BaseRoom *inRoom) {
 //                      getRandomPlayer
 //***********************************************************************
 
-Creature *getRandomPlayer(BaseRoom *inRoom) {
-    Creature *foundPly=nullptr;
+std::shared_ptr<Creature>getRandomPlayer(const std::shared_ptr<BaseRoom>& inRoom) {
+    std::shared_ptr<Creature>foundPly=nullptr;
     int         count=0, roll=0, num=0;
 
     num = inRoom->countVisPly();
     if(!num)
         return(nullptr);
     roll = Random::get(1, num);
-    for(Player* ply : inRoom->players) {
+    for(const auto& ply: inRoom->players) {
         if(ply->flagIsSet(P_DM_INVIS)) {
             continue;
         }
@@ -456,8 +453,8 @@ void Monster::validateAc() {
 int Monster::doHarmfulAuras() {
     int         a=0,dmg=0,aura=0, saved=0;
     long        i=0,t=0;
-    BaseRoom    *inRoom=nullptr;
-    Creature* player=nullptr;
+    std::shared_ptr<BaseRoom> inRoom=nullptr;
+    std::shared_ptr<Creature> player=nullptr;
 
     if(isPet())
         return(0);
@@ -487,7 +484,7 @@ int Monster::doHarmfulAuras() {
     inRoom = getRoomParent();
     if(!inRoom)
         return(0);
-
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
     for(a=0;a<MAX_AURAS;a++) {
 
         if(!flagIsSet(M_FIRE_AURA + a))
@@ -509,7 +506,7 @@ int Monster::doHarmfulAuras() {
                 if(player->isEffected("heat-protection") || player->isEffected("alwayswarm"))
                     continue;
 
-                saved = player->chkSave(BRE, this, 0);
+                saved = player->chkSave(BRE, cThis, 0);
                 if(saved)
                     dmg /=2;
                 player->printColor("^R%M's firey aura singes you for %s%d^R damage!\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -518,7 +515,7 @@ int Monster::doHarmfulAuras() {
                 if(player->isEffected("warmth") || player->isEffected("alwayscold"))
                     continue;
 
-                saved = player->chkSave(BRE, this, 0);
+                saved = player->chkSave(BRE, cThis, 0);
                 if(saved)
                     dmg /=2;
                 player->printColor("^C%M's freezing aura chills you for %s%d^C damage!\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -527,7 +524,7 @@ int Monster::doHarmfulAuras() {
                 if(player->immuneToPoison())
                     continue;
 
-                saved = player->chkSave(POI, this, 0);
+                saved = player->chkSave(POI, cThis, 0);
                 if(saved)
                     dmg /=2;
                 player->printColor("^g%M's foul stench chokes and nauseates you for %s%d^g damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -536,7 +533,7 @@ int Monster::doHarmfulAuras() {
                 if(player->isUndead() || player->isEffected("drain-shield"))
                     continue;
 
-                saved = player->chkSave(DEA, this, 0);
+                saved = player->chkSave(DEA, cThis, 0);
                 if(saved)
                     dmg /=2;
                 player->printColor("^m%M's negative aura taps your life for %s%d^m damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -545,7 +542,7 @@ int Monster::doHarmfulAuras() {
                 if(player->isEffected("wind-protection"))
                     continue;
 
-                saved = player->chkSave(BRE, this, 0);
+                saved = player->chkSave(BRE, cThis, 0);
                 if(saved)
                     dmg /=2;
                 player->printColor("^W%M's turbulent winds buff you about for %s%d^W damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -553,7 +550,7 @@ int Monster::doHarmfulAuras() {
             }
 
             player->hp.decrease(dmg);
-            if(player->checkDie(this))
+            if(player->checkDie(cThis))
                 return(1);
 
         }// End while
@@ -567,9 +564,9 @@ int Monster::doHarmfulAuras() {
 //                      isGuardLoot
 //***********************************************************************
 
-bool isGuardLoot(BaseRoom *inRoom, Creature* player, const char *fmt) {
-    for(Monster* mons : inRoom->monsters) {
-        if(mons->flagIsSet(M_GUARD_TREATURE) && !player->checkStaff(fmt, mons))
+bool isGuardLoot(const std::shared_ptr<BaseRoom>& inRoom, const std::shared_ptr<Creature>& player, const char *fmt) {
+    for(const auto& mons : inRoom->monsters) {
+        if(mons->flagIsSet(M_GUARD_TREATURE) && !player->checkStaff(fmt, mons.get()))
             return(true);
     }
     return(false);

@@ -51,7 +51,7 @@ public:
 
     std::map<int, PlayerTitle*> titles;
     bool hasDefaultStats();
-    bool setDefaultStats(Player* player);
+    bool setDefaultStats(std::shared_ptr<Player> player);
 
     Dice damage;
 protected:

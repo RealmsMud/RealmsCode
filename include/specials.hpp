@@ -180,8 +180,8 @@ private:
 private:
     void reset();
     int computeDamage(bool saved = false);
-    std::string modifyAttackString(std::string_view input, Creature* viewer, Creature* attacker, Creature* target, int dmg = -1);
-    void printToRoom(BaseRoom* room, std::string_view str, Creature* attacker, Creature* target, int dmg = -1);
+    std::string modifyAttackString(std::string_view input, std::shared_ptr<Creature> viewer, std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target, int dmg = -1);
+    void printToRoom(std::shared_ptr<BaseRoom> room, std::string_view str, std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target, int dmg = -1);
     void setFlag(int flag);
     void clearFlag(int flag);
 
@@ -203,12 +203,12 @@ public:
     [[nodiscard]] bool isAreaAttack() const;
     [[nodiscard]] bool flagIsSet(int flag) const;
 
-    void printFailStrings(Creature* attacker, Creature* target);
-    void printRoomString(Creature* attacker, Creature* target = nullptr);
-    void printTargetString(Creature* attacker, Creature* target, int dmg = -1);
+    void printFailStrings(std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target);
+    void printRoomString(std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target = nullptr);
+    void printTargetString(std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target, int dmg = -1);
 
-    void printRoomSaveString(Creature* attacker, Creature* target);
-    void printTargetSaveString(Creature* attacker, Creature* target, int dmg = -1);
+    void printRoomSaveString(std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target);
+    void printTargetSaveString(std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target, int dmg = -1);
 
 };
 

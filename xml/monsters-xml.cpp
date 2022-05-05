@@ -35,7 +35,6 @@
 #include "mud.hpp"                                  // for LT_TICK, LT_TICK_...
 #include "mudObjects/creatures.hpp"                 // for NUM_ASSIST_MOB
 #include "mudObjects/monsters.hpp"                  // for Monster
-#include "os.hpp"                                   // for merror
 #include "paths.hpp"                                // for checkDirExists
 #include "proto.hpp"                                // for monsterPath, load...
 #include "quests.hpp"                               // for TalkResponse, Que...
@@ -46,37 +45,37 @@
 //                      loadMonster
 //*********************************************************************
 
-bool loadMonster(int index, Monster ** pMonster, bool offline) {
+bool loadMonster(int index, std::shared_ptr<Monster>&  pMonster, bool offline) {
     CatRef cr;
     cr.id = index;
     return(loadMonster(cr, pMonster, offline));
 }
 
-bool loadMonster(const CatRef& cr, Monster ** pMonster, bool offline) {
+bool loadMonster(const CatRef& cr, std::shared_ptr<Monster>& pMonster, bool offline) {
     if(!validMobId(cr))
         return(false);
 
     // Check if monster is already loaded, and if so return pointer
     if(gServer->monsterCache.contains(cr)) {
-        *pMonster = new Monster;
-        gServer->monsterCache.fetch(cr, pMonster, false);
+        pMonster = std::make_shared<Monster>();
+        *pMonster = gServer->monsterCache.fetch(cr, false);
     } else {
         // Otherwise load the monster and return a pointer to the newly loaded monster
         // Load the creature from its file
         if(!loadMonsterFromFile(cr, pMonster, "", offline))
             return(false);
-        gServer->monsterCache.insert(cr, pMonster);
+        gServer->monsterCache.insert(cr, *pMonster.get());
     }
 
-    (*pMonster)->fd = -1;
-    (*pMonster)->lasttime[LT_TICK].ltime =
-    (*pMonster)->lasttime[LT_TICK_SECONDARY].ltime =
-    (*pMonster)->lasttime[LT_TICK_HARMFUL].ltime = time(nullptr);
+    pMonster->fd = -1;
+    pMonster->lasttime[LT_TICK].ltime =
+    pMonster->lasttime[LT_TICK_SECONDARY].ltime =
+    pMonster->lasttime[LT_TICK_HARMFUL].ltime = time(nullptr);
 
-    (*pMonster)->lasttime[LT_TICK].interval  =
-    (*pMonster)->lasttime[LT_TICK_SECONDARY].interval = 60;
-    (*pMonster)->lasttime[LT_TICK_HARMFUL].interval = 30;
-    (*pMonster)->getMobSave();
+    pMonster->lasttime[LT_TICK].interval  =
+    pMonster->lasttime[LT_TICK_SECONDARY].interval = 60;
+    pMonster->lasttime[LT_TICK_HARMFUL].interval = 30;
+    pMonster->getMobSave();
 
     return(true);
 }
@@ -85,7 +84,7 @@ bool loadMonster(const CatRef& cr, Monster ** pMonster, bool offline) {
 //                      loadMonsterFromFile
 //*********************************************************************
 
-bool loadMonsterFromFile(const CatRef& cr, Monster **pMonster, std::string filename, bool offline) {
+bool loadMonsterFromFile(const CatRef& cr, std::shared_ptr<Monster>& pMonster, std::string filename, bool offline) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int     num=0;
@@ -104,17 +103,15 @@ bool loadMonsterFromFile(const CatRef& cr, Monster **pMonster, std::string filen
     num = xml::getIntProp(rootNode, "Num");
 
     if(cr.id == -1 || num == cr.id) {
-        *pMonster = new Monster;
-        if(!*pMonster)
-            merror("loadMonsterFromFile", FATAL);
-        (*pMonster)->setVersion(rootNode);
+        pMonster = std::make_shared<Monster>();
+        pMonster->setVersion(rootNode);
 
-        (*pMonster)->readFromXml(rootNode, offline);
-        (*pMonster)->setId("-1");
+        pMonster->readFromXml(rootNode, offline);
+        pMonster->setId("-1");
 
-        if((*pMonster)->flagIsSet(M_TALKS)) {
-            loadCreature_tlk((*pMonster));
-            (*pMonster)->convertOldTalks();
+        if(pMonster->flagIsSet(M_TALKS)) {
+            loadCreature_tlk(pMonster);
+            pMonster->convertOldTalks();
         }
     }
 
@@ -277,7 +274,7 @@ void Monster::saveXml(xmlNodePtr curNode) const {
     xmlNodePtr childNode, subNode;
 
     // record monsters saved during swap
-    if(gConfig->swapIsInteresting(this))
+    if(gConfig->swapIsInteresting(getAsConstMonster()))
         gConfig->swapLog((std::string)"m" + info.str(), false);
 
     xml::saveNonNullString(curNode, "Plural", plural);

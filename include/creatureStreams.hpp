@@ -33,6 +33,7 @@ public:
     virtual ~Streamable() = default;
     void initStreamable();
     // Stream operators
+    Streamable& operator<< (const std::shared_ptr<MudObject> obj);
     Streamable& operator<< (const MudObject* obj);
     Streamable& operator<< (const MudObject& obj);
     Streamable& operator<< (std::string_view str);

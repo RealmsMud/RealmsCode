@@ -42,7 +42,7 @@
 // Allows a player to view, grant, or revoke proxy access
 // to their character
 
-int cmdProxy(Player* player, cmd* cmnd) {
+int cmdProxy(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(cmnd->num == 1) {
         std::string proxyList = gConfig->getProxyList(player);
@@ -62,7 +62,7 @@ int cmdProxy(Player* player, cmd* cmnd) {
     }
     bool online=true;
 
-    Player* target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     std::string name =  cmnd->str[1];
 
     if(name.length() > 1 && name.at(0) == 'p' && isdigit(name.at(1))) {
@@ -89,7 +89,7 @@ int cmdProxy(Player* player, cmd* cmnd) {
         }
 
         if(!target) {
-            if(!loadPlayer(name.c_str(), &target)) {
+            if(!loadPlayer(name.c_str(), target)) {
                 *player << "Player does not exist.\n";
                 return(0);
             }
@@ -97,15 +97,11 @@ int cmdProxy(Player* player, cmd* cmnd) {
             online = false;
         }
         if(target->isStaff()) {
-            if(!online)
-                delete target;;
             *player << "You cannot give staff proxy access!.\n";
             return(0);
         }
         if(target->getId() == player->getId()) {
             *player << "That's just silly.\n";
-            if(!online)
-                delete target;;
             return(0);
         }
 
@@ -115,16 +111,12 @@ int cmdProxy(Player* player, cmd* cmnd) {
             gConfig->removeProxyAccess(target, player);
             if(online)
                 *target << "Your proxy access to " << player->getName() << " has been revoked.\n";
-            else
-                delete target;;
         } else {
             *player << "You grant " << target->getName() << " proxy access to your character.\n";
 
             gConfig->grantProxyAccess(target, player);
             if(online)
                 *target << "Your now have been granted proxy access to " << player->getName() << ".\n";
-            else
-                delete target;;
 
         }
     }
@@ -140,7 +132,7 @@ int cmdProxy(Player* player, cmd* cmnd) {
 //*********************************************************************
 // Does (proxy) have access to (proxied)
 
-bool Config::hasProxyAccess(Player* proxy, Player* proxied) {
+bool Config::hasProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied) {
     return(proxyManager->hasProxyAccess(proxy, proxied));
 }
 
@@ -150,7 +142,7 @@ bool Config::hasProxyAccess(Player* proxy, Player* proxied) {
 // Returns a std::string showing proxy access for the given player
 // or all players if player is null
 
-std::string Config::getProxyList(Player* player) {
+std::string Config::getProxyList(std::shared_ptr<Player> player) {
     std::ostringstream oStr;
     std::string lastId = "";
 
@@ -184,7 +176,7 @@ std::string Config::getProxyList(Player* player) {
 //*********************************************************************
 // Grant proxy access to (proxied) for (proxy)
 
-void Config::grantProxyAccess(Player* proxy, Player* proxied) {
+void Config::grantProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied) {
     proxyManager->grantProxyAccess(proxy, proxied);
 }
 
@@ -193,7 +185,7 @@ void Config::grantProxyAccess(Player* proxy, Player* proxied) {
 //*********************************************************************
 // Remove proxy access to (proxied) for (proxy)
 
-bool Config::removeProxyAccess(Player* proxy, Player* proxied) {
+bool Config::removeProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied) {
     return(proxyManager->removeProxyAccess(proxy, proxied));
 }
 //*********************************************************************
@@ -201,7 +193,7 @@ bool Config::removeProxyAccess(Player* proxy, Player* proxied) {
 //*********************************************************************
 // Remove proxy access to (proxied) for (id)
 
-bool Config::removeProxyAccess(std::string_view id, Player* proxied) {
+bool Config::removeProxyAccess(std::string_view id, std::shared_ptr<Player> proxied) {
     return(proxyManager->removeProxyAccess(id, proxied));
 }
 
@@ -234,7 +226,7 @@ void Config::saveProxyAccess() {
 //*********************************************************************
 // Set's player as the current proxy user
 
-void Player::setProxy(Player* proxy) {
+void Player::setProxy(std::shared_ptr<Player> proxy) {
     proxyName = proxy->getName();
     proxyId = proxy->getId();
 }
@@ -291,7 +283,7 @@ void ProxyManager::clear() {
 //*********************************************************************
 // Grant proxy access to (proxied) for (proxy)
 
-void ProxyManager::grantProxyAccess(Player* proxy, Player* proxied) {
+void ProxyManager::grantProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied) {
     if(hasProxyAccess(proxy, proxied))
         return;
     proxies.insert(ProxyMultiMap::value_type(proxied->getId(), ProxyAccess(proxy, proxied)));
@@ -303,7 +295,7 @@ void ProxyManager::grantProxyAccess(Player* proxy, Player* proxied) {
 //*********************************************************************
 // Remove proxy access to (proxied) for (proxy)
 
-bool ProxyManager::removeProxyAccess(Player* proxy, Player* proxied) {
+bool ProxyManager::removeProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied) {
     return(removeProxyAccess(proxy->getId(), proxied));
 }
 
@@ -312,7 +304,7 @@ bool ProxyManager::removeProxyAccess(Player* proxy, Player* proxied) {
 //*********************************************************************
 // Remove proxy access to (proxied) for (proxy)
 
-bool ProxyManager::removeProxyAccess(std::string_view id, Player* proxied) {
+bool ProxyManager::removeProxyAccess(std::string_view id, std::shared_ptr<Player> proxied) {
     ProxyMultiMapRange range = proxies.equal_range(proxied->getId());
     for(auto it = range.first ; it != range.second ; it++) {
         ProxyAccess& proxyAccess = it->second;
@@ -330,7 +322,7 @@ bool ProxyManager::removeProxyAccess(std::string_view id, Player* proxied) {
 //*********************************************************************
 // True if (proxy) has proxy access to (proxied)
 
-bool ProxyManager::hasProxyAccess(Player* proxy, Player* proxied) {
+bool ProxyManager::hasProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied) {
     if(!proxy || !proxied)
         return(false);
 
@@ -348,7 +340,7 @@ bool ProxyManager::hasProxyAccess(Player* proxy, Player* proxied) {
 //                ProxyAccess proxy functions
 //*********************************************************************
 
-ProxyAccess::ProxyAccess(Player* proxy, Player* proxied) {
+ProxyAccess::ProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied) {
     proxyName = proxy->getName();
     proxyId = proxy->getId();
     proxiedName = proxied->getName();
@@ -360,7 +352,7 @@ ProxyAccess::ProxyAccess(Player* proxy, Player* proxied) {
 //*********************************************************************
 // True if (proxy) has proxy access to (proxied)
 
-bool ProxyAccess::hasProxyAccess(Player* proxy, Player* proxied) {
+bool ProxyAccess::hasProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied) {
     if(proxiedId == proxied->getId() && proxiedName == proxied->getName() &&
             proxyId == proxy->getId() && proxyName == proxy->getName())
         return(true);

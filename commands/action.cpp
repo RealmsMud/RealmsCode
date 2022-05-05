@@ -37,7 +37,6 @@
 #include "mudObjects/objects.hpp"    // for Object
 #include "mudObjects/players.hpp"    // for Player
 #include "mudObjects/rooms.hpp"      // for BaseRoom
-#include "os.hpp"                    // for ASSERTLOG
 #include "proto.hpp"                 // for broadcast, dec_daily, findExit
 #include "random.hpp"                // for Random
 #include "socket.hpp"                // for Socket
@@ -50,47 +49,42 @@
 //                      socialHooks
 //*********************************************************************
 
-void socialHooks(Creature *creature, MudObject* target, const std::string &action, const std::string &result) {
+void socialHooks(const std::shared_ptr<Creature>&creature, std::shared_ptr<MudObject> target, const std::string &action, const std::string &result) {
     Hooks::run(creature, "doSocial", target, "receiveSocial", action, result);
 }
 
-void socialHooks(Creature *target, const std::string &action, const std::string &result) {
+void socialHooks(const std::shared_ptr<Creature>&target, const std::string &action, const std::string &result) {
     if(!target->getRoomParent())
         return;
-    Hooks::run<Monster*,MonsterPtrLess>(target->getRoomParent()->monsters, target, "roomSocial", action, result);
+    Hooks::run<std::shared_ptr<Monster> ,MonsterPtrLess>(target->getRoomParent()->monsters, target, "roomSocial", action, result);
 }
 
 //*********************************************************************
 //                      actionShow
 //*********************************************************************
 
-bool actionShow(Player* pTarget, Creature* creature) {
+bool actionShow(const std::shared_ptr<Player>& pTarget, const std::shared_ptr<Creature>& creature) {
     return(pTarget && !pTarget->isGagging(creature->getName()) && !pTarget->flagIsSet(P_UNCONSCIOUS));
 }
 
 // prototype for actionFail
-int actionFail(Creature* player, std::string action, std::string_view second = "m");
-
-#define ACTION_SHOW
+int actionFail(const std::shared_ptr<Creature>& player, std::string action, std::string_view second = "m");
 
 // update for oroom
 
 #define OUT(a,b)    sock->print(a); \
-                    broadcast(sock, room, b, creature); \
+                    broadcast(sock, room, b, creature.get()); \
                     socialHooks(creature, str);
 #define OUT_HISHER(a,b) sock->print(a); \
-                        broadcast(sock, room, b, creature, creature->hisHer()); \
+                        broadcast(sock, room, b, creature.get(), creature->hisHer()); \
                         socialHooks(creature, str);
-#define OUT_HESHE(a,b)  sock->print(a); \
-                        broadcast(sock, room, b, creature, creature->heShe()); \
-                        socialHooks(creature, str);
-#define OUT4(a,b,c) creature->print((a), target); \
+#define OUT4(a,b,c) creature->print((a), target.get()); \
                     if(actionShow(pTarget, creature)) \
-                        {pTarget->print((b), creature);} \
-                    broadcast(sock, target->getSock(), room, (c), creature, target); \
+                        {pTarget->print((b), creature.get());} \
+                    broadcast(sock, target->getSock(), room, (c), creature.get(), target.get()); \
                     socialHooks(creature, target, str);
 #define OUT_HIMHER(a,b) sock->print(a); \
-                        broadcast(sock, room, b, creature, creature->himHer()); \
+                        broadcast(sock, room, b, creature.get(), creature->himHer()); \
                         socialHooks(creature, str);
 
 
@@ -99,7 +93,7 @@ int actionFail(Creature* player, std::string action, std::string_view second = "
 //                      orderPet
 //*********************************************************************
 
-int orderPet(Player* player, cmd* cmnd) {
+int orderPet(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int x=0;
     bool allPets = true;
 
@@ -123,7 +117,7 @@ int orderPet(Player* player, cmd* cmnd) {
 
         // See if they're trying to order a specific pet
 
-        Creature* pet = player->findPet(cmnd->str[1], cmnd->val[1]);
+        std::shared_ptr<Creature> pet = player->findPet(cmnd->str[1], cmnd->val[1]);
         if(pet) {
             allPets = false;
             for(; x<cmnd->num-2; x++)
@@ -150,9 +144,9 @@ int orderPet(Player* player, cmd* cmnd) {
         // chop the "pet " off
         cmnd->fullstr = getFullstrText(cmnd->fullstr, 1);
 
-        for(Creature* pet : player->pets) {
+        for(const auto& pet : player->pets) {
             if(!player->inSameRoom(pet)) {
-                player->print("%M can't hear you.\n", pet);
+                player->print("%M can't hear you.\n", pet.get());
                 continue;
             }
             cmnd->myCommand = nullptr;
@@ -171,7 +165,7 @@ int orderPet(Player* player, cmd* cmnd) {
 // commands in the player command array, all while still using the
 // same action function to do our work.
 
-int plyAction(Player* player, cmd* cmnd) {
+int plyAction(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(cmdAction(player, cmnd));
 }
 
@@ -183,18 +177,15 @@ int plyAction(Player* player, cmd* cmnd) {
 // with any command that calls this function or plyAction. Go edit that function
 // if you create a new social and wish to exclude it from the socials helpfile.
 
-int cmdAction(Creature* creature, cmd* cmnd) {
-    BaseRoom* room = creature->getRoomParent();
-    Player  *player=nullptr, *pTarget=nullptr;
-    Creature* target=nullptr;
-    Object  *object=nullptr;
-    Exit    *exit=nullptr;
+int cmdAction(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
+    std::shared_ptr<BaseRoom> room = creature->getRoomParent();
+    std::shared_ptr<Player> player = nullptr, pTarget = nullptr;
+    std::shared_ptr<Creature> target = nullptr;
+    std::shared_ptr<Object> object = nullptr;
+    std::shared_ptr<Exit> exit = nullptr;
     int     n=0, num=0, num1=0, num2=0;
     char    temp[12];
-    std::string str = "";
-
-    ASSERTLOG( creature );
-    ASSERTLOG( cmnd );
+    std::string str;
 
     // some actions are creature-only; we will need this variable to use them
     player = creature->getAsPlayer();
@@ -311,7 +302,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 creature->hp.decrease(n);
                 creature->printColor("You take ^R%d^x damage.\n", n);
                 broadcastGroup(false, creature, "%M slices %sself for *CC:DAMAGE*%d^x damage, %s%s\n",
-                    creature, creature->himHer(), n, creature->heShe(), creature->getStatusStr());
+                    creature.get(), creature->himHer(), n, creature->heShe(), creature->getStatusStr());
             }
         }
 
@@ -360,16 +351,16 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
         sock->print("You take a nap.\n");
         if(player && player->flagIsSet(P_HIDDEN)) {
-            broadcast(isCt, sock, room, "*DM* %M takes a nap.", creature);
+            broadcast(isCt, sock, room, "*DM* %M takes a nap.", creature.get());
         } else {
-            broadcast(sock, room, "%M takes a nap.", creature);
+            broadcast(sock, room, "%M takes a nap.", creature.get());
             socialHooks(creature, str);
         }
 
     } else if(str == "wake") {
         if(target) {
             if(!pTarget || !pTarget->flagIsSet(P_SLEEPING)) {
-                sock->print("%M isn't sleeping.", target);
+                sock->print("%M isn't sleeping.", target.get());
             } else {
                 OUT4("You wake %N up.\n", "%M wakes you up.\n",
                     "%M wakes %N up.");
@@ -399,16 +390,16 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
     } else if(str == "chest") {
         if(target) {
-            sock->print("You beat your fists to your chest in praise of %N.\n", target);
+            sock->print("You beat your fists to your chest in praise of %N.\n", target.get());
             target->print("%M beats %s fists to %s chest in praise of you.\n",
-                creature, creature->hisHer(), creature->hisHer());
+                creature.get(), creature->hisHer(), creature->hisHer());
             broadcast(sock, target->getSock(), room, "%M beats %s fists to %s chest in praise of %N.",
-                creature, creature->hisHer(), creature->hisHer(), target);
+                creature.get(), creature->hisHer(), creature->hisHer(), target.get());
             socialHooks(creature, target, str);
         } else {
             sock->print("You beat your fists to your chest in celebration.\n");
             broadcast(sock, room, "%M beats %s fists to %s chest in celebration.",
-                creature, creature->hisHer(), creature->hisHer());
+                creature.get(), creature->hisHer(), creature->hisHer());
             socialHooks(creature, str);
         }
     } else if(str == "bfart" && player && creature->getName() != "Bane") {
@@ -421,17 +412,17 @@ int cmdAction(Creature* creature, cmd* cmnd) {
         } else {
             OUT("You let rip a nasty one.\n", "%M lets out a deadly fart.");
             sock->print("You knock everyone in the room unconscious!\n");
-            for(Player* ply : room->players) {
+            for(const auto& ply: room->players) {
                 if( ply != player &&
                     !ply->flagIsSet(P_DM_INVIS) &&
                     !ply->isUnconscious() &&
                     !ply->isDm() &&
                     !ply->inCombat()
                 ) {
-                    ply->print("%M's fart knocks you unconscious!\n", creature);
+                    ply->print("%M's fart knocks you unconscious!\n", creature.get());
                     ply->knockUnconscious(30);
                     broadcast(sock, ply->getSock(), room,
-                        "%M falls to the ground unconscious.", ply);
+                        "%M falls to the ground unconscious.", ply.get());
                 }
             }
 
@@ -443,10 +434,10 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 return(0);
             }
             target->wake("You awaken suddenly!");
-            sock->print("You tag %N. %s's now it!\n", target, target->upHeShe());
-            target->print("%M tags you. You're now it!\n", creature);
+            sock->print("You tag %N. %s's now it!\n", target.get(), target->upHeShe());
+            target->print("%M tags you. You're now it!\n", creature.get());
             broadcast(sock, target->getSock(), room, "%M just tagged %N! %s's it!",
-                creature, target, target->upHeShe());
+                creature.get(), target.get(), target->upHeShe());
             socialHooks(creature, target, str);
 
         } else {
@@ -501,7 +492,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
         player->mp.restore();
 
 
-        if(loadObject(SHIT_OBJ, &object)) {
+        if(loadObject(SHIT_OBJ, object)) {
             object->setName(std::string("piece of ") + (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName()) + "'s shit");
 
             finishDropObject(object, room, player);
@@ -532,7 +523,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
 
 
-        if(loadObject(42, &object)) {
+        if(loadObject(42, object)) {
             object->setName(std::string("puddle of ") + (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName()) + "'s piss");
             object->plural = "puddles of ";
             object->plural += (player->flagIsSet(P_ALIASING) ? player->getAlias()->getName() : player->getName());
@@ -548,11 +539,11 @@ int cmdAction(Creature* creature, cmd* cmnd) {
             object = room->findObject(player, cmnd, 1);
             if(object) {
                 if(!(object->flagIsSet(O_NO_PREFIX) && (object->flagIsSet(O_NO_TAKE) || object->flagIsSet(O_SCENERY)))) {
-                    sock->printColor("You piss on %P.\n", object);
-                    broadcast(player->getSock(), player->getParent(), "%M pisses on %P.", player, object);
+                    sock->printColor("You piss on %P.\n", object.get());
+                    broadcast(player->getSock(), player->getParent(), "%M pisses on %P.", player.get(), object.get());
                 } else {
-                    sock->printColor("You piss on the %P.\n", object);
-                    broadcast(player->getSock(), player->getParent(), "%M pisses on the %P.", player, object);
+                    sock->printColor("You piss on the %P.\n", object.get());
+                    broadcast(player->getSock(), player->getParent(), "%M pisses on the %P.", player.get(), object.get());
                 }
 
                 socialHooks(creature, object, str);
@@ -562,7 +553,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
                 if(exit && !exit->flagIsSet(X_DESCRIPTION_ONLY) && !exit->isConcealed(player)) {
                     sock->printColor("You piss on the %s^x.\n", exit->getCName());
-                    broadcast(player->getSock(), player->getParent(), "%M pisses on the %s^x.", player, exit->getCName());
+                    broadcast(player->getSock(), player->getParent(), "%M pisses on the %s^x.", player.get(), exit->getCName());
 
                     socialHooks(creature, exit, str);
                 } else {
@@ -575,10 +566,10 @@ int cmdAction(Creature* creature, cmd* cmnd) {
         player->mp.restore();
     } else if(str == "bless") {
         if(target) {
-            creature->print("You give %N your blessing.\n", target);
+            creature->print("You give %N your blessing.\n", target.get());
             if(actionShow(pTarget, creature))
-                pTarget->print("%M gives you %s blessing.\n", creature, creature->hisHer());
-            broadcast(sock, target->getSock(), room, "%M gives %N %s blessing.", creature, target, creature->hisHer());
+                pTarget->print("%M gives you %s blessing.\n", creature.get(), creature->hisHer());
+            broadcast(sock, target->getSock(), room, "%M gives %N %s blessing.", creature.get(), target.get(), creature->hisHer());
             socialHooks(creature, target, str);
         } else
             actionFail(creature, str);
@@ -647,16 +638,16 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
         if(creature->getClass() == CreatureClass::CLERIC && creature->getDeity() == KAMIRA) {
             sock->print("You flip a coin. It lands on its side!\n");
-            broadcast(sock, room, "%M flips a coin. It lands on its side!", creature);
+            broadcast(sock, room, "%M flips a coin. It lands on its side!", creature.get());
             socialHooks(creature, str, "side");
         } else if(target) {
-            sock->print("You flip a coin and show it to %N: %s.\n", target, result.c_str());
-            target->print("%M flips a coin and shows it to you: %s.\n", creature, result.c_str());
-            broadcast(sock, target->getSock(), room, "%M flips a coin and shows it to %N: %s.", creature, target, result.c_str());
+            sock->print("You flip a coin and show it to %N: %s.\n", target.get(), result.c_str());
+            target->print("%M flips a coin and shows it to you: %s.\n", creature.get(), result.c_str());
+            broadcast(sock, target->getSock(), room, "%M flips a coin and shows it to %N: %s.", creature.get(), target.get(), result.c_str());
             socialHooks(creature, target, str, result);
         } else {
             sock->print("You flip a coin: %s.\n", result.c_str());
-            broadcast(sock, room, "%M flips a coin: %s.", creature, result.c_str());
+            broadcast(sock, room, "%M flips a coin: %s.", creature.get(), result.c_str());
             socialHooks(creature, str, result);
         }
     } else if(str == "rps") {
@@ -675,7 +666,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 strcpy(temp, "scissors");
 
             sock->print("One, two, three: You chose %s.\n", temp);
-            broadcast(sock, room, "Rock-paper-scissors: %M chose %s.", creature, temp);
+            broadcast(sock, room, "Rock-paper-scissors: %M chose %s.", creature.get(), temp);
             socialHooks(creature, str, temp);
         }
     } else if(str == "dice") {
@@ -694,7 +685,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 num = (Random::get(0,1) ? 2 : 12);
 
             sock->print("You roll 2d6\n: %d\n", num);
-            broadcast(sock, room, "(Dice 2d6): %M got %d.", creature, num);
+            broadcast(sock, room, "(Dice 2d6): %M got %d.", creature.get(), num);
             socialHooks(creature, str, fmt::format("{}", num));
         }
     }  else if(str == "lobotomy") {
@@ -711,7 +702,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 if(pTarget->flagIsSet(P_BRAINDEAD)) {
                     pTarget->clearFlag(P_BRAINDEAD);
                     pTarget->print("You are no longer lobotomized.\n");
-                    sock->print("%M is no longer lobotomized.\n", pTarget);
+                    sock->print("%M is no longer lobotomized.\n", pTarget.get());
                     if(!creature->isDm())
                         log_immort(false, player, "%s removes %s's lobotomy in room %s.\n", player->getCName(), target->getCName(),
                             room->fullName().c_str());
@@ -738,11 +729,11 @@ int cmdAction(Creature* creature, cmd* cmnd) {
             object = room->findObject(creature, cmnd, 1);
             if(object) {
                 if(!(object->flagIsSet(O_NO_PREFIX) && (object->flagIsSet(O_NO_TAKE) || object->flagIsSet(O_SCENERY)))) {
-                    sock->printColor("You point at %P.\n", object);
-                    broadcast(sock, room, "%M points at %P.", creature, object);
+                    sock->printColor("You point at %P.\n", object.get());
+                    broadcast(sock, room, "%M points at %P.", creature.get(), object.get());
                 } else {
-                    sock->printColor("You point at the %P.\n", object);
-                    broadcast(sock, room, "%M points at the %P.", creature, object);
+                    sock->printColor("You point at the %P.\n", object.get());
+                    broadcast(sock, room, "%M points at the %P.", creature.get(), object.get());
                 }
 
                 socialHooks(creature, object, str);
@@ -752,7 +743,7 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
                 if(exit && !exit->flagIsSet(X_DESCRIPTION_ONLY) && !exit->isConcealed(player)) {
                     sock->printColor("You point to the %s^x.\n", exit->getCName());
-                    broadcast(sock, room, "%M points to the %s^x.", creature, exit->getCName());
+                    broadcast(sock, room, "%M points to the %s^x.", creature.get(), exit->getCName());
 
                     socialHooks(creature, exit, str);
                 } else {
@@ -763,9 +754,9 @@ int cmdAction(Creature* creature, cmd* cmnd) {
 
     }   else if(str == "narrow") {
         if(target) {
-            sock->print("You narrow your eyes at %N.\n", target);
-            target->print("%M narrows %s eyes at you.\n", creature, creature->hisHer());
-            broadcast(sock, target->getSock(), room, "%M narrows %s eyes at %N.", creature, creature->hisHer(), target);
+            sock->print("You narrow your eyes at %N.\n", target.get());
+            target->print("%M narrows %s eyes at you.\n", creature.get(), creature->hisHer());
+            broadcast(sock, target->getSock(), room, "%M narrows %s eyes at %N.", creature.get(), creature->hisHer(), target.get());
             socialHooks(creature, target, str);
         } else {
             OUT_HISHER("You narrow your eyes.\n", "%M narrows %s eyes evilly.");
@@ -773,10 +764,10 @@ int cmdAction(Creature* creature, cmd* cmnd) {
     }  else if(str == "tnl" && player) {
 
         if(player->getActualLevel() > player->getLevel()) {
-            broadcast(player->getSock(), player->getParent(), "%M needs %s experience to relevel.", player, player->expToLevel(false).c_str());
+            broadcast(player->getSock(), player->getParent(), "%M needs %s experience to relevel.", player.get(), player->expToLevel(false).c_str());
             sock->print("You need %s experience to relevel.\n", player->expToLevel(false).c_str());
         } else {
-            broadcast(player->getSock(), player->getParent(), "%M needs %s experience to level.", player, player->expToLevel(false).c_str());
+            broadcast(player->getSock(), player->getParent(), "%M needs %s experience to level.", player.get(), player->expToLevel(false).c_str());
             sock->print("You need %s experience to level.\n", player->expToLevel(false).c_str());
         }
 
@@ -820,9 +811,9 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 return(0);
             }
 
-            sock->printColor("You proudly show %N %P.\n", target, object);
-            target->printColor("%M proudly shows you %P.\n", creature, object);
-            broadcast(sock, target->getSock(), room, "%M proudly shows %N %P.", creature, target, object);
+            sock->printColor("You proudly show %N %P.\n", target.get(), object.get());
+            target->printColor("%M proudly shows you %P.\n", creature.get(), object.get());
+            broadcast(sock, target->getSock(), room, "%M proudly shows %N %P.", creature.get(), target.get(), object.get());
             socialHooks(creature, target, str);
             socialHooks(creature, object, str);
         } else {
@@ -832,8 +823,8 @@ int cmdAction(Creature* creature, cmd* cmnd) {
                 return(0);
             }
 
-            sock->printColor("You proudly show %P to everyone in the room.\n", object);
-            broadcast(sock, room, "%M proudly shows %P to everyone in the room.", creature, object);
+            sock->printColor("You proudly show %P to everyone in the room.\n", object.get());
+            broadcast(sock, room, "%M proudly shows %P to everyone in the room.", creature.get(), object.get());
             socialHooks(creature, object, str);
         }
     }  else if(str == "ballz") {
@@ -913,7 +904,7 @@ bool isGoodSocial(const std::string& str) {
 //*********************************************************************
 // print the error message to the right person
 
-int actionFail(Creature* player, std::string action, std::string_view second) {
+int actionFail(const std::shared_ptr<Creature>& player, std::string action, std::string_view second) {
     action.at(0) = up(action.at(0));
     player->bPrint(fmt::format("{} who{}?\n", action, second));
     return(0);
@@ -938,7 +929,7 @@ bool Player::canDefecate() const {
 //*********************************************************************
 
 void Creature::stand() {
-    Player* player = getAsPlayer();
+    std::shared_ptr<Player> player = getAsPlayer();
 
     if(player && player->flagIsSet(P_SITTING)) {
         player->unhide();
@@ -949,7 +940,7 @@ void Creature::stand() {
     print("You stand up.\n");
     if(getRoomParent()) {
         broadcast(getSock(), getRoomParent(), "%M stands up.", this);
-        socialHooks(this, "stand");
+        socialHooks(Containable::downcasted_shared_from_this<Creature>(), "stand");
     }
 }
 
@@ -978,5 +969,5 @@ void Creature::wake(const std::string& str, bool noise) {
     clearFlag(P_UNCONSCIOUS);
     unhide();
 
-    socialHooks(this, "wake");
+    socialHooks(Containable::downcasted_shared_from_this<Creature>(), "wake");
 }

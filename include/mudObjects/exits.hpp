@@ -43,13 +43,13 @@ Direction getDir(std::string str);
 std::string getDirName(Direction dir);
 
 #define EXIT_KEY_LENGTH 20
-class Exit: public MudObject {
+class Exit: public virtual MudObject, public inheritable_enable_shared_from_this<Exit> {
 public:
     Exit();
     ~Exit();
     bool operator< (const MudObject& t) const;
 
-    int readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline=false);
+    int readFromXml(xmlNodePtr rootNode, std::shared_ptr<BaseRoom> room, bool offline=false);
     int saveToXml(xmlNodePtr parentNode) const;
 
     void escapeText();
@@ -66,7 +66,7 @@ public:
     [[nodiscard]] std::string getDescription() const;
     [[nodiscard]] Direction getDirection() const;
     [[nodiscard]] std::string getEnter() const;
-    [[nodiscard]] BaseRoom* getRoom() const;
+    [[nodiscard]] std::shared_ptr<BaseRoom> getRoom() const;
 
     void setLevel(short lvl);
     void setOpen(std::string_view o);
@@ -80,27 +80,26 @@ public:
     void setSize(Size s);
     void setDirection(Direction d);
     void setEnter(std::string_view e);
-    void setRoom(BaseRoom* room);
+    void setRoom(std::shared_ptr<BaseRoom> room);
 
-    void checkReLock(Creature* creature, bool sneaking);
+    void checkReLock(const std::shared_ptr<Creature>& creature, bool sneaking);
 
     [[nodiscard]] std::string blockedByStr(char color, std::string_view spell, std::string_view effectName, bool detectMagic, bool canSee) const;
-    Exit* getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const;
-    void doDispelMagic(BaseRoom* parent);  // true if the exit was destroyed by dispel-magic
+    std::shared_ptr<Exit> getReturnExit(const std::shared_ptr<const BaseRoom>& parent, std::shared_ptr<BaseRoom> &targetRoom) const;
+    void doDispelMagic(const std::shared_ptr<BaseRoom>& parent);  // true if the exit was destroyed by dispel-magic
     [[nodiscard]] bool isWall(std::string_view name) const;
-    bool isConcealed(const Creature* viewer=nullptr) const;
+    bool isConcealed(const std::shared_ptr<const Creature> & viewer=nullptr) const;
 
     bool isDiscoverable() const;
-    bool hasBeenUsedBy(std::string id) const;
-    bool hasBeenUsedBy(const Player* player) const;
-    bool hasBeenUsedBy(const Creature* creature) const;
+    bool hasBeenUsedBy(const std::string& id) const;
+    bool hasBeenUsedBy(const std::shared_ptr<const Creature> &creature) const;
 
 //// Effects
     bool pulseEffects(time_t t);
-    bool doEffectDamage(Creature* target);
+    bool doEffectDamage(const std::shared_ptr<Creature>& pTarget);
 
-    void addEffectReturnExit(const std::string &effect, long duration, int strength, const Creature* owner);
-    void removeEffectReturnExit(const std::string &effect, BaseRoom* rParent);
+    void addEffectReturnExit(const std::string &effect, long duration, int strength, const std::shared_ptr<Creature> & owner);
+    void removeEffectReturnExit(const std::string &effect, const std::shared_ptr<BaseRoom>& rParent);
 protected:
     short   level;
     std::string open;           // output on open
@@ -113,7 +112,7 @@ protected:
     std::string description;
     Size    size;
     std::string enter;
-    BaseRoom* parentRoom;   // Pointer to the room this exit is in
+    std::shared_ptr<BaseRoom> parentRoom;   // Pointer to the room this exit is in
     Direction direction;
 
 public:
@@ -138,10 +137,10 @@ public:
     void clearFlag(int flag);
     bool toggleFlag(int flag);
 
-    bool raceRestrict(const Creature* creature) const;
-    bool classRestrict(const Creature* creature) const;
-    bool clanRestrict(const Creature* creature) const;
-    bool alignRestrict(const Creature* creature) const;
+    bool raceRestrict(const std::shared_ptr<const Creature> & creature) const;
+    bool classRestrict(const std::shared_ptr<const Creature> & creature) const;
+    bool clanRestrict(const std::shared_ptr<const Creature> & creature) const;
+    bool alignRestrict(const std::shared_ptr<const Creature> & creature) const;
 };
 
 

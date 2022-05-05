@@ -31,7 +31,6 @@
 #include "mud.hpp"                 // for ACC
 #include "mudObjects/players.hpp"  // for Player
 #include "mudObjects/rooms.hpp"    // for BaseRoom
-#include "os.hpp"                  // for merror
 #include "paths.hpp"               // for Post, History
 #include "proto.hpp"               // for up, broadcast, isCt, is
 #include "server.hpp"              // for Server, gServer
@@ -54,7 +53,7 @@ void Player::hasNewMudmail() const {
 //                      canPost
 //*********************************************************************
 
-bool canPost(Player* player) {
+bool canPost(std::shared_ptr<Player> player) {
     if(!player->isStaff()) {
         if( !player->getRoomParent()->flagIsSet(R_POST_OFFICE) &&
             !player->getRoomParent()->flagIsSet(R_LIMBO)
@@ -90,8 +89,8 @@ std::string postText(const std::string &str) {
 // This function allows a player to send a letter to another player if
 // he/she is in a post office.
 
-int cmdSendMail(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int cmdSendMail(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
     bool    online=false;
 
@@ -112,7 +111,7 @@ int cmdSendMail(Player* player, cmd* cmnd) {
 
     target = gServer->findPlayer(cmnd->str[1]);
     if(!target) {
-        if(!loadPlayer(cmnd->str[1], &target)) {
+        if(!loadPlayer(cmnd->str[1], target)) {
             //player->print("Player does not exist.\n");
             return(0);
         }
@@ -121,15 +120,11 @@ int cmdSendMail(Player* player, cmd* cmnd) {
 
     if(!target->isStaff() && player->getClass() == CreatureClass::BUILDER) {
         player->print("You may not mudmail players at this time.\n");
-        if(!online)
-            delete target;
         return(0);
     }
 
     if(!player->isStaff() && target->getClass() == CreatureClass::BUILDER) {
         player->print("You may not mudmail that character at this time.\n");
-        if(!online)
-            delete target;
         return(0);
     }
 
@@ -139,8 +134,6 @@ int cmdSendMail(Player* player, cmd* cmnd) {
 
     target->setFlag(P_UNREAD_MAIL);
     target->save(online);
-    if(!online)
-        delete target;
 
     player->print("Enter your message now. Type '.' or '*' on a line by itself to finish or '\\' to\ncancel. Each line should be NO LONGER THAN 80 CHARACTERS.\n-: ");
     sprintf(player->getSock()->tempstr[0], "%s", cmnd->str[1]);
@@ -152,8 +145,7 @@ int cmdSendMail(Player* player, cmd* cmnd) {
     gServer->processOutput();
     player->getSock()->setState(CON_SENDING_MAIL);
     player->getSock()->intrpt &= ~1;
-//  player->getSock()->fn = postedit;
-//  player->getSock()->fnparam = 1;
+
     if(online) {
         if( target != player &&
             !target->flagIsSet(P_NO_SHOW_MAIL) &&
@@ -178,7 +170,7 @@ int cmdSendMail(Player* player, cmd* cmnd) {
 // Sends a mudmail from System to the target. Include a trailing \n yourself.
 
 void sendMail(const std::string &target, const std::string &message) {
-    Player  *player=nullptr;
+    std::shared_ptr<Player> player=nullptr;
     char    datestr[40];
     long    t=0;
     int     ff=0;
@@ -189,7 +181,7 @@ void sendMail(const std::string &target, const std::string &message) {
 
     player = gServer->findPlayer(target);
     if(!player) {
-        if(!loadPlayer(target, &player))
+        if(!loadPlayer(target, player))
             return;
         online = false;
     }
@@ -197,7 +189,7 @@ void sendMail(const std::string &target, const std::string &message) {
 
     ff = open(((Path::Post / target).replace_extension("txt")).c_str(), O_CREAT | O_APPEND | O_RDWR, ACC);
     if(ff < 0)
-        merror("sendMail", FATAL);
+        throw std::runtime_error("sendMail");
 
     time(&t);
     strcpy(datestr, (char *) ctime(&t));
@@ -216,8 +208,6 @@ void sendMail(const std::string &target, const std::string &message) {
     if(online)
         player->printColor("^c### You have new mudmail.\n");
 
-    if(!online)
-        delete player;
 }
 
 
@@ -234,7 +224,7 @@ void postedit(Socket* sock, const std::string& str) {
     FILE    *fp=nullptr;
     std::string outstr = "";
 
-    Player* ply = sock->getPlayer();
+    std::shared_ptr<Player> ply = sock->getPlayer();
     
     // use a temp file while we're editting it
     sprintf(filename, "%s/%s_to_%s.txt", Path::Post.c_str(), ply->getCName(), sock->tempstr[0]);
@@ -254,7 +244,7 @@ void postedit(Socket* sock, const std::string& str) {
         sprintf(postfile, "%s/%s.txt", Path::Post.c_str(), sock->tempstr[0]);
         ff = open(postfile, O_CREAT | O_APPEND | O_RDWR, ACC);
         if(ff < 0)
-            merror("postedit", FATAL);
+            throw std::runtime_error("postEdit");
 
         time(&t);
         strcpy(datestr, (char *) ctime(&t));
@@ -289,7 +279,7 @@ void postedit(Socket* sock, const std::string& str) {
 
     ff = open(filename, O_CREAT | O_APPEND | O_RDWR, ACC);
     if(ff < 0)
-        merror("postedit", FATAL);
+        throw std::runtime_error("postEdit");
 
     outstr = postText(str);
     write(ff, outstr.c_str(), outstr.length());
@@ -305,7 +295,7 @@ void postedit(Socket* sock, const std::string& str) {
 //*********************************************************************
 // This function allows a player to read their mail.
 
-int cmdReadMail(Player* player, cmd* cmnd) {
+int cmdReadMail(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!canPost(player))
         return(0);
@@ -327,7 +317,7 @@ int cmdReadMail(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows a DM to read other peoples' mudmail.
 
-int dmReadmail(Player* player, cmd* cmnd) {
+int dmReadmail(const std::shared_ptr<Player>& player, cmd* cmnd) {
     cmnd->str[1][0] = up(cmnd->str[1][0]);
 
     if(!Player::exists(cmnd->str[1])) {
@@ -352,7 +342,7 @@ int dmReadmail(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows a player to delete their mail.
 
-int cmdDeleteMail(Player* player, cmd* cmnd) {
+int cmdDeleteMail(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!canPost(player))
         return(0);
     std::error_code ec;
@@ -369,8 +359,8 @@ int cmdDeleteMail(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows a DM to delete a player's mail file.
 
-int dmDeletemail(Player* player, cmd* cmnd) {
-    Player  *creature=nullptr;
+int dmDeletemail(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> creature=nullptr;
 
     cmnd->str[1][0] = up(cmnd->str[1][0]);
 
@@ -392,18 +382,14 @@ int dmDeletemail(Player* player, cmd* cmnd) {
     creature = gServer->findPlayer(cmnd->str[1]);
 
     if(!creature) {
-        if(!loadPlayer(cmnd->str[1], &creature)) {
+        if(!loadPlayer(cmnd->str[1], creature)) {
             //player->print("Player does not exist.\n");
             return(0);
-        } else {
-            creature->clearFlag(P_UNREAD_MAIL);
-            creature->save();
-            delete creature;;
         }
-    } else {
-        creature->clearFlag(P_UNREAD_MAIL);
-        creature->save(true);
     }
+
+    creature->clearFlag(P_UNREAD_MAIL);
+    creature->save(true);
 
     return(0);
 }
@@ -415,7 +401,7 @@ int dmDeletemail(Player* player, cmd* cmnd) {
 // This function allows a player to define his/her own character history
 // for roleplaying purposes. -- TC
 
-int cmdEditHistory(Player* player, cmd* cmnd) {
+int cmdEditHistory(const std::shared_ptr<Player>& player, cmd* cmnd) {
     char    file[80];
     int     ff=0;
 
@@ -467,7 +453,7 @@ void histedit(Socket* sock, const std::string& str) {
 
     ff = open(sock->tempstr[0], O_CREAT | O_APPEND | O_RDWR, ACC);
     if(ff < 0)
-        merror("histedit", FATAL);
+        throw std::runtime_error("histEdit");
 
     outstr = postText(str);
     write(ff, outstr.c_str(), outstr.length());
@@ -482,7 +468,7 @@ void histedit(Socket* sock, const std::string& str) {
 //                      cmdHistory
 //*********************************************************************
 
-int cmdHistory(Player* player, cmd* cmnd) {
+int cmdHistory(const std::shared_ptr<Player>& player, cmd* cmnd) {
     bool    self = false;
 
 
@@ -526,7 +512,7 @@ int cmdHistory(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows a player to delete their history.
 
-int cmdDeleteHistory(Player* player, cmd* cmnd) {
+int cmdDeleteHistory(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     const auto filename = (Path::History / player->getName()).replace_extension("txt");
     std::error_code ec;
@@ -542,7 +528,7 @@ int cmdDeleteHistory(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows a DM to delete a player's mail file.
 
-int dmDeletehist(Player* player, cmd* cmnd) {
+int dmDeletehist(const std::shared_ptr<Player>& player, cmd* cmnd) {
     cmnd->str[1][0] = up(cmnd->str[1][0]);
 
     if(!Player::exists(cmnd->str[1])) {

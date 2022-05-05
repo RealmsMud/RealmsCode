@@ -72,7 +72,7 @@ long Player::tickInterval(Stat& stat, bool fastTick, bool deathSickness, bool va
 // return true if they were destroyed, false if they still exist
 
 void Player::pulseTick(long t) {
-    BaseRoom* room = getRoomParent();
+    std::shared_ptr<BaseRoom> room = getRoomParent();
     bool ill = false;
     bool noTick = false;
     bool fastTick = room && room->isFastTick();
@@ -394,7 +394,7 @@ bool Player::doPlayerHarmRooms() {
     // gives us a range of 10-18 dmg
     int     dmg = 15 - (constitution.getCur() - 150)/50;
 
-    BaseRoom* room = getRoomParent();
+    std::shared_ptr<BaseRoom> room = getRoomParent();
 
     // Poison rooms
     if(room->flagIsSet(R_POISONS) && !isPoisoned() && !immuneToPoison()) {

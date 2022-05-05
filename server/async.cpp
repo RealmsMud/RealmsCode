@@ -52,7 +52,7 @@ Async::Async() {
 //                      branch
 //*********************************************************************
 
-AsyncResult Async::branch(const Player* player, ChildType type) {
+AsyncResult Async::branch(const std::shared_ptr<const Player>& player, ChildType type) {
     std::string user = (player ? player->getName() : "Someone");
     if(pipe(fds) == -1) {
         std::clog << "Error with pipe!\n";

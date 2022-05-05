@@ -80,7 +80,7 @@ CreatureClass Creature::getClass() const { return(cClass); }
 int Creature::getClassInt() const { return(static_cast<int>(cClass)); }
 
 int Creature::getSecondClassInt() const {
-    const Player* pThis = getAsConstPlayer();
+    const std::shared_ptr<const Player> pThis = getAsConstPlayer();
 
     if(pThis)
         return(static_cast<int>(pThis->getSecondClass()));
@@ -361,7 +361,7 @@ std::string Player::getCreatedStr() const {
 }
 
 
-Monster* Player::getAlias() const { return(alias_crt); }
+std::shared_ptr<Monster>  Player::getAlias() const { return(alias_crt); }
 
 cDay* Player::getBirthday() const { return(birthday); }
 
@@ -371,7 +371,7 @@ std::string Player::getAnchorRoomName(int i) const { return(anchor[i] ? anchor[i
 const Anchor* Player::getAnchor(int i) const { return(anchor[i]); }
 
 bool Player::hasAnchor(int i) const { return anchor[i] != nullptr; }
-bool Player::isAnchor(int i, const BaseRoom* room) const { return(anchor[i]->is(room)); }
+bool Player::isAnchor(int i, const std::shared_ptr<BaseRoom>& room) const { return(anchor[i]->is(room)); }
 
 unsigned short Player::getThirst() const { return(thirst); }
 
@@ -402,7 +402,7 @@ void Player::setLastCommand(std::string_view c) { lastCommand = c; boost::trim(l
 void Player::setCreated() { created = time(nullptr); }
 void Player::setSurname(const std::string& s) { surname = s.substr(0, 20); }
 void Player::setForum(std::string_view f) { forum = f; }
-void Player::setAlias(Monster* m) { alias_crt = m; }
+void Player::setAlias(std::shared_ptr<Monster>  m) { alias_crt = m; }
 
 void Player::setBirthday() {
     const Calendar* calendar = gConfig->getCalendar();
@@ -422,7 +422,7 @@ void Player::delAnchor(int i) {
 
 void Player::setAnchor(int i, std::string_view a) {
     delAnchor(i);
-    anchor[i] = new Anchor(a, this);
+    anchor[i] = new Anchor(a, Containable::downcasted_shared_from_this<Player>());
 }
 
 void Player::setThirst(unsigned short t) { thirst = t; }
@@ -439,21 +439,21 @@ int Player::setWrap(int newWrap) {
 
 void Player::setCustomColor(CustomColor i, char c) { customColors[i] = c; }
 
-Creature* Creature::getMaster() {
-    return((isMonster() ? getAsMonster()->getMaster() : this));
+std::shared_ptr<Creature> Creature::getMaster() {
+    return((isMonster() ? getAsMonster()->getMaster() : Containable::downcasted_shared_from_this<Creature>()));
 }
 
-const Creature* Creature::getConstMaster() const {
-    return((isMonster() ? getAsConstMonster()->getMaster() : this));
+std::shared_ptr<const Creature> Creature::getConstMaster() const {
+    return((isMonster() ? getAsConstMonster()->getMaster() : Containable::downcasted_shared_from_this<Creature>()));
 }
 
-Player* Creature::getPlayerMaster() {
+std::shared_ptr<Player> Creature::getPlayerMaster() {
     if(!getMaster())
         return(nullptr);
     return(getMaster()->getAsPlayer());
 }
 
-const Player* Creature::getConstPlayerMaster() const {
+std::shared_ptr<const Player> Creature::getConstPlayerMaster() const {
     if(!getConstMaster())
         return(nullptr);
     return(getConstMaster()->getAsConstPlayer());
@@ -481,7 +481,7 @@ void Creature::crtReset() {
     playing = nullptr;
     myTarget = nullptr;
 
-    for(Creature* targeter : targetingThis) {
+    for(const auto& targeter : targetingThis) {
         targeter->clearTarget(false);
     }
 
@@ -516,8 +516,9 @@ void Creature::crtReset() {
     hp.setName("Hp");
     mp.setName("Mp");
 
-    if(getAsPlayer()) {
-        getAsPlayer()->focus.setName("Focus");
+    auto* pThis = dynamic_cast<Player*>(this);
+    if(pThis) {
+        pThis->focus.setName("Focus");
 
         constitution.setInfluences(&hp);
         hp.setInfluencedBy(&constitution);
@@ -661,7 +662,7 @@ void Player::reset() {
 //                      Creature
 //*********************************************************************
 
-Creature::Creature() {
+Creature::Creature(): ready(MAXWEAR) {
     hooks.setParent(this);
 }
 void Creature::doCopy(const Creature &cr) {
@@ -779,7 +780,7 @@ void Creature::doCopy(const Creature &cr) {
         specials.push_back(attack);
     }
 
-    for(Monster* pet : cr.pets) {
+    for(const auto& pet : cr.pets) {
         pets.push_back(pet);
     }
 
@@ -905,7 +906,7 @@ void Player::doCopy(const Player& cr) {
         questsInProgress[p.first] = new QuestCompletion(*(p.second));
     }
 
-    for(auto qc : cr.questsCompleted) {
+    for(const auto& qc : cr.questsCompleted) {
         questsCompleted.insert(std::make_pair(qc.first, new QuestCompleted(*qc.second)));
     }
 
@@ -1050,8 +1051,8 @@ Player& Player::operator=(const Player& cr) {
 //*********************************************************************
 
 Monster::~Monster() {
-    if(gServer->isActive(getAsMonster()))
-        gServer->delActive(getAsMonster());
+    if(gServer->isActive(this))
+        gServer->delActive(this);
     for(auto it = responses.begin(); it != responses.end();) {
     	auto response = (*it);
     	it++;
@@ -1489,7 +1490,7 @@ bool Creature::isBraindead()  const {
 //*********************************************************************
 
 std::string Creature::fullName() const {
-    const Player *player = getAsConstPlayer();
+    const std::shared_ptr<const Player> player = getAsConstPlayer();
     std::string str = getName();
 
     if(player && !player->getProxyName().empty())
@@ -1692,13 +1693,13 @@ Location Creature::getLocation() {
 //*********************************************************************
 // returns a status string that describes the hp condition of the creature
 
-const char* Creature::getStatusStr(int dmg) {
-    int health = hp.getCur() - dmg;
+const char* Creature::getStatusStr(unsigned int dmg) {
+    unsigned int health = hp.getCur() - dmg;
 
     if(health < 1)
         return "'s dead!";
 
-    switch(MIN<int>(health * 10 / (hp.getMax() ? hp.getMax() : 1), 10)) {
+    switch(MIN<unsigned int>(health * 10 / (hp.getMax() ? hp.getMax() : 1), 10)) {
         case 10:
             return("'s unharmed.");
         case 9:

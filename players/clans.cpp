@@ -129,8 +129,8 @@ int Player::getDeityClan() const {
 // order for a player to pledge, the player needs to be in the correct
 // room with a correct monster to pledge to.
 
-int cmdPledge(Player* player, cmd* cmnd) {
-    Monster* creature=nullptr;
+int cmdPledge(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster>  creature=nullptr;
     const Clan* clan=nullptr;
 
     player->clearFlag(P_AFK);
@@ -175,18 +175,18 @@ int cmdPledge(Player* player, cmd* cmnd) {
 
 
     if(!creature->flagIsSet(M_CAN_PLEDGE_TO)) {
-        player->print("You cannot join %N's organization.\n", creature);
+        player->print("You cannot join %N's organization.\n", creature.get());
         return(0);
     }
 
     if(creature->getClan())
         clan = gConfig->getClan(creature->getClan());
     if(!clan || creature->getClan() != clan->getId()) {
-        player->print("%M is not a member of a clan.\n", creature);
+        player->print("%M is not a member of a clan.\n", creature.get());
         return(0);
     }
     if(!creature->flagIsSet(M_CAN_PLEDGE_TO)) {
-        player->print("%M cannot induct you into a clan.\n", creature);
+        player->print("%M cannot induct you into a clan.\n", creature.get());
         return(0);
     }
     if(clan->getName() == "Clan of Gradius" && player->getRace() != DWARF) {
@@ -194,9 +194,8 @@ int cmdPledge(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    broadcast(player->getSock(), player->getParent(), "%M pledges %s allegiance to %N.",
-        player, creature->hisHer(), creature);
-    player->print("You swear your allegiance to %N as you join %s clan.\n", creature, creature->hisHer());
+    broadcast(player->getSock(), player->getParent(), "%M pledges %s allegiance to %N.", player.get(), creature->hisHer(), creature.get());
+    player->print("You swear your allegiance to %N as you join %s clan.\n", creature.get(), creature->hisHer());
     player->print("You are now a member of the %s.\n", clan->getName().c_str());
     player->print("You %s %d experience and %d gold!\n", gConfig->isAprilFools() ? "lose" : "gain", clan->getJoin(), clan->getJoin() * 5);
 
@@ -229,8 +228,8 @@ int cmdPledge(Player* player, cmd* cmnd) {
 // lose all the privileges of rescinded kingdom as well as a
 // specified amount of experience and gold.
 
-int cmdRescind(Player* player, cmd* cmnd) {
-    Monster* creature=nullptr;
+int cmdRescind(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster>  creature=nullptr;
     unsigned int amte=0;
     const Clan* clan=nullptr;
 
@@ -263,11 +262,11 @@ int cmdRescind(Player* player, cmd* cmnd) {
     if(creature->getClan())
         clan = gConfig->getClan(creature->getClan());
     if(!clan || creature->getClan() != clan->getId()) {
-        player->print("%M is not a member of a clan.\n", creature);
+        player->print("%M is not a member of a clan.\n", creature.get());
         return(0);
     }
     if(creature->getClan() != player->getClan()) {
-        player->print("%M is not a member of your clan! You can't rescind here!\n", creature);
+        player->print("%M is not a member of your clan! You can't rescind here!\n", creature.get());
         return(0);
     }
 
@@ -277,7 +276,7 @@ int cmdRescind(Player* player, cmd* cmnd) {
     }
 
     if(!creature->flagIsSet(M_CAN_RESCIND_TO)) {
-        player->print("%M cannot remove you from your clan.\n", creature);
+        player->print("%M cannot remove you from your clan.\n", creature.get());
         return(0);
     }
 
@@ -286,10 +285,8 @@ int cmdRescind(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    broadcast(player->getSock(), player->getParent(), "%M rescinds %s allegiance to %N.",
-        player, creature->hisHer(), creature);
-    player->print("%M scourns you as %s strips you of all your rights and privileges!\n",
-        creature, creature->heShe());
+    broadcast(player->getSock(), player->getParent(), "%M rescinds %s allegiance to %N.", player.get(), creature->hisHer(), creature.get());
+    player->print("%M scourns you as %s strips you of all your rights and privileges!\n", creature.get(), creature->heShe());
     /*player->print("\nThe room fills with boos and hisses as you are ostracized from %N's organization.\n",
         creature);*/
     player->print("You are no longer a member of the %s.\n", clan->getName().c_str());
@@ -321,7 +318,7 @@ int cmdRescind(Player* player, cmd* cmnd) {
 //                      dmClanList
 //*********************************************************************
 
-int dmClanList(Player* player, cmd* cmnd) {
+int dmClanList(const std::shared_ptr<Player>& player, cmd* cmnd) {
     ClanMap::iterator it;
     Clan *clan=nullptr;
     bool    all = player->isCt() && cmnd->num > 1 && !strcmp(cmnd->str[1], "all");

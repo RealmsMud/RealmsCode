@@ -36,7 +36,7 @@ public:
     [[nodiscard]] std::string str() const;
     bool    operator==(const Location& l) const;
     bool    operator!=(const Location& l) const;
-    BaseRoom* loadRoom(Player* player=nullptr) const;
+    std::shared_ptr<BaseRoom> loadRoom(const std::shared_ptr<Player>& player=nullptr) const;
     [[nodiscard]] short getId() const;
 
     CatRef room;

@@ -39,7 +39,7 @@
 //*********************************************************************
 // This function allows players to detect misted vampires.
 
-int splTrueSight(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splTrueSight(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "true-sight", "true-sight"));
 }
 
@@ -48,7 +48,7 @@ int splTrueSight(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 // allows target to see further in the overland map
 
-int splFarsight(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splFarsight(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "farsight", "farsight"));
 }
 
@@ -58,7 +58,7 @@ int splFarsight(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function allows players to cast the detect-magic spell which
 // allows the spell-castee to see magic items.
 
-int splDetectMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splDetectMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "detect-magic", "detect-magic"));
 }
 
@@ -68,7 +68,7 @@ int splDetectMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function allows players to cast the detect-invisibility spell which
 // allows the target to see invisible items, monsters, and exits.
 
-int splDetectInvisibility(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splDetectInvisibility(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "detect-invisibility", "detect-invisible"));
 }
 
@@ -78,7 +78,7 @@ int splDetectInvisibility(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This spell allows the caster to determine what alignment another
 // target or player is by looking at it.
 
-int splKnowAura(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splKnowAura(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "know-aura", "know-aura"));
 }
 
@@ -87,11 +87,11 @@ int splKnowAura(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 // This allows bards to tell the luck of a given player.
 
-int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splFortune(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
     int     luk;
 
-    Player  *pPlayer = player->getAsPlayer();
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer();
 
     if(player->getClass() !=  CreatureClass::BARD && !player->isCt()) {
         player->print("Only bards may cast that spell.\n");
@@ -140,7 +140,7 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
                 player->print("You can't tell right now.\n");
             }
 
-            broadcast(player->getSock(), player->getParent(), "%M reads %s fortune.", player, player->hisHer());
+            broadcast(player->getSock(), player->getParent(), "%M reads %s fortune.", player.get(), player->hisHer());
         } else if(spellData->how == CastType::POTION)
             player->print("Nothing happens.\n");
 
@@ -164,43 +164,43 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
             luk = target->getAsPlayer()->getLuck() / 10;
 
         luk = MAX(luk, 1);
-        player->print("Fortune spell cast on %N.\n", target);
+        player->print("Fortune spell cast on %N.\n", target.get());
 
         switch (luk) {
         case 1:
-            player->print("%M's death will be swift and certain.\n", target);
+            player->print("%M's death will be swift and certain.\n", target.get());
             break;
         case 2:
-            player->print("You sense %N's karma is imbalanced.\n", target);
+            player->print("You sense %N's karma is imbalanced.\n", target.get());
             break;
         case 3:
-            player->print("A black cat must have crossed %N's path.\n", target);
+            player->print("A black cat must have crossed %N's path.\n", target.get());
             break;
         case 4:
-            player->print("%M's aura reeks of danger.\n", target);
+            player->print("%M's aura reeks of danger.\n", target.get());
             break;
         case 5:
-            player->print("Without intervention %N may end up in a dire situation.\n", target);
+            player->print("Without intervention %N may end up in a dire situation.\n", target.get());
             break;
         case 6:
-            player->print("%M's future is uncertain.\n", target);
+            player->print("%M's future is uncertain.\n", target.get());
             break;
         case 7:
-            player->print("Long range prospects look good for %N.\n", target);
+            player->print("Long range prospects look good for %N.\n", target.get());
             break;
         case 8:
-            player->print("%M should count their blessings, as others are less fortunate.\n", target);
+            player->print("%M should count their blessings, as others are less fortunate.\n", target.get());
             break;
         case 9:
-            player->print("The fates smile upon %N.\n", target);
+            player->print("The fates smile upon %N.\n", target.get());
             break;
         case 10:
-            player->print("%M's death will be tragic and unexpected.\n", target);
+            player->print("%M's death will be tragic and unexpected.\n", target.get());
             break;
         default:
             player->print("You can't tell right now.\n");
         }
-        broadcast(player->getSock(), player->getParent(), "%M checks %N's fortune.", player, target);
+        broadcast(player->getSock(), player->getParent(), "%M checks %N's fortune.", player.get(), target.get());
 
     }
     return(1);
@@ -210,12 +210,12 @@ int splFortune(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splClairvoyance
 //*********************************************************************
 
-int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *pPlayer = player->getAsPlayer();
+int splClairvoyance(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer();
     if(!pPlayer)
         return(0);
 
-    Player  *target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     int     chance=0;
 
     if(pPlayer->getClass() == CreatureClass::BUILDER) {
@@ -239,9 +239,9 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(Move::tooFarAway(pPlayer, target, "clair"))
         return(0);
 
-    broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts clairvoyance.", pPlayer);
+    broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts clairvoyance.", pPlayer.get());
     if(spellData->how == CastType::CAST)
-        pPlayer->print("You attempt to focus on %N.\n", target);
+        pPlayer->print("You attempt to focus on %N.\n", target.get());
 
     chance = 50 + (spellData->level - target->getLevel()) * 5 +
              (bonus(pPlayer->intelligence.getCur()) - bonus(target->intelligence.getCur())) * 5;
@@ -272,16 +272,16 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
                 if(Random::get(1, 100) < chance) {
                     // display a different string if the target can't see
                     if(target->flagIsSet(P_SLEEPING) || target->isBlind()) {
-                        target->print("%M temporarily sees your surroundings.\n", pPlayer);
+                        target->print("%M temporarily sees your surroundings.\n", pPlayer.get());
                     } else {
-                        target->print("%M temporarily sees through your eyes.\n", pPlayer);
+                        target->print("%M temporarily sees through your eyes.\n", pPlayer.get());
                     }
 
                 }
             } else {
-                pPlayer->print("You failed to locate %N.\n", target);
+                pPlayer->print("You failed to locate %N.\n", target.get());
                 if(Random::get(1, 100) < chance)
-                    target->print("%M tried to connect to your mind.\n", pPlayer);
+                    target->print("%M tried to connect to your mind.\n", pPlayer.get());
             }
         } else {
             display_rom(target, pPlayer);
@@ -294,7 +294,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
                  (bonus(target->intelligence.getCur()) - bonus(pPlayer->intelligence.getCur())) * 5;
 
         if(!pPlayer->isStaff() && Random::get(1, 100) < chance)
-            target->print("%M attempts to connect to your mind.\n", pPlayer);
+            target->print("%M attempts to connect to your mind.\n", pPlayer.get());
     }
 
     return(1);
@@ -304,7 +304,7 @@ int splClairvoyance(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splComprehendLanguages
 //*********************************************************************
 
-int splComprehendLanguages(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splComprehendLanguages(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::BARD && !player->isStaff()) {
         player->print("Only mages and bards may cast that spell.\n");
         return(0);
@@ -317,7 +317,7 @@ int splComprehendLanguages(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splTongues
 //*********************************************************************
 
-int splTongues(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splTongues(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::BARD && !player->isStaff()) {
         player->print("Only mages and bards may cast that spell.\n");
         return(0);
@@ -330,7 +330,7 @@ int splTongues(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splDetectHidden
 //*********************************************************************
 
-int splDetectHidden(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splDetectHidden(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     if(!player->isPlayer())
         return(0);
 
@@ -338,10 +338,10 @@ int splDetectHidden(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(!player->isMageLich())
             return(0);
         player->print("You cast a detect-hidden spell.\n");
-        broadcast(player->getSock(), player->getParent(), "%M casts a detect-hidden spell.", player);
+        broadcast(player->getSock(), player->getParent(), "%M casts a detect-hidden spell.", player.get());
     }
 
-    Player* viewer = player->getAsPlayer();
+    std::shared_ptr<Player> viewer = player->getAsPlayer();
     display_rom(viewer, viewer, spellData->level);
     return(1);
 }

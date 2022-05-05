@@ -63,7 +63,6 @@
 #include "msdp.hpp"                                 // for ReportedMsdpVariable
 #include "mud.hpp"                                  // for StartTime
 #include "mudObjects/players.hpp"                   // for Player
-#include "os.hpp"                                   // for ASSERTLOG
 #include "paths.hpp"                                // for Config
 #include "post.hpp"                                 // for histedit, postedit
 #include "property.hpp"                             // for Property
@@ -334,7 +333,7 @@ void Socket::freePlayer() {
     if (myPlayer) {
         if(inPlayerList)
             gServer->clearPlayer(myPlayer);
-        delete myPlayer;
+        myPlayer.reset();
     }
     myPlayer = nullptr;
     inPlayerList = false;
@@ -1842,7 +1841,7 @@ void Socket::setHostname(std::string_view pName) {
 void Socket::setIp(std::string_view pIp) {
     host.ip = pIp;
 }
-void Socket::setPlayer(Player* ply) {
+void Socket::setPlayer(std::shared_ptr<Player> ply) {
     myPlayer = ply;
 }
 
@@ -1850,7 +1849,7 @@ bool Socket::hasPlayer() const {
     return myPlayer != nullptr;
 }
 
-Player* Socket::getPlayer() const {
+std::shared_ptr<Player> Socket::getPlayer() const {
     return (myPlayer);
 }
 
@@ -1895,7 +1894,6 @@ const char EOR_STR[] = {(char) IAC, (char) EOR, '\0' };
 const char GA_STR[] = {(char) IAC, (char) GA, '\0' };
 
 void Socket::askFor(const char *str) {
-    ASSERTLOG( str);
     if (eorEnabled()) {
         printColor(str);
         print(EOR_STR);

@@ -46,7 +46,7 @@ private:
                 verifier.verify(decoded);
 
                 ctx.userId = decoded.get_payload_claim("userId").as_string();
-            } catch(std::system_error e) {
+            } catch(std::system_error& e) {
                 res.code = 403;
                 res.end();
             }

@@ -21,7 +21,7 @@
 
 class cmd;
 
-int mccp(Player* player, cmd* cmnd) {
+int mccp(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player)
         return(0);
 

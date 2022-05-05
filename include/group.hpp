@@ -20,6 +20,7 @@
 #define GROUP_H_
 
 #include <list>
+#include <memory>
 
 class cmd;
 class Creature;
@@ -52,7 +53,7 @@ enum GroupFlags {
 
     GROUP_MAX_FLAG
 };
-typedef std::list<Creature*> CreatureList;
+typedef std::list<std::weak_ptr<Creature>> CreatureList;
 
 class Group {
 public:
@@ -60,29 +61,29 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const Group& group);
 
     // Group commands
-    static int invite(Player* player, cmd* cmnd);
-    static int join(Player* player, cmd *cmnd);
-    static int reject(Player* player, cmd* cmnd);
-    static int disband(Player* player, cmd* cmnd);
-    static int promote(Player* player, cmd* cmnd);
-    static int kick(Player* player, cmd* cmnd);
-    static int leave(Player* player, cmd* cmnd);
-    static int rename(Player* player, cmd* cmnd);
-    static int type(Player* player, cmd* cmnd);
-    static int set(Player* player, cmd* cmnd, bool set);
+    static int invite(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static int join(const std::shared_ptr<Player>& player, cmd *cmnd);
+    static int reject(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static int disband(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static int promote(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static int kick(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static int leave(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static int rename(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static int type(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static int set(const std::shared_ptr<Player>& player, cmd* cmnd, bool set);
 
 public:
-    Group(Creature* pLeader);
+    Group(const std::shared_ptr<Creature>& pLeader);
     ~Group();
 
     // Add or remove players from a group
-    bool add(Creature* newMember, bool addPets = true);
-    bool remove(Creature* toRemove);
+    bool add(const std::weak_ptr<Creature>& newMember, bool addPets = true);
+    bool remove(const std::weak_ptr<Creature>& toRemove);
     void removeAll();
     bool disband();
 
     // Set information about a group
-    bool setLeader(Creature* newLeader);
+    bool setLeader(const std::shared_ptr<Creature>& newLeader);
     void setName(std::string_view newName);
     void setDescription(std::string_view newDescription);
     void setGroupType(GroupType newType);
@@ -92,31 +93,31 @@ public:
 
     // Various info about a group
     [[nodiscard]] bool flagIsSet(int flag) const;
-    [[nodiscard]] bool inGroup(Creature* target);
-    [[nodiscard]] Creature* getLeader() const;
+    [[nodiscard]] bool inGroup(std::shared_ptr<Creature> target);
+    [[nodiscard]] std::shared_ptr<Creature> getLeader() const;
     [[nodiscard]] int size();
     [[nodiscard]] int getSize(bool countDmInvis = false, bool membersOnly = true);
-    [[nodiscard]] int getNumInSameRoom(Creature* target);
-    [[nodiscard]] int getNumPlyInSameRoom(Creature* target);
-    [[nodiscard]] Creature* getMember(int num, bool countDmInvis = false);
-    [[nodiscard]] Creature* getMember(const std::string&  name, int num, Creature* searcher = nullptr, bool includePets = false);
+    [[nodiscard]] int getNumInSameRoom(const std::shared_ptr<Creature>& target);
+    [[nodiscard]] int getNumPlyInSameRoom(const std::shared_ptr<Creature>& target);
+    [[nodiscard]] std::shared_ptr<Creature> getMember(int num, bool countDmInvis = false);
+    [[nodiscard]] std::shared_ptr<Creature> getMember(const std::string&  pName, int num, const std::shared_ptr<Creature>& searcher = nullptr, bool includePets = false);
     [[nodiscard]] GroupType getGroupType() const;
     [[nodiscard]] std::string getGroupTypeStr() const;
-    [[nodiscard]] std::string getFlagsDisplay();
+    [[nodiscard]] std::string getFlagsDisplay() const;
     [[nodiscard]] const std::string& getName() const;
     [[nodiscard]] const std::string& getDescription() const;
-    std::string getGroupList(Creature* viewer);
+    std::string getGroupList(const std::shared_ptr<Creature>& viewer);
 
 
-    void sendToAll(std::string_view msg, Creature* ignore = nullptr, bool sendToInvited = false);
+    void sendToAll(std::string_view msg, const std::shared_ptr<Creature>& ignore = nullptr, bool sendToInvited = false);
 
-    std::string getMsdp(Creature* viewer) const;
+    [[nodiscard]] std::string getMsdp(const std::shared_ptr<Creature>& viewer) const;
 
 public:
     CreatureList members;
 
 private:
-    Creature* leader;
+    std::weak_ptr<Creature> leader;
     std::string name;
     std::string description;
 

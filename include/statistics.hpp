@@ -74,14 +74,14 @@ public:
     ~Statistics();
     void save(xmlNodePtr rootNode, const std::string &nodeName) const;
     void load(xmlNodePtr curNode);
-    void display(const Player* viewer, bool death=false);
-    void displayLevelHistory(const Player* viewer);
+    void display(const std::shared_ptr<Player> viewer, bool death=false);
+    void displayLevelHistory(const std::shared_ptr<Player> viewer);
     void reset();
     std::string getTime();
     unsigned long pkDemographics() const;
 
-    static unsigned long calcToughness(Creature* target);
-    static std::string damageWith(const Player* player, const Object* weapon);
+    static unsigned long calcToughness(std::shared_ptr<Creature> target);
+    static std::string damageWith(const std::shared_ptr<Player> player, const std::shared_ptr<Object>  weapon);
     void startLevelHistoryTracking();
     time_t getLevelHistoryStart();
 protected:
@@ -134,7 +134,7 @@ private:
     StringStatistic mostAttackDamage;
     StringStatistic mostMagicDamage;
     // so we can reference
-    Player* parent{};
+    std::shared_ptr<Player> parent{};
 public:
     bool track{};
     // combat
@@ -176,7 +176,7 @@ public:
 
     // most
     void group(unsigned long num);
-    void monster(Monster* monster);
+    void monster(std::shared_ptr<Monster>  monster);
     void attackDamage(unsigned long num, std::string_view with);
     void magicDamage(unsigned long num, std::string_view with);
     void experience(unsigned long num, std::string_view with);
@@ -191,7 +191,7 @@ public:
     // remove when all players are up to 2.42i
     void setPkin(unsigned long p);
     void setPkwon(unsigned long p);
-    void setParent(Player* player);
+    void setParent(std::shared_ptr<Player> player);
 
     LevelInfo* getLevelInfo(int level);
 };

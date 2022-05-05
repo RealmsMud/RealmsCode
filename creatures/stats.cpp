@@ -521,7 +521,7 @@ unsigned int Stat::restore() {
 //                      modifyStatTotalByEffect
 //*********************************************************************
 
-int modifyStatTotalByEffect(const Player* player, std::string_view effect) {
+int modifyStatTotalByEffect(const std::shared_ptr<Player> player, std::string_view effect) {
     const EffectInfo* ef = player->getEffect(effect);
     if(ef) return(ef->getStrength());
     return(0);
@@ -544,7 +544,7 @@ bool Player::statsAddUp() const {
 
 bool Creature::addStatModEffect(EffectInfo* effect) {
     Stat* stat=nullptr;
-    Player* pThis = getAsPlayer();
+    std::shared_ptr<Player> pThis = getAsPlayer();
     bool good;
     ModifierType modType = MOD_CUR_MAX;
     const auto& effectName = effect->getName();
@@ -641,7 +641,7 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 
 bool Creature::remStatModEffect(EffectInfo* effect) {
     Stat* stat=nullptr;
-    Player* pThis = getAsPlayer();
+    std::shared_ptr<Player> pThis = getAsPlayer();
     const auto& effectName = effect->getName();
 
     if(effectName == "strength" || effectName == "enfeeblement" || effectName == "berserk") {
@@ -685,7 +685,7 @@ void Stat::upgradeSetCur(unsigned int newCur) {
 }
 
 // Note: Used for upgradeStats
-void checkEffect(Creature* creature, std::string_view effName, unsigned int &stat, bool positive)  {
+void checkEffect(std::shared_ptr<Creature> creature, std::string_view effName, unsigned int &stat, bool positive)  {
     EffectInfo* eff = creature->getEffect(effName);
     if(eff) {
         int str = eff->getStrength();
@@ -726,19 +726,20 @@ void Player::upgradeStats() {
     unsigned int cInt = intelligence.getCur(false);
     unsigned int cPie = piety.getCur(false);
 
-    checkEffect(this, "strength", cStr, true);
-    checkEffect(this, "enfeeblement", cStr, false);
-    checkEffect(this, "haste", cDex, true);
-    checkEffect(this, "slow", cDex, false);
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
+    checkEffect(pThis, "strength", cStr, true);
+    checkEffect(pThis, "enfeeblement", cStr, false);
+    checkEffect(pThis, "haste", cDex, true);
+    checkEffect(pThis, "slow", cDex, false);
 
-    checkEffect(this, "fortitude", cCon, true);
-    checkEffect(this, "weakness", cCon, false);
+    checkEffect(pThis, "fortitude", cCon, true);
+    checkEffect(pThis, "weakness", cCon, false);
 
-    checkEffect(this, "insight", cInt, true);
-    checkEffect(this, "feeblemind", cInt, false);
+    checkEffect(pThis, "insight", cInt, true);
+    checkEffect(pThis, "feeblemind", cInt, false);
 
-    checkEffect(this, "prayer", cPie, true);
-    checkEffect(this, "damnation", cPie, false);
+    checkEffect(pThis, "prayer", cPie, true);
+    checkEffect(pThis, "damnation", cPie, false);
 
     PlayerClass *pClass = gConfig->classes[getClassString()];
     LevelGain *lGain = nullptr;
@@ -817,19 +818,20 @@ void Monster::upgradeStats() {
     unsigned int cHp = hp.getCur(false);
     unsigned int cMp = mp.getCur(false);
 
-    checkEffect(this, "strength", cStr, true);
-    checkEffect(this, "enfeeblement", cStr, false);
-    checkEffect(this, "haste", cDex, true);
-    checkEffect(this, "slow", cDex, false);
+    auto mThis = Containable::downcasted_shared_from_this<Monster>();
+    checkEffect(mThis, "strength", cStr, true);
+    checkEffect(mThis, "enfeeblement", cStr, false);
+    checkEffect(mThis, "haste", cDex, true);
+    checkEffect(mThis, "slow", cDex, false);
 
-    checkEffect(this, "fortitude", cCon, true);
-    checkEffect(this, "weakness", cCon, false);
+    checkEffect(mThis, "fortitude", cCon, true);
+    checkEffect(mThis, "weakness", cCon, false);
 
-    checkEffect(this, "insight", cInt, true);
-    checkEffect(this, "feeblemind", cInt, false);
+    checkEffect(mThis, "insight", cInt, true);
+    checkEffect(mThis, "feeblemind", cInt, false);
 
-    checkEffect(this, "prayer", cPie, true);
-    checkEffect(this, "damnation", cPie, false);
+    checkEffect(mThis, "prayer", cPie, true);
+    checkEffect(mThis, "damnation", cPie, false);
 
     hp.setInitial(cHp);
     mp.setInitial(cMp);

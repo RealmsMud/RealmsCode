@@ -53,7 +53,7 @@
 #include "xml.hpp"                               // for numToStr
 
 
-bool Creature::runSpecialAttacks(Creature* victim) {
+bool Creature::runSpecialAttacks(std::shared_ptr<Creature> victim) {
     if(specials.empty())
         return(false);
 
@@ -80,11 +80,11 @@ SpecialAttack* Creature::getSpecial(std::string_view special) {
     return(nullptr);
 
 }
-bool Creature::useSpecial(std::string_view special, Creature* victim) {
+bool Creature::useSpecial(std::string_view special, std::shared_ptr<Creature> victim) {
     return(useSpecial(getSpecial(special), victim));
 }
 
-bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
+bool Creature::useSpecial(SpecialAttack* attack, std::shared_ptr<Creature> victim) {
     if(!attack)
         return(false);
 
@@ -125,21 +125,21 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
 
     bool attacked = false;
     if(attack->isAreaAttack() && getRoomParent()) {
-        attack->printRoomString(this);
+        attack->printRoomString(Containable::downcasted_shared_from_this<Creature>());
 
-        BaseRoom* room = getRoomParent();
+        std::shared_ptr<BaseRoom> room = getRoomParent();
         if(attack->flagIsSet(SA_AE_PLAYER) || attack->flagIsSet(SA_AE_ALL)) {
             // First hit players
             auto pIt = room->players.begin();
             while(pIt != room->players.end()) {
-                Player* ply = (*pIt++);
+                std::shared_ptr<Player> ply = (*pIt++);
                 doSpecial(attack, ply);
                 attacked = true;
             }
             // Second, hit pets
             auto mIt = room->monsters.begin();
             while(mIt != room->monsters.end()) {
-                Monster* mons = (*mIt++);
+                std::shared_ptr<Monster>  mons = (*mIt++);
                 if(mons->isPet()) {
                     doSpecial(attack, mons);
                     attacked = true;
@@ -150,7 +150,7 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
             // Hit all non pets
             auto mIt = room->monsters.begin();
             while(mIt != room->monsters.end()) {
-                Monster* mons = (*mIt++);
+                std::shared_ptr<Monster>  mons = (*mIt++);
                 if(!mons->isPet()) {
                     doSpecial(attack, mons);
                     attacked = true;
@@ -165,9 +165,10 @@ bool Creature::useSpecial(SpecialAttack* attack, Creature* victim) {
 
 
 // Run the given special on a target, should only be called from useSpecial
-bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
-    Player* pVictim = victim->getAsPlayer();
-    Monster* mThis = getAsMonster();
+bool Creature::doSpecial(SpecialAttack* attack, std::shared_ptr<Creature> victim) {
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
+    std::shared_ptr<Player> pVictim = victim->getAsPlayer();
+    std::shared_ptr<Monster>  mThis = getAsMonster();
 
     if(victim->isMonster() && victim->flagIsSet(M_NO_CIRCLE) && boost::iequals(attack->getName(), "circle"))
         return(false);
@@ -216,7 +217,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
             attack->used++;
     }
 
-    victim->checkTarget(this);
+    victim->checkTarget(cThis);
     if(attack->type == SPECIAL_WEAPON) {
         // General attack, so compute an attack result
         int resultFlags = NO_CRITICAL | NO_FUMBLE; // We'll be nice for now...no critical backstabs on mobs :)
@@ -230,21 +231,21 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         AttackResult result = getAttackResult(victim, nullptr, resultFlags);
         switch(result) {
             case ATTACK_DODGE:
-                attack->printFailStrings(this, victim);
-                victim->dodge(this);
+                attack->printFailStrings(cThis, victim);
+                victim->dodge(cThis);
                 victim->doLagProtect();
                 return(true);
             case ATTACK_PARRY:
-                attack->printFailStrings(this, victim);
-                victim->parry(this);
+                attack->printFailStrings(cThis, victim);
+                victim->parry(cThis);
                 victim->doLagProtect();
                 return(true);
             case ATTACK_MISS:
-                attack->printFailStrings(this, victim);
+                attack->printFailStrings(cThis, victim);
                 victim->doLagProtect();
                 return(true);
             case ATTACK_BLOCK:
-                printColor("^C%M partially blocked your attack!\n", victim);
+                printColor("^C%M partially blocked your attack!\n", victim.get());
                 victim->printColor("^CYou manage to partially block %N's attack!\n", this);
                 break;
             default:
@@ -280,7 +281,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
 
         bns = MAX(0,MIN(bns,maxBonus));
         // Save types are saves + 1 to account for NO_SAVE
-        if(victim->chkSave(attack->saveType - 1, this, bns))
+        if(victim->chkSave(attack->saveType - 1, cThis, bns))
             saved = true;
     } else {
         int chance = 50;
@@ -316,8 +317,8 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
     }
 
     if(saved) {
-        attack->printRoomSaveString(this, victim);
-        attack->printTargetSaveString(this, victim);
+        attack->printRoomSaveString(cThis, victim);
+        attack->printTargetSaveString(cThis, victim);
 
         // This flag can be used on attacks like circle where nothing happens when they save vs dex
         if(attack->flagIsSet(SA_SAVE_NO_DAMAGE)) {
@@ -339,7 +340,7 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
                 return(false);
 
             if(!saved) {
-                pVictim->addEffect("petrification", 0, 0, nullptr, true, this);
+                pVictim->addEffect("petrification", 0, 0, nullptr, true, cThis);
                 pVictim->clearAsEnemy(); // clears player from all mob's enemy lists in the room.
                 pVictim->removeFromGroup(false);
             }
@@ -403,9 +404,9 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
 
         // More adjustments
         if(attack->type == SPECIAL_WEAPON || attack->flagIsSet(SA_CHECK_PHYSICAL_DAMAGE))
-            victim->modifyDamage(this, PHYSICAL, attackDamage);
+            victim->modifyDamage(cThis, PHYSICAL, attackDamage);
         else if(attack->flagIsSet(SA_CHECK_NEGATIVE_ENERGY))
-            victim->modifyDamage(this, NEGATIVE_ENERGY, attackDamage);
+            victim->modifyDamage(cThis, NEGATIVE_ENERGY, attackDamage);
 
         if(attack->flagIsSet(SA_BERSERK_REDUCE))
             attackDamage.set(Random::get(1, 10));
@@ -422,12 +423,12 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
     if(pVictim && !isPet()) {
         if(attack->flagIsSet(SA_ACID)) {
             // Check for disolve
-            if(attack->saveType == SAVE_NONE || !pVictim->chkSave(attack->saveType-1, this, attack->saveBonus))
+            if(attack->saveType == SAVE_NONE || !pVictim->chkSave(attack->saveType-1, cThis, attack->saveBonus))
                 pVictim->loseAcid();
         }
         if(attack->flagIsSet(SA_DISSOLVE)) {
-            if(attack->saveType == SAVE_NONE || !pVictim->chkSave(attack->saveType-1, this,attack->saveBonus))
-                pVictim->dissolveItem(this);
+            if(attack->saveType == SAVE_NONE || !pVictim->chkSave(attack->saveType-1, cThis,attack->saveBonus))
+                pVictim->dissolveItem(cThis);
         }
     }
     if(mThis) {
@@ -448,10 +449,10 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         }
     }
     if(attack->flagIsSet(SA_SINGLE_TARGET))
-        attack->printRoomString(this, victim);
+        attack->printRoomString(cThis, victim);
 
     if(attackDamage.get() != -1) {
-        attack->printTargetString(this, victim, attackDamage.get());
+        attack->printTargetString(cThis, victim, attackDamage.get());
 
         if(attack->flagIsSet(SA_DRAINS_DAMAGE)) {
             victim->printColor("^r%M feeds on your energy.\n", this);
@@ -462,10 +463,10 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
             victim->subExperience(attackDamage.get());
         } else {
             if(isPet() && getMaster())
-                getMaster()->printColor("%M %s %N for %s%d^x damage.\n", this, attack->verb.c_str(), victim, getMaster()->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                getMaster()->printColor("%M %s %N for %s%d^x damage.\n", this, attack->verb.c_str(), victim.get(), getMaster()->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 
             broadcastGroup(false, victim, "^M%M^x %s ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", this, attack->verb.c_str(),
-                victim, attackDamage.get(), victim->heShe(), victim->getStatusStr(attackDamage.get()));
+                victim.get(), attackDamage.get(), victim->heShe(), victim->getStatusStr(attackDamage.get()));
 
             if(attack->flagIsSet(SA_CHECK_DIE_ROB)) {
                 if(doDamage(victim, attackDamage.get(), CHECK_DIE_ROB))
@@ -479,10 +480,10 @@ bool Creature::doSpecial(SpecialAttack* attack, Creature* victim) {
         // TODO: Dom: make a flag for this?
         // 5% chance to get porphyria when bitten by a vampire
         if(attack->getName() == "Vampiric Bite")
-            victim->addPorphyria(this, 5);
+            victim->addPorphyria(cThis, 5);
 
     } else {
-        attack->printTargetString(this, victim);
+        attack->printTargetString(cThis, victim);
     }
 
     // Stun the target if they didn't save
@@ -513,7 +514,7 @@ void SpecialAttack::clearFlag(int flag) {
     flags.reset(flag);
 }
 
-std::string SpecialAttack::modifyAttackString(std::string_view input, Creature* viewer, Creature* attacker, Creature* target, int dmg) {
+std::string SpecialAttack::modifyAttackString(std::string_view input, std::shared_ptr<Creature> viewer, std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target, int dmg) {
     std::string toReturn = std::string(input);
     /*          Web Editor
      *           _   _  ____ _______ ______
@@ -552,12 +553,12 @@ std::string SpecialAttack::modifyAttackString(std::string_view input, Creature* 
     return(toReturn);
 }
 
-void SpecialAttack::printToRoom(BaseRoom* room, std::string_view str, Creature* attacker, Creature* target, int dmg ) {
+void SpecialAttack::printToRoom(std::shared_ptr<BaseRoom> room, std::string_view str, std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target, int dmg ) {
     if(str.empty())
         return;
 
     std::string toPrint;
-    for(Player* ply : room->players) {
+    for(const auto& ply: room->players) {
         if(!ply || ply == target)
             continue;
 
@@ -566,24 +567,24 @@ void SpecialAttack::printToRoom(BaseRoom* room, std::string_view str, Creature* 
     }
 
 }
-void SpecialAttack::printFailStrings(Creature* attacker, Creature* target) {
+void SpecialAttack::printFailStrings(std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target) {
     printToRoom(target->getRoomParent(), roomFailStr, attacker, target);
     std::string toPrint = modifyAttackString(targetFailStr, target, attacker, target);
     target->printColor("%s\n", toPrint.c_str());
 }
-void SpecialAttack::printRoomString(Creature* attacker, Creature* target) {
+void SpecialAttack::printRoomString(std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target) {
     return(printToRoom(attacker->getRoomParent(), roomStr, attacker, target));
 }
 
-void SpecialAttack::printTargetString(Creature* attacker, Creature* target, int dmg) {
+void SpecialAttack::printTargetString(std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target, int dmg) {
     std::string toPrint = modifyAttackString(targetStr, target, attacker, target, dmg);
     target->printColor("%s\n", toPrint.c_str());
 }
 
-void SpecialAttack::printRoomSaveString(Creature* attacker, Creature* target) {
+void SpecialAttack::printRoomSaveString(std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target) {
     return(printToRoom(attacker->getRoomParent(), roomSaveStr, attacker, target));
 }
-void SpecialAttack::printTargetSaveString(Creature* attacker, Creature* target, int dmg) {
+void SpecialAttack::printTargetSaveString(std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target, int dmg) {
     std::string toPrint = modifyAttackString(targetSaveStr, target, attacker, target, dmg);
     target->printColor("%s\n", toPrint.c_str());
 }
@@ -615,9 +616,9 @@ std::string Creature::getSpecialsFullList() const {
 
     return(toPrint);
 }
-int dmSpecials(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
-    Monster* mTarget=nullptr;
+int dmSpecials(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Monster>  mTarget=nullptr;
 
     if(player->getClass() == CreatureClass::BUILDER && !player->canBuildMonsters())
         return(cmdNoAuth(player));
@@ -653,7 +654,7 @@ int dmSpecials(Player* player, cmd* cmnd) {
     if(cmnd->num > 2) {
         if(!strncmp(cmnd->str[2], "-d", 2)) {
             target->delSpecials();
-            player->print("Deleted all specials for %N\n", target);
+            player->print("Deleted all specials for %N\n", target.get());
             return(0);
         }
         SpecialAttack* attack;
@@ -687,7 +688,7 @@ int dmSpecials(Player* player, cmd* cmnd) {
             player->print("     death-gaze\n");
             return(0);
         } else {
-            player->printColor("Added special ^W%s^x to ^W%M^x.\n", attack->getName().c_str(), target);
+            player->printColor("Added special ^W%s^x to ^W%M^x.\n", attack->getName().c_str(), target.get());
             return(0);
         }
     } else {

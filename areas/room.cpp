@@ -47,7 +47,6 @@
 #include "mudObjects/players.hpp"      // for Player
 #include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
 #include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
-#include "os.hpp"                      // for ASSERTLOG, merror
 #include "property.hpp"                // for Property
 #include "proto.hpp"                   // for broadcast, isCt, logn, isStaff
 #include "random.hpp"                  // for Random
@@ -65,14 +64,14 @@
 // player into the room's linked player list, alphabetically. Also,
 // the player's room pointer is updated.
 
-void Player::addToSameRoom(Creature* target) {
+void Player::addToSameRoom(const std::shared_ptr<Creature>& target) {
     if(target->inRoom())
         addToRoom(target->getRoomParent());
 }
 
 
 
-void Player::finishAddPlayer(BaseRoom* room) {
+void Player::finishAddPlayer(const std::shared_ptr<BaseRoom>& room) {
 
     setFleeing(false);
 
@@ -102,12 +101,12 @@ void Player::finishAddPlayer(BaseRoom* room) {
 
     if(flagIsSet(P_SNEAK_WHILE_MISTED))
         clearFlag(P_SNEAK_WHILE_MISTED);
-    setLastPawn(0);
+    setLastPawn(nullptr);
 
 
-    for(Object* obj : objects) {
+    for(const auto& obj : objects) {
         if(obj->getType() == ObjectType::CONTAINER) {
-            for(Object* subObj : obj->objects) {
+            for(const auto& subObj : obj->objects) {
                 if(subObj->flagIsSet(O_JUST_BOUGHT))
                     subObj->clearFlag(O_JUST_BOUGHT);
             }
@@ -127,7 +126,7 @@ void Player::finishAddPlayer(BaseRoom* room) {
 
 
     // Clear the enemy list of pets when leaving the room
-    for(Monster* pet : pets) {
+    for(const auto& pet : pets) {
         if(pet->isPet()) {
             pet->clearEnemyList();
         }
@@ -140,19 +139,19 @@ void Player::finishAddPlayer(BaseRoom* room) {
 
 
     if(room->players.empty()) {
-        for(Monster* mons : room->monsters) {
+        for(const auto& mons : room->monsters) {
             gServer->addActive(mons);
         }
     }
 
     addTo(room);
-    display_rom(this);
+    display_rom(Containable::downcasted_shared_from_this<Player>());
 
-    Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
+    Hooks::run(room, "afterAddCreature", Containable::downcasted_shared_from_this<Player>(), "afterAddToRoom");
 }
 
-void Player::addToRoom(BaseRoom* room) {
-    AreaRoom* aRoom = room->getAsAreaRoom();
+void Player::addToRoom(const std::shared_ptr<BaseRoom>& room) {
+    std::shared_ptr<AreaRoom> aRoom = room->getAsAreaRoom();
 
     if(aRoom)
         addToRoom(aRoom);
@@ -160,16 +159,16 @@ void Player::addToRoom(BaseRoom* room) {
         addToRoom(room->getAsUniqueRoom());
 }
 
-void Player::addToRoom(AreaRoom* aRoom) {
-    Hooks::run(aRoom, "afterAddCreature", this, "afterAddToRoom");
+void Player::addToRoom(const std::shared_ptr<AreaRoom>& aRoom) {
+    Hooks::run(aRoom, "afterAddCreature", Containable::downcasted_shared_from_this<Player>(), "afterAddToRoom");
     currentLocation.room.clear();
     finishAddPlayer(aRoom);
 }
 
-void Player::addToRoom(UniqueRoom* uRoom) {
+void Player::addToRoom(const std::shared_ptr<UniqueRoom>& uRoom) {
     bool    builderInRoom=false;
 
-    Hooks::run(uRoom, "beforeAddCreature", this, "beforeAddToRoom");
+    Hooks::run(uRoom, "beforeAddCreature", Containable::downcasted_shared_from_this<Player>(), "beforeAddToRoom");
     currentLocation.room = uRoom->info;
     currentLocation.mapmarker.reset();
 
@@ -208,8 +207,8 @@ void Player::addToRoom(UniqueRoom* uRoom) {
         checkRangeRestrict(uRoom->info))
     {
         // only log if another builder is not in the room
-        for(Player* ply : uRoom->players) {
-            if( ply != this &&
+        for(const auto& ply: uRoom->players) {
+            if( ply.get() != this &&
                 ply->getClass() == CreatureClass::BUILDER)
             {
                 builderInRoom = true;
@@ -259,14 +258,14 @@ void Creature::setPreviousRoom() {
 // This function removes a player from a room's linked list of players.
 
 int Creature::deleteFromRoom(bool delPortal) {
-    Hooks::run(getRoomParent(), "beforeRemoveCreature", this, "beforeRemoveFromRoom");
+    Hooks::run(getRoomParent(), "beforeRemoveCreature", Containable::downcasted_shared_from_this<Creature>(), "beforeRemoveFromRoom");
 
     setPreviousRoom();
 
     if(inUniqueRoom()) {
         return(doDeleteFromRoom(getUniqueRoomParent(), delPortal));
     } else if(inAreaRoom()) {
-        AreaRoom* room = getAreaRoomParent();
+        std::shared_ptr<AreaRoom> room = getAreaRoomParent();
         int i = doDeleteFromRoom(room, delPortal);
         if(room->canDelete()) {
             room->area->remove(room);
@@ -277,11 +276,11 @@ int Creature::deleteFromRoom(bool delPortal) {
     return(0);
 }
 
-int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
+int Player::doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) {
     long    t=0;
     int     i=0;
 
-    t = time(0);
+    t = time(nullptr);
     if(inUniqueRoom() && !isStaff()) {
         strcpy(getUniqueRoomParent()->lastPly, getCName());
         strcpy(getUniqueRoomParent()->lastPlyTime, ctime(&t));
@@ -297,14 +296,14 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
     // but they were never added to the player list. this happens
     // in dmMove for offline players.
     if(room->players.empty()) {
-        Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
+        Hooks::run(room, "afterRemoveCreature", Containable::downcasted_shared_from_this<Player>(), "afterRemoveFromRoom");
         return(i);
     }
 
     removeFrom();
 
     if(room->players.empty()) {
-        for(Monster* mons : room->monsters) {
+        for(const auto& mons : room->monsters) {
             /*
              * pets and fast wanderers are always active
              *
@@ -319,11 +318,11 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
                 !mons->flagIsSet(M_PERMENANT_MONSTER) &&
                 !mons->flagIsSet(M_AGGRESSIVE)
             )
-                gServer->delActive(mons->getAsMonster());
+                gServer->delActive(mons.get());
         }
     }
 
-    Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
+    Hooks::run(room, "afterRemoveCreature", Containable::downcasted_shared_from_this<Player>(), "afterRemoveFromRoom");
     return(i);
 }
 
@@ -334,15 +333,13 @@ int Player::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 // the object list of the room pointed to by the second parameter.
 // The object is added alphabetically to the room.
 
-void Object::addToRoom(BaseRoom* room) {
-    ASSERTLOG(room);
-
+void Object::addToRoom(const std::shared_ptr<BaseRoom>& room) {
     validateId();
 
-    Hooks::run(room, "beforeAddObject", this, "beforeAddToRoom");
+    Hooks::run(room, "beforeAddObject", Containable::downcasted_shared_from_this<Object>(), "beforeAddToRoom");
     clearFlag(O_KEEP);
-    room->add(this);
-    Hooks::run(room, "afterAddObject", this, "afterAddToRoom");
+    room->add(Containable::downcasted_shared_from_this<Object>());
+    Hooks::run(room, "afterAddObject", Containable::downcasted_shared_from_this<Object>(), "afterAddToRoom");
     room->killMortalObjects();
 }
 
@@ -355,11 +352,11 @@ void Object::addToRoom(BaseRoom* room) {
 void Object::deleteFromRoom() {
     if(!inRoom())
         return;
-    BaseRoom* room = this->getRoomParent();
+    std::shared_ptr<BaseRoom> room = this->getRoomParent();
 
-    Hooks::run(room, "beforeRemoveObject", this, "beforeRemoveFromRoom");
+    Hooks::run(room, "beforeRemoveObject", Containable::downcasted_shared_from_this<Object>(), "beforeRemoveFromRoom");
     removeFrom();
-    Hooks::run(room, "afterRemoveObject", this, "afterRemoveFromRoom");
+    Hooks::run(room, "afterRemoveObject", Containable::downcasted_shared_from_this<Object>(), "afterRemoveFromRoom");
 }
 
 //*********************************************************************
@@ -372,13 +369,13 @@ void Object::deleteFromRoom() {
 // If it is non-zero, then the room will be told that "num" monsters
 // of that name entered the room.
 
-void Monster::addToRoom(BaseRoom* room, int num) {
-    Hooks::run(room, "beforeAddCreature", this, "beforeAddToRoom");
+void Monster::addToRoom(const std::shared_ptr<BaseRoom>& room, int num) {
+    Hooks::run(room, "beforeAddCreature", Containable::downcasted_shared_from_this<Monster>(), "beforeAddToRoom");
 
     char    str[160];
     validateId();
 
-    lasttime[LT_AGGRO_ACTION].ltime = time(0);
+    lasttime[LT_AGGRO_ACTION].ltime = time(nullptr);
     killDarkmetal();
 
     // Only show if num != 0 and it isn't a perm, otherwise we'll either
@@ -409,7 +406,7 @@ void Monster::addToRoom(BaseRoom* room, int num) {
 
     addTo(room);
 //  room->monsters.insert(this);
-    Hooks::run(room, "afterAddCreature", this, "afterAddToRoom");
+    Hooks::run(room, "afterAddCreature", Containable::downcasted_shared_from_this<Monster>(), "afterAddToRoom");
 }
 
 //*********************************************************************
@@ -420,16 +417,14 @@ void Monster::addToRoom(BaseRoom* room, int num) {
 // Return Value: True if the area room was purged
 //               False otherwise
 
-int Monster::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
-
-
+int Monster::doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) {
     if(!room)
         return(0);
     if(room->monsters.empty())
         return(0);
 
     removeFrom();
-    Hooks::run(room, "afterRemoveCreature", this, "afterRemoveFromRoom");
+    Hooks::run(room, "afterRemoveCreature", Containable::downcasted_shared_from_this<Monster>(), "afterRemoveFromRoom");
     return(0);
 }
 
@@ -442,10 +437,10 @@ int Monster::doDeleteFromRoom(BaseRoom* room, bool delPortal) {
 
 void UniqueRoom::addPermCrt() {
     std::map<int, crlasttime>::iterator it, nt;
-    crlasttime* crtm=0;
+    crlasttime* crtm=nullptr;
     std::map<int, bool> checklist;
-    Monster *creature=0;
-    long    t = time(0);
+    std::shared_ptr<Monster> monster=nullptr;
+    long    t = time(nullptr);
     int     j=0, m=0, n=0;
 
     for(it = permMonsters.begin(); it != permMonsters.end() ; it++) {
@@ -467,35 +462,35 @@ void UniqueRoom::addPermCrt() {
                 ((*nt).second.ltime + (*nt).second.interval) < t
             ) {
                 n++;
-                checklist[(*nt).first] = 1;
+                checklist[(*nt).first] = true;
             }
         }
 
-        if(!loadMonster(crtm->cr, &creature))
+        if(!loadMonster(crtm->cr, monster))
             continue;
 
-        for(Monster* mons : monsters) {
-            if( mons->flagIsSet(M_PERMENANT_MONSTER) && mons->getName() == creature->getName() )
+        for(const auto& mons : monsters) {
+            if( mons->flagIsSet(M_PERMENANT_MONSTER) && mons->getName() == monster->getName() )
                 m++;
         }
 
-        delete creature;;
+        monster.reset();
 
         for(j=0; j<n-m; j++) {
 
-            if(!loadMonster(crtm->cr, &creature))
+            if(!loadMonster(crtm->cr, monster))
                 continue;
 
-            creature->initMonster();
-            creature->setFlag(M_PERMENANT_MONSTER);
-            creature->daily[DL_BROAD].cur = 20;
-            creature->daily[DL_BROAD].max = 20;
+            monster->initMonster();
+            monster->setFlag(M_PERMENANT_MONSTER);
+            monster->daily[DL_BROAD].cur = 20;
+            monster->daily[DL_BROAD].max = 20;
 
-            creature->validateAc();
-            creature->addToRoom(this, 0);
+            monster->validateAc();
+            monster->addToRoom(BaseRoom::downcasted_shared_from_this<UniqueRoom>(), 0);
 
             if(!players.empty())
-                gServer->addActive(creature);
+                gServer->addActive(monster);
         }
     }
 }
@@ -510,10 +505,10 @@ void UniqueRoom::addPermCrt() {
 
 void UniqueRoom::addPermObj() {
     std::map<int, crlasttime>::iterator it, nt;
-    crlasttime* crtm=0;
+    crlasttime* crtm=nullptr;
     std::map<int, bool> checklist;
-    Object  *object=0;
-    long    t = time(0);
+    std::shared_ptr<Object> object=nullptr;
+    long    t = time(nullptr);
     int     j=0, m=0, n=0;
 
     for(it = permObjects.begin(); it != permObjects.end() ; it++) {
@@ -535,14 +530,14 @@ void UniqueRoom::addPermObj() {
                 ((*nt).second.ltime + (*nt).second.interval) < t )
             {
                 n++;
-                checklist[(*nt).first] = 1;
+                checklist[(*nt).first] = true;
             }
         }
 
-        if(!loadObject(crtm->cr, &object))
+        if(!loadObject(crtm->cr, object))
             continue;
 
-        for(Object* obj : objects) {
+        for(const auto& obj : objects) {
             if(obj->flagIsSet(O_PERM_ITEM)) {
                 if(obj->getName() == object->getName() && obj->info == object->info)
                     m++;
@@ -552,15 +547,15 @@ void UniqueRoom::addPermObj() {
                 }
         }
 
-        delete object;
+        object.reset();
 
         for(j=0; j<n-m; j++) {
-            if(!loadObject(crtm->cr, &object))
+            if(!loadObject(crtm->cr, object))
                 continue;
         if (!object->randomObjects.empty())
              object->init();
         else
-             object->setDroppedBy(this, "PermObject");
+             object->setDroppedBy(shared_from_this(), "PermObject");
 
 
             if(object->flagIsSet(O_RANDOM_ENCHANT))
@@ -569,7 +564,7 @@ void UniqueRoom::addPermObj() {
             object->setFlag(O_PERM_ITEM);
 
 
-            object->addToRoom(this);
+            object->addToRoom(BaseRoom::downcasted_shared_from_this<UniqueRoom>());
         }
     }
 }
@@ -578,12 +573,12 @@ void UniqueRoom::addPermObj() {
 //                      roomEffStr
 //*********************************************************************
 
-std::string roomEffStr(std::string effect, std::string str, const BaseRoom* room, bool detectMagic) {
+std::string roomEffStr(const std::string& effect, std::string str, const std::shared_ptr<BaseRoom>& room, bool detectMagic) {
     if(!room->isEffected(effect))
         return("");
     if(detectMagic) {
         EffectInfo* eff = room->getEffect(effect);
-        if(eff->getOwner() != "") {
+        if(!eff->getOwner().empty()) {
             str += " (cast by ";
             str += eff->getOwner();
             str += ")";
@@ -601,18 +596,18 @@ std::string roomEffStr(std::string effect, std::string str, const BaseRoom* room
 // and all the exits in a room.  That is, unless they are not visible
 // or the room is dark.
 
-void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
-    UniqueRoom *target=0;
-    const Player *pCreature=0;
-    const Creature* creature=0;
+void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<BaseRoom>& room, int magicShowHidden) {
+    std::shared_ptr<UniqueRoom> target=nullptr;
+    const std::shared_ptr<Player>pCreature=nullptr;
+    std::shared_ptr<Creature> creature=nullptr;
     char    name[256];
     int     n=0, m=0, flags = (player->displayFlags() | QUEST), staff=0;
     std::ostringstream oStr;
-    std::string str = "";
+    std::string str;
     bool    wallOfFire=false, wallOfThorns=false, canSee=false;
 
-    const UniqueRoom* uRoom = room->getAsConstUniqueRoom();
-    const AreaRoom* aRoom = room->getAsConstAreaRoom();
+    const std::shared_ptr<const UniqueRoom> uRoom = room->getAsConstUniqueRoom();
+    const std::shared_ptr<const AreaRoom> aRoom = room->getAsConstAreaRoom();
     strcpy(name, "");
 
     staff = player->isStaff();
@@ -635,15 +630,15 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
             oStr << uRoom->info.displayStr() << " - ";
         oStr << uRoom->getName() << "^x\n\n";
 
-        if(uRoom->getShortDescription() != "")
+        if(!uRoom->getShortDescription().empty())
             oStr << uRoom->getShortDescription() << "\n";
 
-        if(uRoom->getLongDescription() != "")
+        if(!uRoom->getLongDescription().empty())
             oStr << uRoom->getLongDescription() << "\n";
 
     } else {
 
-        if(aRoom->area->name != "") {
+        if(!aRoom->area->name.empty()) {
             oStr << aRoom->area->name;
             if(player->isCt())
                 oStr << " " << aRoom->fullName();
@@ -657,7 +652,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
     n=0;
 
     str = "";
-    for(Exit* ext : room->exits) {
+    for(const auto& ext : room->exits) {
         wallOfFire = ext->isWall("wall-of-fire");
         wallOfThorns = ext->isWall("wall-of-thorns");
 
@@ -678,7 +673,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
             } else if(  !player->flagIsSet(P_NO_EXTRA_COLOR) &&
                 (   !player->canEnter(ext) || (
                         ext->target.room.id && (
-                            !loadRoom(ext->target.room, &target) ||
+                            !loadRoom(ext->target.room, target) ||
                             !target ||
                             !player->canEnter(target)
                         )
@@ -761,7 +756,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
     oStr << str << "^c";
     str = "";
     n = 0;
-    for(const Player* ply : room->players) {
+    for(const auto& ply : room->players) {
         if(ply != player && player->canSee(ply)) {
 
             // other non-vis rules
@@ -824,7 +819,7 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
 
     n=0;
 
-    MonsterSet::iterator mIt = room->monsters.begin();
+    auto mIt = room->monsters.begin();
     while(mIt != room->monsters.end()) {
         creature = (*mIt++);
 
@@ -863,12 +858,12 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
         oStr << ".\n";
 
     str = room->listObjects(player, false, 'y');
-    if(str != "")
+    if(!str.empty())
         oStr << "^yYou see " << str << ".^w\n";
 
     *player << ColorOn << oStr.str();
 
-    for(Monster* mons : room->monsters) {
+    for(const auto& mons : room->monsters) {
         if(mons && mons->hasEnemy()) {
             creature = mons->getTarget();
 
@@ -883,13 +878,13 @@ void displayRoom(Player* player, const BaseRoom* room, int magicShowHidden) {
     player->print("^x\n");
 }
 
-void display_rom(Player* player, Player *looker, int magicShowHidden) {
+void display_rom(const std::shared_ptr<Player>& player, std::shared_ptr<Player> looker, int magicShowHidden) {
     if(!looker)
         looker = player;
     displayRoom(looker, player->getRoomParent(), magicShowHidden);
 }
 
-void display_rom(Player* player,BaseRoom* room) {
+void display_rom(const std::shared_ptr<Player> &player, std::shared_ptr<BaseRoom> &room) {
     displayRoom(player, room, 0);
 }
 
@@ -900,17 +895,13 @@ void display_rom(Player* player,BaseRoom* room) {
 // This function creates a storage room. Setting all the flags, and
 // putting in a generic description
 
-void storageName(UniqueRoom* room, const Player* player) {
+void storageName(const std::shared_ptr<UniqueRoom>& room, const std::shared_ptr<Player>& player) {
     room->setName(player->getName() + "'s Personal Storage Room");
 }
 
-int createStorage(CatRef cr, const Player* player) {
-    UniqueRoom *newRoom;
-    std::string desc = "";
-
-    newRoom = new UniqueRoom;
-    if(!newRoom)
-        merror("createStorage", FATAL);
+int createStorage(CatRef cr, const std::shared_ptr<Player>& player) {
+    std::shared_ptr<UniqueRoom> newRoom = std::make_shared<UniqueRoom>();
+    std::string desc;
 
     newRoom->info = cr;
     storageName(newRoom, player);
@@ -956,7 +947,7 @@ int createStorage(CatRef cr, const Player* player) {
     newRoom->setFlag(R_OUTLAW_SAFE);
     newRoom->setFlag(R_INDOORS);
 
-    Property *p = new Property;
+    auto *p = new Property;
     p->found(player, PROP_STORAGE, "any realty office", false);
 
     p->setName(newRoom->getName());
@@ -967,7 +958,7 @@ int createStorage(CatRef cr, const Player* player) {
     if(newRoom->saveToFile(0) < 0)
         return(0);
 
-    delete newRoom;
+    newRoom.reset();
     return(0);
 }
 
@@ -977,8 +968,8 @@ int createStorage(CatRef cr, const Player* player) {
 
 void UniqueRoom::validatePerms() {
     std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=0;
-    long    t = time(0);
+    crlasttime* crtm=nullptr;
+    long    t = time(nullptr);
 
     for(it = permMonsters.begin(); it != permMonsters.end() ; it++) {
         crtm = &(*it).second;
@@ -1007,7 +998,7 @@ void UniqueRoom::validatePerms() {
 //                      doRoomHarms
 //*********************************************************************
 
-void doRoomHarms(BaseRoom *inRoom, Player* target) {
+void doRoomHarms(const std::shared_ptr<BaseRoom>& inRoom, const std::shared_ptr<Player>& target) {
     int     roll=0, toHit=0, dmg=0;
 
     if(!inRoom || !target)
@@ -1073,9 +1064,9 @@ void doRoomHarms(BaseRoom *inRoom, Player* target) {
 // to hurry up and find a room to take the player - if we can't, we need to
 // crash the mud.
 
-BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
-    BaseRoom* room=0;
-    UniqueRoom* newRoom=0;
+std::shared_ptr<BaseRoom> abortFindRoom(const std::shared_ptr<Creature>& player, const char from[15]) {
+    std::shared_ptr<BaseRoom> room;
+    std::shared_ptr<UniqueRoom> newRoom;
 
     player->print("Shifting dimensional forces direct your travel!\n");
     loge("Error: abortFindRoom called by %s in %s().\n", player->getCName(), from);
@@ -1091,7 +1082,7 @@ BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
         return(room);
     broadcast(isCt, "^yError: could not load Limbo: %s.", player->getLimboRoom().str().c_str());
 
-    Player *target=0;
+    std::shared_ptr<Player> target=nullptr;
     if(player)
         target = player->getAsPlayer();
     if(target) {
@@ -1102,7 +1093,7 @@ BaseRoom *abortFindRoom(Creature* player, const char from[15]) {
             target->bound.str().c_str());
     }
 
-    if(loadRoom(0, &newRoom))
+    if(loadRoom(0, newRoom))
         return(newRoom);
     broadcast(isCt, "^yError: could not load The Void. Aborting.");
     crash(-1);
@@ -1119,18 +1110,18 @@ int UniqueRoom::getWeight() {
     int     i=0;
 
     // count weight of all players in this
-    for(Player* ply : players) {
+    for(const auto& ply: players) {
         if(ply->countForWeightTrap())
             i += ply->getWeight();
     }
 
     // count weight of all objects in this
-    for(Object* obj : objects ) {
+    for(const auto& obj : objects ) {
         i += obj->getActualWeight();
     }
 
     // count weight of all monsters in this
-    for(Monster* mons : monsters) {
+    for(const auto& mons : monsters) {
         if(mons->countForWeightTrap()) {
             i+= mons->getWeight();
         }
@@ -1143,7 +1134,7 @@ int UniqueRoom::getWeight() {
 //                      needUniqueRoom
 //*********************************************************************
 
-bool needUniqueRoom(const Creature* player) {
+bool needUniqueRoom(const std::shared_ptr<Creature> & player) {
     if(!player->inUniqueRoom()) {
         player->print("You can't do that here.\n");
         return(false);

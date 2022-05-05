@@ -118,15 +118,15 @@ void Object::validateId() {
     }
 }
 
-void Object::setDroppedBy(MudObject* dropper, std::string_view pDropType) {
+void Object::setDroppedBy(const std::shared_ptr<MudObject>& dropper, std::string_view pDropType) {
 
     droppedBy.name = dropper->getName();
     droppedBy.id = dropper->getId();
 
-    auto* mDropper = dynamic_cast<Monster*>(dropper);
-    auto* oDropper = dynamic_cast<Object*>(dropper);
-    auto* rDropper = dynamic_cast<UniqueRoom*>(dropper);
-    auto* aDropper = dynamic_cast<AreaRoom*>(dropper);
+    auto mDropper = dynamic_pointer_cast<Monster>(dropper);
+    auto oDropper = dynamic_pointer_cast<Object>(dropper);
+    auto rDropper = dynamic_pointer_cast<UniqueRoom>(dropper);
+    auto aDropper = dynamic_pointer_cast<AreaRoom>(dropper);
 
     if(mDropper) {
         droppedBy.index = mDropper->info.str();
@@ -185,12 +185,6 @@ Object::~Object() {
     delete increase;
     alchemyEffects.clear();
     compass = nullptr;
-    ObjectSet::iterator it;
-    Object* obj;
-    for(it = objects.begin() ; it != objects.end() ; ) {
-        obj = (*it++);
-        delete obj;
-    }
     objects.clear();
     gServer->removeDelayedActions(this);
 }
@@ -218,8 +212,8 @@ void Object::init(bool selRandom) {
 //                          getNewPotion
 //*********************************************************************
 
-Object* Object::getNewPotion() {
-    auto* newPotion = new Object;
+std::shared_ptr<Object> Object::getNewPotion() {
+    std::shared_ptr<Object> newPotion = std::make_shared<Object>();
 
     newPotion->type = ObjectType::POTION;
     newPotion->setName( "generic potion");
@@ -228,7 +222,7 @@ Object* Object::getNewPotion() {
     newPotion->weight = 1;
     newPotion->setFlag(O_SAVE_FULL);
 
-    return(newPotion);
+    return newPotion;
 }
 
 //*********************************************************************
@@ -321,9 +315,9 @@ void Object::doCopy(const Object& o) {
     effectStrength = o.effectStrength;
 
     // copy everything contained inside this object
-    Object *newObj;
-    for(Object* obj : o.objects) {
-        newObj = new Object;
+    std::shared_ptr<Object>newObj;
+    for(const auto& obj : o.objects) {
+        newObj = std::make_shared<Object>();
         *newObj = *obj;
         addObj(newObj, false);
     }
@@ -469,7 +463,7 @@ int Object::getActualWeight() const {
     n = weight;
 
     if(!flagIsSet(O_WEIGHTLESS_CONTAINER)) {
-        for(Object* obj : objects) {
+        for(const auto& obj : objects) {
             n += obj->getActualWeight();
         }
     }
@@ -583,7 +577,7 @@ int Object::getActualBulk() const {
 void Object::selectRandom() {
     std::list<CatRef>::const_iterator it;
     CatRef cr;
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
     int which = randomObjects.size();
 
     // Load all means we will become every object in this list (trade only)
@@ -600,21 +594,21 @@ void Object::selectRandom() {
         }
     }
 
-    if(!loadObject(cr, &object))
+    if(!loadObject(cr, object))
         return;
 
 
-    object->setDroppedBy(this, "RandomItemParent");
+    object->setDroppedBy(Containable::downcasted_shared_from_this<Object>(), "RandomItemParent");
     *this = *object;
     
-    delete object;
+    object.reset();
 }
 
 //*********************************************************************
 //                          raceRestrict
 //*********************************************************************
 
-bool Object::raceRestrict(const Creature* creature, bool p) const {
+bool Object::raceRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
     if(raceRestrict(creature)) {
         if(p) creature->checkStaff("Your race prevents you from using %P.\n", this);
         if(!creature->isStaff()) return(true);
@@ -622,7 +616,7 @@ bool Object::raceRestrict(const Creature* creature, bool p) const {
     return(false);
 }
 
-bool Object::raceRestrict(const Creature* creature) const {
+bool Object::raceRestrict(const std::shared_ptr<const Creature> & creature) const {
     bool pass = false;
 
     // if no flags are set
@@ -687,7 +681,7 @@ bool Object::raceRestrict(const Creature* creature) const {
 // We need more information here - we can't just pass/fail them like
 // we usually do.
 
-bool Object::classRestrict(const Creature* creature, bool p) const {
+bool Object::classRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
     if(classRestrict(creature)) {
         if(p) creature->checkStaff("Your class prevents you from using %P.\n", this);
         if(!creature->isStaff()) return(true);
@@ -695,9 +689,9 @@ bool Object::classRestrict(const Creature* creature, bool p) const {
     return(false);
 }
 
-bool Object::classRestrict(const Creature* creature) const {
+bool Object::classRestrict(const std::shared_ptr<const Creature> & creature) const {
     bool pass = false;
-    const Player* player = creature->getAsConstPlayer();
+    const std::shared_ptr<const Player> player = creature->getAsConstPlayer();
 
     CreatureClass cClass = creature->getClass();
     if(player && player->getClass() == CreatureClass::MAGE && (player->getSecondClass() == CreatureClass::ASSASSIN || player->getSecondClass() == CreatureClass::THIEF))
@@ -782,7 +776,7 @@ bool Object::classRestrict(const Creature* creature) const {
 //                          levelRestrict
 //*********************************************************************
 
-bool Object::levelRestrict(const Creature* creature, bool p) const {
+bool Object::levelRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
     if(level > creature->getLevel()) {
         if(p) creature->checkStaff("You are not experienced enough to use that.\n");
         if(!creature->isStaff()) return(true);
@@ -790,7 +784,7 @@ bool Object::levelRestrict(const Creature* creature, bool p) const {
     return(false);
 }
 
-bool Object::skillRestrict(const Creature* creature, bool p) const {
+bool Object::skillRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
     int skillLevel = 0;
 
     std::string skill = "";
@@ -819,14 +813,14 @@ bool Object::skillRestrict(const Creature* creature, bool p) const {
 //                          levelRestrict
 //*********************************************************************
 
-bool Object::alignRestrict(const Creature* creature, bool p) const {
+bool Object::alignRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
     if( (flagIsSet(O_GOOD_ALIGN_ONLY) && creature->getAdjustedAlignment() < NEUTRAL) ||
         (flagIsSet(O_EVIL_ALIGN_ONLY) && creature->getAdjustedAlignment() > NEUTRAL) )
     {
         if(p) {
             creature->checkStaff("%O shocks you and you drop it.\n", this);
             if(!creature->isStaff())
-                broadcast(creature->getSock(), creature->getConstRoomParent(), "%M is shocked by %P.", creature, this);
+                broadcast(creature->getSock(), creature->getConstRoomParent(), "%M is shocked by %P.", creature.get(), this);
         }
         if(!creature->isStaff()) return(true);
     }
@@ -839,7 +833,7 @@ bool Object::alignRestrict(const Creature* creature, bool p) const {
 //                          sexRestrict
 //*********************************************************************
 
-bool Object::sexRestrict(const Creature* creature, bool p) const {
+bool Object::sexRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
     Sex sex = creature->getSex();
     if(flagIsSet(O_MALE_ONLY) && sex != SEX_MALE) {
         if(p) creature->checkStaff("Only males can use that.\n");
@@ -861,7 +855,7 @@ bool Object::sexRestrict(const Creature* creature, bool p) const {
 //                          strRestrict
 //*********************************************************************
 
-bool Object::strRestrict(Creature* creature, bool p) const {
+bool Object::strRestrict(const std::shared_ptr<Creature>& creature, bool p) const {
     if(minStrength > creature->strength.getCur()) {
         if(!p) creature->checkStaff("You are currently not strong enough to use that.\n");
         if(!creature->isStaff()) return(true);
@@ -874,7 +868,7 @@ bool Object::strRestrict(Creature* creature, bool p) const {
 //                          clanRestrict
 //*********************************************************************
 
-bool Object::clanRestrict(const Creature* creature, bool p) const {
+bool Object::clanRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
     if(clanRestrict(creature)) {
         if(p) creature->checkStaff("Your allegience prevents you from using %P.\n", this);
         if(!creature->isStaff()) return(true);
@@ -882,7 +876,7 @@ bool Object::clanRestrict(const Creature* creature, bool p) const {
     return(false);
 }
 
-bool Object::clanRestrict(const Creature* creature) const {
+bool Object::clanRestrict(const std::shared_ptr<const Creature> & creature) const {
     int c = creature->getClan();
     if(creature->getDeity()) {
         const Clan* clan = gConfig->getClanByDeity(creature->getDeity());
@@ -932,7 +926,7 @@ bool Object::clanRestrict(const Creature* creature) const {
 //                          lawchaoRestrict
 //*********************************************************************
 
-bool Object::lawchaoRestrict(const Creature* creature, bool p) const {
+bool Object::lawchaoRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
     if( (flagIsSet(O_CHAOTIC_ONLY) && !creature->flagIsSet(P_CHAOTIC)) ||
         (flagIsSet(O_LAWFUL_ONLY) && creature->flagIsSet(P_CHAOTIC)) )
     {
@@ -947,40 +941,25 @@ bool Object::lawchaoRestrict(const Creature* creature, bool p) const {
 //                      doRestrict
 //*********************************************************************
 
-bool Object::doRestrict(Creature* creature, bool p) {
-    if(clanRestrict(creature, p))
-        return(true);
-    if(levelRestrict(creature, p))
-        return(true);
-    if(skillRestrict(creature, p))
-        return(true);
-    if(strRestrict(creature, p))
-        return(true);
-    if(classRestrict(creature, p))
-        return(true);
-    if(raceRestrict(creature, p))
-        return(true);
-    if(sexRestrict(creature, p))
-        return(true);
-    if(clanRestrict(creature, p))
-        return(true);
-    if(lawchaoRestrict(creature, p))
-        return(true);
-    if(alignRestrict(creature, p)) {
-        if(p && !creature->isStaff()) {
-            creature->delObj(this, false, true);
+bool Object::doRestrict(const std::shared_ptr<Creature> &creature, bool p) {
+    if (clanRestrict(creature, p) || levelRestrict(creature, p) || skillRestrict(creature, p) || strRestrict(creature, p) || classRestrict(creature, p)
+     || raceRestrict(creature, p) || sexRestrict(creature, p) || clanRestrict(creature, p) || lawchaoRestrict(creature, p))
+        return (true);
+    if (alignRestrict(creature, p)) {
+        if (p && !creature->isStaff()) {
+            creature->delObj(Containable::downcasted_shared_from_this<Object>(), false, true);
             addToRoom(creature->getRoomParent());
         }
-        return(true);
+        return (true);
     }
-    return(false);
+    return (false);
 }
 
 //*********************************************************************
 //                          getCompass
 //*********************************************************************
 
-const std::string Object::getCompass(const Creature* creature, bool useName) {
+std::string Object::getCompass(const std::shared_ptr<const Creature> & creature, bool useName) const {
     std::ostringstream oStr;
 
     if(useName)
@@ -1018,7 +997,7 @@ const std::string Object::getCompass(const Creature* creature, bool useName) {
 //                      getObjStr
 //*********************************************************************
 
-std::string Object::getObjStr(const Creature* viewer, unsigned int ioFlags, int num) const {
+std::string Object::getObjStr(const std::shared_ptr<const Creature> & viewer, unsigned int ioFlags, int num) const {
     std::ostringstream objStr;
     std::string toReturn = "";
     char ch;
@@ -1136,8 +1115,8 @@ std::string Object::getObjStr(const Creature* viewer, unsigned int ioFlags, int 
 //*********************************************************************
 // removes an object from the bag, usually when the bag is stolen or destroyed
 
-void Object::popBag(Creature* creature, bool quest, bool drop, bool steal, bool bodypart, bool dissolve) {
-    Object* object=nullptr;
+void Object::popBag(const std::shared_ptr<Creature>& creature, bool quest, bool drop, bool steal, bool bodypart, bool dissolve) {
+    std::shared_ptr<Object>  object=nullptr;
 
     ObjectSet::iterator it;
     for(it = objects.begin() ; it != objects.end() ; ) {
@@ -1159,7 +1138,7 @@ void Object::popBag(Creature* creature, bool quest, bool drop, bool steal, bool 
 //                      isKey
 //*********************************************************************
 
-bool Object::isKey(const UniqueRoom* room, const Exit* exit) const {
+bool Object::isKey(const std::shared_ptr<UniqueRoom>& room, const std::shared_ptr<Exit> exit) const {
     // storage room exist must be a storage room key
     if(exit->flagIsSet(X_TO_STORAGE_ROOM))
         return(getName() == "storage room key");
@@ -1189,13 +1168,13 @@ bool Object::isKey(const UniqueRoom* room, const Exit* exit) const {
 // room = the catref for the destination room
 
 void spawnObjects(const std::string &room, const std::string &objects) {
-    UniqueRoom *dest = nullptr;
-    Object* object=nullptr;
+    std::shared_ptr<UniqueRoom> dest = nullptr;
+    std::shared_ptr<Object>  object=nullptr;
     CatRef  cr;
 
     getCatRef(room, &cr, nullptr);
 
-    if(!loadRoom(cr, &dest))
+    if(!loadRoom(cr, dest))
         return;
 
     std::string obj;
@@ -1215,7 +1194,7 @@ void spawnObjects(const std::string &room, const std::string &objects) {
 
                     if(object->info == cr) {
                         object->deleteFromRoom();
-                        delete object;
+                        object.reset();
                     }
                 }
             }
@@ -1231,10 +1210,10 @@ void spawnObjects(const std::string &room, const std::string &objects) {
         {
             getCatRef(obj, &cr, nullptr);
 
-            if(loadObject(cr, &object)) {
+            if(loadObject(cr, object)) {
                 // no need to spawn darkmetal items in a sunlit room
                 if(object->flagIsSet(O_DARKMETAL) && dest->isSunlight())
-                    delete object;
+                    object.reset();
                 else {
                     object->addToRoom(dest);
                     object->setDroppedBy(dest, "SpawnObjects");

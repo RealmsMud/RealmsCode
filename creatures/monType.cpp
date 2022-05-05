@@ -17,7 +17,6 @@
  */
 
 #include "monType.hpp"  // for mType, MAX_MOB_TYPES, UNDEAD, AUTOMATON, ELEM...
-#include "os.hpp"       // for ASSERTLOG
 #include "size.hpp"     // for NO_SIZE, SIZE_FINE, SIZE_GARGANTUAN, SIZE_HUGE
 
 char mobtype_name[MAX_MOB_TYPES][20] = { "Player", "Monster", "Humanoid", "Goblinoid", "Monstrous Humanoid",
@@ -171,9 +170,6 @@ bool monType::immuneCriticals(mType type) {
 
 char *monType::getName(mType type) {
     // do bounds checking
-    ASSERTLOG( type >= PLAYER );
-    ASSERTLOG( type < MAX_MOB_TYPES );
-
     return(mobtype_name[(int)type]);
 }
 
@@ -182,8 +178,5 @@ char *monType::getName(mType type) {
 //*********************************************************************
 
 int monType::getHitdice(mType type) {
-    ASSERTLOG( type >= PLAYER );
-    ASSERTLOG( type < MAX_MOB_TYPES );
-
     return(mob_hitdice[(int)type]);
 }

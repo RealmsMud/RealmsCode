@@ -36,7 +36,7 @@
 //              <player> Who are we logging?
 
 // Log something done by an immortal, and optionally broadcast it
-int log_immort(int broad, Player* player, const char *fmt,...) {
+int log_immort(int broad, std::shared_ptr<Player> player, const char *fmt,...) {
     // broad==0 - no broadcast
     // broad==1 - broadcast
     // broad==2 - more needs to be done
@@ -106,7 +106,7 @@ bool Creature::checkStaff(const char *failStr,...) const {
     return(ret);
 }
 
-bool isPtester(const Creature* player) {
+bool isPtester(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->isCt() || player->flagIsSet(P_PTESTER));
@@ -116,7 +116,7 @@ bool isPtester(Socket* sock) {
         return(isPtester(sock->getPlayer()));
     return(false);
 }
-bool isWatcher(const Creature* player) {
+bool isWatcher(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->isCt() || player->isWatcher());
@@ -128,7 +128,7 @@ bool isWatcher(Socket* sock) {
     return(false);
 }
 
-bool isStaff(const Creature* player) {
+bool isStaff(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->getClass() >= CreatureClass::BUILDER);
@@ -140,7 +140,7 @@ bool isStaff(Socket* sock) {
     return(false);
 }
 
-bool isCt(const Creature* player) {
+bool isCt(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->getClass() >= CreatureClass::CARETAKER);
@@ -153,7 +153,7 @@ bool isCt(Socket* sock) {
     return(false);
 }
 
-bool isDm(const Creature* player) {
+bool isDm(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->getClass() == CreatureClass::DUNGEONMASTER);
@@ -165,7 +165,7 @@ bool isDm(Socket* sock) {
     return(false);
 }
 
-bool isAdm(const Creature* player) {
+bool isAdm(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->getName() == "Bane" || player->getName() == "Dominus" || player->getName() == "Ocelot");

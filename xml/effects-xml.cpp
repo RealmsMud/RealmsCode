@@ -24,20 +24,47 @@
 
 #include "effects.hpp"      // for EffectInfo, Effects, EffectList
 #include "xml.hpp"          // for newNumChild, newStringChild, NODE_NAME
+#include "config.hpp"
 
 class MudObject;
+
+
+//*********************************************************************
+//                      EffectInfo
+//*********************************************************************
+
+EffectInfo::EffectInfo(xmlNodePtr rootNode) {
+    xmlNodePtr curNode = rootNode->children;
+
+    while(curNode) {
+        if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
+        else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
+        else if(NODE_NAME(curNode, "Strength")) xml::copyToNum(strength, curNode);
+        else if(NODE_NAME(curNode, "Extra")) xml::copyToNum(extra, curNode);
+        else if(NODE_NAME(curNode, "PulseModifier")) xml::copyToNum(pulseModifier, curNode);
+
+        curNode = curNode->next;
+    }
+
+    lastPulse = lastMod = time(nullptr);
+    myEffect = gConfig->getEffect(name);
+
+    if(!myEffect) {
+        throw std::runtime_error("Can't find effect listing " + name);
+    }
+}
 
 //*********************************************************************
 //                      load
 //*********************************************************************
 
-void Effects::load(xmlNodePtr rootNode, MudObject* pParent) {
+void Effects::load(xmlNodePtr rootNode, const std::shared_ptr<MudObject>& pParent) {
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {
         if(NODE_NAME(curNode, "Effect")) {
             try {
                 auto* newEffect = new EffectInfo(curNode);
-                newEffect->setParent(pParent);
+                newEffect->setParent(pParent.get());
                 effectList.push_back(newEffect);
             } catch(std::runtime_error &e) {
                 std::clog << "Error adding effect: " << e.what() << std::endl;

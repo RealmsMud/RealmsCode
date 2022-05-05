@@ -33,12 +33,12 @@
 #define SP_MODE_ADVISE      2
 #define SP_MODE_HIGHLIGHT   4
 
-static void     check_spelling(Player* player,cmd* cmnd);
-static void     learn_spelling(Player* player,cmd* cmnd);
-static void     forget_spelling(Player* player,cmd* cmnd);
-static void     do_spelling_check(Player* player, int mode, const std::string& str);
-/*static void       do_spelling_learn(Player* player,cmd *cmd);*/
-static void     print_word_list(Player* player, const PspellWordList *wl);
+static void check_spelling(const std::shared_ptr<Player>& player, cmd* cmnd);
+static void     learn_spelling(std::shared_ptr<Player> player,cmd* cmnd);
+static void     forget_spelling(std::shared_ptr<Player> player,cmd* cmnd);
+static void     do_spelling_check(std::shared_ptr<Player> player, int mode, const std::string& str);
+/*static void       do_spelling_learn(std::shared_ptr<Player> player,cmd *cmd);*/
+static void     print_word_list(std::shared_ptr<Player> player, const PspellWordList *wl);
 
 PspellCanHaveError  *ret;
 PspellManager       *manager;
@@ -83,7 +83,7 @@ bool init_spelling() {
     return true;
 }
 
-int dmSpelling(Player* player, cmd* cmnd) {
+int dmSpelling(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(sp_initialized) {
         if((strcmp(cmnd->str[1],"check") == 0) || (cmnd->num < 2)) {
@@ -107,7 +107,7 @@ int dmSpelling(Player* player, cmd* cmnd) {
     return(0);
 }
 
-static void check_spelling(Player* player, cmd* cmnd) {
+static void check_spelling(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int i=0;
     int exit_desc_seen=0;
     int long_desc_seen=0;
@@ -167,14 +167,14 @@ static void check_spelling(Player* player, cmd* cmnd) {
 
     if(exit_desc && !player->getUniqueRoomParent()->exits.empty()) {
         player->print("Checking for misspelled words in exit descriptions...\n");
-        for(Exit* ext : player->getUniqueRoomParent()->exits) {
+        for(const auto& ext : player->getUniqueRoomParent()->exits) {
             player->print("   %s:\n", ext->getCName());
             do_spelling_check(player, mode, ext->getDescription());
         }
     }
 }
 
-static void learn_spelling(Player* player,cmd* cmnd) {
+static void learn_spelling(std::shared_ptr<Player> player,cmd* cmnd) {
     int i;
 
     for(i = 2; i < COMMANDMAX && cmnd->str[i][0] != '\0'; i++) {
@@ -185,7 +185,7 @@ static void learn_spelling(Player* player,cmd* cmnd) {
     pspell_manager_save_all_word_lists(manager);
 }
 
-static void forget_spelling(Player* player,cmd* cmnd) {
+static void forget_spelling(std::shared_ptr<Player> player,cmd* cmnd) {
     int i=0;
 
     /* Well, pspell doesn't seem to have a function for removing
@@ -221,7 +221,7 @@ static void forget_spelling(Player* player,cmd* cmnd) {
     /*pspell_manager_save_all_word_lists(manager);*/
 }
 
-static void do_spelling_check(Player* player, int mode, const std::string& str) {
+static void do_spelling_check(std::shared_ptr<Player> player, int mode, const std::string& str) {
     char    *tmp;
     char    *tok;
     char    *word;
@@ -273,12 +273,12 @@ static void do_spelling_check(Player* player, int mode, const std::string& str) 
 }
 
 /*
-static void do_spelling_learn(Player* player,cmd *cmd)
+static void do_spelling_learn(std::shared_ptr<Player> player,cmd *cmd)
 {
 }
 */
 
-static void print_word_list(Player* player,const PspellWordList *wl) {
+static void print_word_list(std::shared_ptr<Player> player,const PspellWordList *wl) {
     if(wl != nullptr) {
         PspellStringEmulation   *emu = pspell_word_list_elements(wl);
         const char      *word;

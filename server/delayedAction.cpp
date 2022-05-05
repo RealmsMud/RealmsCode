@@ -44,20 +44,23 @@
 //*********************************************************************
 //                      removeDelayedActions
 //*********************************************************************
-// If the creature's delayedActionQueue is not cleared first, it will have invalid pointers.
-// If the creature is immediately going out of memory (like in free_crt), that's fine.
+
+bool Server::removeDelayedActions(const std::shared_ptr<MudObject>& target, bool interruptOnly) {
+    return removeDelayedActions(target.get(), interruptOnly);
+}
 
 bool Server::removeDelayedActions(MudObject* target, bool interruptOnly) {
-    std::list<DelayedAction>::iterator it;
     bool found = false;
 
-    for(it = delayedActionQueue.begin(); it != delayedActionQueue.end(); ) {
-        if(!(*it).target) {
+    for(auto it = delayedActionQueue.begin(); it != delayedActionQueue.end(); ) {
+        auto actionTarget = it->target.lock();
+        if(!actionTarget) {
             // this must be a bug
             found = true;
             it = delayedActionQueue.erase(it);
             broadcast(isCt, "^rA delayed action without a target was discovered and removed from the queue.");
-        } else if((*it).target == target) {
+            continue;
+        } else if(actionTarget.get() == target) {
             // should we remove this action?
             if(!interruptOnly || (*it).canInterrupt) {
                 // if we're just interrupting, we won't remove-all at the end
@@ -66,12 +69,10 @@ bool Server::removeDelayedActions(MudObject* target, bool interruptOnly) {
 
                 found = true;
                 it = delayedActionQueue.erase(it);
-            } else {
-                it++;
+                continue;
             }
-        } else {
-            it++;
         }
+        it++;
     }
 
     // if we aren't just interrupting, remove all
@@ -86,18 +87,18 @@ bool Server::removeDelayedActions(MudObject* target, bool interruptOnly) {
 // this function is called once a second from Server::updateGame
 
 void Server::parseDelayedActions(long t) {
-    std::list<DelayedAction>::iterator it;
-
-    for(it = delayedActionQueue.begin(); it != delayedActionQueue.end(); ) {
-        if((*it).whenFinished <= t) {
-            if((*it).target) {
+    for(auto it = delayedActionQueue.begin(); it != delayedActionQueue.end(); ) {
+        if(it->whenFinished <= t) {
+            auto actionTarget = it->target.lock();
+            if(actionTarget) {
                 // exectue the callback function
                 ((*it).callback) (&(*it));
-                (*it).target->removeDelayedAction(&(*it));
+                actionTarget->removeDelayedAction(&(*it));
             }
             it = delayedActionQueue.erase(it);
-        } else
+        } else {
             it++;
+        }
     }
 }
 
@@ -109,7 +110,7 @@ void Server::parseDelayedActions(long t) {
 // If adding the action interrupts what the player is currently doing, that's up to the
 // calling code to take care of.
 
-void Server::addDelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long howLong, bool canInterrupt) {
+void Server::addDelayedAction(void (*callback)(DelayedActionFn), const std::shared_ptr<MudObject>& target, cmd* cmnd, DelayedActionType type, long howLong, bool canInterrupt) {
     switch(type) {
         case ActionFish:
         case ActionSearch:
@@ -133,7 +134,7 @@ void Server::addDelayedAction(void (*callback)(DelayedActionFn), MudObject* targ
 //                      addDelayedScript
 //*********************************************************************
 
-void Server::addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, std::string_view script, long howLong, bool canInterrupt) {
+void Server::addDelayedScript(void (*callback)(DelayedActionFn), const std::shared_ptr<MudObject>& target, std::string_view script, long howLong, bool canInterrupt) {
     DelayedAction action = DelayedAction(callback, target, script, time(nullptr) + howLong, canInterrupt);
 
     delayedActionQueue.push_back(action);
@@ -146,12 +147,19 @@ void Server::addDelayedScript(void (*callback)(DelayedActionFn), MudObject* targ
 //*********************************************************************
 // this will inform the calling function that a particular delayed action is in the queue
 
-bool Server::hasAction(const MudObject* target, DelayedActionType type) {
+bool Server::hasAction(const std::shared_ptr<MudObject>& target, DelayedActionType type) {
     std::list<DelayedAction>::const_iterator it;
 
-    for(it = delayedActionQueue.begin(); it != delayedActionQueue.end(); it++) {
-        if((*it).target == target && (*it).type == type)
-            return(true);
+    for(it = delayedActionQueue.begin(); it != delayedActionQueue.end();) {
+        auto actionTarget = it->target.lock();
+        if(actionTarget) {
+            if (actionTarget == target && it->type == type)
+                return (true);
+
+            it++;
+        } else {
+            it = delayedActionQueue.erase(it);
+        }
     }
 
     return(false);
@@ -162,28 +170,34 @@ bool Server::hasAction(const MudObject* target, DelayedActionType type) {
 //*********************************************************************
 // called from Player::score
 
-std::string Server::delayedActionStrings(const MudObject* target) {
+std::string Server::delayedActionStrings(const std::shared_ptr<MudObject>& target) {
     std::ostringstream oStr;
     std::list<DelayedAction>::const_iterator it;
 
-    for(it = delayedActionQueue.begin(); it != delayedActionQueue.end(); it++) {
-        if((*it).target == target) {
-            switch((*it).type) {
-                case ActionFish:
-                    oStr << " ^C*Fishing*";
-                    break;
-                case ActionSearch:
-                    oStr << " ^C*Searching*";
-                    break;
-                case ActionTrack:
-                    oStr << " ^C*Tracking*";
-                    break;
-                case ActionStudy:
-                    oStr << " ^Y*Studying*";
-                    break;
-                default:
-                    break;
+    for(it = delayedActionQueue.begin(); it != delayedActionQueue.end();) {
+        auto actionTarget = it->target.lock();
+        if(actionTarget) {
+            if (actionTarget == target) {
+                switch ((*it).type) {
+                    case ActionFish:
+                        oStr << " ^C*Fishing*";
+                        break;
+                    case ActionSearch:
+                        oStr << " ^C*Searching*";
+                        break;
+                    case ActionTrack:
+                        oStr << " ^C*Tracking*";
+                        break;
+                    case ActionStudy:
+                        oStr << " ^Y*Studying*";
+                        break;
+                    default:
+                        break;
+                }
             }
+            it++;
+        } else {
+            it = delayedActionQueue.erase(it);
         }
     }
 
@@ -199,8 +213,8 @@ std::string Server::delayedActionStrings(const MudObject* target) {
 void MudObject::interruptDelayedActions() {
     if(!delayedActionQueue.empty()) {
         // true means we are only removing interrupt-able actions
-        if(gServer->removeDelayedActions(this, true)) {
-            const Creature* creature = getAsConstCreature();
+        if(gServer->removeDelayedActions(shared_from_this(), true)) {
+            const std::shared_ptr<const Creature> & creature = getAsConstCreature();
             if(creature)
                 creature->print("You stop what you are doing.\n");
         }
@@ -250,9 +264,11 @@ void MudObject::clearDelayedActions() {
 //*********************************************************************
 
 void doDelayedAction(const DelayedAction* action) {
-    Creature* creature = action->target->getAsCreature();
-    if(!creature)
-        return;
+    auto actionTarget = action->target.lock();
+    if(!actionTarget && action->type)return;
+
+    auto creature = actionTarget->getAsCreature();
+    if(!creature) return;
     // we need a non-const command
     cmd cmnd;
     cmnd = action->cmnd;
@@ -264,7 +280,7 @@ void doDelayedAction(const DelayedAction* action) {
 //*********************************************************************
 
 
-void Creature::delayedAction(const std::string& action, int delay, MudObject* target) {
+void Creature::delayedAction(const std::string& action, int delay, const std::shared_ptr<MudObject>& target) {
     cmd cmnd;
 
     cmnd.fullstr = action;
@@ -276,7 +292,7 @@ void Creature::delayedAction(const std::string& action, int delay, MudObject* ta
     lowercize(cmnd.fullstr, 0);
     parse(cmnd.fullstr, &cmnd);
 
-    gServer->addDelayedAction(doDelayedAction, this, &cmnd, ActionScript, delay);
+    gServer->addDelayedAction(doDelayedAction, Containable::downcasted_shared_from_this<Creature>(), &cmnd, ActionScript, delay);
 }
 
 //*********************************************************************
@@ -284,7 +300,9 @@ void Creature::delayedAction(const std::string& action, int delay, MudObject* ta
 //*********************************************************************
 
 void doDelayedScript(const DelayedAction* action) {
-    Creature* creature = action->target->getAsCreature();
+    auto actionTarget = action->target.lock();
+    if(!actionTarget) return;
+    std::shared_ptr<Creature> creature = actionTarget->getAsCreature();
     if(!creature)
         return;
     gServer->runPython(action->script, "", creature);
@@ -295,5 +313,5 @@ void doDelayedScript(const DelayedAction* action) {
 //*********************************************************************
 
 void Creature::delayedScript(const std::string& script, int delay) {
-    gServer->addDelayedScript(doDelayedScript, this, script, delay);
+    gServer->addDelayedScript(doDelayedScript, Containable::downcasted_shared_from_this<Creature>(), script, delay);
 }

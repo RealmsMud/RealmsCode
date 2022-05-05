@@ -46,7 +46,6 @@
 #include "mudObjects/players.hpp"                   // for Player
 #include "mudObjects/rooms.hpp"                     // for NUM_PERM_SLOTS
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
-#include "os.hpp"                                   // for merror
 #include "proto.hpp"                                // for mprofic, zero
 #include "raceData.hpp"                             // for RaceData
 #include "realm.hpp"                                // for MAX_REALM, COLD
@@ -61,7 +60,7 @@
 
 class Object;
 
-int convertProf(Creature* player, Realm realm) {
+int convertProf(std::shared_ptr<Creature> player, Realm realm) {
     int skill = player->getLevel()*7 + player->getLevel()*3 * mprofic(player, realm) / 100 - 5;
     skill = MAX(0, skill);
     return(skill);
@@ -71,8 +70,8 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
     xmlNodePtr curNode;
     CreatureClass c = CreatureClass::NONE;
 
-    Player *pPlayer = getAsPlayer();
-    Monster *mMonster = getAsMonster();
+    std::shared_ptr<Player>pPlayer = getAsPlayer();
+    std::shared_ptr<Monster> mMonster = getAsMonster();
 
     if(mMonster) {
         mMonster->info.load(rootNode);
@@ -159,7 +158,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             loadFactions(curNode);
         }
         else if(NODE_NAME(curNode, "Effects")) {
-            effects.load(curNode, this);
+            effects.load(curNode, getAsCreature());
         }
         else if(NODE_NAME(curNode, "SpecialAttacks")) {
             loadAttacks(curNode);
@@ -195,7 +194,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         }
         else if(NODE_NAME(curNode, "Equipment")) {
             xmlNodePtr equipNode = curNode->children;
-            Object* obj;
+            std::shared_ptr<Object>  obj;
             CatRef cr;
             int wearLoc;
 
@@ -203,7 +202,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 obj = nullptr;
                 wearLoc = xml::getIntProp(equipNode, "WearLoc");
                 if(NODE_NAME(equipNode, "Object")) {
-                    obj = new Object;
+                    obj = std::make_shared<Object>();
                     obj->readFromXml(equipNode, nullptr);
                 } else {
                     cr.load(equipNode);
@@ -211,7 +210,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                     if(!validObjId(cr)) {
                         std::clog << "Invalid object " << cr.displayStr() << std::endl;
                     } else {
-                        if(loadObject(cr, &obj)) {
+                        if(loadObject(cr, obj)) {
                             // These two flags might be cleared on the reference object, so let that object set them if it wants to
                             obj->clearFlag(O_HIDDEN);
                             obj->clearFlag(O_CURSED);
@@ -229,7 +228,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         else if(NODE_NAME(curNode, "Pets")) {
             readCreatures(curNode, offline);
         }
-        else if(NODE_NAME(curNode, "AreaRoom")) gServer->areaInit(this, curNode);
+        else if(NODE_NAME(curNode, "AreaRoom")) gServer->areaInit(getAsCreature(), curNode);
         else if(NODE_NAME(curNode, "Size")) setSize(whatSize(xml::toNum<int>(curNode)));
         else if(NODE_NAME(curNode, "Hooks")) hooks.load(curNode);
 
@@ -328,12 +327,12 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             addSkill("translocation", skill);
             addSkill("transmutation", skill);
 
-            addSkill("fire", convertProf(this, FIRE));
-            addSkill("water", convertProf(this, WATER));
-            addSkill("earth", convertProf(this, EARTH));
-            addSkill("air", convertProf(this, WIND));
-            addSkill("cold", convertProf(this, COLD));
-            addSkill("electric", convertProf(this, ELEC));
+            addSkill("fire", convertProf(getAsCreature(), FIRE));
+            addSkill("water", convertProf(getAsCreature(), WATER));
+            addSkill("earth", convertProf(getAsCreature(), EARTH));
+            addSkill("air", convertProf(getAsCreature(), WIND));
+            addSkill("cold", convertProf(getAsCreature(), COLD));
+            addSkill("electric", convertProf(getAsCreature(), ELEC));
         }
         if(getVersion() < "2.45c" && getCastingType() == Divine) {
             int skill = level;
@@ -497,22 +496,20 @@ void Creature::loadFactions(xmlNodePtr rootNode) {
 
 void MudObject::readCreatures(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode = curNode->children;
-    Monster *mob=nullptr;
+    std::shared_ptr<Monster> mob=nullptr;
     CatRef  cr;
 
-    Creature* cParent = getAsCreature();
-//  Monster* mParent = parent->getMonster();
-//  Player* pParent = parent->getPlayer();
-    UniqueRoom* rParent = getAsUniqueRoom();
-    Object* oParent = getAsObject();
+    std::shared_ptr<Creature> cParent = getAsCreature();
+//  std::shared_ptr<Monster>  mParent = parent->getMonster();
+//  std::shared_ptr<Player> pParent = parent->getPlayer();
+    std::shared_ptr<UniqueRoom> rParent = getAsUniqueRoom();
+    std::shared_ptr<Object>  oParent = getAsObject();
 
     while(childNode) {
         mob = nullptr;
         if(NODE_NAME( childNode , "Creature")) {
             // If it's a full creature, read it in
-            mob = new Monster;
-            if(!mob)
-                merror("loadCreaturesXml", FATAL);
+            mob = std::make_shared<Monster>();
             mob->readFromXml(childNode);
         } else if(NODE_NAME( childNode, "CrtRef")) {
             // If it's an creature reference, we want to first load the parent creature
@@ -520,7 +517,7 @@ void MudObject::readCreatures(xmlNodePtr curNode, bool offline) {
             cr.load(childNode);
             cr.id = xml::getIntProp( childNode, "Num" );
 
-            if(loadMonster(cr, &mob)) {
+            if(loadMonster(cr, mob)) {
                 mob->readFromXml(childNode);
             } else {
                 //printf("Unable to load creature %d\n", num);
@@ -583,7 +580,7 @@ void Creature::loadStats(xmlNodePtr curNode) {
             else if(statName == "Hp") hp.load(childNode, statName);
             else if(statName == "Mp") mp.load(childNode, statName);
             else if(statName == "Focus") {
-                Player* player = getAsPlayer();
+                std::shared_ptr<Player> player = getAsPlayer();
                 if(player)
                     player->focus.load(childNode, statName);
             }
@@ -704,8 +701,8 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
     if(getName()[0] == '\0' || rootNode == nullptr)
         return(-1);
 
-    const Player    *pPlayer = getAsConstPlayer();
-    const Monster   *mMonster = getAsConstMonster();
+    const auto pPlayer = getAsConstPlayer();
+    const auto mMonster = getAsConstMonster();
 
     if(pPlayer) {
         xml::newProp(rootNode, "Name", pPlayer->getName());
@@ -858,7 +855,7 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
     saveObjectsXml(curNode, objects, permOnly);
 
     curNode = xml::newStringChild(rootNode, "Equipment");
-    Object *obj;
+    std::shared_ptr<Object>obj;
     xmlNodePtr objNode;
     LoadType lt;
     for(i=0; i<MAXWEAR; i++) {
@@ -937,7 +934,7 @@ void Creature::saveAttacks(xmlNodePtr rootNode) const {
 
 int saveCreaturesXml(xmlNodePtr parentNode, const MonsterSet& set, int permOnly) {
     xmlNodePtr curNode;
-    for(const Monster* mons : set) {
+    for(const auto &mons : set) {
         if( mons && mons->isMonster() &&
             (   (permOnly == ALLITEMS && !mons->isPet()) ||
                 (permOnly == PERMONLY && mons->flagIsSet(M_PERMENANT_MONSTER))
@@ -967,7 +964,7 @@ int saveCreaturesXml(xmlNodePtr parentNode, const MonsterSet& set, int permOnly)
 void Creature::savePets(xmlNodePtr parentNode) const {
     xmlNodePtr curNode;
 
-    for(const Monster* pet : pets) {
+    for(const auto& pet : pets) {
         // Only save pets, not creatures just following
         if(!pet->isPet()) continue;
         curNode = xml::newStringChild(parentNode, "Creature");

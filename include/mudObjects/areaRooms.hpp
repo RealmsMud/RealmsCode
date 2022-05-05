@@ -25,7 +25,7 @@
 
 class AreaRoom: public BaseRoom {
 public:
-    AreaRoom(Area *a, const MapMarker *m=0);
+    AreaRoom(std::shared_ptr<Area> a, const MapMarker *m=0);
     ~AreaRoom();
     bool operator< (const AreaRoom& t) const;
 
@@ -37,13 +37,13 @@ public:
     void    recycle();
     bool    updateExit(std::string_view dir);
     void    updateExits();
-    bool    isInteresting(const Player *viewer) const;
+    bool    isInteresting(const std::shared_ptr<Player> viewer) const;
     bool    isRoad() const;
     bool    isWater() const;
     bool    canSave() const;
-    void    save(Player* player=0) const;
+    void    save(const std::shared_ptr<Player>& player=0) const;
     void    load(xmlNodePtr rootNode);
-    CatRef  getUnique(Creature* creature, bool skipDec=false);
+    CatRef  getUnique(std::shared_ptr<Creature> creature, bool skipDec=false);
     void    setMapMarker(const MapMarker* m);
     bool    spawnHerbs();
 
@@ -57,7 +57,7 @@ public:
     // will lead you to a unique room
     CatRef      unique;
 
-    Area        *area;
+    std::shared_ptr<Area> area;
     MapMarker   mapmarker;
 
     bool getNeedsCompass() const;

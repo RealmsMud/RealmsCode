@@ -62,7 +62,7 @@ bool Container::purge(bool includePets) {
 bool Container::purgeMonsters(bool includePets) {
     bool purgedAll = true;
     MonsterSet::iterator mIt, prevIt;
-    Monster *mons = nullptr;
+    std::shared_ptr<Monster> mons = nullptr;
     for(mIt = monsters.begin() ; mIt != monsters.end() ; ) {
         prevIt = mIt;
         mons = (*mIt++);
@@ -71,31 +71,29 @@ bool Container::purgeMonsters(bool includePets) {
             continue;
         }
         if(mons->flagIsSet(M_DM_FOLLOW)) {
-            Player* master = mons->getPlayerMaster();
+            std::shared_ptr<Player> master = mons->getPlayerMaster();
             if(master) {
                 master->clearFlag(P_ALIASING);
 
                 master->setAlias(nullptr);
-                master->print("%1M's soul was purged.\n", mons);
+                master->print("%1M's soul was purged.\n", mons.get());
                 master->delPet(mons->getAsMonster());
             }
         }
 
         monsters.erase(prevIt);
-        delete (mons);
     }
     return(purgedAll);
 }
 bool Container::purgeObjects() {
     bool purgedAll = true;
     ObjectSet::iterator oIt, prevIt;
-    Object* obj;
+    std::shared_ptr<Object>  obj;
     for(oIt = objects.begin() ; oIt != objects.end() ; ) {
         prevIt = oIt;
         obj = (*oIt++);
         if(!obj->flagIsSet(O_TEMP_PERM)) {
             objects.erase(prevIt);
-            delete obj;
         } else {
             purgedAll = false;
         }
@@ -103,13 +101,13 @@ bool Container::purgeObjects() {
     return(purgedAll);
 }
 
-Container* Container::remove(Containable* toRemove) {
+std::shared_ptr<Container> Container::remove(const std::shared_ptr<Containable>& toRemove) {
     if(!toRemove)
         return(nullptr);
 
-    auto* remObject = dynamic_cast<Object*>(toRemove);
-    auto* remPlayer = dynamic_cast<Player*>(toRemove);
-    auto* remMonster = dynamic_cast<Monster*>(toRemove);
+    auto remObject = dynamic_pointer_cast<Object>(toRemove);
+    auto remPlayer = dynamic_pointer_cast<Player>(toRemove);
+    auto remMonster = dynamic_pointer_cast<Monster>(toRemove);
 
     bool toReturn;
     if(remObject) {
@@ -129,7 +127,7 @@ Container* Container::remove(Containable* toRemove) {
     //std::clog << "Removing " << toRemove->getName() << " from " << this->getName() << std::endl;
 
     if(toReturn) {
-        Container* retVal = toRemove->getParent();
+        std::shared_ptr<Container> retVal = toRemove->getParent();
         toRemove->setParent(nullptr);
         return(retVal);
     }
@@ -137,13 +135,13 @@ Container* Container::remove(Containable* toRemove) {
     return(nullptr);
 }
 
-bool Container::add(Containable* toAdd) {
+bool Container::add(const std::shared_ptr<Containable>& toAdd) {
     if(!toAdd)
         return(false);
 
-    auto* addObject = dynamic_cast<Object*>(toAdd);
-    auto* addPlayer = dynamic_cast<Player*>(toAdd);
-    auto* addMonster = dynamic_cast<Monster*>(toAdd);
+    auto addObject = dynamic_pointer_cast<Object>(toAdd);
+    auto addPlayer = dynamic_pointer_cast<Player>(toAdd);
+    auto addMonster = dynamic_pointer_cast<Monster>(toAdd);
 
     // If we're adding an object or a monster, we're registered and the item we're adding is not,
     // then register the item
@@ -168,7 +166,7 @@ bool Container::add(Containable* toAdd) {
     }
 
     if(toReturn) {
-        toAdd->setParent(this);
+        toAdd->setParent(shared_from_this());
     }
     //std::clog << "Adding " << toAdd->getName() << " to " << this->getName() << std::endl;
     return(toReturn);
@@ -179,21 +177,21 @@ void Container::registerContainedItems() {
     // Player registration is handled by the server
     MonsterSet::iterator mIt;
     for(mIt = monsters.begin() ; mIt != monsters.end() ; ) {
-        Monster* mons = *mIt++;
+        std::shared_ptr<Monster>  mons = *mIt++;
         mons->registerMo();
     }
     ObjectSet::iterator oIt;
     for(oIt = objects.begin() ; oIt != objects.end() ; ) {
-        Object* obj = *oIt++;
+        std::shared_ptr<Object>  obj = *oIt++;
         obj->registerMo();
     }
 }
 void Container::unRegisterContainedItems() {
     // Player registration is handled by the server
-    for(Monster* mons : monsters) {
+    for(const auto& mons : monsters) {
         mons->unRegisterMo();
     }
-    for(Object* obj : objects) {
+    for(const auto& obj : objects) {
         obj->unRegisterMo();
     }
 }
@@ -204,34 +202,34 @@ void Container::unRegisterContainedItems() {
 //*********************************************************************
 
 void Container::wake(const std::string &str, bool noise) const {
-    for(Player* ply : players) {
+    for(const auto& ply: players) {
         ply->wake(str, noise);
     }
 }
 
-bool Container::checkAntiMagic(Monster* ignore) {
-    for(Monster* mons : monsters) {
+bool Container::checkAntiMagic(const std::shared_ptr<Monster>&  ignore) {
+    for(const auto& mons : monsters) {
         if(mons == ignore)
             continue;
         if(mons->flagIsSet(M_ANTI_MAGIC_AURA)) {
-            broadcast(nullptr,  this, "^B%M glows bright blue.", mons);
+            broadcast(nullptr,  this, "^B%M glows bright blue.", mons.get());
             return(true);
         }
     }
     return(false);
 }
 
-MudObject* Container::findTarget(const Creature* searcher,  cmd* cmnd, int num) const {
+std::shared_ptr<MudObject> Container::findTarget(const std::shared_ptr<const Creature>& searcher,  cmd* cmnd, int num) const {
     return(findTarget(searcher, cmnd->str[num], cmnd->val[num]));
 }
 
-MudObject* Container::findTarget(const Creature* searcher, const std::string& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch) const {
+std::shared_ptr<MudObject> Container::findTarget(const std::shared_ptr<const Creature>& searcher, const std::string& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch) const {
     int match=0;
     return(findTarget(searcher, name, num, monFirst, firstAggro, exactMatch, match));
 }
 
-MudObject* Container::findTarget(const Creature* searcher, const std::string& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
-    MudObject* toReturn = nullptr;
+std::shared_ptr<MudObject> Container::findTarget(const std::shared_ptr<const Creature>& searcher, const std::string& name, const int num,  bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
+    std::shared_ptr<MudObject> toReturn = nullptr;
 
     if((toReturn = findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, match))) {
         return(toReturn);
@@ -241,16 +239,16 @@ MudObject* Container::findTarget(const Creature* searcher, const std::string& na
 }
 
 // Wrapper for the real findObject to support legacy callers
-Object* Container::findObject(const Creature *searcher, const cmd* cmnd, int val) const {
+std::shared_ptr<Object>  Container::findObject(const std::shared_ptr<const Creature>& searcher, const cmd* cmnd, int val) const {
     return(findObject(searcher, cmnd->str[val], cmnd->val[val]));
 }
-Object* Container::findObject(const Creature* searcher, const std::string& name, const int num, bool exactMatch ) const {
+std::shared_ptr<Object>  Container::findObject(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch ) const {
     int match = 0;
     return(findObject(searcher, name, num,exactMatch, match));
 }
-Object* Container::findObject(const Creature* searcher, const std::string& name, const int num, bool exactMatch, int& match) const {
-    Object *target = nullptr;
-    for(Object* obj : objects) {
+std::shared_ptr<Object>  Container::findObject(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch, int& match) const {
+    std::shared_ptr<Object>target = nullptr;
+    for(const auto& obj : objects) {
         if(isMatch(searcher, obj, name, exactMatch, true)) {
             match++;
             if(match == num) {
@@ -270,11 +268,11 @@ Object* Container::findObject(const Creature* searcher, const std::string& name,
 
 
 // Wrapper for the real findCreature to support legacy callers
-Creature* Container::findCreature(const Creature* searcher,  cmd* cmnd, int num) const {
+std::shared_ptr<Creature> Container::findCreature(const std::shared_ptr<const Creature>& searcher,  cmd* cmnd, int num) const {
     return(findCreature(searcher, cmnd->str[num], cmnd->val[num]));
 }
 
-Creature* Container::findCreaturePython(Creature* searcher, const std::string& name, bool monFirst, bool firstAggro, bool exactMatch ) {
+std::shared_ptr<Creature> Container::findCreaturePython(const std::shared_ptr<Creature>& searcher, const std::string& name, bool monFirst, bool firstAggro, bool exactMatch ) {
     int ignored=0;
     int num = 1;
 
@@ -296,11 +294,11 @@ Creature* Container::findCreaturePython(Creature* searcher, const std::string& n
 }
 
 // Wrapper for the real findCreature for callers that don't care about the value of match
-Creature* Container::findCreature(const Creature* searcher, const std::string& name, const int num, bool monFirst, bool firstAggro, bool exactMatch )  const {
+std::shared_ptr<Creature> Container::findCreature(const std::shared_ptr<const Creature>& searcher, const std::string& name, const int num, bool monFirst, bool firstAggro, bool exactMatch )  const {
     int ignored=0;
     return(findCreature(searcher, name, num, monFirst, firstAggro, exactMatch, ignored));
 }
-bool isMatch(const Creature* searcher, MudObject* target, const std::string& name, bool exactMatch, bool checkVisibility) {
+bool isMatch(const std::shared_ptr<const Creature>& searcher, const std::shared_ptr<MudObject>& target, const std::string& name, bool exactMatch, bool checkVisibility) {
     if(!target)
         return(false);
     if(checkVisibility && !searcher->canSee(target))
@@ -327,12 +325,12 @@ bool isMatch(const Creature* searcher, MudObject* target, const std::string& nam
 
 // The real findCreature, will take and return the value of match as to allow for findTarget to find the 3rd thing named
 // gold with a monster name goldfish, player named goldmine, and some gold in the room!
-Creature* Container::findCreature(const Creature* searcher, const std::string& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
+std::shared_ptr<Creature> Container::findCreature(const std::shared_ptr<const Creature>& searcher, const std::string& name, const int num, bool monFirst, bool firstAggro, bool exactMatch, int& match) const {
 
     if(!searcher || name.empty())
         return(nullptr);
 
-    Creature* target=nullptr;
+    std::shared_ptr<Creature> target=nullptr;
     for(int i = 1 ; i <= 2 ; i++) {
         if( (monFirst && i == 1) || (!monFirst && i == 2) ) {
             target = findMonster(searcher, name, num, firstAggro, exactMatch, match);
@@ -348,16 +346,16 @@ Creature* Container::findCreature(const Creature* searcher, const std::string& n
 
 }
 
-Monster* Container::findMonster(const Creature* searcher,  cmd* cmnd, int num) const {
+std::shared_ptr<Monster>  Container::findMonster(std::shared_ptr<const Creature> searcher,  cmd* cmnd, int num) const {
     return(findMonster(searcher, cmnd->str[num], cmnd->val[num]));
 }
-Monster* Container::findMonster(const Creature* searcher, const std::string& name, const int num, bool firstAggro, bool exactMatch) const {
+std::shared_ptr<Monster>  Container::findMonster(std::shared_ptr<const Creature> searcher, const std::string& name, const int num, bool firstAggro, bool exactMatch) const {
     int match = 0;
     return(findMonster(searcher, name, num, firstAggro, exactMatch, match));
 }
-Monster* Container::findMonster(const Creature* searcher, const std::string& name, const int num, bool firstAggro, bool exactMatch, int& match) const {
-    Monster* target = nullptr;
-    for(Monster* mons : searcher->getParent()->monsters) {
+std::shared_ptr<Monster>  Container::findMonster(const std::shared_ptr<const Creature>& searcher, const std::string& name, const int num, bool firstAggro, bool exactMatch, int& match) const {
+    std::shared_ptr<Monster>  target = nullptr;
+    for(const auto& mons : searcher->getParent()->monsters) {
         if(isMatch(searcher, mons, name, exactMatch, true)) {
             match++;
             if(match == num) {
@@ -380,15 +378,15 @@ Monster* Container::findMonster(const Creature* searcher, const std::string& nam
         return(target);
     }
 }
-Player* Container::findPlayer(const Creature* searcher,  cmd* cmnd, int num) const {
+std::shared_ptr<Player> Container::findPlayer(const std::shared_ptr<const Creature>& searcher, cmd* cmnd, int num) const {
     return(findPlayer(searcher, cmnd->str[num], cmnd->val[num]));
 }
-Player* Container::findPlayer(const Creature* searcher, const std::string& name, const int num, bool exactMatch) const {
+std::shared_ptr<Player> Container::findPlayer(const std::shared_ptr<const Creature>& searcher, const std::string& name, const int num, bool exactMatch) const {
     int match = 0;
     return(findPlayer(searcher, name, num, exactMatch, match));
 }
-Player* Container::findPlayer(const Creature* searcher, const std::string& name, const int num, bool exactMatch, int& match) const {
-    for(Player* ply : searcher->getParent()->players) {
+std::shared_ptr<Player> Container::findPlayer(const std::shared_ptr<const Creature>& searcher, const std::string& name, const int num, bool exactMatch, int& match) const {
+    for(const auto& ply: searcher->getParent()->players) {
         if(isMatch(searcher, ply, name, exactMatch, true)) {
             match++;
             if(match == num) {
@@ -418,9 +416,9 @@ void Containable::addToSet() {
     lastParent = nullptr;
 }
 
-bool Containable::addTo(Container* container) {
+bool Containable::addTo(const std::shared_ptr<Container>& container) {
     if(container == nullptr)
-        return(removeFrom());
+        return(removeFrom() != nullptr);
 
     if(this->parent != nullptr && parent->getAsMudObject() != container->getAsMudObject()) {
         std::clog << "Non Null Parent" << std::endl;
@@ -434,10 +432,10 @@ bool Containable::addTo(Container* container) {
             getAsCreature()->currentLocation.mapmarker = container->getAsAreaRoom()->mapmarker;
         }
     }
-    return(container->add(this));
+    return(container->add(shared_from_this()));
 }
 
-Container* Containable::removeFrom() {
+std::shared_ptr<Container> Containable::removeFrom() {
     if(!parent) {
         return(nullptr);
     }
@@ -446,13 +444,13 @@ Container* Containable::removeFrom() {
         getAsCreature()->currentLocation.room.clear();
         getAsCreature()->currentLocation.mapmarker.reset();
     }
-    return(parent->remove(this));
+    return(parent->remove(shared_from_this()));
 }
 
-void Containable::setParent(Container* container) {
+void Containable::setParent(std::shared_ptr<Container> container) {
     parent = container;
 }
-Container* Containable::getParent() const {
+std::shared_ptr<Container> Containable::getParent() const {
     return(parent);
 }
 
@@ -479,74 +477,74 @@ bool Containable::inCreature() const {
     return(parent && parent->isCreature());
 }
 
-BaseRoom* Containable::getRoomParent() {
+std::shared_ptr<BaseRoom> Containable::getRoomParent() {
     if(!parent)
         return(nullptr);
     return(parent->getAsRoom());
 }
-UniqueRoom* Containable::getUniqueRoomParent() {
+std::shared_ptr<UniqueRoom> Containable::getUniqueRoomParent() {
     if(!parent)
             return(nullptr);
     return(parent->getAsUniqueRoom());
 }
-AreaRoom* Containable::getAreaRoomParent() {
+std::shared_ptr<AreaRoom> Containable::getAreaRoomParent() {
     if(!parent)
         return(nullptr);
     return(parent->getAsAreaRoom());
 }
-Object* Containable::getObjectParent() {
+std::shared_ptr<Object>  Containable::getObjectParent() {
     if(!parent)
         return(nullptr);
     return(parent->getAsObject());
 }
-Player* Containable::getPlayerParent() {
+std::shared_ptr<Player> Containable::getPlayerParent() {
     if(!parent)
         return(nullptr);
     return(parent->getAsPlayer());
 }
-Monster* Containable::getMonsterParent() {
+std::shared_ptr<Monster>  Containable::getMonsterParent() {
     if(!parent)
         return(nullptr);
     return(parent->getAsMonster());
 }
-Creature* Containable::getCreatureParent() {
+std::shared_ptr<Creature> Containable::getCreatureParent() {
     if(!parent)
         return(nullptr);
     return(parent->getAsCreature());
 }
 
-const BaseRoom* Containable::getConstRoomParent() const {
+std::shared_ptr<const BaseRoom> Containable::getConstRoomParent() const {
     if(!parent)
         return(nullptr);
     return(parent->getAsConstRoom());
 }
-const UniqueRoom* Containable::getConstUniqueRoomParent() const {
+std::shared_ptr<const UniqueRoom> Containable::getConstUniqueRoomParent() const {
     if(!parent)
         return(nullptr);
     return(parent->getAsConstUniqueRoom());
 }
-const AreaRoom* Containable::getConstAreaRoomParent() const {
+std::shared_ptr<const AreaRoom> Containable::getConstAreaRoomParent() const {
     if(!parent)
         return(nullptr);
     return(parent->getAsConstAreaRoom());
 }
-const Object* Containable::getConstObjectParent() const {
+std::shared_ptr<const Object>  Containable::getConstObjectParent() const {
     if(!parent)
         return(nullptr);
     return(parent->getAsConstObject());
 }
-const Player* Containable::getConstPlayerParent() const {
+std::shared_ptr<const Player> Containable::getConstPlayerParent() const {
     if(!parent)
         return(nullptr);
     return(parent->getAsConstPlayer());
 }
-const Monster* Containable::getConstMonsterParent() const {
+std::shared_ptr<const Monster>  Containable::getConstMonsterParent() const {
     if(!parent)
         return(nullptr);
     return(parent->getAsConstMonster());
 }
 
-const Creature* Containable::getConstCreatureParent() const {
+std::shared_ptr<const Creature> Containable::getConstCreatureParent() const {
     if(!parent)
         return(nullptr);
     return(parent->getAsConstCreature());

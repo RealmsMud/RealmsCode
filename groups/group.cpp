@@ -36,9 +36,7 @@
 //# Group methods for groups
 //################################################################################
 
-Group::Group(Creature* pLeader) {
-    //if(pLeader.inGroup())
-    //  throw(std::runtime_error("Error: Leader already in another group\n"));
+Group::Group(const std::shared_ptr<Creature>& pLeader) {
     flags = 0;
     add(pLeader);
     leader = pLeader;
@@ -48,8 +46,8 @@ Group::Group(Creature* pLeader) {
     if(pLeader->pFlagIsSet(P_GOLD_SPLIT))
         setFlag(GROUP_SPLIT_GOLD);
 
-    name = std::string(leader->getName()) + "'s group";
-    description = "A group, lead by " + std::string(leader->getName());
+    name = std::string(pLeader->getName()) + "'s group";
+    description = "A group, lead by " + std::string(pLeader->getName());
     // Register us in the server's list of groups
     gServer->registerGroup(this);
 }
@@ -67,25 +65,29 @@ Group::~Group() {
 // Adds a creature to the group, and adds his pets too if the addPets parameter
 // is set
 
-bool Group::add(Creature* newMember, bool addPets) {
-    Group* oldGroup = newMember->getGroup(false);
-    if(oldGroup && oldGroup != this) {
-        oldGroup->remove(newMember);
-        oldGroup = nullptr;
-    }
-
-    // No adding someone twice
-    if(!oldGroup) {
-        newMember->setGroup(this);
-        members.push_back(newMember);
-    }
-    if(addPets) {
-        for(Monster* mons : newMember->pets) {
-            add(mons);
+bool Group::add(const std::weak_ptr<Creature>& newMember, bool addPets) {
+    if(auto target = newMember.lock()) {
+        Group *oldGroup = target->getGroup(false);
+        if (oldGroup && oldGroup != this) {
+            oldGroup->remove(target);
+            oldGroup = nullptr;
         }
+
+        // No adding someone twice
+        if (!oldGroup) {
+            target->setGroup(this);
+            members.push_back(target);
+        }
+        if (addPets) {
+            for (const auto &mons: target->pets) {
+                add(mons);
+            }
+        }
+        target->setGroupStatus(GROUP_MEMBER);
+        return(true);
+    } else {
+        return false;
     }
-    newMember->setGroupStatus(GROUP_MEMBER);
-    return(true);
 }
 
 //********************************************************************************
@@ -96,8 +98,15 @@ bool Group::add(Creature* newMember, bool addPets) {
 //
 // Returns: true  - The group was deleted and is no longer valid
 //          false - The group still exists
-bool Group::remove(Creature* toRemove) {
-    auto it = std::find(members.begin(), members.end(), toRemove);
+bool Group::remove(const std::weak_ptr<Creature>& pToRemove) {
+    const auto toRemove = pToRemove.lock();
+    if(!toRemove) {
+        return size() == 0;
+    }
+    const auto it = std::find_if(members.begin(), members.end(), [&toRemove](const std::weak_ptr<Creature>& ptr1) {
+        return ptr1.lock() == toRemove;
+    });
+
     if(it != members.end()) {
         toRemove->setGroup(nullptr);
         toRemove->setGroupStatus(GROUP_NO_STATUS);
@@ -105,7 +114,7 @@ bool Group::remove(Creature* toRemove) {
         // Iterator is invalid now, do not try to access it after this
         members.erase(it);
         // Remove any pets this player had in the group
-        for(Monster* mons : toRemove->pets) {
+        for(const auto& mons : toRemove->pets) {
             if(remove(mons))
                 return(true);
         }
@@ -115,18 +124,20 @@ bool Group::remove(Creature* toRemove) {
             return(disband());
 
         // We've already checked for a disband, now check for a leadership change
-        if(toRemove == leader) {
+        auto curLeader = leader.lock();
+        if(toRemove == curLeader) {
             leader = this->getMember(1, false);
 
             // Something's wrong here
-            if(!leader) {
+            auto newLeader = leader.lock();
+            if(!newLeader) {
                 std::clog << "Couldn't find a replacement leader.\n";
                 return(disband());
             }
 
-            leader->setGroupStatus(GROUP_LEADER);
-            leader->print("You are now the group leader.\n");
-            sendToAll(std::string(leader->getName()) + " is now the group leader.\n", leader);
+            newLeader->setGroupStatus(GROUP_LEADER);
+            newLeader->print("You are now the group leader.\n");
+            sendToAll(std::string(newLeader->getName()) + " is now the group leader.\n", newLeader);
         }
 
 
@@ -150,9 +161,13 @@ bool Group::disband() {
 //********************************************************************************
 // Removes all players from a group (but does not delete it)
 void Group::removeAll() {
-    for(Creature* crt : members) {
-        crt->setGroup(nullptr);
-        crt->setGroupStatus(GROUP_NO_STATUS);
+    auto it = members.begin();
+    while (it != members.end()) {
+        if(auto crt = it->lock()) {
+            crt->setGroup(nullptr);
+            crt->setGroupStatus(GROUP_NO_STATUS);
+        }
+        it++;
     }
     members.clear();
 }
@@ -163,9 +178,15 @@ void Group::removeAll() {
 // Returns the absolute size of the group
 int Group::size() {
     int count=0;
-    for(Creature* crt : members) {
-        if(crt->getGroupStatus() >= GROUP_MEMBER)
-            count++;
+    auto it = members.begin();
+    while (it != members.end()) {
+        if(auto crt = it->lock()) {
+            if(crt->getGroupStatus() >= GROUP_MEMBER)
+                count++;
+            it++;
+        } else {
+            it = members.erase(it);
+        }
     }
     return(count);
 
@@ -179,9 +200,15 @@ int Group::size() {
 // Returns: The number of players in the group
 int Group::getSize(bool countDmInvis, bool membersOnly) {
     int count=0;
-    for(Creature* crt : members) {
-        if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && (crt->getGroupStatus() >= GROUP_MEMBER || ! membersOnly))
-            count++;
+    auto it = members.begin();
+    while (it != members.end()) {
+        if(auto crt = it->lock()) {
+            if ((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && (crt->getGroupStatus() >= GROUP_MEMBER || !membersOnly))
+                count++;
+            it++;
+        } else {
+            it = members.erase(it);
+        }
     }
     return(count);
 
@@ -190,11 +217,17 @@ int Group::getSize(bool countDmInvis, bool membersOnly) {
 //* getNumInSameRoup
 //********************************************************************************
 // Returns the number of group members in the same room as the target
-int Group::getNumInSameRoom(Creature* target) {
+int Group::getNumInSameRoom(const std::shared_ptr<Creature>& target) {
     int count=0;
-    for(Creature* crt : members) {
-        if(crt != target && target->inSameRoom(crt))
-            count++;
+    auto it = members.begin();
+    while (it != members.end()) {
+        if(auto crt = it->lock()) {
+            if (crt != target && target->inSameRoom(crt))
+                count++;
+            it++;
+        } else {
+            it = members.erase(it);
+        }
     }
     return(count);
 }
@@ -203,11 +236,17 @@ int Group::getNumInSameRoom(Creature* target) {
 //********************************************************************************
 // Returns the number of group members (players) in the same room as the target
 
-int Group::getNumPlyInSameRoom(Creature* target) {
+int Group::getNumPlyInSameRoom(const std::shared_ptr<Creature>& target) {
     int count=0;
-    for(Creature* crt : members) {
-        if(crt != target && crt->isPlayer() && target->inSameRoom(crt))
-            count++;
+    auto it = members.begin();
+    while (it != members.end()) {
+        if(auto crt = it->lock()) {
+            if(crt != target && crt->isPlayer() && target->inSameRoom(crt))
+                count++;
+            it++;
+        } else {
+            it = members.erase(it);
+        }
     }
     return(count);
 }
@@ -218,13 +257,19 @@ int Group::getNumPlyInSameRoom(Creature* target) {
 // Parameters: countDmInvis - Should we count DM invis players or not?
 // Returns: The chosen players in the group
 
-Creature* Group::getMember(int num, bool countDmInvis) {
+std::shared_ptr<Creature> Group::getMember(int num, bool countDmInvis) {
     int count=0;
-    for(Creature* crt : members) {
-        if((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && crt->getGroupStatus() >= GROUP_MEMBER)
-            count++;
-        if(count == num)
-            return(crt);
+    auto it = members.begin();
+    while (it != members.end()) {
+        if(auto crt = it->lock()) {
+            if ((countDmInvis || !crt->pFlagIsSet(P_DM_INVIS)) && crt->isPlayer() && crt->getGroupStatus() >= GROUP_MEMBER)
+                count++;
+            if (count == num)
+                return (crt);
+            it++;
+        } else {
+            it = members.erase(it);
+        }
     }
     return(nullptr);
 }
@@ -236,16 +281,22 @@ Creature* Group::getMember(int num, bool countDmInvis) {
 //              Searcher    - The creature doing the search (allows nulls)
 //              includePets - Include pets in the search
 // Returns: A pointer to the creature, if found
-Creature* Group::getMember(const std::string& name, int num, Creature* searcher, bool includePets) {
+std::shared_ptr<Creature> Group::getMember(const std::string& pName, int num, const std::shared_ptr<Creature>& searcher, bool includePets) {
     int match = 0;
-    for(Creature* crt : members) {
-        if(!crt->isPlayer() && !includePets) continue;
-        if(crt->getGroupStatus() < GROUP_MEMBER) continue;
-        if(!searcher || !searcher->canSee(crt)) continue;
-        if(keyTxtEqual(crt, name.c_str())) {
-            if(++match == num) {
-                return(crt);
+    auto it = members.begin();
+    while (it != members.end()) {
+        if(auto crt = it->lock()) {
+            if(!crt->isPlayer() && !includePets) continue;
+            if(crt->getGroupStatus() < GROUP_MEMBER) continue;
+            if(!searcher || !searcher->canSee(crt)) continue;
+            if(keyTxtEqual(crt, pName.c_str())) {
+                if(++match == num) {
+                    return(crt);
+                }
             }
+            it++;
+        } else {
+            it = members.erase(it);
         }
     }
     return(nullptr);
@@ -256,8 +307,12 @@ Creature* Group::getMember(const std::string& name, int num, Creature* searcher,
 //* inGroup
 //********************************************************************************
 // Returns: Is the target in this group?
-bool Group::inGroup(Creature* target) {
-    if(std::find(members.begin(), members.end(), target) == members.end())
+bool Group::inGroup(std::shared_ptr<Creature> target) {
+    const auto it = std::find_if(members.begin(), members.end(), [&target](const std::weak_ptr<Creature>& ptr1) {
+        return ptr1.lock() == target;
+    });
+
+    if(it == members.end())
         return(false);
     else
         return(true);
@@ -268,10 +323,16 @@ bool Group::inGroup(Creature* target) {
 //********************************************************************************
 // Parameters: sendToInvited - Are invited members counted as in the group or not?
 // Send msg to everyone in the group except ignore
-void Group::sendToAll(std::string_view msg, Creature* ignore, bool sendToInvited) {
-    for(Creature* crt : members) {
-        if(!crt->isPet() && crt != ignore && (sendToInvited || crt->getGroupStatus() >= GROUP_MEMBER )) {
-            *crt << ColorOn << msg << ColorOff;
+void Group::sendToAll(std::string_view msg, const std::shared_ptr<Creature>& ignore, bool sendToInvited) {
+    auto it = members.begin();
+    while (it != members.end()) {
+        if(auto crt = it->lock()) {
+            if(!crt->isPet() && crt != ignore && (sendToInvited || crt->getGroupStatus() >= GROUP_MEMBER )) {
+                *crt << ColorOn << msg << ColorOff;
+            }
+            it++;
+        } else {
+            it = members.erase(it);
         }
     }
 }
@@ -294,10 +355,12 @@ void Group::setName(std::string_view newName) {
 //********************************************************************************
 //* setLeader
 //********************************************************************************
-bool Group::setLeader(Creature* newLeader) {
+bool Group::setLeader(const std::shared_ptr<Creature>& newLeader) {
     //if(newLeader->getGroup() != this)
     //  return(false);
-    leader->setGroupStatus(GROUP_MEMBER);
+    if(auto oldLeader = leader.lock()) {
+        oldLeader->setGroupStatus(GROUP_MEMBER);
+    }
     newLeader->setGroupStatus(GROUP_LEADER);
     leader = newLeader;
 
@@ -322,8 +385,8 @@ GroupType Group::getGroupType() const {
 //********************************************************************************
 //* getLeader
 //********************************************************************************
-Creature* Group::getLeader() const {
-    return(leader);
+std::shared_ptr<Creature> Group::getLeader() const {
+    return(leader.lock());
 }
 //********************************************************************************
 //* getName
@@ -379,14 +442,14 @@ GroupStatus Creature::getGroupStatus() {
 //********************************************************************************
 //* InSameGroup
 //********************************************************************************
-bool Creature::inSameGroup(Creature* target) {
+bool Creature::inSameGroup(const std::shared_ptr<Creature>& target) {
     if(!target) return(false);
     return(getGroup() == target->getGroup());
 }
 //********************************************************************************
 //* GetGroupLeader
 //********************************************************************************
-Creature* Creature::getGroupLeader() {
+std::shared_ptr<Creature> Creature::getGroupLeader() {
     group = getGroup();
     if(!group) return(nullptr);
     return(group->getLeader());
@@ -445,7 +508,6 @@ std::string Group::getGroupTypeStr() const {
         case GROUP_PRIVATE:
             return("(Private)");
     }
-    return("**Unknown**");
 }
 
 //********************************************************************************
@@ -454,7 +516,7 @@ std::string Group::getGroupTypeStr() const {
 std::string displayPref(const std::string &name, bool set) {
     return(name + (set ? "^gon^x" : "^roff^x"));
 }
-std::string Group::getFlagsDisplay() {
+std::string Group::getFlagsDisplay() const {
     std::ostringstream oStr;
     oStr << displayPref("Group Experience Split: ", flagIsSet(GROUP_SPLIT_EXPERIENCE));
     oStr << ", ";
@@ -479,60 +541,69 @@ std::string Server::getGroupList() {
 //* GetGroupTypeStr
 //********************************************************************************
 // Returns the group listing used for displaying to group members
-std::string Group::getGroupList(Creature* viewer) {
+std::string Group::getGroupList(const std::shared_ptr<Creature>& viewer) {
     int i = 0;
     std::ostringstream oStr;
 
-    for(Creature* target : members) {
-        if(!viewer->isStaff() && (target->pFlagIsSet(P_DM_INVIS) || (target->isEffected("incognito") && !viewer->inSameRoom(target))))
+    auto it = members.begin();
+    auto curLeader = leader.lock();
+    while (it != members.end()) {
+        auto crt = it->lock();
+        if(!crt) {
+            it = members.erase(it);
             continue;
-        bool isPet = target->isPet();
+        }
+        it++;
+
+        if(!viewer->isStaff() && (crt->pFlagIsSet(P_DM_INVIS) || (crt->isEffected("incognito") && !viewer->inSameRoom(crt))))
+            continue;
+        bool isPet = crt->isPet();
         oStr << ++i << ") ";
-        if(!viewer->pFlagIsSet(P_NO_EXTRA_COLOR) && viewer->isEffected("know-aura") && target->getGroupStatus() != GROUP_INVITED)
-            oStr << target->alignColor();
+        if(!viewer->pFlagIsSet(P_NO_EXTRA_COLOR) && viewer->isEffected("know-aura") && crt->getGroupStatus() != GROUP_INVITED)
+            oStr << crt->alignColor();
 
         if(isPet)
-            oStr << target->getMaster()->getName() << "'s " << target->getName();
+            oStr << crt->getMaster()->getName() << "'s " << crt->getName();
         else
-            oStr << target->getName();
+            oStr << crt->getName();
         oStr << "^x";
-        if(target == leader) {
+        if(crt == curLeader) {
             oStr << " (Leader)";
-        } else if(target->getGroupStatus() == GROUP_INVITED) {
+        } else if(crt->getGroupStatus() == GROUP_INVITED) {
             oStr << " (Invited).\n";
             continue;
         }
-        if( viewer->isCt() ||
-                (isPet && !target->getMaster()->flagIsSet(P_NO_SHOW_STATS)) ||
-                (!isPet && !target->pFlagIsSet(P_NO_SHOW_STATS)) ||
-                (isPet && target->getMaster() == viewer) ||
-                (!isPet && target == viewer))
+        if(viewer->isCt() ||
+           (isPet && !crt->getMaster()->flagIsSet(P_NO_SHOW_STATS)) ||
+           (!isPet && !crt->pFlagIsSet(P_NO_SHOW_STATS)) ||
+           (isPet && crt->getMaster() == viewer) ||
+           (!isPet && crt == viewer))
         {
-            oStr << " - " << (target->hp.getCur() < target->hp.getMax() && !viewer->pFlagIsSet(P_NO_EXTRA_COLOR) ? "^R" : "")
-                 << std::setw(3) << target->hp.getCur() << "^x/" << std::setw(3) << target->hp.getMax()
-                 << " Hp - " << std::setw(3) << target->mp.getCur() << "/" << std::setw(3)
-                 << target->mp.getMax() << " Mp";
+            oStr << " - " << (crt->hp.getCur() < crt->hp.getMax() && !viewer->pFlagIsSet(P_NO_EXTRA_COLOR) ? "^R" : "")
+                 << std::setw(3) << crt->hp.getCur() << "^x/" << std::setw(3) << crt->hp.getMax()
+                 << " Hp - " << std::setw(3) << crt->mp.getCur() << "/" << std::setw(3)
+                 << crt->mp.getMax() << " Mp";
 
             if(!isPet) {
-                if(target->isEffected("blindness"))
+                if(crt->isEffected("blindness"))
                     oStr << ", Blind";
-                if(target->isEffected("drunkenness"))
+                if(crt->isEffected("drunkenness"))
                     oStr << ", Drunk";
-                if(target->isEffected("confusion"))
+                if(crt->isEffected("confusion"))
                     oStr << ", Confused";
-                if(target->isDiseased())
+                if(crt->isDiseased())
                     oStr << ", Diseased";
-                if(target->isEffected("petrification"))
+                if(crt->isEffected("petrification"))
                     oStr << ", Petrified";
-                if(target->isPoisoned())
+                if(crt->isPoisoned())
                     oStr << ", Poisoned";
-                if(target->isEffected("silence"))
+                if(crt->isEffected("silence"))
                     oStr << ", Silenced";
-                if(target->flagIsSet(P_SLEEPING))
+                if(crt->flagIsSet(P_SLEEPING))
                     oStr << ", Sleeping";
-                else if(target->flagIsSet(P_UNCONSCIOUS))
+                else if(crt->flagIsSet(P_UNCONSCIOUS))
                     oStr << ", Unconscious";
-                if(target->isEffected("wounded"))
+                if(crt->isEffected("wounded"))
                     oStr << ", Wounded";
             }
 
@@ -550,7 +621,10 @@ std::ostream& operator<<(std::ostream& out, const Group* group) {
 }
 std::ostream& operator<<(std::ostream& out, const Group& group) {
     int i = 0;
-    for(Creature* crt : group.members) {
+    for(const auto& member : group.members) {
+        auto crt = member.lock();
+        if(!crt) continue;
+
         out << "\t" << ++i << ") " << crt->getName();
         if(crt->getGroupStatus() == GROUP_LEADER)
             out << " (Leader)";

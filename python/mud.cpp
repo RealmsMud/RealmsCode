@@ -194,7 +194,7 @@ void init_module_mud(py::module &m) {
     m.def("isSemiBadSocial", &::isSemiBadSocial);
     m.def("isGoodSocial", &::isGoodSocial);
     m.def("getConBonusPercentage", &::getConBonusPercentage);
-    //void doCastPython(MudObject* caster, Creature* target, std::string spell, int strength)
+    //void doCastPython(std::shared_ptr<MudObject> caster, std::shared_ptr<Creature> target, std::string spell, int strength)
     m.def("doCast", &::doCastPython, py::arg("caster"), py::arg("target"), py::arg("spell"), py::arg("strength")=(int)(130) );
 
 }

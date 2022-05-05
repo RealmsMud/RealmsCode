@@ -191,7 +191,7 @@ void Calendar::resetToMidnight() {
     setLastPirate("");
 }
 
-bool Calendar::isBirthday(const Player* target) const {
+bool Calendar::isBirthday(std::shared_ptr<const Player> target) const {
     cDay* b = target->getBirthday();
     if(!b)
         return(false);
@@ -223,7 +223,7 @@ void Calendar::setSeason() {
 //                      printtime
 //*********************************************************************
 
-void Calendar::printtime(const Player* player) const {
+void Calendar::printtime(const std::shared_ptr<Player> player) const {
     int daytime = gConfig->currentHour(), sun=0;
     cMonth* month = getMonth(curMonth);
     const CatRefInfo* cri = gConfig->getCatRefInfo(player->getConstRoomParent(), 1);
@@ -371,8 +371,8 @@ void Calendar::setLastPirate(std::string_view name) {
 //                      checkBirthdays
 //*********************************************************************
 
-int checkBirthdays(Player* player, cmd* cmnd) {
-    const Player* target=nullptr;
+int checkBirthdays(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<const Player> target=nullptr;
     const Calendar* calendar = gConfig->getCalendar();
     bool    found = false;
 
@@ -434,7 +434,7 @@ const Calendar* Config::getCalendar() const {
 //                      reloadCalendar
 //*********************************************************************
 
-int reloadCalendar(Player* player) {
+int reloadCalendar(std::shared_ptr<Player> player) {
     const auto filename = Path::Game / "calendar.load.xml";
     const auto filename2 = Path::PlayerData / "calendar.xml";
 

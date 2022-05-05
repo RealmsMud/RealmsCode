@@ -65,10 +65,10 @@
 // This spell allows the caster to magically transport an object to
 // another player.
 
-int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player* pPlayer = player->getAsPlayer();
-    Creature* target=nullptr;
-    Object  *object=nullptr;
+int splTransport(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer();
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Object> object=nullptr;
     int     cost;
 
     if(pPlayer->getClass() == CreatureClass::BUILDER) {
@@ -106,7 +106,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
     if(target->isEffected("petrification")) {
-        pPlayer->print("%M cannot receive items right now.\n", target);
+        pPlayer->print("%M cannot receive items right now.\n", target.get());
         return(0);
     }
 
@@ -129,7 +129,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     cost = 5 + bonus(pPlayer->intelligence.getCur()) + ((int)pPlayer->getLevel() - 5) * 2;
     if(object->getActualWeight() > cost) {
-        pPlayer->printColor("%O is too heavy to transport at your current level.\n", object);
+        pPlayer->printColor("%O is too heavy to transport at your current level.\n", object.get());
         return(0);
     }
 
@@ -147,12 +147,12 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
     object->clearFlag(O_JUST_BOUGHT);
 
     if(!pPlayer->flagIsSet(P_DM_INVIS)) {
-        broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M transports an object to someone.", pPlayer);
-        broadcast(isCt, pPlayer->getSock(), pPlayer->getRoomParent(), "*DM* %M transports %1P to %N.", pPlayer, object, target);
+        broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M transports an object to someone.", pPlayer.get());
+        broadcast(isCt, pPlayer->getSock(), pPlayer->getRoomParent(), "*DM* %M transports %1P to %N.", pPlayer.get(), object.get(), target.get());
     }
 
-    pPlayer->printColor("You concentrate intensely on %P as it disappears.\n", object);
-    pPlayer->printColor("You sucessfully transported %1P to %N.\n", object, target);
+    pPlayer->printColor("You concentrate intensely on %P as it disappears.\n", object.get());
+    pPlayer->printColor("You sucessfully transported %1P to %N.\n", object.get(), target.get());
 
     if(!pPlayer->isDm())
         log_immort(true, pPlayer, "%s transports a %s to %s in room %s.\n", pPlayer->getCName(), object->getCName(),
@@ -160,7 +160,7 @@ int splTransport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(!pPlayer->flagIsSet(P_DM_INVIS) && (!target->isEffected("incognito") || pPlayer->inSameRoom(target))) {
         target->wake("You awaken suddenly!");
-        target->printColor("%M magically sends you %1P.\n", pPlayer, object);
+        target->printColor("%M magically sends you %1P.\n", pPlayer.get(), object.get());
     }
 
     pPlayer->delObj(object);
@@ -190,9 +190,9 @@ bool hinderedByDimensionalAnchor(int splno) {
 // This spell can either create a dimensional anchor in a room or make
 // them resistant to magical movement spells
 
-int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* creature=nullptr;
-    Player* target=nullptr, *pPlayer = player->getAsPlayer();
+int splDimensionalAnchor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Player> target=nullptr, pPlayer = player->getAsPlayer();
     int     i=0, num=-1;
     bool    destroy=false;
 
@@ -266,8 +266,8 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(target != pPlayer) {
             if(target->flagIsSet(P_NO_SUMMON) && !player->isStaff()) {
                 if(target->isStaff() || target->chkSave(SPL, player, 0)) {
-                    player->printColor("^y%M resisted your anchor spell!\n", target);
-                    target->printColor("^y%M tried to place a dimensional-anchor on you!^w\nIf you wish to be anchored, type \"set summon\".^x\n", player);
+                    player->printColor("^y%M resisted your anchor spell!\n", target.get());
+                    target->printColor("^y%M tried to place a dimensional-anchor on you!^w\nIf you wish to be anchored, type \"set summon\".^x\n", player.get());
                     return(1);
                 }
             }
@@ -368,10 +368,8 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
     pPlayer->setAnchor(num, cmnd->str[2]);
 
     player->print("Anchor spell cast.\nDimensional anchor \"%s\" created.\n", pPlayer->getAnchorAlias(num).c_str());
-    broadcast(player->getSock(), pPlayer->getRoomParent(),
-            "%M forms a dimensional anchor in the room.", pPlayer);
-    broadcast(isCt, "^y%M forms a dimensional anchor in room %s.",
-            pPlayer, pPlayer->getRoomParent()->fullName().c_str());
+    broadcast(player->getSock(), pPlayer->getRoomParent(), "%M forms a dimensional anchor in the room.", pPlayer.get());
+    broadcast(isCt, "^y%M forms a dimensional anchor in room %s.", pPlayer.get(), pPlayer->getRoomParent()->fullName().c_str());
 
     if(spellData->how == CastType::CAST)
         pPlayer->subMp(50);
@@ -384,12 +382,12 @@ int splDimensionalAnchor(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 // This function creates a portal to the caster's anchor
 
-int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player* pPlayer = player->getAsPlayer();
+int splPortal(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer();
     const Anchor* destination=0;
-    BaseRoom* newRoom=nullptr;
-    UniqueRoom* uRoom=nullptr;
-    AreaRoom* aRoom=nullptr;
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
+    std::shared_ptr<AreaRoom> aRoom=nullptr;
     int     i=0;
 
     if(!pPlayer)
@@ -442,7 +440,7 @@ int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     if(destination->getMapMarker()) {
-        Area *area = gServer->getArea(destination->getMapMarker()->getArea());
+        std::shared_ptr<Area> area = gServer->getArea(destination->getMapMarker()->getArea());
         if(!area) {
             player->printColor("Massive dimensional interference detected.\n^yYour spell fails.\n");
             return(0);
@@ -454,7 +452,7 @@ int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
         newRoom = aRoom;
     } else {
-        if( !loadRoom(destination->getRoom(), &uRoom) ||
+        if( !loadRoom(destination->getRoom(), uRoom) ||
             !pPlayer->canEnter(uRoom)
         ) {
             player->printColor("Dimensional interference at destination detected.\n^yYour spell fails.\n");
@@ -474,7 +472,7 @@ int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     player->print("You cast a portal spell.\n");
-    broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a portal spell.", pPlayer);
+    broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a portal spell.", pPlayer.get());
 
     player->setFlag(P_PORTAL);
     Move::createPortal(pPlayer->getRoomParent(), newRoom, pPlayer);
@@ -485,19 +483,19 @@ int splPortal(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      createPortal
 //*********************************************************************
 
-void Move::createPortal(BaseRoom* room, BaseRoom* target, const Player* player, bool initial) {
+void Move::createPortal(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<BaseRoom>& target, const std::shared_ptr<Player>& player, bool initial) {
     // start with a unique exit name so we don't override any existing
     // portal exits in the room
-    UniqueRoom *uRoom = target->getAsUniqueRoom();
+    std::shared_ptr<UniqueRoom> uRoom = target->getAsUniqueRoom();
     if(uRoom) {
         link_rom(room, uRoom->info, "uniqueportalname");
     } else {
-        AreaRoom* aRoom = target->getAsAreaRoom();
+        std::shared_ptr<AreaRoom> aRoom = target->getAsAreaRoom();
         link_rom(room, &aRoom->mapmarker, "uniqueportalname");
     }
 
     // the new portal is always the last exit in the room
-    Exit* ext = room->exits.back();
+    std::shared_ptr<Exit> ext = room->exits.back();
     ext->setName("^Yportal");
     ext->setLevel(7);
     ext->setFlag(X_PORTAL);
@@ -519,7 +517,7 @@ void Move::createPortal(BaseRoom* room, BaseRoom* target, const Player* player, 
 //*********************************************************************
 // return true if the portal is used up
 
-bool Move::usePortal(Creature* player, BaseRoom* room, Exit* exit, bool initial) {
+bool Move::usePortal(std::shared_ptr<Creature> player, const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Exit>& exit, bool initial) {
     if(!exit->flagIsSet(X_PORTAL))
         return(false);
 
@@ -529,9 +527,9 @@ bool Move::usePortal(Creature* player, BaseRoom* room, Exit* exit, bool initial)
         return(true);
 
     if(initial) {
-        BaseRoom* target = exit->target.loadRoom();
-        Exit* toUse = nullptr;
-        for(Exit* ext : target->exits) {
+        std::shared_ptr<BaseRoom> target = exit->target.loadRoom();
+        std::shared_ptr<Exit> toUse = nullptr;
+        for(const auto& ext : target->exits) {
             if(ext->flagIsSet(X_PORTAL) && ext->getPassPhrase() == exit->getPassPhrase()) {
                 toUse = ext;
                 break;
@@ -549,21 +547,21 @@ bool Move::usePortal(Creature* player, BaseRoom* room, Exit* exit, bool initial)
 //                      deletePortal
 //*********************************************************************
 
-bool Move::deletePortal(BaseRoom* room, Exit* exit, const Creature* leader, std::list<Creature*> *followers, bool initial) {
+bool Move::deletePortal(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Creature> & leader, std::list<std::shared_ptr<Creature>> *followers, bool initial) {
     return(Move::deletePortal(room, exit->getPassPhrase(), leader, followers, initial));
 }
 
-bool Move::deletePortal(BaseRoom* room, const std::string &name, const Creature* leader, std::list<Creature*> *followers, bool initial) {
+bool Move::deletePortal(const std::shared_ptr<BaseRoom>& room, const std::string &name, const std::shared_ptr<Creature> & leader, std::list<std::shared_ptr<Creature>> *followers, bool initial) {
     ExitList::iterator xit;
     for(xit = room->exits.begin() ; xit != room->exits.end() ; xit++) {
-        Exit* ext = *xit;
+        std::shared_ptr<Exit> ext = *xit;
 
         if(ext->flagIsSet(X_PORTAL) && ext->getPassPhrase() == name) {
             if(initial) {
                 if(leader && leader->isPlayer())
                     leader->printColor("The %s^x collapses into nothingness.\n", ext->getCName());
                 if(followers) {
-                    std::list<Creature*>::const_iterator it;
+                    std::list<std::shared_ptr<Creature>>::const_iterator it;
                     for(it = followers->begin(); it != followers->end(); it++) {
                         if(!(*it)->isPlayer())
                             continue;
@@ -575,13 +573,12 @@ bool Move::deletePortal(BaseRoom* room, const std::string &name, const Creature*
             broadcast(nullptr, room, "The %s^x collapses into nothingness.", ext->getCName());
 
             if(initial) {
-                BaseRoom* target = ext->target.loadRoom();
+                std::shared_ptr<BaseRoom> target = ext->target.loadRoom();
                 Move::deletePortal(target, name, nullptr, nullptr, false);
             }
             room->exits.erase(xit);
-            delete ext;
 
-            Player* owner = gServer->findPlayer(name);
+            std::shared_ptr<Player> owner = gServer->findPlayer(name);
             if(owner)
                 owner->clearFlag(P_PORTAL);
             return(true);
@@ -596,13 +593,13 @@ bool Move::deletePortal(BaseRoom* room, const std::string &name, const Creature*
 // This function allows a player to teleport themself or another player
 // to another room randomly.
 
-int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
-    Player* pPlayer = player->getAsPlayer(), *pTarget=nullptr;
-    Monster* mTarget=nullptr;
-    UniqueRoom  *uRoom=nullptr;
-    BaseRoom *newRoom=nullptr;
-    AreaRoom *aRoom=nullptr;
+int splTeleport(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer(), pTarget=nullptr;
+    std::shared_ptr<Monster>  mTarget=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
+    std::shared_ptr<AreaRoom> aRoom=nullptr;
     int     i=0;
     const Anchor* destination=nullptr;
     char    dest[18];
@@ -668,7 +665,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(1);
         }
 
-        broadcast(player->getSock(), player->getParent(), "%M disappears.", player);
+        broadcast(player->getSock(), player->getParent(), "%M disappears.", player.get());
 
         if(spellData->how != CastType::CAST && spellData->how != CastType::SCROLL)
             player->print("You become disoriented and find yourself in another place.\n");
@@ -723,7 +720,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
             }
 
             if(destination->getMapMarker()) {
-                Area *area = gServer->getArea(destination->getMapMarker()->getArea());
+                std::shared_ptr<Area> area = gServer->getArea(destination->getMapMarker()->getArea());
                 if(!area) {
                     player->printColor("Massive dimensional interference detected.\n^yYour spell fails.\n");
                     return(0);
@@ -735,7 +732,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
                 }
                 newRoom = aRoom;
             } else {
-                if( !loadRoom(destination->getRoom(), &uRoom) ||
+                if( !loadRoom(destination->getRoom(), uRoom) ||
                     !pPlayer->canEnter(uRoom)
                 ) {
                     player->printColor("Dimensional interference at destination detected.\n^yYour spell fails.^x\n");
@@ -765,8 +762,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
             player->print("You cast a teleport spell on yourself.\n");
 
-            broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a teleport spell on %sself.",
-                pPlayer, pPlayer->himHer());
+            broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a teleport spell on %sself.", pPlayer.get(), pPlayer->himHer());
 
             if(spellData->how == CastType::CAST && !player->isStaff() && player->checkDimensionalAnchor()) {
                 player->printColor("^yYour dimensional-anchor causes your spell to fizzle!^w\n");
@@ -819,23 +815,23 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
                     return(0);
                 }
                 if(pTarget->flagIsSet(P_LINKDEAD)) {
-                    player->print("You cannot cast that spell on %N right now.\n", target);
+                    player->print("You cannot cast that spell on %N right now.\n", target.get());
                     return(0);
                 }
                 if(pTarget->inCombat()) {
-                    player->print("Not while %N is in combat.\n", pTarget);
+                    player->print("Not while %N is in combat.\n", pTarget.get());
                     return(0);
                 }
                 if(spellData->how == CastType::CAST && pTarget->checkDimensionalAnchor()) {
-                    player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target);
-                    pTarget->printColor("^yYour dimensional-anchor protects you from %N's teleport spell!^w\n", pPlayer);
+                    player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target.get());
+                    pTarget->printColor("^yYour dimensional-anchor protects you from %N's teleport spell!^w\n", pPlayer.get());
                     return(1);
                 }
             }
 
             if(target->chkSave(SPL, player, 0) || target->isCt()) {
                 player->printColor("^yYour spell fizzled.\n");
-                target->print("%M failed to teleport you.\n", player);
+                target->print("%M failed to teleport you.\n", player.get());
                 return(1);
             }
             if(pPlayer && !dec_daily(&pPlayer->daily[DL_TELEP])) {
@@ -843,9 +839,9 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
                 return(1);
             }
             if(target->isEffected("resist-magic") && (Random::get(1, 60) + ((int)player->getLevel() - (int)target->getLevel()) * 10) > 80) {
-                player->print("Your magic is too weak to teleport %N.\n", target);
+                player->print("Your magic is too weak to teleport %N.\n", target.get());
                 if(target->getSock())
-                    target->print("%M tried to teleport you.\n", player);
+                    target->print("%M tried to teleport you.\n", player.get());
                 if(spellData->how == CastType::CAST)
                     player->subMp(30);
                 return(1);
@@ -855,11 +851,11 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("Teleport cast on %N.\n", target);
-            target->print("%M casts a teleport spell on you.\n", player);
+            player->print("Teleport cast on %N.\n", target.get());
+            target->print("%M casts a teleport spell on you.\n", player.get());
 
             if(!player->isDm())
-                broadcast(isCt, "^y### %M(L%d) just teleported %N(L%d).", player, player->getLevel(), target, target->getLevel());
+                broadcast(isCt, "^y### %M(L%d) just teleported %N(L%d).", player.get(), player->getLevel(), target.get(), target->getLevel());
 
             logCast(player, target, "teleport");
 
@@ -873,19 +869,19 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
                 pTarget->doPetFollow();
             } else {
                 mTarget->setFlag(M_WAS_PORTED);
-                broadcast(nullptr, player->getRoomParent(), "%M vanishes!", mTarget);
+                broadcast(nullptr, player->getRoomParent(), "%M vanishes!", mTarget.get());
                 // being ported pisses mobs off! haha
                 mTarget->addEnemy(player);
                 mTarget->deleteFromRoom();
                 mTarget->addToRoom(newRoom);
-                broadcast(nullptr, mTarget->getRoomParent(), "%M was thrown from %N's dimensional rift!", mTarget, player);
+                broadcast(nullptr, mTarget->getRoomParent(), "%M was thrown from %N's dimensional rift!", mTarget.get(), player.get());
             }
 
             logn("log.teleport", "%s(L%dH%dM%dR:%s) was just teleported to room %s by %s(L%d)\n",
                 target->getCName(), target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoomParent()->fullName().c_str(),
                 newRoom->fullName().c_str(), player->getCName(), player->getLevel());
             broadcast(isCt, "^y%M(L%dH%dM%dR:%s) was just teleported to room %s by %s(L%d)",
-                target, target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoomParent()->fullName().c_str(),
+                target.get(), target->getLevel(), target->hp.getCur(), target->mp.getCur(), player->getRoomParent()->fullName().c_str(),
                 newRoom->fullName().c_str(), player->getCName(), player->getLevel());
 
             return(2);
@@ -901,7 +897,7 @@ int splTeleport(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function allows a player to teleport themself or another player
 // to the Ethereal Plane
 
-int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splEtherealTravel(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     if(!player->isStaff()) {
         const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoomParent());
         const CatRefInfo* eth = gConfig->getCatRefInfo(gConfig->getDefaultArea());
@@ -918,8 +914,8 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
     }
 
-    Player  *target=nullptr, *pCaster = player->getAsPlayer();
-    UniqueRoom  *new_rom=nullptr;
+    std::shared_ptr<Player> target=nullptr, pCaster = player->getAsPlayer();
+    std::shared_ptr<UniqueRoom> new_rom=nullptr;
     CatRef  cr;
 
     if(player->getClass() == CreatureClass::BUILDER) {
@@ -939,17 +935,16 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
             player->print("Ethereal-travel spell cast.\n");
             player->print("You turn translucent and fade away.\n");
             player->print("You have been transported to the ethereal plane.\n");
-            broadcast(pCaster->getSock(), pCaster->getRoomParent(), "%M casts ethereal-travel on %sself.",
-                pCaster, pCaster->himHer());
+            broadcast(pCaster->getSock(), pCaster->getRoomParent(), "%M casts ethereal-travel on %sself.", pCaster.get(), pCaster->himHer());
         } else if(spellData->how == CastType::POTION) {
             player->print("You turn translucent and fade away.\n");
             player->print("You have been transported to the ethereal plane.\n");
-            broadcast(pCaster->getSock(), pCaster->getRoomParent(), "%M turns translucent and fades away.", player);
+            broadcast(pCaster->getSock(), pCaster->getRoomParent(), "%M turns translucent and fades away.", player.get());
         }
 
 
         cr = getEtherealTravelRoom();
-        if(!loadRoom(cr, &new_rom)) {
+        if(!loadRoom(cr, new_rom)) {
             player->print("Spell failure.\n");
             return(0);
         }
@@ -991,7 +986,7 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
         if( (pCaster || player->isPet()) &&
             !target->flagIsSet(P_CHAOTIC) &&
             target->flagIsSet(P_NO_SUMMON) && !target->flagIsSet(P_OUTLAW) &&
-            !player->checkStaff("The spell fizzles.\n%M's summon flag is not set.\n", target)  )
+            !player->checkStaff("The spell fizzles.\n%M's summon flag is not set.\n", target.get())  )
         {
             target->print("%s tried to send you to the ethereal plane\nIf you wish to be sent, type \"set summon\".\n", player->getCName());
             return(0);
@@ -1000,7 +995,7 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(!player->isCt()) {
             if(!target->flagIsSet(P_NO_SUMMON) && target->chkSave(SPL, player, 0)) {
                 player->printColor("^yYour spell fizzled.\n");
-                target->print("%M failed to send you to the ethereal plane.\n", player);
+                target->print("%M failed to send you to the ethereal plane.\n", player.get());
                 return(1);
             }
         }
@@ -1008,27 +1003,26 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
             if(spellData->how == CastType::CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
-                player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target);
-                target->printColor("^yYour dimensional-anchor protects you from %N's ethereal-travel spell!^w\n", player);
+                player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target.get());
+                target->printColor("^yYour dimensional-anchor protects you from %N's ethereal-travel spell!^w\n", player.get());
                 return(1);
             }
 
-            player->print("Ethereal travel spell cast on %N.\n", target);
-            player->print("%N turns translucent and fades away.\n", target);
+            player->print("Ethereal travel spell cast on %N.\n", target.get());
+            player->print("%N turns translucent and fades away.\n", target.get());
 
-            target->print("%M casts an ethereal travel spell on you.\n", player);
+            target->print("%M casts an ethereal travel spell on you.\n", player.get());
             target->print("You turn translucent and fade away.\n");
             target->print("You have been transported to the ethereal plane.\n");
 
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts ethereal-travel on %N.",
-                player, target);
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts ethereal-travel on %N.", player.get(), target.get());
 
             logCast(player, target, "ethereal-travel");
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%N turns translucent and fades away.", target);
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%N turns translucent and fades away.", target.get());
 
             cr = getEtherealTravelRoom();
 
-            if(!loadRoom(cr, &new_rom)) {
+            if(!loadRoom(cr, new_rom)) {
                 player->print("Spell failure.\n");
                 return(0);
             }
@@ -1047,8 +1041,8 @@ int splEtherealTravel(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function allows players to cast summon spells on anyone who is
 // in the game, taking that person to your current room.
 
-int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *target=nullptr;
+int splSummon(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> target=nullptr;
 
     if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
@@ -1147,7 +1141,7 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         // nosummon flag
         if( target->flagIsSet(P_NO_SUMMON) && !target->flagIsSet(P_OUTLAW) &&
-            !player->checkStaff("The spell fizzles.\n%M's summon flag is not set.\n", target)
+            !player->checkStaff("The spell fizzles.\n%M's summon flag is not set.\n", target.get())
         ) {
             target->print("%s tried to summon you!\nIf you wish to be summoned, type \"set summon\".\n", player->getCName());
             return(0);
@@ -1156,16 +1150,16 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
             if(spellData->how == CastType::CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
-                player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target);
-                target->printColor("^yYour dimensional-anchor protects you from %N's summon spell!^w\n", player);
+                player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target.get());
+                target->printColor("^yYour dimensional-anchor protects you from %N's summon spell!^w\n", player.get());
                 return(1);
             }
 
-            player->print("You summon %N.\n", target);
-            target->print("%M summons you.\n", player);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M summons %N.", player, target);
+            player->print("You summon %N.\n", target.get());
+            target->print("%M summons you.\n", player.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M summons %N.", player.get(), target.get());
 
-            broadcast(target->getSock(), target->getRoomParent(), "%M vanishes!", target);
+            broadcast(target->getSock(), target->getRoomParent(), "%M vanishes!", target.get());
 
             target->deleteFromRoom();
             target->addToSameRoom(player);
@@ -1184,10 +1178,10 @@ int splSummon(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function allows rangers to cast the track spell which takes them
 // to any other player in the game.
 
-int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *pPlayer=nullptr, *target=nullptr, *follower=nullptr;
-    BaseRoom *oldRoom=nullptr;
-    UniqueRoom  *troom=nullptr;
+int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer=nullptr, target=nullptr, follower=nullptr;
+    std::shared_ptr<BaseRoom> oldRoom=nullptr;
+    std::shared_ptr<UniqueRoom> troom=nullptr;
     int     chance=0;
     long    t = time(nullptr);
 
@@ -1309,18 +1303,22 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
     // Check for trying to grouptrack with linkdead people following them - abuse
     if(groupTrack) {
         if(pPlayer->getGroupStatus() == GROUP_LEADER && group) {
-            for(Creature* crt : group->members) {
-                if(crt->pFlagIsSet(P_LINKDEAD) && pPlayer->inSameRoom(crt)) {
-                    pPlayer->print("%M's partial link with reality prevents you from tracking.\n", crt);
-                    return(0);
+            auto it = group->members.begin();
+            while(it != group->members.end()) {
+                if(auto crt = it->lock()) {
+                    if(crt->pFlagIsSet(P_LINKDEAD) && pPlayer->inSameRoom(crt)) {
+                        pPlayer->print("%M's partial link with reality prevents you from tracking.\n", crt.get());
+                        return(0);
+                    }
                 }
+                it++;
             }
         }
     }
 
-    pPlayer->print("You track %N.\n", target);
-    target->print("%M has tracked you.\n", pPlayer);
-    broadcast(pPlayer->getSock(), target->getSock(), oldRoom, "%M tracks %N.", pPlayer, target);
+    pPlayer->print("You track %N.\n", target.get());
+    target->print("%M has tracked you.\n", pPlayer.get());
+    broadcast(pPlayer->getSock(), target->getSock(), oldRoom, "%M tracks %N.", pPlayer.get(), target.get());
 
     pPlayer->deleteFromRoom();
     pPlayer->addToSameRoom(target);
@@ -1338,7 +1336,14 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(groupTrack) {
         if(pPlayer->getGroupStatus() == GROUP_LEADER && group) {
-            for(Creature* crt : group->members) {
+            auto it = group->members.begin();
+            while(it != group->members.end()) {
+                auto crt = it->lock();
+                if(!crt) {
+                    it = group->members.erase(it);
+                    continue;
+                }
+                it++;
                 follower = crt->getAsPlayer();
 
                 if(!follower || follower->getRoomParent() != oldRoom)
@@ -1351,7 +1356,7 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
                 follower->doPetFollow();
 
                 if(!follower->flagIsSet(P_DM_INVIS)) {
-                    broadcast(pPlayer->getSock(), follower->getSock(), oldRoom, "%N follows %N.", follower, pPlayer);
+                    broadcast(pPlayer->getSock(), follower->getSock(), oldRoom, "%N follows %N.", follower.get(), pPlayer.get());
 
                     follower->printColor("^gYou are temporarily disoriented.\n");
 
@@ -1374,9 +1379,9 @@ int splTrack(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function allows a player to teleport themself or another player
 // to the recall room
 
-int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *caster = player->getAsPlayer();
-    Player  *target=nullptr;
+int splWordOfRecall(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> caster = player->getAsPlayer();
+    std::shared_ptr<Player> target=nullptr;
 
     if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You cannot cast this spell.\n");
@@ -1403,8 +1408,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Word of recall spell cast.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts word of recall on %sself.",
-                caster, caster->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts word of recall on %sself.", caster.get(), caster->himHer());
         }
 
         if(spellData->how == CastType::CAST && !caster->isStaff() && caster->checkDimensionalAnchor()) {
@@ -1414,7 +1418,7 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         if(spellData->how == CastType::POTION) {
             player->print("You phase in and out of existence.\n");
-            broadcast(player->getSock(), caster->getRoomParent(), "%M disappears.", caster);
+            broadcast(player->getSock(), caster->getRoomParent(), "%M disappears.", caster.get());
         }
 
         caster->statistics.recall();
@@ -1440,21 +1444,21 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
-            player->print("Word of recall cast on %N.\n", target);
-            target->print("%M casts a word of recall spell on you.\n", player);
+            player->print("Word of recall cast on %N.\n", target.get());
+            target->print("%M casts a word of recall spell on you.\n", player.get());
             broadcast(player->getSock(), target->getSock(), player->getParent(),
-                "%M casts word of recall on %N.", player, target);
+                "%M casts word of recall on %N.", player.get(), target.get());
 
             if(spellData->how == CastType::CAST && !player->isStaff() && target->checkDimensionalAnchor()) {
-                player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target);
-                target->printColor("^yYour dimensional-anchor protects you from %N's word-of-recall spell!^w\n", player);
+                player->printColor("^y%M's dimensional-anchor causes your spell to fizzle!^w\n", target.get());
+                target->printColor("^yYour dimensional-anchor protects you from %N's word-of-recall spell!^w\n", player.get());
                 return(1);
             }
 
             // eh?
             if(target->flagIsSet(P_JAILED)) {
                 if(player->isCt())
-                    player->print("%M's jailed flag has been cleared.\n", target);
+                    player->print("%M's jailed flag has been cleared.\n", target.get());
                 target->clearFlag(P_JAILED);
             }
             target->doRecall();
@@ -1469,9 +1473,9 @@ int splWordOfRecall(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 // This spell allows a player to travel to another plane
 
-int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *pPlayer=nullptr, *target=nullptr;
-    UniqueRoom  *new_rom=nullptr;
+int splPlaneShift(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer=nullptr, target=nullptr;
+    std::shared_ptr<UniqueRoom> new_rom=nullptr;
 
     pPlayer = player->getAsPlayer();
     if(!pPlayer)
@@ -1486,7 +1490,7 @@ int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
     if(cmnd->num == 2) {
         target = pPlayer;
         pPlayer->print("You fade out of existence.\n");
-        broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M slowly fades out of existence.", pPlayer);
+        broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M slowly fades out of existence.", pPlayer.get());
 
     // Cast plane-shift on another pPlayer
     } else {
@@ -1499,9 +1503,9 @@ int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            pPlayer->print("You cast plane-shift on %N.\n", target);
-            target->print("%M casts plane-shift on you.\n", pPlayer);
-            broadcast(pPlayer->getSock(), target->getSock(), pPlayer->getRoomParent(), "%M casts plane-shift on %N.", pPlayer, target);
+            pPlayer->print("You cast plane-shift on %N.\n", target.get());
+            target->print("%M casts plane-shift on you.\n", pPlayer.get());
+            broadcast(pPlayer->getSock(), target->getSock(), pPlayer->getRoomParent(), "%M casts plane-shift on %N.", pPlayer.get(), target.get());
             broadcast("");
         }
     }
@@ -1509,7 +1513,7 @@ int splPlaneShift(Creature* player, cmd* cmnd, SpellData* spellData) {
     CatRef  cr;
     cr.setArea("plane");
     cr.id = 1;
-    if(!loadRoom(cr, &new_rom)) {
+    if(!loadRoom(cr, new_rom)) {
         pPlayer->print("Spell failure.\n");
         return(0);
     }
@@ -1541,15 +1545,15 @@ bool Creature::checkDimensionalAnchor() const {
 //                      splBlink
 //*********************************************************************
 
-int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *pPlayer = player->getAsPlayer();
-    Exit    *exit=nullptr;
+int splBlink(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer();
+    std::shared_ptr<Exit> exit=nullptr;
     int     i=0;
     bool doMove = true;
     bool portalDestroyed = false;
     bool isPortal = false;
     bool canCast = false;
-    BaseRoom* newRoom=nullptr, *room = player->getRoomParent();
+    std::shared_ptr<BaseRoom> newRoom=nullptr, room = player->getRoomParent();
 
     if(!pPlayer)
         return(0);
@@ -1589,8 +1593,8 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
         return(0);
     }
 
-    const Monster* guard = room->getGuardingExit(exit, pPlayer);
-    if(guard && !player->checkStaff("You cannot see past %N.\n", guard))
+    const std::shared_ptr<Monster>  guard = room->getGuardingExit(exit, pPlayer);
+    if(guard && !player->checkStaff("You cannot see past %N.\n", guard.get()))
         return(0);
 
     if(exit->flagIsSet(X_CLOSED)) {
@@ -1617,8 +1621,8 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
         // 10% chance of going to the ethereal plane
         if(Random::get(1,10) == 1) {
             CatRef cr = getEtherealTravelRoom();
-            UniqueRoom* uRoom=nullptr;
-            if(loadRoom(cr, &uRoom))
+            std::shared_ptr<UniqueRoom> uRoom=nullptr;
+            if(loadRoom(cr, uRoom))
                 newRoom = uRoom;
         }
 
@@ -1638,12 +1642,12 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(isPortal) {
         player->print("You cast a blink spell.\n");
-        broadcast(pPlayer->getSock(), room, "%M casts a blink spell.", player);
+        broadcast(pPlayer->getSock(), room, "%M casts a blink spell.", player.get());
 
         broadcast(nullptr, room, "^YThe %s^Y explodes violently as the dimensional tunnels converge!", exit->getCName());
 
         int dmg=0;
-        for(Player* ply : room->players) {
+        for(const auto& ply: room->players) {
             // more damage for caster
             if(ply->isStaff())
                 dmg = 0;
@@ -1657,9 +1661,8 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
             ply->printColor("You are blasted with energy for %s%d^x damage!\n", ply->customColorize("*CC:DAMAGE*").c_str(), dmg);
-            broadcast(ply->getSock(), ply->getRoomParent(), "%M is blasted with energy!", ply);
-            broadcastGroup(false, ply, "%M is blasted by energy for *CC:DAMAGE*%d^x damage, %s%s\n",
-                ply, dmg, ply->heShe(), ply->getStatusStr(dmg));
+            broadcast(ply->getSock(), ply->getRoomParent(), "%M is blasted with energy!", ply.get());
+            broadcastGroup(false, ply, "%M is blasted by energy for *CC:DAMAGE*%d^x damage, %s%s\n", ply.get(), dmg, ply->heShe(), ply->getStatusStr(dmg));
 
             ply->hp.decrease(dmg);
 
@@ -1673,15 +1676,15 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
             } else {
                 if(ply == player) {
                     player->print("You are violently ejected from the room!\n\n");
-                    broadcast(pPlayer->getSock(), room, "%M is violently ejected from the room!", player);
+                    broadcast(pPlayer->getSock(), room, "%M is violently ejected from the room!", player.get());
                 }
             }
         }
 
     } else{
         player->printColor("You cast a blink spell. You blink away to the %s^x.\n", exit->getCName());
-        broadcast(pPlayer->getSock(), room, "%M blinks away!", player);
-        broadcast(isDm, pPlayer->getSock(), room, "*DM* %M blinks to the \"%s^x\" exit.", pPlayer, exit->getCName());
+        broadcast(pPlayer->getSock(), room, "%M blinks away!", player.get());
+        broadcast(isDm, pPlayer->getSock(), room, "*DM* %M blinks to the \"%s^x\" exit.", pPlayer.get(), exit->getCName());
     }
 
     if(doMove) {
@@ -1693,7 +1696,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
         pPlayer->addToRoom(newRoom);
         pPlayer->doPetFollow();
 
-        broadcast(pPlayer->getSock(), newRoom, "%M just blinked into existence.", player);
+        broadcast(pPlayer->getSock(), newRoom, "%M just blinked into existence.", player.get());
 
         // if we left an area room that got recycled, no need to do any more
         if(i & DEL_ROOM_DESTROYED)
@@ -1718,7 +1721,7 @@ int splBlink(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      willScatterTo
 //*********************************************************************
 
-bool willScatterTo(const Object* object, const BaseRoom* room, const Exit* exit) {
+bool willScatterTo(const std::shared_ptr<Object>&  object, const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Exit>& exit) {
     return( !exit->flagIsSet(X_SECRET) &&
             !exit->isConcealed(nullptr) &&
             !exit->flagIsSet(X_DESCRIPTION_ONLY) &&
@@ -1744,9 +1747,9 @@ bool willScatterTo(const Object* object, const BaseRoom* room, const Exit* exit)
 //*********************************************************************
 
 void BaseRoom::scatterObjects() {
-    BaseRoom* newRoom=nullptr;
-    Object* object=nullptr;
-    Exit* exit=nullptr;
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
+    std::shared_ptr<Exit> exit=nullptr;
 
     int pick=0;
     ObjectSet::iterator it;
@@ -1766,8 +1769,8 @@ void BaseRoom::scatterObjects() {
 
         // pick an exit
         pick = 0;
-        for(Exit* ext : exits) {
-            if(willScatterTo(object, this, ext))
+        for(const auto& ext : exits) {
+            if(willScatterTo(object, Container::downcasted_shared_from_this<BaseRoom>(), ext))
                 pick++;
         }
 
@@ -1776,8 +1779,8 @@ void BaseRoom::scatterObjects() {
             return;
 
         pick = Random::get(1, pick);
-        for(Exit* ext : exits) {
-            if(willScatterTo(object, this, ext)) {
+        for(const auto& ext : exits) {
+            if(willScatterTo(object, Container::downcasted_shared_from_this<BaseRoom>(), ext)) {
                 pick--;
                 if(!pick) {
                     exit = ext;
@@ -1791,13 +1794,13 @@ void BaseRoom::scatterObjects() {
         if(!newRoom)
             continue;
 
-        broadcast(nullptr, this, "%1O flies to the %s^x!", object, exit->getCName());
+        broadcast(nullptr, this, "%1O flies to the %s^x!", object.get(), exit->getCName());
 
         // send it to exit
         object->clearFlag(O_HIDDEN);
         object->deleteFromRoom();
 
-        broadcast(nullptr, newRoom, "%1O comes flying into the room!", object);
+        broadcast(nullptr, newRoom, "%1O comes flying into the room!", object.get());
         newRoom->wake("Loud noises disturb your sleep.", true);
         finishDropObject(object, newRoom, nullptr, false, false, true);
 

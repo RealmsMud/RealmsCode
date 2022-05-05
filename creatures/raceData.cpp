@@ -420,7 +420,7 @@ const RaceData* Config::getRace(unsigned int id) const {
 //                      dmShowRaces
 //*********************************************************************
 
-int dmShowRaces(Player* player, cmd* cmnd) {
+int dmShowRaces(const std::shared_ptr<Player>& player, cmd* cmnd) {
     RaceDataMap::const_iterator it;
     RaceData* data=nullptr;
     bool    all = player->isDm() && cmnd->num > 1 && !strcmp(cmnd->str[1], "all");

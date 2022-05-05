@@ -31,7 +31,7 @@ class cmd;
 //                      dmCatRefInfo
 //*********************************************************************
 
-int dmCatRefInfo(Player* player, cmd* cmnd) {
+int dmCatRefInfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::list<CatRefInfo*>::const_iterator it;
     std::ostringstream oStr;
     const CatRefInfo *cri=nullptr;

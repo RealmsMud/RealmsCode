@@ -52,7 +52,6 @@
 #include "mudObjects/players.hpp"                // for Player
 #include "mudObjects/rooms.hpp"                  // for BaseRoom
 #include "mudObjects/uniqueRooms.hpp"            // for UniqueRoom
-#include "os.hpp"                                // for ASSERTLOG
 #include "paths.hpp"                             // for BugLog
 #include "proto.hpp"                             // for logn, broadcast, induel
 #include "random.hpp"                            // for Random
@@ -83,60 +82,61 @@ bool Player::isHardcore() const {
 //********************************************************************
 //                      hardcoreDeath
 //********************************************************************
-bool canDrop(const Player* player, const Object* object, const Property* p);
-bool delete_drop_obj(const BaseRoom* room, const Object* object, bool factionCanRecycle);
+bool canDrop(const std::shared_ptr<Player>& player, const std::shared_ptr<Object>&  object, const Property* p);
+bool delete_drop_obj(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Object>&  object, bool factionCanRecycle);
 
-void hardcoreDeath(Player* player) {
-    if(!player->isHardcore())
+void Player::hardcoreDeath() {
+    if(!isHardcore())
         return;
-    bool factionCanRecycle = !player->inUniqueRoom() || Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction());
-    player->hooks.execute("preHardcoreDeath");
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
+    bool factionCanRecycle = !inUniqueRoom() || Faction::willDoBusinessWith(pThis, getUniqueRoomParent()->getFaction());
+    hooks.execute("preHardcoreDeath");
 
     for(int i=0; i<MAXWEAR; i++) {
-        if(player->ready[i] && (!(player->ready[i]->flagIsSet(O_CURSED) && player->ready[i]->getShotsCur() > 0))) {
-            player->ready[i]->clearFlag(O_WORN);
-            player->doRemove(i);
+        if(ready[i] && (!(ready[i]->flagIsSet(O_CURSED) && ready[i]->getShotsCur() > 0))) {
+            ready[i]->clearFlag(O_WORN);
+            doRemove(i);
         }
     }
-    player->computeAC();
-    player->computeAttackPower();
+    computeAC();
+    computeAttackPower();
 
 
-    BaseRoom* room = player->getRoomParent();
-    Object* object=nullptr;
+    std::shared_ptr<BaseRoom> room = getRoomParent();
+    std::shared_ptr<Object>  object=nullptr;
     ObjectSet::iterator it;
-    for( it = player->objects.begin() ; it != player->objects.end() ; ) {
+    for( it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
-        if(delete_drop_obj(room, object, factionCanRecycle) || !canDrop(player, object, nullptr) || object->flagIsSet(O_STARTING)) {
-            delete object;
+        if(delete_drop_obj(room, object, factionCanRecycle) || !canDrop(pThis, object, nullptr) || object->flagIsSet(O_STARTING)) {
+            object.reset();
             continue;
         }
 
-        player->delObj(object, false, true, true, false);
+        delObj(object, false, true, true, false);
         object->addToRoom(room);
     }
-    player->checkDarkness();
+    checkDarkness();
 
-    if(player->coins[GOLD]) {
+    if(coins[GOLD]) {
         object=nullptr;
-        loadObject(MONEY_OBJ, &object);
-        object->nameCoin("gold", player->coins[GOLD]);
-        object->setDroppedBy(player, "HardcoreDeath");
-        object->value.set(player->coins[GOLD], GOLD);
-        player->coins.sub(player->coins[GOLD], GOLD);
-        Server::logGold(GOLD_OUT, player, object->value, nullptr, "HardcoreDeath");
+        loadObject(MONEY_OBJ, object);
+        object->nameCoin("gold", coins[GOLD]);
+        object->setDroppedBy(pThis, "HardcoreDeath");
+        object->value.set(coins[GOLD], GOLD);
+        coins.sub(coins[GOLD], GOLD);
+        Server::logGold(GOLD_OUT, pThis, object->value, nullptr, "HardcoreDeath");
 
         object->addToRoom(room);
     }
 
-    player->printColor("\n\n                 ^YYou have died.\n\n");
-    player->printColor("^RAs a hardcore character, this death is permanent.\n");
-    player->print("\n\n");
-    player->statistics.display(player, true);
-    player->print("\n");
-    broadcast("^#^R### %s's soul is lost forever.", player->getCName());
-    player->hooks.execute("postHardcoreDeath");
-    deletePlayer(player);
+    printColor("\n\n                 ^YYou have died.\n\n");
+    printColor("^RAs a hardcore character, this death is permanent.\n");
+    print("\n\n");
+    statistics.display(pThis, true);
+    print("\n");
+    broadcast("^#^R### %s's soul is lost forever.", getCName());
+    hooks.execute("postHardcoreDeath");
+    deletePlayer();
 }
 
 //********************************************************************
@@ -167,13 +167,13 @@ std::string isHoliday() {
 // Parameters:  <killer> The creature attacking
 // Handles the dropping of items from creatures
 
-void Monster::dropCorpse(Creature *killer) {
-    BaseRoom* room = getRoomParent();
-    std::string str = "", carry = "";
-    Object      *object=nullptr;
-    Player*     player=nullptr;
-    Player*     pMaster = isPet() ? getPlayerMaster() : nullptr;
-    bool        destroy = (room->isDropDestroy() && !flagIsSet(M_IGNORE_ROOM_DESTROY));
+void Monster::dropCorpse(const std::shared_ptr<Creature>& killer) {
+    std::shared_ptr<BaseRoom> room = getRoomParent();
+    std::string str, carried;
+    std::shared_ptr<Object> object = nullptr;
+    std::shared_ptr<Player> player = nullptr;
+    std::shared_ptr<Player> pMaster = isPet() ? getPlayerMaster() : nullptr;
+    bool destroy = (room->isDropDestroy() && !flagIsSet(M_IGNORE_ROOM_DESTROY));
 
     if(killer)
         player = killer->getPlayerMaster();
@@ -187,12 +187,13 @@ void Monster::dropCorpse(Creature *killer) {
         if(destroy) {
             unequip(WIELD, UNEQUIP_DELETE);
         } else {
-            if(player)
-                player->printColor("%M dropped their weapon: %1P.\n", this, ready[WIELD - 1]);
-            Object* drop = unequip(WIELD, UNEQUIP_NOTHING, false);
+            if(player) {
+                *player << ColorOn << "" << setf(CAP) << "" << this << " dropped their weapon: " << ready[WIELD - 1] << ".\n";
+            }
+            std::shared_ptr<Object>  drop = unequip(WIELD, UNEQUIP_NOTHING, false);
             if(drop) {
                 if(drop->flagIsSet(O_JUST_LOADED))
-                    drop->setDroppedBy(this, "MobDeath");
+                    drop->setDroppedBy(Containable::downcasted_shared_from_this<Monster>(), "MobDeath");
                 drop->addToRoom(room);
             }
         }
@@ -209,13 +210,13 @@ void Monster::dropCorpse(Creature *killer) {
     for( it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
         if(object->flagIsSet(O_JUST_LOADED))
-            object->setDroppedBy(this, "MobDeath");
+            object->setDroppedBy(Containable::downcasted_shared_from_this<Monster>(), "MobDeath");
 
         Lore::remove(pMaster, object, true);
         delObj(object, false, false, true, false);
 
         if(destroy)
-            delete object;
+            object.reset();
         else if(!flagIsSet(M_TRADES) || !object->info.id) {
             object->clearFlag(O_BODYPART);
             object->addToRoom(room);
@@ -225,10 +226,10 @@ void Monster::dropCorpse(Creature *killer) {
 
     if(!destroy) {
         if(!coins.isZero()) {
-            loadObject(MONEY_OBJ, &object);
+            loadObject(MONEY_OBJ, object);
             object->value.set(coins);
 
-            object->setDroppedBy(this, "MobDeath");
+            object->setDroppedBy(Containable::downcasted_shared_from_this<Monster>(), "MobDeath");
 
             object->nameCoin("gold", object->value[GOLD]);
             object->addToRoom(room);
@@ -241,14 +242,14 @@ void Monster::dropCorpse(Creature *killer) {
         }
 
         if(player && !str.empty()) {
-            carry = getCrtStr(player, CAP | INV, 0);
-            carry += " was carrying: ";
-            carry += str;
-            carry += ".\n";
+            carried = getCrtStr(player, CAP | INV, 0);
+            carried += " was carrying: ";
+            carried += str;
+            carried += ".\n";
 
-            player->printColor("%s", carry.c_str());
+            player->printColor("%s", carried.c_str());
             if(!player->flagIsSet(P_DM_INVIS))
-                broadcastGroup(true, killer, "%s", carry.c_str());
+                broadcastGroup(true, killer, "%s", carried.c_str());
         }
     }
 }
@@ -258,7 +259,7 @@ void Monster::dropCorpse(Creature *killer) {
 //********************************************************************
 // wrapper for die
 
-void Creature::die(Creature *killer) {
+void Creature::die(std::shared_ptr<Creature>killer) {
     bool freeTarget=true;
     die(killer, freeTarget);
 }
@@ -269,12 +270,12 @@ void Creature::die(Creature *killer) {
 // Parameters:  <killer> The creature attacking
 // Handles the death of people
 
-void Creature::die(Creature *killer, bool &freeTarget) {
-    Player*  pVictim = getAsPlayer();
-    Monster* mVictim = getAsMonster();
+void Creature::die(const std::shared_ptr<Creature>& killer, bool &freeTarget) {
+    std::shared_ptr<Player>  pVictim = getAsPlayer();
+    std::shared_ptr<Monster>  mVictim = getAsMonster();
 
-    Player*  pKiller = killer->getAsPlayer();
-    Monster* mKiller = killer->getAsMonster();
+    std::shared_ptr<Player>  pKiller = killer->getAsPlayer();
+    std::shared_ptr<Monster>  mKiller = killer->getAsMonster();
     bool duel = induel(pVictim, pKiller);
 
     if(pKiller) {
@@ -282,7 +283,7 @@ void Creature::die(Creature *killer, bool &freeTarget) {
         if(mVictim)
             pKiller->statistics.monster(mVictim);
         if(pKiller->hasCharm(getName()))
-            pKiller->delCharm(this);
+            pKiller->delCharm(Containable::downcasted_shared_from_this<Creature>());
     }
 
     if(pVictim)
@@ -292,7 +293,7 @@ void Creature::die(Creature *killer, bool &freeTarget) {
     if(pVictim && pVictim->getLevel() >= 7 && !duel)
         pVictim->save(true, LoadType::LS_BACKUP);
 
-    Hooks::run(killer, "preKill", this, "preDeath", std::to_string(duel));
+    Hooks::run(killer, "preKill", Containable::downcasted_shared_from_this<Creature>(), "preDeath", std::to_string(duel));
 
     if(mKiller && mKiller->isPet() && pVictim) {
         pVictim->dieToPet(mKiller);
@@ -330,10 +331,7 @@ void Creature::die(Creature *killer, bool &freeTarget) {
 // Parameters:  <killer> The creature attacking
 // Handles monsters killing players
 
-void Player::dieToMonster(Monster *killer) {
-    // Some sanity checks here -- Should never fail these
-    ASSERTLOG( !killer->isPet() );
-
+void Player::dieToMonster(const std::shared_ptr<Monster>& killer) {
     // no real penalties for staff dying
     if(isStaff()) {
         printColor("^r*** You just died ***\n");
@@ -347,7 +345,7 @@ void Player::dieToMonster(Monster *killer) {
         return;
     }
 
-    print("%M killed you!\n", killer);
+    *this << setf(CAP) << killer << " killed you!\n";
 
     if(flagIsSet(P_OUTLAW) && killer->getLevel() > 10)
         clearFlag(P_OUTLAW);
@@ -364,11 +362,11 @@ void Player::dieToMonster(Monster *killer) {
     unsigned long oldxp = experience;
     unsigned short oldlvl = level;
 
-    broadcast("### Sadly, %s was killed by %1N.", getCName(), killer);
-    killer->clearEnemy(this);
+    broadcast("### Sadly, %s was killed by %1N.", getCName(), killer.get());
+    killer->clearEnemy(Containable::downcasted_shared_from_this<Player>());
     clearTarget();
     clearAsEnemy();
-    gServer->clearAsEnemy(this);
+    gServer->clearAsEnemy(Containable::downcasted_shared_from_this<Player>());
     loseExperience(killer);
     dropEquipment(false);
     logDeath(killer);
@@ -386,8 +384,8 @@ void Player::dieToMonster(Monster *killer) {
 // Parameters:  <killer> The creature attacking
 // Handles pets killing players
 
-void Player::dieToPet(Monster *killer) {
-    Player  *master=nullptr;
+void Player::dieToPet(const std::shared_ptr<Monster>& killer) {
+    std::shared_ptr<Player> master=nullptr;
 
     if(killer->getMaster())
         master = killer->getMaster()->getAsPlayer();
@@ -397,9 +395,9 @@ void Player::dieToPet(Monster *killer) {
         return;
     }
 
-    bool dueling = induel(this, master);
+    bool isDueling = induel(Containable::downcasted_shared_from_this<Player>(), master);
 
-    if(dueling)
+    if(isDueling)
         broadcast("^R### Sadly, %s was killed by %s's %s in a duel.", getCName(), master->getCName(), killer->getCName());
     else {
         if(level > 2)
@@ -410,8 +408,8 @@ void Player::dieToPet(Monster *killer) {
         }
     }
 
-    killer->clearEnemy(this);
-    getPkilled(master, dueling);
+    killer->clearEnemy(Containable::downcasted_shared_from_this<Player>());
+    getPkilled(master, isDueling);
 }
 
 //********************************************************************
@@ -420,9 +418,9 @@ void Player::dieToPet(Monster *killer) {
 // Parameters:  <killer> The creature attacking
 // Handles pets killing monsters
 
-void Monster::dieToPet(Monster *killer, bool &freeTarget) {
-    Creature* petKiller=nullptr;
-    Player* pKiller=nullptr;
+void Monster::dieToPet(const std::shared_ptr<Monster>& killer, bool &freeTarget) {
+    std::shared_ptr<Creature> petKiller=nullptr;
+    std::shared_ptr<Player> pKiller=nullptr;
     logDeath(killer);
 
     if(killer->getMaster()) {
@@ -435,7 +433,7 @@ void Monster::dieToPet(Monster *killer, bool &freeTarget) {
     }
 
 
-    broadcast(nullptr, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller, petKiller->getCName(), this);
+    broadcast(nullptr, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller.get(), petKiller->getCName(), this);
 
     mobDeath(pKiller, freeTarget);
 }
@@ -448,9 +446,9 @@ void Monster::dieToPet(Monster *killer, bool &freeTarget) {
 //              <killer> The creature attacking
 
 // Handles monsters killing monsters
-void Monster::dieToMonster(Monster *killer, bool &freeTarget) {
-    if(this != killer)
-        broadcast(nullptr, killer->getRoomParent(), "%M killed %N.", killer, this);
+void Monster::dieToMonster(const std::shared_ptr<Monster>& killer, bool &freeTarget) {
+    if(this != killer.get())
+        broadcast(nullptr, killer->getRoomParent(), "%M killed %N.", killer.get(), this);
     mobDeath(killer, freeTarget);
 }
 
@@ -462,11 +460,11 @@ void Monster::dieToMonster(Monster *killer, bool &freeTarget) {
 // Parameters:  <killer> The creature attacking
 // Handles players killing monsters
 
-void Monster::dieToPlayer(Player *killer, bool &freeTarget) {
+void Monster::dieToPlayer(const std::shared_ptr<Player>&killer, bool &freeTarget) {
     logDeath(killer);
     if(getMaster() != killer) {
         killer->print("You killed %N.\n", this);
-        broadcast(killer->getSock(), killer->getRoomParent(), "%M killed %N.", killer, this);
+        broadcast(killer->getSock(), killer->getRoomParent(), "%M killed %N.", killer.get(), this);
     }
     mobDeath(killer, freeTarget);
 }
@@ -476,13 +474,13 @@ void Monster::dieToPlayer(Player *killer, bool &freeTarget) {
 //********************************************************************
 // Common routine for all mob's dying.
 
-void Monster::mobDeath(Creature *killer) {
+void Monster::mobDeath(const std::shared_ptr<Creature>& killer) {
     bool freeTarget=true;
     mobDeath(killer, freeTarget);
 }
-void Monster::mobDeath(Creature *killer, bool &freeTarget) {
+void Monster::mobDeath(const std::shared_ptr<Creature>& killer, bool &freeTarget) {
     if(killer)
-        killer->checkDoctorKill(this);
+        killer->checkDoctorKill(Containable::downcasted_shared_from_this<Monster>());
 
     distributeExperience(killer);
     dropCorpse(killer);
@@ -501,14 +499,13 @@ void Monster::mobDeath(Creature *killer, bool &freeTarget) {
 //                      finishMobDeath
 //********************************************************************
 
-void Monster::finishMobDeath(Creature *killer) {
+void Monster::finishMobDeath(const std::shared_ptr<Creature>& killer) {
     //if(killer)
     // a null killer is valid, so the called function should handle that properly
-    Hooks::run(killer, "postKill", this, "postDeath", "0");
+    Hooks::run(killer, "postKill", Containable::downcasted_shared_from_this<Monster>(), "postDeath", "0");
 
     deleteFromRoom();
     gServer->delActive(this);
-    delete this;
 }
 
 
@@ -518,14 +515,14 @@ void Monster::finishMobDeath(Creature *killer) {
 // Parameters:  <killer> The creature attacking
 // Handles players killing players
 
-void Player::dieToPlayer(Player *killer) {
+void Player::dieToPlayer(const std::shared_ptr<Player>& killer) {
     char    deathstring[80];
 
-    bool dueling = induel(this, killer);
+    bool isDueling = induel(Containable::downcasted_shared_from_this<Player>(), killer);
 
-    killer->print("You killed %N.\n", this);
-    print("%M killed you.\n", killer);
-    broadcast(killer->getSock(), getSock(), killer->getRoomParent(), "%M killed %N.", killer, this);
+    *killer << "You killed " << this << ".\n";
+    *this << setf(CAP) << killer << " killed you.\n";
+    broadcast(killer->getSock(), getSock(), killer->getRoomParent(), "%M killed %N.", killer.get(), this);
 
     if(killer->isEffected("lycanthropy") && killer->getLevel() >= 13)
         strcpy(deathstring, "eaten");
@@ -534,23 +531,19 @@ void Player::dieToPlayer(Player *killer) {
     else
         strcpy(deathstring, "killed");
 
-    if(dueling)
+    if(isDueling)
         broadcast("^R### Sadly, %s was %s by %s in a duel.", getCName(), deathstring, killer->getCName());
-    else// if(level > 2)
-        broadcast("### Sadly, %s was %s by %1N.", getCName(), deathstring, killer);
-    //else {
-    //  broadcast(::isWatcher, "^C### Sadly, %s was %s by %1N.", name, deathstring, killer);
-    //  print("### Sadly, %s was %s by %1N.\n", name, deathstring, killer);
-    //}
+    else
+        broadcast("### Sadly, %s was %s by %1N.", getCName(), deathstring, killer.get());
 
-    getPkilled(killer, dueling);
+    getPkilled(killer, isDueling);
 }
 
 //********************************************************************
 //                      getPkilled
 //********************************************************************
 
-void Player::getPkilled(Player *killer, bool dueling, bool reset) {
+void Player::getPkilled(const std::shared_ptr<Player>&killer, bool pDueling, bool reset) {
     unsigned long oldxp = experience;
     unsigned short oldlvl = level;
 
@@ -566,7 +559,7 @@ void Player::getPkilled(Player *killer, bool dueling, bool reset) {
     clearAsPetEnemy();
     killer->clearAsPetEnemy();
 
-    if(!dueling) {
+    if(!pDueling) {
         updatePkill(killer);
 
         dropBodyPart(killer);
@@ -590,8 +583,8 @@ void Player::getPkilled(Player *killer, bool dueling, bool reset) {
 //                      isGodKill
 //********************************************************************
 
-bool Player::isGodKill(const Player *killer) const {
-    if(induel(killer, this))
+bool Player::isGodKill(const std::shared_ptr<Player>& killer) const {
+    if(induel(killer, Containable::downcasted_shared_from_this<Player>()))
         return(false);
 
     if(killer->getLevel() < 7 || level < 7)
@@ -610,12 +603,12 @@ bool Player::isGodKill(const Player *killer) const {
 //                      isClanKill
 //********************************************************************
 
-bool Player::isClanKill(const Player *killer) const {
+bool Player::isClanKill(const std::shared_ptr<Player>& killer) const {
 
     if(flagIsSet(P_OUTLAW_WILL_LOSE_XP))
         return(true);
 
-    if(induel(killer, this))
+    if(induel(killer, Containable::downcasted_shared_from_this<Player>()))
         return(false);
 
     if(killer->getLevel() < 7 || level < 7)
@@ -643,7 +636,7 @@ bool Player::isClanKill(const Player *killer) const {
 //                      guildKill
 //********************************************************************
 
-int Player::guildKill(Player *killer) {
+int Player::guildKill(const std::shared_ptr<Player>& killer) {
     int     bns=0, penalty=0, levelDiff=0;
     Guild *killerGuild, *thisGuild;
     int     same=0, base=0;
@@ -708,7 +701,7 @@ int Player::guildKill(Player *killer) {
         printColor("^gYou have been defeated by a member of a rival guild!\n");
         print("Your guild shames you by taking %d experience.\n", std::abs(penalty));
         if(coins[GOLD])
-            printColor("%M grabs all of your coins!\n", killer);
+            printColor("%M grabs all of your coins!\n", killer.get());
     } else {
         killer->printColor("^gYou have shamelessly defeated a member of your own guild!\n");
         killer->printColor("Your guild penalizes you for %d experience.\n", std::abs(total));
@@ -727,7 +720,7 @@ int Player::guildKill(Player *killer) {
 //                      godKill
 //********************************************************************
 
-int Player::godKill(Player *killer) {
+int Player::godKill(const std::shared_ptr<Player>& killer) {
     int     bns=0, penalty=0, levelDiff=0;
     int     same=0, base=0;
     Guild *killerGuild, *thisGuild;
@@ -796,7 +789,7 @@ int Player::godKill(Player *killer) {
 //                      clanKill
 //********************************************************************
 
-int Player::clanKill(Player *killer) {
+int Player::clanKill(const std::shared_ptr<Player>& killer) {
     bool penalty = false; // Do we give a penalty for killing this person?
     int expGain = 0, expLoss = 0;
 
@@ -839,12 +832,12 @@ int Player::clanKill(Player *killer) {
 //              <killer> The creature attacking
 // Checks for doctor killers
 
-void Creature::checkDoctorKill(Creature *victim) {
+void Creature::checkDoctorKill(const std::shared_ptr<Creature>& victim) {
     if(victim->getName() == "doctor") {
         if( (isPlayer() && !isStaff()) ||
             (isMonster() && isPet() && !getMaster()->isStaff()))
         {
-            Creature* target = isPlayer() ? this : getMaster();
+            std::shared_ptr<Creature> target = isPlayer() ? Containable::downcasted_shared_from_this<Creature>() : getMaster();
 
             target->setFlag(P_DOCTOR_KILLER);
             if(!target->flagIsSet(P_DOCTOR_KILLER))
@@ -861,7 +854,7 @@ void Creature::checkDoctorKill(Creature *victim) {
 //********************************************************************
 // Parameters:  <player>
 // Checks if a player has deleveled or releveled
-//void doTrain(Player* player) {
+//void doTrain(std::shared_ptr<Player> player) {
 //
 //
 //}
@@ -912,7 +905,7 @@ int Player::checkLevel() {
 //                      updatePkill
 //********************************************************************
 
-void Player::updatePkill(Player *killer) {
+void Player::updatePkill(const std::shared_ptr<Player>& killer) {
     // No pkill changes if either party is staff
     if(isStaff() || killer->isStaff())
         return;
@@ -929,13 +922,13 @@ void Player::updatePkill(Player *killer) {
 // via a pkill
 
 void Player::dropEquipment(bool dropAll, Socket* killerSock) {
-    std::string dropString = "";
+    std::string dropString;
     int     i=0;
 
     // dropping weapons is handled separately from equipment, but we still need their
     // names for dropping later
-    Object* main = ready[WIELD-1];
-    Object* held = ready[HELD-1];
+    std::shared_ptr<Object>  main = ready[WIELD-1];
+    std::shared_ptr<Object>  held = ready[HELD-1];
 
     dropWeapons();
 
@@ -948,8 +941,8 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
 
             // we reassign these for the purposes of having them printed in the list;
             // they will be reset afterwards
-            Object* rMain = ready[WIELD-1];
-            Object* rHeld = ready[HELD-1];
+            std::shared_ptr<Object>  rMain = ready[WIELD-1];
+            std::shared_ptr<Object>  rHeld = ready[HELD-1];
             ready[WIELD-1] = main;
             ready[HELD-1] = held;
 
@@ -971,9 +964,9 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
 
                 if(i != WIELD-1 && i != HELD-1) {
                     // I is wearloc-1, so add one to it
-                    Object* temp = unequip(i+1, UNEQUIP_NOTHING, false);
+                    std::shared_ptr<Object>  temp = unequip(i+1, UNEQUIP_NOTHING, false);
                     if(temp)
-                        finishDropObject(temp, getRoomParent(), this);
+                        finishDropObject(temp, getRoomParent(), Containable::downcasted_shared_from_this<Player>());
                 }
             }
 
@@ -1002,18 +995,16 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
 // Parameters:  <killer> The creature attacking
 // Makes a player drop a body part
 
-void Player::dropBodyPart(Player *killer) {
-    ASSERTLOG( killer->isPlayer());
-
+void Player::dropBodyPart(const std::shared_ptr<Player>&killer) {
     if(getRoomParent()->isDropDestroy())
         return;
 
     bool nopart = false;
-    int dueling = 0, num = 0;
-    Object *body_part;
-    char part[12], partName[25];
+    int isDueling = 0, num = 0;
+    std::shared_ptr<Object>body_part;
+    std::string part, partName;
 
-    dueling = induel(this,killer);
+    isDueling = induel(Containable::downcasted_shared_from_this<Player>(), killer);
 
     if(Random::get<bool>(0.95) && !killer->isDm() && !flagIsSet(P_OUTLAW))
         nopart = true;
@@ -1021,74 +1012,73 @@ void Player::dropBodyPart(Player *killer) {
     if(level <= 4 && !killer->isDm() && !flagIsSet(P_OUTLAW))
         nopart = true;
 
-    if( isStaff() || (
+    if (isStaff() || (
             !killer->isPet() &&
             !killer->isDm() &&
             (killer->getLevel() > level + 5) &&
             !flagIsSet(P_OUTLAW))
         || (
-            killer->isPet() &&
-            !killer->getMaster()->isDm() &&
-            (killer->getMaster()->getLevel() > level + 5) &&
-            !flagIsSet(P_OUTLAW)
-        ) )
-    {
+                killer->isPet() &&
+                !killer->getMaster()->isDm() &&
+                (killer->getMaster()->getLevel() > level + 5) &&
+                !flagIsSet(P_OUTLAW)
+        )) {
         nopart = true;
     }
 
-    if(!nopart && !dueling) {
+    if(!nopart && !isDueling) {
 
-        if(loadObject(BODYPART_OBJ, &body_part)) {
+        if(loadObject(BODYPART_OBJ, body_part)) {
             num = Random::get(1,14);
 
             switch(num) {
             case 1:
-                strcpy(part, "skull");
+                part = "skull";
                 break;
             case 2:
-                strcpy(part, "head");
+                part = "head";
                 break;
             case 3:
-                strcpy(part, "ear");
+                part = "ear";
                 break;
             case 4:
-                strcpy(part, "scalp");
+                part = "scalp";
                 break;
             case 5:
-                strcpy(part, "hand");
+                part = "hand";
                 break;
             case 6:
-                strcpy(part, "spleen");
+                part = "spleen";
                 break;
             case 7:
-                strcpy(part, "nose");
+                part = "nose";
                 break;
             case 8:
-                strcpy(part, "arm");
+                part = "arm";
                 break;
             case 9:
-                strcpy(part, "foot");
+                part = "foot";
                 break;
             case 10:
-                strcpy(part, "spine");
+                part = "spine";
                 break;
             case 11:
-                strcpy(part, "heart");
+                part = "heart";
                 break;
             case 12:
-                strcpy(part, "brain");
+                part = "brain";
                 break;
             case 13:
-                strcpy(part, "eyeball");
+                part = "eyeball";
                 break;
             case 14:
                 if(isEffected("vampirism"))
-                    strcpy(part, "fangs");
+                    part = "fangs";
                 else
-                    strcpy(part, "teeth");
+                    part = "teeth";
                 break;
             default:
-                strcpy(part, "skull");
+                part = "skull";
                 break;
             }
 
@@ -1097,11 +1087,11 @@ void Player::dropBodyPart(Player *killer) {
             body_part->setName(newPartName);
 
             lowercize(partName, 0);
-            strncpy(body_part->key[0], partName, 20);
-            strncpy(body_part->key[1], part, 20);
-            strncpy(body_part->key[2], part, 20);
+            strncpy(body_part->key[0], partName.c_str(), 20);
+            strncpy(body_part->key[1], part.c_str(), 20);
+            strncpy(body_part->key[2], part.c_str(), 20);
 
-            body_part->setAdjustment(Random::get(1,2));
+            body_part->setAdjustment(Random::get<short>(1,2));
             if(Random::get(1,100) == 1)
                 body_part->setAdjustment(3);
 
@@ -1115,9 +1105,9 @@ void Player::dropBodyPart(Player *killer) {
 //                      logDeath
 //********************************************************************
 
-void Player::logDeath(Creature *killer) {
+void Player::logDeath(const std::shared_ptr<Creature>&killer) {
     char    file[16], killerName[80];
-    Player* pKiller = killer->getAsPlayer();
+    std::shared_ptr<Player> pKiller = killer->getAsPlayer();
 
     if(!killer->isStaff())
         statistics.die();
@@ -1154,13 +1144,13 @@ void Player::logDeath(Creature *killer) {
 // Reset a player after death -- Move them to limbo, broadcast
 // they were killed, clear deterimental effects, etc
 
-void Player::resetPlayer(Creature *killer) {
+void Player::resetPlayer(const std::shared_ptr<Creature>& killer) {
     int     duel=0;
     bool    same=false;
-    Player* pKiller = killer->getAsPlayer();
-    BaseRoom *newRoom = getLimboRoom().loadRoom(this);
+    std::shared_ptr<Player> pKiller = killer->getAsPlayer();
+    std::shared_ptr<BaseRoom> newRoom = getLimboRoom().loadRoom(Containable::downcasted_shared_from_this<Player>());
 
-    duel = induel(this, pKiller);
+    duel = induel(Containable::downcasted_shared_from_this<Player>(), pKiller);
 
     if( inJail() ||
         duel ||
@@ -1179,7 +1169,7 @@ void Player::resetPlayer(Creature *killer) {
         same = true;
 
     if(!same) {
-        Hooks::run(killer, "postKillPreLimbo", this, "postDeathPreLimbo");
+        Hooks::run(killer, "postKillPreLimbo", Containable::downcasted_shared_from_this<Player>(), "postDeathPreLimbo");
 
         deleteFromRoom();
         addToRoom(newRoom);
@@ -1198,7 +1188,7 @@ void Player::resetPlayer(Creature *killer) {
     unhide();
 
     if(killer->isPlayer() || duel) {
-        hp.setCur( MAX<int>(1, MAX(hp.getMax()/2, hp.getCur())));
+        hp.setCur( MAX<unsigned int>(1, MAX(hp.getMax()/2, hp.getCur())));
         mp.setCur(MAX(mp.getCur(),(mp.getMax())/10));
     } else {
         hp.restore();
@@ -1214,14 +1204,14 @@ void Player::resetPlayer(Creature *killer) {
         pKiller->delDueling(getName());
         delDueling(killer->getName());
     } else if(isHardcore() && !killer->isStaff()) {
-        hardcoreDeath(this);
+        hardcoreDeath();
         // the player is invalid after this
         return;
     } else {
         courageous();
     }
 
-    killer->hooks.execute("postKill", this, std::to_string(duel));
+    killer->hooks.execute("postKill", Containable::downcasted_shared_from_this<Player>(), std::to_string(duel));
     hooks.execute("postDeath", killer, std::to_string(duel), std::to_string(same));
 }
 
@@ -1239,10 +1229,10 @@ bool hearMobDeath(Socket* sock) {
 //                      logDeath
 //********************************************************************
 
-void Monster::logDeath(Creature *killer) {
+void Monster::logDeath(const std::shared_ptr<Creature>& killer) {
     int         logType=0;
-    Creature *leader=nullptr, *pet=nullptr;
-    BaseRoom* room = killer->getRoomParent();
+    std::shared_ptr<Creature>leader=nullptr, pet=nullptr;
+    std::shared_ptr<BaseRoom> room = killer->getRoomParent();
     char        file[80], killerString[1024];
     char        logStr[2096];
 
@@ -1355,7 +1345,7 @@ void Monster::logDeath(Creature *killer) {
 // Parameters:  <killer> The creature attacking
 // Handles experience/realms loss & death effects
 
-void Player::loseExperience(Monster *killer) {
+void Player::loseExperience(const std::shared_ptr<Monster>& killer) {
     float   xploss=0.0;
     long    n=0;
     int     count=0;
@@ -1414,10 +1404,11 @@ void Player::loseExperience(Monster *killer) {
 // Parameters:  <killer> The creature attacking
 // Handles experience gain on monster death
 
-void Monster::distributeExperience(Creature *killer) {
+void Monster::distributeExperience(const std::shared_ptr<Creature>&killer) {
     long    expGain = 0;
 
-    Player* player=nullptr;
+    std::shared_ptr<Player> player=nullptr;
+    auto mThis = Containable::downcasted_shared_from_this<Monster>();
 
     if(isPet())
         return;
@@ -1436,49 +1427,53 @@ void Monster::distributeExperience(Creature *killer) {
             group = player->getGroup();
         }
 
-        std::map<Player*, int> expList;
+        std::map<std::shared_ptr<Player>, int> expList;
         // See if the group has experience split turned on
         if(group && group->flagIsSet(GROUP_SPLIT_EXPERIENCE) && group->getNumPlyInSameRoom(player) >= 1) {
 
             // Split exp evenly amongst the group
-            int numGroupMembers=0, totalGroupLevel=0, totalGroupDamage=0;
+            long numGroupMembers=0, totalGroupLevel=0, totalGroupDamage=0;
             long n = 0;
 
             // Calculate how many people are in the group, see how much damage they have done
             // and remove them from the enemy list
 
-            Player* groupMember;
-            for(Creature* crt : group->members )
-            {
-                if(isEnemy(crt) && inSameRoom(crt)) {
-                    if(crt->getsGroupExperience(this)) {
-                        // Group member
-                        groupMember = crt->getAsPlayer();
-                        numGroupMembers++;
-                        totalGroupLevel += groupMember->getLevel();
-                        n = clearEnemy(groupMember);
-                        totalGroupDamage += n;
-                        expList[groupMember] += n;
-                    } else if(crt->isPet() && (crt->getMaster()->getsGroupExperience(this) || expList.find(crt->getPlayerMaster()) != expList.end() )) {
-                        // If the master gets group experience, or was calculated earlier to get group experience (They're in expList already)
-                        // then count the pet as the same
-                        n = clearEnemy(crt);
-                        totalGroupDamage += n;
-                        expList[crt->getPlayerMaster()] += n;
+            auto it = group->members.begin();
+            while(it != group->members.end()) {
+                if(auto crt = (*it).lock()) {
+                    it++;
+                    if(isEnemy(crt) && inSameRoom(crt)) {
+                        if(crt->getsGroupExperience(mThis)) {
+                            // Group member
+                            auto groupMember = crt->getAsPlayer();
+                            numGroupMembers++;
+                            totalGroupLevel += groupMember->getLevel();
+                            n = clearEnemy(groupMember);
+                            totalGroupDamage += n;
+                            expList[groupMember] += n;
+                        } else if(crt->isPet() && (crt->getMaster()->getsGroupExperience(mThis) || expList.find(crt->getPlayerMaster()) != expList.end() )) {
+                            // If the master gets group experience, or was calculated earlier to get group experience (They're in expList already)
+                            // then count the pet as the same
+                            n = clearEnemy(crt);
+                            totalGroupDamage += n;
+                            expList[crt->getPlayerMaster()] += n;
+                        }
                     }
+                } else {
+                    it = group->members.erase(it);
                 }
             }
-            float xpPercent = (float)MIN<int>(totalGroupDamage, hp.getMax())/(float)hp.getMax();
+            float xpPercent = (float)MIN<unsigned int>(totalGroupDamage, hp.getMax())/(float)hp.getMax();
             long adjustedExp = (long)((xpPercent*experience) * (1.0 + (.25*numGroupMembers)));
 
             // Exp is split amoungst the group based on their level,
             // since we split it evenly, in this case pets do NOT give their master
             // any extra experience.
 
-            int averageEffort = totalGroupDamage / MAX<int>(expList.size(), 1);
+            int averageEffort = totalGroupDamage / MAX<unsigned int>(expList.size(), 1);
             std::clog << "GROUP EXP: TGD:" << totalGroupDamage << " Num:" << expList.size() << " AVG EFF:" << averageEffort << std::endl;
-            for(std::pair<Player*, int> p : expList) {
-                Player* ply = p.first;
+            for(std::pair<std::shared_ptr<Player>, int> p : expList) {
+                std::shared_ptr<Player> ply = p.first;
                 int effort = p.second;
 
                 if(ply) {
@@ -1490,18 +1485,18 @@ void Monster::distributeExperience(Creature *killer) {
                         expGain *= (((float)effort)/totalGroupDamage);
                     }
                     expGain = MAX<long>(1, expGain);
-                    ply->gainExperience(this, killer, expGain, true);
+                    ply->gainExperience(mThis, killer, expGain, true);
                 }
             }
         }
     }
 
     // Now handle everyone else on the list
-    std::map<Player*, int> expList;
+    std::map<std::shared_ptr<Player>, int> expList;
 
     auto tIt = threatTable->threatSet.begin();
     ThreatEntry* threat = nullptr;
-    Creature* crt = nullptr;
+    std::shared_ptr<Creature> crt = nullptr;
     while(tIt != threatTable->threatSet.end()) {
     // Iterate it because we will be invaliding this iterator
         threat = (*tIt++);
@@ -1514,8 +1509,8 @@ void Monster::distributeExperience(Creature *killer) {
             expList[crt->getAsPlayer()] += clearEnemy(crt);
     }
 
-    for(std::pair<Player*, int> p : expList) {
-        Player* ply = p.first;
+    for(std::pair<std::shared_ptr<Player>, int> p : expList) {
+        std::shared_ptr<Player> ply = p.first;
         if(!ply) {
             std::clog << "Distribute Experience: null Player found" << std::endl;
             continue;
@@ -1525,7 +1520,7 @@ void Monster::distributeExperience(Creature *killer) {
         expGain = (experience * effort) / MAX<int>(hp.getMax(), 1);
         expGain = MIN<long>(MAX<long>(0,expGain), experience);
 
-        ply->gainExperience(this, killer, expGain);
+        ply->gainExperience(mThis, killer, expGain);
 
 
         // TODO: Why is this here?
@@ -1540,8 +1535,8 @@ void Monster::distributeExperience(Creature *killer) {
 //                      adjustExperience
 //********************************************************************
 
-void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp) {
-    Player* player;
+void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& expAmount, int& holidayExp) {
+    std::shared_ptr<Player> player;
     if(isPet())
         player = getMaster()->getAsPlayer();
     else
@@ -1607,7 +1602,7 @@ void Creature::adjustExperience(Monster* victim, int& expAmount, int& holidayExp
 //                      gainExperience
 //********************************************************************
 
-void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bool groupExp) {
+void Player::gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount, bool groupExp) {
     int holidayExp = 0;
     adjustExperience(victim, expAmount, holidayExp);
     bool notlocal = false, af = gConfig->isAprilFools();
@@ -1617,17 +1612,17 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
 
     std::string holidayStr = isHoliday();
     if( groupExp ||
-        this == killer ||
+        this == killer.get() ||
         !killer || !(notlocal &&
                     !(killer->isPlayer() && killer->flagIsSet(P_DM_INVIS)) &&
                     !(killer->isPet() && killer->getMaster()->flagIsSet(P_DM_INVIS))))
     {
-        printColor("You %s ^y%d^x %sexperience for the death of %N.\n", af ? "lose" : "gain", expAmount, groupExp ? "group " : "", victim);
+        printColor("You %s ^y%d^x %sexperience for the death of %N.\n", af ? "lose" : "gain", expAmount, groupExp ? "group " : "", victim.get());
     } else {
         if(killer->isPet())
-            print("%M's %s %s you %d experience for the death of %N.\n", killer->getMaster(), killer->getCName(), af ? "cost" : "gained", expAmount, victim);
+            print("%M's %s %s you %d experience for the death of %N.\n", killer->getMaster().get(), killer->getCName(), af ? "cost" : "gained", expAmount, victim.get());
         else
-            print("%M %s you %d experience for the death of %N.\n", killer, af ? "cost" : "gained", expAmount, victim);
+            print("%M %s you %d experience for the death of %N.\n", killer.get(), af ? "cost" : "gained", expAmount, victim.get());
     }
     if(holidayExp > 0)
         printColor("%s You %s an extra ^y%d^x experience!\n", holidayStr.c_str(), af ? "lost" : "gained", holidayExp);
@@ -1642,7 +1637,7 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
     if(victim->flagIsSet(M_WILL_BE_LOGGED))
         logn("log.mdeath", "%s was killed by %s, for %d experience.\n", victim->getCName(), getCName(), expAmount);
 
-    for(Monster* pet : pets) {
+    for(const auto& pet : pets) {
         pet->clearEnemy(victim);
     }
 }
@@ -1651,8 +1646,8 @@ void Player::gainExperience(Monster* victim, Creature* killer, int expAmount, bo
 //                      gainExperience
 //********************************************************************
 
-void Monster::gainExperience(Monster* victim, Creature* killer, int expAmount, bool groupExp) {
-    Creature* master = getMaster();
+void Monster::gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount, bool groupExp) {
+    std::shared_ptr<Creature> master = getMaster();
     if(!master || !isPet())
         return;
     bool af = gConfig->isAprilFools();
@@ -1660,7 +1655,7 @@ void Monster::gainExperience(Monster* victim, Creature* killer, int expAmount, b
     int holidayExp = 0;
     adjustExperience(victim, expAmount, holidayExp);
 
-    master->printColor("Your %s %s you ^y%d^x experience for the death of %N.\n", this->getCName(), af ? "cost" : "earned", expAmount, victim);
+    master->printColor("Your %s %s you ^y%d^x experience for the death of %N.\n", this->getCName(), af ? "cost" : "earned", expAmount, victim.get());
 
     std::string holidayStr = isHoliday();
     if(holidayExp > 0)
@@ -1677,7 +1672,7 @@ void Monster::gainExperience(Monster* victim, Creature* killer, int expAmount, b
 // wrapper for checkDie
 // Return: true if they died, false if they didn't
 
-bool Creature::checkDie(Creature *killer) {
+bool Creature::checkDie(const std::shared_ptr<Creature> &killer) {
     bool freeTarget=true;
     return(checkDie(killer, freeTarget));
 }
@@ -1689,7 +1684,7 @@ bool Creature::checkDie(Creature *killer) {
 // If the victim has 0 hp or less, kill them off
 // Return: true if they died, false if they didn't
 
-bool Creature::checkDie(Creature *killer, bool &freeTarget) {
+bool Creature::checkDie(const std::shared_ptr<Creature> &killer, bool &freeTarget) {
     if(hp.getCur() < 1) {
         die(killer, freeTarget);
         return(true);
@@ -1702,7 +1697,7 @@ bool Creature::checkDie(Creature *killer, bool &freeTarget) {
 //********************************************************************
 // wrapper for checkDieRobJail
 
-int Creature::checkDieRobJail(Monster *killer) {
+int Creature::checkDieRobJail(const std::shared_ptr<Monster>& killer) {
     bool freeTarget=true;
     return(checkDieRobJail(killer, freeTarget));
 }
@@ -1717,10 +1712,9 @@ int Creature::checkDieRobJail(Monster *killer) {
 //                2 <Unconscious/Jail/Mug>
 //                0 <Nothing>
 
-int Creature::checkDieRobJail(Monster *killer, bool &freeTarget) {
-    BaseRoom* room = getRoomParent();
-    Player  *pVictim = getAsPlayer();
-    ASSERTLOG(killer->isMonster());
+int Creature::checkDieRobJail(const std::shared_ptr<Monster>& killer, bool &freeTarget) {
+    std::shared_ptr<BaseRoom> room = getRoomParent();
+    std::shared_ptr<Player> pVictim = getAsPlayer();
 
     // Less than 1 hp & not police/greedy monster or it's monster, then die
     if(hp.getCur() < 1
@@ -1734,22 +1728,22 @@ int Creature::checkDieRobJail(Monster *killer, bool &freeTarget) {
         pVictim && pVictim->hp.getCur() < pVictim->hp.getMax()/10)
     {
         freeTarget = false;
-        pVictim->printColor("^r%M knocks you unconscious.\n",killer);
+        pVictim->printColor("^r%M knocks you unconscious.\n",killer.get());
         pVictim->knockUnconscious(39);
-        broadcast(pVictim->getSock(), room, "%M knocked %N unconscious.", killer, pVictim);
+        broadcast(pVictim->getSock(), room, "%M knocked %N unconscious.", killer.get(), pVictim.get());
         pVictim->hp.setCur( pVictim->hp.getMax()/20);
         pVictim->clearAsEnemy();
         killer->clearEnemy(pVictim);
         if(killer->flagIsSet(M_POLICE)) {
-            broadcast(pVictim->getSock(), room, "%M picks %N up and hauls %s off.",killer, pVictim, pVictim->himHer());
+            broadcast(pVictim->getSock(), room, "%M picks %N up and hauls %s off.",killer.get(), pVictim.get(), pVictim->himHer());
             if(!killer->jail.id && !pVictim->isStaff())
-                broadcast("### Unfortunately, %N was hauled off to jail by %N.",pVictim, killer);
+                broadcast("### Unfortunately, %N was hauled off to jail by %N.",pVictim.get(), killer.get());
             killer->toJail(pVictim);
             return(2);
         }
         if(killer->flagIsSet(M_GREEDY)) {
-            broadcast(pVictim->getSock(), room, "%M rummages through %N's inventory.", killer, pVictim);
-            broadcast("### Unfortunately, %N was mugged by %N.", pVictim, killer);
+            broadcast(pVictim->getSock(), room, "%M rummages through %N's inventory.", killer.get(), pVictim.get());
+            broadcast("### Unfortunately, %N was mugged by %N.", pVictim.get(), killer.get());
             killer->grabCoins(pVictim);
             return(2);
         }
@@ -1769,9 +1763,9 @@ int Creature::checkDieRobJail(Monster *killer, bool &freeTarget) {
 // player or a monster. -- TC
 
 void Player::die(DeathType dt) {
-    std::string death = "";
-    Player* killer=nullptr;
-    Object* statue=nullptr;
+    std::string death;
+    std::shared_ptr<Player> killer=nullptr;
+    std::shared_ptr<Object>  statue=nullptr;
     char    deathStr[2048];
     unsigned long oldxp=0;
     int     n=0;
@@ -1860,12 +1854,12 @@ void Player::die(DeathType dt) {
                 getCName(), upHisHer());
 
         // all inventory, equipment, and gold are destroyed
-        lose_all(this, true, "petrification");
+        loseAll(true, "petrification");
         coins.set(0, GOLD);
         printColor("^rAll your possessions were lost!\n");
 
         if(level >= 10) {
-            if(loadObject(STATUE_OBJ, &statue)) {
+            if(loadObject(STATUE_OBJ, statue)) {
                 statue->setName("broken statue of " + getName());
                 statue->description = getName();
                 statue->description += " is forever frozen in stone.";
@@ -2072,12 +2066,7 @@ void Player::die(DeathType dt) {
         death = "misfortune";
         break;
     }
-    //if(level > 2)
-    //  broadcast(deathStr);
-    //else {
-    //  broadcast(::isWatcher, "^C%s", deathStr);
-    //  print(deathStr);
-    //}
+
     broadcast(deathStr);
 
 
@@ -2094,36 +2083,6 @@ void Player::die(DeathType dt) {
     // only drop all if killed by player
     dropEquipment(killedByPlayer && (!killer || !killer->isStaff()), killer ? killer->getSock() : nullptr);
 
-    /*
-    if(ready[WIELD - 1] && !ready[WIELD - 1]->flagIsSet(O_CURSED))
-        unequip(WIELD);
-
-    if( ready[HELD - 1] &&
-        ready[HELD - 1]->getWearflag() == WIELD &&
-        !ready[HELD - 1]->flagIsSet(O_CURSED)
-    ) {
-        Object* held = unequip(HELD, UNEQUIP_NOTHING);
-        if(held) {
-            held->addToRoom(getRoom());
-            held->tempPerm();
-        }
-    }
-
-    Object* temp=0;
-    for(i=0; i<MAXWEAR; i++) {
-        if(ready[i] && !ready[i]->flagIsSet(O_CURSED)) {
-            if(!killedByPlayer) {
-                // i is wearloc-1 so add 1
-                unequip(i+1);
-            }
-            else {
-                temp = unequip(i+1, UNEQUIP_NOTHING);
-                if(temp)
-                    temp->addToRoom(getRoom());
-            }
-        }
-    }
-    */
     checkDarkness();
     computeAC();
     computeAttackPower();
@@ -2184,10 +2143,10 @@ void Player::die(DeathType dt) {
         oldxp, xploss, oldlvl, level, getRoomParent()->fullName().c_str());
 
     if(isHardcore()) {
-        hardcoreDeath(this);
+        hardcoreDeath();
     // if you die in jail, you stay in jail
     } else if(!inJail()) {
-        BaseRoom *newRoom = getLimboRoom().loadRoom(this);
+        std::shared_ptr<BaseRoom> newRoom = getLimboRoom().loadRoom(Containable::downcasted_shared_from_this<Player>());
         if(newRoom) {
             deleteFromRoom();
             addToRoom(newRoom);
@@ -2201,9 +2160,10 @@ void Player::die(DeathType dt) {
 //********************************************************************
 
 void Creature::clearAsPetEnemy() {
-    for(Monster* mons : getRoomParent()->monsters) {
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
+    for(const auto& mons : getRoomParent()->monsters) {
         if(mons->isPet())
-            mons->clearEnemy(this);
+            mons->clearEnemy(cThis);
     }
 }
 
@@ -2211,9 +2171,9 @@ void Creature::clearAsPetEnemy() {
 //                      cleanFollow
 //********************************************************************
 
-void Monster::cleanFollow(Creature *killer) {
+void Monster::cleanFollow(const std::shared_ptr<Creature>& killer) {
     if(isMonster() && getMaster()) {
-        Player* player = getMaster()->getAsPlayer();
+        std::shared_ptr<Player> player = getMaster()->getAsPlayer();
 
         // This should fix the bug with having a dm's pet killed while possessing a mob
         if(flagIsSet(M_DM_FOLLOW)) {
@@ -2223,10 +2183,10 @@ void Monster::cleanFollow(Creature *killer) {
         if(getMaster() != killer) {
             player->printColor("^r%M's body has been destroyed.\n", this);
             if(killer)
-                broadcast(killer->getSock(), getRoomParent(), "%M was killed by %N.", this, killer);
+                broadcast(killer->getSock(), getRoomParent(), "%M was killed by %N.", this, killer.get());
         }
         removeFromGroup(false);
-        player->delPet(this);
+        player->delPet(Containable::downcasted_shared_from_this<Monster>());
     }
 }
 
@@ -2237,8 +2197,8 @@ void Monster::cleanFollow(Creature *killer) {
 // Return: true if any weapons were dropped, false if none were dropped
 
 bool Player::dropWeapons() {
-    BaseRoom* room = getRoomParent();
-    Object* weapon;
+    std::shared_ptr<BaseRoom> room = getRoomParent();
+    std::shared_ptr<Object>  weapon;
     bool    dropMain=false, dropSec=false, fumbleMain=false, fumbleSec=false;
     bool    dropDestroy = room->isDropDestroy();
     bool    jump=false;
@@ -2257,7 +2217,7 @@ bool Player::dropWeapons() {
             dropMain = true;
             // Unequip, and add to the room
             weapon = unequip(WIELD, UNEQUIP_NOTHING, false);
-            finishDropObject(weapon, room, this);
+            finishDropObject(weapon, room, Containable::downcasted_shared_from_this<Player>());
         }
     }
 
@@ -2279,7 +2239,7 @@ bool Player::dropWeapons() {
                 dropSec = true;
                 // Unequip and add to the room
                 weapon = unequip(HELD, UNEQUIP_NOTHING, false);
-                finishDropObject(weapon, room, this);
+                finishDropObject(weapon, room, Containable::downcasted_shared_from_this<Player>());
             }
         }
     }

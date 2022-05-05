@@ -37,7 +37,7 @@ unsigned int Damage::getPhysicalReflected() const { return(physicalReflected); }
 ReflectedDamageType Damage::getPhysicalReflectedType() const { return(physicalReflectedType); }
 unsigned int Damage::getPhysicalBonusReflected() const { return(physicalBonusReflected); }
 
-void Damage::add(int d) {
+void Damage::add(unsigned int d) {
     damage = MAX<int>(1, (int)damage + d);
 }
 

@@ -658,7 +658,7 @@ void runDemographics() {
 #endif
 }
 
-int cmdDemographics(Player* player, cmd* cmnd) {
+int cmdDemographics(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("Beginning demographics routine.\nCheck for results in a few seconds.\n");
     runDemographics();
     return(0);

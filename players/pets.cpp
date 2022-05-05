@@ -22,6 +22,7 @@
 #include <list>                      // for list<>::iterator, operator==
 #include <ostream>                   // for operator<<, basic_ostream, ostri...
 #include <string>                    // for char_traits, operator<<, basic_s...
+#include <utility>
 
 #include "flags.hpp"                 // for M_PET, P_NO_EXTRA_COLOR
 #include "group.hpp"                 // for Group
@@ -31,25 +32,25 @@
 #include "proto.hpp"                 // for broadcast, isMatch
 #include "stats.hpp"                 // for Stat
 
-void Creature::addPet(Monster* newPet, bool setPetFlag) {
+void Creature::addPet(std::shared_ptr<Monster>  newPet, bool setPetFlag) {
     if(newPet->getMaster())
         return;
 
     if(setPetFlag)
         newPet->setFlag(M_PET);
-    newPet->setMaster(this);
+    newPet->setMaster(Containable::downcasted_shared_from_this<Creature>());
     pets.push_back(newPet);
     if(getGroup())
         getGroup()->add(newPet);
 }
-void Creature::delPet(Monster* toDel) {
+void Creature::delPet(const std::shared_ptr<Monster>&  toDel) {
     auto it = std::find(pets.begin(), pets.end(), toDel);
     if(it != pets.end()) {
         pets.erase(it);
     }
 
 }
-Monster* Creature::findPet(Monster* toFind) {
+std::shared_ptr<Monster>  Creature::findPet(const std::shared_ptr<Monster>&  toFind) {
     auto it = std::find(pets.begin(), pets.end(), toFind);
     if(it != pets.end())
         return((*it));
@@ -63,18 +64,18 @@ bool Creature::hasPet() const {
     return(!pets.empty());
 }
 
-void Monster::setMaster(Creature* pMaster) {
-    myMaster = pMaster;
+void Monster::setMaster(std::shared_ptr<Creature> pMaster) {
+    myMaster = std::move(pMaster);
 }
 
-Creature* Monster::getMaster() const {
+std::shared_ptr<Creature> Monster::getMaster() const {
     return(myMaster);
 }
 
-Monster* Creature::findPet(const std::string& pName, int pNum) {
+std::shared_ptr<Monster>  Creature::findPet(const std::string& pName, int pNum) {
     int match = 0;
-    for(Monster* pet : pets) {
-        if(isMatch(this, pet, pName, false, false)) {
+    for(const auto& pet : pets) {
+        if(isMatch(Containable::downcasted_shared_from_this<Creature>(), pet, pName, false, false)) {
             match++;
             if(match == pNum) {
                 return(pet);
@@ -94,32 +95,32 @@ bool Creature::isPet() const {
     return(flagIsSet(M_PET) && getAsConstMonster()->getMaster());
 }
 
-void Creature::dismissPet(Monster* pet) {
-    if(pet->getMaster() != this)
+void Creature::dismissPet(const std::shared_ptr<Monster>&  pet) {
+    if(pet->getMaster().get() != this)
         return;
 
-    print("You dismiss %N.\n", pet);
-    broadcast(getSock(), getRoomParent(), "%M dismisses %N.", this, pet);
+    print("You dismiss %N.\n", pet.get());
+    broadcast(getSock(), getRoomParent(), "%M dismisses %N.", this, pet.get());
 
     if(pet->isUndead())
-        broadcast(nullptr, getRoomParent(), "%M wanders away.", pet);
+        broadcast(nullptr, getRoomParent(), "%M wanders away.", pet.get());
     else
-        broadcast(nullptr, getRoomParent(), "%M fades away.", pet);
-    pet->die(this);
+        broadcast(nullptr, getRoomParent(), "%M fades away.", pet.get());
+    pet->die(Containable::downcasted_shared_from_this<Creature>());
 
 }
 void Creature::dismissAll() {
     // We use this instead of for() because dismissPet will remove it from the list and invalidate the iterators
     PetList::iterator it;
     for(it = pets.begin() ; it != pets.end() ; ) {
-        Monster* pet = (*it++);
+        std::shared_ptr<Monster>  pet = (*it++);
         dismissPet(pet);
     }
 }
 void Creature::displayPets() {
     std::ostringstream oStr;
     oStr << "Your pet" << (pets.size() > 1 ? "s" : "") << ":" << std::endl;
-    for(Monster* pet : pets) {
+    for(const auto& pet : pets) {
 
         oStr << pet->getName();
 

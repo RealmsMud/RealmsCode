@@ -31,10 +31,6 @@ const unsigned int MAX_ARMOR = 2000;
 const int IBUFSIZE = 1024;
 const int OBUFSIZ = 8192;
 
-// merror() error types
-const int FATAL = 1;
-const int NONFATAL = 0;
-
 const int DEFAULT_WEAPON_DELAY = 30;   // 3 seconds
 
 

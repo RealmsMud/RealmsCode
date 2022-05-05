@@ -59,7 +59,7 @@
 // Attempt to load the player named 'name' into the address given
 // return 0 on success, -1 on failure
 
-bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType) {
+bool loadPlayer(std::string_view name, std::shared_ptr<Player>& player, enum LoadType loadType) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     fs::path    filename;
@@ -84,15 +84,15 @@ bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType) 
         return(false);
     }
 
-    *player = new Player;
+    player = std::make_shared<Player>();
 
-    (*player)->setName(xml::getProp(rootNode, "Name"));
+    (player)->setName(xml::getProp(rootNode, "Name"));
     xml::copyPropToString(pass, rootNode, "Password");
-    (*player)->setPassword(pass);
-    (*player)->setLastLogin(xml::getIntProp(rootNode, "LastLogin"));
+    (player)->setPassword(pass);
+    (player)->setLastLogin(xml::getIntProp(rootNode, "LastLogin"));
 
     // If we get here, we should be loading the correct player, so start reading them in
-    (*player)->readFromXml(rootNode);
+    (player)->readFromXml(rootNode);
 
     xmlFreeDoc(xmlDoc);
     xmlCleanupParser();
@@ -124,7 +124,7 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
     else if(NODE_NAME(curNode, "Wrap")) xml::copyToNum(wrap, curNode);
     else if(NODE_NAME(curNode, "Forum")) xml::copyToString(forum, curNode);
     else if(NODE_NAME(curNode, "Ranges"))
-        loadRanges(curNode, this);
+        loadRanges(curNode, getAsPlayer());
     else if(NODE_NAME(curNode, "Wimpy")) setWimpy(xml::toNum<unsigned short>(curNode));
 
     else if(NODE_NAME(curNode, "Songs")) {
@@ -214,7 +214,7 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
         QuestCompletion* qc;
         while(childNode) {
             if(NODE_NAME(childNode, "QuestCompletion")) {
-                qc = new QuestCompletion(childNode, this);
+                qc = new QuestCompletion(childNode, getAsPlayer());
                 questsInProgress[qc->getParentQuest()->getId()] = qc;
             }
             childNode = childNode->next;
@@ -326,7 +326,7 @@ void Player::loadAnchors(xmlNodePtr curNode) {
 //*********************************************************************
 // Loads builder ranges into the provided creature
 
-void loadRanges(xmlNodePtr curNode, Player *pPlayer) {
+void loadRanges(xmlNodePtr curNode, std::shared_ptr<Player>pPlayer) {
     xmlNodePtr childNode = curNode->children;
     int i=0;
 
@@ -394,7 +394,7 @@ void Player::saveXml(xmlNodePtr curNode) const {
     int i;
 
     // record people logging off during swap
-    if(gConfig->swapIsInteresting(this))
+    if(gConfig->swapIsInteresting(getAsConstPlayer()))
         gConfig->swapLog((std::string)"p" + getName(), false);
 
     bank.save("Bank", curNode);

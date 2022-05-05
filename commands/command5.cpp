@@ -49,7 +49,6 @@
 #include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
 #include "playerClass.hpp"             // for PlayerClass
 #include "raceData.hpp"                // for RaceData
-#include "os.hpp"                      // for ASSERTLOG
 #include "paths.hpp"                   // for Bank, History, Player, Post
 #include "proto.hpp"                   // for broadcast, low, isCt, lowercize
 #include "server.hpp"                  // for Server, gServer, PlayerMap
@@ -65,7 +64,7 @@
 // This function outputs a list of all the players who are currently
 // logged into the game.
 
-int cmdWho(Player* player, cmd* cmnd) {
+int cmdWho(const std::shared_ptr<Player>& player, cmd* cmnd) {
     CreatureClass cClass = CreatureClass::NONE;
 
     int     special=0;
@@ -403,8 +402,8 @@ int cmdWho(Player* player, cmd* cmnd) {
 
     whoStr << "\n^BPlayers currently online:\n";
     whoStr << "-------------------------------------------------------------------------------^x\n";
-    auto cmp = [](const Player* a, const Player* b) { return a->getSock()->getHostname() < b->getSock()->getHostname(); };
-    std::multiset<Player*, decltype(cmp)> sortedPlayers;
+    auto cmp = [](const std::shared_ptr<Player>& a, const std::shared_ptr<Player>& b) { return a->getSock()->getHostname() < b->getSock()->getHostname(); };
+    std::multiset<std::shared_ptr<Player>, decltype(cmp)> sortedPlayers;
     for(const auto& [pId, ply] : gServer->players) sortedPlayers.insert(ply);
 
     for(const auto& target : sortedPlayers) {
@@ -447,7 +446,7 @@ int cmdWho(Player* player, cmd* cmnd) {
 // logged into the game which are the same class as the player doing
 // the command.
 
-int cmdClasswho(Player* player, cmd* cmnd) {
+int cmdClasswho(const std::shared_ptr<Player>& player, cmd* cmnd) {
     cmnd->num = 2;
     strcpy(cmnd->str[0], "who");
     strcpy(cmnd->str[1], "class");
@@ -461,8 +460,8 @@ int cmdClasswho(Player* player, cmd* cmnd) {
 // The whois function displays a selected player's name, class, level
 // title, age and gender
 
-int cmdWhois(Player* player, cmd* cmnd) {
-    Player  *target=0;
+int cmdWhois(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -494,7 +493,7 @@ int cmdWhois(Player* player, cmd* cmnd) {
 // This function is called whenever the player explicitly asks to
 // commit suicide.
 
-int cmdSuicide(Player* player, cmd* cmnd) {
+int cmdSuicide(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->ableToDoCommand())
         return(0);
@@ -511,7 +510,7 @@ int cmdSuicide(Player* player, cmd* cmnd) {
     // Prevents players from suiciding in jail
     if(player->inJail()) {
         player->print("You attempt to kill yourself and fail. It sure hurts though!\n");
-        broadcast(player->getSock(), player->getParent(),"%M tries to kill %sself.", player, player->himHer());
+        broadcast(player->getSock(), player->getParent(),"%M tries to kill %sself.", player.get(), player->himHer());
         return(0);
     }
 
@@ -530,7 +529,7 @@ int cmdSuicide(Player* player, cmd* cmnd) {
 
     logn("log.suicide", fmt::format("{}({})-{} ({})\n", player->getCName(), player->getPassword().c_str(), player->getLevel(), player->getSock()->getHostname()).c_str());
 
-    deletePlayer(player);
+    player->deletePlayer();
     updateRecentActivity();
     return(0);
 }
@@ -541,39 +540,41 @@ int cmdSuicide(Player* player, cmd* cmnd) {
 //*********************************************************************
 // Does a true delete of a player and their files
 
-void deletePlayer(Player* player) {
+void Player::deletePlayer() {
     char    file[80];
-    bool hardcore = player->isHardcore();
+    bool hardcore = isHardcore();
     // cache the name because we will be deleting the player object
-    std::string name = player->getName();
+    std::string name = getName();
 
-    gConfig->deleteUniques(player);
-    gServer->clearAsEnemy(player);
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
+
+    gConfig->deleteUniques(pThis);
+    gServer->clearAsEnemy(pThis);
 
     // remove minions before backup, since this affects other players as well
-    player->clearMinions();
+    clearMinions();
 
     // they are no longer the owner of any effects they have created
-    gServer->removeEffectsOwner(player);
+    gServer->removeEffectsOwner(pThis);
 
     // unassociate
-    if(player->getForum() != "") {
-        player->setForum("");
+    if(!getForum().empty()) {
+        setForum("");
         webUnassociate(name);
     }
 
     // take the player out of any guilds
-    updateGuild(player, GUILD_REMOVE);
+    updateGuild(pThis, GUILD_REMOVE);
 
     // save a backup - this will be the only copy of the player!
-    if(player->getLevel() >= 7)
-        player->save(false, LoadType::LS_BACKUP);
+    if(getLevel() >= 7)
+        save(false, LoadType::LS_BACKUP);
 
-    if(player->flagIsSet(P_CREATING_GUILD)) {
+    if(flagIsSet(P_CREATING_GUILD)) {
         // If they are the founder, this will return text, and we
         // need go no further. Otherwise, they are a supporter, and we
         // have to search for them.
-        if(gConfig->removeGuildCreation(name) != "") {
+        if(!gConfig->removeGuildCreation(name).empty()) {
             std::list<GuildCreation*>::iterator gcIt;
             for(gcIt = gConfig->guildCreations.begin(); gcIt != gConfig->guildCreations.end(); gcIt++) {
                 // they were supporting this guild - stop
@@ -585,23 +586,17 @@ void deletePlayer(Player* player) {
     }
 
     // this deletes the player object
-    Socket* sock = player->getSock();
-    player->uninit();
-    gServer->clearPlayer(player);
-    delete player;
+    Socket* sock = getSock();
+    uninit();
+    gServer->clearPlayer(pThis);
     //gServer->clearPlayer(name);
     sock->setPlayer(nullptr);
 
     // get rid of any files the player was using
-    sprintf(file, "%s/%s.xml", Path::Player.c_str(), name.c_str());
-    unlink(file);
-
-    sprintf(file, "%s/%s.txt", Path::Bank.c_str(), name.c_str());
-    unlink(file);
-    sprintf(file, "%s/%s.txt", Path::Post.c_str(), name.c_str());
-    unlink(file);
-    sprintf(file, "%s/%s.txt", Path::History.c_str(), name.c_str());
-    unlink(file);
+    fs::remove((Path::Player / name).replace_extension("xml"));
+    fs::remove((Path::Bank / name).replace_extension("txt"));
+    fs::remove((Path::Post / name).replace_extension("txt"));
+    fs::remove((Path::History / name).replace_extension("txt"));
 
     // handle removing and property this player owned
     gConfig->destroyProperties(name);
@@ -620,13 +615,13 @@ void deletePlayer(Player* player) {
 // checks to make sure the player isn't in the middle of combat, and if
 // so, the player is not allowed to quit (and 0 is returned).
 
-int cmdQuit(Player* player, cmd* cmnd) {
+int cmdQuit(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i=0, t=0;
 
     if(!player->ableToDoCommand())
         return(0);
 
-    t = time(0);
+    t = time(nullptr);
     if(player->inCombat())
         i = player->getLTAttack() + 20;
     else
@@ -655,7 +650,7 @@ int cmdQuit(Player* player, cmd* cmnd) {
 //                      changeStats
 //*********************************************************************
 
-int cmdChangeStats(Player* player, cmd* cmnd) {
+int cmdChangeStats(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->changeStats();
     return(0);
 }
@@ -686,12 +681,13 @@ void Player::changeStats() {
 void changingStats(Socket* sock, const std::string& str) {
     sock->getPlayer()->changingStats(str);
 }
+
 void Player::changingStats(std::string str) {
     int sum;
     std::vector<std::string> inputArgs;
     std::vector<int> statInput;
     Socket *sock = getSock();
-    Player *player = sock->getPlayer();
+    std::shared_ptr<Player> player = sock->getPlayer();
 
     switch(sock->getState()) {
     case CON_CHANGING_STATS:
@@ -703,7 +699,7 @@ void Player::changingStats(std::string str) {
         }
 
         inputArgs = splitString(str, " ");
-        std::transform(inputArgs.begin(), inputArgs.end(), std::back_inserter(statInput), [](std::string s) { return std::stoi(s); });
+        std::transform(inputArgs.begin(), inputArgs.end(), std::back_inserter(statInput), [](const std::string& s) { return std::stoi(s); });
 
         if(statInput.size() < 5) {
             sock->print("Please enter all 5 numbers.\n");
@@ -891,8 +887,8 @@ char *timestr(long t) {
 //                      showAbility
 //*********************************************************************
 
-void showAbility(Player* player, const char *skill, const char *display, int lt, int tu, int flag = -1) {
-    long    t = time(0), u=0, tmp=0;
+void showAbility(const std::shared_ptr<Player>& player, const char *skill, const char *display, int lt, int tu, int flag = -1) {
+    long    t = time(nullptr), u=0, tmp=0;
 
     if(player->knowsSkill(skill)) {
         if(flag != -1 && player->flagIsSet(flag)) {
@@ -909,12 +905,12 @@ void showAbility(Player* player, const char *skill, const char *display, int lt,
 //*********************************************************************
 // This function outputs the time of day (realtime) to the player.
 
-int cmdTime(Player* player, cmd* cmnd) {
-    long    t = time(0), u=0, tmp=0, i=0;
+int cmdTime(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    long    t = time(nullptr), u=0, tmp=0, i=0;
     const CatRefInfo* cri = gConfig->getCatRefInfo(player->getRoomParent(), 1);
-    std::string world = "";
+    std::string world;
 
-    if(cri && cri->getWorldName() != "") {
+    if(cri && !cri->getWorldName().empty()) {
         world += " of ";
         world += cri->getWorldName();
     }
@@ -1016,7 +1012,7 @@ int cmdTime(Player* player, cmd* cmnd) {
         }
 
         i = 0;
-        for(Monster* pet : player->pets) {
+        for(const auto& pet : player->pets) {
             if(pet->isMonster() && pet->isPet()) {
                 i = 1;
                 if(pet->isUndead())
@@ -1053,9 +1049,7 @@ int cmdTime(Player* player, cmd* cmnd) {
 // It calls save() (the real save function) and then tells the user
 // the player was saved.  See save() for more details.
 
-int cmdSave(Player* player, cmd* cmnd) {
-    ASSERTLOG( player );
-
+int cmdSave(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(player->isBraindead()) {
