@@ -45,7 +45,7 @@
 //                      steal_gold
 //*********************************************************************
 
-void steal_gold(Player* player, Creature* creature) {
+void steal_gold(std::shared_ptr<Player> player, std::shared_ptr<Creature> creature) {
     int chance=0, amt=0;
     if(!player)
         return;
@@ -71,13 +71,13 @@ void steal_gold(Player* player, Creature* creature) {
     if(creature->isPlayer() && creature->isStaff() && !player->isDm())
     {
         player->print("Stealing from an immortal is not a good thing for your health.\n");
-        creature->print("%M tried to steal something from you.\n", player);
+        creature->print("%M tried to steal something from you.\n", player.get());
         return;
     }
 
     if(creature->isPlayer() && !player->isCt() && (player->getLevel() > creature->getLevel() + 6))
     {
-        player->print("%M is probably poor. Go look for a better mark.\n", creature);
+        player->print("%M is probably poor. Go look for a better mark.\n", creature.get());
         return;
     }
 
@@ -156,7 +156,7 @@ void steal_gold(Player* player, Creature* creature) {
         player->checkImprove("steal", true);
         player->statistics.steal();
         if(creature->coins.isZero()) {
-            player->print("%M doesn't have any coins!\n",creature);
+            player->print("%M doesn't have any coins!\n",creature.get());
             return;
         }
 
@@ -179,7 +179,7 @@ void steal_gold(Player* player, Creature* creature) {
 
         if(creature->isPlayer()) {
             if(!player->isEffected("blindness"))
-                creature->print("%M tried to steal some of your gold!\n",player);
+                creature->print("%M tried to steal some of your gold!\n",player.get());
             else
                 creature->print("Someone tried to steal something from you.\n");
         } else
@@ -192,8 +192,8 @@ void steal_gold(Player* player, Creature* creature) {
 //                      get_steal_chance
 //*********************************************************************
 
-int get_steal_chance(Player* player, Creature* target, Object* object) {
-    Player  *pTarget = target->getAsPlayer();
+int get_steal_chance(std::shared_ptr<Player> player, std::shared_ptr<Creature> target, std::shared_ptr<Object>  object) {
+    std::shared_ptr<Player> pTarget = target->getAsPlayer();
     int     chance=0, classmod=0, bulk=0, weight=0, level=0;
 
     if(!target || !object || !player)
@@ -357,12 +357,12 @@ int get_steal_chance(Player* player, Creature* target, Object* object) {
 //*********************************************************************
 // this function allows a player to steal from a monster or another player
 
-int cmdSteal(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
-    Monster *mTarget=nullptr;
-    Player* pTarget=nullptr;
-    BaseRoom* room = player->getRoomParent();
-    Object      *object=nullptr;
+int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Monster> mTarget=nullptr;
+    std::shared_ptr<Player> pTarget=nullptr;
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
+    std::shared_ptr<Object> object=nullptr;
     long        i=0, t = time(nullptr);
     int         cantSteal=0;
     int         caught=0, chance=0, roll=0;
@@ -562,7 +562,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
              room->fullName().c_str());
 
         // Other people in the room will possibly notice what's going on.
-        for(Player* bystander : room->players ) {
+        for(const auto& bystander : room->players ) {
 
             // We only want to test bystanders.
             if(bystander == player || bystander == target)
@@ -605,16 +605,16 @@ int cmdSteal(Player* player, cmd* cmnd) {
                 // If roll is less than 10% of chance, bystander will see
                 // what was trying to be stolen.
                 if(roll <= chance/10 || isCt(bystander))
-                    bystander->printColor("%M tried to steal %1P from %N.\n", player, object, target);
+                    bystander->printColor("%M tried to steal %1P from %N.\n", player.get(), object.get(), target.get());
                 else
-                    bystander->print("%M tried to steal something from %N.\n", player, target);
+                    bystander->print("%M tried to steal something from %N.\n", player.get(), target.get());
             }
         }
 
         // Assisting monsters will now all watch one another's backs against stealing.
         // If thief steals from one, others in room might notice and attack.
         if(mTarget && !player->flagIsSet(P_DM_INVIS)) {
-            for(Monster* assist : room->monsters) {
+            for(const auto& assist : room->monsters) {
 
                 // Victim doesn't assist itself
                 if(!assist || assist == mTarget)
@@ -650,8 +650,8 @@ int cmdSteal(Player* player, cmd* cmnd) {
                 caught = 100 - chance;
                 caught = MAX(1,MIN(50,caught));
                 if(roll > caught && !player->isCt()) {
-                    player->printColor("^r%M notices you in the act and attacks!\n", assist);
-                    broadcast(player->getSock(), room, "^r%M catches %N stealing and attacks!", assist, player);
+                    player->printColor("^r%M notices you in the act and attacks!\n", assist.get());
+                    broadcast(player->getSock(), room, "^r%M catches %N stealing and attacks!", assist.get(), player.get());
                     assist->getAsMonster()->addEnemy(player);
                 }
             }
@@ -665,7 +665,7 @@ int cmdSteal(Player* player, cmd* cmnd) {
             object->setDroppedBy(target, "Theft");
             expGain = MAX(expGain, 1L);
             if(!player->halftolevel()) {
-                player->printColor("You %s ^Y%d^x experience for the theft of %P.\n", gConfig->isAprilFools() ? "lose" : "gain", expGain, object);
+                player->printColor("You %s ^Y%d^x experience for the theft of %P.\n", gConfig->isAprilFools() ? "lose" : "gain", expGain, object.get());
                 player->addExperience(expGain);
             }
         }
@@ -684,16 +684,16 @@ int cmdSteal(Player* player, cmd* cmnd) {
         player->checkImprove("steal", false);
         player->smashInvis();
 
-        broadcast(player->getSock(), target->getSock(), room, "%M tried to steal from %N.", player, target);
+        broadcast(player->getSock(), target->getSock(), room, "%M tried to steal from %N.", player.get(), target.get());
 
         if(!mTarget) {
             if(!player->isEffected("blindness"))
-                target->printColor("%M tried to steal %1P from you.\n", player, object);
+                target->printColor("%M tried to steal %1P from you.\n", player.get(), object.get());
             else
                 target->print("Someone tried to steal something from you.\n");
         } else {
             player->print("You are attacked!\n");
-            broadcast(player->getSock(), room, "%M attacks %N!", mTarget, player);
+            broadcast(player->getSock(), room, "%M attacks %N!", mTarget.get(), player.get());
             mTarget->addEnemy(player);
         }
     }

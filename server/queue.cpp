@@ -25,6 +25,7 @@
 #include "lru/lru-cache.hpp"           // for lru_cache
 #include "mudObjects/areaRooms.hpp"    // for AreaRoom
 #include "mudObjects/objects.hpp"      // for Object
+#include "mudObjects/monsters.hpp"     // for Monsters
 #include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
 #include "server.hpp"                  // for Server, RoomCache, gServer
 
@@ -73,11 +74,10 @@ void Server::flushObject() {
 // in game that can't be kept around anymore
 
 void Server::killMortalObjects() {
-    std::list<AreaRoom*> toDelete;
-    UniqueRoom* r=nullptr;
+    std::list<std::shared_ptr<AreaRoom>> toDelete;
 
     for(const auto& it : roomCache) {
-        r = it.second->second;
+        std::shared_ptr<UniqueRoom>& r = it.second->second;
         if(!r)
             continue;
         r->killMortalObjects();
@@ -108,10 +108,8 @@ void Server::killMortalObjects() {
 // rooms are saved back.
 
 void Server::resaveAllRooms(char permonly) {
-	UniqueRoom *r;
-
     for(const auto& it : roomCache) {
-        r = it.second->second;
+        std::shared_ptr<UniqueRoom>& r = it.second->second;
         if(!r)
             continue;
 		r->saveToFile(permonly);

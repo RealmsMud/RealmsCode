@@ -35,7 +35,7 @@ public:
 protected:
     void doCopy(const Monster& cr);
     void reset();
-    int doDeleteFromRoom(BaseRoom* room, bool delPortal);
+    int doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal);
 
 public:
 // Constructors, Deconstructors, etc
@@ -55,31 +55,31 @@ public:
 
 protected:
 // Data
-    unsigned short updateAggro;
-    unsigned short loadAggro;
-    unsigned short numwander;
-    unsigned short magicResistance;
-    unsigned short mobTrade;
-    int skillLevel;
-    unsigned short maxLevel;
-    unsigned short cast;
+    unsigned short updateAggro{};
+    unsigned short loadAggro{};
+    unsigned short numwander{};
+    unsigned short magicResistance{};
+    unsigned short mobTrade{};
+    int skillLevel{};
+    unsigned short maxLevel{};
+    unsigned short cast{};
     Realm baseRealm; // For pets/elementals -> What realm they are
     std::string primeFaction;
     std::string talk;
     // Not giving monsters skills right now, so store it on their character
-    int weaponSkill;
-    int defenseSkill;
+    int weaponSkill{};
+    int defenseSkill{};
 
-    Creature* myMaster;
+    std::shared_ptr<Creature> myMaster;
 
     std::list<QuestInfo*> quests;
 
 public:
 // Data
-    char last_mod[25]; // last staff member to modify creature.
-    char ttalk[72];
-    char aggroString[80];
-    char attack[3][CRT_ATTACK_LENGTH];
+    char last_mod[25]{}; // last staff member to modify creature.
+    char ttalk[72]{};
+    char aggroString[80]{};
+    char attack[3][CRT_ATTACK_LENGTH]{};
     std::list<TalkResponse*> responses;
     boost::dynamic_bitset<> cClassAggro{32};
     boost::dynamic_bitset<> raceAggro{32};
@@ -94,56 +94,56 @@ public:
 
 
 // Combat & Death
-    bool addEnemy(Creature* target, bool print=false);
-    long clearEnemy(Creature* target);
+    bool addEnemy(const std::shared_ptr<Creature>& target, bool print=false);
+    long clearEnemy(const std::shared_ptr<Creature>& target);
 
-    bool isEnemy(const Creature* target) const;
+    bool isEnemy(const std::shared_ptr<const Creature> & target) const;
     bool hasEnemy() const;
 
-    long adjustThreat(Creature* target, long modAmt, double threatFactor = 1.0);
-    long adjustContribution(Creature* target, long modAmt);
-    void clearEnemyList();
-    bool checkForYell(Creature* target);
+    long adjustThreat(const std::shared_ptr<Creature>& target, long modAmt, double threatFactor = 1.0);
+    long adjustContribution(const std::shared_ptr<Creature>& target, long modAmt) const;
+    void clearEnemyList() const;
+    bool checkForYell(const std::shared_ptr<Creature>& target);
 
-    Creature* getTarget(bool sameRoom=true);
-    bool nearEnemy(const Creature* target) const;
+    std::shared_ptr<Creature> getTarget(bool sameRoom=true) const;
+    bool nearEnemy(const std::shared_ptr<Creature> & target) const;
 
-    ThreatTable* threatTable;
+    ThreatTable* threatTable{};
 
-    void setMaster(Creature* pMaster);
-    Creature* getMaster() const;
+    void setMaster(std::shared_ptr<Creature> pMaster);
+    std::shared_ptr<Creature> getMaster() const;
 
-    Player* whoToAggro() const;
-    bool willAggro(const Player *player) const;
+    std::shared_ptr<Player> whoToAggro() const;
+    bool willAggro(const std::shared_ptr<Player>& player) const;
     int getAdjustedAlignment() const;
-    int toJail(Player* player);
-    void dieToPet(Monster *killer, bool &freeTarget);
-    void dieToMonster(Monster *killer, bool &freeTarget);
-    void dieToPlayer(Player *killer, bool &freeTarget);
-    void mobDeath(Creature *killer=0);
-    void mobDeath(Creature *killer, bool &freeTarget);
-    void finishMobDeath(Creature *killer);
-    void logDeath(Creature *killer);
-    void dropCorpse(Creature *killer);
-    void cleanFollow(Creature *killer);
-    void distributeExperience(Creature *killer);
-    void monsterCombat(Monster *target);
+    int toJail(std::shared_ptr<Player> player);
+    void dieToPet(const std::shared_ptr<Monster>& killer, bool &freeTarget);
+    void dieToMonster(const std::shared_ptr<Monster>& killer, bool &freeTarget);
+    void dieToPlayer(const std::shared_ptr<Player>&killer, bool &freeTarget);
+    void mobDeath(const std::shared_ptr<Creature>&killer=0);
+    void mobDeath(const std::shared_ptr<Creature>&killer, bool &freeTarget);
+    void finishMobDeath(const std::shared_ptr<Creature>&killer);
+    void logDeath(const std::shared_ptr<Creature>&killer);
+    void dropCorpse(const std::shared_ptr<Creature>&killer);
+    void cleanFollow(const std::shared_ptr<Creature>&killer);
+    void distributeExperience(const std::shared_ptr<Creature>&killer);
+    void monsterCombat(const std::shared_ptr<Monster>& target);
     bool nearEnemy() const;
     bool nearEnmPly() const;
     bool checkEnemyMobs();
     bool updateCombat();
     bool checkAssist();
-    bool willAssist(const Monster *victim) const;
+    bool willAssist(const std::shared_ptr<Monster> victim) const;
     void adjust(int buffswitch);
-    bool tryToDisease(Creature* target, SpecialAttack* pAttack = nullptr);
-    bool tryToStone(Creature* target, SpecialAttack* pAttack = nullptr);
-    bool tryToPoison(Creature* target, SpecialAttack* pAttack = nullptr);
-    bool tryToBlind(Creature* target, SpecialAttack* pAttack = nullptr);
-    bool zapMp(Creature *victim, SpecialAttack* attack = nullptr);
-    bool steal(Player *victim);
+    bool tryToDisease(const std::shared_ptr<Creature>& target, SpecialAttack* pAttack = nullptr);
+    bool tryToStone(const std::shared_ptr<Creature>& target, SpecialAttack* pAttack = nullptr);
+    bool tryToPoison(const std::shared_ptr<Creature>& target, SpecialAttack* pAttack = nullptr);
+    bool tryToBlind(const std::shared_ptr<Creature>& target, SpecialAttack* pAttack = nullptr);
+    bool zapMp(std::shared_ptr<Creature>victim, SpecialAttack* attack = nullptr);
+    bool steal(std::shared_ptr<Player>victim);
     void berserk();
-    bool summonMobs(Creature *victim);
-    int castSpell(Creature *target);
+    bool summonMobs(const std::shared_ptr<Creature>&victim);
+    int castSpell(const std::shared_ptr<Creature>&target);
     bool petCaster();
     int mobDeathScream();
     bool possibleEnemy();
@@ -158,16 +158,16 @@ public:
     bool isDeityAggro(int x, bool checkInvert) const;
     void setDeityAggro(int x);
     void clearDeityAggro(int x);
-    void gainExperience(Monster* victim, Creature* killer, int expAmount,
+    void gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount,
                         bool groupExp = false);
 
-    int computeDamage(Creature* victim, Object* weapon, AttackType attackType,
+    int computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon, AttackType attackType,
                       AttackResult& result, Damage& attackDamage, bool computeBonus,
-                      int& drain, float multiplier = 1.0);
+                      unsigned int &drain, float multiplier = 1.0);
     int mobWield();
     int checkScrollDrop();
-    int grabCoins(Player* player);
-    bool isEnemyMob(const Monster* target) const;
+    int grabCoins(const std::shared_ptr<Player>& player);
+    bool isEnemyMob(const std::shared_ptr<Monster>  target) const;
     void diePermCrt();
 
 // Get
@@ -182,7 +182,7 @@ public:
     unsigned short getMagicResistance() const;
     std::string getPrimeFaction() const;
     std::string getTalk() const;
-    int getWeaponSkill(const Object* weapon = nullptr) const;
+    int getWeaponSkill(const std::shared_ptr<Object>  weapon = nullptr) const;
     int getDefenseSkill() const;
 
 // Set
@@ -207,15 +207,15 @@ public:
     void killUniques();
     void escapeText();
     void convertOldTalks();
-    void addToRoom(BaseRoom* room, int num=1);
+    void addToRoom(const std::shared_ptr<BaseRoom>& room, int num=1);
 
     void checkSpellWearoff();
     void checkScavange(long t);
     int checkWander(long t);
-    bool canScavange(Object* object);
+    bool canScavange(const std::shared_ptr<Object>&  object);
 
-    bool doTalkAction(Player* target, std::string action, QuestInfo* quest = nullptr);
-    void sayTo(const Player* player, const std::string& message);
+    bool doTalkAction(const std::shared_ptr<Player>& target, std::string action, QuestInfo* quest = nullptr);
+    void sayTo(const std::shared_ptr<Player>& player, const std::string& message);
     void pulseTick(long t);
     void beneficialCaster();
     int initMonster(bool loadOriginal = false, bool prototype = false);
@@ -231,6 +231,6 @@ public:
     std::string customColorize(const std::string& text, bool caret=true) const;
 
     bool hasQuests() const;
-    QuestEligibility getEligibleQuestDisplay(const Creature* viewer) const;
-    QuestTurninStatus checkQuestTurninStatus(const Creature* viewer) const;
+    QuestEligibility getEligibleQuestDisplay(const std::shared_ptr<const Creature> & viewer) const;
+    QuestTurninStatus checkQuestTurninStatus(const std::shared_ptr<const Creature> & viewer) const;
 };

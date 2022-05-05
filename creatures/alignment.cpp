@@ -39,7 +39,7 @@
 // both evil) it will return 0. It is to be used for when opposing
 // ethos has an effect on anything.
 
-int getAlignDiff(Creature *crt1, Creature *crt2) {
+int getAlignDiff(std::shared_ptr<Creature>crt1, std::shared_ptr<Creature>crt2) {
 
     int     alignDiff = 0;
 
@@ -109,7 +109,7 @@ std::string Creature::alignColor() const {
 //                      cmdChooseAlignment
 //********************************************************************
 
-int cmdChooseAlignment(Player* player, cmd* cmnd) {
+int cmdChooseAlignment(const std::shared_ptr<Player>& player, cmd* cmnd) {
     char syntax[] = "Syntax: alignment lawful\n"
                     "        alignment chaotic\n"
                     "Note: Tieflings must be chaotic.\n\n";
@@ -222,7 +222,7 @@ bool antiGradius(int race) {
 //                      adjustAlignment
 //********************************************************************
 
-void Player::adjustAlignment(Monster *victim) {
+void Player::adjustAlignment(std::shared_ptr<Monster> victim) {
     auto adjust = (short)(victim->getAlignment() / 8);
 
     if(victim->getAlignment() < 0 && victim->getAlignment() > -8)
@@ -272,7 +272,7 @@ void Player::adjustAlignment(Monster *victim) {
 //*********************************************************************
 // This function allows a player to convert from chaotic to lawful alignment.
 
-int cmdConvert(Player* player, cmd* cmnd) {
+int cmdConvert(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 

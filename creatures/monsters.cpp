@@ -41,7 +41,6 @@
 #include "mudObjects/players.hpp"      // for Player
 #include "mudObjects/rooms.hpp"        // for BaseRoom
 #include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
-#include "os.hpp"                      // for ASSERTLOG
 #include "proto.hpp"                   // for broadcast, bonus, get_spell_lvl
 #include "random.hpp"                  // for Random
 #include "realm.hpp"                   // for MAX_REALM, NO_REALM
@@ -131,7 +130,7 @@ void Monster::pulseTick(long t) {
     ill = isEffected("petrification") || (isPoisoned() && !immuneToPoison());
 //  noTick = ill;
 
-    //BaseRoom* room = getRoom();
+    //std::shared_ptr<BaseRoom> room = getRoom();
     // ****** Main Tick ******
     if(mainTick < t && !ill) {
         double power = 0.8;
@@ -188,7 +187,7 @@ void Monster::pulseTick(long t) {
     }
 
     // reset hide when mob ticks to full and no enemies are in the room
-    if(!nearEnemy(this) && hp.getCur() >= hp.getMax()/4) {
+    if(!nearEnemy(Containable::downcasted_shared_from_this<Creature>()) && hp.getCur() >= hp.getMax()/4) {
         if(flagIsSet(M_WAS_HIDDEN)) // Reset mob-hide
         {
             broadcast(nullptr, getRoomParent(), "%M hides in shadows.", this);
@@ -197,7 +196,7 @@ void Monster::pulseTick(long t) {
         }
     }
     // Mobs shouldn't stay berserk after they tick full
-    if(!nearEnemy(this) && hp.getCur() == hp.getMax()) {
+    if(!nearEnemy(Containable::downcasted_shared_from_this<Creature>()) && hp.getCur() == hp.getMax()) {
         if(isEffected("berserk")) {
             broadcast(nullptr, getRoomParent(), "^r%M's rage diminishes!", this);
             removeEffect("berserk");
@@ -222,7 +221,7 @@ void Monster::beneficialCaster() {
     if(mp.getCur() < 2)
         return;
 
-    for(Player* ply : getRoomParent()->players) {
+    for(const auto& ply: getRoomParent()->players) {
 
         if( ply->flagIsSet(P_DM_INVIS) ||
             ply->flagIsSet(P_HIDDEN) ||
@@ -239,7 +238,7 @@ void Monster::beneficialCaster() {
 
         if(ply->flagIsSet(P_DOCTOR_KILLER)) {
             if(Random::get(1,100)<=2) {
-                broadcast(ply->getSock(), ply->getRoomParent(), "%M spits, \"Doctor killer!\" at %N.", this, ply);
+                broadcast(ply->getSock(), ply->getRoomParent(), "%M spits, \"Doctor killer!\" at %N.", this, ply.get());
                 ply->print("%M spits, \"Doctor killer!\" at you.\n", this);
             }
             continue;
@@ -258,7 +257,7 @@ void Monster::beneficialCaster() {
 
                 ply->print("%M casts a slow-poison spell on you.\n", this);
                 broadcast(ply->getSock(), ply->getSock(), getRoomParent(),
-                    "%M casts a slow-poison spell on %N.", this, ply);
+                    "%M casts a slow-poison spell on %N.", this, ply.get());
                 mp.decrease(8);
 
                 ply->addPermEffect("slow-poison");
@@ -275,8 +274,7 @@ void Monster::beneficialCaster() {
 
                 ply->print("%M casts a cure-disease spell on you.\n", this);
 
-                broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a cure-disease spell on %N.",
-                    this, ply);
+                broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a cure-disease spell on %N.", this, ply.get());
                 mp.decrease(12);
 
                 ply->cureDisease();
@@ -295,8 +293,7 @@ void Monster::beneficialCaster() {
 
                 ply->print("%M casts a vigor spell on you.\n", this);
 
-                broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a vigor spell on %N.",
-                    this, ply);
+                broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a vigor spell on %N.", this, ply.get());
                 mp.decrease(2);
                 heal = Random::get(1,6) + bonus((int) piety.getCur());
                 heal = MAX(1, heal);
@@ -322,8 +319,7 @@ void Monster::beneficialCaster() {
 
                 ply->print("%M casts a mend-wounds spell on you.\n", this);
 
-                broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a mend-wounds spell on %N.",
-                    this, ply);
+                broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a mend-wounds spell on %N.", this, ply.get());
                 mp.decrease(4);
                 heal = Random::get(6,9) + bonus((int) piety.getCur());
                 heal = MAX(1, heal);
@@ -349,7 +345,7 @@ void Monster::beneficialCaster() {
 
                 ply->print("%M casts a heal spell on you.\n", this);
 
-                broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a heal spell on %N.", this, ply);
+                broadcast(ply->getSock(), ply->getSock(), getRoomParent(), "%M casts a heal spell on %N.", this, ply.get());
                 mp.decrease(25);
 
                 ply->hp.restore();
@@ -367,7 +363,7 @@ void Monster::beneficialCaster() {
 int Monster::mobDeathScream() {
     long    i=0, t=0, n=0;
     int     death=0;
-    Creature* target=nullptr;
+    std::shared_ptr<Creature> target=nullptr;
 
     i = lasttime[LT_BERSERK].ltime;
     t = time(nullptr);
@@ -433,8 +429,6 @@ int Monster::mobDeathScream() {
 bool Monster::possibleEnemy() {
     bool    possible=false, nodetect=false;
 
-    ASSERTLOG(this);
-
     if( !flagIsSet(M_STEAL_ALWAYS) &&
         !flagIsSet(M_AGGRESSIVE) &&
         !flagIsSet(M_AGGRESSIVE_GOOD) &&
@@ -442,7 +436,7 @@ bool Monster::possibleEnemy() {
     )
         return(false);
 
-    for(Player* ply : getRoomParent()->players) {
+    for(const auto& ply: getRoomParent()->players) {
         if(flagIsSet(M_AGGRESSIVE))
             possible = true;
         if(flagIsSet(M_STEAL_ALWAYS))
@@ -473,8 +467,8 @@ bool Monster::possibleEnemy() {
 // This function allows monsters to cast spells at players.
 
 extern int spllist_size;
-int Monster::castSpell(Creature *target) {
-    Creature *temp_ptr=nullptr;
+int Monster::castSpell(const std::shared_ptr<Creature>&target) {
+    std::shared_ptr<Creature>temp_ptr=nullptr;
     cmd     cmnd;
     int     i=0, spl=0, c=0;
     int     known[20], knowctr=0;
@@ -569,7 +563,7 @@ int Monster::castSpell(Creature *target) {
         enemy = target->getName();
         n = 1;
         do {
-            temp_ptr = getRoomParent()->findCreature(this, enemy, n, false);
+            temp_ptr = getRoomParent()->findCreature(Containable::downcasted_shared_from_this<Monster>(), enemy, n, false);
             if(!temp_ptr) {
                 // something is seriously wrong here
                 return(12);
@@ -597,16 +591,16 @@ int Monster::castSpell(Creature *target) {
     target->printColor("^r");
 
     SpellData data;
-    data.set(CastType::CAST, get_spell_school(spl), get_spell_domain(spl), nullptr, this);
+    data.set(CastType::CAST, get_spell_school(spl), get_spell_domain(spl), nullptr, Containable::downcasted_shared_from_this<Monster>());
     data.splno = spl;
 
     if((int(*)(SpellFn, char*, osp_t*))fn == splOffensive) {
         for(c=0; ospell[c].splno != get_spell_num(spl); c++)
             if(ospell[c].splno == -1)
                 return(13);
-        i = ((int(*)(SpellFn, const char*, osp_t*))*fn)(this, &cmnd, &data, get_spell_name(spl), &ospell[c]);
+        i = ((int(*)(SpellFn, const char*, osp_t*))*fn)(Containable::downcasted_shared_from_this<Monster>(), &cmnd, &data, get_spell_name(spl), &ospell[c]);
     } else {
-        i = ((int(*)(SpellFn))*fn)(this, &cmnd, &data);
+        i = ((int(*)(SpellFn))*fn)(Containable::downcasted_shared_from_this<Monster>(), &cmnd, &data);
     }
 
     castDelay(PET_CAST_DELAY);
@@ -618,7 +612,7 @@ int Monster::castSpell(Creature *target) {
 //*********************************************************************
 
 bool Monster::petCaster() {
-    Player *master = getPlayerMaster();
+    std::shared_ptr<Player>master = getPlayerMaster();
     int     heal=0;
     long    i=0, t = time(nullptr);
 
@@ -641,7 +635,7 @@ bool Monster::petCaster() {
 
         master->print("%M casts a heal spell on you.\n", this);
         broadcast(master->getSock(), getRoomParent(),
-            "%M casts a heal spell on %N.", this, master);
+            "%M casts a heal spell on %N.", this, master.get());
         master->hp.restore();
         castDelay(PET_CAST_DELAY);
         return(true);
@@ -653,8 +647,7 @@ bool Monster::petCaster() {
         Random::get(1,100) > 25
     ) {
         master->print("%M casts a mend-wounds spell on you.\n", this);
-        broadcast((Socket*)nullptr, master->getSock(), getRoomParent(),
-            "%M casts a mend-wounds spell on %N.", this, master);
+        broadcast((Socket*)nullptr, master->getSock(), getRoomParent(), "%M casts a mend-wounds spell on %N.", this, master.get());
 
         mp.decrease(4);
 
@@ -679,8 +672,7 @@ bool Monster::petCaster() {
         mp.getCur() >= 2
     ) {
         master->print("%M casts a vigor spell on you.\n", this);
-        broadcast((Socket*)nullptr, master->getSock(), getRoomParent(),
-            "%M casts a vigor spell on %N.", this, master);
+        broadcast((Socket*)nullptr, master->getSock(), getRoomParent(), "%M casts a vigor spell on %N.", this, master.get());
         mp.decrease(2);
 
         heal = MAX(bonus((int) intelligence.getCur()),bonus((int) piety.getCur())) +
@@ -716,10 +708,10 @@ bool Monster::petCaster() {
                ((isEffected("vampirism") || cClass == CreatureClass::BARD || cClass == CreatureClass::DEATHKNIGHT) ?
                 Random::get(1, 1 + level / 5) + 2 : 0) +
                ((isEffected("lycanthropy") || cClass == CreatureClass::MONK) ? level / 5 +
-                Random::get(1, 1 + level / 7) + 2 : 0) +
+                                                                               Random::get(1, 1 + level / 7) + 2 : 0) +
                dice(2, 7, 0);
 
-                doHeal(this, heal);
+        doHeal(Containable::downcasted_shared_from_this<Monster>(), heal);
         castDelay(PET_CAST_DELAY);
         return(true);
     }
@@ -743,7 +735,7 @@ bool Monster::petCaster() {
                 Random::get(1,1+level/7) : 0)
                + Random::get(1, 8);
 
-        doHeal(this, heal);
+        doHeal(Containable::downcasted_shared_from_this<Monster>(), heal);
         castDelay(PET_CAST_DELAY);
         return(true);
     }
@@ -767,7 +759,7 @@ bool hearMobAggro(Socket* sock) {
 bool Monster::checkAssist() {
     int i=0, assist=0;
 
-    Creature *crt=nullptr;
+    std::shared_ptr<Creature>crt=nullptr;
 
     for(i=0; i<NUM_ASSIST_MOB; i++) {
         if(assist_mob[i].id) {
@@ -777,8 +769,8 @@ bool Monster::checkAssist() {
     }
 
     if(assist) {
-        for(Monster* mons : getRoomParent()->monsters) {
-            if(mons == this)
+        for(const auto& mons : getRoomParent()->monsters) {
+            if(mons.get() == this)
                 continue;
 
             if(mons->hasEnemy() && willAssist(mons)) {
@@ -803,14 +795,14 @@ bool Monster::checkAssist() {
 
 
     if(flagIsSet(M_WILL_BE_ASSISTED) || !primeFaction.empty()) {
-        Creature* target=nullptr;
+        std::shared_ptr<Creature> target=nullptr;
         if(hasEnemy()) {
             target = getTarget();
             if(target)
                 target = target->getAsPlayer();
             if(target) {
-                for(Monster* mons : target->getRoomParent()->monsters) {
-                    if(mons == this)
+                for(const auto& mons : target->getRoomParent()->monsters) {
+                    if(mons.get() == this)
                         continue;
                     if(mons->hasEnemy() || !mons->canSee(target))
                         continue;
@@ -818,7 +810,7 @@ bool Monster::checkAssist() {
                     if( (mons->flagIsSet(M_WILL_ASSIST) && flagIsSet(M_WILL_BE_ASSISTED)) ||
                         (mons->flagIsSet(M_FACTION_ASSIST) && primeFaction == mons->getPrimeFaction()))
                     {
-                        target->printColor("^r%M quickly assists %N!\n", mons, this);
+                        target->printColor("^r%M quickly assists %N!\n", mons.get(), this);
 
                         mons->setFlag(M_ALWAYS_ACTIVE);
 
@@ -836,7 +828,7 @@ bool Monster::checkAssist() {
 //                      willAssist
 //*********************************************************************
 
-bool Monster::willAssist(const Monster *victim) const {
+bool Monster::willAssist(const std::shared_ptr<Monster> victim) const {
 
     if(!victim->info.id)
         return(false);
@@ -854,8 +846,8 @@ bool Monster::willAssist(const Monster *victim) const {
 //*********************************************************************
 
 void Monster::checkScavange(long t) {
-    BaseRoom* room = getRoomParent();
-    Object* object=nullptr;
+    std::shared_ptr<BaseRoom> room = getRoomParent();
+    std::shared_ptr<Object>  object=nullptr;
     long i=0;
 
     if(room->flagIsSet(R_SHOP_STORAGE))
@@ -873,12 +865,12 @@ void Monster::checkScavange(long t) {
             object->deleteFromRoom();
 
             setFlag(M_HAS_SCAVANGED);
-            broadcast(nullptr, room, "%M picked up %1P.", this, object);
+            broadcast(nullptr, room, "%M picked up %1P.", this, object.get());
 
             // Object is gold
             if(!object->info.id) {
                 coins.add(object->value);
-                delete object;
+                object.reset();
             } else
                 addObj(object);
         }
@@ -890,7 +882,7 @@ void Monster::checkScavange(long t) {
     if(flagIsSet(M_TAKE_LOOT) || flagIsSet(M_STREET_SWEEPER)) {
         i = lasttime[LT_MOB_THIEF].ltime;
         if(t - i > 5) {
-            Object  *hide_obj = nullptr;
+            std::shared_ptr<Object> hide_obj = nullptr;
             char    buf[2048], *s = buf;
             int     buflen = 0;
             int     namelen;
@@ -922,7 +914,7 @@ void Monster::checkScavange(long t) {
                     object->deleteFromRoom();
                     if(object->getType() == ObjectType::MONEY || !object->info.id) {
                         coins.add(object->value);
-                        delete object;
+                        object.reset();
                     } else {
                         addObj(object);
                     }
@@ -934,7 +926,7 @@ void Monster::checkScavange(long t) {
             }
             if(hide_obj) {
                 object = hide_obj;
-                broadcast(getSock(), room, "%M attempts to hide %1P.", this, object);
+                broadcast(getSock(), room, "%M attempts to hide %1P.", this, object.get());
                 if(Random::get(1, 100) <= level * 10) {
                     object->setFlag(O_HIDDEN);
                 }
@@ -948,7 +940,7 @@ void Monster::checkScavange(long t) {
 //                      canScavange
 //*********************************************************************
 
-bool Monster::canScavange(Object* object) {
+bool Monster::canScavange(const std::shared_ptr<Object>&  object) {
     return( !object->flagIsSet(O_NO_TAKE) &&
             !object->flagIsSet(O_SCENERY) &&
             !object->flagIsSet(O_HIDDEN) &&
@@ -970,7 +962,7 @@ static int Mobilechance = 30;
 
 int Monster::checkWander(long t) {
     int n=0, wanderchance=0;
-    BaseRoom* room = getRoomParent();
+    std::shared_ptr<BaseRoom> room = getRoomParent();
     long i = lasttime[LT_MON_WANDER].ltime;
 
             // If we're a mobile monster
@@ -1044,7 +1036,7 @@ int Monster::checkWander(long t) {
 
         // If we're chasing someone we have a chance to wander away
         if(flagIsSet(M_CHASING_SOMEONE) && Random::get(1,100) < 10) {
-            Creature* target = getTarget(false);
+            std::shared_ptr<Creature> target = getTarget(false);
             if(target)
                 broadcast(nullptr, room, "%1M gives up %s search for %s and wanders away.", this, hisHer(), target->getCName());
             else
@@ -1055,16 +1047,17 @@ int Monster::checkWander(long t) {
 
     // Special case for aggressive monsters
     // If we're an aggressive non perm and haven't had any combat in 20 minutes
-    if( flagIsSet(M_AGGRESSIVE) &&
+    const std::string moveString = Move::getString(Containable::downcasted_shared_from_this<Monster>());
+    if(flagIsSet(M_AGGRESSIVE) &&
         t - lasttime[LT_AGGRO_ACTION].ltime > 1200 &&
-        !flagIsSet(M_PERMENANT_MONSTER)
+       !flagIsSet(M_PERMENANT_MONSTER)
     ) {
         // Then we've got a chance to wander away
         if(Random::get<bool>(0.05)) {
             if(race || monType::isIntelligent(type))
-                broadcast(nullptr, room, "%1M %s away in search of someone to bully.", this, Move::getString(this).c_str());
+                broadcast(nullptr, room, "%1M %s away in search of someone to bully.", this, moveString.c_str());
             else
-                broadcast(nullptr, room, "%1M just %s away.", this, Move::getString(this).c_str());
+                broadcast(nullptr, room, "%1M just %s away.", this, moveString.c_str());
             return(2);
         }
     }
@@ -1102,7 +1095,7 @@ int Monster::checkWander(long t) {
                     // and we've got a wander chance
                     (Random::get(1,100) <= wanderchance)
                 ) {
-                    broadcast(nullptr, room, "%1M just %s away.", this, Move::getString(this).c_str());
+                    broadcast(nullptr, room, "%1M just %s away.", this, moveString.c_str());
                     return(2);
                 }
             }
@@ -1118,7 +1111,7 @@ int Monster::checkWander(long t) {
                 // dm invis person in the room, we can wander away
                 else if(!room->dmInRoom() && !hasEnemy() && !flagIsSet(M_PERMENANT_MONSTER)) {
                     // Time to wander away
-                    broadcast(nullptr, room, "%1M just %s away.", this, Move::getString(this).c_str());
+                    broadcast(nullptr, room, "%1M just %s away.", this, moveString.c_str());
                     return(2);
                 }
             }
@@ -1136,7 +1129,7 @@ int Monster::checkWander(long t) {
 
 bool Monster::checkEnemyMobs() {
     int i=0, aggroSize=0;
-    BaseRoom* room = getRoomParent();
+    std::shared_ptr<BaseRoom> room = getRoomParent();
 
     for(i = 0 ; i<NUM_ENEMY_MOB ;i++) {
         if(enemy_mob[i].id != 0) {
@@ -1154,9 +1147,9 @@ bool Monster::checkEnemyMobs() {
     // We know we have some enemies, now lets see if we have any
     // enemies in the room with us to attack!
 
-    for(Monster* mons : room->monsters) {
-        if(mons != this && isEnemyMob(mons)) {
-            broadcast(nullptr, room, "%M attacks %N!", this, mons);
+    for(const auto& mons : room->monsters) {
+        if(mons.get() != this && isEnemyMob(mons)) {
+            broadcast(nullptr, room, "%M attacks %N!", this, mons.get());
             addEnemy(mons);
             updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
             return(true);
@@ -1170,7 +1163,7 @@ bool Monster::checkEnemyMobs() {
 //                      isEnemyMob
 //*********************************************************************
 
-bool Monster::isEnemyMob(const Monster* target) const {
+bool Monster::isEnemyMob(const std::shared_ptr<Monster>  target) const {
     if(target->info.id == 0)
         return(false);
     for(const auto & i : enemy_mob) {
@@ -1186,8 +1179,8 @@ bool Monster::isEnemyMob(const Monster* target) const {
 //*********************************************************************
 // Sends a guy off to jail
 
-int Monster::toJail(Player* player) {
-    UniqueRoom* room=nullptr;
+int Monster::toJail(std::shared_ptr<Player> player) {
+    std::shared_ptr<UniqueRoom> room=nullptr;
     CatRef jailroom;
     jailroom.id = 2650;
     long jailtime=0;
@@ -1198,7 +1191,7 @@ int Monster::toJail(Player* player) {
     if(jail.id)
         jailroom = jail;
 
-    if(!loadRoom(jailroom, &room)) {
+    if(!loadRoom(jailroom, room)) {
         player->print("%M gets very confused.\n", this);
         return(-1);
     }
@@ -1230,7 +1223,7 @@ int Monster::toJail(Player* player) {
 //*********************************************************************
 // steals someone's gold
 
-int Monster::grabCoins(Player* player) {
+int Monster::grabCoins(const std::shared_ptr<Player>& player) {
     if(!player->coins[GOLD])
         return(0);
 
@@ -1238,7 +1231,7 @@ int Monster::grabCoins(Player* player) {
     // never steal all gold if they have more than 100k
     grab = MIN(grab, 100000UL);
 
-    Server::logGold(GOLD_OUT, player, Money(grab, GOLD), this, "Mugging");
+    Server::logGold(GOLD_OUT, player, Money(grab, GOLD), Containable::downcasted_shared_from_this<Monster>(), "Mugging");
     coins.add(grab, GOLD);
     player->coins.sub(grab, GOLD);
 

@@ -69,7 +69,7 @@ class EffectInfo;
 //                      tooFarAway
 //*********************************************************************
 
-bool Move::tooFarAway(BaseRoom* pRoom, BaseRoom* tRoom, bool track) {
+bool Move::tooFarAway(const std::shared_ptr<BaseRoom>& pRoom, const std::shared_ptr<BaseRoom>& tRoom, bool track) {
     if(pRoom == tRoom)
         return(false);
     if(!pRoom || !tRoom || pRoom->flagIsSet(R_JAIL) || tRoom->flagIsSet(R_JAIL))
@@ -90,7 +90,7 @@ bool Move::tooFarAway(BaseRoom* pRoom, BaseRoom* tRoom, bool track) {
     return(false);
 }
 
-bool Move::tooFarAway(Creature *player, BaseRoom* room) {
+bool Move::tooFarAway(const std::shared_ptr<Creature>& player, const std::shared_ptr<BaseRoom>& room) {
     if(player->isStaff())
         return(false);
 
@@ -102,20 +102,19 @@ bool Move::tooFarAway(Creature *player, BaseRoom* room) {
     return(false);
 }
 
-bool Move::tooFarAway(Creature *player, Creature *target, const std::string& action) {
+bool Move::tooFarAway(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, const std::string& action) {
     if(player->isStaff())
         return(false);
 
-    BaseRoom* tRoom = target->getRoomParent();
+    std::shared_ptr<BaseRoom> tRoom = target->getRoomParent();
     // target is offline, so we need to load their room
     if(!tRoom) {
-        UniqueRoom *room=nullptr;
-        if(target->currentLocation.room.id && loadRoom(target->currentLocation.room, &room))
+        std::shared_ptr<UniqueRoom> room=nullptr;        if(target->currentLocation.room.id && loadRoom(target->currentLocation.room, room))
             tRoom = room;
     }
 
     if(!tRoom || Move::tooFarAway(player->getRoomParent(), tRoom, action == "track")) {
-        player->print("%M is too far away to %s.\n", target, action.c_str());
+        player->print("%M is too far away to %s.\n", target.get(), action.c_str());
         return(true);
     }
 
@@ -126,16 +125,16 @@ bool Move::tooFarAway(Creature *player, Creature *target, const std::string& act
 //                      broadcast
 //*********************************************************************
 
-void Move::broadcast(Creature* player, Container* container, bool ordinal, const std::string& exit, bool hiddenExit) {
+void Move::broadcast(const std::shared_ptr<Creature>& player, const std::shared_ptr<const Container>& container, bool ordinal, const std::string& exit, bool hiddenExit) {
     std::string strAction = Move::getString(player, ordinal, exit.c_str());
     bool noShow = (player->pFlagIsSet(P_DM_INVIS));
 
     if(!noShow) {
         if(player->isMonster() || (player->isPlayer() && !player->isEffected("mist"))) {
             if(hiddenExit)
-                ::broadcast(player->getSock(), container, "%M slips out of sight.", player);
+                ::broadcast(player->getSock(), container, "%M slips out of sight.", player.get());
             else
-                ::broadcast(player->getSock(), container, "%M %s %s^x.", player, strAction.c_str(), exit.c_str());
+                ::broadcast(player->getSock(), container, "%M %s %s^x.", player.get(), strAction.c_str(), exit.c_str());
         } else if(player->isEffected("mist") && !player->flagIsSet(P_DM_INVIS)) {
             if(hiddenExit)
                 ::broadcast(player->getSock(), container, "A light mist slips out of sight.");
@@ -146,11 +145,11 @@ void Move::broadcast(Creature* player, Container* container, bool ordinal, const
 
     if(noShow || hiddenExit) {
         if(player->isDm())
-            ::broadcast(isDm, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
+            ::broadcast(isDm, player->getSock(), container, "*STAFF* %M %s %s^x.", player.get(), strAction.c_str(), exit.c_str());
         if(player->getClass() == CreatureClass::CARETAKER)
-            ::broadcast(isCt, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
+            ::broadcast(isCt, player->getSock(), container, "*STAFF* %M %s %s^x.", player.get(), strAction.c_str(), exit.c_str());
         if(!player->isCt())
-            ::broadcast(isStaff, player->getSock(), container, "*STAFF* %M %s %s^x.", player, strAction.c_str(), exit.c_str());
+            ::broadcast(isStaff, player->getSock(), container, "*STAFF* %M %s %s^x.", player.get(), strAction.c_str(), exit.c_str());
     }
 }
 
@@ -205,12 +204,12 @@ bool Move::isOrdinal(cmd* cmnd) {
 // given the room we just left (everyone is out) this code handles the
 // recycling of the room
 
-AreaRoom *Move::recycle(AreaRoom* room, Exit* exit) {
+std::shared_ptr<AreaRoom> Move::recycle(std::shared_ptr<AreaRoom> room, const std::shared_ptr<Exit>& exit) {
     if(room->canDelete()) {
         room->setMapMarker(&exit->target.mapmarker);
         room->recycle();
     } else {
-        room = new AreaRoom(room->area, &exit->target.mapmarker);
+        room = std::make_shared<AreaRoom>(room->area, &exit->target.mapmarker);
         room->area->rooms[room->mapmarker.str()] = room;
     }
     return(room);
@@ -221,7 +220,7 @@ AreaRoom *Move::recycle(AreaRoom* room, Exit* exit) {
 //*********************************************************************
 // updates some settings on the character once they move
 
-void Move::update(Player* player) {
+void Move::update(const std::shared_ptr<Player>& player) {
     if( player->getRoomParent()->isUnderwater() && !player->flagIsSet(P_FREE_ACTION)) {
         player->lasttime[LT_MOVED].ltime = time(nullptr);
         player->lasttime[LT_MOVED].interval = 2L;
@@ -241,7 +240,7 @@ void Move::update(Player* player) {
 //*********************************************************************
 // announces to the room we're leaving that we're leaving
 
-void Move::broadMove(Creature* player, Exit* exit, cmd* cmnd, bool sneaking) {
+void Move::broadMove(const std::shared_ptr<Creature>& player, const std::shared_ptr<Exit>& exit, cmd* cmnd, bool sneaking) {
 
     if(!exit->getEnter().empty())
         player->printColor("%s\n", exit->getEnter().c_str());
@@ -257,11 +256,11 @@ void Move::broadMove(Creature* player, Exit* exit, cmd* cmnd, bool sneaking) {
         );
     } else {
         if(player->isDm())
-            ::broadcast(isDm, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->getCName());
+            ::broadcast(isDm, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player.get(), exit->getCName());
         if(player->getClass() == CreatureClass::CARETAKER)
-            ::broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->getCName());
+            ::broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player.get(), exit->getCName());
         if(!player->isCt())
-            ::broadcast(isStaff, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player, exit->getCName());
+            ::broadcast(isStaff, player->getSock(), player->getRoomParent(), "*DM* %M snuck to the %s^x.", player.get(), exit->getCName());
         player->checkImprove("sneak", true);
     }
 }
@@ -273,7 +272,7 @@ void Move::broadMove(Creature* player, Exit* exit, cmd* cmnd, bool sneaking) {
 //*********************************************************************
 // takes care of any tracks we leave
 
-bool Move::track(UniqueRoom* room, MapMarker *mapmarker, Exit* exit, Player* player, bool reset) {
+bool Move::track(const std::shared_ptr<UniqueRoom>& room, MapMarker *mapmarker, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Player>& player, bool reset) {
     if(room && room->flagIsSet(R_PERMENANT_TRACKS))
         return(reset);
     if(exit->flagIsSet(X_DESCRIPTION_ONLY) || exit->flagIsSet(X_PORTAL))
@@ -291,14 +290,14 @@ bool Move::track(UniqueRoom* room, MapMarker *mapmarker, Exit* exit, Player* pla
             track = &room->track;
         else if(mapmarker) {
 
-            Area *area = gServer->getArea(mapmarker->getArea());
+            std::shared_ptr<Area> area = gServer->getArea(mapmarker->getArea());
             if(area) {
                 track = area->getTrack(mapmarker);
                 // only make tracks if they will last longer than 0 minutes
                 if(!track && area->getTrackDuration(mapmarker)) {
-                    auto *aTrack = new AreaTrack;
+                    auto aTrack = std::make_shared<AreaTrack>();
 
-                    *&aTrack->mapmarker = *mapmarker;
+                    aTrack->mapmarker = *mapmarker;
                     aTrack->setDuration(area->getTrackDuration(mapmarker));
 
                     area->addTrack(aTrack);
@@ -322,8 +321,8 @@ bool Move::track(UniqueRoom* room, MapMarker *mapmarker, Exit* exit, Player* pla
     return(reset);
 }
 
-void Move::track(UniqueRoom* room, MapMarker *mapmarker, Exit* exit, Player *leader, std::list<Creature*> *followers) {
-    std::list<Creature*>::iterator it;
+void Move::track(const std::shared_ptr<UniqueRoom>& room, MapMarker *mapmarker, const std::shared_ptr<Exit>& exit, std::shared_ptr<Player>leader, std::list<std::shared_ptr<Creature>> *followers) {
+    std::list<std::shared_ptr<Creature>>::iterator it;
     bool    reset=false;
 
     if(!room && !mapmarker)
@@ -346,7 +345,7 @@ void Move::track(UniqueRoom* room, MapMarker *mapmarker, Exit* exit, Player *lea
 //*********************************************************************
 // handles our attempted sneaking
 
-bool Move::sneak(Player* player, bool sneaking) {
+bool Move::sneak(const std::shared_ptr<Player>& player, bool sneaking) {
 
     if(sneaking && player->isEffected("mist"))
         player->setFlag(P_SNEAK_WHILE_MISTED);
@@ -378,7 +377,7 @@ bool Move::sneak(Player* player, bool sneaking) {
 // this function determines if we're allowed to go in the exit provided
 // it should print the reason for failure
 
-bool Move::canEnter(Player* player, Exit* exit, bool leader) {
+bool Move::canEnter(const std::shared_ptr<Player>& player, const std::shared_ptr<Exit>& exit, bool leader) {
     // this also keeps builders out of overland rooms
     if(!player->checkBuilder(exit->target.room))
         return(false);
@@ -387,8 +386,8 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
     // why they can't enter
     if(!player->canEnter(exit, true))
         return(false);
-    for(Monster* pet : player->pets) {
-        if(pet && !pet->canEnter(exit) && !player->checkStaff("%M cannot go that way.\n", pet))
+    for(const auto& pet : player->pets) {
+        if(pet && !pet->canEnter(exit) && !player->checkStaff("%M cannot go that way.\n", pet.get()))
             return(false);
     }
 
@@ -397,9 +396,9 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 
     // This is handled here and not in canEnter. If it were in canEnter,
     // they wouldn't be able to flee past the monster.
-    for(Monster* mons : player->getRoomParent()->monsters) {
+    for(const auto& mons : player->getRoomParent()->monsters) {
         if( mons->flagIsSet(M_BLOCK_EXIT) && mons->isEnemy(player) && mons->canSee(player)) {
-            player->print("%M blocks your exit.\n", mons);
+            player->print("%M blocks your exit.\n", mons.get());
             return(false);
         }
     }
@@ -414,15 +413,14 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
             int dmg = Random::get(5, 15 + fall / 10);
 
             player->printColor("You fell and hurt yourself for %s%d^x damage.\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
-            ::broadcast(player->getSock(), player->getParent(), "%M fell down.", player);
-            broadcastGroup(false, player, "%M fell and took *CC:DAMAGE*%d^x damage, %s%s\n",
-                player, dmg, player->heShe(), player->getStatusStr(dmg));
+            ::broadcast(player->getSock(), player->getParent(), "%M fell down.", player.get());
+            broadcastGroup(false, player, "%M fell and took *CC:DAMAGE*%d^x damage, %s%s\n", player.get(), dmg, player->heShe(), player->getStatusStr(dmg));
 
             player->hp.decrease(dmg);
             if(player->hp.getCur() <= 0) {
                 player->print("You fell to your death.\n");
                 player->hp.setCur(0);
-                ::broadcast(player->getSock(), player->getParent(), "%M died from the fall.\n", player);
+                ::broadcast(player->getSock(), player->getParent(), "%M died from the fall.\n", player.get());
                 player->die(FALL);
                 return(false);
             }
@@ -455,7 +453,7 @@ bool Move::canEnter(Player* player, Exit* exit, bool leader) {
 // this runs the checks to see if we're even able to go anywhere
 // failure should print a message
 
-bool Move::canMove(Player* player, cmd* cmnd) {
+bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->clearFlag(P_AFK);
 
@@ -558,31 +556,31 @@ bool Move::canMove(Player* player, cmd* cmnd) {
                 if(moves == 1) {
                     if(player->getRoomParent()->flagIsSet(R_EARTH_BONUS)) {
                         player->print("You are stuck in the mud!\n");
-                        ::broadcast(player->getSock(), player->getParent(), "%M got stuck in the mud!", player);
+                        ::broadcast(player->getSock(), player->getParent(), "%M got stuck in the mud!", player.get());
                     } else if(player->getRoomParent()->flagIsSet(R_AIR_BONUS)) {
                         player->print("The strong wind knocks you from your feet!\n");
-                        ::broadcast(player->getSock(), player->getParent(), "%M got blown over by the wind!", player);
+                        ::broadcast(player->getSock(), player->getParent(), "%M got blown over by the wind!", player.get());
                     } else if(player->getRoomParent()->flagIsSet(R_FIRE_BONUS)) {
                         player->print("You are knocked down by heat waves!\n");
-                        ::broadcast(player->getSock(), player->getParent(), "%M got knocked down by heat waves!", player);
+                        ::broadcast(player->getSock(), player->getParent(), "%M got knocked down by heat waves!", player.get());
                     } else if(player->getRoomParent()->flagIsSet(R_WATER_BONUS)) {
                         player->print("Strong water currents make you lose balance!\n");
-                        ::broadcast(player->getSock(), player->getParent(), "%M got knocked down by the current!", player);
+                        ::broadcast(player->getSock(), player->getParent(), "%M got knocked down by the current!", player.get());
                     } else if(player->getRoomParent()->flagIsSet(R_COLD_BONUS) || player->getRoomParent()->isWinter()) {
                         player->print("You are stuck in the ice and snow!\n");
-                        ::broadcast(player->getSock(), player->getParent(), "%M got stuck in the ice and snow!", player);
+                        ::broadcast(player->getSock(), player->getParent(), "%M got stuck in the ice and snow!", player.get());
                     } else if(player->getRoomParent()->flagIsSet(R_ELEC_BONUS)) {
                         player->print("Strong magnetic forces knock you down!\n");
-                        ::broadcast(player->getSock(), player->getParent(), "%M got knocked down by magnetic forces!", player);
+                        ::broadcast(player->getSock(), player->getParent(), "%M got knocked down by magnetic forces!", player.get());
                     } else {
                         player->print("You are stuck!!\n");
-                        ::broadcast(player->getSock(), player->getParent(), "%M got stuck!", player);
+                        ::broadcast(player->getSock(), player->getParent(), "%M got stuck!", player.get());
                     }
                     wait = true;
                 } else {
                     // Speedwalking is fine as long as there are no aggros in the room; if there are
                     // there's a chance to trip them up
-                    for(Monster* monster : player->getParent()->monsters) {
+                    for(const auto& monster : player->getParent()->monsters) {
                         if(monster->willAggro(player) || monster->isEnemy(player)) {
                             *player << ColorOn << setf(CAP) << monster << " startles you.\n" << ColorOff;
                             wait = true;
@@ -632,9 +630,9 @@ bool Move::canMove(Player* player, cmd* cmnd) {
 // this looks through the exits in the room and finds the one we want
 // to go to
 
-Exit *Move::getExit(Creature* player, cmd* cmnd) {
-    BaseRoom* room = player->getRoomParent();
-    Exit    *exit=nullptr;
+std::shared_ptr<Exit> Move::getExit(std::shared_ptr<Creature> player, cmd* cmnd) {
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
+    std::shared_ptr<Exit> exit=nullptr;
 
     if(!room)
         return(nullptr);
@@ -643,7 +641,7 @@ Exit *Move::getExit(Creature* player, cmd* cmnd) {
         player = player->getMaster();
 
     if(Move::isOrdinal(cmnd)) {
-        for(Exit* ext : room->exits) {
+        for(const auto& ext : room->exits) {
             if( ext->getName() == cmnd->str[1] && player->canSee(ext) && !(!player->isStaff() && ext->flagIsSet(X_DESCRIPTION_ONLY))) {
                 exit = ext;
                 break;
@@ -686,8 +684,8 @@ bool drunkenStumble(const EffectInfo* effect) {
 //*********************************************************************
 // gives us the text of the movement string
 
-std::string Move::getString(Creature* creature, bool ordinal, std::string_view exit) {
-    std::string str = "";
+std::string Move::getString(const std::shared_ptr<Creature>& creature, bool ordinal, std::string_view exit) {
+    std::string str;
     int     num=0;
 
     if(creature->getAsPlayer()) {
@@ -747,8 +745,8 @@ std::string Move::getString(Creature* creature, bool ordinal, std::string_view e
 // this sees if any monsters plan on following the people leaving the
 // room, adding them to the list if they want to tag along for the ride
 
-void Move::checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<Creature*> *followers) {
-    Monster *target=nullptr;
+void Move::checkFollowed(const std::shared_ptr<Player>& player, const std::shared_ptr<Exit>& exit, const std::shared_ptr<BaseRoom>& room, std::list<std::shared_ptr<Creature>> *followers) {
+    std::shared_ptr<Monster> target=nullptr;
     if(!room)
         return;
 
@@ -761,7 +759,7 @@ void Move::checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<C
         if(!target->hasEnemy())
             continue;
 
-        Creature* crt = target->getTarget(false);
+        std::shared_ptr<Creature> crt = target->getTarget(false);
         if(!crt || crt != player) continue;
 
         // Protect the newbie areas from aggro-dragging
@@ -776,8 +774,8 @@ void Move::checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<C
         if(Random::get(1,20) > 10 - (player->dexterity.getCur()/10) + target->dexterity.getCur()/10)
             continue;
 
-        player->print("%M followed you.\n", target);
-        ::broadcast(player->getSock(), room, "%M follows %N.", target, player);
+        player->print("%M followed you.\n", target.get());
+        ::broadcast(player->getSock(), room, "%M follows %N.", target.get(), player.get());
 
         // prevent players from continuously creating new monsters
         if(target->flagIsSet(M_PERMENANT_MONSTER))
@@ -800,9 +798,9 @@ void Move::checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<C
 //*********************************************************************
 // this finishes up all the work of adding people to the room
 
-void Move::finish(Creature* creature, BaseRoom* room, bool self, std::list<Creature*> *followers) {
-    Player  *player = creature->getAsPlayer();
-    Monster *monster = creature->getAsMonster();
+void Move::finish(const std::shared_ptr<Creature>& creature, const std::shared_ptr<BaseRoom>& room, bool self, std::list<std::shared_ptr<Creature>> *followers) {
+    std::shared_ptr<Player> player = creature->getAsPlayer();
+    std::shared_ptr<Monster> monster = creature->getAsMonster();
 
     if(player)
         player->addToRoom(room);
@@ -831,9 +829,9 @@ void Move::finish(Creature* creature, BaseRoom* room, bool self, std::list<Creat
 // creature is allowed to be null if we're just trying to load the room
 // out of the exit.
 
-bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, bool justLooking, MapMarker* teleport, bool recycle) {
+bool Move::getRoom(const std::shared_ptr<Creature>& creature, const std::shared_ptr<Exit>& exit, std::shared_ptr<BaseRoom>& newRoom, bool justLooking, MapMarker* teleport, bool recycle) {
 
-    Player* player = nullptr;
+    std::shared_ptr<Player> player = nullptr;
     if(creature)
        player = creature->getAsPlayer();
     Location l;
@@ -879,7 +877,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
     }
 
     if(l.mapmarker.getArea()) {
-        Area *area = gServer->getArea(l.mapmarker.getArea());
+        std::shared_ptr<Area> area = gServer->getArea(l.mapmarker.getArea());
         if(!area) {
             if(!teleport && creature) {
 				creature->print("Off the map in that direction.\n");
@@ -902,44 +900,44 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
             // if we're only looking, don't use the function that will create a new room
             // if one doesnt already exit
             if(justLooking)
-                (*newRoom) = area->getRoom(&l.mapmarker);
+                (newRoom) = area->getRoom(&l.mapmarker);
             else
-                (*newRoom) = area->loadRoom(creature, &l.mapmarker, recycle);
-            if(!*newRoom)
+                (newRoom) = area->loadRoom(creature, &l.mapmarker, recycle);
+            if(!newRoom)
                 return(false);
             // getUnique gets called again later, so skip the decrement process here
             // or the compass will use 2 shots
             if(teleport || !creature || !creature->inUniqueRoom())
-                l.room = (*newRoom)->getAsAreaRoom()->getUnique(creature, true);
+                l.room = (newRoom)->getAsAreaRoom()->getUnique(creature, true);
         }
     }
 
     if(l.room.id) {
-        UniqueRoom* uRoom = nullptr;
+        std::shared_ptr<UniqueRoom> uRoom = nullptr;
         if( (creature && creature->inUniqueRoom() && l.room == creature->currentLocation.room) ||
-            !loadRoom(l.room, &uRoom) )
+            !loadRoom(l.room, uRoom) )
         {
             if(!teleport && creature)
                 creature->print("Off map in that direction.\n");
             return(false);
         }
-        *newRoom = uRoom;
+        newRoom = uRoom;
         if(creature) {
             // sending true to this function tells the player why
             // they can't cant enter the room: if teleporting send false
             if(!creature->canEnter(uRoom, !teleport)) {
-                (*newRoom)=nullptr;
+                (newRoom)=nullptr;
                 return(false);
             }
 
             // the rest of these rules are for players only
             // exclude pets
             if(player && !creature->isPet()) {
-                for(Monster*pet : player->pets) {
+                for(const auto& pet : player->pets) {
                     if(pet && !pet->canEnter(uRoom, !teleport)) {
                         if(!teleport)
-                            player->print("%M won't follow you there.\n", pet);
-                        (*newRoom)=nullptr;
+                            player->print("%M won't follow you there.\n", pet.get());
+                        newRoom=nullptr;
                         return(false);
                     }
                 }
@@ -956,7 +954,7 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
     }
 
 
-    BaseRoom* room = (*newRoom);
+    std::shared_ptr<BaseRoom> room = (newRoom);
 
     // when entering the room, we may have to unmist them
     if( !justLooking &&
@@ -985,13 +983,11 @@ bool Move::getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, boo
 // the exit, sees if they can enter, then removes them from the current
 // room. the final step is completed in Move::finish
 
-BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, std::list<Creature*> *followers, int* numPeople, bool& roomPurged) {
-    BaseRoom *oldRoom = creature->getRoomParent(), *newRoom=nullptr;
-//  UniqueRoom  *uRoom=0;
-//  AreaRoom* aRoom=0;
-    Exit    *exit=nullptr;
-    Player  *player = creature->getAsPlayer();
-    Monster* monster = creature->getAsMonster();
+std::shared_ptr<BaseRoom> Move::start(const std::shared_ptr<Creature>& creature, cmd* cmnd, std::shared_ptr<Exit> *gExit, bool leader, std::list<std::shared_ptr<Creature>> *followers, int* numPeople, bool& roomPurged) {
+    std::shared_ptr<BaseRoom> oldRoom = creature->getRoomParent(), newRoom=nullptr;
+    std::shared_ptr<Exit> exit=nullptr;
+    std::shared_ptr<Player> player = creature->getAsPlayer();
+    std::shared_ptr<Monster>  monster = creature->getAsMonster();
     bool    sneaking=false, wasSneaking=false, mem=false;
 
     if(player) {
@@ -1019,7 +1015,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
     if(player && !Move::canEnter(player, exit, leader))
         return(nullptr);
 
-    if(!Move::getRoom(creature, exit, &newRoom) || newRoom == nullptr)
+    if(!Move::getRoom(creature, exit, newRoom) || newRoom == nullptr)
         return(nullptr);
 
     // Rangers and F/T can't sneak with heavy armor on!
@@ -1049,7 +1045,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
         return(nullptr);
 
     // save a copy of the exit for the track function
-    if(leader) {
+    if(leader && gExit != nullptr) {
         *gExit = exit;
     }
 
@@ -1088,7 +1084,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 
     if(player && (wasSneaking || portal)) {
         // TODO: Make pet unhide during failed sneak
-        for(Monster*pet : player->pets) {
+        for(const auto& pet : player->pets) {
             if(pet && oldRoom == pet->getRoomParent())
                 Move::start(pet, cmnd, nullptr, false, followers, numPeople, roomPurged);
         }
@@ -1106,7 +1102,14 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 
     Group* group = creature->getGroup();
     if(group && creature->getGroupStatus() == GROUP_LEADER && !creature->pFlagIsSet(P_DM_INVIS)) {
-        for(Creature* follower : group->members) {
+        auto it = group->members.begin();
+        while(it != group->members.end()) {
+            auto follower = it->lock();
+            if(!follower) {
+                it = group->members.erase(it);
+                continue;
+            }
+            it++;
             if(follower == creature || follower->getGroupStatus() < GROUP_MEMBER)
                 continue;
 
@@ -1117,7 +1120,7 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
         }
     }
     if(leader && (!group || creature->getGroupStatus() != GROUP_LEADER)) {
-        for(Monster* pet : creature->pets) {
+        for(const auto& pet : creature->pets) {
             if(oldRoom == pet->getRoomParent())
                 Move::start(pet, cmnd, nullptr, false, followers, numPeople, roomPurged);
             if(roomPurged)
@@ -1145,10 +1148,10 @@ BaseRoom* Move::start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, 
 // the base go command - it is called by the leader and causes everyone
 // following to run the Move::start and Move::finish functions
 
-int cmdGo(Player* player, cmd* cmnd) {
+int cmdGo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     MapMarker *oldMarker=nullptr;
-    UniqueRoom  *oldRoom = player->getUniqueRoomParent();
-    Exit*   exit;
+    std::shared_ptr<UniqueRoom> oldRoom = player->getUniqueRoomParent();
+    std::shared_ptr<Exit>   exit;
     int     numPeople=0;
 
     if(!player->getRoomParent()) {
@@ -1162,8 +1165,8 @@ int cmdGo(Player* player, cmd* cmnd) {
     }
 
     // keep track of this room
-    AreaRoom* aRoom = player->getAreaRoomParent();
-    std::list<Creature*> followers;
+    std::shared_ptr<AreaRoom> aRoom = player->getAreaRoomParent();
+    std::list<std::shared_ptr<Creature>> followers;
 
     if(aRoom) {
         oldMarker = new MapMarker;
@@ -1172,7 +1175,7 @@ int cmdGo(Player* player, cmd* cmnd) {
 
     bool roomPurged = false;
     // this removes everyone from the room
-    BaseRoom* newRoom = nullptr;
+    std::shared_ptr<BaseRoom> newRoom = nullptr;
     if(!(newRoom = Move::start(player, cmnd, &exit, true, &followers, &numPeople, roomPurged)))
         return(0);
 
@@ -1211,7 +1214,7 @@ int cmdGo(Player* player, cmd* cmnd) {
 // This function attempts to move a player in one of the
 // cardinal directions (n,s,e,w,u,d).
 
-int cmdMove(Player* player, cmd* cmnd) {
+int cmdMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string dir, str;
 
     player->clearFlag(P_AFK);
@@ -1280,7 +1283,7 @@ int cmdMove(Player* player, cmd* cmnd) {
 //*********************************************************************
 // wrapper which allows a player to flee
 
-int cmdFlee(Player* player, cmd* cmnd) {
+int cmdFlee(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->flee();
     return(0);
 }
@@ -1292,8 +1295,8 @@ int cmdFlee(Player* player, cmd* cmnd) {
 // This function allows a player to open a door if it is not already
 // open and if it is not locked.
 
-int cmdOpen(Player* player, cmd* cmnd) {
-    Exit    *exit=nullptr;
+int cmdOpen(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Exit> exit=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -1329,8 +1332,8 @@ int cmdOpen(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    const Monster* guard = player->getRoomParent()->getGuardingExit(exit, player);
-    if(guard && !player->checkStaff("%M %s.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you open it" : "won't let you open it"))
+    const std::shared_ptr<Monster>  guard = player->getRoomParent()->getGuardingExit(exit, player);
+    if(guard && !player->checkStaff("%M %s.\n", guard.get(), guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you open it" : "won't let you open it"))
         return(0);
 
     if(exit->flagIsSet(X_LOCKED) && !player->checkStaff("It's locked.\n"))
@@ -1357,7 +1360,7 @@ int cmdOpen(Player* player, cmd* cmnd) {
     exit->ltime.ltime = time(nullptr);
 
     player->printColor("You open the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M opens the %s^x.", player, exit->getCName());
+    broadcast(player->getSock(), player->getParent(), "%M opens the %s^x.", player.get(), exit->getCName());
 
     Hooks::run(player, "openExit", exit, "openByCreature");
 
@@ -1378,8 +1381,8 @@ int cmdOpen(Player* player, cmd* cmnd) {
 // This function allows a player to close a door, if the door is not
 // already closed, and if indeed it is a door.
 
-int cmdClose(Player* player, cmd* cmnd) {
-    Exit    *exit=nullptr;
+int cmdClose(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Exit> exit=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -1414,7 +1417,7 @@ int cmdClose(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    for(Player* ply : player->getRoomParent()->players) {
+    for(const auto& ply: player->getRoomParent()->players) {
         if(ply->inCombat()) {
             player->print("You cannot do that right now.\n");
             return(0);
@@ -1435,7 +1438,7 @@ int cmdClose(Player* player, cmd* cmnd) {
     Hooks::run(player, "closeExit", exit, "closeByCreature");
 
     player->printColor("You close the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M closes the %s^x.", player, exit->getCName());
+    broadcast(player->getSock(), player->getParent(), "%M closes the %s^x.", player.get(), exit->getCName());
 
     return(0);
 
@@ -1450,9 +1453,9 @@ int cmdClose(Player* player, cmd* cmnd) {
 unsigned short Object::getKey() const { return(keyVal); }
 void Object::setKey(unsigned short k) { keyVal = k; }
 
-int cmdUnlock(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
-    Exit    *exit=nullptr;
+int cmdUnlock(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
+    std::shared_ptr<Exit> exit=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -1479,8 +1482,8 @@ int cmdUnlock(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    const Monster* guard = player->getRoomParent()->getGuardingExit(exit, player);
-    if(guard && !player->checkStaff("%M %s.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you unlock it" : "won't let you unlock it"))
+    const std::shared_ptr<Monster>  guard = player->getRoomParent()->getGuardingExit(exit, player);
+    if(guard && !player->checkStaff("%M %s.\n", guard.get(), guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you unlock it" : "won't let you unlock it"))
         return(0);
 
     if(!exit->flagIsSet(X_LOCKED) && !player->checkStaff("It's not locked.\n"))
@@ -1508,7 +1511,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
         exit->ltime.ltime = time(nullptr);
         player->print("Click.\n");
 
-        broadcast(player->getSock(), player->getParent(), "%M unlocks the %s^x.", player, exit->getCName());
+        broadcast(player->getSock(), player->getParent(), "%M unlocks the %s^x.", player.get(), exit->getCName());
 
         broadcast(isWatcher, "^C%s unlocked the %s^x exit in room %s.\n",
             player->getCName(), exit->getCName(), player->getRoomParent()->fullName().c_str());
@@ -1540,7 +1543,7 @@ int cmdUnlock(Player* player, cmd* cmnd) {
     }
 
     if(object->getShotsCur() < 1) {
-        player->printColor("%O is broken.\n", object);
+        player->printColor("%O is broken.\n", object.get());
         return(0);
     }
 
@@ -1567,13 +1570,12 @@ int cmdUnlock(Player* player, cmd* cmnd) {
         player->print("%s\n", object->use_output);
     else
         player->print("Click.\n");
-    broadcast(player->getSock(), player->getParent(), "%M unlocks the %s^x.", player, exit->getCName());
+    broadcast(player->getSock(), player->getParent(), "%M unlocks the %s^x.", player.get(), exit->getCName());
 
     Hooks::run(player, "unlockExit", exit, "unlockByCreature");
 
     if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
         player->delObj(object, true);
-        delete object;
     }
     return(0);
 }
@@ -1583,9 +1585,9 @@ int cmdUnlock(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows a player to lock a door with the correct key.
 
-int cmdLock(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
-    Exit    *exit=nullptr;
+int cmdLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
+    std::shared_ptr<Exit> exit=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -1609,8 +1611,8 @@ int cmdLock(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    const Monster* guard = player->getRoomParent()->getGuardingExit(exit, player);
-    if(guard && !player->checkStaff("%M %s.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you lock it" : "won't let you lock it"))
+    const std::shared_ptr<Monster>  guard = player->getRoomParent()->getGuardingExit(exit, player);
+    if(guard && !player->checkStaff("%M %s.\n", guard.get(), guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you lock it" : "won't let you lock it"))
         return(0);
 
     if(exit->flagIsSet(X_LOCKED)) {
@@ -1631,7 +1633,7 @@ int cmdLock(Player* player, cmd* cmnd) {
     }
 
     if(object->getType() != ObjectType::KEY) {
-        player->printColor("%O is not a key.\n", object);
+        player->printColor("%O is not a key.\n", object.get());
         return(0);
     }
 
@@ -1646,7 +1648,7 @@ int cmdLock(Player* player, cmd* cmnd) {
     }
 
     if(object->getShotsCur() < 1) {
-        player->printColor("%O is broken.\n", object);
+        player->printColor("%O is broken.\n", object.get());
         return(0);
     }
 
@@ -1667,13 +1669,12 @@ int cmdLock(Player* player, cmd* cmnd) {
     exit->setFlag(X_LOCKED);
 
     player->print("Click.\n");
-    broadcast(player->getSock(), player->getParent(), "%M locks the %s^x.", player, exit->getCName());
+    broadcast(player->getSock(), player->getParent(), "%M locks the %s^x.", player.get(), exit->getCName());
 
     Hooks::run(player, "lockExit", exit, "lockByCreature");
 
     if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
         player->delObj(object, true);
-        delete object;
     }
     return(0);
 }
@@ -1685,7 +1686,7 @@ int cmdLock(Player* player, cmd* cmnd) {
 // we're given a string and expected to find a) the area and
 // b) the room id.
 
-void getCatRef(std::string str, CatRef* cr, const Creature* target) {
+void getCatRef(std::string str, CatRef* cr, const std::shared_ptr<Creature> & target) {
     cr->setDefault(target);
 
     // chop off the end!
@@ -1717,13 +1718,13 @@ void getCatRef(std::string str, CatRef* cr, const Creature* target) {
 // b) a CatRef. the string will start at the point we wish
 // to search, but may contain extra crap at the end
 
-void getDestination(const std::string &str, Location* l, const Creature* target) {
+void getDestination(const std::string &str, Location* l, const std::shared_ptr<Creature> & target) {
     l->mapmarker.reset();
     l->room.id = 0;
     getDestination(str, &l->mapmarker, &l->room, target);
 }
 
-void getDestination(std::string str, MapMarker* mapmarker, CatRef* cr, const Creature* target) {
+void getDestination(std::string str, MapMarker* mapmarker, CatRef* cr, const std::shared_ptr<Creature> & target) {
     std::string::size_type pos=0;
     char    *txt;
     int     x=0, y=0, z=0;
@@ -1760,11 +1761,11 @@ void getDestination(std::string str, MapMarker* mapmarker, CatRef* cr, const Cre
 //                      getGuardingExit
 //*********************************************************************
 
-Monster* BaseRoom::getGuardingExit(const Exit* exit, const Player* player) const {
+std::shared_ptr<Monster>  BaseRoom::getGuardingExit(const std::shared_ptr<Exit>& exit, const std::shared_ptr<const Player>& player) const {
     if(!exit->flagIsSet(X_PASSIVE_GUARD))
         return(nullptr);
 
-    for(Monster* mons : monsters) {
+    for(const auto& mons : monsters) {
         if(!mons->flagIsSet(M_PASSIVE_EXIT_GUARD))
             continue;
         if(player && mons->flagIsSet(M_FACTION_NO_GUARD) && Faction::willLetThrough(player, mons->getAsMonster()->getPrimeFaction()))

@@ -44,8 +44,8 @@
 // Follow loops are not allowed; i.e. you cannot follow someone who is
 // following you.
 
-int cmdFollow(Player* player, cmd* cmnd) {
-    Player* toFollow=nullptr;
+int cmdFollow(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> toFollow=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -82,7 +82,7 @@ int cmdFollow(Player* player, cmd* cmnd) {
     }
 
     if(toFollow->isRefusing(player->getName())) {
-        player->print("%M doesn't allow you to group with %s right now.\n", toFollow, toFollow->himHer());
+        player->print("%M doesn't allow you to group with %s right now.\n", toFollow.get(), toFollow->himHer());
         return(0);
     }
 
@@ -135,10 +135,10 @@ int cmdFollow(Player* player, cmd* cmnd) {
 //********************************************************************************
 // Adds the creature to the group, and announces if requested
 void Creature::addToGroup(Group* toJoin, bool announce) {
-    toJoin->add(this);
+    toJoin->add(Containable::downcasted_shared_from_this<Creature>());
     if(announce) {
         *this << ColorOn << "^gYou join \"" << toJoin->getName() << "\".\n" << ColorOff;
-        toJoin->sendToAll(std::string("^g") + getName() + " has joined your group.\n", this);
+        toJoin->sendToAll(std::string("^g") + getName() + " has joined your group.\n", Containable::downcasted_shared_from_this<Creature>());
         broadcast(getSock(), getRoomParent(), "%M joins the group \"%s\".", this, toJoin->getName().c_str());
     }
 
@@ -147,11 +147,11 @@ void Creature::addToGroup(Group* toJoin, bool announce) {
 //* CreateGroup
 //********************************************************************************
 // Creates a new group with the creature as the leader, and crt as a member
-void Creature::createGroup(Creature* crt) {
+void Creature::createGroup(const std::shared_ptr<Creature>& crt) {
     this->print("You have formed a group.\n");
 
     // Note: Group leader is added to this group in the constructor
-    group = new Group(this);
+    group = new Group(Containable::downcasted_shared_from_this<Creature>());
     groupStatus = GROUP_LEADER;
 
     crt->addToGroup(group);
@@ -164,24 +164,25 @@ void Creature::createGroup(Creature* crt) {
 
 bool Creature::removeFromGroup(bool announce) {
     if(group) {
+        auto cThis = Containable::downcasted_shared_from_this<Creature>();
         if(groupStatus == GROUP_INVITED) {
             if(announce) {
                 if(!pFlagIsSet(P_DM_INVIS) && !isEffected("incognito"))
                     group->sendToAll(getCrtStr(nullptr, CAP) + " rejects the invitation to join your group.\n");
                 *this << ColorOn << "^gYou reject the invitation to join \"" << group->getName() << "\".\n^x" << ColorOff;
             }
-            group->remove(this);
+            group->remove(cThis);
             group = nullptr;
         } else {
             if(announce) {
                 if(!pFlagIsSet(P_DM_INVIS) && !isEffected("incognito"))
-                    group->sendToAll(getCrtStr(nullptr, CAP) + " leaves the group.\n", this);
-                if(group->getLeader() == this)
+                    group->sendToAll(getCrtStr(nullptr, CAP) + " leaves the group.\n", cThis);
+                if(group->getLeader() == cThis)
                     *this << ColorOn << "^gYou leave your group.^x\n" << ColorOff;
                 else
                     *this << ColorOn << "^gYou leave \"" << group->getName() << "\".\n^x" << ColorOff;
             }
-            group->remove(this);
+            group->remove(cThis);
             group = nullptr;
         }
         groupStatus = GROUP_NO_STATUS;
@@ -198,8 +199,8 @@ bool Creature::removeFromGroup(bool announce) {
 // following them. When successful, that player will no longer be
 // following.
 
-int cmdLose(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
+int cmdLose(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
@@ -243,7 +244,7 @@ int cmdLose(Player* player, cmd* cmnd) {
 }
 
 
-int printGroupSyntax(Player* player) {
+int printGroupSyntax(const std::shared_ptr<Player>& player) {
     player->printColor("Syntax: group ^e<^xleave^e>\n");
     if(player->getGroupStatus() == GROUP_INVITED) {
         player->printColor("              ^e<^xreject^e>\n");
@@ -272,7 +273,7 @@ int printGroupSyntax(Player* player) {
 // This function allows you to see who is in a group or party of people
 // who are following you.
 
-int cmdGroup(Player* player, cmd* cmnd) {
+int cmdGroup(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
@@ -312,8 +313,8 @@ int cmdGroup(Player* player, cmd* cmnd) {
     return(0);
 }
 
-int Group::invite(Player* player, cmd* cmnd) {
-    Player* target = nullptr;
+int Group::invite(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target = nullptr;
 
     if(cmnd->num < 3) {
         *player << "Invite who into your group?\n";
@@ -371,7 +372,7 @@ int Group::invite(Player* player, cmd* cmnd) {
 }
 
 // Accept an invitation and join a group
-int Group::join(Player* player, cmd *cmnd)  {
+int Group::join(const std::shared_ptr<Player>& player, cmd *cmnd)  {
     if(player->getGroupStatus() != GROUP_INVITED) {
         *player << "You have not been invited to join any groups.\n";
         return(0);
@@ -385,7 +386,7 @@ int Group::join(Player* player, cmd *cmnd)  {
     player->addToGroup(toJoin, true);
     return(0);
 }
-int Group::reject(Player* player, cmd* cmnd) {
+int Group::reject(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->getGroupStatus() != GROUP_INVITED) {
         *player << "You have not been invited to join any groups.\n";
         return(0);
@@ -399,7 +400,7 @@ int Group::reject(Player* player, cmd* cmnd) {
     player->removeFromGroup(true);
     return(0);
 }
-int Group::disband(Player* player, cmd* cmnd) {
+int Group::disband(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Group* toDisband = player->getGroup(true);
     if(!toDisband) {
         *player << "You are not in a group.\n";
@@ -415,7 +416,7 @@ int Group::disband(Player* player, cmd* cmnd) {
 
     return(0);
 }
-int Group::promote(Player* player, cmd* cmnd) {
+int Group::promote(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Group* group = player->getGroup(true);
     if(!group) {
         *player << "You are not in a group.\n";
@@ -426,7 +427,7 @@ int Group::promote(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    Player* target = nullptr;
+    std::shared_ptr<Player> target = nullptr;
 
     if(cmnd->num < 3) {
         *player << "Who would you like to promote to leader?\n";
@@ -456,7 +457,7 @@ int Group::promote(Player* player, cmd* cmnd) {
 
     return(0);
 }
-int Group::kick(Player* player, cmd* cmnd) {
+int Group::kick(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Group* group = player->getGroup(true);
     if(!group) {
         *player << "You are not in a group.\n";
@@ -467,7 +468,7 @@ int Group::kick(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    Player* target = nullptr;
+    std::shared_ptr<Player> target = nullptr;
 
     if(cmnd->num < 3) {
         *player << "Who would you like to kick from your group?\n";
@@ -506,7 +507,7 @@ int Group::kick(Player* player, cmd* cmnd) {
     }
     return(0);
 }
-int Group::leave(Player* player, cmd* cmnd) {
+int Group::leave(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->getGroup(false)) {
         *player << "You're not in a group.\n";
         return(0);
@@ -519,7 +520,7 @@ int Group::leave(Player* player, cmd* cmnd) {
 
     return(0);
 }
-int Group::rename(Player* player, cmd* cmnd) {
+int Group::rename(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Group* group = player->getGroup(true);
     if(!group) {
         *player << "You are not in a group.\n";
@@ -546,7 +547,7 @@ int Group::rename(Player* player, cmd* cmnd) {
 
     return(0);
 }
-int Group::type(Player* player, cmd* cmnd) {
+int Group::type(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Group* group = player->getGroup(true);
     const char *errorMsg = "What would you like to switch your group to? (Public, Private, Invite Only)?\n";
     if(!group) {
@@ -593,7 +594,7 @@ int Group::type(Player* player, cmd* cmnd) {
     return(0);
 }
 
-int Group::set(Player* player, cmd* cmnd, bool set) {
+int Group::set(const std::shared_ptr<Player>& player, cmd* cmnd, bool set) {
     Group* group = player->getGroup(true);
     const char* errorMsg;
     if(set)
@@ -649,13 +650,20 @@ int Group::set(Player* player, cmd* cmnd, bool set) {
 //                      doFollow
 //********************************************************************
 
-void Player::doFollow(BaseRoom* oldRoom) {
+void Player::doFollow(const std::shared_ptr<BaseRoom>& oldRoom) {
     Group* group = getGroup(true);
     if(getGroupStatus() == GROUP_LEADER && group) {
-        for(Creature* crt : group->members) {
+        auto it = group->members.begin();
+        while (it != group->members.end()) {
+            auto crt = it->lock();
+            if(!crt) {
+                it = group->members.erase(it);
+                continue;
+            }
+            it++;
             if(crt->getRoomParent() == oldRoom) {
-                Player* pFollow = crt->getAsPlayer();
-                Monster* mFollow = crt->getAsMonster();
+                std::shared_ptr<Player> pFollow = crt->getAsPlayer();
+                std::shared_ptr<Monster>  mFollow = crt->getAsMonster();
                 if(pFollow) {
                     pFollow->deleteFromRoom();
                     pFollow->addToRoom(getRoomParent());
@@ -665,6 +673,7 @@ void Player::doFollow(BaseRoom* oldRoom) {
                 }
             }
         }
+
     }
     doPetFollow();
 }
@@ -674,7 +683,7 @@ void Player::doFollow(BaseRoom* oldRoom) {
 //********************************************************************
 
 void Player::doPetFollow() {
-    for(Monster*pet : pets ){
+    for(const auto& pet : pets ){
         if(pet && pet->getRoomParent() != getRoomParent()) {
             pet->deleteFromRoom();
             pet->addToRoom(getRoomParent());
@@ -691,7 +700,7 @@ void Player::doPetFollow() {
 //                      getsGroupExperience
 //*********************************************************************
 
-bool Creature::getsGroupExperience(Monster* target) {
+bool Creature::getsGroupExperience(const std::shared_ptr<Monster>&  target) {
     // We can get exp if we're a player...
     return(isPlayer() &&
         // And idle less than 2 minutes
@@ -713,6 +722,6 @@ bool Creature::getsGroupExperience(Monster* target) {
         // no statues
         !isEffected("petrification") &&
         // and they're on the enemy list
-        target->isEnemy(this)
+        target->isEnemy(Containable::downcasted_shared_from_this<Creature>())
     );
 }

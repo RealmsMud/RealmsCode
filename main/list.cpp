@@ -272,7 +272,7 @@ int list_monsters() {
             std::sort(monsters.begin(), monsters.end());
             for (const fs::path& monster : monsters) {
                 if (fs::is_regular_file(monster)) {
-                    auto *lMonster = new Monster();
+                    auto lMonster = std::make_shared<Monster>();
                     if((xmlDoc = xml::loadFile(monster.c_str(), "Creature")) == nullptr) {
                         std::cout << "Error loading: " << monster.string() << "\n";
                         continue;

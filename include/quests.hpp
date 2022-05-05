@@ -82,13 +82,13 @@ public:
     [[nodiscard]] std::string getDisplayString() const;
     [[nodiscard]] bool isRepeatable() const;
     [[nodiscard]] int getTimesRepeatable() const;
-    [[nodiscard]] QuestEligibility getEligibility(const Player *player, const Monster *giver) const;
+    [[nodiscard]] QuestEligibility getEligibility(const std::shared_ptr<const Player> &player, const std::shared_ptr<const Monster> &giver) const;
     [[nodiscard]] const CatRef & getTurnInMob() const;
-    [[nodiscard]] bool canGetQuest(const Player* player, const Monster* giver) const;
+    [[nodiscard]] bool canGetQuest(const std::shared_ptr<const Player> &player, const std::shared_ptr<const Monster> &giver) const;
 
-    void printReceiveString(Player* player, const Monster* giver) const;
-    void printCompletionString(Player* player, const Monster* giver) const;
-    void giveInitialitems(const Monster* giver, Player* player) const;
+    void printReceiveString(const std::shared_ptr<Player> &player, const std::shared_ptr<const Monster> &giver) const;
+    void printCompletionString(const std::shared_ptr<Player> &player, const std::shared_ptr<const Monster> &giver) const;
+    void giveInitialitems(const std::shared_ptr<const Monster> &giver, const std::shared_ptr<Player> &player) const;
 private:
     CatRef questId;
     std::string name;
@@ -99,13 +99,13 @@ private:
     std::string revision;           // This will be used for making sure all QuestCompletions are synced up with the
                                     // parent quest in case we make changes to them
 
-    bool repeatable;                        // Can this quest be repeated multiple times?
+    bool repeatable{};                        // Can this quest be repeated multiple times?
     QuestRepeatFrequency repeatFrequency;   // How often can this quest be repeated
     int timesRepeatable{};                  // Number of times the quest can be repeated.  0 for infinite
-    bool sharable;                          // Can this quest be shared with other players?
-    int minLevel;                           // Minimum required level to get this quest
-    int minFaction;                         // Minimum required faction to get this quest (Based on mob's primeFaction)
-    int level;                              // Level of this quest, used to adjust rewards
+    bool sharable{};                          // Can this quest be shared with other players?
+    int minLevel{};                           // Minimum required level to get this quest
+    int minFaction{};                         // Minimum required faction to get this quest (Based on mob's primeFaction)
+    int level{};                              // Level of this quest, used to adjust rewards
 
     std::list<CatRef> preRequisites;        // A list of quests that must have been completed before someone is allowed
                                             // to get this quest
@@ -118,8 +118,8 @@ private:
     // Completion Info
     CatRef turnInMob;                           // Monster that we turn this quest into for completion
     Money cashReward;                           // Coin Reward
-    long expReward;                             // Exp reward
-    short alignmentChange;			            // Amount alignment changes upon quest completion
+    long expReward{};                             // Exp reward
+    short alignmentChange{};			            // Amount alignment changes upon quest completion
     std::list<QuestCatRef> itemRewards;         // Items rewarded on completion
     std::map<std::string, long> factionRewards; // Factions to be modified
 
@@ -129,8 +129,8 @@ private:
 // Class to keep track of what has been completed on a given quest for a player so far
 class QuestCompletion {
 public:
-    QuestCompletion(QuestInfo* parent, Player* player);
-    QuestCompletion(xmlNodePtr rootNode, Player* player);
+    QuestCompletion(QuestInfo* parent, std::shared_ptr<Player> player);
+    QuestCompletion(xmlNodePtr rootNode, std::shared_ptr<Player> player);
     xmlNodePtr save(xmlNodePtr rootNode) const;
 
     //int getQuestId();
@@ -139,7 +139,7 @@ public:
 private:
     CatRef questId;
     QuestInfo* parentQuest{}; // What quest are we keeping track of?
-    Player* parentPlayer;   // Parent Player for this quest
+    std::shared_ptr<Player> parentPlayer;   // Parent Player for this quest
     std::string revision;
 
     std::list<QuestCatRef> mobsKilled;      // How many of the required monsters have we killed
@@ -154,9 +154,9 @@ private:
     bool itemsCompleted;
     bool roomsCompleted;
 public:
-    void updateMobKills(Monster* monster);
-    void updateItems(Object* object);
-    void updateRooms(UniqueRoom* room);
+    void updateMobKills(const std::shared_ptr<Monster>&  monster);
+    void updateItems(const std::shared_ptr<Object>&  object);
+    void updateRooms(const std::shared_ptr<UniqueRoom>& room);
     std::string getStatusDisplay();
 
     bool checkQuestCompletion(bool showMessage = true);
@@ -164,7 +164,7 @@ public:
     [[nodiscard]] bool hasRequiredItems() const;
     [[nodiscard]] bool hasRequiredRooms() const;
 
-    bool complete(Monster* monster);
+    bool complete(const std::shared_ptr<Monster>&  monster);
 };
 
 class QuestCompleted {

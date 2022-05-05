@@ -46,7 +46,6 @@
 #include "mudObjects/objects.hpp"                   // for Object, DroppedBy
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "objIncrease.hpp"                          // for ObjIncrease
-#include "os.hpp"                                   // for ASSERTLOG, merror
 #include "paths.hpp"                                // for checkDirExists
 #include "proto.hpp"                                // for objectPath, valid...
 #include "range.hpp"                                // for Range
@@ -81,36 +80,36 @@ int objRefSaveFlags[] =
 //                      loadObject
 //*********************************************************************
 
-bool loadObject(int index, Object** pObject, bool offline) {
+bool loadObject(int index, std::shared_ptr<Object>&  pObject, bool offline) {
     CatRef cr;
     cr.id = index;
     return(loadObject(cr, pObject, offline));
 }
 
-bool loadObject(const CatRef& cr, Object** pObject, bool offline) {
+bool loadObject(const CatRef& cr, std::shared_ptr<Object>&  pObject, bool offline) {
     if(!validObjId(cr))
         return(false);
 
     // Check if object is already loaded, and if so return pointer
     if(gServer->objectCache.contains(cr)) {
-        *pObject = new Object;
-        gServer->objectCache.fetch(cr, pObject, false);
+        pObject = std::make_shared<Object>();
+        gServer->objectCache.fetch(cr, *pObject, false);
     } else {
         // Otherwise load the object and return a pointer to the newly loaded object
         // Load the object from it's file
         if(!loadObjectFromFile(cr, pObject, offline))
             return(false);
-        gServer->objectCache.insert(cr, pObject);
+        gServer->objectCache.insert(cr, *pObject);
     }
 
     if(pObject) {
         // Quest items are now auto NO-DROP
-        if((*pObject)->getQuestnum()) {
-            (*pObject)->setFlag(O_NO_DROP);
+        if(pObject->getQuestnum()) {
+            pObject->setFlag(O_NO_DROP);
         }
         // cannot steal scrolls
-        if((*pObject)->getType() == ObjectType::SCROLL) {
-            (*pObject)->setFlag(O_NO_STEAL);
+        if(pObject->getType() == ObjectType::SCROLL) {
+            pObject->setFlag(O_NO_STEAL);
         }
     }
     return(true);
@@ -120,7 +119,7 @@ bool loadObject(const CatRef& cr, Object** pObject, bool offline) {
 //                      loadObjectFromFile
 //*********************************************************************
 
-bool loadObjectFromFile(const CatRef& cr, Object** pObject, bool offline) {
+bool loadObjectFromFile(const CatRef& cr, std::shared_ptr<Object>&  pObject, bool offline) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int         num;
@@ -140,13 +139,11 @@ bool loadObjectFromFile(const CatRef& cr, Object** pObject, bool offline) {
 
     if(num == cr.id) {
         // BINGO: This is the object we want, read it in
-        *pObject = new Object;
-        if(!*pObject)
-            merror("loadObjectFile", FATAL);
-        xml::copyPropToString((*pObject)->version, rootNode, "Version");
+        pObject = std::make_shared<Object>();
+        xml::copyPropToString(pObject->version, rootNode, "Version");
 
-        (*pObject)->readFromXml(rootNode, nullptr, offline);
-        (*pObject)->setId("-1");
+        pObject->readFromXml(rootNode, nullptr, offline);
+        pObject->setId("-1");
     }
 
     xmlFreeDoc(xmlDoc);
@@ -302,7 +299,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
     }
     // make sure uniqueness stays intact
     setFlag(O_UNIQUE);
-    if(!gConfig->getUnique(this))
+    if(!gConfig->getUnique(getAsObject()))
         clearFlag(O_UNIQUE);
 
     escapeText();
@@ -317,15 +314,15 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
 
 void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode = curNode->children;
-    Object* object=nullptr, *object2=nullptr;
+    std::shared_ptr<Object>  object=nullptr, object2=nullptr;
     CatRef  cr;
     int     i=0,quantity=0;
 
-    Creature* cParent = getAsCreature();
-//  Monster* mParent = parent->getMonster();
-//  Player* pParent = parent->getPlayer();
-    UniqueRoom* rParent = getAsUniqueRoom();
-    Object* oParent = getAsObject();
+    std::shared_ptr<Creature> cParent = getAsCreature();
+//  std::shared_ptr<Monster>  mParent = parent->getMonster();
+//  std::shared_ptr<Player> pParent = parent->getPlayer();
+    std::shared_ptr<UniqueRoom> rParent = getAsUniqueRoom();
+    std::shared_ptr<Object>  oParent = getAsObject();
     std::list<std::string> *idList = nullptr;
 
     while(childNode) {
@@ -341,9 +338,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
         try {
             if(NODE_NAME(childNode, "Object")) {
                 // If it's a full object, read it in
-                object = new Object;
-                if(!object)
-                    merror("loadObjectsXml", FATAL);
+                object = std::make_shared<Object>();
                 object->readFromXml(childNode, idList);
             } else if(NODE_NAME(childNode, "ObjRef")) {
                 // If it's an object reference, we want to first load the parent object
@@ -353,7 +348,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                 if(!validObjId(cr)) {
                     std::clog << "Invalid object " << cr.displayStr() << std::endl;
                 } else {
-                    if(loadObject(cr, &object)) {
+                    if(loadObject(cr, object)) {
                         // These two flags might be cleared on the reference object, so let that object set them if it wants to
                         object->clearFlag(O_HIDDEN);
                         object->clearFlag(O_CURSED);
@@ -370,7 +365,7 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                     if(!i) {
                         object2 = object;  // just a reference
                     } else {
-                        object2 = new Object;
+                        object2 = std::make_shared<Object>();
                         *object2 = *object;
                     }
                     try {
@@ -387,7 +382,6 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                     } catch(std::runtime_error &e) {
                         std::clog << "Error setting ID: " << e.what() << std::endl;
                         if(object2) {
-                            delete object2;
                             object2 = nullptr;
                         }
                     }
@@ -396,7 +390,6 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
         } catch(std::runtime_error &e) {
             std::clog << "Error loading object: " << e.what() << std::endl;
             if(object != nullptr) {
-                delete object;
                 object = nullptr;
             }
         }
@@ -437,8 +430,6 @@ int Object::saveToFile() {
     xmlNodePtr  rootNode;
     char        filename[256];
 
-    ASSERTLOG( this );
-
     // Invalid Number
     if(info.id < 0)
         return(-1);
@@ -452,7 +443,7 @@ int Object::saveToFile() {
 
     // make sure uniqueness stays intact
     setFlag(O_UNIQUE);
-    if(!gConfig->getUnique(this))
+    if(!gConfig->getUnique(getAsObject()))
         clearFlag(O_UNIQUE);
 
     escapeText();
@@ -485,9 +476,6 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     if(rootNode == nullptr)
         return(-1);
 
-    ASSERTLOG( info.id >= 0 );
-    ASSERTLOG( info.id < OMAX );
-
     // If the object's index is 0, then we have to do a full save
     if(!info.id && saveType != LoadType::LS_FULL && saveType != LoadType::LS_PROTOTYPE) {
         // We should never get here...if it's a 0 index, should have O_SAVE_FULL set
@@ -496,7 +484,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     }
 
     // record objects saved during swap
-    if(gConfig->swapIsInteresting(this))
+    if(gConfig->swapIsInteresting(getAsConstObject()))
         gConfig->swapLog((std::string)"o" + info.str(), false);
 
     xml::newNumProp(rootNode, "Num", info.id);
@@ -671,9 +659,9 @@ int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet &set, int permOnly) {
     int quantity = 0;
     LoadType lt;
     ObjectSet::const_iterator it;
-    const Object *obj;
+
     for (it = set.begin(); it != set.end();) {
-        obj = (*it++);
+        const std::shared_ptr<Object>&obj = (*it++);
         if (obj &&
             (permOnly == ALLITEMS ||
              (permOnly == PERMONLY && obj->flagIsSet(O_PERM_ITEM))

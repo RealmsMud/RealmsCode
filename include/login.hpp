@@ -128,8 +128,8 @@ typedef enum {
 namespace Create {
     const int doPrint=1;
     const int doWork=2;
-    void addStartingItem(Player* player, const std::string &area, int id, bool wear=true, bool skipUseCheck=false, int num=1);
-    void addStartingWeapon(Player* player, const std::string &weapon);
+    void addStartingItem(const std::shared_ptr<Player>& player, const std::string &area, int id, bool wear=true, bool skipUseCheck=false, int num=1);
+    void addStartingWeapon(const std::shared_ptr<Player>& player, const std::string &weapon);
 
     // work functions
     bool getSex(Socket* sock, std::string str, int mode);
@@ -159,7 +159,7 @@ namespace Create {
     bool getHeight(Socket* sock, std::string str, int mode);
     bool getWeight(Socket* sock, std::string str, int mode);
 
-    void doFamily(Player* player, int mode);
+    void doFamily(const std::shared_ptr<Player>& player, int mode);
     int calcHeight(int race, int mode);
     int calcWeight(int race, int mode);
 }

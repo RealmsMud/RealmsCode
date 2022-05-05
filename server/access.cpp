@@ -28,7 +28,6 @@
 #include "deityData.hpp"           // for DeityData
 #include "global.hpp"              // for CreatureClass, CreatureClass::CLAS...
 #include "mudObjects/players.hpp"  // for Player
-#include "os.hpp"                  // for ASSERTLOG
 #include "playerClass.hpp"         // for PlayerClass
 #include "playerTitle.hpp"         // for PlayerTitle
 #include "proto.hpp"               // for getLastDigit, ltoa, up, getClassAb...
@@ -268,18 +267,12 @@ int get_perm_ac(int nIndex) {
 //*********************************************************************
 char *get_class_string(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < static_cast<int>(CreatureClass::CLASS_COUNT) );
-
     nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(class_str[nIndex]);
 }
 
 char* get_lang_color(int nIndex) {
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < LANGUAGE_COUNT );
-
     nIndex = MAX( 0, MIN(nIndex, LANGUAGE_COUNT-1 ) );
 
     return(lang_color[nIndex]);
@@ -287,9 +280,6 @@ char* get_lang_color(int nIndex) {
 
 char *get_language_adj(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < LANGUAGE_COUNT );
-
     nIndex = MAX( 0, MIN(nIndex, LANGUAGE_COUNT - 1 ) );
 
     return(language_adj[nIndex]);
@@ -299,9 +289,6 @@ char *get_language_adj(int nIndex) {
 
 char *get_language_verb(int lang) {
     int num=0;
-
-    ASSERTLOG( lang >= 0 );
-    ASSERTLOG( lang < LANGUAGE_COUNT );
 
     num = Random::get(1,3);
     lang = MAX(0, MIN(lang, LANGUAGE_COUNT-1));
@@ -315,27 +302,18 @@ char *get_language_verb(int lang) {
 
 char *get_skill_string(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < 11 );
-
     nIndex = MAX( 0, MIN(nIndex, 10) );
 
     return(mob_skill_str[nIndex]);
 }
 char *get_save_string(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < MAX_SAVE_COLOR );
-
     nIndex = MAX( 0, MIN(nIndex, MAX_SAVE_COLOR-1 ) );
 
     return(save_str[nIndex]);
 }
 
 char get_save_color(int nIndex) {
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < MAX_SAVE_COLOR );
-
     nIndex = MAX( 0, MIN(nIndex, MAX_SAVE_COLOR-1 ) );
 
     return(save_color[nIndex]);
@@ -343,15 +321,12 @@ char get_save_color(int nIndex) {
 
 char *getClassAbbrev(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < static_cast<int>(CreatureClass::CLASS_COUNT) );
-
     nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(class_abbrev[nIndex] );
 }
 
-char *getClassName(Player* player) {
+char *getClassName(std::shared_ptr<Player> player) {
     static char classname[1024];
 
     if(!player->hasSecondClass())
@@ -368,26 +343,19 @@ char *getClassName(Player* player) {
 
 char *getShortClassAbbrev(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < static_cast<int>(CreatureClass::CLASS_COUNT) );
-
     nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(shortClassAbbrev[nIndex-1] );
 }
 
-char *getShortClassName(const Player* player) {
-    static char classname[1024];
-
+std::string getShortClassName(const std::shared_ptr<const Player> &player) {
     if(!player->hasSecondClass())
         return(get_class_string(static_cast<int>(player->getClass())));
 
-    strcpy(classname, "");
-    strcpy(classname, getShortClassAbbrev(player->getClassInt()));
-    strcat(classname, "/");
-    strcat(classname, getShortClassAbbrev(player->getSecondClassInt()));
+    std::ostringstream ostr;
+    ostr << getShortClassAbbrev(player->getClassInt()) << "/" << getShortClassAbbrev(player->getSecondClassInt());
 
-    return(classname);
+    return(ostr.str());
 }
 
 

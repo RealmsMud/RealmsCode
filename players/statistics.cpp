@@ -270,7 +270,7 @@ char* getSaveName(int save) {
     return(save_names[save]);
 }
 
-void Statistics::displayLevelHistory(const Player* viewer) {
+void Statistics::displayLevelHistory(const std::shared_ptr<Player> viewer) {
     std::string padding;
     std::ostringstream oStr;
     // set left aligned
@@ -300,7 +300,7 @@ void Statistics::displayLevelHistory(const Player* viewer) {
 //                      display
 //*********************************************************************
 
-void Statistics::display(const Player* viewer, bool death) {
+void Statistics::display(const std::shared_ptr<Player> viewer, bool death) {
     std::string padding;
     std::ostringstream oStr;
     // set left aligned
@@ -439,12 +439,12 @@ void Statistics::display(const Player* viewer, bool death) {
 //                      calcToughness
 //*********************************************************************
 
-unsigned long Statistics::calcToughness(Creature* target) {
+unsigned long Statistics::calcToughness(std::shared_ptr<Creature> target) {
     unsigned long t = 0;
 
     if(target->isMonster()) {
 
-        const Monster* monster = target->getAsConstMonster();
+        const std::shared_ptr<const Monster>  monster = target->getAsConstMonster();
         t += target->hp.getMax();
         t += target->getAttackPower();
         t += target->getWeaponSkill();
@@ -467,7 +467,7 @@ unsigned long Statistics::calcToughness(Creature* target) {
 //                      damageWith
 //*********************************************************************
 
-std::string Statistics::damageWith(const Player* player, const Object* weapon) {
+std::string Statistics::damageWith(const std::shared_ptr<Player> player, const std::shared_ptr<Object>  weapon) {
     if(weapon)
         return(weapon->getObjStr(nullptr, INV | MAG, 1));
     return((std::string)"your " + player->getUnarmedWeaponSkill() + "s");
@@ -685,7 +685,7 @@ void Statistics::group(unsigned long num) { if(track) mostGroup = MAX(num, mostG
 //                      monster
 //*********************************************************************
 
-void Statistics::monster(Monster* monster) {
+void Statistics::monster(std::shared_ptr<Monster>  monster) {
     if(!track || monster->isPet())
         return;
     mostMonster.update(calcToughness(monster), monster->getCName());
@@ -719,13 +719,13 @@ void Statistics::magicDamage(unsigned long num, std::string_view with) {
 //                      setParent
 //*********************************************************************
 
-void Statistics::setParent(Player* player) { parent = player; }
+void Statistics::setParent(std::shared_ptr<Player> player) { parent = player; }
 
 //*********************************************************************
 //                      pkRank
 //*********************************************************************
 // This function returns the rank of the player based on how many
-// pkills they has been in, and how many they have won
+// pkills they have been in, and how many they have won
 
 unsigned long Statistics::pkRank() const {
     if(!numPkWon || !numPkIn)
@@ -776,15 +776,15 @@ void Statistics::setPkwon(unsigned long p) { numPkWon = p; }
 //                      cmdLevelHistory
 //*********************************************************************
 
-int cmdLevelHistory(Player* player, cmd* cmnd) {
-    Player* target = player;
+int cmdLevelHistory(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target = player;
     bool online=true;
 
     if(player->isDm() && cmnd->num > 1) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         if(!target) {
-            loadPlayer(cmnd->str[1], &target);
+            loadPlayer(cmnd->str[1], target);
             online = false;
             // If the player is offline, init() won't be run and the statistics object won't
             // get its parent set. Do so now.
@@ -800,8 +800,6 @@ int cmdLevelHistory(Player* player, cmd* cmnd) {
 
     target->statistics.displayLevelHistory(player);
 
-    if(!online)
-        delete target;;
     return(0);
 }
 
@@ -809,8 +807,8 @@ int cmdLevelHistory(Player* player, cmd* cmnd) {
 //                      cmdStatistics
 //*********************************************************************
 
-int cmdStatistics(Player* player, cmd* cmnd) {
-    Player* target = player;
+int cmdStatistics(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target = player;
     bool online=true;
 
     if(!strcmp(cmnd->str[1], "reset")) {
@@ -824,7 +822,7 @@ int cmdStatistics(Player* player, cmd* cmnd) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         if(!target) {
-            loadPlayer(cmnd->str[1], &target);
+            loadPlayer(cmnd->str[1], target);
             online = false;
             // If the player is offline, init() won't be run and the statistics object won't
             // get its parent set. Do so now.
@@ -845,7 +843,5 @@ int cmdStatistics(Player* player, cmd* cmnd) {
         *player << "You may use the set, clear, and toggle commands to control tracking of statistics.\n";
     }
 
-    if(!online)
-        delete target;;
     return(0);
 }

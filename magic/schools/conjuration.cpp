@@ -37,7 +37,6 @@
 #include "mudObjects/objects.hpp"    // for Object
 #include "mudObjects/players.hpp"    // for Player
 #include "mudObjects/rooms.hpp"      // for BaseRoom
-#include "os.hpp"                    // for merror
 #include "proto.hpp"                 // for broadcast, findExit, bonus, getO...
 #include "random.hpp"                // for Random
 #include "realm.hpp"                 // for Realm, EARTH, MAX_REALM, COLD, ELEC
@@ -294,7 +293,7 @@ creatureStats conjureStats[3][40]  =
 //                      petTalkDesc
 //*********************************************************************
 
-void petTalkDesc(Monster* pet, Creature* owner) {
+void petTalkDesc(const std::shared_ptr<Monster>&  pet, std::shared_ptr<Creature> owner) {
     std::string name = owner->getName(), desc = "";
 
     if(owner->flagIsSet(P_DM_INVIS))
@@ -340,7 +339,7 @@ int getPetTitle(CastType how, int skLevel, bool weaker, bool undead) {
 //*********************************************************************
 //                      conjure
 //*********************************************************************
-int conjureCmd(Player* player, cmd* cmnd) {
+int conjureCmd(const std::shared_ptr<Player>& player, cmd* cmnd) {
     SpellData data;
     data.set(CastType::SKILL, CONJURATION, NO_DOMAIN, nullptr, player);
     if(!data.check(player))
@@ -348,12 +347,12 @@ int conjureCmd(Player* player, cmd* cmnd) {
     return(conjure(player, cmnd, &data));
 }
 
-int conjure(Creature *player, cmd *cmnd, SpellData *spellData) {
-    Player *pPlayer = player->getAsPlayer();
+int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellData) {
+    std::shared_ptr<Player>pPlayer = player->getAsPlayer();
     if (!pPlayer)
         return (0);
 
-    Monster *target = nullptr;
+    std::shared_ptr<Monster> target = nullptr;
     int title = 0, mp = 0, realm = 0, level = 0, spells = 0, chance = 0, sRealm = 0;
     int buff = 0, hp_percent = 0, mp_percent = 0, a = 0, rnum = 0, cClass = 0, skLevel = 0;
     int interval = 0, n = 0, x = 0, hplow = 0, hphigh = 0, mplow = 0, mphigh = 0;
@@ -481,10 +480,9 @@ int conjure(Creature *player, cmd *cmnd, SpellData *spellData) {
     // 0 = weak, 1 = normal, 2 = buff
     buff = Random::get(1, 3) - 1;
 
-    target = new Monster;
+    target = std::make_shared<Monster>();
     if (!target) {
         player->print("Cannot allocate memory for target.\n");
-        merror("conjure", NONFATAL);
         return (PROMPT);
     }
 
@@ -843,7 +841,7 @@ int conjure(Creature *player, cmd *cmnd, SpellData *spellData) {
 
     player->print("You conjure a %s.\n", target->getCName());
     player->checkImprove("conjure", true);
-    broadcast(player->getSock(), player->getParent(), "%M conjures a %s.", player, target->getCName());
+    broadcast(player->getSock(), player->getParent(), "%M conjures a %s.", player.get(), target->getCName());
 
 
     if (!combatPet) {
@@ -903,7 +901,7 @@ int conjure(Creature *player, cmd *cmnd, SpellData *spellData) {
 //                      splDenseFog
 //*********************************************************************
 
-int splDenseFog(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splDenseFog(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     int strength = 10;
     long duration = 600;
 
@@ -918,7 +916,7 @@ int splDenseFog(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     player->print("You cast a dense fog spell.\n");
-    broadcast(player->getSock(), player->getParent(), "%M casts a dense fog spell.", player);
+    broadcast(player->getSock(), player->getParent(), "%M casts a dense fog spell.", player.get());
 
     if(player->getRoomParent()->hasPermEffect("dense-fog")) {
         player->print("The spell didn't take hold.\n");
@@ -938,7 +936,7 @@ int splDenseFog(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splToxicCloud
 //*********************************************************************
 
-int splToxicCloud(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splToxicCloud(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     int strength = spellData->level;
     long duration = 600;
 
@@ -957,7 +955,7 @@ int splToxicCloud(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     player->print("You cast a toxic cloud spell.\n");
-    broadcast(player->getSock(), player->getParent(), "%M casts a toxic cloud spell.", player);
+    broadcast(player->getSock(), player->getParent(), "%M casts a toxic cloud spell.", player.get());
 
     if(player->getRoomParent()->hasPermEffect("toxic-cloud")) {
         player->print("The spell didn't take hold.\n");
@@ -977,8 +975,8 @@ int splToxicCloud(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splWallOfFire
 //*********************************************************************
 
-int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Exit *exit=nullptr;
+int splWallOfFire(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Exit> exit=nullptr;
     int strength = spellData->level;
     long duration = 300;
 
@@ -1004,8 +1002,7 @@ int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     player->printColor("You cast a wall of fire spell on the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M casts a wall of fire spell on the %s^x.",
-        player, exit->getCName());
+    broadcast(player->getSock(), player->getParent(), "%M casts a wall of fire spell on the %s^x.", player.get(), exit->getCName());
 
     if(exit->hasPermEffect("wall-of-fire")) {
         player->print("The spell didn't take hold.\n");
@@ -1025,8 +1022,8 @@ int splWallOfFire(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splWallOfForce
 //*********************************************************************
 
-int splWallOfForce(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Exit *exit=nullptr;
+int splWallOfForce(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Exit> exit=nullptr;
     int strength = spellData->level;
     long duration = 300;
 
@@ -1041,8 +1038,7 @@ int splWallOfForce(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     player->printColor("You cast a wall of force spell on the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M casts a wall of force spell on the %s^x.",
-        player, exit->getCName());
+    broadcast(player->getSock(), player->getParent(), "%M casts a wall of force spell on the %s^x.", player.get(), exit->getCName());
 
     if(exit->hasPermEffect("wall-of-force")) {
         player->print("The spell didn't take hold.\n");
@@ -1062,8 +1058,8 @@ int splWallOfForce(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splWallOfThorns
 //*********************************************************************
 
-int splWallOfThorns(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Exit *exit=nullptr;
+int splWallOfThorns(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Exit> exit=nullptr;
     int strength = spellData->level;
     long duration = 300;
 
@@ -1083,8 +1079,7 @@ int splWallOfThorns(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     player->printColor("You cast a wall of thorns spell on the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M casts a wall of thorns spell on the %s^x.",
-        player, exit->getCName());
+    broadcast(player->getSock(), player->getParent(), "%M casts a wall of thorns spell on the %s^x.", player.get(), exit->getCName());
 
     if(exit->hasPermEffect("wall-of-thorns")) {
         player->print("The spell didn't take hold.\n");
@@ -1104,11 +1099,11 @@ int splWallOfThorns(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      bringDownTheWall
 //*********************************************************************
 
-void bringDownTheWall(EffectInfo* effect, BaseRoom* room, Exit* exit) {
+void bringDownTheWall(EffectInfo* effect, const std::shared_ptr<BaseRoom>& room, std::shared_ptr<Exit> exit) {
     if(!effect)
         return;
 
-    BaseRoom* targetRoom=nullptr;
+    std::shared_ptr<BaseRoom> targetRoom=nullptr;
     std::string name = effect->getName();
 
     if(effect->isPermanent()) {
@@ -1118,7 +1113,7 @@ void bringDownTheWall(EffectInfo* effect, BaseRoom* room, Exit* exit) {
 
         // extra of 2 means a 2 pulse (21-40 seconds) duration
         effect->setExtra(2);
-        exit = exit->getReturnExit(room, &targetRoom);
+        exit = exit->getReturnExit(room, targetRoom);
         if(exit) {
             effect = exit->getEffect(name);
             if(effect) {

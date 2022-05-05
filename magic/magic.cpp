@@ -34,7 +34,6 @@
 #include "magic.hpp"                 // for splOffensive, EVOCATION, DESTRUC...
 #include "mudObjects/creatures.hpp"  // for Creature
 #include "mudObjects/players.hpp"    // for Player
-#include "os.hpp"                    // for ASSERTLOG
 #include "paths.hpp"                 // for BuilderHelp, DMHelp, Code, Help
 #include "proto.hpp"                 // for zero, getSpellMp, get_spell_list...
 #include "stats.hpp"                 // for Stat
@@ -371,9 +370,6 @@ void initSpellList() {
 
 const char *get_spell_name(int nIndex) {
     // do bounds checking
-    ASSERTLOG(nIndex >= 0);
-    ASSERTLOG(nIndex < spllist_size);
-
     nIndex = MAX(0, MIN(nIndex, spllist_size));
     return( spllist[nIndex].splstr );
 }
@@ -385,9 +381,6 @@ const char *get_spell_name(int nIndex) {
 
 int get_spell_num(int nIndex) {
     // do bounds checking
-    ASSERTLOG(nIndex >= 0);
-    ASSERTLOG(nIndex < spllist_size);
-
     nIndex = MAX(0, MIN(nIndex, spllist_size));
     return(spllist[nIndex].splno);
 }
@@ -400,9 +393,6 @@ int get_spell_num(int nIndex) {
 
 int get_spell_lvl(int sflag) {
     int slvl=0;
-
-    ASSERTLOG(sflag >= 0 );
-    ASSERTLOG(sflag < spllist_size );
 
     switch(sflag) {
     case S_RUMBLE:
@@ -475,9 +465,6 @@ int get_spell_lvl(int sflag) {
 
 SpellRet get_spell_function(int nIndex) {
     // do bounds checking
-    ASSERTLOG(nIndex >= 0);
-    ASSERTLOG(nIndex < spllist_size);
-
     nIndex = MAX(0, MIN(nIndex, spllist_size));
 
     return( spllist[nIndex].splfn );
@@ -489,9 +476,6 @@ SpellRet get_spell_function(int nIndex) {
 
 SchoolOfMagic get_spell_school(int nIndex) {
     // do bounds checking
-    ASSERTLOG(nIndex >= 0);
-    ASSERTLOG(nIndex < spllist_size);
-
     nIndex = MAX(0, MIN(nIndex, spllist_size));
 
     return( spllist[nIndex].school );
@@ -503,9 +487,6 @@ SchoolOfMagic get_spell_school(int nIndex) {
 
 DomainOfMagic get_spell_domain(int nIndex) {
     // do bounds checking
-    ASSERTLOG(nIndex >= 0);
-    ASSERTLOG(nIndex < spllist_size);
-
     nIndex = MAX(0, MIN(nIndex, spllist_size));
 
     return( spllist[nIndex].domain );
@@ -525,9 +506,6 @@ int get_spell_list_size() {
 // Parameters:  <splNo>
 int getSpellMp(int spellNum) {
     // do bounds checking
-    ASSERTLOG(spellNum >= 0);
-    ASSERTLOG(spellNum < spllist_size);
-
     return(spllist[spellNum].mp);
 }
 
@@ -581,18 +559,18 @@ void Creature::subMp(int reqMp) {
 //                      checkRefusingMagic
 //*********************************************************************
 
-bool checkRefusingMagic(Creature* player, Creature* target, bool healing, bool print) {
+bool checkRefusingMagic(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, bool healing, bool print) {
     if(player->isStaff() || !target->isPlayer())
         return(false);
     // linkdead players always want healing
     if(!healing && target->flagIsSet(P_LINKDEAD)) {
         if(print)
-            player->print("%M doesn't want that cast on them right now.\n", target);
+            player->print("%M doesn't want that cast on them right now.\n", target.get());
         return(false);
     }
     if(target->getAsPlayer()->isRefusing(player->getName())) {
         if(print)
-            player->print("%M is refusing your magical services.\n", target);
+            player->print("%M is refusing your magical services.\n", target.get());
         return(true);
     }
     return(false);
@@ -604,8 +582,8 @@ bool checkRefusingMagic(Creature* player, Creature* target, bool healing, bool p
 //*********************************************************************
 // This function returns the magical realm proficiency as a percentage
 
-int mprofic(const Creature* player, int index) {
-    const Player *pPlayer = player->getAsConstPlayer();
+int mprofic(const std::shared_ptr<Creature> & player, int index) {
+    const std::shared_ptr<const Player>pPlayer = player->getAsConstPlayer();
     long    prof_array[12];
     int i=0, n=0, prof=0;
 

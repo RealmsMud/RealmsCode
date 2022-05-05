@@ -55,8 +55,8 @@
 void Player::disarmSelf() {
     bool removed = false;
     if(ready[WIELD-1] && ready[WIELD-1]->getType() == ObjectType::WEAPON && !ready[WIELD-1]->flagIsSet(O_CURSED)) {
-        printColor("You removed %1P\n", ready[WIELD-1]);
-        broadcast(getSock(),  getRoomParent(), "%M removed %1P.", this, ready[WIELD-1]);
+        printColor("You removed %1P\n", ready[WIELD-1].get());
+        broadcast(getSock(),  getRoomParent(), "%M removed %1P.", this, ready[WIELD-1].get());
         unequip(WIELD);
         removed = true;
     }
@@ -73,8 +73,8 @@ void Player::disarmSelf() {
                 }
             }
         } else {
-            printColor("You removed %1P\n", ready[HELD-1]);
-            broadcast(getSock(),  getRoomParent(), "%M removed %1P.", this, ready[HELD-1]);
+            printColor("You removed %1P\n", ready[HELD-1].get());
+            broadcast(getSock(),  getRoomParent(), "%M removed %1P.", this, ready[HELD-1].get());
             unequip(HELD);
             removed = true;
         }
@@ -89,10 +89,10 @@ void Player::disarmSelf() {
 //                      cmdDisarm
 //*********************************************************************
 
-int cmdDisarm(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
-    Player  *pCreature=nullptr;
-    BaseRoom* room = player->getRoomParent();
+int cmdDisarm(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Player> pCreature=nullptr;
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
     long    i=0, t=0;
     int     chance=0, drop=0;
 
@@ -131,7 +131,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
     }
 
     if( !player->ready[WIELD-1] &&
-        !player->checkStaff("You must be wielding a weapon in order to disarm %N.\n", creature)
+        !player->checkStaff("You must be wielding a weapon in order to disarm %N.\n", creature.get())
     )
         return(0);
 
@@ -192,10 +192,10 @@ int cmdDisarm(Player* player, cmd* cmnd) {
 
 
     if(Random::get(1, 100) > chance) {
-        player->print("You fail to disarm %N.\n", creature);
+        player->print("You fail to disarm %N.\n", creature.get());
         player->checkImprove("disarm", false);
-        creature->print("%M tried to disarm you!\n",player);
-        broadcast(player->getSock(),  creature->getSock(), room, "%M attempts to disarm %N.\n", player, creature);
+        creature->print("%M tried to disarm you!\n",player.get());
+        broadcast(player->getSock(),  creature->getSock(), room, "%M attempts to disarm %N.\n", player.get(), creature.get());
         if(creature->isMonster())
             creature->getAsMonster()->addEnemy(player);
         return(0);
@@ -213,34 +213,25 @@ int cmdDisarm(Player* player, cmd* cmnd) {
         if(creature->isMonster() && Unique::is(creature->ready[WIELD-1]))
             drop = 0;
 
-        if( Random::get(1,100) <= drop &&
-            !creature->ready[WIELD-1]->flagIsSet(O_NO_DROP)
-        ) {
-            player->print("You disarm %N!\n", creature);
-            player->printColor("You force %N to drop %P!\n", creature, creature->ready[WIELD-1]);
-            creature->print("%M disarmed you!\n", player);
+        player->print("You disarm %N!\n", creature.get());
+        broadcast(player->getSock(),  creature->getSock(), room, "%M attempts to disarm %N.", player.get(), creature.get());
+        if( Random::get(1,100) <= drop && !creature->ready[WIELD-1]->flagIsSet(O_NO_DROP)) {
+            player->printColor("You force %N to drop %P!\n", creature.get(), creature->ready[WIELD-1].get());
+            creature->print("%M disarmed you!\n", player.get());
 
-            broadcast(player->getSock(),  creature->getSock(), room, "%M attempts to disarm %N.", player, creature);
-            broadcast(player->getSock(),  creature->getSock(), room, "%M dropped %s weapon!", creature, player->hisHer());
+            broadcast(player->getSock(),  creature->getSock(), room, "%M dropped %s weapon!", creature.get(), player->hisHer());
             if(creature->isPlayer())
                 creature->print("You drop your weapon!\n");
 
-            Object* toDrop = creature->unequip(WIELD, UNEQUIP_NOTHING);
+            std::shared_ptr<Object>  toDrop = creature->unequip(WIELD, UNEQUIP_NOTHING);
             toDrop->addToRoom(room);
-            creature->stun(2);
-            if(creature->isPlayer())
-                creature->unhide();
             if(creature->isMonster())  {
-                creature->getAsMonster()->addEnemy(player);
-                //      creature->setFlag(MDRWPN);
                 creature->setFlag(M_GUARD_TREATURE);   // Can't pick up weapon until you kill mob that dropped it.
             }
         } else {
-            player->print("You disarm %N!\n", creature);
-            creature->print("%M disarmed you!\n", player);
+            creature->print("%M disarmed you!\n", player.get());
             player->print("%s fumbles %s weapon!\n", creature->upHeShe(), creature->hisHer());
-            broadcast(player->getSock(),  creature->getSock(), room, "%M attempts to disarm %N.", player, creature);
-            broadcast(player->getSock(),  creature->getSock(), room, "%M fumbles %s weapon!", creature, creature->hisHer());
+            broadcast(player->getSock(),  creature->getSock(), room, "%M fumbles %s weapon!", creature.get(), creature->hisHer());
 
             if(creature->ready[HELD-1] && creature->getClass() == CreatureClass::RANGER)
                 creature->printColor("^gYou FUMBLE your primary weapon.\n");
@@ -248,12 +239,12 @@ int cmdDisarm(Player* player, cmd* cmnd) {
                 creature->printColor("^gYou FUMBLE your weapon.\n");
 
             creature->unequip(WIELD);
-            creature->stun(2);
-            if(creature->isPlayer())
-                creature->unhide();
-            else
-                creature->getAsMonster()->addEnemy(player);
         }
+        creature->stun(2);
+        if(creature->isPlayer())
+            creature->unhide();
+        else if(creature->isMonster())
+            creature->getAsMonster()->addEnemy(player);
     }
 
     return(0);
@@ -264,7 +255,7 @@ int cmdDisarm(Player* player, cmd* cmnd) {
 //                      cmdMistbane
 //*********************************************************************
 
-int cmdMistbane(Player* player, cmd* cmnd) {
+int cmdMistbane(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i=0, t=0;
     int     chance=0;
 
@@ -299,7 +290,7 @@ int cmdMistbane(Player* player, cmd* cmnd) {
 
     if(Random::get(1, 100) <= chance) {
         player->print("You imbue yourself with positive energy.\n");
-        broadcast(player->getSock(), player->getParent(), "%M imbues %sself with positive energy.", player, player->himHer());
+        broadcast(player->getSock(), player->getParent(), "%M imbues %sself with positive energy.", player.get(), player->himHer());
         player->checkImprove("mistbane", true);
         player->setFlag(P_MISTBANE);
         player->lasttime[LT_MISTBANE].ltime = t;
@@ -308,7 +299,7 @@ int cmdMistbane(Player* player, cmd* cmnd) {
     } else {
         player->print("You failed to imbue yourself with positive energy.\n");
         broadcast(player->getSock(), player->getParent(), "%M tried to imbue %sself with positive energy.",
-            player, player->himHer());
+            player.get(), player->himHer());
         player->checkImprove("mistbane", false);
         player->lasttime[LT_MISTBANE].ltime = t - 590L;
     }
@@ -322,8 +313,8 @@ int cmdMistbane(Player* player, cmd* cmnd) {
 // This lets a ranger wield a weapon in their off-hand, getting 1/2
 // damage, and 1/2 the thac0 bonus from it.
 
-int cmdSecond(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
+int cmdSecond(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -377,12 +368,12 @@ int cmdSecond(Player* player, cmd* cmnd) {
             return(0);
 
         if(!player->willFit(object)) {
-            player->printColor("%O isn't the right size for you.\n", object);
+            player->printColor("%O isn't the right size for you.\n", object.get());
             return(0);
         }
 
         if(object->getMinStrength() > player->strength.getCur()) {
-            player->printColor("You are currently not strong enough to wield %P.\n", object);
+            player->printColor("You are currently not strong enough to wield %P.\n", object.get());
             return(0);
         }
 
@@ -402,7 +393,7 @@ int cmdSecond(Player* player, cmd* cmnd) {
 //                      cmdBerserk
 //*********************************************************************
 
-int cmdBerserk(Player* player, cmd* cmnd) {
+int cmdBerserk(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i=0, t=time(nullptr), timeBetweenBerserks=480;
     int     chance=0;
 
@@ -468,7 +459,7 @@ int cmdBerserk(Player* player, cmd* cmnd) {
 
     if(Random::get(1, 10000) <= chance) {
         *player << ColorOn << "^RYou go berserk! " << ColorOff;
-        broadcast(player->getSock(), player->getParent(), "%M goes berserk!", player);
+        broadcast(player->getSock(), player->getParent(), "%M goes berserk!", player.get());
         player->checkImprove("berserk", true);
 
         // TODO: SKILLS: Add more modifiers based on berserk skill level - will save for full class overhaul
@@ -501,7 +492,7 @@ int cmdBerserk(Player* player, cmd* cmnd) {
     } else {
         *player << "You failed to channel your rage.\n";
         player->checkImprove("berserk", false);
-        broadcast(player->getSock(), player->getParent(), "%M's rage wells up inside %s!", player, player->himHer());
+        broadcast(player->getSock(), player->getParent(), "%M's rage wells up inside %s!", player.get(), player->himHer());
         player->lasttime[LT_BERSERK].ltime = t;
         player->lasttime[LT_BERSERK].interval = 10L;
     }
@@ -515,10 +506,10 @@ int cmdBerserk(Player* player, cmd* cmnd) {
 // This function allows fighters and barbarians to run circles about an
 // enemy, confusing it for several seconds.
 
-int cmdCircle(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
-    Monster *mTarget=nullptr;
-    Player  *pTarget=nullptr;
+int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Monster> mTarget=nullptr;
+    std::shared_ptr<Player> pTarget=nullptr;
     int     chance=0, delay=0;
     double level = 0.0;
 
@@ -551,7 +542,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
             }
 
             if(player->vampireCharmed(pTarget) || (pTarget->hasCharm(player->getName()) && player->flagIsSet(P_CHARMED))) {
-                player->print("You are too fond of %N to do that.\n", pTarget);
+                player->print("You are too fond of %N to do that.\n", pTarget.get());
                 return(0);
             }
         }
@@ -613,7 +604,7 @@ int cmdCircle(Player* player, cmd* cmnd) {
 
         target->stun(delay);
 
-        player->print("You circle %N.\n", target);
+        player->print("You circle %N.\n", target.get());
         player->checkImprove("circle", true);
         log_immort(false, player, "%s circled %s.\n", player->getCName(), target->getCName());
 
@@ -629,8 +620,8 @@ int cmdCircle(Player* player, cmd* cmnd) {
             }
         }
 
-        target->print("%M circles you.\n", player);
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M circles %N.", player, target);
+        target->print("%M circles you.\n", player.get());
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M circles %N.", player.get(), target.get());
         player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY - 10);
 
         if(mTarget) {
@@ -640,10 +631,10 @@ int cmdCircle(Player* player, cmd* cmnd) {
 
 
     } else {
-        player->print("You failed to circle %N.\n", target);
+        player->print("You failed to circle %N.\n", target.get());
         player->checkImprove("circle", false);
-        target->print("%M tried to circle you.\n", player);
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to circle %N.", player, target);
+        target->print("%M tried to circle you.\n", player.get());
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to circle %N.", player.get(), target.get());
         player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
         if(mTarget) {
             // An un-successful circle gives 2.5% of the target's max health as threat
@@ -661,9 +652,9 @@ int cmdCircle(Player* player, cmd* cmnd) {
 // doing less damage than a normal attack, but knocking the opponent
 // over for a few seconds, leaving them unable to attack back.
 
-int cmdBash(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
-    Player  *pCreature=nullptr;
+int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Player> pCreature=nullptr;
     long    t = time(nullptr);
     int     chance=0;
     double level=0.0;
@@ -760,9 +751,9 @@ int cmdBash(Player* player, cmd* cmnd) {
     else {
         player->print("Your bash failed.\n");
         player->checkImprove("bash", false);
-        creature->print("%M tried to bash you.\n", player);
+        creature->print("%M tried to bash you.\n", player.get());
         broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(),
-            "%M tried to bash %N.", player, creature);
+            "%M tried to bash %N.", player.get(), creature.get());
     }
 
     return(0);
@@ -775,8 +766,8 @@ int cmdBash(Player* player, cmd* cmnd) {
 // This function allows fighters to kick their oopponents every 12
 // seconds, in order to do a little extra damage. -- TC
 
-int cmdKick(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
+int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
     long    i=0, t=0;
     int     chance=0;
 
@@ -858,8 +849,8 @@ int cmdKick(Player* player, cmd* cmnd) {
     else {
         player->print("Your kick was ineffective.\n");
         player->checkImprove("kick", false);
-        creature->print("%M tried to kick you.\n", player);
-        broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M tried to kick %N.", player, creature);
+        creature->print("%M tried to kick you.\n", player.get());
+        broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M tried to kick %N.", player.get(), creature.get());
     }
 
     return(0);
@@ -871,33 +862,33 @@ int cmdKick(Player* player, cmd* cmnd) {
 //*********************************************************************
 // determines if this player finds tracks by smell or by sight
 
-bool scentTrack(const Player* player) {
-    return(player->getClass() == CreatureClass::WEREWOLF || player->getRace() == MINOTAUR);
+bool Player::scentTrack() {
+    return(getClass() == CreatureClass::WEREWOLF || getRace() == MINOTAUR);
 }
 
 //*********************************************************************
 //                      canTrack
 //*********************************************************************
 
-bool canTrack(const Player* player) {
-    if(!player->ableToDoCommand())
+bool Player::canTrack() {
+    if(!ableToDoCommand())
         return(false);
 
-    if(player->isBlind() && !scentTrack(player) && !player->isStaff()) {
-        player->printColor("^CYou can't see any tracks! You're blind!\n");
-        return(false);
-    }
-
-    if(!player->knowsSkill("track")) {
-        player->print("You lack the proper training to find tracks.\n");
+    if(isBlind() && !scentTrack() && !isStaff()) {
+        printColor("^CYou can't see any tracks! You're blind!\n");
         return(false);
     }
 
-    if(player->checkHeavyRestrict("find tracks"))
+    if(!knowsSkill("track")) {
+        print("You lack the proper training to find tracks.\n");
+        return(false);
+    }
+
+    if(checkHeavyRestrict("find tracks"))
         return(false);
 
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You must stand up first!\n");
+    if(flagIsSet(P_SITTING)) {
+        print("You must stand up first!\n");
         return(false);
     }
 
@@ -908,50 +899,49 @@ bool canTrack(const Player* player) {
 //                      doTrack
 //*********************************************************************
 
-void doTrack(Player* player) {
+void Player::doTrack() {
     Track*  track=nullptr;
     int     chance=0;
-    int     skLevel = (int)player->getSkillLevel("track");
+    int     skLevel = (int)getSkillLevel("track");
 
-    player->clearFlag(P_AFK);
-    player->unhide();
+    clearFlag(P_AFK);
+    unhide();
 
-    if(!canTrack(player))
+    if(!canTrack())
         return;
 
-    if(player->inAreaRoom())
-        track = player->getAreaRoomParent()->area->getTrack(&player->getAreaRoomParent()->mapmarker);
-    else if(player->inUniqueRoom())
-        track = &player->getUniqueRoomParent()->track;
+    if(inAreaRoom())
+        track = getAreaRoomParent()->area->getTrack(&getAreaRoomParent()->mapmarker);
+    else if(inUniqueRoom())
+        track = &getUniqueRoomParent()->track;
 
-    chance = 25 + (bonus(player->dexterity.getCur()) + skLevel) * 5;
+    chance = 25 + (bonus(dexterity.getCur()) + skLevel) * 5;
 
     if(!track || Random::get(1,100) > chance) {
-        player->print("You fail to find any tracks.\n");
-        player->checkImprove("track", false);
+        *this << "You fail to find any tracks.\n";
+        checkImprove("track", false);
         return;
     }
 
     if(track->getDirection().empty()) {
-        player->print("There are no tracks in this room.\n");
+        print("There are no tracks in this room.\n");
         return;
     }
 
-    if(scentTrack(player))
-        player->printColor("You smell tracks leading to the %s^x.\n", track->getDirection().c_str());
-    else
-        player->printColor("You find tracks leading to the %s^x.\n", track->getDirection().c_str());
+    *this << ColorOn << "You " << (scentTrack() ? "smell" : "find") << " tracks leading to the " << track->getDirection() << "^x.\n" << ColorOff;
 
     if(skLevel >= 5 && track->getSize() != NO_SIZE)
-        player->print("The tracks are %s.\n", getSizeName(track->getSize()).c_str());
+        *this << "The tracks are " << getSizeName(track->getSize()) << ".\n";
     if(skLevel >= 10 && track->getNum())
-        player->print("You find %d unique sets of tracks.\n", track->getNum());
+        *this << "You find " << track->getNum() << " unique sets of tracks.\n";
 
-    player->checkImprove("track", true);
+    checkImprove("track", true);
 }
 
 void doTrack(const DelayedAction* action) {
-    doTrack(action->target->getAsPlayer());
+    if(auto t = action->target.lock()) {
+        t->getAsPlayer()->doTrack();
+    }
 }
 
 //*********************************************************************
@@ -961,12 +951,12 @@ void doTrack(const DelayedAction* action) {
 // for tracks in a room. If successful, they will be told what
 // direction the last person who was in the room went.
 
-int cmdTrack(Player* player, cmd* cmnd) {
+int cmdTrack(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i=0, t=0;
 
     player->clearFlag(P_AFK);
     
-    if(!canTrack(player))
+    if(!player->canTrack())
         return(0);
     if(gServer->hasAction(player, ActionTrack)) {
         player->print("You are already looking for tracks!\n");
@@ -996,20 +986,11 @@ int cmdTrack(Player* player, cmd* cmnd) {
 
         gServer->addDelayedAction(doTrack, player, nullptr, ActionTrack, player->lasttime[LT_TRACK].interval);
 
-        if(scentTrack(player)) {
-            player->print("You begin sniffing for tracks.\n");
-            broadcast(player->getSock(), player->getParent(), "%M sniffs for tracks.", player);
-        } else {
-            player->print("You begin searching for tracks.\n");
-            broadcast(player->getSock(), player->getParent(), "%M searches for tracks.", player);
-        }
+        player->print("You begin %s for tracks.\n", (player->scentTrack() ? "sniffing" : "searching"));
     } else {
-        if(scentTrack(player))
-            broadcast(player->getSock(), player->getParent(), "%M sniffs for tracks.", player);
-        else
-            broadcast(player->getSock(), player->getParent(), "%M searches for tracks.", player);
+        broadcast(player->getSock(), player->getParent(), "%M %s for tracks.", player.get(), (player->scentTrack() ? "sniffs" : "searches"));
 
-        doTrack(player);
+        player->doTrack();
     }
 
     return(0);
@@ -1020,8 +1001,8 @@ int cmdTrack(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This will allow death knights to harm touch once reaching 16th level.
 
-int cmdHarmTouch(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
+int cmdHarmTouch(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
     int     num=0, chance=0, modifier=0;
     long    t=time(nullptr), i=0;
 
@@ -1067,7 +1048,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 
 
     *creature << setf(CAP) << player << " touches you with " << player->hisHer() << " malevolent hand!\n";
-    broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M touches %N with %s malevolent hand!", player, creature, player->hisHer());
+    broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M touches %N with %s malevolent hand!", player.get(), creature.get(), player->hisHer());
 
 
     chance = 6500;
@@ -1114,7 +1095,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
         *player << "Your harmful touch failed!\n";
         player->checkImprove("harm", false);
         *creature << player->upHisHer() << " harmful touch had no effect.\n";
-        broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M's harmful touch had no effect.", player);
+        broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "%M's harmful touch had no effect.", player.get());
         player->lasttime[LT_LAY_HANDS].interval = 45L;
     }
 
@@ -1140,7 +1121,7 @@ int cmdHarmTouch(Player* player, cmd* cmnd) {
 // This function allows Death Knights to drain over their max hp for
 // 2 minutes out of every 10.
 
-int cmdBloodsacrifice(Player* player, cmd* cmnd) {
+int cmdBloodsacrifice(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i=0, t=0;
     int     chance=0;
 
@@ -1190,7 +1171,6 @@ int cmdBloodsacrifice(Player* player, cmd* cmnd) {
         player->lasttime[LT_BLOOD_SACRIFICE].ltime = t - 590L;
     }
 
-    broadcast(player->getSock(), player->getParent(), "%M sacrifices %s blood.",
-        player, player->hisHer());
+    broadcast(player->getSock(), player->getParent(), "%M sacrifices %s blood.", player.get(), player->hisHer());
     return(0);
 }

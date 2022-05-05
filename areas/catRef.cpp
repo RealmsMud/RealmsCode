@@ -54,7 +54,7 @@ CatRef::CatRef() {
 //                      setDefault
 //*********************************************************************
 
-void CatRef::setDefault(const Creature* target) {
+void CatRef::setDefault(const std::shared_ptr<Creature> & target) {
     clear();
     setArea(gConfig->getDefaultArea());
 

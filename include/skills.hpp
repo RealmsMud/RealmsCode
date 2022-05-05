@@ -135,7 +135,7 @@ public:
     void clearBonus();          // Clear the bonus (after an increase)
     void improve(int amt=1);    // Improve the skill
 
-    bool checkTimer(Creature* creature, bool displayFail);
+    bool checkTimer(std::shared_ptr<Creature> creature, bool displayFail);
     void updateTimer(bool setDelay = false, int delay = 0);
     void modifyDelay(int amt);
     void setDelay(int newDelay);

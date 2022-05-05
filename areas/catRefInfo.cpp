@@ -161,11 +161,11 @@ const CatRefInfo* Config::getCatRefInfo(std::string_view area, int id, int shoul
 //                      getCatRefInfo
 //*********************************************************************
 
-const CatRefInfo* Config::getCatRefInfo(const BaseRoom* room, int shouldGetParent) const {
-    const AreaRoom* aRoom=nullptr;
-    const UniqueRoom* uRoom=nullptr;
+const CatRefInfo* Config::getCatRefInfo(const std::shared_ptr<const BaseRoom> room, int shouldGetParent) const {
+    std::shared_ptr<const AreaRoom> aRoom=nullptr;
+    std::shared_ptr<const UniqueRoom> uRoom=nullptr;
     int id = 0;
-    std::string area = "";
+    std::string area;
 
     if(room) {
         uRoom = room->getAsConstUniqueRoom();

@@ -50,8 +50,8 @@
 //*********************************************************************
 // we get the bankteller mob in the room, if there is one
 
-Monster* Bank::teller(const BaseRoom* room) {
-    for(Monster* mons : room->monsters ) {
+std::shared_ptr<Monster>  Bank::teller(const std::shared_ptr<const BaseRoom> &room) {
+    for(const auto& mons : room->monsters ) {
         if(mons->getName() == "bank teller")
             return(mons);
 
@@ -66,7 +66,7 @@ Monster* Bank::teller(const BaseRoom* room) {
 //*********************************************************************
 // we get the bankteller mob in the room, if there is one
 
-bool Bank::canSee(const Player* player) {
+bool Bank::canSee(const std::shared_ptr<Player> player) {
     if(player->isCt())
         return(true);
 
@@ -82,7 +82,7 @@ bool Bank::canSee(const Player* player) {
     if(player->getConstRoomParent()->flagIsSet(R_MAGIC_MONEY_MACHINE))
         return(true);
 
-    Monster* teller = Bank::teller(player->getConstRoomParent());
+    std::shared_ptr<Monster>  teller = Bank::teller(player->getConstRoomParent());
     if(teller && teller->canSee(player))
         return(true);
 
@@ -96,7 +96,7 @@ bool Bank::canSee(const Player* player) {
 //*********************************************************************
 // can this person use the bank without being in a bank room?
 
-bool Bank::canAnywhere(const Player* player) {
+bool Bank::canAnywhere(const std::shared_ptr<Player> player) {
     return(
         (player->getClass() == CreatureClass::CLERIC && player->getDeity() == JAKAR) ||
         player->isCt()
@@ -108,12 +108,12 @@ bool Bank::canAnywhere(const Player* player) {
 //                      can
 //*********************************************************************
 
-bool Bank::can(Player* player, bool isGuild) {
+bool Bank::can(std::shared_ptr<Player> player, bool isGuild) {
     Guild* guild=nullptr;
     return(Bank::can(player, isGuild, &guild));
 }
 
-bool Bank::can(Player* player, bool isGuild, Guild** guild) {
+bool Bank::can(std::shared_ptr<Player> player, bool isGuild, Guild** guild) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
@@ -162,7 +162,7 @@ bool Bank::can(Player* player, bool isGuild, Guild** guild) {
 //                      say
 //*********************************************************************
 
-void Bank::say(const Player* player, const char* text) {
+void Bank::say(const std::shared_ptr<Player> player, const char* text) {
     if(player->getConstRoomParent()->flagIsSet(R_BANK))
         player->print("The bank teller says, \"%s\".\n", text);
     else
@@ -174,7 +174,7 @@ void Bank::say(const Player* player, const char* text) {
 //*********************************************************************
 // gives you your current balance
 
-void Bank::balance(Player* player, bool isGuild) {
+void Bank::balance(std::shared_ptr<Player> player, bool isGuild) {
     Guild* guild=nullptr;
     bool isBank = player->getRoomParent()->flagIsSet(R_BANK);
     
@@ -218,7 +218,7 @@ void Bank::balance(Player* player, bool isGuild) {
 //                      cmdBalance
 //*********************************************************************
 
-int cmdBalance(Player* player, cmd* cmnd) {
+int cmdBalance(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Bank::balance(player);
     return(0);
 }
@@ -228,7 +228,7 @@ int cmdBalance(Player* player, cmd* cmnd) {
 //*********************************************************************
 // lets you put money in your account
 
-void Bank::deposit(Player* player, cmd* cmnd, bool isGuild) {
+void Bank::deposit(const std::shared_ptr<Player>& player, cmd* cmnd, bool isGuild) {
     int i = (isGuild ? 2 : 1);
     unsigned long amt=0;
     Guild* guild=nullptr;
@@ -284,7 +284,7 @@ void Bank::deposit(Player* player, cmd* cmnd, bool isGuild) {
 //                      cmdDeposit
 //*********************************************************************
 
-int cmdDeposit(Player* player, cmd* cmnd) {
+int cmdDeposit(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Bank::deposit(player, cmnd);
     return(0);
 }
@@ -294,7 +294,7 @@ int cmdDeposit(Player* player, cmd* cmnd) {
 //*********************************************************************
 // lets you withdraw money from your account
 
-void Bank::withdraw(Player* player, cmd* cmnd, bool isGuild) {
+void Bank::withdraw(const std::shared_ptr<Player>& player, cmd* cmnd, bool isGuild) {
     int i = (isGuild ? 2 : 1);
     unsigned long amt=0;
     Guild* guild=nullptr;
@@ -362,7 +362,7 @@ void Bank::withdraw(Player* player, cmd* cmnd, bool isGuild) {
 //                      cmdWithdraw
 //*********************************************************************
 
-int cmdWithdraw(Player* player, cmd* cmnd) {
+int cmdWithdraw(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Bank::withdraw(player, cmnd);
     return(0);
 }
@@ -372,9 +372,9 @@ int cmdWithdraw(Player* player, cmd* cmnd) {
 //*********************************************************************
 // lets you move funds
 
-void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
+void Bank::transfer(const std::shared_ptr<Player>& player, cmd* cmnd, bool isGuild) {
     int i = (isGuild ? 2 : 1);
-    Player* target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     unsigned long amt=0;
     bool    online=false;
     Guild* guild=nullptr;
@@ -434,7 +434,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
     target = gServer->findPlayer(cmnd->str[i+1]);
 
     if(!target) {
-        if(!loadPlayer(cmnd->str[2], &target)) {
+        if(!loadPlayer(cmnd->str[2], target)) {
             Bank::say(player, "I don't know who that is.");
             return;
         }
@@ -444,7 +444,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
     if(target->getClass() == CreatureClass::BUILDER) {
         Bank::say(player, "I don't know who that is.");
         if(!online)
-            delete target;;
+            target.reset();
         return;
     }
 
@@ -491,7 +491,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
     player->save(true);
     target->save(online);
     if(!online)
-        delete target;;
+        target.reset();
 
     Bank::balance(player, isGuild);
     broadcast(player->getSock(), player->getParent(), "%s transfers some gold.", player->getCName());
@@ -501,7 +501,7 @@ void Bank::transfer(Player* player, cmd* cmnd, bool isGuild) {
 //                      cmdTransfer
 //*********************************************************************
 
-int cmdTransfer(Player* player, cmd* cmnd) {
+int cmdTransfer(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Bank::transfer(player, cmnd);
     return(0);
 }
@@ -511,7 +511,7 @@ int cmdTransfer(Player* player, cmd* cmnd) {
 //*********************************************************************
 // lets someone view their transaction history
 
-void Bank::statement(Player* player, bool isGuild) {
+void Bank::statement(std::shared_ptr<Player> player, bool isGuild) {
     char file[80];
     bool isBank = player->getRoomParent()->flagIsSet(R_BANK);
 
@@ -551,7 +551,7 @@ void Bank::statement(Player* player, bool isGuild) {
 //                      cmdStatement
 //*********************************************************************
 
-int cmdStatement(Player* player, cmd* cmnd) {
+int cmdStatement(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Bank::statement(player);
     return(0);
 }
@@ -560,7 +560,7 @@ int cmdStatement(Player* player, cmd* cmnd) {
 //                      deleteStatement
 //*********************************************************************
 
-void Bank::deleteStatement(Player* player, bool isGuild) {
+void Bank::deleteStatement(std::shared_ptr<Player> player, bool isGuild) {
     char file[80];
 
     // can they use the bank?
@@ -588,7 +588,7 @@ void Bank::deleteStatement(Player* player, bool isGuild) {
 //                      cmdDeleteStatement
 //*********************************************************************
 
-int cmdDeleteStatement(Player* player, cmd* cmnd) {
+int cmdDeleteStatement(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Bank::deleteStatement(player);
     return(0);
 }
@@ -662,7 +662,7 @@ void Player::computeInterest(long t, bool online) {
         return;
 
     bank.add(amt, GOLD);
-    Server::logGold(GOLD_IN, this, Money(amt, GOLD), nullptr, "BankInterest");
+    Server::logGold(GOLD_IN, Containable::downcasted_shared_from_this<Player>(), Money(amt, GOLD), nullptr, "BankInterest");
 
     Bank::log(getCName(), "INTEREST for %d day%s at %d%%: %ld [Balance: %s]\n",
         interestDays, interestDays != 1 ? "s" : "", (int)(rate*100), amt, bank.str().c_str());

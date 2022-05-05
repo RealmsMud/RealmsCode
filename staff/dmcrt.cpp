@@ -63,7 +63,6 @@
 #include "mudObjects/players.hpp"              // for Player
 #include "mudObjects/rooms.hpp"                // for BaseRoom
 #include "mudObjects/uniqueRooms.hpp"          // for UniqueRoom
-#include "os.hpp"                              // for merror
 #include "paths.hpp"
 #include "proto.hpp"                           // for log_immort, mprofic
 #include "raceData.hpp"                        // for RaceData
@@ -89,9 +88,9 @@
 // This function allows a staff member to create a creature that will appear
 // in the room they are located in.
 
-int dmCreateMob(Player* player, cmd* cmnd) {
-    Monster *monster=nullptr;
-    BaseRoom* room = player->getRoomParent();
+int dmCreateMob(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster> monster=nullptr;
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
     int     l=0, total=1;
     std::string noMonsters = "^mNo monsters were summoned.\n";
 
@@ -148,7 +147,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(!loadMonster(cr, &monster)) {
+    if(!loadMonster(cr, monster)) {
         player->print("Error (%s)\n", cr.displayStr().c_str());
         return(0);
     }
@@ -157,7 +156,6 @@ int dmCreateMob(Player* player, cmd* cmnd) {
         monster->validateAc();
 
     if(!monster->getName()[0] || monster->getName()[0] == ' ') {
-        delete monster;;
         player->print("Error (%s)\n", cr.displayStr().c_str());
         return(0);
     }
@@ -175,7 +173,7 @@ int dmCreateMob(Player* player, cmd* cmnd) {
         gServer->addActive(monster);
         l++;
         if(l < total)
-            loadMonster(cr, &monster);
+            loadMonster(cr, monster);
     }
 
     if(!player->isDm())
@@ -191,8 +189,8 @@ int dmCreateMob(Player* player, cmd* cmnd) {
 //  Display information on creature given to player given.
 
 std::string Creature::statCrt(int statFlags) {
-    const Player *pTarget = getAsConstPlayer();
-    const Monster *mTarget = getAsConstMonster();
+    const std::shared_ptr<const Player>pTarget = getAsConstPlayer();
+    const std::shared_ptr<const Monster> mTarget = getAsConstMonster();
     std::ostringstream crtStr;
     std::string str = "";
     int     i=0, n=0;
@@ -211,7 +209,7 @@ std::string Creature::statCrt(int statFlags) {
         crtStr.setf(std::ios::right, std::ios::adjustfield);
         crtStr << "Idle: " << std::setfill('0') << std::setw(2) << ((t - sock->ltime) / 60L) << ":"
                << std::setfill('0') << std::setw(2) << ((t - sock->ltime) % 60L) << std::setfill(' ')
-               << "                Toughness: " << Statistics::calcToughness(this) << "\n";
+               << "                Toughness: " << Statistics::calcToughness(getAsCreature()) << "\n";
         crtStr.setf(std::ios::left, std::ios::adjustfield);
         //crtStr.setFill(' ');
         crtStr << "Term(" << sock->getTermType() << ")";
@@ -264,7 +262,7 @@ std::string Creature::statCrt(int statFlags) {
         // Stop the comma for index
         crtStr.imbue(std::locale("C"));
         crtStr << "\nIndex: " << mTarget->info.displayStr("", 'y')
-               << "                Toughness: " << Statistics::calcToughness(this) << "\n";
+               << "                Toughness: " << Statistics::calcToughness(getAsCreature()) << "\n";
         crtStr.imbue(std::locale(""));
 
         if(!mTarget->getPrimeFaction().empty())
@@ -436,12 +434,12 @@ std::string Creature::statCrt(int statFlags) {
             "  El: "<< getRealm(ELEC) <<
             "  Co: "<< getRealm(COLD) << "\n";
 
-    crtStr << "Ea: " << std::setw(2) << mprofic(this, EARTH) << "%" <<
-            "   Ai: " << std::setw(2) << mprofic(this, WIND) << "%" <<
-            "   Fi: " << std::setw(2) << mprofic(this, FIRE) << "%" <<
-            "   Wa: " << std::setw(2) << mprofic(this, WATER) << "%" <<
-            "   El: " << std::setw(2) << mprofic(this, ELEC) << "%" <<
-            "   Co: " << std::setw(2) << mprofic(this, COLD) << "%" << "\n\n";
+    crtStr << "Ea: " << std::setw(2) << mprofic(getAsCreature(), EARTH) << "%" <<
+            "   Ai: " << std::setw(2) << mprofic(getAsCreature(), WIND) << "%" <<
+            "   Fi: " << std::setw(2) << mprofic(getAsCreature(), FIRE) << "%" <<
+            "   Wa: " << std::setw(2) << mprofic(getAsCreature(), WATER) << "%" <<
+            "   El: " << std::setw(2) << mprofic(getAsCreature(), ELEC) << "%" <<
+            "   Co: " << std::setw(2) << mprofic(getAsCreature(), COLD) << "%" << "\n\n";
 
     i = (saves[POI].chance + saves[DEA].chance + saves[BRE].chance +
            saves[MEN].chance + saves[SPL].chance)/5;
@@ -678,12 +676,12 @@ std::string Creature::statCrt(int statFlags) {
  *      editor! Either edit the PHP yourself or tell Dominus to make the changes.
  */
 
-int dmSetCrt(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
-    Player  *pTarget=nullptr;
-    Monster *mTarget=nullptr;
+int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Player> pTarget=nullptr;
+    std::shared_ptr<Monster> mTarget=nullptr;
     int     i=0, num=0, test=0, a=0, sp=0,  rnum=0, f=0;
-    Object  *object=nullptr;
+    std::shared_ptr<Object> object=nullptr;
     bool    ctModBuilder=false;
 
     if(player->getClass() == CreatureClass::BUILDER) {
@@ -791,7 +789,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
             mTarget->setUpdateAggro((short)cmnd->val[3]);
             player->print("Aggro update chance set.\n");
-            player->print("%M has a %d%% chance to go aggressive each update cycle.\n", mTarget, mTarget->getUpdateAggro());
+            player->print("%M has a %d%% chance to go aggressive each update cycle.\n", mTarget.get(), mTarget->getUpdateAggro());
             log_immort(true, player, "%s set %s %s's chance to go aggro each update cycle to %d.\n",
                 player->getCName(), PLYCRT(mTarget), mTarget->getCName(), mTarget->getUpdateAggro());
             break;
@@ -829,7 +827,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         if(cmnd->num >= 4 && cmnd->str[4][0] == 'd') {
             for(i=0; i<NUM_ASSIST_MOB; i++)
                 mTarget->assist_mob[i].clear();
-            player->print("%M's assist mobs deleted.\n", mTarget);
+            player->print("%M's assist mobs deleted.\n", mTarget.get());
             return(PROMPT);
         }
 
@@ -845,7 +843,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         }
 
         getCatRef(getFullstrText(cmnd->fullstr, 4), &mTarget->assist_mob[num-1], mTarget);
-        player->print("%M's assist mob #%d set to creature %s.\n", mTarget, num,
+        player->print("%M's assist mob #%d set to creature %s.\n", mTarget.get(), num,
                       mTarget->assist_mob[num - 1].displayStr().c_str());
 
         log_immort(true, player, "%s set %s %s's AssistMob#%d to %s.\n",
@@ -861,7 +859,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
             pTarget->bank.set(cmnd->val[3], GOLD);
 
-            player->print("%M bank gold is now set at %ld.\n", pTarget, pTarget->bank[GOLD]);
+            player->print("%M bank gold is now set at %ld.\n", pTarget.get(), pTarget->bank[GOLD]);
             log_immort(true, player, "%s set %s %s's Bank gold to %d.\n",
                 player->getCName(), PLYCRT(pTarget), pTarget->getCName(), pTarget->bank[GOLD]);
 
@@ -907,13 +905,13 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             }
 
             if(mTarget->isClassAggro(num, false)) {
-                player->print("%M will no longer attack %s's.\n", mTarget, getClassAbbrev(num));
+                player->print("%M will no longer attack %s's.\n", mTarget.get(), getClassAbbrev(num));
                 mTarget->clearClassAggro(num);
                 log_immort(true, player, "%s set %s %s's to NOT aggro %ss(%d).\n",
                     player->getCName(), PLYCRT(mTarget), mTarget->getCName(), getClassAbbrev(num), num);
             } else {
                 mTarget->setClassAggro(num);
-                player->print("%M will now attack %s's.\n", mTarget, getClassAbbrev(num));
+                player->print("%M will now attack %s's.\n", mTarget.get(), getClassAbbrev(num));
                 log_immort(true, player, "%s set %s %s's to aggro %ss(%d).\n",
                     player->getCName(), PLYCRT(mTarget), mTarget->getCName(), getClassAbbrev(num), num);
             }
@@ -1034,13 +1032,13 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             }
 
             if(mTarget->isDeityAggro(num, false)) {
-                player->print("%M will no longer attack %s's.\n", mTarget, gConfig->getDeity(num)->getName().c_str());
+                player->print("%M will no longer attack %s's.\n", mTarget.get(), gConfig->getDeity(num)->getName().c_str());
                 mTarget->clearDeityAggro(num);
                 log_immort(true, player, "%s set %s %s's to NOT aggro %ss(%d).\n",
                     player->getCName(), PLYCRT(mTarget), mTarget->getCName(), gConfig->getDeity(num)->getName().c_str(), num);
             } else {
                 mTarget->setDeityAggro(num);
-                player->print("%M will now attack %s's.\n", mTarget, gConfig->getDeity(num)->getName().c_str());
+                player->print("%M will now attack %s's.\n", mTarget.get(), gConfig->getDeity(num)->getName().c_str());
                 log_immort(true, player, "%s set %s %s's to aggro %ss(%d).\n",
                     player->getCName(), PLYCRT(mTarget), mTarget->getCName(), gConfig->getDeity(num)->getName().c_str(), num);
             }
@@ -1156,7 +1154,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 if(target->getExperience() > 10000)
                     target->setExperience(10000);
             }
-            player->print("%M has %ld experience.\n", target, target->getExperience());
+            player->print("%M has %ld experience.\n", target.get(), target->getExperience());
             log_immort(true, player, "%s set %s %s's experience to %ld.\n",
                 player->getCName(), PLYCRT(target), target->getCName(), target->getExperience());
             break;
@@ -1165,7 +1163,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         if(cmnd->str[4][0] == 'd') {
             for(i=0; i<NUM_ENEMY_MOB; i++)
                 mTarget->enemy_mob[i].clear();
-            player->print("%M's enemy mobs deleted.\n", mTarget);
+            player->print("%M's enemy mobs deleted.\n", mTarget.get());
             break;
         }
 
@@ -1181,7 +1179,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         }
 
         getCatRef(getFullstrText(cmnd->fullstr, 4), &mTarget->enemy_mob[num-1], mTarget);
-        player->print("%M's enemy mob #%d set to creature %s.\n", mTarget, num, mTarget->enemy_mob[num - 1].displayStr().c_str());
+        player->print("%M's enemy mob #%d set to creature %s.\n", mTarget.get(), num, mTarget->enemy_mob[num - 1].displayStr().c_str());
         log_immort(true, player, "%s set %s %s's EnemyMob#%d to %s.\n",
             player->getCName(), PLYCRT(mTarget), mTarget->getCName(), num, mTarget->enemy_mob[num - 1].displayStr().c_str());
         break;
@@ -1281,11 +1279,11 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
         if(target->flagIsSet(num - 1)) {
             target->clearFlag(num - 1);
-            player->print("%M's flag #%d(%s) off.\n", target, num, (mTarget ? gConfig->getMFlag(num-1):gConfig->getPFlag(num-1)).c_str());
+            player->print("%M's flag #%d(%s) off.\n", target.get(), num, (mTarget ? gConfig->getMFlag(num-1):gConfig->getPFlag(num-1)).c_str());
             i=0;
         } else {
             target->setFlag(num - 1);
-            player->print("%M's flag #%d(%s) on.\n", target, num, (mTarget ? gConfig->getMFlag(num-1):gConfig->getPFlag(num-1)).c_str());
+            player->print("%M's flag #%d(%s) on.\n", target.get(), num, (mTarget ? gConfig->getMFlag(num-1):gConfig->getPFlag(num-1)).c_str());
             i=1;
 
             if(pTarget && num == P_MXP_ENABLED+1) {
@@ -1335,7 +1333,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
         target->coins.set(cmnd->val[3], GOLD);
 
-        player->print("%M has %ld gold.\n", target, target->coins[GOLD]);
+        player->print("%M has %ld gold.\n", target.get(), target->coins[GOLD]);
         log_immort(true, player, "%s set %s %s's gold to %ld.\n",
             player->getCName(), PLYCRT(target), target->getCName(), target->coins[GOLD]);
         break;
@@ -1686,7 +1684,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
 
         target->proficiency[num] = MAX(0, MIN(cmnd->val[3], 10000000));
-        player->print("%M given %d shots in prof#%d.\n", target,
+        player->print("%M given %d shots in prof#%d.\n", target.get(),
             target->proficiency[num], num);
         log_immort(true, player, "%s set %s %s's %s%d to %ld.\n",
             player->getCName(), PLYCRT(target), target->getCName(),
@@ -1707,11 +1705,11 @@ int dmSetCrt(Player* player, cmd* cmnd) {
         }
         if(pTarget->questIsSet(num - 1)) {
             pTarget->clearQuest(num - 1);
-            player->print("%M's quest #%d - (%s) off.\n", pTarget, num, get_quest_name(num-1));
+            player->print("%M's quest #%d - (%s) off.\n", pTarget.get(), num, get_quest_name(num-1));
             i=0;
         } else {
             pTarget->setQuest(num - 1);
-            player->print("%M's quest #%d - (%s) on.\n", pTarget, num, get_quest_name(num-1));
+            player->print("%M's quest #%d - (%s) on.\n", pTarget.get(), num, get_quest_name(num-1));
             i=1;
         }
         log_immort(true, player, "%s turned %s %s's %s %d - (%s) %s.\n",
@@ -1740,13 +1738,13 @@ int dmSetCrt(Player* player, cmd* cmnd) {
             }
 
             if(mTarget->isRaceAggro(num, false)) {
-                player->print("%M will no longer attack %s's.\n", mTarget, gConfig->getRace(num)->getName().c_str());
+                player->print("%M will no longer attack %s's.\n", mTarget.get(), gConfig->getRace(num)->getName().c_str());
                 mTarget->clearRaceAggro(num);
                 log_immort(true, player, "%s set creature %s to NOT aggro %ss(%d).\n",
                     player->getCName(), mTarget->getCName(), gConfig->getRace(num)->getName().c_str(), num);
             } else {
                 mTarget->setRaceAggro(num);
-                player->print("%M will now attack %s's.\n", mTarget, gConfig->getRace(num)->getName().c_str());
+                player->print("%M will now attack %s's.\n", mTarget.get(), gConfig->getRace(num)->getName().c_str());
                 log_immort(true, player, "%s set creature %s to aggro %ss(%d).\n",
                     player->getCName(), mTarget->getCName(), gConfig->getRace(num)->getName().c_str(), num);
             }
@@ -1860,7 +1858,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 
             Realm r = (Realm)MAX((int)MIN_REALM, MIN((int)MAX_REALM-1, atoi(&cmnd->str[3][1])));
             target->setRealm(cmnd->val[3], r);
-            player->print("%M given %d shots in realm#%d.\n", target, target->getRealm(r), num);
+            player->print("%M given %d shots in realm#%d.\n", target.get(), target->getRealm(r), num);
             log_immort(true, player, "%s set %s %s's %s%d to %ld.\n",
                 player->getCName(), PLYCRT(target), target->getCName(), "Realm#",
                 num, target->getRealm(r));
@@ -1953,7 +1951,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 for(sp=0; sp < MAXSPELL; sp++) {
                     target->forgetSpell(sp);
                 }
-                player->print("%M's spells deleted.\n", target);
+                player->print("%M's spells deleted.\n", target.get());
                 break;
             }
 
@@ -1961,7 +1959,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 for(sp=0; sp < MAXSPELL; sp++) {
                     target->learnSpell(sp);
                 }
-                player->print("%M's spells all set.\n", target);
+                player->print("%M's spells all set.\n", target.get());
                 break;
             }
 
@@ -2019,7 +2017,7 @@ int dmSetCrt(Player* player, cmd* cmnd) {
                 }
 
                 target->saves[num].chance = MAX(1, MIN((int)cmnd->val[3], 99));
-                player->print("%M now has %d%% chance for save #%d.\n", target,
+                player->print("%M now has %d%% chance for save #%d.\n", target.get(),
                     target->saves[num].chance, num);
                 log_immort(true, player, "%s set %s %s's %s%d to %d.\n",
                     player->getCName(), PLYCRT(target), target->getCName(),
@@ -2127,8 +2125,8 @@ int dmSetCrt(Player* player, cmd* cmnd) {
 // object data base.  This command is intended for adding personalize
 // weapons and objects to the game
 
-int dmCrtName(Player* player, cmd* cmnd) {
-    Monster *target=nullptr;
+int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster> target=nullptr;
     int     i=0, num=0;
     char    modstr[32];
     char    which=0;
@@ -2352,8 +2350,8 @@ int dmCrtName(Player* player, cmd* cmnd) {
 //*********************************************************************
 //  This function allows staff to become a monster.
 
-int dmAlias(Player* player, cmd* cmnd) {
-    Monster* monster = nullptr;
+int dmAlias(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster>  monster = nullptr;
 
     if(cmnd->num < 2) {
         player->print("Syntax: *possess <creature>\n");
@@ -2386,7 +2384,7 @@ int dmAlias(Player* player, cmd* cmnd) {
         }
         monster->clearFlag(M_DM_FOLLOW);
         player->clearFlag(P_ALIASING);
-        player->print("You release %1N's body.\n", monster);
+        player->print("You release %1N's body.\n", monster.get());
 
         log_immort(false,player, "%s no longer possesses %s.\n", player->getCName(), monster->getCName());
         monster->removeFromGroup(false);
@@ -2397,19 +2395,9 @@ int dmAlias(Player* player, cmd* cmnd) {
     player->setAlias(monster);
     player->setFlag(P_ALIASING);
     monster->setFlag(M_DM_FOLLOW);
-    //  monster->setFlag(M_UNKILLABLE);
 
-    //  player->strength.getCur() = monster->strength.getCur();
-    //  player->dexterity.getCur() = monster->dexterity.getCur();
-    //  player->constitution.getCur() = monster->constitution.getCur();
-    //  player->intelligence.getCur() = monster->intelligence.getCur();
-    //  player->piety.getCur() = monster->piety.getCur();
-    //  player->getLevel() = monster->getLevel();
-    //  player->ndice = monster->ndice;
-    //  player->sdice = monster->sdice;
-    //  player->pdice = monster->pdice;
 
-    player->print("You possess %1N.\n", monster);
+    player->print("You possess %1N.\n", monster.get());
 
     // make sure we are invis at this point
     if(!player->flagIsSet(P_DM_INVIS)) {
@@ -2430,8 +2418,8 @@ int dmAlias(Player* player, cmd* cmnd) {
 // them, and has been made to allow for the movement of
 // custom monsters (made with the dmCrtName function).
 
-int dmFollow(Player* player, cmd* cmnd) {
-    Monster* creature=nullptr;
+int dmFollow(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster>  creature=nullptr;
 
     if(cmnd->num < 2) {
         player->print("syntax: *cfollow <creature>\n");
@@ -2464,9 +2452,9 @@ int dmFollow(Player* player, cmd* cmnd) {
 //*********************************************************************
 //  This function allows staff to make a monster attack a given player.
 
-int dmAttack(Player* player, cmd* cmnd) {
-    Monster* attacker=nullptr;
-    Creature* victim=nullptr;
+int dmAttack(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster>  attacker=nullptr;
+    std::shared_ptr<Creature> victim=nullptr;
     int inroom=1;
 
     if(!player->checkBuilder(player->getUniqueRoomParent())) {
@@ -2510,7 +2498,7 @@ int dmAttack(Player* player, cmd* cmnd) {
         player->print("Perms can't do that.\n");
         return(0);
     }
-    player->print("Adding %N to attack list of %N.\n", victim, attacker);
+    player->print("Adding %N to attack list of %N.\n", victim.get(), attacker.get());
 
 
     if(!player->isDm())
@@ -2519,8 +2507,8 @@ int dmAttack(Player* player, cmd* cmnd) {
     attacker->addEnemy(victim);
 
     if(inroom) {
-        broadcast(victim->getSock(), victim->getRoomParent(), "%M attacks %N.", attacker, victim);
-        victim->print("%M attacked you!\n", attacker);
+        broadcast(victim->getSock(), victim->getRoomParent(), "%M attacks %N.", attacker.get(), victim.get());
+        victim->print("%M attacked you!\n", attacker.get());
     }
     return(0);
 }
@@ -2530,8 +2518,8 @@ int dmAttack(Player* player, cmd* cmnd) {
 //*********************************************************************
 //  This function lists the enemy list of a given monster.
 
-int dmListEnemy(Player* player, cmd* cmnd) {
-    Monster* target=nullptr;
+int dmListEnemy(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster>  target=nullptr;
 
     target = player->getParent()->findMonster(player, cmnd);
 
@@ -2553,8 +2541,8 @@ int dmListEnemy(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows staff to see a given players charm list
 
-int dmListCharm(Player* player, cmd* cmnd) {
-    Player* target=nullptr;
+int dmListCharm(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
     if(cmnd->num < 2) {
         *player << "See whose charm list?\n";
@@ -2591,8 +2579,8 @@ int dmListCharm(Player* player, cmd* cmnd) {
 //                      dmSaveMob
 //*********************************************************************
 
-void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr) {
-    Monster *target=nullptr;
+void dmSaveMob(const std::shared_ptr<Player>& player, cmd* cmnd, const CatRef& cr) {
+    std::shared_ptr<Monster> target=nullptr;
     ttag    *tp=nullptr, *tempt=nullptr;
     char    file[80];
     int     i=0, x=0;
@@ -2648,7 +2636,7 @@ void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr) {
     target->first_tlk = nullptr;
 
     if(!target->flagIsSet(M_TRADES)) {
-        for(Object* obj : target->objects ) {
+        for(const auto& obj : target->objects ) {
             x = obj->info.id;
             if(!x) {
                 player->print("Unique object in inventory not saved.\n");
@@ -2666,12 +2654,12 @@ void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr) {
     // clean up possesed before save
     if(target->flagIsSet(M_DM_FOLLOW)) { // clear relevant follow lists
         if(target->getMaster()) {
-            Player* master = target->getMaster()->getAsPlayer();
+            std::shared_ptr<Player> master = target->getMaster()->getAsPlayer();
 
             master->clearFlag(P_ALIASING);
 
             master->setAlias(nullptr);
-            master->print("%1M's soul was saved.\n", target);
+            master->print("%1M's soul was saved.\n", target.get());
             master->delPet(target);
         }
         target->clearFlag(M_DM_FOLLOW);
@@ -2691,7 +2679,7 @@ void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr) {
         player->print("Monster %s updated.\n", cr.displayStr().c_str());
 
     if(player->flagIsSet(P_NO_FLUSHCRTOBJ))
-        gServer->monsterCache.insert(target->info, &target);
+        gServer->monsterCache.insert(target->info, *target);
 }
 
 //*********************************************************************
@@ -2699,8 +2687,7 @@ void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr) {
 //*********************************************************************
 // This function creates a generic creature for staff to work on.
 
-int dmAddMob(Player* player, cmd* cmnd) {
-    Monster *new_mob=nullptr;
+int dmAddMob(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     n;
     long    t = time(nullptr);
 
@@ -2713,12 +2700,7 @@ int dmAddMob(Player* player, cmd* cmnd) {
     if(!player->builderCanEditRoom("add monsters"))
         return(0);
 
-    new_mob = new Monster;
-    if(!new_mob) {
-        player->print("Cannot allocate memory for monster.\n");
-        merror("dmAddMob", NONFATAL);
-        return(0);
-    }
+    std::shared_ptr<Monster> new_mob = std::make_shared<Monster>();
     log_immort(true, player, "%s made a new mob!\n", player->getCName());
 
     //zero(new_mob, sizeof(Monster));
@@ -2766,8 +2748,8 @@ int dmAddMob(Player* player, cmd* cmnd) {
 //                      dmForceWander
 //*********************************************************************
 
-int dmForceWander(Player* player, cmd* cmnd) {
-    Monster* monster=nullptr;
+int dmForceWander(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster>  monster=nullptr;
     char    name[80];
 
     strcpy(name,"");
@@ -2807,10 +2789,9 @@ int dmForceWander(Player* player, cmd* cmnd) {
     }
 
     strcpy(name, monster->getCName());
-    broadcast(nullptr, player->getRoomParent(), "%1M just %s away.", monster, Move::getString(monster).c_str());
+    broadcast(nullptr, player->getRoomParent(), "%1M just %s away.", monster.get(), Move::getString(monster).c_str());
 
     monster->deleteFromRoom();
-    delete monster;;
 
     log_immort(false,player,"%s forced %s to wander away in room %s.\n",
         player->getCName(), name, player->getRoomParent()->fullName().c_str());
@@ -2824,8 +2805,8 @@ int dmForceWander(Player* player, cmd* cmnd) {
 //                      dmBalance
 //*********************************************************************
 
-int dmBalance(Player* player, cmd* cmnd) {
-    Monster *target=nullptr;
+int dmBalance(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster> target=nullptr;
     int     lvl=0;
 
     if(cmnd->num < 2) {
@@ -2864,9 +2845,9 @@ int dmBalance(Player* player, cmd* cmnd) {
     if(lvl >= 7)
         target->setFlag(M_BLOCK_EXIT);
 
-    player->print("%M is now balanced at level %d.\n", target, target->getLevel());
+    player->print("%M is now balanced at level %d.\n", target.get(), target->getLevel());
 
-    player->print("%M was balanced with average %s stats.\n", target, monType::getName(target->getType()));
+    player->print("%M was balanced with average %s stats.\n", target.get(), monType::getName(target->getType()));
     log_immort(true, player, "%s balanced %s (%s) to level %d.\n", player->getCName(), target->getCName(), monType::getName(target->getType()), target->getLevel());
 
     return(0);

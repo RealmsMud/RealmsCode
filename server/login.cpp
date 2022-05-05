@@ -55,7 +55,6 @@
 #include "mudObjects/creatures.hpp"              // for CustomCrt, Creature
 #include "mudObjects/objects.hpp"                // for Object
 #include "mudObjects/players.hpp"                // for Player
-#include "os.hpp"                                // for merror
 #include "paths.hpp"                             // for Config, CreateHelp
 #include "playerClass.hpp"                       // for PlayerClass
 #include "proto.hpp"                             // for low, get_class_string
@@ -97,7 +96,7 @@ char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16] =
 //                      cmdReconnect
 //*********************************************************************
 
-int cmdReconnect(Player* player, cmd* cmnd) {
+int cmdReconnect(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Socket* sock = player->getSock();
 
     player->print("\n\nReconnecting.\n\n\n");
@@ -106,7 +105,6 @@ int cmdReconnect(Player* player, cmd* cmnd) {
 
     player->uninit();
     gServer->clearPlayer(player);
-    delete player;
     sock->setPlayer(nullptr);
 
     sock->reconnect();
@@ -126,11 +124,11 @@ std::string getProxyChar(const std::string &str, unsigned int n) {
 }
 // Character being logged in
 std::string getProxiedChar(const std::string &str, unsigned int n) {
-    unsigned int m = str.find_first_of(" ", n+1);
+    unsigned int m = str.find_first_of(' ', n+1);
     return(str.substr(m+1, str.length() - m - 1));
 }
 
-bool Player::checkProxyAccess(Player* proxy) {
+bool Player::checkProxyAccess(const std::shared_ptr<Player>& proxy) {
     if(!proxy)
         return(false);
 
@@ -142,7 +140,7 @@ bool Player::checkProxyAccess(Player* proxy) {
     if(proxy->isDm())
         return(true);
 
-    return(gConfig->hasProxyAccess(proxy, this));
+    return(gConfig->hasProxyAccess(proxy, Containable::downcasted_shared_from_this<Player>()));
 }
 //*********************************************************************
 //                      login
@@ -154,7 +152,7 @@ unsigned const char echo_off[] = {255, 251, 1, 0};
 unsigned const char echo_on[] = {255, 252, 1, 0};
 
 void login(Socket* sock, const std::string& inStr) {
-    Player  *player=nullptr;
+    std::shared_ptr<Player> player=nullptr;
     std::string::size_type proxyCheck = 0;
     if(!sock) {
         std::clog << "**** ERORR: Null socket in login.\n";
@@ -206,30 +204,23 @@ void login(Socket* sock, const std::string& inStr) {
                 sock->askFor("Please enter name: ");
                 return;
             }
-            if(!loadPlayer(proxiedChar, &player)) {
+            if(!loadPlayer(proxiedChar, player)) {
                 sock->println(std::string("Error loading ") + proxiedChar + "\n");
                 sock->askFor("Please enter name: ");
                 return;
             }
             player->fd = -1;
-            bool online = false;
-            Player* proxy = nullptr;
+            std::shared_ptr<Player> proxy = nullptr;
             proxy = gServer->findPlayer(proxyChar);
-            if(proxy)
-                online = true;
-            else {
-                if(!loadPlayer(proxyChar, &proxy)) {
+            if(!proxy) {
+                if(!loadPlayer(proxyChar, proxy)) {
                     sock->println(std::string("Error loading ") + proxyChar + "\n");
-                    delete player;
                     sock->askFor("Please enter name: ");
                     return;
                 }
             }
             if(!player->checkProxyAccess(proxy)) {
                 sock->println(std::string(proxy->getName()) + " does not have access to " + player->getName());
-                delete player;
-                if(!online)
-                    delete proxy;
                 sock->askFor("Please enter name: ");
                 return;
             }
@@ -241,8 +232,6 @@ void login(Socket* sock, const std::string& inStr) {
             if(gServer->checkDuplicateName(*sock, false)) {
                 // Don't free player here or ask for name again because checkDuplicateName does that
                 // We only need to worry about freeing proxy
-                if(!online)
-                    delete proxy;
                 return;
             }
             sock->println(std::string("Trying to log in ") + player->getName() + " using " + proxy->getName() + " as proxy.");
@@ -258,8 +247,6 @@ void login(Socket* sock, const std::string& inStr) {
 
             player->setProxy(proxy);
 
-            if(!online)
-                delete proxy;
             sock->setState(LOGIN_GET_PROXY_PASSWORD);
 
             return;
@@ -273,7 +260,7 @@ void login(Socket* sock, const std::string& inStr) {
             return;
         }
 
-        if(!loadPlayer(str, &player)) {
+        if(!loadPlayer(str, player)) {
             strcpy(sock->tempstr[0], str.c_str());
             sock->print("\n%s? Did I get that right? ", str.c_str());
             sock->setState(LOGIN_CHECK_CREATE_NEW);
@@ -336,7 +323,7 @@ void login(Socket* sock, const std::string& inStr) {
 
 void Socket::finishLogin() {
     char    charName[25];
-    Player* player = nullptr;
+    std::shared_ptr<Player> player = nullptr;
 
     print("%s", echo_on);
     strcpy(charName, getPlayer()->getCName());
@@ -351,10 +338,9 @@ void Socket::finishLogin() {
     player = getPlayer();
     std::string proxyName = player->getProxyName();
     std::string proxyId = player->getProxyId();
-    delete player;
     setPlayer(nullptr);
 
-    if(!loadPlayer(charName, &player)) {
+    if(!loadPlayer(charName, player)) {
         askFor("Player no longer exists!\n\nPlease enter name: ");
         setState(LOGIN_GET_NAME);
         return;
@@ -368,12 +354,6 @@ void Socket::finishLogin() {
         player->currentLocation.room.id = 100;
         // remove all their stuff
         player->coins.zero();
-        ObjectSet::iterator it;
-        Object *obj;
-        for( it = player->objects.begin() ; it != player->objects.end() ; ) {
-            obj = (*it++);
-            delete obj;
-        }
         player->objects.clear();
 
     }
@@ -535,15 +515,12 @@ void createPlayer(Socket* sock, const std::string& str) {
     switch(sock->getState()) {
     case CREATE_NEW:
         {
-            Player* target = sock->getPlayer();
+            std::shared_ptr<Player> target = sock->getPlayer();
             sock->print("\n");
             if(target) {
                 gServer->clearPlayer(target->getName());
-                delete target;
             }
-            target = new Player;
-            if(!target)
-                merror("createPlayer", FATAL);
+            target = std::make_shared<Player>();
 
             target->fd = -1;
 
@@ -753,18 +730,18 @@ no_pass:
 //                      addStartingItem
 //*********************************************************************
 
-void Create::addStartingItem(Player* player, const std::string &area, int id, bool wear, bool skipUseCheck, int num) {
+void Create::addStartingItem(const std::shared_ptr<Player>& player, const std::string &area, int id, bool wear, bool skipUseCheck, int num) {
     CatRef cr;
     cr.setArea(area);
     cr.id = id;
 
     for(int i=0; i<num; i++) {
-        Object* object=nullptr;
-        if(loadObject(cr, &object)) {
+        std::shared_ptr<Object>  object=nullptr;
+        if(loadObject(cr, object)) {
             object->setFlag(O_STARTING);
             // if they can't use it, don't even give it to them
             if(!skipUseCheck && !player->canUse(object, true)) {
-                delete object;
+                continue;
             } else {
                 object->setDroppedBy(player, "PlayerCreation");
                 player->addObj(object);
@@ -779,7 +756,7 @@ void Create::addStartingItem(Player* player, const std::string &area, int id, bo
 //                      addStartingWeapon
 //*********************************************************************
 
-void Create::addStartingWeapon(Player* player, const std::string &weapon) {
+void Create::addStartingWeapon(const std::shared_ptr<Player>& player, const std::string &weapon) {
     if(weapon == "sword")
         Create::addStartingItem(player, "tut", 28, false);
     else if(weapon == "great-sword")
@@ -1189,7 +1166,7 @@ bool Create::getDeity(Socket* sock, std::string str, int mode) {
 //*********************************************************************
 
 // from startlocs.cpp
-bool startingChoices(Player* player, std::string str, char* location, bool choose);
+bool startingChoices(std::shared_ptr<Player> player, std::string str, char* location, bool choose);
 
 bool Create::getLocation(Socket* sock, const std::string &str, int mode) {
     char location[256];
@@ -1373,7 +1350,7 @@ bool Create::getStats(Socket* sock, std::string str, int mode) {
 //*********************************************************************
 
 void Create::finishStats(Socket* sock) {
-    Player* ply = sock->getPlayer();
+    std::shared_ptr<Player> ply = sock->getPlayer();
     ply->strength.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(STR));
     ply->dexterity.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(DEX));
     ply->constitution.addInitial(  gConfig->getRace(ply->getRace())->getStatAdj(CON));
@@ -1579,7 +1556,7 @@ bool Create::handleWeapon(Socket* sock, int mode, char ch) {
 //                      cmdWeapons
 //*********************************************************************
 
-int cmdWeapons(Player* player, cmd* cmnd) {
+int cmdWeapons(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->getWeaponTrains() < 1) {
         *player << "You don't have any weapon trains left!\n";
         return(0);
@@ -1741,7 +1718,7 @@ void Create::done(Socket* sock, const std::string &str, int mode) {
         sock->setState(CREATE_DONE);
 
     } else if(mode == Create::doWork) {
-        Player* player = sock->getPlayer();
+        std::shared_ptr<Player> player = sock->getPlayer();
         long t = time(nullptr);
         int i=0;
 
@@ -1994,7 +1971,7 @@ bool Create::getCommunity(Socket* sock, std::string str, int mode) {
 //                      doFamily
 //*********************************************************************
 
-void Create::doFamily(Player* player, int mode) {
+void Create::doFamily(const std::shared_ptr<Player>& player, int mode) {
 
     if(mode == 1) {
         player->custom.parents = CustomCrt::PARENTS_UNKNOWN;

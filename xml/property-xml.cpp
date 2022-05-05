@@ -116,9 +116,9 @@ void Property::load(xmlNodePtr rootNode) {
     // backwards compatability - removable when all are updated
     if(type != PROP_STORAGE && area.empty()) {
         // load intro room, find the out exit, look at the room info
-        UniqueRoom* room=nullptr;
-        if(loadRoom(low, &room)) {
-            for(Exit* ext : room->exits) {
+        std::shared_ptr<UniqueRoom> room=nullptr;
+        if(loadRoom(low, room)) {
+            for(const auto& ext : room->exits) {
                 if(ext->target.room.area != "shop" && low.area != ext->target.room.area) {
                     area = ext->target.room.area;
                     break;

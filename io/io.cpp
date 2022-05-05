@@ -51,7 +51,6 @@
 #include "mudObjects/players.hpp"                // for Player
 #include "mudObjects/rooms.hpp"                  // for BaseRoom, ExitList
 #include "mudObjects/uniqueRooms.hpp"            // for UniqueRoom
-#include "os.hpp"                                // for ASSERTLOG
 #include "proto.hpp"                             // for broadcast, getGuildName
 #include "raceData.hpp"                          // for RaceData
 #include "server.hpp"                            // for Server, gServer, Pla...
@@ -70,7 +69,7 @@ int Numplayers;
 //                      broadcast
 //********************************************************************
 
-bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool showTo(Socket*)) {
+bool hearBroadcast(std::shared_ptr<Creature> target, Socket* ignore1, Socket* ignore2, bool showTo(Socket*)) {
     if(!target)
         return(false);
     if(target == NULL)
@@ -81,7 +80,7 @@ bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool show
     if(showTo && !showTo(target->getSock()))
         return(false);
 
-    Player* pTarget = target->getAsPlayer();
+    std::shared_ptr<Player> pTarget = target->getAsPlayer();
     if(pTarget) {
         if( ignore1 != nullptr &&
             ignore1->getPlayer() &&
@@ -100,9 +99,9 @@ bool hearBroadcast(Creature* target, Socket* ignore1, Socket* ignore2, bool show
 
 
 // global broadcast
-void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, va_list ap, Creature* player) {
+void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, va_list ap, const std::shared_ptr<Creature>& player) {
     for(Socket &sock : gServer->sockets) {
-        const Player* ply = sock.getPlayer();
+        const std::shared_ptr<Player> ply = sock.getPlayer();
 
         if(!ply)
             continue;
@@ -123,11 +122,11 @@ void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, 
 
 
 // room broadcast
-void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const Container* container, const char *fmt, va_list ap) {
+void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const std::shared_ptr<const Container>& container, const char *fmt, va_list ap) {
     if(!container)
         return;
 
-    for(Player* ply : container->players) {
+    for(const auto& ply: container->players) {
         if(!hearBroadcast(ply, ignore1, ignore2, showTo))
             continue;
         if(ply->flagIsSet(P_UNCONSCIOUS))
@@ -141,7 +140,7 @@ void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const C
 
 
 // room broadcast, 1 ignore
-void broadcast(Socket* ignore, const Container* container, const char *fmt, ...) {
+void broadcast(Socket* ignore, const std::shared_ptr<const Container>& container, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     doBroadcast(0, ignore, nullptr, container, fmt, ap);
@@ -149,7 +148,7 @@ void broadcast(Socket* ignore, const Container* container, const char *fmt, ...)
 }
 
 // room broadcast, 2 ignores
-void broadcast(Socket* ignore1, Socket* ignore2, const Container* container, const char *fmt, ...) {
+void broadcast(Socket* ignore1, Socket* ignore2, const std::shared_ptr<const Container>& container, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     doBroadcast(0, ignore1, ignore2, container, fmt, ap);
@@ -157,7 +156,7 @@ void broadcast(Socket* ignore1, Socket* ignore2, const Container* container, con
 }
 
 // room broadcast, 1 ignore, showTo function
-void broadcast(bool showTo(Socket*), Socket* ignore, const Container* container, const char *fmt, ...) {
+void broadcast(bool showTo(Socket*), Socket* ignore, const std::shared_ptr<const Container>& container, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     doBroadcast(showTo, ignore, nullptr, container, fmt, ap);
@@ -174,7 +173,6 @@ void broadcast(const char *fmt,...) {
 
 // broadcast with showTo function
 void broadcast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt,...) {
-    ASSERTLOG(showTo);
     va_list ap;
     va_start(ap, fmt);
     doBroadCast(showTo, showAlso, fmt, ap);
@@ -183,29 +181,27 @@ void broadcast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt,...
 
 // broadcast with showTo function
 void broadcast(bool showTo(Socket*), const char *fmt,...) {
-    ASSERTLOG(showTo);
     va_list ap;
     va_start(ap, fmt);
     doBroadCast(showTo, 0, fmt, ap);
     va_end(ap);
 }
 
-void broadcast(Creature* player, bool showTo(Socket*), int color, const char *fmt,...) {
-    ASSERTLOG(showTo);
+void broadcast(std::shared_ptr<Creature> player, bool showTo(Socket*), int color, const char *fmt,...) {
     va_list ap;
     va_start(ap, fmt);
     doBroadCast(showTo, (bool(*)(Socket*))nullptr, fmt, ap, player);
     va_end(ap);
 }
 
-bool yes(Creature* player) {
+bool yes(std::shared_ptr<Creature> player) {
     return(true);
 }
 bool yes(Socket* sock) {
     return(true);
 }
 bool wantsPermDeaths(Socket* sock) {
-    Player* ply = sock->getPlayer();
+    std::shared_ptr<Player> ply = sock->getPlayer();
     return(ply != nullptr && !ply->flagIsSet(P_NO_BROADCASTS) && ply->flagIsSet(P_PERM_DEATH));
 }
 
@@ -215,13 +211,10 @@ bool wantsPermDeaths(Socket* sock) {
 // This function broadcasts a message to all the players that are in the
 // game. If they have the NO-BROADCAST flag set, then they will not see it.
 
-void broadcastLogin(Player* player, BaseRoom* inRoom, int login) {
+void broadcastLogin(std::shared_ptr<Player> player, const std::shared_ptr<BaseRoom>& inRoom, int login) {
     std::ostringstream preText, postText, extra, room;
-    std::string text = "", illusion = "";
+    std::string text = "", illusion;
     int    logoff=0;
-
-    ASSERTLOG( player );
-    ASSERTLOG( !player->getName().empty() );
 
     preText << "### " << player->fullName() << " ";
 
@@ -317,7 +310,7 @@ void broadcast_rom_LangWc(int lang, Socket* ignore, const Location& currentLocat
     strcpy(fmt2, fmt);
     strcat(fmt2, "\n");
 
-    Player* ply;
+    std::shared_ptr<Player> ply;
     for(const auto& p : gServer->players) {
         ply = p.second;
         Socket* sock = ply->getSock();
@@ -351,7 +344,7 @@ void broadcast_rom_LangWc(int lang, Socket* ignore, const Location& currentLocat
 // this function broadcasts a message to all players in a group except
 // the source player
 
-void broadcastGroupMember(bool dropLoot, Creature* player, const Player* listen, const char *fmt, va_list ap) {
+void broadcastGroupMember(bool dropLoot, const std::shared_ptr<const Creature>& player, const std::shared_ptr<const Player> listen, const char *fmt, va_list ap) {
 
     if(!listen)
         return;
@@ -382,7 +375,7 @@ void broadcastGroupMember(bool dropLoot, Creature* player, const Player* listen,
     listen->vprint(listen->customColorize(fmt).c_str(), ap);
 }
 
-void broadcastGroup(bool dropLoot, Creature* player, const char *fmt,...) {
+void broadcastGroup(bool dropLoot, const std::shared_ptr<Creature>& player, const char *fmt,...) {
     Group* group = player->getGroup();
     if(!group)
         return;
@@ -390,7 +383,14 @@ void broadcastGroup(bool dropLoot, Creature* player, const char *fmt,...) {
     va_start(ap, fmt);
 
 //  broadcastGroupMember(dropLoot, player, leader, fmt, ap);
-    for(Creature* crt : group->members) {
+    auto it = group->members.begin();
+    while (it != group->members.end()) {
+        auto crt = it->lock();
+        if (!crt) {
+            it = group->members.erase(it);
+            continue;
+        }
+        it++;
         broadcastGroupMember(dropLoot, player, crt->getAsConstPlayer(), fmt, ap);
     }
 }
@@ -448,7 +448,7 @@ void broadcastGuild(int guildNum, int showName, const char *fmt,...) {
     strcat(fmt2, fmt);
     strcat(fmt2, "\n");
 
-    Player* target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     for(const auto& p : gServer->players) {
         target = p.second;
 
@@ -535,7 +535,7 @@ void UniqueRoom::escapeText() {
     short_desc = Pueblo::multiline(short_desc);
     long_desc = Pueblo::multiline(long_desc);
 
-    for(Exit* exit : exits) {
+    for(const auto& exit : exits) {
         exit->escapeText();
     }
 }
@@ -689,8 +689,8 @@ char keyTxtConvert(unsigned char c) {
 
 std::string keyTxtConvert(std::string_view txt) {
     std::ostringstream ret;
-    for(int i=0; i<txt.length(); i++) {
-        ret << keyTxtConvert(txt.at(i));
+    for(char i : txt) {
+        ret << keyTxtConvert(i);
     }
     return(ret.str());
 }
@@ -754,7 +754,7 @@ bool keyTxtCompare(const char* key, const char* txt, int tLen) {
 //                      keyTxtEqual
 //*********************************************************************
 
-bool keyTxtEqual(const Creature* target, const char* txt) {
+bool keyTxtEqual(const std::shared_ptr<Creature> & target, const char* txt) {
     int len = strlen(txt);
     return keyTxtCompare(target->key[0], txt, len) ||
            keyTxtCompare(target->key[1], txt, len) ||
@@ -763,7 +763,7 @@ bool keyTxtEqual(const Creature* target, const char* txt) {
            target->getId() == txt;
 }
 
-bool keyTxtEqual(const Object* target, const char* txt) {
+bool keyTxtEqual(const std::shared_ptr<Object>  target, const char* txt) {
     int len = strlen(txt);
     return keyTxtCompare(target->key[0], txt, len) ||
            keyTxtCompare(target->key[1], txt, len) ||

@@ -78,7 +78,7 @@ bool MudObject::registerMo() {
         return(false);
     }
 
-    if(gServer->registerMudObject(this)) {
+    if(gServer->registerMudObject(shared_from_this())) {
         registerContainedItems();
         return(true);
     }
@@ -89,7 +89,7 @@ bool MudObject::registerMo() {
 bool MudObject::unRegisterMo() {
     if(!registered)
         return(false);
-    if(gServer->unRegisterMudObject(this)) {
+    if(gServer->unRegisterMudObject(shared_from_this())) {
         unRegisterContainedItems();
         return(true);
     }
@@ -101,17 +101,17 @@ void MudObject::registerContainedItems() {
 void MudObject::unRegisterContainedItems() {
 }
 
-bool PlayerPtrLess::operator()(const Player* lhs, const Player* rhs) const {
+bool PlayerPtrLess::operator()(const std::shared_ptr<Player>& lhs, const std::shared_ptr<Player>& rhs) const {
     return *lhs < *rhs;
 }
 
-bool MonsterPtrLess::operator()(const Monster* lhs, const Monster* rhs) const {
+bool MonsterPtrLess::operator()(const std::shared_ptr<Monster>&  lhs, const std::shared_ptr<Monster>&  rhs) const {
     std::string lhsStr = lhs->getName() + lhs->id;
     std::string rhsStr = rhs->getName() + rhs->id;
     return(lhsStr.compare(rhsStr) < 0);
 }
 
-bool ObjectPtrLess::operator()(const Object* lhs, const Object* rhs) const {
+bool ObjectPtrLess::operator()(const std::shared_ptr<Object>&  lhs, const std::shared_ptr<Object>&  rhs) const {
     return *lhs < *rhs;
 }
 
@@ -144,8 +144,8 @@ void MudObject::moCopy(const MudObject& mo) {
     hooks.setParent(this);
 }
 
-MudObject* MudObject::getAsMudObject() {
-    return(dynamic_cast<MudObject*>(this));
+std::shared_ptr<MudObject> MudObject::getAsMudObject() {
+    return(shared_from_this());
 }
 
 
@@ -153,136 +153,136 @@ MudObject* MudObject::getAsMudObject() {
 //                      getMonster
 //***********************************************************************
 
-Monster* MudObject::getAsMonster() {
-    return(dynamic_cast<Monster*>(this));
+std::shared_ptr<Monster>  MudObject::getAsMonster() {
+    return(std::dynamic_pointer_cast<Monster>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getCreature
 //***********************************************************************
 
-Creature* MudObject::getAsCreature() {
-    return(dynamic_cast<Creature*>(this));
+std::shared_ptr<Creature> MudObject::getAsCreature() {
+    return(std::dynamic_pointer_cast<Creature>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getPlayer
 //***********************************************************************
 
-Player* MudObject::getAsPlayer() {
-    return(dynamic_cast<Player*>(this));
+std::shared_ptr<Player> MudObject::getAsPlayer() {
+    return(std::dynamic_pointer_cast<Player>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getObject
 //***********************************************************************
 
-Object* MudObject::getAsObject() {
-    return(dynamic_cast<Object*>(this));
+std::shared_ptr<Object>  MudObject::getAsObject() {
+    return(std::dynamic_pointer_cast<Object>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getUniqueRoom
 //***********************************************************************
 
-UniqueRoom* MudObject::getAsUniqueRoom() {
-    return(dynamic_cast<UniqueRoom*>(this));
+std::shared_ptr<UniqueRoom> MudObject::getAsUniqueRoom() {
+    return(std::dynamic_pointer_cast<UniqueRoom>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getAreaRoom
 //***********************************************************************
 
-AreaRoom* MudObject::getAsAreaRoom() {
-    return(dynamic_cast<AreaRoom*>(this));
+std::shared_ptr<AreaRoom> MudObject::getAsAreaRoom() {
+    return(std::dynamic_pointer_cast<AreaRoom>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getRoom
 //***********************************************************************
 
-BaseRoom* MudObject::getAsRoom() {
-    return(dynamic_cast<BaseRoom*>(this));
+std::shared_ptr<BaseRoom> MudObject::getAsRoom() {
+    return(std::dynamic_pointer_cast<BaseRoom>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getExit
 //***********************************************************************
 
-Exit* MudObject::getAsExit() {
-    return(dynamic_cast<Exit*>(this));
+std::shared_ptr<Exit> MudObject::getAsExit() {
+    return(std::dynamic_pointer_cast<Exit>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getConstMonster
 //***********************************************************************
 
-const Monster* MudObject::getAsConstMonster() const {
-    return(dynamic_cast<const Monster*>(this));
+std::shared_ptr<const Monster>  MudObject::getAsConstMonster() const {
+    return(std::dynamic_pointer_cast<const Monster>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getConstPlayer
 //***********************************************************************
 
-const Player* MudObject::getAsConstPlayer() const {
-    return(dynamic_cast<const Player*>(this));
+std::shared_ptr<const Player> MudObject::getAsConstPlayer() const {
+    return(std::dynamic_pointer_cast<const Player>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getConstCreature
 //***********************************************************************
 
-const Creature* MudObject::getAsConstCreature() const {
-    return(dynamic_cast<const Creature*>(this));
+std::shared_ptr<const Creature> MudObject::getAsConstCreature() const {
+    return(std::dynamic_pointer_cast<const Creature>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getConstObject
 //***********************************************************************
 
-const Object* MudObject::getAsConstObject() const {
-    return(dynamic_cast<const Object*>(this));
+std::shared_ptr<const Object>  MudObject::getAsConstObject() const {
+    return(std::dynamic_pointer_cast<const Object>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getConstUniqueRoom
 //***********************************************************************
 
-const UniqueRoom* MudObject::getAsConstUniqueRoom() const {
-    return(dynamic_cast<const UniqueRoom*>(this));
+std::shared_ptr<const UniqueRoom> MudObject::getAsConstUniqueRoom() const {
+    return(std::dynamic_pointer_cast<const UniqueRoom>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getConstAreaRoom
 //***********************************************************************
 
-const AreaRoom* MudObject::getAsConstAreaRoom() const {
-    return(dynamic_cast<const AreaRoom*>(this));
+std::shared_ptr<const AreaRoom> MudObject::getAsConstAreaRoom() const {
+    return(std::dynamic_pointer_cast<const AreaRoom>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getConstRoom
 //***********************************************************************
 
-const BaseRoom* MudObject::getAsConstRoom() const {
-    return(dynamic_cast<const BaseRoom*>(this));
+std::shared_ptr<const BaseRoom> MudObject::getAsConstRoom() const {
+    return(std::dynamic_pointer_cast<const BaseRoom>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      getConstExit
 //***********************************************************************
 
-const Exit* MudObject::getAsConstExit() const {
-    return(dynamic_cast<const Exit*>(this));
+std::shared_ptr<const Exit> MudObject::getAsConstExit() const {
+    return(std::dynamic_pointer_cast<const Exit>(shared_from_this()));
 }
 
 //***********************************************************************
 //                      equals
 //***********************************************************************
 
-bool MudObject::equals(MudObject* other) {
-    return(this == other);
+bool MudObject::equals(const std::shared_ptr<MudObject>& other) {
+    return(this == other.get());
 }
 
 

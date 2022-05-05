@@ -33,8 +33,8 @@ public:
 public:
     ThreatEntry(std::string_view pUid);
 
-    long getThreatValue();
-    long getContributionValue();
+    long getThreatValue() const;
+    long getContributionValue() const;
     long adjustThreat(long modAmt);
     long adjustContribution(long modAmt);
 //protected:
@@ -63,27 +63,28 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const ThreatTable& table);
     friend std::ostream& operator<<(std::ostream& out, const ThreatTable* table);
 public:
-    ThreatTable(Creature* parent);
+    ThreatTable(Creature *cParent);
     ~ThreatTable();
 
-    bool isEnemy(const Creature* target);
+    bool isEnemy(const std::shared_ptr<const Creature> & target);
     long getTotalThreat();
-    long getThreat(Creature* target);
-    long adjustThreat(Creature* target, long modAmt, double threatFactor = 1.0);
+    long getThreat(const std::shared_ptr<Creature>& target);
+    long adjustThreat(const std::shared_ptr<Creature>& target, long modAmt, double threatFactor = 1.0);
     long removeThreat(const std::string &pUid);
-    long removeThreat(Creature* target);
-    void setParent(Creature* pParent);
+    long removeThreat(const std::shared_ptr<Creature>& target);
+    void setParent(Creature *cParent);
     bool hasEnemy() const;
 
-    ThreatMap::size_type size();
+    ThreatMap::size_type size() const;
     void clear();
 
-    Creature* getTarget(bool sameRoom=true);
+    std::shared_ptr<Creature> getTarget(bool sameRoom=true);
 
 protected:
     ThreatSet::iterator removeFromSet(ThreatEntry* threat);
 
 public:
+    // TODO: Why the fuck is there a map and a set...
     ThreatMap threatMap;
     ThreatSet threatSet;
 

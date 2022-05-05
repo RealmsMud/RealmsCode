@@ -116,7 +116,7 @@ typedef std::map<int, AlchemyEffect> AlchemyEffectMap;
 class Object: public Container, public Containable {
     // Static class functions
 public:
-    static Object* getNewPotion();  // Creates a new blank potion object
+    static std::shared_ptr<Object>  getNewPotion();  // Creates a new blank potion object
     static const std::map<ObjectType, std::string> objTypeToString;
     static const std::map<Material, std::string> materialToString;
 
@@ -218,7 +218,7 @@ public:
     std::list<CatRef> randomObjects;
 
     bool isAlchemyPotion();
-    bool consumeAlchemyPotion(Creature* consumer);
+    bool consumeAlchemyPotion(const std::shared_ptr<Creature>& consumer);
     bool addAlchemyEffect(int num, const AlchemyEffect &ae);
 
     // Map of effects that are on this item for alchemy purposes, used for herbs and potions objects
@@ -236,7 +236,7 @@ public:
     int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType = LoadType::LS_FULL, int quantity = 1, bool saveId = true, const std::list<std::string> *idList = nullptr) const;
     int saveToFile();
 
-    void setDroppedBy(MudObject* dropper, std::string_view pDropType);
+    void setDroppedBy(const std::shared_ptr<MudObject>& dropper, std::string_view pDropType);
 
     // Flags
     [[nodiscard]] bool flagIsSet(int flag) const; // *
@@ -251,12 +251,12 @@ public:
     [[nodiscard]] std::string getFlagList(std::string_view sep=", ") const override;
 
     // Placement of the object etc
-    void addObj(Object *toAdd, bool incShots = true); // Add an object to this object
-    void delObj(Object  *toDel);
-    void addToRoom(BaseRoom* room);
+    void addObj(std::shared_ptr<Object>toAdd, bool incShots = true); // Add an object to this object
+    void delObj(std::shared_ptr<Object> toDel);
+    void addToRoom(const std::shared_ptr<BaseRoom>& room);
     void deleteFromRoom();
-    void popBag(Creature* creature, bool quest = true, bool drop = true, bool steal = true, bool bodypart = true, bool dissolve = false);
-    int doSpecial(Player* player);
+    void popBag(const std::shared_ptr<Creature>& creature, bool quest = true, bool drop = true, bool steal = true, bool bodypart = true, bool dissolve = false);
+    int doSpecial(std::shared_ptr<Player> player);
     int countObj(bool permOnly = false);
 
     // Get
@@ -304,9 +304,9 @@ public:
     [[nodiscard]] short getLotteryNumbers(short i) const;
     [[nodiscard]] int getRecipe() const;
     [[nodiscard]] Material getMaterial() const;
-    [[nodiscard]] std::string getObjStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
+    [[nodiscard]] std::string getObjStr(const std::shared_ptr<const Creature> & viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
     [[nodiscard]] const std::string & getMaterialName() const;
-    [[nodiscard]] const std::string getCompass(const Creature* creature, bool useName);
+    [[nodiscard]] std::string getCompass(const std::shared_ptr<const Creature> & creature, bool useName) const;
     [[nodiscard]] const std::string & getVersion() const;
     [[nodiscard]] const std::string & getQuestOwner() const;
     [[nodiscard]] const std::string & getSubType() const;
@@ -318,7 +318,7 @@ public:
     [[nodiscard]] std::string getWeaponVerbPlural() const;
     [[nodiscard]] std::string getWeaponVerbPast() const;
 
-    bool isQuestOwner(const Player* player) const;
+    bool isQuestOwner(const std::shared_ptr<const Player>& player) const;
     std::string getWearName();
 
 
@@ -367,7 +367,7 @@ public:
     void setLotteryNumbers(short i, short n);
     void setRecipe(int r);
     void setMaterial(Material m);
-    void setQuestOwner(const Player* player);
+    void setQuestOwner(const std::shared_ptr<Player> player);
     void setUniqueId(int id);
 
     void clearEffect();
@@ -375,41 +375,41 @@ public:
     // Adjust things
     void killUniques();
     void loadContainerContents();
-    void nameCoin(std::string_view type, unsigned long value);
+    void nameCoin(std::string_view pType, unsigned long pValue);
     void randomEnchant(int bonus = 0);
     int adjustArmor();
     int adjustWeapon();
     void tempPerm();
-    void track(Player* player);
+    void track(std::shared_ptr<Player> player);
 
     // Check conditions
-    [[nodiscard]] bool doRestrict(Creature* creature, bool p);
-    [[nodiscard]] bool raceRestrict(const Creature* creature) const;
-    [[nodiscard]] bool raceRestrict(const Creature* creature, bool p) const;
-    [[nodiscard]] bool classRestrict(const Creature* creature) const;
-    [[nodiscard]] bool classRestrict(const Creature* creature, bool p) const;
-    [[nodiscard]] bool clanRestrict(const Creature* creature) const;
-    [[nodiscard]] bool clanRestrict(const Creature* creature, bool p) const;
-    [[nodiscard]] bool levelRestrict(const Creature* creature, bool p = false) const;
-    [[nodiscard]] bool skillRestrict(const Creature* creature, bool p = false) const;
-    [[nodiscard]] bool alignRestrict(const Creature* creature, bool p = false) const;
-    [[nodiscard]] bool sexRestrict(const Creature* creature, bool p = false) const;
-    [[nodiscard]] bool strRestrict(Creature* creature, bool p = false) const;
-    [[nodiscard]] bool lawchaoRestrict(const Creature* creature, bool p = false) const;
-    [[nodiscard]] bool showAsSame(const Player* player, const Object* Object) const;
+    [[nodiscard]] bool doRestrict(const std::shared_ptr<Creature>& creature, bool p);
+    [[nodiscard]] bool raceRestrict(const std::shared_ptr<const Creature> & creature) const;
+    [[nodiscard]] bool raceRestrict(const std::shared_ptr<Creature> & creature, bool p) const;
+    [[nodiscard]] bool classRestrict(const std::shared_ptr<const Creature> & creature) const;
+    [[nodiscard]] bool classRestrict(const std::shared_ptr<Creature> & creature, bool p) const;
+    [[nodiscard]] bool clanRestrict(const std::shared_ptr<const Creature> & creature) const;
+    [[nodiscard]] bool clanRestrict(const std::shared_ptr<Creature> & creature, bool p) const;
+    [[nodiscard]] bool levelRestrict(const std::shared_ptr<Creature> & creature, bool p = false) const;
+    [[nodiscard]] bool skillRestrict(const std::shared_ptr<Creature> & creature, bool p = false) const;
+    [[nodiscard]] bool alignRestrict(const std::shared_ptr<Creature> & creature, bool p = false) const;
+    [[nodiscard]] bool sexRestrict(const std::shared_ptr<Creature> & creature, bool p = false) const;
+    [[nodiscard]] bool strRestrict(const std::shared_ptr<Creature>& creature, bool p = false) const;
+    [[nodiscard]] bool lawchaoRestrict(const std::shared_ptr<Creature> & creature, bool p = false) const;
+    [[nodiscard]] bool showAsSame(const std::shared_ptr<const Player> &player, const std::shared_ptr<const Object> & Object) const;
     [[nodiscard]] bool isHeavyArmor() const;
     [[nodiscard]] bool isMediumArmor() const;
     [[nodiscard]] bool isLightArmor() const;
     [[nodiscard]] bool needsTwoHands() const;
     [[nodiscard]] bool isQuestValid() const; // Is this object valid for a quest?
 
-    [[nodiscard]] std::string showAlchemyEffects(Player *player = nullptr);
+    [[nodiscard]] std::string showAlchemyEffects(const std::shared_ptr<const Player>& player = nullptr) const;
     [[nodiscard]] std::string statObj(unsigned int statFlags);
     [[nodiscard]] double winterProtection() const;
-    [[nodiscard]] bool isKey(const UniqueRoom* room, const Exit* exit) const;
+    [[nodiscard]] bool isKey(const std::shared_ptr<UniqueRoom>& room, const std::shared_ptr<Exit> exit) const;
 
-    bool swap(Swap s);
-    bool swapIsInteresting(Swap s) const;
+    bool swap(const Swap& s);
+    bool swapIsInteresting(const Swap& s) const;
 
 };
 

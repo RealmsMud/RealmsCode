@@ -116,15 +116,15 @@ const std::string & Object::getMaterialName() const {
 //*********************************************************************
 // This function adds the object toAdd to the current object
 
-void Object::addObj(Object *toAdd, bool incShots) {
+void Object::addObj(std::shared_ptr<Object>toAdd, bool incShots) {
     toAdd->validateId();
 
-    Hooks::run(toAdd, "beforeAddObject", this, "beforeAddToObject");
+    Hooks::run(toAdd, "beforeAddObject", Containable::downcasted_shared_from_this<Object>(), "beforeAddToObject");
 
     add(toAdd);
     if(incShots)
         incShotsCur();
-    Hooks::run(toAdd, "afterAddObject", this, "afterAddToObject");
+    Hooks::run(toAdd, "afterAddObject", Containable::downcasted_shared_from_this<Object>(), "afterAddToObject");
 }
 
 //*********************************************************************
@@ -133,12 +133,12 @@ void Object::addObj(Object *toAdd, bool incShots) {
 // This function removes the object pointed to by the first parameter
 // from the object pointed to by the second.
 
-void Object::delObj(Object  *toDel) {
-    Hooks::run(this, "beforeRemoveObject", toDel, "beforeRemoveFromObject");
+void Object::delObj(std::shared_ptr<Object> toDel) {
+    Hooks::run(Containable::downcasted_shared_from_this<Object>(), "beforeRemoveObject", toDel, "beforeRemoveFromObject");
 
     decShotsCur();
     toDel->removeFrom();
-    Hooks::run(this, "afterRemoveObject", toDel, "afterRemoveFromObject");
+    Hooks::run(Containable::downcasted_shared_from_this<Object>(), "afterRemoveObject", toDel, "afterRemoveFromObject");
 }
 
 
@@ -148,7 +148,7 @@ void Object::delObj(Object  *toDel) {
 // This function produces a string which lists all the objects in a
 // player's, room's or object's inventory.
 
-bool listObjectSee(const Player* player, Object* object, bool showAll) {
+bool listObjectSee(const std::shared_ptr<const Player> player, std::shared_ptr<Object>  object, bool showAll) {
     return(player->isStaff() || (
         player->canSee(object) &&
         (showAll || !object->flagIsSet(O_HIDDEN)) &&
@@ -156,8 +156,8 @@ bool listObjectSee(const Player* player, Object* object, bool showAll) {
     ) );
 }
 
-std::string Container::listObjects(const Player* player, bool showAll, char endColor) const {
-    Object  *object=nullptr;
+std::string Container::listObjects(const std::shared_ptr<const Player> &player, bool showAll, char endColor) const {
+    std::shared_ptr<Object> object=nullptr;
     int     num=1, n=0;
     unsigned int flags = player->displayFlags();
     std::string str = "";
@@ -222,7 +222,7 @@ void Object::randomEnchant(int bonus) {
 }
 
 // min int 13, cast flag, or mage class
-int new_scroll(int level, Object **new_obj) {
+int new_scroll(int level, std::shared_ptr<Object> &new_obj) {
     int lvl, realm;
 
 
@@ -230,7 +230,7 @@ int new_scroll(int level, Object **new_obj) {
     char    name[128];
     int     num=0;
     char    *p;
-    *new_obj = new Object;
+    new_obj = std::make_shared<Object>();
     // level 2-6 lvl 1 scrolls, level 7-11 lvl 2 scrolls, level 12-17 lvl 3 scrolls,
     // lvl 18-24 lvl 4 scrolls, lvl 25+ lvl 5 scrolls
 
@@ -258,10 +258,10 @@ int new_scroll(int level, Object **new_obj) {
 
 
     // No index for this object, need to set the save full flag
-    (*new_obj)->setFlag(O_SAVE_FULL);
+    new_obj->setFlag(O_SAVE_FULL);
 
-    (*new_obj)->setMagicpower(ospell[(lvl-1)*6 +(realm-1)].splno+1);
-    (*new_obj)->description = "It has arcane runes.";
+    new_obj->setMagicpower(ospell[(lvl-1)*6 +(realm-1)].splno+1);
+    new_obj->description = "It has arcane runes.";
     delem = " ";
 
     num = Random::get(1,10);
@@ -269,27 +269,27 @@ int new_scroll(int level, Object **new_obj) {
     strcat(name, " ");
     num = Random::get(1,2);
     strcat(name, scrollType[lvl-1][num-1]);
-    (*new_obj)->setName( name);
+    new_obj->setName( name);
     p = strtok(name, delem);
     if(p)
-        strcpy((*new_obj)->key[0], p);
+        strcpy(new_obj->key[0], p);
     p = strtok(nullptr, delem);
     if(p)
-        strcpy((*new_obj)->key[1], p);
+        strcpy(new_obj->key[1], p);
     p = strtok(nullptr, delem);
     if(p)
-        strcpy((*new_obj)->key[2], p);
+        strcpy(new_obj->key[2], p);
 
-    (*new_obj)->setWearflag(HELD);
-    (*new_obj)->setType(ObjectType::SCROLL);
-    (*new_obj)->setWeight(1);
-    (*new_obj)->setShotsMax(1);
-    (*new_obj)->setShotsCur(1);
+    new_obj->setWearflag(HELD);
+    new_obj->setType(ObjectType::SCROLL);
+    new_obj->setWeight(1);
+    new_obj->setShotsMax(1);
+    new_obj->setShotsCur(1);
 
     if(lvl >= 4) {
         lvl -= 4;
         lvl *= 6;
-        (*new_obj)->setQuestnum(22 + lvl + (realm-1));
+        new_obj->setQuestnum(22 + lvl + (realm-1));
     }
 
     return(1);
@@ -310,7 +310,7 @@ int Monster::checkScrollDrop() {
 
 void Object::loadContainerContents() {
     int     count=0, a=0;
-    Object  *newObj=nullptr;
+    std::shared_ptr<Object> newObj=nullptr;
 
     if(type != ObjectType::CONTAINER)
         return;
@@ -325,14 +325,12 @@ void Object::loadContainerContents() {
     for(a=0; a<count; a++) {
         if(!in_bag[a].id)
             continue;
-        if(!loadObject(in_bag[a], &newObj))
+        if(!loadObject(in_bag[a], newObj))
             continue;
 
         if(Random::get(1,100)<25) {
-            newObj->setDroppedBy(this, "ContainerContents");
+            newObj->setDroppedBy(Containable::downcasted_shared_from_this<Object>(), "ContainerContents");
             addObj(newObj);
-        } else {
-            delete newObj;
         }
     }
 }
@@ -341,8 +339,8 @@ void Object::loadContainerContents() {
 //                      cmdKeep
 //*********************************************************************
 
-int cmdKeep(Player* player, cmd* cmnd) {
-    Object  *object = player->findObject(player, cmnd, 1);
+int cmdKeep(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object = player->findObject(player, cmnd, 1);
 
     if(!object) {
         player->print("You don't have that in your inventory.\n");
@@ -353,7 +351,7 @@ int cmdKeep(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    player->printColor("You will keep %P.\n", object);
+    player->printColor("You will keep %P.\n", object.get());
     object->setFlag(O_KEEP);
     return(0);
 }
@@ -362,11 +360,11 @@ int cmdKeep(Player* player, cmd* cmnd) {
 //                      cmdUnkeep
 //*********************************************************************
 
-int cmdUnkeep(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
+int cmdUnkeep(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
 
     if(!strcmp(cmnd->str[1], "all")) {
-        for(Object* obj : player->objects ) {
+        for(const auto& obj : player->objects ) {
             obj->clearFlag(O_KEEP);
         }
         player->print("All kept objects cleared.\n");
@@ -384,7 +382,7 @@ int cmdUnkeep(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    player->printColor("You no longer are keeping %P.\n", object);
+    player->printColor("You no longer are keeping %P.\n", object.get());
     object->clearFlag(O_KEEP);
     return(0);
 }
@@ -393,8 +391,8 @@ int cmdUnkeep(Player* player, cmd* cmnd) {
 //                      cantDropInBag
 //*********************************************************************
 
-bool cantDropInBag(Object* object) {
-    for(Object* obj : object->objects) {
+bool cantDropInBag(std::shared_ptr<Object>  object) {
+    for(const auto& obj : object->objects) {
         if(obj->flagIsSet(O_NO_DROP))
             return(true);
     }
@@ -405,11 +403,11 @@ bool cantDropInBag(Object* object) {
 //                      findObj
 //*********************************************************************
 
-MudObject* Creature::findObjTarget(ObjectSet &set, unsigned int findFlags, const std::string& str, int val, int* match) {
+std::shared_ptr<MudObject> Creature::findObjTarget(ObjectSet &set, unsigned int findFlags, const std::string& str, int val, int* match) {
     if(set.empty())
         return(nullptr);
 
-    for(Object* obj : set) {
+    for(const auto& obj : set) {
         if(keyTxtEqual(obj, str.c_str()) && canSee(obj)) {
             (*match)++;
             if(*match == val) {
@@ -424,7 +422,7 @@ MudObject* Creature::findObjTarget(ObjectSet &set, unsigned int findFlags, const
 //                      displayObject
 //*********************************************************************
 
-int displayObject(Player* player, Object* target) {
+int displayObject(const std::shared_ptr<const Player> &player, const std::shared_ptr<const Object> &target) {
     unsigned int i=0;
     char str[2048];
     char filename[256];
@@ -560,7 +558,7 @@ int displayObject(Player* player, Object* target) {
 //                      getDamageString
 //*********************************************************************
 
-void getDamageString(char atk[50], Creature* player, Object *weapon, bool critical) {
+void getDamageString(char atk[50], std::shared_ptr<Creature> player, std::shared_ptr<Object>weapon, bool critical) {
     if(!weapon) {
         strcpy(atk, "^Rpunched^x");
 
@@ -613,7 +611,7 @@ void getDamageString(char atk[50], Creature* player, Object *weapon, bool critic
 //                      getWeaponDelay
 //*********************************************************************
 
-bool Object::showAsSame(const Player* player, const Object* object) const {
+bool Object::showAsSame(const std::shared_ptr<const Player> &player, const std::shared_ptr<const Object> & object) const {
     return( getName() == object->getName() &&
             flagIsSet(O_KEEP) == object->flagIsSet(O_KEEP) &&
             isEffected("invisibility") == object->isEffected("invisibility") &&
@@ -631,8 +629,8 @@ bool Object::showAsSame(const Player* player, const Object* object) const {
 //                      nameCoin
 //*********************************************************************
 
-void Object::nameCoin(std::string_view type, unsigned long value) {
-    setName(fmt::format("{} {} coin{}", value, type, value != 1 ? "s" : ""));
+void Object::nameCoin(std::string_view pType, unsigned long pValue) {
+    setName(fmt::format("{} {} coin{}", pValue, pType, pValue != 1 ? "s" : ""));
 }
 
 //*********************************************************************
@@ -640,13 +638,13 @@ void Object::nameCoin(std::string_view type, unsigned long value) {
 //*********************************************************************
 
 void BaseRoom::killMortalObjectsOnFloor() {
-    UniqueRoom* room = getAsUniqueRoom();
+    std::shared_ptr<UniqueRoom> room = getAsUniqueRoom();
 
     // if area = shop, kill in main room, but not in storage
     if(room && room->info.isArea("shop") && !room->flagIsSet(R_SHOP))
         return;
 
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
     bool    sunlight = isSunlight(), isStor = room && room->info.isArea("stor");
     ObjectSet::iterator it;
     for( it = objects.begin() ; it != objects.end() ; ) {
@@ -659,11 +657,9 @@ void BaseRoom::killMortalObjectsOnFloor() {
         if(sunlight && object->flagIsSet(O_DARKMETAL)) {
             broadcast(nullptr, this, "^yThe %s^y was destroyed by the sunlight!", object->getCName());
             object->deleteFromRoom();
-            delete object;
         } else if(!Unique::canLoad(object)) {
             broadcast(nullptr, this, "^yThe %s^y vanishes!", object->getCName());
             object->deleteFromRoom();
-            delete object;
         } else
             object->killUniques();
     }
@@ -678,10 +674,10 @@ void BaseRoom::killMortalObjects(bool floor) {
         return;
     if(isSunlight()) {
         // kill all players' darkmetal
-        for(Player* ply : players) {
+        for(const auto& ply: players) {
             ply->killDarkmetal();
         }
-        for(Monster* mons : monsters) {
+        for(const auto& mons : monsters) {
             mons->killDarkmetal();
         }
     }
@@ -695,8 +691,8 @@ void BaseRoom::killMortalObjects(bool floor) {
 // if allowed, will kill the darkmetal the target carries
 
 void Creature::killDarkmetal() {
-    Player  *pTarget = getAsPlayer();
-    Object  *object=nullptr;
+    std::shared_ptr<Player> pTarget = getAsPlayer();
+    std::shared_ptr<Object> object=nullptr;
     int     i=0;
     bool    found=false;
 
@@ -720,7 +716,6 @@ void Creature::killDarkmetal() {
             else if(isPet())
                 printColor("^y%M's %s was destroyed by the sunlight!\n", this, object->getCName());
             delObj(object, true, false, false, false);
-            delete object;
             found = true;
         }
     }
@@ -766,27 +761,25 @@ void BaseRoom::setTempNoKillDarkmetal(bool noKillDarkmetal) {
 //*********************************************************************
 
 void Monster::killUniques() {
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
     ObjectSet::iterator it;
     for(it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
 
         if(!Unique::canLoad(object)) {
             delObj(object);
-            delete object;
         }
     }
 }
 
 void Object::killUniques() {
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
     ObjectSet::iterator it;
     for(it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
 
         if(!Unique::canLoad(object)) {
             delObj(object);
-            delete object;
         }
     }
 }
@@ -913,7 +906,7 @@ std::string Object::getSizeStr() const{
 // (usually quest related). This should not be used for general in-my-inventory
 // ownership.
 
-bool Object::isQuestOwner(const Player* player) const {
+bool Object::isQuestOwner(const std::shared_ptr<const Player>& player) const {
     if(questOwner.empty())
         return(true);
     if(questOwner != player->getName())
@@ -977,7 +970,7 @@ std::string Object::getWearName() {
 
 int Object::countObj(bool permOnly) {
     int total=0;
-    for(Object* obj : objects) {
+    for(const auto& obj : objects) {
         if(!permOnly || (permOnly && (obj->flagIsSet(O_PERM_ITEM))))
             total++;
     }

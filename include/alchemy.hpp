@@ -30,11 +30,11 @@ class Creature;
 class Object;
 class AlchemyBuilder;
 
-typedef std::vector<Object*> HerbVector;
+typedef std::vector<std::shared_ptr<Object> > HerbVector;
 typedef std::map<std::string, HerbVector > HerbMap;
 
 namespace Alchemy {
-    std::string getEffectString(Object* obj, std::string_view effect);
+    std::string getEffectString(const std::shared_ptr<Object>&  obj, std::string_view effect);
     int numEffectsVisisble(int skillLevel);
 };
 
@@ -105,7 +105,7 @@ public:
     void combineWith(const AlchemyEffect &ae);
 
     // Apply this effect to the creature:
-    bool apply(Creature* target);
+    bool apply(const std::shared_ptr<Creature>& target);
 
     [[nodiscard]] const std::string & getEffect() const;
     [[nodiscard]] long getDuration() const;

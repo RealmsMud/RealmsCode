@@ -27,7 +27,6 @@
 
 #include "calendar.hpp"                             // for cWeather, Calendar
 #include "global.hpp"                               // for FATAL
-#include "os.hpp"                                   // for merror
 #include "paths.hpp"                                // for PlayerData
 #include "proto.hpp"                                // for merror
 #include "season.hpp"                               // for Season
@@ -275,10 +274,10 @@ void Calendar::load() {
     sprintf(filename, "%s/calendar.xml", Path::PlayerData.c_str());
 
     if(!fs::exists(filename))
-        merror("Unable to find calendar file", FATAL);
+        throw std::runtime_error("Unable to find calendar file");
 
     if((xmlDoc = xml::loadFile(filename, "Calendar")) == nullptr)
-        merror("Unable to read calendar file", FATAL);
+        throw std::runtime_error("Unable to read calendar file");
 
     rootNode = xmlDocGetRootElement(xmlDoc);
     curNode = rootNode->children;

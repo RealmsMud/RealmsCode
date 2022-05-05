@@ -143,7 +143,7 @@ void Server::updateGame() {
 //                      weatherize
 //*********************************************************************
 
-std::string Config::weatherize(WeatherString w, const BaseRoom* room) const {
+std::string Config::weatherize(WeatherString w, const std::shared_ptr<BaseRoom>& room) const {
     const CatRefInfo* cri=nullptr;
     const cWeather* weather=nullptr;
     std::string txt = "";
@@ -266,7 +266,7 @@ void Server::weather(WeatherString w) {
     for(Socket &sock : gServer->sockets) {
         if (!sock.hasPlayer()) continue;
 
-        Player *player = sock.getPlayer();
+        std::shared_ptr<Player> player = sock.getPlayer();
 
         if(player->fd < 0)
             continue;
@@ -290,14 +290,14 @@ void Server::weather(WeatherString w) {
     auto it = activeList.begin();
     while(it != activeList.end()) {
         // Increment the iterator in case this monster dies during the update and is removed from the active list
-        Monster* monster = (*it++);
-
-        if(!monster)
+        auto monster = (it->lock());
+        if(!monster) {
+            it = activeList.erase(it);
             continue;
+        }
+        it++;
 
-        if( (w == WEATHER_SUNRISE || w == WEATHER_SUNSET) &&
-            monster->isEffected("vampirism"))
-        {
+        if( (w == WEATHER_SUNRISE || w == WEATHER_SUNSET) && monster->isEffected("vampirism")) {
             // if sunrise/sunset, vampires always see it
         } else {
             if(!monster->getRoomParent()->isOutdoors())
@@ -352,7 +352,7 @@ void update_time(long t) {
         gServer->weather(WEATHER_SUNSET);
     }
 
-    for(std::pair<std::string, Player*> p : gServer->players) {
+    for(std::pair<std::string, std::shared_ptr<Player>> p : gServer->players) {
         if(p.second->isEffected("vampirism"))
             p.second->computeAC();
     }
@@ -605,9 +605,9 @@ void Server::updateWeather(long t) {
 // update function for logic scripts
 
 void Server::updateAction(long t) {
-    Creature* victim=nullptr;
-    Object  *object=nullptr;
-    BaseRoom* room=nullptr;
+    std::shared_ptr<Creature> victim=nullptr;
+    std::shared_ptr<Object> object=nullptr;
+    std::shared_ptr<BaseRoom> room=nullptr;
     ttag    *act=nullptr, *tact=nullptr;
     int     i=0, on_cmd=0, thresh=0;
     int     xdir=0, num=0;
@@ -618,219 +618,221 @@ void Server::updateAction(long t) {
 
     last_action_update = t;
 
-    Monster *monster=nullptr;
     auto it = activeList.begin();
     while(it != activeList.end()) {
-        monster = (*it++);
-        if(monster) {
-            room = monster->getRoomParent();
-            if(room && monster->flagIsSet(M_LOGIC_MONSTER)) {
-                if(!monster->first_tlk)
-                    loadCreature_actions(monster);
-                else {
-                    act = monster->first_tlk;
-                    on_cmd = act->on_cmd;
-                    on_cmd--;
-                    i = 0;
-                    if(on_cmd)
-                        while(i < on_cmd) {
-                            act = act->next_tag;
-                            i++;
-                        }
-                    on_cmd+=2; // set for next command, can be altered later
-                    // proccess commands based on a higharcy
-                    if(act && act->test_for) {
-                        switch(act->test_for) {
-                        case 'P': // test for player
-                            victim = room->findPlayer(monster, act->response, 1);
-                            if(victim) {
-                                delete[] monster->first_tlk->target;
-                                monster->first_tlk->target = new char[strlen(act->response)+1];
-                                strcpy(monster->first_tlk->target, act->response);
-                                act->success = 1;
-                            } else {
-                                if(monster->first_tlk->target)
-                                    free(monster->first_tlk->target);
-                                monster->first_tlk->target = nullptr;
-                                act->success = 0;
-                            }
-                            break;
-                        case 'C': // test for a player with class
-                        case 'R': // test for a player with race
-                            for(Player* ply : room->players) {
-                                if(act->test_for == 'C')
-                                    if(static_cast<int>(ply->getClass()) == act->arg1) {
-                                        delete[] monster->first_tlk->target;
-                                        monster->first_tlk->target = new char[ply->getName().length()+1];
-                                        strcpy(monster->first_tlk->target, ply->getCName());
-                                        act->success = 1;
-                                        break;
-                                    }
-                                if(act->test_for == 'R')
-                                    if(ply->getRace() == act->arg1) {
-                                        delete monster->first_tlk->target;
-                                        monster->first_tlk->target = new char[ply->getName().length()+1];
-                                        strcpy(monster->first_tlk->target, ply->getCName());
-                                        act->success = 1;
-                                        break;
-                                    }
-                            }
-                            if(!act->success) {
-                                delete monster->first_tlk->target;
-                                monster->first_tlk->target = nullptr;
-                                act->success = 0;
-                            }
-                            break;
-                        case 'O': // test for object in room
-                            object = room->findObject(monster, act->response, 1);
-
-                            if(object) {
-                                delete monster->first_tlk->target;
-                                monster->first_tlk->target = new char[strlen(act->response)+1];
-                                strcpy(monster->first_tlk->target, act->response);
-                                act->success = 1;
-                                // loge(victim->name);
-                            } else {
-                                if(monster->first_tlk->target)
-                                    free(monster->first_tlk->target);
-                                monster->first_tlk->target = nullptr;
-                                act->success = 0;
-                            }
-                            break;
-                        case 'o': // test for object on players
-                            break;
-                        case 'M': // test for monster
-                            victim = room->findMonster(monster, act->response, 1);
-                            if(victim) {
-                                delete monster->first_tlk->target;
-                                monster->first_tlk->target = new char[strlen(act->response)+1];
-                                strcpy(monster->first_tlk->target, act->response);
-                                act->success = 1;
-                            } else {
-                                if(monster->first_tlk->target)
-                                    free(monster->first_tlk->target);
-                                monster->first_tlk->target = nullptr;
-                                act->success = 0;
-                            }
-                            break;
-                        }
-
+        auto monster = it->lock();
+        if(!monster) {
+            it = activeList.erase(it);
+            continue;
+        }
+        it++;
+        room = monster->getRoomParent();
+        if(room && monster->flagIsSet(M_LOGIC_MONSTER)) {
+            if(!monster->first_tlk)
+                loadCreature_actions(monster);
+            else {
+                act = monster->first_tlk;
+                on_cmd = act->on_cmd;
+                on_cmd--;
+                i = 0;
+                if(on_cmd)
+                    while(i < on_cmd) {
+                        act = act->next_tag;
+                        i++;
                     }
-                    if(act->if_cmd) {
-                        // test to see if command was successful
-                        for(tact = monster->first_tlk; tact; tact = tact->next_tag) {
-                            if(tact->type == act->if_cmd)
-                                break;
-                        }
-                        if(tact) {
-                            if(act->if_goto_cmd && tact->success)
-                                on_cmd = act->if_goto_cmd;
-                            if(act->not_goto_cmd && !tact->success)
-                                on_cmd = act->not_goto_cmd;
+                on_cmd+=2; // set for next command, can be altered later
+                // proccess commands based on a higharcy
+                if(act && act->test_for) {
+                    switch(act->test_for) {
+                    case 'P': // test for player
+                        victim = room->findPlayer(monster, act->response, 1);
+                        if(victim) {
+                            delete[] monster->first_tlk->target;
+                            monster->first_tlk->target = new char[strlen(act->response)+1];
+                            strcpy(monster->first_tlk->target, act->response);
+                            act->success = 1;
                         } else {
-                            if(act->not_goto_cmd)
-                                on_cmd = act->not_goto_cmd;
+                            if(monster->first_tlk->target)
+                                free(monster->first_tlk->target);
+                            monster->first_tlk->target = nullptr;
+                            act->success = 0;
                         }
-                    }
-                    // run a action
-                    if(act->do_act) {
-                        //  num = 0;
-                        //  thresh = 0;
-                        act->success = 1;
-
-                        resp = act->response;
-                        if(isdigit(*(resp))) {
-
-                            num = 10*(atoi(resp));
-                            ++resp;
-                            num = (num == 0) ? 100:num;
-
-                            thresh = Random::get(1,200);
-
-                            //  broadcast(isDm, -1, cp->crt->getRoom(), "*DM* NUM: %d Thresh: %d", num, thresh);
-
-                        }
-
-
-                        switch(act->do_act) {
-                        case 'E': // broadcast response to room
-                            if(thresh <= num)
-                                broadcast(nullptr, monster->getRoomParent(), "%s", resp);
-
-                            break;
-                        case 'S': // say to room
-                            if(thresh <= num)
-                                broadcast(nullptr, monster->getRoomParent(), "%M says, \"%s\"", monster, resp);
-                            break;
-                        case 'T':   // Mob Trash-talk
-                            if(Random::get(1,100) <= 10) {
-
-                                if(countTotalEnemies(monster) > 0 && !monster->getAsMonster()->nearEnemy()) {
-                                    if(monster->daily[DL_BROAD].cur > 0) {
-                                        broadcast("### %M broadcasted, \"%s\"", monster, resp);
-                                        subtractMobBroadcast(monster, 0);
-                                    }
+                        break;
+                    case 'C': // test for a player with class
+                    case 'R': // test for a player with race
+                        for(const auto& ply: room->players) {
+                            if(act->test_for == 'C')
+                                if(static_cast<int>(ply->getClass()) == act->arg1) {
+                                    delete[] monster->first_tlk->target;
+                                    monster->first_tlk->target = new char[ply->getName().length()+1];
+                                    strcpy(monster->first_tlk->target, ply->getCName());
+                                    act->success = 1;
+                                    break;
                                 }
-                            }
-                            break;
-                        case 'B':   // Mob general random broadcasts
-                            if(Random::get(1,100) <= 10) {
-
-                                if(countTotalEnemies(monster) < 1 && thresh <= num) {
-                                    if(monster->daily[DL_BROAD].cur > 0) {
-                                        broadcast("### %M broadcasted, \"%s\"", monster, resp);
-                                        subtractMobBroadcast(monster, 0);
-                                    }
+                            if(act->test_for == 'R')
+                                if(ply->getRace() == act->arg1) {
+                                    delete monster->first_tlk->target;
+                                    monster->first_tlk->target = new char[ply->getName().length()+1];
+                                    strcpy(monster->first_tlk->target, ply->getCName());
+                                    act->success = 1;
+                                    break;
                                 }
-                            }
-                            break;
-                        case 'A': // attack monster in target string
-                            if(monster->first_tlk->target && !monster->getAsMonster()->hasEnemy()) {
-                                victim = room->findMonster(monster, monster->first_tlk->target, 1);
-                                if(!victim)
-                                    return;
-                                victim->getAsMonster()->monsterCombat((Monster*)monster);
-                                if(monster->first_tlk->target)
-                                    free(monster->first_tlk->target);
-                                monster->first_tlk->target = nullptr;
-                            }
-                            break;
-                        case 'a': // attack player target
-                        case 'c': // cast a spell on target
-                        case 'F': // force target to do somthing
-                        case '|': // set a flag on target
-                        case '&': // remove flag on target
-                        case 'P': // perform social
-                        case 'O': // open door
-                        case 'C': // close door
-                        case 'D': // delay action
-                        case 'G': // go into a keyword exit
-                            break;
-                        case '0': // go n
-                        case '1': // go ne
-                        case '2': // go e
-                        case '3': // go se
-                        case '4': // go s
-                        case '5': // go sw
-                        case '6': // go w
-                        case '7': // go nw
-                        case '8': // go up
-                        case '9': // go down
-                            xdir = act->do_act - '0';
-                            strcpy(cmnd.str[0], xits[xdir]);
-                            // TODO: Dom: fix update
-                                std::clog << "action move\n";
-                            //move(creature, &cmnd);
-                            break;
                         }
+                        if(!act->success) {
+                            delete monster->first_tlk->target;
+                            monster->first_tlk->target = nullptr;
+                            act->success = 0;
+                        }
+                        break;
+                    case 'O': // test for object in room
+                        object = room->findObject(monster, act->response, 1);
+
+                        if(object) {
+                            delete monster->first_tlk->target;
+                            monster->first_tlk->target = new char[strlen(act->response)+1];
+                            strcpy(monster->first_tlk->target, act->response);
+                            act->success = 1;
+                            // loge(victim->name);
+                        } else {
+                            if(monster->first_tlk->target)
+                                free(monster->first_tlk->target);
+                            monster->first_tlk->target = nullptr;
+                            act->success = 0;
+                        }
+                        break;
+                    case 'o': // test for object on players
+                        break;
+                    case 'M': // test for monster
+                        victim = room->findMonster(monster, act->response, 1);
+                        if(victim) {
+                            delete monster->first_tlk->target;
+                            monster->first_tlk->target = new char[strlen(act->response)+1];
+                            strcpy(monster->first_tlk->target, act->response);
+                            act->success = 1;
+                        } else {
+                            if(monster->first_tlk->target)
+                                free(monster->first_tlk->target);
+                            monster->first_tlk->target = nullptr;
+                            act->success = 0;
+                        }
+                        break;
                     }
-                    // unconditional jump
-                    if(act->goto_cmd) {
-                        act->success = 1;
-                        monster->first_tlk->on_cmd = act->goto_cmd;
-                    } else
-                        monster->first_tlk->on_cmd = on_cmd;
+
                 }
+                if(act->if_cmd) {
+                    // test to see if command was successful
+                    for(tact = monster->first_tlk; tact; tact = tact->next_tag) {
+                        if(tact->type == act->if_cmd)
+                            break;
+                    }
+                    if(tact) {
+                        if(act->if_goto_cmd && tact->success)
+                            on_cmd = act->if_goto_cmd;
+                        if(act->not_goto_cmd && !tact->success)
+                            on_cmd = act->not_goto_cmd;
+                    } else {
+                        if(act->not_goto_cmd)
+                            on_cmd = act->not_goto_cmd;
+                    }
+                }
+                // run a action
+                if(act->do_act) {
+                    //  num = 0;
+                    //  thresh = 0;
+                    act->success = 1;
+
+                    resp = act->response;
+                    if(isdigit(*(resp))) {
+
+                        num = 10*(atoi(resp));
+                        ++resp;
+                        num = (num == 0) ? 100:num;
+
+                        thresh = Random::get(1,200);
+
+                        //  broadcast(isDm, -1, cp->crt->getRoom(), "*DM* NUM: %d Thresh: %d", num, thresh);
+
+                    }
+
+
+                    switch(act->do_act) {
+                    case 'E': // broadcast response to room
+                        if(thresh <= num)
+                            broadcast(nullptr, monster->getRoomParent(), "%s", resp);
+
+                        break;
+                    case 'S': // say to room
+                        if(thresh <= num)
+                            broadcast(nullptr, monster->getRoomParent(), "%M says, \"%s\"", monster.get(), resp);
+                        break;
+                    case 'T':   // Mob Trash-talk
+                        if(Random::get(1,100) <= 10) {
+
+                            if(countTotalEnemies(monster) > 0 && !monster->getAsMonster()->nearEnemy()) {
+                                if(monster->daily[DL_BROAD].cur > 0) {
+                                    broadcast("### %M broadcasted, \"%s\"", monster.get(), resp);
+                                    subtractMobBroadcast(monster, 0);
+                                }
+                            }
+                        }
+                        break;
+                    case 'B':   // Mob general random broadcasts
+                        if(Random::get(1,100) <= 10) {
+
+                            if(countTotalEnemies(monster) < 1 && thresh <= num) {
+                                if(monster->daily[DL_BROAD].cur > 0) {
+                                    broadcast("### %M broadcasted, \"%s\"", monster.get(), resp);
+                                    subtractMobBroadcast(monster, 0);
+                                }
+                            }
+                        }
+                        break;
+                    case 'A': // attack monster in target string
+                        if(monster->first_tlk->target && !monster->getAsMonster()->hasEnemy()) {
+                            victim = room->findMonster(monster, monster->first_tlk->target, 1);
+                            if(!victim)
+                                return;
+                            victim->getAsMonster()->monsterCombat((std::shared_ptr<Monster> )monster);
+                            if(monster->first_tlk->target)
+                                free(monster->first_tlk->target);
+                            monster->first_tlk->target = nullptr;
+                        }
+                        break;
+                    case 'a': // attack player target
+                    case 'c': // cast a spell on target
+                    case 'F': // force target to do somthing
+                    case '|': // set a flag on target
+                    case '&': // remove flag on target
+                    case 'P': // perform social
+                    case 'O': // open door
+                    case 'C': // close door
+                    case 'D': // delay action
+                    case 'G': // go into a keyword exit
+                        break;
+                    case '0': // go n
+                    case '1': // go ne
+                    case '2': // go e
+                    case '3': // go se
+                    case '4': // go s
+                    case '5': // go sw
+                    case '6': // go w
+                    case '7': // go nw
+                    case '8': // go up
+                    case '9': // go down
+                        xdir = act->do_act - '0';
+                        strcpy(cmnd.str[0], xits[xdir]);
+                        // TODO: Dom: fix update
+                            std::clog << "action move\n";
+                        //move(creature, &cmnd);
+                        break;
+                    }
+                }
+                // unconditional jump
+                if(act->goto_cmd) {
+                    act->success = 1;
+                    monster->first_tlk->on_cmd = act->goto_cmd;
+                } else
+                    monster->first_tlk->on_cmd = on_cmd;
             }
         }
     }
@@ -876,7 +878,7 @@ void doCrash(int sig) {
     broadcast(isStaff, "%s", ctime(&t));
 
     oStr << "People online: ";
-    Player* player=nullptr;
+    std::shared_ptr<Player> player=nullptr;
     int i=0;
     for(Socket &sock : gServer->sockets) {
         if (!sock.hasPlayer()) continue;
@@ -961,7 +963,7 @@ void cleanUpMemory() {
 //                      subtractMobBroadcast
 //*********************************************************************
 
-void subtractMobBroadcast(Creature *monster, int num) {
+void subtractMobBroadcast(const std::shared_ptr<Creature>&monster, int num) {
     if(monster->daily[DL_BROAD].cur > 0) {
         if(num)
             monster->daily[DL_BROAD].cur -= num;
@@ -974,10 +976,10 @@ void subtractMobBroadcast(Creature *monster, int num) {
 //                      countTotalEnemies
 //*********************************************************************
 
-int countTotalEnemies(Creature *monster) {
+int countTotalEnemies(const std::shared_ptr<Creature>&monster) {
     if(monster->isPlayer())
         return(0);
-    Monster* mons = monster->getAsMonster();
+    std::shared_ptr<Monster>  mons = monster->getAsMonster();
     return(mons->threatTable->size());
 }
 
@@ -987,13 +989,16 @@ int countTotalEnemies(Creature *monster) {
 // This function removes a player's name from every single monster
 // on the active list when the player dies, suicides, or is dusted.
 
-void Server::clearAsEnemy(Player* player) {
+void Server::clearAsEnemy(const std::shared_ptr<Player>& player) {
 
-    Monster *monster=nullptr;
     auto it = activeList.begin();
     while(it != activeList.end()) {
-        // Increment the iterator in case this monster dies during the update and is removed from the active list
-        monster = (*it++);
+        auto monster = it->lock();
+        if(!monster) {
+            it = activeList.erase(it);
+            continue;
+        }
+        it++;
 
         if(!(monster->inUniqueRoom() && monster->getUniqueRoomParent()->info.id) && !monster->inAreaRoom()) continue;
 
@@ -1008,7 +1013,7 @@ void Server::clearAsEnemy(Player* player) {
 // This function will return 1 if anyone is in the room while dmInvis
 
 int BaseRoom::dmInRoom() const {
-    for(Player* ply : players) {
+    for(const auto& ply: players) {
         if(ply->flagIsSet(P_DM_INVIS))
             return(1);
     }
@@ -1023,10 +1028,10 @@ void Player::checkOutlawAggro() {
     if(!flagIsSet(P_OUTLAW_WILL_BE_ATTACKED))
         return;
 
-    for(Monster* mons : getRoomParent()->monsters) {
+    for(const auto& mons : getRoomParent()->monsters) {
         if(mons->flagIsSet(M_OUTLAW_AGGRO) && !mons->getAsMonster()->hasEnemy()) {
             mons->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-            mons->getAsMonster()->addEnemy(this, true);
+            mons->getAsMonster()->addEnemy(getAsCreature(), true);
         }
     }
 }
@@ -1093,14 +1098,18 @@ void Server::updateShips(long n) {
 //                          list_act
 //*********************************************************************
 std::string Server::showActiveList() {
-    Monster* monster;
     auto it = activeList.begin();
     std::ostringstream oStr;
     oStr << "### Active monster list ###\n";
     oStr << "Monster    -    Room Number\n";
 
     while(it != activeList.end()) {
-        monster = (*it++);
+        auto monster = it->lock();
+        if(!monster) {
+            it = activeList.erase(it);
+            continue;
+        }
+        it++;
         if((!monster->inUniqueRoom() || !monster->getUniqueRoomParent()->info.id) && !monster->inAreaRoom()) {
             if(monster->getName()[0])
                 oStr << "Bad Mob " << monster->getName() << ".\n";
@@ -1117,7 +1126,7 @@ std::string Server::showActiveList() {
     return(oStr.str());
 
 }
-int list_act(Player* player, cmd* cmnd) {
+int list_act(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("%s", gServer->showActiveList().c_str());
     gServer->processOutput();
     return(0);

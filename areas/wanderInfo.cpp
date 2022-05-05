@@ -84,21 +84,18 @@ unsigned long WanderInfo::getRandomCount() const {
 //                      show
 //*********************************************************************
 
-void WanderInfo::show(const Player* player, std::string_view area) const {
+void WanderInfo::show(const std::shared_ptr<Player> player, std::string_view area) const {
     std::map<int, CatRef>::const_iterator it;
-    Monster* monster=nullptr;
+    std::shared_ptr<Monster>  monster=nullptr;
 
     player->print("Traffic: %d%%\n", traffic);
     player->print("Random Monsters:\n");
     for(it = random.begin(); it != random.end() ; it++) {
-        loadMonster((*it).second, &monster);
+        loadMonster((*it).second, monster);
 
         player->printColor("^c%2d) ^x%14s ^c::^x %s\n", (*it).first+1,
                            (*it).second.displayStr("", 'c').c_str(), monster ? monster->getCName() : "");
 
-        if(monster) {
-            delete monster;;
-            monster = nullptr;
-        }
+        monster.reset();
     }
 }

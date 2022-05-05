@@ -42,7 +42,7 @@
 typedef struct prefInfo {
     std::string name;
     int     flag;
-    bool    (*canUse)(const Creature *);
+    bool    (*canUse)(const std::shared_ptr<Creature> &);
     std::string desc;
     bool    invert;                 // reverses the language
 } prefInfo, *prefPtr;
@@ -137,9 +137,9 @@ prefInfo prefList[] =
 //                      cmdTelOpts
 //*********************************************************************
 
-int cmdTelOpts(Player* player, cmd* cmnd) {
+int cmdTelOpts(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Socket* sock = player->getSock();
-    Player* target = player;
+    std::shared_ptr<Player> target = player;
 
 
     if(!sock)
@@ -213,7 +213,7 @@ int cmdTelOpts(Player* player, cmd* cmnd) {
 //                      cmdPrefs
 //*********************************************************************
 
-int cmdPrefs(Player* player, cmd* cmnd) {
+int cmdPrefs(const std::shared_ptr<Player>& player, cmd* cmnd) {
     prefPtr pref = nullptr;
     int     i=0, match=0, len=strlen(cmnd->str[1]);
     bool    set = cmnd->str[0][0]=='s';
@@ -389,9 +389,9 @@ int cmdPrefs(Player* player, cmd* cmnd) {
         if(pref->name == "afk") {
             // broadcast for going afk
             if(!player->flagIsSet(P_DM_INVIS))
-                broadcast(player->getSock(), player->getParent(), "%M has gone afk.", player);
+                broadcast(player->getSock(), player->getParent(), "%M has gone afk.", player.get());
             else
-                broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M has gone afk.", player);
+                broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M has gone afk.", player.get());
         }
         if(pref->name == "wimpy") {
             player->setWimpy(cmnd->val[1] == 1L ? 10 : cmnd->val[1]);

@@ -32,7 +32,7 @@
 //                      track
 //*********************************************************************
 
-void Object::track(Player* player) { lastMod = player->getName(); }
+void Object::track(std::shared_ptr<Player> player) { lastMod = player->getName(); }
 
 void Object::setDelay(int newDelay) { delay = newDelay; }
 void Object::setExtra(int x) { extra = x; }
@@ -82,7 +82,7 @@ void Object::setLotteryCycle(int c) { lotteryCycle = c; }
 void Object::setLotteryNumbers(short i, short n) { lotteryNumbers[i] = n; }
 void Object::setRecipe(int r) { recipe = r; }
 void Object::setMaterial(Material m) { material = m; }
-void Object::setQuestOwner(const Player* player) { questOwner = player->getName(); }
+void Object::setQuestOwner(const std::shared_ptr<Player> player) { questOwner = player->getName(); }
 
 void Object::clearEffect() {
     setEffect("");

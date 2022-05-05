@@ -37,7 +37,7 @@ class Fishing;
 #include "wanderInfo.hpp"
 #include "mudObjects/players.hpp"
 
-typedef std::list<Exit*> ExitList;
+typedef std::list<std::shared_ptr<Exit>> ExitList;
 
 class BaseRoom: public Container {
 protected:
@@ -58,7 +58,7 @@ public:
 
     void readExitsXml(xmlNodePtr curNode, bool offline=false);
     bool delExit(std::string_view dir);
-    bool delExit(Exit *exit);
+    bool delExit(const std::shared_ptr<Exit>& exit);
     void clearExits();
 
     [[nodiscard]] bool isSunlight() const;
@@ -75,15 +75,15 @@ public:
     int saveExitsXml(xmlNodePtr curNode) const;
 
 
-    [[nodiscard]] Monster* getGuardingExit(const Exit* exit, const Player* player) const;
-    void addExit(Exit *ext);
+    [[nodiscard]] std::shared_ptr<Monster>  getGuardingExit(const std::shared_ptr<Exit>& exit, const std::shared_ptr<const Player>& player) const;
+    void addExit(std::shared_ptr<Exit> ext);
     void checkExits();
-    [[nodiscard]] bool deityRestrict(const Creature* creature) const;
+    [[nodiscard]] bool deityRestrict(const std::shared_ptr<const Creature> & creature) const;
     [[nodiscard]] int maxCapacity() const;
     [[nodiscard]] bool isFull() const;
     [[nodiscard]] int countVisPly() const;
     [[nodiscard]] int countCrt() const;
-    [[nodiscard]] Monster* getTollkeeper() const;
+    [[nodiscard]] std::shared_ptr<Monster>  getTollkeeper() const;
 
     [[nodiscard]] bool isMagicDark() const;
     [[nodiscard]] bool isNormalDark() const;
@@ -93,9 +93,9 @@ public:
     [[nodiscard]] bool magicBonus() const;
     [[nodiscard]] bool isForest() const;
     [[nodiscard]] bool vampCanSleep(Socket* sock) const;
-    [[nodiscard]] int getMaxMobs() const;
+    [[nodiscard]] virtual int getMaxMobs() const;
     [[nodiscard]] int dmInRoom() const;
-    void arrangeExits(Player* player= nullptr);
+    void arrangeExits(const std::shared_ptr<Player>& player= nullptr);
     [[nodiscard]] bool isWinter() const;
     [[nodiscard]] bool isOutlawSafe() const;
     [[nodiscard]] bool isPkSafe() const;

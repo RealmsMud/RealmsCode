@@ -60,6 +60,7 @@
 #include "xml.hpp"                               // for loadPlayer
 
 class Guild;
+bool canCommunicate(const std::shared_ptr<Player>& player);
 
 char com_text[][20] = {"sent", "replied", "whispered", "signed", "said",
                        "recited", "yelled", "emoted", "group mentioned" };
@@ -185,7 +186,7 @@ char confusionChar() {
 //*********************************************************************
 // make the player say gibberish instead of actual words
 
-std::string confusionText(Creature* speaker, std::string text) {
+std::string confusionText(const std::shared_ptr<Creature>& speaker, std::string text) {
     if( (!speaker->isEffected("confusion") && !speaker->isEffected("drunkenness")) ||
         speaker->isStaff()
     )
@@ -221,7 +222,7 @@ std::string confusionText(Creature* speaker, std::string text) {
 //    Ex: tell bob hello there
 
 std::string getFullstrTextTrun(std::string str, int skip, char toSkip, bool colorEscape) {
-    return(getFullstrText(str, skip, toSkip, colorEscape, true));
+    return(getFullstrText(std::move(str), skip, toSkip, colorEscape, true));
 }
 
 std::string getFullstrText(std::string str, int skip, char toSkip, bool colorEscape, bool truncate) {
@@ -276,9 +277,9 @@ std::string getFullstrText(std::string str, int skip, char toSkip, bool colorEsc
 // This is the base function for communication with a target player.
 // The commands tell, whisper, reply, and sign are all routed through here.
 
-int communicateWith(Player* player, cmd* cmnd) {
-    std::string text = "";
-    Player  *target=nullptr;
+int communicateWith(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::string text;
+    std::shared_ptr<Player> target=nullptr;
     int     i=0, found=0;
     char    ooc_str[10];
 
@@ -353,10 +354,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 
     // run the player table
     cmnd->str[1][0] = up(cmnd->str[1][0]);
-    Player* ply;
-    for(const auto& p : gServer->players) {
-        ply = p.second;
-
+    for(const auto& [pId, ply] : gServer->players) {
         if(!ply->isConnected())
             continue;
         // these two need vicinity
@@ -434,7 +432,7 @@ int communicateWith(Player* player, cmd* cmnd) {
                 return(0);
             }
             if(target->isEffected("blindness")) {
-                player->print("%M is blind! %s can't see what you're signing.\n", target, target->upHeShe());
+                player->print("%M is blind! %s can't see what you're signing.\n", target.get(), target->upHeShe());
                 return(0);
             }
             if(player->isInvisible() && !target->isEffected("detect-invisible")) {
@@ -465,20 +463,18 @@ int communicateWith(Player* player, cmd* cmnd) {
     }
     text = confusionText(player, text);
 
-    player->printColor("^cYou %s \"%s%s\" to %N.\n",
-        com_text[chan->type],
-        ooc_str, text.c_str(), target);
+    player->printColor("^cYou %s \"%s%s\" to %N.\n", com_text[chan->type], ooc_str, text.c_str(), target.get());
 
 
     if(chan->type == COM_WHISPER)
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M whispers something to %N.", player, target);
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M whispers something to %N.", player.get(), target.get());
 
 
     if(!target->isGagging(player->getName())) {
         target->printColor("%s%s%M %s%s, \"%s%s\".\n",
             target->customColorize("*CC:TELL*").c_str(),
             chan->type == COM_WHISPER || chan->type == COM_SIGN ? "" : "### ",
-            player,
+            player.get(),
             chan->type == COM_WHISPER || chan->type == COM_SIGN ? com_text[chan->type] : "just flashed",
             chan->type == COM_WHISPER || chan->type == COM_SIGN ? " to you" : "",
             ooc_str, text.c_str());
@@ -515,13 +511,13 @@ int communicateWith(Player* player, cmd* cmnd) {
 
     } else {
 
-        for(Player* ply : player->getRoomParent()->players) {
+        for(const auto& ply: player->getRoomParent()->players) {
             if( ply != player && ply != target && !ply->isEffected("blindness"))
             {
                 if(ply->getRace() == DARKELF || ply->isStaff())
-                    ply->print("%M signed, \"%s\" to %N.\n", player, text.c_str(), target);
+                    ply->print("%M signed, \"%s\" to %N.\n", player.get(), text.c_str(), target.get());
                 else
-                    ply->print("%M signed something in dark elven to %N.\n", player, target);
+                    ply->print("%M signed something in dark elven to %N.\n", player.get(), target.get());
             }
         }
 
@@ -544,7 +540,7 @@ int communicateWith(Player* player, cmd* cmnd) {
 //*********************************************************************
 // function that does the actual printing of message for below
 
-void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, std::string_view text, std::string speak, char *ooc_str, bool anon) {
+void commTarget(const std::shared_ptr<Creature>& player, const std::shared_ptr<Player>& target, int type, bool ooc, int lang, std::string_view text, std::string speak, char *ooc_str, bool anon) {
     std::ostringstream out;
 
     if(!target || target->flagIsSet(P_UNCONSCIOUS))
@@ -597,16 +593,16 @@ void commTarget(Creature* player, Player* target, int type, bool ooc, int lang, 
 // This function allows the player to say something to all the other
 // people in the room (or nearby rooms).
 
-int pCommunicate(Player* player, cmd* cmnd) {
+int pCommunicate(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(communicate(player, cmnd));
 }
 
-int communicate(Creature* creature, cmd* cmnd) {
-    const Player* player=nullptr;
+int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
+    std::shared_ptr<const Player> player=nullptr;
     std::string text, name;
-    Creature *owner=nullptr;
-    Player* pTarget=nullptr;
-    BaseRoom* room=nullptr;
+    std::shared_ptr<Creature>owner=nullptr;
+    std::shared_ptr<Player> pTarget=nullptr;
+    std::shared_ptr<BaseRoom> room=nullptr;
 
     int     i=0, lang;
     char    speak[35], ooc_str[10];
@@ -672,20 +668,27 @@ int communicate(Creature* creature, cmd* cmnd) {
 
         Group* group = creature->getGroup();
         if(group) {
-            for(Creature* crt : group->members) {
-                pTarget = crt->getAsPlayer();
-                if(!pTarget) continue;
-                // GT prints to the player!
-                if(pTarget == creature && chan->type != COM_GT)
-                    continue;
+            auto it = group->members.begin();
+            while(it != group->members.end()) {
+                if(auto crt = (*it).lock()) {
+                    it++;
+                    pTarget = crt->getAsPlayer();
+                    if(!pTarget) continue;
+                    // GT prints to the player!
+                    if(pTarget == creature && chan->type != COM_GT)
+                        continue;
 
-                if(pTarget->isGagging(creature->isPet() ? creature->getMaster()->getCName() : creature->getCName()))
-                    continue;
+                    if(pTarget->isGagging(creature->isPet() ? creature->getMaster()->getCName() : creature->getCName()))
+                        continue;
 
-                if(pTarget->getGroupStatus() < GROUP_MEMBER) continue;
+                    if(pTarget->getGroupStatus() < GROUP_MEMBER) continue;
 
-                commTarget(creature, pTarget, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+                    commTarget(creature, pTarget, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+                } else {
+                    it = group->members.erase(it);
+                }
             }
+
         } else {
             creature->print("You are not in a group.\n");
             return(0);
@@ -710,7 +713,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 
         }
 
-        for(Player* ply : creature->getRoomParent()->players) {
+        for(const auto& ply: creature->getRoomParent()->players) {
             if(chan->shout)
                 ply->wake("Loud noises disturb your sleep.", true);
 
@@ -736,13 +739,13 @@ int communicate(Creature* creature, cmd* cmnd) {
             // the adjacent rooms, however, people will not know who yelled.
 
 
-            for(Exit* exit : creature->getRoomParent()->exits) {
+            for(const auto& exit : creature->getRoomParent()->exits) {
                 room = nullptr;
                 i=0;
                 PlayerSet::iterator pIt, pEnd;
                 // don't shout through closed doors
                 if(!exit->flagIsSet(X_CLOSED))
-                    Move::getRoom(nullptr, exit, &room, true);
+                    Move::getRoom(nullptr, exit, room, true);
 
                 // the same-room checks aren't run in getRoom because
                 // we don't send a creature.
@@ -785,7 +788,7 @@ int communicate(Creature* creature, cmd* cmnd) {
 
         if(chan->passphrase) {
 
-            for(Exit* exit : creature->getRoomParent()->exits) {
+            for(const auto& exit : creature->getRoomParent()->exits) {
                 // got the phrase right?
                 if(!exit->getPassPhrase().empty() && exit->getPassPhrase() == text) {
                     // right language?
@@ -827,7 +830,7 @@ int communicate(Creature* creature, cmd* cmnd) {
         broadcast(watchingSuperEaves, "^E--- %s %s, \"%s%s\" in %s.", name.c_str(), com_text[chan->type],
             ooc_str, text.c_str(), get_language_adj(lang));
 
-    Player* pPlayer = creature->getAsPlayer();
+    std::shared_ptr<Player> pPlayer = creature->getAsPlayer();
     // spam check
     if(pPlayer)
         pPlayer->checkForSpam();
@@ -843,7 +846,7 @@ std::string mxpTag(std::string_view str) {
 //**********************************************************************
 // This function is used as a base for all global communication channels
 
-int channel(Player* player, cmd* cmnd) {
+int channel(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string text, chanStr, extra;
     size_t i = 0;
     unsigned int check=0, skip=1;
@@ -949,7 +952,7 @@ int channel(Player* player, cmd* cmnd) {
         if(!check)
             check = player->getDisplayRace();
         extra = "(";
-        extra += gConfig->getRace(check)->getName().c_str();
+        extra += gConfig->getRace(check)->getName();
         extra += ") ";
 
     } else if(chan->type == COM_CLAN) {
@@ -994,7 +997,7 @@ int channel(Player* player, cmd* cmnd) {
         if(!extra.empty())
             player->printColor("%s%s", player->customColorize(chan->color).c_str(), extra.c_str());
 
-        player->printColor(player->customColorize(chan->color + chan->displayFmt).c_str(), player, text.c_str());
+        player->printColor(player->customColorize(chan->color + chan->displayFmt).c_str(), player.get(), text.c_str());
     } else {
 
         std::ostringstream eaves;
@@ -1020,7 +1023,7 @@ int channel(Player* player, cmd* cmnd) {
     return(0);
 }
 
-channelPtr getChannelByName(const Player *player, const std::string &chanStr) {
+channelPtr getChannelByName(const std::shared_ptr<Player>& player, const std::string &chanStr) {
     for(auto& curChan : channelList) {
         if (curChan.channelName == nullptr) return nullptr;
         if (chanStr == curChan.channelName && (!curChan.canSee || curChan.canSee(player)))
@@ -1037,7 +1040,7 @@ channelPtr getChannelByDiscordChannel(const unsigned long discordChannelID) {
     return nullptr;
 }
 
-void sendGlobalComm(const Player *player, const std::string &text, const std::string &extra, unsigned int check,
+void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &text, const std::string &extra, unsigned int check,
                     const channelInfo *chan, const std::string &etxt, const std::string &oocName, const std::string &icName) {
     // more complicated checks go here
     Socket* sock=nullptr;
@@ -1116,7 +1119,7 @@ void sendGlobalComm(const Player *player, const std::string &text, const std::st
 //                      cmdSpeak
 //*********************************************************************
 
-int cmdSpeak(Player* player, cmd* cmnd) {
+int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     lang=0;
 
     if(!player->ableToDoCommand())
@@ -1334,7 +1337,7 @@ int cmdSpeak(Player* player, cmd* cmnd) {
 //                      cmdLanguages
 //*********************************************************************
 
-int cmdLanguages(Player* player, cmd* cmnd) {
+int cmdLanguages(const std::shared_ptr<Player>& player, cmd* cmnd) {
     char    str[2048];
     //  char    lang[LANGUAGE_COUNT][32];
     int     i, j=0;
@@ -1374,7 +1377,7 @@ int cmdLanguages(Player* player, cmd* cmnd) {
 //                      printForeignTongueMsg
 //*********************************************************************
 
-void printForeignTongueMsg(const BaseRoom *inRoom, Creature *talker) {
+void printForeignTongueMsg(const std::shared_ptr<const BaseRoom> &inRoom, const std::shared_ptr<Creature>&talker) {
     int         lang=0;
 
     if(!talker || !inRoom)
@@ -1384,11 +1387,11 @@ void printForeignTongueMsg(const BaseRoom *inRoom, Creature *talker) {
     if(!lang)
         return;
 
-    for(Player* ply : inRoom->players) {
+    for(const auto& ply: inRoom->players) {
         if(ply->languageIsKnown(lang) || ply->isEffected("comprehend-languages") || ply->isStaff()) {
             continue;
         }
-        ply->print("%M says something in %s.\n", talker, get_language_adj(lang));
+        ply->print("%M says something in %s.\n", talker.get(), get_language_adj(lang));
     }
 }
 
@@ -1396,11 +1399,11 @@ void printForeignTongueMsg(const BaseRoom *inRoom, Creature *talker) {
 //                      sayTo
 //*********************************************************************
 
-void Monster::sayTo(const Player* player, const std::string& message) {
+void Monster::sayTo(const std::shared_ptr<Player>& player, const std::string& message) {
     short language = player->current_language;
 
-    broadcast_rom_LangWc(language, player->getSock(), player->currentLocation, "%M says to %N, \"%s\"^x", this, player, message.c_str());
-    printForeignTongueMsg(player->getConstRoomParent(), this);
+    broadcast_rom_LangWc(language, player->getSock(), player->currentLocation, "%M says to %N, \"%s\"^x", this, player.get(), message.c_str());
+    printForeignTongueMsg(player->getConstRoomParent(), Containable::downcasted_shared_from_this<Monster>());
 
     player->printColor("%s%M says to you, \"%s\"\n^x",get_lang_color(language), this, message.c_str());
 }
@@ -1410,7 +1413,7 @@ void Monster::sayTo(const Player* player, const std::string& message) {
 //                      canCommunicate
 //*********************************************************************
 
-bool canCommunicate(Player* player) {
+bool canCommunicate(const std::shared_ptr<Player>& player) {
     if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You are not allowed to broadcast.\n");
         return(false);
@@ -1451,10 +1454,10 @@ bool canCommunicate(Player* player) {
 //                      std::string list functions
 //*********************************************************************
 
-int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun, std::string (Player::*show)() const,
+int listWrapper(const std::shared_ptr<Player>& player, cmd* cmnd, const char* gerund, const char* noun, std::string (Player::*show)() const,
                 bool (Player::*is)(const std::string &name) const, void (Player::*del)(const std::string &name),
                 void (Player::*add)(const std::string &name), void (Player::*clear)()) {
-    Player  *target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     bool online=true;
 
     player->clearFlag(P_AFK);
@@ -1463,21 +1466,21 @@ int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun,
         return(0);
 
     if(cmnd->num == 1) {
-        player->print("You are %s: %s\n", gerund, (player->*show)().c_str());
+        player->print("You are %s: %s\n", gerund, (player.get()->*show)().c_str());
         return(0);
     }
 
     cmnd->str[1][0] = up(cmnd->str[1][0]);
 
-    if((player->*is)(cmnd->str[1])) {
-        (player->*del)(cmnd->str[1]);
+    if((player.get()->*is)(cmnd->str[1])) {
+        (player.get()->*del)(cmnd->str[1]);
         player->print("%s removed from your %s list.\n", cmnd->str[1], noun);
         return(0);
     }
 
     if(cmnd->num == 2) {
         if(!strcmp(cmnd->str[1], "clear")) {
-            (player->*clear)();
+            (player.get()->*clear)();
             player->print("Cleared.\n");
             return(0);
         }
@@ -1486,7 +1489,7 @@ int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun,
     target = gServer->findPlayer(cmnd->str[1]);
 
     if(!target) {
-        loadPlayer(cmnd->str[1], &target);
+        loadPlayer(cmnd->str[1], target);
         online = false;
     }
 
@@ -1494,8 +1497,7 @@ int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun,
         player->print("That player does not exist.\n");
     } else if(target->isStaff() && target->getClass() > player->getClass()) {
         player->print("You cannot %s that player.\n", noun);
-        if(!online)
-            delete target;;
+        if(!online) target.reset();
     } else {
 
         if(!strcmp(noun, "watch")) {
@@ -1503,23 +1505,22 @@ int listWrapper(Player* player, cmd* cmnd, const char* gerund, const char* noun,
                 !player->isCt() &&
                 !(player->isWatcher() && target->getLevel() <= 4)
             ) {
-                player->print("%M is not a member of your group.\n", target);
-                if(!online)
-                    delete target;;
+                player->print("%M is not a member of your group.\n", target.get());
+                if(!online) target.reset();
                 return(0);
             }
         }
 
-        (player->*add)(cmnd->str[1]);
+        (player.get()->*add)(cmnd->str[1]);
         player->print("%s added to your %s list.\n", target->getCName(), noun);
         if(!online)
-            delete target;;
+            target.reset();
     }
 
     return(0);
 }
 
-int cmdIgnore(Player* player, cmd* cmnd) {
+int cmdIgnore(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(listWrapper(player, cmnd, "ignoring", "ignore",
         &Player::showIgnoring,
         &Player::isIgnoring,
@@ -1528,7 +1529,7 @@ int cmdIgnore(Player* player, cmd* cmnd) {
         &Player::clearIgnoring
     ));
 }
-int cmdGag(Player* player, cmd* cmnd) {
+int cmdGag(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(listWrapper(player, cmnd, "gaging", "gag",
         &Player::showGagging,
         &Player::isGagging,
@@ -1537,7 +1538,7 @@ int cmdGag(Player* player, cmd* cmnd) {
         &Player::clearGagging
     ));
 }
-int cmdRefuse(Player* player, cmd* cmnd) {
+int cmdRefuse(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(listWrapper(player, cmnd, "refusing", "refuse",
         &Player::showRefusing,
         &Player::isRefusing,
@@ -1546,7 +1547,7 @@ int cmdRefuse(Player* player, cmd* cmnd) {
         &Player::clearRefusing
     ));
 }
-int cmdWatch(Player* player, cmd* cmnd) {
+int cmdWatch(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(listWrapper(player, cmnd, "watching", "watch",
         &Player::showWatching,
         &Player::isWatching,
@@ -1560,8 +1561,8 @@ int cmdWatch(Player* player, cmd* cmnd) {
 //                      dmGag
 //*********************************************************************
 
-int dmGag(Player* player, cmd* cmnd) {
-    Player  *target;
+int dmGag(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target;
 
     if(!player->isStaff() && !player->isWatcher())
         return(cmdNoExist(player, cmnd));

@@ -122,12 +122,12 @@ bool PythonHandler::addMudObjectToDictionary(py::object& dictionary, const std::
         return true;
     }
 
-    Monster* mPtr = myObject->getAsMonster();
-    Player* pPtr = myObject->getAsPlayer();
-    Object* oPtr = myObject->getAsObject();
-    UniqueRoom* rPtr = myObject->getAsUniqueRoom();
-    AreaRoom* aPtr = myObject->getAsAreaRoom();
-    Exit* xPtr = myObject->getAsExit();
+    std::shared_ptr<Monster>  mPtr = myObject->getAsMonster();
+    std::shared_ptr<Player> pPtr = myObject->getAsPlayer();
+    std::shared_ptr<Object>  oPtr = myObject->getAsObject();
+    std::shared_ptr<UniqueRoom> rPtr = myObject->getAsUniqueRoom();
+    std::shared_ptr<AreaRoom> aPtr = myObject->getAsAreaRoom();
+    std::shared_ptr<Exit> xPtr = myObject->getAsExit();
 
     if (mPtr) {
         dictionary[key.c_str()] = py::cast(mPtr);
@@ -166,11 +166,11 @@ bool PythonHandler::runPython(const std::string& pyScript, py::object& locals) {
 //  actor:      The actor of the script.
 //  target:     The target of the script
 
-bool PythonHandler::runPython(const std::string& pyScript, const std::string &args, MudObject *actor, MudObject *target) {
+bool PythonHandler::runPython(const std::string& pyScript, const std::string &args, std::shared_ptr<MudObject>actor, std::shared_ptr<MudObject>target) {
     auto locals = py::dict("args"_a=args);
 
-    addMudObjectToDictionary(locals, "actor", actor);
-    addMudObjectToDictionary(locals, "target", target);
+    addMudObjectToDictionary(locals, "actor", actor.get());
+    addMudObjectToDictionary(locals, "target", target.get());
 
     return (runPython(pyScript, locals));
 }
@@ -192,13 +192,13 @@ bool PythonHandler::runPythonWithReturn(const std::string& pyScript, py::object&
 //  pyScript:   The script to be run
 //  actor:      The actor of the script.
 //  target:     The target of the script
-bool PythonHandler::runPythonWithReturn(const std::string& pyScript, const std::string &args, MudObject *actor, MudObject *target) {
+bool PythonHandler::runPythonWithReturn(const std::string& pyScript, const std::string &args, std::shared_ptr<MudObject>actor, std::shared_ptr<MudObject>target) {
 
     try {
         auto locals = py::dict("args"_a=args);
 
-        addMudObjectToDictionary(locals, "actor", actor);
-        addMudObjectToDictionary(locals, "target", target);
+        addMudObjectToDictionary(locals, "actor", actor.get());
+        addMudObjectToDictionary(locals, "target", target.get());
 
         return runPythonWithReturn(pyScript, locals);
     }
@@ -230,9 +230,9 @@ bool Server::runPython(const std::string& pyScript, py::object& dictionary) {
 bool Server::runPythonWithReturn(const std::string& pyScript, py::object& dictionary) {
     return(pythonHandler->runPythonWithReturn(pyScript, dictionary));
 }
-bool Server::runPython(const std::string& pyScript, const std::string &args, MudObject *actor, MudObject *target) {
+bool Server::runPython(const std::string& pyScript, const std::string &args, std::shared_ptr<MudObject>actor, std::shared_ptr<MudObject>target) {
     return pythonHandler->runPython(pyScript, args, actor, target);
 }
-bool Server::runPythonWithReturn(const std::string& pyScript, const std::string &args, MudObject *actor, MudObject *target) {
+bool Server::runPythonWithReturn(const std::string& pyScript, const std::string &args, std::shared_ptr<MudObject>actor, std::shared_ptr<MudObject>target) {
     return pythonHandler->runPythonWithReturn(pyScript, args, actor, target);
 }

@@ -123,11 +123,11 @@ void freeQuest(questPtr toFree) {
     delete toFree;
 }
 
-void fulfillQuest(Player* player, Object* object) {
+void fulfillQuest(std::shared_ptr<Player> player, std::shared_ptr<Object>  object) {
     if(object->getQuestnum()) {
         player->print("Quest fulfilled!");
         if(object->getType() != ObjectType::MONEY) {
-            player->printColor(" Don't drop %P.\n", object);
+            player->printColor(" Don't drop %P.\n", object.get());
             player->print("You won't be able to pick it up again.");
         }
         player->print("\n");
@@ -136,7 +136,7 @@ void fulfillQuest(Player* player, Object* object) {
         if(!player->halftolevel())
             player->print("%ld experience granted.\n", get_quest_exp(object->getQuestnum()));
     }
-    for(Object *obj : object->objects) {
+    for(const auto& obj : object->objects) {
         fulfillQuest(player, obj);
     }
 }

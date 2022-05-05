@@ -159,13 +159,13 @@ public:
 // Proxy
     void loadProxyAccess();
     void saveProxyAccess();
-    bool hasProxyAccess(Player* proxy, Player* proxied);
-    void grantProxyAccess(Player* proxy, Player* proxied);
-    bool removeProxyAccess(Player* proxy, Player* proxied);
-    bool removeProxyAccess(std::string_view id, Player* proxied);
+    bool hasProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
+    void grantProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
+    bool removeProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
+    bool removeProxyAccess(std::string_view id, std::shared_ptr<Player> proxied);
     void clearProxyAccess();
 
-    std::string getProxyList(Player* player = nullptr);
+    std::string getProxyList(std::shared_ptr<Player> player = nullptr);
 
 // MSDP
     bool initMsdp();
@@ -237,7 +237,7 @@ public:
 
     Guild* getGuild(int guildId);
     Guild* getGuild(std::string_view name);
-    Guild* getGuild(const Player* player, std::string txt);
+    Guild* getGuild(const std::shared_ptr<Player> player, std::string txt);
     bool deleteGuild(int guildId);
 
 // GuildCreations
@@ -295,15 +295,15 @@ public:
     void saveLimited() const;
     void clearLimited();
     void addUnique(Unique* unique);
-    void listLimited(const Player* player);
-    [[nodiscard]] Unique* getUnique(const Object* object) const;
+    void listLimited(const std::shared_ptr<Player>& player);
+    [[nodiscard]] Unique* getUnique(const std::shared_ptr<const Object>&  object) const;
     [[nodiscard]] Unique* getUnique(int id) const;
-    void deleteUniques(Player* player);
+    void deleteUniques(const std::shared_ptr<Player>& player);
     void deleteUnique(Unique* unique);
     [[nodiscard]] Lore* getLore(const CatRef& cr) const;
     void addLore(const CatRef& cr, int i);
     void delLore(const CatRef& cr);
-    void uniqueDecay(Player* player=nullptr);
+    void uniqueDecay(const std::shared_ptr<Player>& player=nullptr);
 
 // Clans
     bool loadClans();
@@ -316,7 +316,7 @@ public:
     void clearRecipes();
     bool saveRecipes() const;
     Recipe *getRecipe(int id);
-    Recipe *searchRecipes(const Player* player, std::string_view skill, Size recipeSize, int numIngredients, const Object* object=nullptr);
+    Recipe *searchRecipes(const std::shared_ptr<const Player> &player, std::string_view skill, Size recipeSize, int numIngredients, const std::shared_ptr<Object> &object=nullptr);
     void addRecipe(Recipe* recipe);
     void remRecipe(Recipe* recipe);
 
@@ -333,13 +333,13 @@ public:
     bool saveProperties() const;
     void clearProperties();
     void addProperty(Property* p);
-    void showProperties(Player* viewer, Player* player, PropType propType = PROP_NONE);
+    void showProperties(const std::shared_ptr<Player>& viewer, const std::shared_ptr<Player>& player, PropType propType = PROP_NONE);
     Property* getProperty(const CatRef& cr);
     void destroyProperty(Property *p);
     void destroyProperties(std::string_view owner);
     CatRef getAvailableProperty(PropType type, int numRequired);
-    void renamePropertyOwner(std::string_view oldName, Player *player);
-    CatRef getSingleProperty(const Player* player, PropType type);
+    void renamePropertyOwner(std::string_view oldName, const std::shared_ptr<Player>& player);
+    CatRef getSingleProperty(const std::shared_ptr<const Player>& player, PropType type);
 
 // CatRefInfo
     bool loadCatRefInfo();
@@ -347,13 +347,13 @@ public:
     void saveCatRefInfo() const;
     [[nodiscard]] std::string catRefName(std::string_view area) const;
     [[nodiscard]] const CatRefInfo* getCatRefInfo(std::string_view area, int id=0, int shouldGetParent=0) const;
-    [[nodiscard]] const CatRefInfo* getCatRefInfo(const BaseRoom* room, int shouldGetParent=0) const;
+    [[nodiscard]] const CatRefInfo* getCatRefInfo(const std::shared_ptr<const BaseRoom> room, int shouldGetParent=0) const;
     [[nodiscard]] const CatRefInfo* getRandomCatRefInfo(int zone) const;
 
 
 // swap
     void swapLog(const std::string& log, bool external=true);
-    void swap(Player* player, std::string_view name);
+    void swap(std::shared_ptr<Player> player, std::string_view name);
     void swap(std::string str);
     void offlineSwap(childProcess &child, bool onReap);
     void offlineSwap();
@@ -369,11 +369,11 @@ public:
     int swapQueueSize();
     bool isSwapping() const;
     void setMovingRoom(const CatRef& o, const CatRef& t);
-    void swapInfo(const Player* player);
+    void swapInfo(const std::shared_ptr<Player>& player);
     void swapAbort();
-    bool checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), Player* player, bool online, std::string_view type);
-    bool swapChecks(const Player* player, const Swap& s);
-    bool swapIsInteresting(const MudObject* target) const;
+    bool checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), const std::shared_ptr<Player>& player, bool online, std::string_view type);
+    bool swapChecks(const std::shared_ptr<Player>& player, const Swap& s) const;
+    bool swapIsInteresting(const std::shared_ptr<const MudObject>& target) const;
 
 // Misc
     [[nodiscard]] const RaceData* getRace(std::string race) const;
@@ -388,7 +388,7 @@ public:
     [[nodiscard]] std::string getMudNameAndVersion();
     [[nodiscard]] short getPortNum() const;
     void setPortNum(short pPort);
-    [[nodiscard]] std::string weatherize(WeatherString w, const BaseRoom* room) const;
+    [[nodiscard]] std::string weatherize(WeatherString w, const std::shared_ptr<BaseRoom>& room) const;
     [[nodiscard]] std::string getMonthDay() const;
     [[nodiscard]] bool isAprilFools() const;
     [[nodiscard]] bool willAprilFools() const;

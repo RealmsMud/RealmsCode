@@ -53,8 +53,8 @@ std::string getWho() {
     std::ostringstream whoStr;
 
     whoStr << "```\n";
-    auto cmp = [](const Player* a, const Player* b) { return a->getSock()->getHostname() < b->getSock()->getHostname(); };
-    std::multiset<Player*, decltype(cmp)> sortedPlayers;
+    auto cmp = [](const std::shared_ptr<Player> a, const std::shared_ptr<Player> b) { return a->getSock()->getHostname() < b->getSock()->getHostname(); };
+    std::multiset<std::shared_ptr<Player>, decltype(cmp)> sortedPlayers;
     for(const auto& [pId, ply] : gServer->players) sortedPlayers.insert(ply);
 
     for(const auto& player : sortedPlayers) {

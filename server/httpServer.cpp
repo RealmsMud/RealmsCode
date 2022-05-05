@@ -36,6 +36,8 @@ using json = nlohmann::json;
 
 bool Server::initHttpServer() {
     httpServer = new HttpServer(8080);
+    if(!httpServer)
+        throw std::runtime_error("WTF httpserver!");
     return true;
 }
 
@@ -73,15 +75,14 @@ HttpServer::HttpServer(int pPort) {
             std::string name = body["name"];
             std::string pw = body["pw"];
             lowercize(name, 1);
-            bool offline = false, valid=false;
+            bool valid=false;
 
             // TODO: Thread Saftey
-            Player *player = gServer->findPlayer(name);
+            std::shared_ptr<Player> player = gServer->findPlayer(name);
             if(!player) {
-                if (!loadPlayer(name, &player)) {
+                if (!loadPlayer(name, player)) {
                     return crow::response(crow::status::NOT_FOUND);
                 }
-                offline = true;
             }
 
             json j;
@@ -93,8 +94,6 @@ HttpServer::HttpServer(int pPort) {
                         .sign(jwt::algorithm::hs256{"not a real secret, replace me"});
             }
 
-            if(offline)
-                delete player;
 
             if(!valid)
                 return crow::response(crow::status::UNAUTHORIZED);

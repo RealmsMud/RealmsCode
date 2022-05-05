@@ -58,7 +58,7 @@
 //                      stoneScroll
 //*********************************************************************
 
-int stoneScroll(Player* player, cmd* cmnd) {
+int stoneScroll(const std::shared_ptr<Player>& player, cmd* cmnd) {
     char    filename[80];
     sprintf(filename, "%s/stone_scroll", Path::Sign.c_str());
 
@@ -79,9 +79,9 @@ int stoneScroll(Player* player, cmd* cmnd) {
 //                      lookAtExit
 //*********************************************************************
 
-bool doScout(Player* player, const Exit* exit);
+bool doScout(std::shared_ptr<Player> player, std::shared_ptr<Exit> exit);
 
-void lookAtExit(Player* player, Exit* exit) {
+void lookAtExit(const std::shared_ptr<Player>& player, const std::shared_ptr<Exit>& exit) {
     // blindness is already handled
     
     player->printColor("You look at the %s^x exit.\n", exit->getCName());
@@ -105,8 +105,8 @@ void lookAtExit(Player* player, Exit* exit) {
     if(exit->isWall("wall-of-thorns"))
         player->print("It is blocked by a wall of thorns.\n");
 
-    const Monster* guard = player->getRoomParent()->getGuardingExit(exit, player);
-    if(guard && !player->checkStaff("%M %s.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you look there" : "won't let you look there"))
+    const std::shared_ptr<Monster>  guard = player->getRoomParent()->getGuardingExit(exit, player);
+    if(guard && !player->checkStaff("%M %s.\n", guard.get(), guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you look there" : "won't let you look there"))
         return;
 
     if(exit->flagIsSet(X_CAN_LOOK) || exit->flagIsSet(X_LOOK_ONLY)) {
@@ -124,8 +124,8 @@ void lookAtExit(Player* player, Exit* exit) {
 //                      cmdLook
 //*********************************************************************
 
-int cmdLook(Player* player, cmd* cmnd) {
-    MudObject* target=nullptr;
+int cmdLook(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<MudObject> target=nullptr;
     int flags = player->displayFlags();
 
     if(!player->ableToDoCommand())
@@ -147,7 +147,7 @@ int cmdLook(Player* player, cmd* cmnd) {
         if(target->isCreature()) {
             player->displayCreature(target->getAsCreature());
         } else if(target->isObject()) {
-            auto* obj = dynamic_cast<Object*>(target);
+            auto obj = target->getAsConstObject();
             if(cmnd->num == 3 && obj->info.id == STONE_SCROLL_INDEX && obj->info.isArea("misc"))
                 stoneScroll(player, cmnd);
             else
@@ -168,16 +168,16 @@ int cmdLook(Player* player, cmd* cmnd) {
 //                      cmdThrow
 //*********************************************************************
 
-bool storageProperty(const Player* player, const Object* object, Property **p);
+bool storageProperty(const std::shared_ptr<Player>& player, const std::shared_ptr<Object>&  object, Property **p);
 
-int cmdThrow(Creature* creature, cmd* cmnd) {
-    Object* object=nullptr;
-    Creature* victim=nullptr;
-    const Monster* guard=nullptr;
-    Exit*   exit=nullptr;
-    BaseRoom *room=nullptr, *newRoom=nullptr;
+int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
+    std::shared_ptr<Object>  object=nullptr;
+    std::shared_ptr<Creature> victim=nullptr;
+    std::shared_ptr<Monster>  guard=nullptr;
+    std::shared_ptr<Exit>   exit=nullptr;
+    std::shared_ptr<BaseRoom> room=nullptr, newRoom=nullptr;
+    std::shared_ptr<Player> player = creature->getAsPlayer(), pVictim=nullptr;
     Property* p=nullptr;
-    Player* player = creature->getAsPlayer(), *pVictim=nullptr;
 
     if(!creature->ableToDoCommand())
         return(0);
@@ -200,7 +200,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
     // throw checks
 
     if(object->flagIsSet(O_KEEP)) {
-        player->printColor("%O is currently in safe keeping.\nYou must unkeep it to throw it.\n", object);
+        player->printColor("%O is currently in safe keeping.\nYou must unkeep it to throw it.\n", object.get());
         return(0);
     }
 
@@ -210,16 +210,16 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
         return(0);
     }
 
-    for(Object *obj : object->objects) {
+    for(const auto& obj : object->objects) {
         if( obj->flagIsSet(O_NO_DROP) &&
-            !player->checkStaff("You cannot throw that. It contains %P.\n", obj) )
+            !player->checkStaff("You cannot throw that. It contains %P.\n", obj.get()) )
         {
             return(0);
         }
     }
 
     if( object->getActualWeight() > creature->strength.getCur()/3 &&
-        !creature->checkStaff("%O is too heavy for you to throw!\n", object)
+        !creature->checkStaff("%O is too heavy for you to throw!\n", object.get())
     )
         return(0);
 
@@ -239,9 +239,9 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
         if(creature->inCombat() && !creature->checkStaff("Not while you are in combat!\n"))
             return(0);
 
-        creature->printColor("You throw %P to the %s^x.\n", object, exit->getCName());
+        creature->printColor("You throw %P to the %s^x.\n", object.get(), exit->getCName());
         broadcast(creature->getSock(), room, "%M throws %P to the %s^x.",
-            creature, object, exit->getCName());
+            creature.get(), object.get(), exit->getCName());
         creature->delObj(object);
 
         guard = room->getGuardingExit(exit, player);
@@ -249,22 +249,21 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
         // don't bother getting rooms if exit is closed or guarded
         bool loadExit = (!exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_PORTAL) && !guard);
         if(loadExit)
-            Move::getRoom(creature, exit, &newRoom, false, &exit->target.mapmarker);
+            Move::getRoom(creature, exit, newRoom, false, &exit->target.mapmarker);
 
         room->wake("Loud noises disturb your sleep.", true);
 
         // closed, or off map, or being guarded
         if(!loadExit || (!newRoom)) {
             if(guard)
-                broadcast(nullptr, room, "%M knocks %P to the ground.", guard, object);
+                broadcast(nullptr, room, "%M knocks %P to the ground.", guard.get(), object.get());
             else
-                broadcast(nullptr, room, "%O hits the %s^x and falls to the ground.",
-                    object, exit->getCName());
+                broadcast(nullptr, room, "%O hits the %s^x and falls to the ground.", object.get(), exit->getCName());
             finishDropObject(object, room, creature);
         } else {
             room = newRoom;
 
-            broadcast(nullptr, room, "%1O comes flying into the room.", object);
+            broadcast(nullptr, room, "%1O comes flying into the room.", object.get());
             room->wake("Loud noises disturb your sleep.", true);
             finishDropObject(object, room, creature, false, false, true);
 
@@ -281,7 +280,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
             return(0);
 
         if(creature->vampireCharmed(pVictim) || (victim->hasCharm(creature->getCName()) && creature->pFlagIsSet(P_CHARMED))) {
-            creature->print("You like %N too much to do that.\n", victim);
+            creature->print("You like %N too much to do that.\n", victim.get());
             return(0);
         }
 
@@ -291,10 +290,10 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 
         if(player)
             player->statistics.swing();
-        creature->printColor("You throw %P at %N.\n", object, victim);
-        victim->printColor("%M throws %P at you.\n", creature, object);
+        creature->printColor("You throw %P at %N.\n", object.get(), victim.get());
+        victim->printColor("%M throws %P at you.\n", creature.get(), object.get());
         broadcast(creature->getSock(), victim->getSock(), room,
-            "%M throws %P at %N.", creature, object, victim);
+            "%M throws %P at %N.", creature.get(), object.get(), victim.get());
         creature->delObj(object);
 
         if(!pVictim)
@@ -304,8 +303,8 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
             pVictim->statistics.wasMissed();
             if(player)
                 player->statistics.miss();
-            broadcast(victim->getSock(), room, "%O passes right through %N.", object, victim);
-            victim->printColor("%O passes right through you.\n", object);
+            broadcast(victim->getSock(), room, "%O passes right through %N.", object.get(), victim.get());
+            victim->printColor("%O passes right through you.\n", object.get());
         } else {
             int skillLevel = (int)creature->getSkillGained("thrown");
             AttackResult result = creature->getAttackResult(victim, nullptr, NO_FUMBLE, skillLevel);
@@ -319,15 +318,15 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
                 if(player)
                     player->statistics.miss();
                 victim->printColor("You dodge out of the way.\n");
-                broadcast(victim->getSock(), room, "%M dodges out of the way.", victim);
+                broadcast(victim->getSock(), room, "%M dodges out of the way.", victim.get());
                 creature->checkImprove("thrown", false);
             } else if(result == ATTACK_MISS || result == ATTACK_BLOCK || result == ATTACK_PARRY) {
                 if(pVictim)
                     pVictim->statistics.wasMissed();
                 if(player)
                     player->statistics.miss();
-                victim->printColor("You knock %P to the ground.\n", object);
-                broadcast(victim->getSock(), room, "%M knocks %P to the ground.", victim, object);
+                victim->printColor("You knock %P to the ground.\n", object.get());
+                broadcast(victim->getSock(), room, "%M knocks %P to the ground.", victim.get(), object.get());
                 creature->checkImprove("thrown", false);
             } else {
 
@@ -344,11 +343,11 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
                     player->statistics.attackDamage(damage.get(), Statistics::damageWith(player, object));
                 }
 
-                creature->printColor("You hit %N for %s%d^x damage.\n", victim, creature->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-                victim->printColor("%M hit you%s for %s%d^x damage!\n", creature,
+                creature->printColor("You hit %N for %s%d^x damage.\n", victim.get(), creature->customColorize("*CC:DAMAGE*").c_str(), damage.get());
+                victim->printColor("%M hit you%s for %s%d^x damage!\n", creature.get(),
                     victim->isBrittle() ? "r brittle body" : "", victim->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-                broadcastGroup(false, victim, "^M%M^x hit ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", creature,
-                    victim, damage.get(), victim->heShe(), victim->getStatusStr(damage.get()));
+                broadcastGroup(false, victim, "^M%M^x hit ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", creature.get(),
+                    victim.get(), damage.get(), victim->heShe(), victim->getStatusStr(damage.get()));
 
                 creature->doDamage(victim, damage.get(), CHECK_DIE);
                 creature->checkImprove("thrown", true);
@@ -360,7 +359,7 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
         room->wake("Loud noises disturb your sleep.", true);
 
     } else {
-        creature->printColor("Throw %P at what?\n", object);
+        creature->printColor("Throw %P at what?\n", object.get());
     }
     return(0);
 }
@@ -369,9 +368,9 @@ int cmdThrow(Creature* creature, cmd* cmnd) {
 //                      cmdKnock
 //*********************************************************************
 
-int cmdKnock(Creature* creature, cmd* cmnd) {
-    BaseRoom* targetRoom=nullptr;
-    Exit    *exit=nullptr;
+int cmdKnock(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
+    std::shared_ptr<BaseRoom> targetRoom=nullptr;
+    std::shared_ptr<Exit> exit=nullptr;
 
     if(cmnd->num < 2) {
         creature->print("Knock on what exit?\n");
@@ -392,14 +391,14 @@ int cmdKnock(Creature* creature, cmd* cmnd) {
 
     creature->getParent()->wake("You awaken suddenly!", true);
     creature->printColor("You knock on the %s^x.\n", exit->getCName());
-    broadcast(creature->getSock(), creature->getRoomParent(), "%M knocks on the %s^x.", creature, exit->getCName());
+    broadcast(creature->getSock(), creature->getRoomParent(), "%M knocks on the %s^x.", creature.get(), exit->getCName());
 
     // change the meaning of exit
-    exit = exit->getReturnExit(creature->getRoomParent(), &targetRoom);
+    exit = exit->getReturnExit(creature->getRoomParent(), targetRoom);
     targetRoom->wake("You awaken suddenly!", true);
 
     if(exit)
-        broadcast(nullptr, targetRoom, "You hear someone knocking on the %s.", exit);
+        broadcast(nullptr, targetRoom, "You hear someone knocking on the %s.", exit.get());
     else
         broadcast(nullptr, targetRoom, "You hear the sound of someone knocking.");
     return(0);
@@ -409,7 +408,7 @@ int cmdKnock(Creature* creature, cmd* cmnd) {
 //                      cmdPrepare
 //*********************************************************************
 
-int cmdPrepare(Player* player, cmd* cmnd) {
+int cmdPrepare(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2)
         return(cmdPrepareForTraps(player, cmnd));
     return(cmdPrepareObject(player, cmnd));
@@ -420,14 +419,14 @@ int cmdPrepare(Player* player, cmd* cmnd) {
 //                      cmdBreak
 //*********************************************************************
 
-int cmdBreak(Player* player, cmd* cmnd) {
+int cmdBreak(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     duration=0;
     CatRef  newloc;
     int     chance=0, dmg=0, xpgain=0, splvl=0;
     float   mtbf=0, shots=0, shotsmax=0;
-    UniqueRoom *new_rom=nullptr;
+    std::shared_ptr<UniqueRoom> new_rom=nullptr;
     char    item[80];
-    Object  *object=nullptr;
+    std::shared_ptr<Object> object=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -521,11 +520,11 @@ int cmdBreak(Player* player, cmd* cmnd) {
         }
 
         if(!(object->getType() == ObjectType::POISON && player->getClass() == CreatureClass::PALADIN)) {
-            player->printColor("You manage to break %P.\n", object);
-            broadcast(player->getSock(), player->getParent(), "%M breaks %P.", player, object);
+            player->printColor("You manage to break %P.\n", object.get());
+            broadcast(player->getSock(), player->getParent(), "%M breaks %P.", player.get(), object.get());
         } else {
-            player->printColor("You dispose of the vile %P.\n", object);
-            broadcast(player->getSock(), player->getParent(), "%M neatly disposes of the vile %P.", player, object);
+            player->printColor("You dispose of the vile %P.\n", object.get());
+            broadcast(player->getSock(), player->getParent(), "%M neatly disposes of the vile %P.", player.get(), object.get());
         }
 
 
@@ -569,21 +568,21 @@ int cmdBreak(Player* player, cmd* cmnd) {
                 player->print("Spell level: %d.\n", splvl);
 
             if(splvl >= 4) {
-                player->printColor("%O explodes in a retributive strike!\n", object);
-                broadcast(player->getSock(), player->getParent(), "%O explodes in a retributive strike!", object);
+                player->printColor("%O explodes in a retributive strike!\n", object.get());
+                broadcast(player->getSock(), player->getParent(), "%O explodes in a retributive strike!", object.get());
 
                 player->delObj(object, true);
-                delete object;
+                object.reset();
             } else {
-                player->printColor("%O explodes!\n", object);
-                broadcast(player->getSock(), player->getParent(), "%O explodes!", object);
-                broadcast(player->getSock(), player->getParent(), "%M is engulfed by magical energy!", player);
+                player->printColor("%O explodes!\n", object.get());
+                broadcast(player->getSock(), player->getParent(), "%O explodes!", object.get());
+                broadcast(player->getSock(), player->getParent(), "%M is engulfed by magical energy!", player.get());
 
                 player->delObj(object, true);
-                delete object;
+                object.reset();
             }
 
-            broadcast(player->getSock(), player->getParent(), "%M is engulfed by a magical vortex!", player);
+            broadcast(player->getSock(), player->getParent(), "%M is engulfed by a magical vortex!", player.get());
 
             dmg = Random::get(1,5);
             dmg += MAX(5,(Random::get(splvl*2, splvl*6)))+((int)mtbf/2);
@@ -597,7 +596,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
                 auto pIt = player->getRoomParent()->players.begin();
                 auto pEnd = player->getRoomParent()->players.end();
 
-                Player* ply=nullptr;
+                std::shared_ptr<Player> ply=nullptr;
                 while(pIt != pEnd) {
                     ply = (*pIt++);
                     if(ply != player && !ply->inCombat()) {
@@ -632,11 +631,11 @@ int cmdBreak(Player* player, cmd* cmnd) {
                     else if(player->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE))
                         newloc.id = 50;
 
-                    if(!loadRoom(newloc, &new_rom))
+                    if(!loadRoom(newloc, new_rom))
                         return(0);
 
                     if(!player->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE)) {
-                        broadcast(player->getSock(), player->getParent(), "%M was blown from this universe by the explosion!", player);
+                        broadcast(player->getSock(), player->getParent(), "%M was blown from this universe by the explosion!", player.get());
                         player->print("You are blown into an alternate dimension.\n");
                     }
                     player->deleteFromRoom();
@@ -663,11 +662,11 @@ int cmdBreak(Player* player, cmd* cmnd) {
 
     } else {
         if(!(object->getType() == ObjectType::POISON && player->getClass() == CreatureClass::PALADIN)) {
-            player->printColor("You were unable to break %P.\n", object);
-            broadcast(player->getSock(), player->getParent(), "%M tried to break %P.", player, object);
+            player->printColor("You were unable to break %P.\n", object.get());
+            broadcast(player->getSock(), player->getParent(), "%M tried to break %P.", player.get(), object.get());
         } else {
-            player->printColor("You were unable to properly dispose of the %P.\n", object);
-            broadcast(player->getSock(), player->getParent(), "%M tried to dispose of the %P.", player, object);
+            player->printColor("You were unable to properly dispose of the %P.\n", object.get());
+            broadcast(player->getSock(), player->getParent(), "%M tried to dispose of the %P.", player.get(), object.get());
             chance = 30 - (bonus(player->dexterity.getCur()));
 
             if(player->immuneToPoison())
@@ -676,7 +675,7 @@ int cmdBreak(Player* player, cmd* cmnd) {
             if(Random::get(1,100) <= chance) {
                 player->printColor("^r^#You accidentally poisoned yourself!\n");
                 broadcast(player->getSock(), player->getParent(), "%M accidentally poisoned %sself!",
-                    player, player->himHer());
+                    player.get(), player->himHer());
 
                 duration = standardPoisonDuration(object->getEffectDuration(), player->constitution.getCur());
 

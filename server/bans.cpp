@@ -74,7 +74,7 @@ bool Ban::matches(std::string_view toMatch) {
 
 
 
-int dmListbans(Player* player, cmd* cmnd) {
+int dmListbans(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int found=0;
     std::ostringstream banStr;
     
@@ -139,8 +139,8 @@ int dmListbans(Player* player, cmd* cmnd) {
     return(0);
 }
 
-int dmBan(Player* player, cmd* cmnd) {
-    Player* target=nullptr;
+int dmBan(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     size_t  i=0, j=0, strLen, len;
     int     dur, iTmp = 0;
     int     isPrefix = 0, isSuffix = 0;
@@ -359,7 +359,7 @@ void Server::checkBans() {
     }
 }
 
-int dmUnban(Player* player, cmd* cmnd) {
+int dmUnban(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int toDel = 0, i;
 
     // Kill any trailing white space in the fullstr

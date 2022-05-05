@@ -43,8 +43,8 @@ public:
 
     bool runPython(const std::string& pyScript, py::object& locals);
     bool runPythonWithReturn(const std::string& pyScript, py::object& locals);
-    bool runPython(const std::string& pyScript, const std::string &args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
-    bool runPythonWithReturn(const std::string& pyScript, const std::string &args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    bool runPython(const std::string& pyScript, const std::string &args = "", std::shared_ptr<MudObject>actor = nullptr, std::shared_ptr<MudObject>target = nullptr);
+    bool runPythonWithReturn(const std::string& pyScript, const std::string &args = "", std::shared_ptr<MudObject>actor = nullptr, std::shared_ptr<MudObject>target = nullptr);
     static void handlePythonError(py::error_already_set &e);
 
     static bool addMudObjectToDictionary(py::object& dictionary, const std::string& key, MudObject* myObject);

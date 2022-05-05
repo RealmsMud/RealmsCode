@@ -145,7 +145,7 @@ unsigned int Creature::getBaseDamage() const {
 //****************************************************************************
 // Returns the damage reduction factor when attacking the given target
 
-float Creature::getDamageReduction(const Creature* target) const {
+float Creature::getDamageReduction(const std::shared_ptr<Creature> & target) const {
     float reduction;
     auto targetArmor = (float)target->getArmor();
     float myLevel = level == 1 && isPlayer() ? 2 : (float)level;
@@ -369,7 +369,7 @@ bool Object::setSubType(const std::string &newType) {
 //                      getWeaponSkill
 //**********************************************************************
 
-int Monster::getWeaponSkill(const Object* weapon) const {
+int Monster::getWeaponSkill(const std::shared_ptr<Object>  weapon) const {
     // Same skills for all weapons
     return(weaponSkill);
 }
@@ -378,7 +378,7 @@ int Monster::getWeaponSkill(const Object* weapon) const {
 //                      getWeaponSkill
 //**********************************************************************
 
-int Player::getWeaponSkill(const Object* weapon) const {
+int Player::getWeaponSkill(const std::shared_ptr<Object>  weapon) const {
     int bonus = 0;
 
     // Bless improves your chance to hit
@@ -434,7 +434,7 @@ int Player::getDefenseSkill() const {
 // 295 - 300 = -5 * .01% less chance to miss
 // 320 - 300 = 20 * .01% more chance to miss
 
-AttackResult Creature::getAttackResult(Creature* victim, const Object* weapon, unsigned int resultFlags, int altSkillLevel) {
+AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, const std::shared_ptr<Object>&  weapon, unsigned int resultFlags, int altSkillLevel) {
     /*
     int pFd;
     if(isPlayer())
@@ -472,7 +472,7 @@ AttackResult Creature::getAttackResult(Creature* victim, const Object* weapon, u
 
     if(victim->getRoomParent()->isEffected("dense-fog")) {
         effect = victim->getRoomParent()->getEffect("dense-fog");
-        if(!effect->isOwner(this))
+        if(!effect->isOwner(Containable::downcasted_shared_from_this<Creature>()))
             missChance += effect->getStrength();
     }
 
@@ -484,25 +484,25 @@ AttackResult Creature::getAttackResult(Creature* victim, const Object* weapon, u
     if(resultFlags & NO_DODGE)
         dodgeChance = 0;
     else
-        dodgeChance = victim->getDodgeChance(this, difference);
+        dodgeChance = victim->getDodgeChance(Containable::downcasted_shared_from_this<Creature>(), difference);
     int dodgeCutoff = (int)(missCutoff + (dodgeChance * 100));
 
     if(resultFlags & NO_PARRY)
         parryChance = 0;
     else
-        parryChance = victim->getParryChance(this, difference);
+        parryChance = victim->getParryChance(Containable::downcasted_shared_from_this<Creature>(), difference);
     int parryCutoff = (int)(dodgeCutoff + (parryChance * 100));
 
     if(resultFlags & NO_GLANCING)
         glancingChance = 0;
     else
-        glancingChance = victim->getGlancingBlowChance(this, difference);
+        glancingChance = victim->getGlancingBlowChance(Containable::downcasted_shared_from_this<Creature>(), difference);
     int glancingCutoff = (int)(parryCutoff + (glancingChance * 100));
 
     if(resultFlags & NO_BLOCK)
         blockChance = 0;
     else
-        blockChance = victim->getBlockChance(this, difference);
+        blockChance = victim->getBlockChance(Containable::downcasted_shared_from_this<Creature>(), difference);
     int blockCutoff = (int)(glancingCutoff + (blockChance * 100));
 
     if((resultFlags & NO_CRITICAL) || victim->immuneCriticals())
@@ -558,7 +558,7 @@ AttackResult Creature::getAttackResult(Creature* victim, const Object* weapon, u
         result = (ATTACK_HIT);
 
     if(result == ATTACK_HIT || result == ATTACK_CRITICAL)
-        if(victim->kamiraLuck(this))
+        if(victim->kamiraLuck(Containable::downcasted_shared_from_this<Creature>()))
             result = ATTACK_MISS;
 
     return(result);
@@ -598,7 +598,7 @@ int Creature::adjustChance(const int &difference) const {
 //                      getFumbleChance
 //**********************************************************************
 
-double Creature::getFumbleChance(const Object* weapon) const {
+double Creature::getFumbleChance(const std::shared_ptr<Object>&  weapon) const {
     double chance = 2.0;
 
     if(!weapon || weapon->flagIsSet(O_CURSED) || isDm()) {
@@ -631,7 +631,7 @@ double Creature::getCriticalChance(const int& difference) const {
 //                      getBlockChance
 //**********************************************************************
 
-double Creature::getBlockChance(Creature* attacker, const int& difference) {
+double Creature::getBlockChance(std::shared_ptr<Creature> attacker, const int& difference) {
     if(isPlayer()) {
         if(!knowsSkill("block"))
             return(0);
@@ -657,7 +657,7 @@ double Creature::getBlockChance(Creature* attacker, const int& difference) {
 // when a player or pet is attacking a monster but only against
 // monsters of the same level or higher
 
-double Creature::getGlancingBlowChance(Creature* attacker, const int& difference) const {
+double Creature::getGlancingBlowChance(const std::shared_ptr<Creature>& attacker, const int& difference) const {
     if(isPlayer() || isPet() || (attacker->isMonster() && !attacker->isPet()))
         return(0);
 
@@ -675,7 +675,7 @@ double Creature::getGlancingBlowChance(Creature* attacker, const int& difference
 // Chance that they will parry or riposte an attack.
 // 50% of parry will be a riposte
 
-double Creature::getParryChance(Creature* attacker, const int& difference) {
+double Creature::getParryChance(const std::shared_ptr<Creature>& attacker, const int& difference) {
     if(isPlayer()) {
         if(!canDodge(attacker) || !canParry(attacker))
             return(0);
@@ -698,10 +698,10 @@ double Creature::getParryChance(Creature* attacker, const int& difference) {
         chance /= 2;
 
     int numEnm = 0;
-    for(Monster* mons : getRoomParent()->monsters) {
+    for(const auto& mons : getRoomParent()->monsters) {
         if(mons->isPet())
             continue;
-        if(mons->isEnemy(this))
+        if(mons->isEnemy(Containable::downcasted_shared_from_this<Creature>()))
             if(numEnm++ > 1)
                 chance -= .02;
     }
@@ -713,7 +713,7 @@ double Creature::getParryChance(Creature* attacker, const int& difference) {
 //                      canParry
 //**********************************************************************
 
-bool Creature::canParry(Creature* attacker) {
+bool Creature::canParry(const std::shared_ptr<Creature>& attacker) {
     if(attacker->isDm())
         return(false);
     if(isMonster())
@@ -738,11 +738,11 @@ bool Creature::canParry(Creature* attacker) {
 //   try a parry, so parry returns 0 without going off. -TC
 
     // +3% fail for every monster mad at this besides the one he's currently hitting
-    combatPercent = 3*(MAX(0,numEnemyMonInRoom(this)-1));
+    combatPercent = 3*(MAX<unsigned int>(0, numEnemyMonInRoom()-1));
     // Group members are assumed to fight together to help one another.
     // -2% fail for every member in the this's group besides themself in the same room
     if(getGroup())
-        combatPercent -= 2*(MAX(0,getGroup()->getNumInSameRoom(this)));
+        combatPercent -= 2*(MAX(0,getGroup()->getNumInSameRoom(Containable::downcasted_shared_from_this<Creature>())));
 
     combatPercent = MAX(0,combatPercent);
 
@@ -774,7 +774,7 @@ bool Creature::canParry(Creature* attacker) {
 //                      canDodge
 //**********************************************************************
 
-bool Creature::canDodge(Creature* attacker) {
+bool Creature::canDodge(const std::shared_ptr<Creature>& attacker) {
     if(attacker->isDm())
         return(false);
     if(attacker->isMonster()) {
@@ -816,7 +816,7 @@ bool Creature::canDodge(Creature* attacker) {
 //**********************************************************************
 // What chance do we have to dodge the attacker?
 
-double Creature::getDodgeChance(Creature* attacker, const int& difference) {
+double Creature::getDodgeChance(const std::shared_ptr<Creature>& attacker, const int& difference) {
     if(!canDodge(attacker))
         return(false);
 
@@ -824,7 +824,7 @@ double Creature::getDodgeChance(Creature* attacker, const int& difference) {
 //      return(0);
 //
     double chance = 0.0;
-    Player* pPlayer = getAsPlayer();
+    std::shared_ptr<Player> pPlayer = getAsPlayer();
 
     // Find the base chance
     if(pPlayer) {
@@ -913,7 +913,7 @@ double Creature::getMissChance(const int& difference) {
         chance = 5.0;
 
     chance += adjustChance(difference);
-    Player* pPlayer = getAsPlayer();
+    std::shared_ptr<Player> pPlayer = getAsPlayer();
     // Class modification for miss
     if(pPlayer) {
         switch(cClass) {
@@ -992,9 +992,9 @@ void Monster::setDefenseSkill(int amt) {
 //                      canHit
 //**********************************************************************
 
-bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail) {
-    //Monster* mVictim = victim->getMonster();
-    Player* pVictim = victim->getAsPlayer();
+bool Creature::canHit(const std::shared_ptr<Creature>& victim, std::shared_ptr<Object>  weapon, bool glow, bool showFail) {
+    //std::shared_ptr<Monster>  mVictim = victim->getMonster();
+    std::shared_ptr<Player> pVictim = victim->getAsPlayer();
 
     if(isMonster()) {
 
@@ -1023,13 +1023,12 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
             if(!isDm()) {
                 if(pVictim->isEffected("mist")) {
                     if(weapon) {
-                        if( !weapon->flagIsSet(O_CAN_HIT_MIST) && !flagIsSet(P_MISTBANE) )
-                        {
-                            if(showFail) printColor("Your cannot hit a misted creature with your %1P.\n", weapon);
+                        if( !weapon->flagIsSet(O_CAN_HIT_MIST) && !flagIsSet(P_MISTBANE) ) {
+                            if(showFail) *this << ColorOn << "You cannot hit a misted creature with your " << weapon << ".\n" << ColorOff;
                             return(false);
                         }
                     } else if(!flagIsSet(P_MISTBANE)) {
-                        if(showFail) print("You cannot physically hit a misted creature.\n");
+                        if(showFail) *this << "You cannot physically hit a misted creature.\n";
                         return(false);
                     }
                 }
@@ -1053,15 +1052,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
                 )
             ) {
                 if(showFail) {
-                    if(weapon) {
-                        if(weapon->getType() == ObjectType::WEAPON)
-                            print("Your %s has no effect on %N.\n", weapon->getCName(), pVictim);
-                        else
-                            print("Your %s have no effect on %N.\n", weapon->getCName(), pVictim);
-                    }
-                    else
-                        print("Your attack has no effect on %N.\n", pVictim);
-
+                    *this << ColorOn << "Your " << (weapon ? weapon->getName() : "attack") << (!weapon || weapon->getType() == ObjectType::WEAPON ? "has" : "have") << " no effect on " << pVictim << "\n" << ColorOff;
                     pVictim->print("%M's attack on you was uneffective.\n", this);
                 }
                 return(false);
@@ -1079,7 +1070,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
                     level > 19 &&
                     victim->flagIsSet(M_ENCHANTED_WEAPONS_ONLY)
                 ) {
-                    if(glow) printColor("^WYour claws glow radiantly in the night against %N.\n", victim);
+                    if(glow) printColor("^WYour claws glow radiantly in the night against %N.\n", victim.get());
                 }
                 else if(cClass == CreatureClass::MONK &&
                     flagIsSet(P_FOCUSED) &&
@@ -1087,7 +1078,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
                             (level >= 16 && victim->flagIsSet(M_PLUS_TWO))
                     )
                 ) {
-                    if(glow) printColor("^WYour fists glow with power against %N.\n", victim);
+                    if(glow) *this << ColorOn << "^WYour fists glow with power against " << victim << ".\n" << ColorOff;
                 }
                 else if(weapon && (
                         (victim->flagIsSet(M_ENCHANTED_WEAPONS_ONLY) && enchant > 0) ||
@@ -1096,23 +1087,14 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
                     )
                 ) {
                     if(glow && weapon) {
-                        if(weapon->getType() == ObjectType::WEAPON)
-                            printColor("^WYour %s^W glows with power against %N.\n", weapon->getCName(), victim);
-                        else
-                            printColor("^WYour^W %s glow with power against %N.\n", weapon->getCName(), victim);
+                        *this << ColorOn << "^WYour " << weapon << "^W glow" << (weapon->getType() == ObjectType::WEAPON ? "s" : "") << " with power against " << victim << ".\n" << ColorOff;
                     }
                 } else if(isDm()) {
                     if(glow)
-                        printColor("^WYou ignore the laws of the land and attack %N anyway.\n", victim);
+                        *this << ColorOn << "^WYou ignore the laws of the land and attack " << victim << " anyway.\n" << ColorOff;
                 } else {
                     if(showFail) {
-                        if(weapon) {
-                            if(weapon->getType() == ObjectType::WEAPON)
-                                printColor("^cYour %s has no effect on %N.\n", weapon->getCName(), victim);
-                            else
-                                printColor("^cYour %s have no effect on %N.\n", weapon->getCName(), victim);
-                        } else
-                            printColor("^cYour attack has no effect on %N.\n", victim);
+                        *this << ColorOn << "Your " << (weapon ? weapon->getName() : "attack") << (!weapon || weapon->getType() == ObjectType::WEAPON ? "has" : "have") << " no effect on " << victim << "\n" << ColorOff;
                     }
                     return(false);
                 }
@@ -1128,7 +1110,7 @@ bool Creature::canHit(Creature* victim, Object* weapon, bool glow, bool showFail
 //********************************************************************************
 // Returns 0 on normal computation, 1 if the weapon was shattered
 
-int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackType, AttackResult& result, Damage& attackDamage, bool computeBonus, int& drain, float multiplier) {
+int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon, AttackType attackType, AttackResult& result, Damage& attackDamage, bool computeBonus, unsigned int &drain, float multiplier) {
     int retVal = 0;
     Damage bonusDamage;
     std::string weaponCategory = weapon ? weapon->getWeaponCategory() : "none";
@@ -1327,7 +1309,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
             bonusDamage.set(victim->computeBlock(bonusDamage.get()));
     }
 
-    victim->modifyDamage(this, PHYSICAL, attackDamage, NO_REALM, weapon, 0, computeBonus ? OFFGUARD_NOREMOVE : OFFGUARD_REMOVE);
+    victim->modifyDamage(Containable::downcasted_shared_from_this<Player>(), PHYSICAL, attackDamage, NO_REALM, weapon, 0, computeBonus ? OFFGUARD_NOREMOVE : OFFGUARD_REMOVE);
 
     // Don't forget to modify the bonus
     if(computeBonus) {
@@ -1335,13 +1317,13 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
         // too little with slow weapons.  (Bonus / 3) * weapon speed
         bonusDamage.set((int)(((float)bonusDamage.get()/(float)DEFAULT_WEAPON_DELAY) * (weapon ? weapon->getWeaponDelay() : DEFAULT_WEAPON_DELAY)));
 
-        victim->modifyDamage(this, PHYSICAL, bonusDamage, NO_REALM, weapon, 0, OFFGUARD_NOPRINT, true);
+        victim->modifyDamage(Containable::downcasted_shared_from_this<Player>(), PHYSICAL, bonusDamage, NO_REALM, weapon, 0, OFFGUARD_NOPRINT, true);
         attackDamage.setBonus(bonusDamage);
     }
 
     if(retVal != 1) {
         // If we didn't shatter, minimum of 1 damage
-        attackDamage.set(MAX<int>(attackDamage.get(), 1));
+        attackDamage.set(MAX<unsigned int>(attackDamage.get(), 1));
     }
 
     return(retVal);
@@ -1351,7 +1333,7 @@ int Player::computeDamage(Creature* victim, Object* weapon, AttackType attackTyp
 //                      computeDamage
 //**********************************************************************
 
-int Monster::computeDamage(Creature* victim, Object* weapon, AttackType attackType, AttackResult& result, Damage& attackDamage, bool computeBonus, int& drain, float multiplier) {
+int Monster::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon, AttackType attackType, AttackResult& result, Damage& attackDamage, bool computeBonus, unsigned int &drain, float multiplier) {
     Damage bonusDamage;
 
     if(computeBonus)
@@ -1378,11 +1360,11 @@ int Monster::computeDamage(Creature* victim, Object* weapon, AttackType attackTy
         }
     }
 
-    victim->modifyDamage(this, PHYSICAL, attackDamage);
-    victim->modifyDamage(this, PHYSICAL, bonusDamage);
+    victim->modifyDamage(Containable::downcasted_shared_from_this<Monster>(), PHYSICAL, attackDamage);
+    victim->modifyDamage(Containable::downcasted_shared_from_this<Monster>(), PHYSICAL, bonusDamage);
     attackDamage.setBonus(bonusDamage);
 
-    attackDamage.set(MAX<int>(1, attackDamage.get()));
+    attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
     return(0);
 }
 
@@ -1403,14 +1385,14 @@ unsigned int Creature::computeBlock(unsigned int dmg) {
 // This function prints the messages for dodging, chance is now
 // computed elsewhere
 
-int Creature::dodge(Creature* target) {
+int Creature::dodge(const std::shared_ptr<Creature>& target) {
     int     i = Random::get(1,10);
 
     unhide();
     smashInvis();
 
     if(isPlayer()) {
-        Player* player = getAsPlayer();
+        std::shared_ptr<Player> player = getAsPlayer();
         player->statistics.dodge();
         player->increaseFocus(FOCUS_DODGE);
     }
@@ -1419,55 +1401,55 @@ int Creature::dodge(Creature* target) {
         target->getAsPlayer()->statistics.miss();
 
     if(i == 1) {
-        printColor("^cYou barely manage to dodge %N's attack.\n", target);
+        printColor("^cYou barely manage to dodge %N's attack.\n", target.get());
         broadcast(getSock(), target->getSock(), getRoomParent(),
-            "%M barely dodges %N's attack.", this, target);
+            "%M barely dodges %N's attack.", this, target.get());
         if(target->isPlayer())
             target->printColor("^c%M somehow manages to dodge your attack.\n", this);
     } else if(i == 2) {
-        printColor("^cYou deftly dodge %N's attack.\n", target);
+        printColor("^cYou deftly dodge %N's attack.\n", target.get());
         broadcast(getSock(), target->getSock(), getRoomParent(),
-            "%M deftly dodges %N's attack.", this, target);
+            "%M deftly dodges %N's attack.", this, target.get());
         if(target->isPlayer())
             target->printColor("^c%M deftly dodges your attack.\n", this);
     } else if(i == 3 && (target->isPlayer())) {
-        printColor("^cYou side-step %N's attack and smack %s on the back of the head.\n", target,
+        printColor("^cYou side-step %N's attack and smack %s on the back of the head.\n", target.get(),
             target->himHer());
         broadcast(getSock(), target->getSock(), getRoomParent(),
             "%M side-steps %N's attack and smacks %s on the back of the head.", this,
-            target, target->himHer());
+            target.get(), target->himHer());
         if(target->isPlayer())
             target->printColor("^c%M side-steps your attack and smacks you on the back of the head.\n", this);
     } else if(i > 3 && i < 6) {
-        printColor("^cYou dance gracefully around %N's attack.\n", target);
+        printColor("^cYou dance gracefully around %N's attack.\n", target.get());
         broadcast(getSock(), target->getSock(), getRoomParent(),
-            "%M dances gracefully around %N's attack.", this, target);
+            "%M dances gracefully around %N's attack.", this, target.get());
         if(target->isPlayer())
             target->printColor("^c%M dances gracefully around your attack.\n", this);
     } else if(i >= 6 && i < 8) {
-        printColor("^cYou easily dodge %N's attack.\n", target);
+        printColor("^cYou easily dodge %N's attack.\n", target.get());
         broadcast(getSock(), target->getSock(), getRoomParent(),
-            "%M easily dodges %N's attack.", this, target);
+            "%M easily dodges %N's attack.", this, target.get());
         if(target->isPlayer())
             target->printColor("^c%M easily dodges your attack.\n",this);
     }
     else if(i >= 8 && i < 9) {
-        printColor("^cYou easily duck under %N's pitifully executed attack.\n", target);
+        printColor("^cYou easily duck under %N's pitifully executed attack.\n", target.get());
         broadcast(getSock(), target->getSock(), getRoomParent(),
-            "%M easily ducks under %N's pitifully executed attack.", this, target);
+            "%M easily ducks under %N's pitifully executed attack.", this, target.get());
         if(target->isPlayer())
             target->printColor("^c%M easily ducks under your pitifully executed attack.\n",this);
     } else if(i >= 9 && i <= 10) {
         printColor("^cYou laugh at %N as you easily dodge %s attack.\n",
-            target, target->hisHer());
+            target.get(), target->hisHer());
         broadcast(getSock(), target->getSock(), getRoomParent(),
-            "%M laughs as %s easily dodges %N's attack.", this, heShe(), target);
+            "%M laughs as %s easily dodges %N's attack.", this, heShe(), target.get());
         if(target->isPlayer())
             target->printColor("^c%M laughs as %s dodges your attack.\n", this, heShe());
     } else {
-        printColor("^cYou deftly dodge %N's attack.\n", target);
+        printColor("^cYou deftly dodge %N's attack.\n", target.get());
         broadcast(getSock(), target->getSock(), getRoomParent(),
-            "%M deftly dodges %N's attack.", this, target);
+            "%M deftly dodges %N's attack.", this, target.get());
         if(target->isPlayer())
             target->printColor("^c%M deftly dodges your attack.\n",this);
     }
@@ -1502,9 +1484,9 @@ bool Creature::canRiposte() const {
 // Returns 2 on death of person being reposited, returns 1 on non-death sucess
 // This is only called when success has already been determined
 
-int Creature::parry(Creature* target) {
+int Creature::parry(const std::shared_ptr<Creature>& target) {
     long    t=0;
-    Object* weapon = ready[WIELD-1];
+    std::shared_ptr<Object>  weapon = ready[WIELD-1];
     Damage attackDamage;
 
     if(!weapon && isPlayer()) {
@@ -1552,8 +1534,8 @@ int Creature::parry(Creature* target) {
 
     // if result == miss || can't hit target, parry
     if(result == ATTACK_MISS || !canHit(target, weapon, true, false)) {
-        printColor("^cYou parry %N's attack.\n", target);
-        broadcast(getSock(), target->getSock(), getRoomParent(), "%M parries %N's attack.", this, target);
+        printColor("^cYou parry %N's attack.\n", target.get());
+        broadcast(getSock(), target->getSock(), getRoomParent(), "%M parries %N's attack.", this, target.get());
         if(target->isPlayer())
             target->printColor("^c%M parries your attack.\n", this);
         if(isPlayer()) {
@@ -1563,7 +1545,7 @@ int Creature::parry(Creature* target) {
         // We have a riposte, calculate damage and such
         std::string verb = getWeaponVerb();
         std::string verbPlural = getWeaponVerbPlural();
-        int drain=0;
+        unsigned int drain=0;
         bool wasKilled = false, freeTarget = false, meKilled = false;
         //int enchant = 0;
         //if(weapon)
@@ -1575,69 +1557,69 @@ int Creature::parry(Creature* target) {
         // So mob riposte isn't soo mean
         if(isMonster()) {
             attackDamage.set(attackDamage.get() / 2);
-            attackDamage.set(MAX<int>(1, attackDamage.get()));
+            attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
         }
 
         switch(Random::get(1,7)) {
         case 1:
             printColor("^cYou side-step ^M%N's^c attack and %s %s for %s%d^c damage.\n",
-                    target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                    target.get(), verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             broadcast(getSock(), target->getSock(), getRoomParent(), "%M side-steps %N's attack and %s %s.",
-                this, target, verbPlural.c_str(), target->himHer());
+                this, target.get(), verbPlural.c_str(), target->himHer());
             if(target->isPlayer())
                 target->printColor("^M%M^x side-steps your attack and %s you for %s%d^x damage.\n",
                     this, verbPlural.c_str(), target->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             break;
         case 2:
             printColor("^cYou lunge and viciously %s ^M%N^c for %s%d^c damage.\n",
-                verb.c_str(), target, customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                verb.c_str(), target.get(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             broadcast(getSock(), target->getSock(), getRoomParent(), "%M lunges and viciously %s %N.",
-                this, verbPlural.c_str(), target );
+                this, verbPlural.c_str(), target.get() );
             if(target->isPlayer())
                 target->printColor("^M%M^x lunges at you and viciously %s you for %s%d^x damage.\n",
                     this, verbPlural.c_str(), target->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             break;
         case 3:
             printColor("^cYou slide around ^M%N's^c attack and %s %s for %s%d^c damage.\n",
-                target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                target.get(), verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             broadcast(getSock(), target->getSock(), getRoomParent(), "%M slides around %N's attack and %s %s.",
-                this, target, verbPlural.c_str(), target->himHer());
+                this, target.get(), verbPlural.c_str(), target->himHer());
             if(target->isPlayer())
                 target->printColor("^M%M^x slides around your attack and %s you for %s%d^x damage.\n",
                     this, verbPlural.c_str(), target->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             break;
         case 4:
             printColor("^cYou spin away from ^M%N^c's attack and %s %s for %s%d^c damage.\n",
-                target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                target.get(), verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             broadcast(getSock(), target->getSock(), getRoomParent(), "%M spins away from %N's attack and %s %s.",
-                this, target, verbPlural.c_str(), target->himHer());
+                this, target.get(), verbPlural.c_str(), target->himHer());
             if(target->isPlayer())
                 target->printColor("^M%M^x spins away from your attack and %s you for %s%d^x damage.\n",
                     this, verbPlural.c_str(), target->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             break;
         case 5:
             printColor("^cYou duck under ^M%N's^c attack and %s %s for %s%d^c damage.\n",
-                target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                target.get(), verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             broadcast(getSock(), target->getSock(), getRoomParent(), "%M ducks under %N's attack and %s %s.",
-                this, target, verbPlural.c_str(), target->himHer() );
+                this, target.get(), verbPlural.c_str(), target->himHer() );
             if(target->isPlayer())
                 target->printColor("^M%M^x ducks under your attack and %s you for %s%d^x damage.\n",
                     this, verbPlural.c_str(), target->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             break;
         case 6:
             printColor("^cYou laugh at ^M%N^c and quickly %s %s for %s%d^c damage.\n",
-                target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                target.get(), verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             broadcast(getSock(), target->getSock(), getRoomParent(), "%M laughs at %N and quickly %s %s.",
-                this, target, verbPlural.c_str(), target->himHer() );
+                this, target.get(), verbPlural.c_str(), target->himHer() );
             if(target->isPlayer())
                 target->printColor("^M%M^x laughs at you and quickly %s you for %s%d^x damage.\n",
                     this, verbPlural.c_str(), target->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             break;
         case 7:
             printColor("^cYou riposte ^M%N's^c attack and %s %s for %s%d^c damage.\n",
-                target, verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                target.get(), verb.c_str(), target->himHer(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
             broadcast(getSock(), target->getSock(), getRoomParent(), "%M ripostes %N's attack and %s %s.",
-                this, target, verbPlural.c_str(), target->himHer() );
+                this, target.get(), verbPlural.c_str(), target->himHer() );
             if(target->isPlayer())
                 target->printColor("^M%M^x ripostes your attack and %s you for %s%d^x damage.\n",
                     this, verbPlural.c_str(), target->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
@@ -1649,14 +1631,14 @@ int Creature::parry(Creature* target) {
 
             // die check moved right before return.
             if(weapon->getShotsCur() <= 0) {
-                printColor("%O just broke.\n", weapon);
-                broadcast(getSock(), target->getSock(), getRoomParent(), "%M's just broke %P.", this, weapon);
+                *this << ColorOn << setf(CAP) << weapon << " just broke.\n" << ColorOff;
+                broadcast(getSock(), target->getSock(), getRoomParent(), "%M's just broke %P.", this, weapon.get());
                 unequip(WIELD);
             }
         }
 
         if(target->isPlayer()) {
-            Player* pCrt = target->getAsPlayer();
+            std::shared_ptr<Player> pCrt = target->getAsPlayer();
             pCrt->updateAttackTimer();
         }
 
@@ -1672,7 +1654,7 @@ int Creature::parry(Creature* target) {
             wasKilled ||
             meKilled)
         {
-            Creature::simultaneousDeath(this, target, false, freeTarget);
+            Creature::simultaneousDeath(Containable::downcasted_shared_from_this<Creature>(), target, false, freeTarget);
             return(2);
         }
     }
@@ -1724,11 +1706,11 @@ bool Creature::negAuraRepel() const {
 //                      doResistMagic
 //*********************************************************************
 
-unsigned int Creature::doResistMagic(unsigned int dmg, Creature* enemy) {
+unsigned int Creature::doResistMagic(unsigned int dmg, const std::shared_ptr<Creature>& enemy) {
     double resist=0;
-    dmg = MAX<int>(1, dmg);
+    dmg = MAX<unsigned int>(1, dmg);
 
-    if(negAuraRepel() && enemy && this != enemy) {
+    if(negAuraRepel() && enemy && this != enemy.get()) {
         resist = (10.0 + Random::get(1,3) + level + bonus(constitution.getCur()))
             - (bonus(enemy->intelligence.getCur()) + bonus(enemy->piety.getCur()));
         resist /= 100; // percentage
@@ -1744,7 +1726,7 @@ unsigned int Creature::doResistMagic(unsigned int dmg, Creature* enemy) {
         dmg -= (int)resist;
     }
 
-    return(MAX<int>(0, dmg));
+    return(MAX<unsigned int>(0, dmg));
 }
 
 int Creature::getPrimaryDelay() {

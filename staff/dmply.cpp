@@ -74,7 +74,7 @@ class UniqueRoom;
 //                      dmLastCommand
 //*********************************************************************
 
-std::string dmLastCommand(const Player* player) {
+std::string dmLastCommand(const std::shared_ptr<const Player> &player) {
     if(player->isPassword(player->getLastCommand()))
         return("**********");
     return(escapeColor(player->getLastCommand()));
@@ -86,8 +86,8 @@ std::string dmLastCommand(const Player* player) {
 //*********************************************************************
 // This function allows a DM to force another user to do a command.
 
-int dmForce(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmForce(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     int     index=0;
     std::string::size_type i=0;
     char    str[IBUFSIZE+1];
@@ -149,8 +149,8 @@ int dmForce(Player* player, cmd* cmnd) {
 //                      dmSpy
 //*********************************************************************
 
-int dmSpy(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmSpy(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
 
     if(cmnd->num < 2 && !player->flagIsSet(P_SPYING)) {
@@ -176,7 +176,7 @@ int dmSpy(Player* player, cmd* cmnd) {
 
     if(target->isDm() && !player->isDm()) {
         player->print("You cannot spy on DM's!\n");
-        target->printColor("^r%M tried to spy on you.\n", player);
+        target->printColor("^r%M tried to spy on you.\n", player.get());
         return(0);
     }
 
@@ -206,8 +206,8 @@ int dmSpy(Player* player, cmd* cmnd) {
 // This function sets it so a player can't broadcast for 10 minutes or
 // however long specified by [minutes]
 
-int dmSilence(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
+int dmSilence(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
 
 
     if(cmnd->num < 2) {
@@ -253,8 +253,8 @@ int dmSilence(Player* player, cmd* cmnd) {
 //                      dmTitle
 //*********************************************************************
 
-int dmTitle(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmTitle(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     std::string title = "";
 
     if(cmnd->num < 3) {
@@ -292,8 +292,8 @@ int dmTitle(Player* player, cmd* cmnd) {
 //                      dmSurname
 //*********************************************************************
 
-int dmSurname(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmSurname(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     int     i=0;
     char    which=0;
 
@@ -379,8 +379,8 @@ int dmSurname(Player* player, cmd* cmnd) {
 // This function allows you to see who is in a group or party of people
 // who are following you.
 
-int dmGroup(Player* player, cmd* cmnd) {
-    Creature *target=nullptr;
+int dmGroup(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature>target=nullptr;
 
     if(cmnd->num < 2) {
         player->printColor("Active Groups: \n%s", gServer->getGroupList().c_str());
@@ -420,7 +420,7 @@ int dmGroup(Player* player, cmd* cmnd) {
             oStr << group;
         }
     } else {
-        player->print("%M is not a member of a group.\n", target);
+        player->print("%M is not a member of a group.\n", target.get());
     }
     return(0);
 }
@@ -430,8 +430,8 @@ int dmGroup(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows staff to delete a player.
 
-int dmDust(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmDust(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     char    buf[120];
 
     if(cmnd->num < 2) {
@@ -481,7 +481,7 @@ int dmDust(Player* player, cmd* cmnd) {
         last_dust_output = time(nullptr) + 15L;
     }
 
-    deletePlayer(target);
+    target->deletePlayer();
     return(0);
 }
 
@@ -491,9 +491,9 @@ int dmDust(Player* player, cmd* cmnd) {
 //  This function allows a DM to output a string to an individual
 //  players screen.
 
-int dmFlash(Player* player, cmd* cmnd) {
+int dmFlash(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string text = "";
-    Player  *target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
 
 
     if(cmnd->num < 2) {
@@ -515,7 +515,7 @@ int dmFlash(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    player->printColor("^cYou flashed: \"%s^c\" to %N.\n", text.c_str(), target);
+    player->printColor("^cYou flashed: \"%s^c\" to %N.\n", text.c_str(), target.get());
 
     target->printColor("%s\n", text.c_str());
     return(0);
@@ -525,8 +525,8 @@ int dmFlash(Player* player, cmd* cmnd) {
 //                      dmAward
 //*********************************************************************
 
-int dmAward(Player* player, cmd* cmnd) {
-    Player  *target;
+int dmAward(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target;
     long    i=0, t=0, amount=0, gp=0;
     char    temp[80];
 
@@ -643,8 +643,8 @@ int dmAward(Player* player, cmd* cmnd) {
 //*********************************************************************
 //                      dmBeep
 //*********************************************************************
-int dmBeep(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmBeep(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
     if(cmnd->num < 2) {
         player->print("\n*Beep whom?\n");
@@ -673,8 +673,8 @@ int dmBeep(Player* player, cmd* cmnd) {
 //                      dmAdvance
 //*********************************************************************
 
-int dmAdvance(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmAdvance(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     int     lev=0, i=0;
 
     if(cmnd->num < 2) {
@@ -700,18 +700,18 @@ int dmAdvance(Player* player, cmd* cmnd) {
     }
     lev = cmnd->val[1] - target->getLevel();
     if(lev == 0) {
-        player->print("But %N is already level %d!\n", target, target->getLevel());
+        player->print("But %N is already level %d!\n", target.get(), target->getLevel());
         return(0);
     }
     if(lev > 0) {
         for(i = 0; i < lev; i++)
             target->upLevel();
-        player->print("%M has been raised to level %d.\n", target, target->getLevel());
+        player->print("%M has been raised to level %d.\n", target.get(), target->getLevel());
     }
     if(lev < 0) {
         for(i = 0; i > lev; i--)
             target->downLevel();
-        player->print("%M has been lowered to level %d.\n", target, target->getLevel());
+        player->print("%M has been lowered to level %d.\n", target.get(), target->getLevel());
     }
     if(target->getLevel() > 1)
         target->setExperience(Config::expNeeded(target->getLevel()-1)+1);
@@ -724,9 +724,9 @@ int dmAdvance(Player* player, cmd* cmnd) {
 //                      dmFinger
 //*********************************************************************
 
-int dmFinger(Player* player, cmd* cmnd) {
+int dmFinger(const std::shared_ptr<Player>& player, cmd* cmnd) {
     struct stat     f_stat{};
-    Player  *target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     char    tmp[80];
 
     if(cmnd->num < 2) {
@@ -739,14 +739,13 @@ int dmFinger(Player* player, cmd* cmnd) {
 
     if(!target) {
 
-        if(!loadPlayer(cmnd->str[1], &target)) {
+        if(!loadPlayer(cmnd->str[1], target)) {
             player->print("Player does not exist.\n");
             return(0);
         }
 
         player->print("\n");
         target->information(player, false);
-        delete target;
 
     } else {
         player->print("\n");
@@ -770,8 +769,8 @@ int dmFinger(Player* player, cmd* cmnd) {
 //                      dmDisconnect
 //*********************************************************************
 
-int dmDisconnect(Player* player, cmd* cmnd) {
-    Player  *creature=nullptr;
+int dmDisconnect(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> creature=nullptr;
 
     if(cmnd->num < 2) {
         player->print("\nDisconnect whom?\n");
@@ -802,9 +801,9 @@ int dmDisconnect(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows staff to steal items from a player remotely.
 
-int dmTake(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
-    Object  *object=nullptr, *container=nullptr;
+int dmTake(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
+    std::shared_ptr<Object> object=nullptr, container=nullptr;
     bool    online=false;
 
     if(cmnd->num < 2) {
@@ -824,7 +823,7 @@ int dmTake(Player* player, cmd* cmnd) {
 
     if(!target || !player->canSee(target)) {
         if(player->isDm()) {
-            if(!loadPlayer(cmnd->str[2], &target)) {
+            if(!loadPlayer(cmnd->str[2], target)) {
                 player->print("Player does not exist.\n");
                 return(0);
             }
@@ -843,23 +842,17 @@ int dmTake(Player* player, cmd* cmnd) {
 
         if(!container) {
             player->print("%s doesn't have that container.\n", target->upHeShe());
-            if(!online)
-                delete target;;
             return(0);
         }
 
         if(container->getType() != ObjectType::CONTAINER) {
             player->print("That isn't a container.\n");
-            if(!online)
-                delete target;;
             return(0);
         }
 
         object = container->findObject(player, cmnd, 1);
         if(!object) {
             player->print("That is not in that container.\n");
-            if(!online)
-                delete target;;
             return(0);
         }
 
@@ -868,14 +861,12 @@ int dmTake(Player* player, cmd* cmnd) {
         // don't need to run addUnique on staff
         player->addObj(object);
 
-        player->printColor("You remove a %P from %N's %s.\n", object, target, container->getCName());
+        player->printColor("You remove a %P from %N's %s.\n", object.get(), target.get(), container->getCName());
 
         if(!player->isDm())
             log_immort(true, player, "%s removed %s from %s's %s.\n", player->getCName(), object->getCName(), target->getCName(), container->getCName());
 
         target->save(online);
-        if(!online)
-            delete target;;
         return(0);
     }
 
@@ -884,14 +875,11 @@ int dmTake(Player* player, cmd* cmnd) {
 
     if(!object) {
         player->print("%s doesn't have that.\n", target->upHeShe());
-
-        if(!online)
-            delete target;;
         return(0);
     }
 
 
-    player->printColor("You remove %P from %N's inventory.\n", object, target);
+    player->printColor("You remove %P from %N's inventory.\n", object.get(), target.get());
 
     if(!player->isDm())
         log_immort(true, player, "%s removed %s from %s's inventory.\n", player->getCName(), object->getCName(), target->getCName());
@@ -901,8 +889,6 @@ int dmTake(Player* player, cmd* cmnd) {
     player->addObj(object);
 
     target->save(online);
-    if(!online)
-        delete target;;
     return(0);
 }
 
@@ -911,9 +897,9 @@ int dmTake(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows staff to unwield/unwear items from a player remotely.
 
-int dmRemove(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
-    Object  *object=nullptr;
+int dmRemove(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
+    std::shared_ptr<Object> object=nullptr;
     int     i=0, j=0, found=0;
 
     if(cmnd->num < 2) {
@@ -974,7 +960,7 @@ int dmRemove(Player* player, cmd* cmnd) {
     }
 
 
-    player->printColor("You remove %P from %N's worn equipment.\n", object, target);
+    player->printColor("You remove %P from %N's worn equipment.\n", object.get(), target.get());
 
     if(!player->isDm())
         log_immort(true, player, "%s removed %s from %s's worn equipment.\n", player->getCName(), object->getCName(), target->getCName());
@@ -990,9 +976,9 @@ int dmRemove(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows a CT or DM to remotely add items to a player.
 
-int dmPut(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
-    Object  *object=nullptr, *container=nullptr;
+int dmPut(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
+    std::shared_ptr<Object> object=nullptr, container=nullptr;
 
     bool    online=false;
 
@@ -1011,7 +997,7 @@ int dmPut(Player* player, cmd* cmnd) {
 
     if(!target || !player->canSee(target)) {
         if(player->isDm()) {
-            if(!loadPlayer(cmnd->str[2], &target)) {
+            if(!loadPlayer(cmnd->str[2], target)) {
                 player->print("Player does not exist.\n");
                 return(0);
             }
@@ -1030,23 +1016,17 @@ int dmPut(Player* player, cmd* cmnd) {
 
         if(!container) {
             player->print("%s doesn't have that container.\n", target->upHeShe());
-            if(!online)
-                delete target;;
             return(0);
         }
 
         if(container->getType() != ObjectType::CONTAINER) {
             player->print("That isn't a container.\n");
-            if(!online)
-                delete target;;
             return(0);
         }
 
         object = player->findObject(player, cmnd, 1);
         if(!object) {
             player->print("You do not have that.\n");
-            if(!online)
-                delete target;;
             return(0);
         }
 
@@ -1054,8 +1034,6 @@ int dmPut(Player* player, cmd* cmnd) {
         if((container->getShotsCur() + 1) > container->getShotsMax()) {
             player->printColor("You will exceed the maximum allowed items for %P(%d).\n", container->getCName(), container->getShotsMax());
             player->print("Aborted.\n");
-            if(!online)
-                delete target;;
             return(0);
         }
 
@@ -1064,11 +1042,9 @@ int dmPut(Player* player, cmd* cmnd) {
         container->addObj(object);
         Limited::addOwner(target, object);
 
-        player->printColor("You put %P into %N's %s.\n", object, target, container->getCName());
+        player->printColor("You put %P into %N's %s.\n", object.get(), target.get(), container->getCName());
 
         target->save(online);
-        if(!online)
-            delete target;;
         return(0);
     }
 
@@ -1076,24 +1052,20 @@ int dmPut(Player* player, cmd* cmnd) {
     object = player->findObject(player, cmnd, 1);
     if(!object) {
         player->print("You don't have that.\n");
-        if(!online)
-            delete target;;
         return(0);
     }
 
     if(object->flagIsSet(O_DARKMETAL) && target->getRoomParent()->isSunlight()) {
-        player->printColor("You cannot give %P to %N now!\nIt would surely be destroyed!\n", object, target);
+        player->printColor("You cannot give %P to %N now!\nIt would surely be destroyed!\n", object.get(), target.get());
         return(0);
     }
 
-    player->printColor("You add %P to %N's inventory.\n", object, target);
+    player->printColor("You add %P to %N's inventory.\n", object.get(), target.get());
     player->delObj(object, false, false, true, true, true);
     Limited::addOwner(target, object);
     target->addObj(object);
 
     target->save(online);
-    if(!online)
-        delete target;;
     return(0);
 }
 
@@ -1105,8 +1077,8 @@ int dmPut(Player* player, cmd* cmnd) {
 // when logged off. If logged on it will do nothing as teleport handles
 // the online function.
 
-int dmMove(Player* player, cmd* cmnd) {
-    Player  *creature=nullptr;
+int dmMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> creature=nullptr;
 
     MapMarker mapmarker;
     std::ostringstream log;
@@ -1130,13 +1102,12 @@ int dmMove(Player* player, cmd* cmnd) {
     }
 
     // now load 'em in
-    if(!loadPlayer(cmnd->str[1], &creature)) {
+    if(!loadPlayer(cmnd->str[1], creature)) {
         player->print("player %s does not exist\n", cmnd->str[1]);
         return(0);
     }
     if(creature->isCt() && !player->isDm()) {
         player->print("You cannot move that player.\n");
-        delete creature;;
         return(0);
     }
 
@@ -1153,10 +1124,9 @@ int dmMove(Player* player, cmd* cmnd) {
     getDestination(getFullstrText(cmnd->fullstr, 2), &mapmarker, &cr, player);
 
     if(!cr.id) {
-        Area *area = gServer->getArea(mapmarker.getArea());
+        std::shared_ptr<Area> area = gServer->getArea(mapmarker.getArea());
         if(!area) {
             player->print("That area does not exist.\n");
-            delete creature;;
             return(0);
         }
         creature->currentLocation.room.clear();
@@ -1167,7 +1137,6 @@ int dmMove(Player* player, cmd* cmnd) {
     } else {
         if(!validRoomId(cr)) {
             player->print("Can only put players in the range of 1-%d.\n", RMAX);
-            delete creature;;
             return(0);
         }
         *&creature->currentLocation.room = *&cr;
@@ -1178,7 +1147,6 @@ int dmMove(Player* player, cmd* cmnd) {
     log_immort(true, player, "%s.\n", log.str().c_str());
 
     creature->save();
-    delete creature;;
     return(0);
 }
 
@@ -1189,10 +1157,10 @@ int dmMove(Player* player, cmd* cmnd) {
 // This function is to be used to quickly move ALL players online to
 // one place for whatever reason.
 
-int dmWordAll(Player* player, cmd* cmnd) {
-    BaseRoom    *room=nullptr;
+int dmWordAll(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<BaseRoom> room=nullptr;
 
-    Player* target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
 
     for(const auto& p : gServer->players) {
         target = p.second;
@@ -1208,11 +1176,11 @@ int dmWordAll(Player* player, cmd* cmnd) {
         broadcast(target->getSock(), target->getRoomParent(), "An astral vortex just arrived.");
 
         target->print("The astral vortex sucks you in!\n");
-        broadcast(target->getSock(), target->getRoomParent(), "The astral vortex sucks %N into it!", target);
+        broadcast(target->getSock(), target->getRoomParent(), "The astral vortex sucks %N into it!", target.get());
 
         broadcast(target->getSock(), target->getRoomParent(), "The astral vortex disappears.");
 
-        broadcast("^Y### Strangely, %N was sucked into an astral vortex.", target);
+        broadcast("^Y### Strangely, %N was sucked into an astral vortex.", target.get());
 
         // Optionally, can knock everyone out for one minute.
         if(!strcmp(cmnd->str[1], "-u"))
@@ -1233,8 +1201,8 @@ int dmWordAll(Player* player, cmd* cmnd) {
 //                      dmRename
 //*********************************************************************
 
-int dmRename(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmRename(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     int     i=0;
     FILE    *fp;
     std::string oldName, newName;
@@ -1349,8 +1317,8 @@ int dmRename(Player* player, cmd* cmnd) {
 //                      dmPassword
 //*********************************************************************
 
-int dmPassword(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmPassword(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
     bool    online=false;
     std::string pass = "";
@@ -1369,7 +1337,7 @@ int dmPassword(Player* player, cmd* cmnd) {
     cmnd->str[1][0] = up(cmnd->str[1][0]);
     target = gServer->findPlayer(cmnd->str[1]);
     if(!target) {
-        if(!loadPlayer(cmnd->str[1], &target)) {
+        if(!loadPlayer(cmnd->str[1], target)) {
             player->print("Player does not exist.\n");
             return(0);
         }
@@ -1396,8 +1364,6 @@ int dmPassword(Player* player, cmd* cmnd) {
     logn("log.passwd", "### %s changed %s's password to %s.\n", player->getCName(), target->getCName(), pass.c_str());
 
     target->save(online);
-    if(!online)
-        delete target;;
     return(0);
 }
 
@@ -1406,8 +1372,8 @@ int dmPassword(Player* player, cmd* cmnd) {
 //                      dmRestorePlayer
 //*********************************************************************
 
-int dmRestorePlayer(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmRestorePlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     int     n=0;
     long    old_xp=0;
     float   exp=0;
@@ -1417,7 +1383,7 @@ int dmRestorePlayer(Player* player, cmd* cmnd) {
     target = gServer->findPlayer(cmnd->str[1]);
 
     if(!target) {
-        if(!loadPlayer(cmnd->str[1], &target)) {
+        if(!loadPlayer(cmnd->str[1], target)) {
             player->print("Player does not exist.\n");
             return(0);
         }
@@ -1440,15 +1406,13 @@ int dmRestorePlayer(Player* player, cmd* cmnd) {
         target->upLevel();
 
 
-    player->print("%M has been restored.\n", target);
+    player->print("%M has been restored.\n", target.get());
 
     log_immort(true, player, "%s restored %s from %ld to %ld xp.\n", player->getCName(),
         target->getCName(), old_xp, target->getExperience());
 
     target->save(online);
-    if(!online)
-        delete target;
-    else
+    if(online)
         target->print("Your experience has been restored.\n");
     return(0);
 }
@@ -1466,8 +1430,8 @@ int dmRestorePlayer(Player* player, cmd* cmnd) {
 #define DM_GEN_WARN     4
 #define DM_GEN_BUG      5
 
-int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
-    Player  *target=nullptr;
+int dmGeneric(const std::shared_ptr<Player>& player, cmd* cmnd, std::string_view action, int what) {
+    std::shared_ptr<Player> target=nullptr;
 
     bool    online=false;
 
@@ -1481,7 +1445,7 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
 
     if(!target || !player->canSee(target)) {
         if(player->isCt()) {
-            if(!loadPlayer(cmnd->str[1], &target)) {
+            if(!loadPlayer(cmnd->str[1], target)) {
                 player->print("Player does not exist.\n");
                 return(DOPROMPT);
             }
@@ -1502,35 +1466,27 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
 
         if(!player->isDm() && target->isDm()) {
             player->print("Don't be silly.\n");
-            if(!online == 1)
-                delete target;;
             return(0);
         }
 
         if(cmnd->num < 3) {
-            player->print("%M has %d total warning%s.\n", target, target->getWarnings(), (target->getWarnings()==1 ? "":"s") );
-            if(!online)
-                delete target;;
+            player->print("%M has %d total warning%s.\n", target.get(), target->getWarnings(), (target->getWarnings()==1 ? "":"s") );
             return(0);
         }
 
         if(!strcmp(cmnd->str[2], "-r")) {
             if(!player->isCt()) {
                 player->print("You are unable to remove warnings.\n");
-                if(!online)
-                    delete target;;
                 return(0);
             }
             if(target->getWarnings() < 1) {
-                player->print("%M has no warnings.\n", target);
-                if(!online)
-                    delete target;;
+                player->print("%M has no warnings.\n", target.get());
                 return(0);
             } else {
                 target->subWarnings(1);
                 if(online)
-                    target->print("%M removed one of your warnings. You now have %d.\n", player, target->getWarnings());
-                player->print("One warning removed. %M now has %d warning%s remaining.\n", target, target->getWarnings(), (target->getWarnings()==1 ? "":"s"));
+                    target->print("%M removed one of your warnings. You now have %d.\n", player.get(), target->getWarnings());
+                player->print("One warning removed. %M now has %d warning%s remaining.\n", target.get(), target->getWarnings(), (target->getWarnings()==1 ? "":"s"));
             }
             log_immort(false,player, "%s removed a warning from %s.\n", player->getCName(), target->getCName());
             logn("log.warn", "%s removed a warning from %s.\n", player->getCName(), target->getCName());
@@ -1538,17 +1494,13 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
             broadcast(isCt, "^y%s removed a warning from %s. New total: %d", player->getCName(), target->getCName(), target->getWarnings());
         } else if(!strcmp(cmnd->str[2], "-a")) {
             if(target->getWarnings() > 2) {
-                player->print("%M already has 3 warnings. %s cannot be warned further.\n",
-                      target, target->upHeShe());
-                if(!online)
-                    delete target;;
+                player->print("%M already has 3 warnings. %s cannot be warned further.\n", target.get(), target->upHeShe());
                 return(0);
             } else {
                 target->addWarnings(1);
                 if(online)
-                    target->print("%M has formally warned you. You now have %d warning%s.\n",
-                          player, target->getWarnings(), (target->getWarnings()>1 ? "s":""));
-                player->print("Warning added. %M now has %d total warning%s.\n", target, target->getWarnings(), (target->getWarnings()>1 ? "s":""));
+                    target->print("%M has formally warned you. You now have %d warning%s.\n", player.get(), target->getWarnings(), (target->getWarnings()>1 ? "s":""));
+                player->print("Warning added. %M now has %d total warning%s.\n", target.get(), target->getWarnings(), (target->getWarnings()>1 ? "s":""));
 
                 logn("log.warn", "%s added a warning to %s.\n", player->getCName(), target->getCName());
                 log_immort(false,player, "%s added a warning to %s.\n", player->getCName(), target->getCName());
@@ -1558,8 +1510,6 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
 
         } else {
             player->print("Syntax: *warn (player) [-r|-a]\n");
-            if(!online)
-                delete target;;
             return(0);
         }
         target->save(online);
@@ -1578,28 +1528,25 @@ int dmGeneric(Player* player, cmd* cmnd, std::string_view action, int what) {
     } else
         player->print("Invalid option for dmGetInfo().\n");
 
-
-    if(!online)
-        delete target;;
     return(0);
 }
 
 //*********************************************************************
 //                      dmBank
 //*********************************************************************
-int dmBank(Player* player, cmd* cmnd) {
+int dmBank(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(dmGeneric(player, cmnd, "*bank", DM_GEN_BANK));
 }
 //*********************************************************************
 //                      dmInventoryValue
 //*********************************************************************
-int dmInventoryValue(Player* player, cmd* cmnd) {
+int dmInventoryValue(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(dmGeneric(player, cmnd, "*inv", DM_GEN_INVVAL));
 }
 //*********************************************************************
 //                      dmWarn
 //*********************************************************************
-int dmWarn(Player* player, cmd* cmnd) {
+int dmWarn(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     // watchers can use *warn
     if(!player->isStaff() && !player->isWatcher())
@@ -1612,7 +1559,7 @@ int dmWarn(Player* player, cmd* cmnd) {
 //*********************************************************************
 //                      dmBugPlayer
 //*********************************************************************
-int dmBugPlayer(Player* player, cmd* cmnd) {
+int dmBugPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(dmGeneric(player, cmnd, "*bug", DM_GEN_BUG));
 }
 
@@ -1659,9 +1606,9 @@ int dmBugPlayer(Player* player, cmd* cmnd) {
 // this function handles and *kill commands that kill everyone
 
 int dmKillAll(int type, int silent, int hpmp_loss, int unconscious, int uncon_length) {
-    BaseRoom *room=nullptr;
+    std::shared_ptr<BaseRoom> room=nullptr;
 
-    Player* target;
+    std::shared_ptr<Player> target;
     for(const auto& p : gServer->players) {
         target = p.second;
 
@@ -1681,15 +1628,15 @@ int dmKillAll(int type, int silent, int hpmp_loss, int unconscious, int uncon_le
             broadcast(target->getSock(), target->getRoomParent(), "Meteors begin falling from the sky!\n");
 
             target->print("A freak meteor strikes you!\n");
-            broadcast(target->getSock(), target->getRoomParent(), "A freak meteors strikes %N!", target);
+            broadcast(target->getSock(), target->getRoomParent(), "A freak meteors strikes %N!", target.get());
 
             target->print("The freak meteor slams into you for %d damage!\n", Random::get(5000,10000));
-            broadcast(target->getSock(), target->getRoomParent(), "The freak meteor blasts right through %N!", target);
+            broadcast(target->getSock(), target->getRoomParent(), "The freak meteor blasts right through %N!", target.get());
             target->print("You die as your ashes fall to the ground.\n");
-            broadcast(target->getSock(), target->getRoomParent(), "The freak meteor vaporized %N!", target);
+            broadcast(target->getSock(), target->getRoomParent(), "The freak meteor vaporized %N!", target.get());
 
             if(!silent)
-                broadcast("### Sadly, %N was killed by a freak meteor shower.", target);
+                broadcast("### Sadly, %N was killed by a freak meteor shower.", target.get());
             break;
         case DM_IGMOO:
             target->print("Igmoo the Mad just arrived.\n");
@@ -1701,7 +1648,7 @@ int dmKillAll(int type, int silent, int hpmp_loss, int unconscious, int uncon_le
             target->print("Igmoo the Mad killed you.\n");
 
             if(!silent)
-                broadcast("### Sadly, %N was disintegrated by Igmoo the Mad.", target);
+                broadcast("### Sadly, %N was disintegrated by Igmoo the Mad.", target.get());
             break;
         case DM_SUPERNOVA:
             target->printColor("\n^YThe searing rays of the sun grow uncomfortably hot.\n\n");
@@ -1711,7 +1658,7 @@ int dmKillAll(int type, int silent, int hpmp_loss, int unconscious, int uncon_le
             target->printColor("^YYou've been disintegrated!\n\n");
 
             if(!silent)
-                broadcast("^Y### Sadly, %N was disintegrated by an exploding sun.", target);
+                broadcast("^Y### Sadly, %N was disintegrated by an exploding sun.", target.get());
 
         default:
             break;
@@ -1741,9 +1688,9 @@ int dmKillAll(int type, int silent, int hpmp_loss, int unconscious, int uncon_le
 // not declared in proto.h, only used below
 // handles player-targeted *kills
 
-int dmKill(Player* player, Player *victim, int type, int silent, int hpmp_loss, int unconscious, int uncon_length) {
+int dmKill(std::shared_ptr<Player> player, std::shared_ptr<Player>victim, int type, int silent, int hpmp_loss, int unconscious, int uncon_length) {
     int     kill_room=0, no_limbo=0;
-    BaseRoom *newRoom=nullptr;
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
 
     char filename[80];
     snprintf(filename, 80, "%s/crash.txt", Path::Config.c_str());
@@ -1765,116 +1712,116 @@ int dmKill(Player* player, Player *victim, int type, int silent, int hpmp_loss, 
     if(victim->isDm()) {
         switch(type) {
         case DM_COMBUST:
-            player->print("You tried to make %N spontaneously combust!\n", victim);
-            victim->printColor("^r%M tried to make you spontaneously combust!\n", player);
+            player->print("You tried to make %N spontaneously combust!\n", victim.get());
+            victim->printColor("^r%M tried to make you spontaneously combust!\n", player.get());
             break;
         case DM_SLIME:
-            player->print("You tried to make %N dissolve in green slime!\n", victim);
-            victim->printColor("^g%M tried to dissolve you in green slime!\n", player);
+            player->print("You tried to make %N dissolve in green slime!\n", victim.get());
+            victim->printColor("^g%M tried to dissolve you in green slime!\n", player.get());
             break;
         case DM_GNATS:
-            player->print("You tried to make a swarm of gnats eat %N!\n", victim);
-            victim->printColor("^m%M tried to send a swarm of ravenous gnats after you!\n", player);
+            player->print("You tried to make a swarm of gnats eat %N!\n", victim.get());
+            victim->printColor("^m%M tried to send a swarm of ravenous gnats after you!\n", player.get());
             break;
         case DM_TRIP:
-            player->print("You tried to make %N trip and break %s neck!\n", victim, victim->hisHer());
-            victim->printColor("^y%M tried to make you trip and break your neck!\n", player);
+            player->print("You tried to make %N trip and break %s neck!\n", victim.get(), victim->hisHer());
+            victim->printColor("^y%M tried to make you trip and break your neck!\n", player.get());
             break;
         case DM_BOMB:
-            player->print("You tried to suicide bomb %N!\n", victim);
-            victim->printColor("^r%M tried to suicide bomb you!\n", player);
+            player->print("You tried to suicide bomb %N!\n", victim.get());
+            victim->printColor("^r%M tried to suicide bomb you!\n", player.get());
             break;
         case DM_NUCLEAR:
-            player->print("You tried to make %N meltdown!\n", victim);
-            victim->printColor("^g%M tried to make you meltdown!\n", player);
+            player->print("You tried to make %N meltdown!\n", victim.get());
+            victim->printColor("^g%M tried to make you meltdown!\n", player.get());
             break;
         case DM_RAPE:
-            player->print("You tried to rape %N!\n", victim);
-            victim->printColor("^m%M tried to rape you!\n", player);
+            player->print("You tried to rape %N!\n", victim.get());
+            victim->printColor("^m%M tried to rape you!\n", player.get());
             break;
         case DM_DRAIN:
-            player->print("You tried to drain %N!\n", victim);
-            victim->printColor("^c%M tried to drain you!\n", player);
+            player->print("You tried to drain %N!\n", victim.get());
+            victim->printColor("^c%M tried to drain you!\n", player.get());
             break;
         case DM_CRUSH:
-            player->print("You tried to crush %N!\n", victim);
-            victim->printColor("^c%M tried to crush you!\n", player);
+            player->print("You tried to crush %N!\n", victim.get());
+            victim->printColor("^c%M tried to crush you!\n", player.get());
             break;
         case DM_MISSILE:
-            player->print("You tried to hit %N with a cruise missile!\n", victim);
-            victim->printColor("^r%M tried to hit you with a cruise missile!\n", player);
+            player->print("You tried to hit %N with a cruise missile!\n", victim.get());
+            victim->printColor("^r%M tried to hit you with a cruise missile!\n", player.get());
             break;
         case DM_NOMNOM:
-            player->print("You tried to make a fearsome monster eat %N!\n", victim);
-            victim->printColor("^r%M tried to make a fearsome monster!\n", player);
+            player->print("You tried to make a fearsome monster eat %N!\n", victim.get());
+            victim->printColor("^r%M tried to make a fearsome monster!\n", player.get());
             break;
         case DM_GRENADE:
-            player->print("You tried to make %N die from a grenade!\n", victim);
-            victim->printColor("^r%M tried to kill you with a grenade!\n", player);
+            player->print("You tried to make %N die from a grenade!\n", victim.get());
+            victim->printColor("^r%M tried to kill you with a grenade!\n", player.get());
             break;
         case DM_HEAD_BOOM:
-            player->print("You tried to make %N's head explode!\n", victim);
-            victim->printColor("^r%M tried to make your head explode!\n", player);
+            player->print("You tried to make %N's head explode!\n", victim.get());
+            victim->printColor("^r%M tried to make your head explode!\n", player.get());
             break;
         case DM_STAB:
-            player->print("You tried to make %N stab %sself to death!\n", victim, victim->himHer());
-            victim->printColor("^r%M tried to make you stab yourself to death!\n", player);
+            player->print("You tried to make %N stab %sself to death!\n", victim.get(), victim->himHer());
+            victim->printColor("^r%M tried to make you stab yourself to death!\n", player.get());
             break;
         case DM_SUICIDE:
-            player->print("You tried to make %N kill %sself!\n", victim, victim->himHer());
-            victim->printColor("^r%M tried to make you kill yourself!\n", player);
+            player->print("You tried to make %N kill %sself!\n", victim.get(), victim->himHer());
+            victim->printColor("^r%M tried to make you kill yourself!\n", player.get());
             break;
          case DM_ALCOHOL:
-            player->print("You tried to make %N drink %sself to death!\n", victim, victim->himHer());
-            victim->printColor("^r%M tried to make you drink yourself to death!\n", player);
+            player->print("You tried to make %N drink %sself to death!\n", victim.get(), victim->himHer());
+            victim->printColor("^r%M tried to make you drink yourself to death!\n", player.get());
             break;
         case DM_DROWNED:
-            player->print("You tried to drown %N!\n", victim);
-            victim->printColor("^r%M tried to drown you!\n", player);
+            player->print("You tried to drown %N!\n", victim.get());
+            victim->printColor("^r%M tried to drown you!\n", player.get());
             break;
         case DM_DRAGON:
-            player->print("You tried to kill %N with an ancient dragon!\n", victim);
-            victim->printColor("^r%M tried to send an ancient dragon to kill you!\n", player);
+            player->print("You tried to kill %N with an ancient dragon!\n", victim.get());
+            victim->printColor("^r%M tried to send an ancient dragon to kill you!\n", player.get());
             break;
          case DM_CHOKE:
-            player->print("You tried to choke %N to death!\n", victim);
-            victim->printColor("^r%M tried to choke you to death!\n", player);
+            player->print("You tried to choke %N to death!\n", victim.get());
+            victim->printColor("^r%M tried to choke you to death!\n", player.get());
             break;
         case DM_DEMON:
-            player->print("You tried to make an ancient demon kill %N!\n", victim);
-            victim->printColor("^r%M tried to kill you with an ancient demon!\n", player);
+            player->print("You tried to make an ancient demon kill %N!\n", victim.get());
+            victim->printColor("^r%M tried to kill you with an ancient demon!\n", player.get());
             break;
         case DM_RATS:
-            player->print("You tried to kill %N with gutter rats!\n", victim);
-            victim->printColor("^r%M tried to kill you with gutter rats!\n", player);
+            player->print("You tried to kill %N with gutter rats!\n", victim.get());
+            victim->printColor("^r%M tried to kill you with gutter rats!\n", player.get());
             break;
         case DM_COMET:
-            player->print("You tried to kill %N with a firey comet!\n", victim);
-            victim->printColor("^r%M tried to kill you with a firey comet!\n", player);
+            player->print("You tried to kill %N with a firey comet!\n", victim.get());
+            victim->printColor("^r%M tried to kill you with a firey comet!\n", player.get());
             break;
         case DM_ABYSS:
-            player->print("You tried to send %N's soul to the Abyss!\n", victim);
-            victim->printColor("^r%M tried to suck your soul into the Abyss!\n", player);
+            player->print("You tried to send %N's soul to the Abyss!\n", victim.get());
+            victim->printColor("^r%M tried to suck your soul into the Abyss!\n", player.get());
             break;
         case DM_SHARDS:
-            player->print("You tried to break %N into millions of tiny crystalline shards!\n", victim);
-            victim->printColor("^r%M tried break you into millions of tiny crystalline shards!\n", player);
+            player->print("You tried to break %N into millions of tiny crystalline shards!\n", victim.get());
+            victim->printColor("^r%M tried break you into millions of tiny crystalline shards!\n", player.get());
             break;
         case DM_FLATULENCE:
-            player->print("You tried to give %N death by an overabundance of flatulence!\n", victim);
-            victim->printColor("^r%M tried to give you an overabundance of flatulence and kill you!\n", player);
+            player->print("You tried to give %N death by an overabundance of flatulence!\n", victim.get());
+            victim->printColor("^r%M tried to give you an overabundance of flatulence and kill you!\n", player.get());
             break;
         case DM_DIARRHEA:
-            player->print("You tried to give %N excessive diarreah of the mouth and kill %s!\n", victim, victim->himHer());
-            victim->printColor("^r%M tried to give you excessive diarreah and kill you!\n", player);
+            player->print("You tried to give %N excessive diarreah of the mouth and kill %s!\n", victim.get(), victim->himHer());
+            victim->printColor("^r%M tried to give you excessive diarreah and kill you!\n", player.get());
             break;
         case DM_KINETIC:
-            player->print("You tried to kill %N with a kinetic strike from space!\n", victim);
-            victim->printColor("^r%M tried to kill you with a kinetic strike from space!\n", player);
+            player->print("You tried to kill %N with a kinetic strike from space!\n", victim.get());
+            victim->printColor("^r%M tried to kill you with a kinetic strike from space!\n", player.get());
             break;
         default:
-            player->print("You tried to strike down %N!\n", victim);
-            victim->printColor("^r%M tried to strike you down with lightning!\n", player);
+            player->print("You tried to strike down %N!\n", victim.get());
+            victim->printColor("^r%M tried to strike you down with lightning!\n", player.get());
             break;
         }
         return(0);
@@ -1898,9 +1845,7 @@ int dmKill(Player* player, Player *victim, int type, int silent, int hpmp_loss, 
         break;
     case DM_NUCLEAR:
         victim->printColor("^gYou begin to meltdown!\n");
-        char filename[80];
-        snprintf(filename, 80, "%s/crash.txt", Path::Config.c_str());
-        victim->getSock()->viewFile(filename);
+        victim->getSock()->viewFile(Path::Config / "crash.txt");
         break;
     case DM_RAPE:
         victim->printColor("^mYou have been raped by the gods!\n");
@@ -2262,9 +2207,9 @@ int dmKill(Player* player, Player *victim, int type, int silent, int hpmp_loss, 
 // all *kill commands are routed through this function; dmKillAll
 // and dmKill are passed the appropriate arguments
 
-int dmKillSwitch(Player* player, cmd* cmnd) {
+int dmKillSwitch(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     i, silent=0, unconscious=0, uncon_length=0, hpmp_loss=0, type=DM_KILL;
-    Player  *victim;
+    std::shared_ptr<Player> victim;
 
     if(player->getClass() == CreatureClass::CARETAKER && !player->flagIsSet(P_CT_CAN_KILL)) {
         player->print("You don't have the authorization to use that command.\n");
@@ -2445,8 +2390,8 @@ int dmKillSwitch(Player* player, cmd* cmnd) {
 //                      dmRepair
 //*********************************************************************
 
-int dmRepair(Player* player, cmd* cmnd) {
-    Player  *creature=nullptr;
+int dmRepair(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> creature=nullptr;
     int     a=0, count=0, check=0;
 
     if(cmnd->num < 2) {
@@ -2505,7 +2450,7 @@ int dmRepair(Player* player, cmd* cmnd) {
 //                      dmMax
 //*********************************************************************
 
-int dmMax(Player* player, cmd* cmnd) {
+int dmMax(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int i=0;
 
     if(cmnd)
@@ -2560,10 +2505,10 @@ int dmMax(Player* player, cmd* cmnd) {
 //                      dmBackupPlayer
 //*********************************************************************
 
-int dmBackupPlayer(Player* player, cmd* cmnd) {
+int dmBackupPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     char    filename[80], restoredFile[80];
-    Player  *target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     bool    online=false;
 
     if(cmnd->num < 2) {
@@ -2603,7 +2548,7 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
     target = gServer->findPlayer(cmnd->str[1]);
 
     if(!target) {
-        if(!loadPlayer(cmnd->str[1], &target)) {
+        if(!loadPlayer(cmnd->str[1], target)) {
             player->print("Player does not exist.\n");
             return(0);
         }
@@ -2624,16 +2569,12 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
 
         }
 
-        if(!online)
-            delete target;;
         return(0);
     }
 
 
     if(target->save(online, LoadType::LS_BACKUP) > 0) {
         player->print("Backup failed.\n");
-        if(!online)
-            delete target;;
         return(0);
     }
 
@@ -2641,9 +2582,6 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
     player->print("%s has been backed up.\n", target->getCName());
 
     log_immort(false,player, "%s backed up player %s to disk.\n", player->getCName(), target->getCName());
-
-    if(!online)
-        delete target;;
     return(0);
 }
 
@@ -2652,8 +2590,8 @@ int dmBackupPlayer(Player* player, cmd* cmnd) {
 //                      dmChangeStats
 //*********************************************************************
 
-int dmChangeStats(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmChangeStats(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
 
     if(cmnd->num < 2) {
@@ -2691,11 +2629,11 @@ int dmChangeStats(Player* player, cmd* cmnd) {
 //                      dmJailPlayer
 //*********************************************************************
 
-int dmJailPlayer(Player* player, cmd* cmnd) {
+int dmJailPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int         tm=0, i=0, iTmp=0, len=0, strLen=0;
     long        t=0;
-    UniqueRoom  *newRoom=nullptr;
-    Player  *target=nullptr;
+    std::shared_ptr<UniqueRoom> newRoom=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     char        *reason=nullptr;
     bool        online=false;
 
@@ -2713,7 +2651,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
     lowercize(cmnd->str[1], 1);
     target = gServer->findPlayer(cmnd->str[1]);
     if(!target) {
-        if(!loadPlayer(cmnd->str[1], &target)) {
+        if(!loadPlayer(cmnd->str[1], target)) {
             player->print("Player does not exist.\n");
             return(0);
         }
@@ -2722,21 +2660,15 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 
     if(target->isStaff()) {
         player->print("Don't use *jail on staff members.\n");
-        if(!online)
-            delete target;;
         return(0);
     }
     if(player == target) {
         player->print("Do not jail yourself.\n");
-        if(!online)
-            delete target;;
         return(0);
     }
 
     if(player->isWatcher() && !isCt(player) && target->isWatcher()) {
         player->print("Do not jail other watchers.\n");
-        if(!online)
-            delete target;;
         return(0);
     }
 
@@ -2776,15 +2708,11 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
     }
     if(!reason && player->isWatcher()) {
         player->print("You must enter a reason. Use the -r option.\n");
-        if(!online)
-            delete target;;
         return(0);
     }
 
     if(!reason && player->getName() != "Bane") {
         player->print("Use the -r option and enter a reason, assbandit!\n");
-        if(!online)
-            delete target;;
         return(0);
     }
 
@@ -2829,7 +2757,7 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 
     } else {
 
-        if(!loadRoom(cr, &newRoom)) {
+        if(!loadRoom(cr, newRoom)) {
             player->print("Problem loading room %s.\nAborting.\n", cr.displayStr().c_str());
             return(0);
         } else {
@@ -2852,8 +2780,6 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
     }
 
     target->save();
-    if(!online)
-        delete target;;
     return(0);
 }
 
@@ -2862,8 +2788,8 @@ int dmJailPlayer(Player* player, cmd* cmnd) {
 //                      dmLts
 //*********************************************************************
 
-int dmLts(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmLts(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     int     i=0;
     long    t = time(nullptr);
 
@@ -2891,8 +2817,8 @@ int dmLts(Player* player, cmd* cmnd) {
 //                      dmLtClear
 //*********************************************************************
 
-int dmLtClear(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmLtClear(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 //  int     i=0;
 
     if(cmnd->num < 2) {

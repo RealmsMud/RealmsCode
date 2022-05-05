@@ -43,7 +43,7 @@
 // This function allows a player to cast an invisibility spell on themself
 // or on another player.
 
-int splInvisibility(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splInvisibility(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     if(!player->isStaff()) {
         if(player->inCombat()) {
             player->print("Not in the middle of combat.\n");
@@ -60,7 +60,7 @@ int splInvisibility(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function allows a player to cast an invisibility spell on themself
 // or on another player.
 
-int splGreaterInvisibility(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splGreaterInvisibility(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     if(!player->isStaff()) {
         if(!player->isMageLich())
             return(0);
@@ -87,7 +87,7 @@ bool Creature::isInvisible() const {
 // This function allows players to cast camouflage on one another or
 // themselves. Camouflage lessens the chance of ranger track spell.
 
-int splCamouflage(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splCamouflage(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "camouflage", "camouflage"));
 }
 
@@ -95,9 +95,9 @@ int splCamouflage(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splIllusion
 //*********************************************************************
 
-int splIllusion(Creature* creature, cmd* cmnd, SpellData* spellData) {
-    std::string txt = "";
-    Player* pPlayer=nullptr, *target=nullptr;
+int splIllusion(const std::shared_ptr<Creature>& creature, cmd* cmnd, SpellData* spellData) {
+    std::string txt;
+    std::shared_ptr<Player> pPlayer=nullptr, target=nullptr;
     const RaceData* race=nullptr;
 
     pPlayer = creature->getAsPlayer();
@@ -128,7 +128,7 @@ int splIllusion(Creature* creature, cmd* cmnd, SpellData* spellData) {
             race = gConfig->getRace(spellData->object->getExtra());
 
         if(!race) {
-            creature->printColor("%O is doesn't taste quite right.\n", spellData->object);
+            creature->printColor("%O is doesn't taste quite right.\n", spellData->object.get());
             return(0);
         }
     }
@@ -139,7 +139,7 @@ int splIllusion(Creature* creature, cmd* cmnd, SpellData* spellData) {
 
         if(spellData->how != CastType::POTION) {
             creature->print("You cast an illusion spell.\n");
-            broadcast(pPlayer ? pPlayer->getSock() : nullptr, creature->getRoomParent(), "%M casts an illusion spell.", creature);
+            broadcast(pPlayer ? pPlayer->getSock() : nullptr, creature->getRoomParent(), "%M casts an illusion spell.", creature.get());
         }
     } else {
         if(creature->noPotion( spellData))
@@ -156,10 +156,9 @@ int splIllusion(Creature* creature, cmd* cmnd, SpellData* spellData) {
         if(pPlayer && checkRefusingMagic(creature, target))
             return(0);
 
-        broadcast(pPlayer ? pPlayer->getSock() : nullptr, target->getSock(), creature->getRoomParent(), "%M casts an illusion spell on %N.",
-                creature, target);
-        target->print("%M casts illusion on you.\n", creature);
-        creature->print("You cast an illusion spell on %N.\n", target);
+        broadcast(pPlayer ? pPlayer->getSock() : nullptr, target->getSock(), creature->getRoomParent(), "%M casts an illusion spell on %N.", creature.get(), target.get());
+        target->print("%M casts illusion on you.\n", creature.get());
+        creature->print("You cast an illusion spell on %N.\n", target.get());
     }
 
     if(creature->getRoomParent()->magicBonus())
@@ -195,7 +194,7 @@ bool Creature::willIgnoreIllusion() const {
 //                      splBlur
 //*********************************************************************
 
-int splBlur(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splBlur(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     // this number is the % miss chance
     int strength = 7;
     if(spellData->how == CastType::CAST)
@@ -208,8 +207,8 @@ int splBlur(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splIllusoryWall
 //*********************************************************************
 
-int splIllusoryWall(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Exit *exit=nullptr;
+int splIllusoryWall(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Exit> exit=nullptr;
     int strength = spellData->level;
     long duration = 300;
 
@@ -224,8 +223,7 @@ int splIllusoryWall(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     player->printColor("You cast an illusory wall spell on the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M casts an illusory wall spell on the %s^x.",
-        player, exit->getCName());
+    broadcast(player->getSock(), player->getParent(), "%M casts an illusory wall spell on the %s^x.", player.get(), exit->getCName());
 
     if(exit->flagIsSet(X_CONCEALED) || exit->hasPermEffect("illusory-wall")) {
         player->print("The spell didn't take hold.\n");

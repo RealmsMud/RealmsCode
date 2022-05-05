@@ -127,7 +127,7 @@ namespace Alchemy {
         return(MAX_ALCHEMY_DURATION);
     }
 
-    std::string getEffectString(Object* obj, std::string_view effect) {
+    std::string getEffectString(const std::shared_ptr<const Object>&  obj, std::string_view effect) {
         if(!obj || effect.empty())
             return("*invalid*");
         return fmt::format("{}|{}", obj->info.str(), effect);
@@ -218,7 +218,7 @@ void AlchemyEffect::combineWith(const AlchemyEffect& ae) {
 //                      alchemyEffectVisible
 //*********************************************************************
 
-bool Player::alchemyEffectVisible(Object* obj, std::string_view effect) {
+bool Player::alchemyEffectVisible(const std::shared_ptr<const Object>&  obj, std::string_view effect) const {
     if(!obj || effect.empty())
         return(false);
 
@@ -240,7 +240,7 @@ bool Player::alchemyEffectVisible(Object* obj, std::string_view effect) {
 //                      learnAlchemyEffect
 //*********************************************************************
 
-bool Player::learnAlchemyEffect(Object* obj, std::string_view effect) {
+bool Player::learnAlchemyEffect(const std::shared_ptr<const  Object>&  obj, std::string_view effect) {
     if(!obj || effect.empty())
         return(false);
 
@@ -259,7 +259,7 @@ bool Player::learnAlchemyEffect(Object* obj, std::string_view effect) {
 //*********************************************************************
 // NOTE: A null player is perfectly valid, so handle it properly
 
-std::string Object::showAlchemyEffects(Player *player) {
+std::string Object::showAlchemyEffects(const std::shared_ptr<const Player>& player) const {
     std::string toReturn;
     int skillLevel=0, numVisible=0;
     bool isct = false, visible=false;
@@ -291,7 +291,7 @@ std::string Object::showAlchemyEffects(Player *player) {
 
             if(n > numVisible && !isct)
                 known = false;
-            else if(player && player->alchemyEffectVisible(this, p.second.getEffect()))
+            else if(player && player->alchemyEffectVisible(Containable::downcasted_shared_from_this<Object>(), p.second.getEffect()))
                 known = true;
 
             if(!known && isct) outStr << "(*) ";
@@ -339,7 +339,7 @@ std::ostream& operator<<(std::ostream& out, AlchemyEffect* effect) {
 //                      cmdBrew
 //*********************************************************************
 
-int cmdBrew(Player* player, cmd* cmnd) {
+int cmdBrew(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->knowsSkill("alchemy")) {
         player->print("You have no idea how to brew potions!\n");
         return(0);
@@ -354,9 +354,9 @@ int cmdBrew(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    Object* mortar=nullptr;   // Our Mortar and Pestle
+    std::shared_ptr<Object>  mortar=nullptr;   // Our Mortar and Pestle
 
-    mortar = dynamic_cast<Object*>(player->findTarget(FIND_OBJ_INVENTORY | FIND_OBJ_EQUIPMENT | FIND_OBJ_ROOM, 0, cmnd->str[1], cmnd->val[1]));
+    mortar = dynamic_pointer_cast<Object>(player->findTarget(FIND_OBJ_INVENTORY | FIND_OBJ_EQUIPMENT | FIND_OBJ_ROOM, 0, cmnd->str[1], cmnd->val[1]));
 
     if(!mortar) {
         player->print("What would you like to brew the contents of?.\n");
@@ -395,7 +395,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 
         // If we have no effects with 2 or more occurrences, we have a failed attempt to make a potion.
         int numHerbs = 0;
-        for(Object *herb : mortar->objects) {
+        for(const auto& herb : mortar->objects) {
 
             for(auto& p : herb->alchemyEffects) {
 
@@ -420,7 +420,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
         for( const HerbMap::value_type& effectPair : effectCount) {
             if(effectPair.second.size() > 1) {
                 player->printColor("Using effect: ^Y%s^x.\n", effectPair.first.c_str());
-                for(Object* herb : effectPair.second) {
+                for(const auto& herb : effectPair.second) {
                     player->learnAlchemyEffect(herb, effectPair.first);
                 }
             }
@@ -433,7 +433,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
     // We'll be using just one herb, so it'll be the first effect
     // To get here, we have to have 100 skill
     else if(mortar->getShotsCur() == 1) {
-        Object* herb = *mortar->objects.begin();
+        std::shared_ptr<Object>  herb = *mortar->objects.begin();
 
         AlchemyEffect &ae = herb->alchemyEffects[1];
         effects[ae.getEffect()] = ae;
@@ -447,7 +447,7 @@ int cmdBrew(Player* player, cmd* cmnd) {
 
 
 
-    Object* potion = Object::getNewPotion();
+    std::shared_ptr<Object>  potion = Object::getNewPotion();
 
     double alchemySkillModifier = player->getSkillGained("alchemy");
 
@@ -541,7 +541,7 @@ bool AlchemyInfo::potionNameHasPrefix() const {
 //*********************************************************************
 
 // Return: Was it consumed?
-bool Object::consumeAlchemyPotion(Creature* consumer) {
+bool Object::consumeAlchemyPotion(const std::shared_ptr<Creature>& consumer) {
     if(!isAlchemyPotion() || !consumer)
         return false;
     // TODO: Verify we're not in a no potion room
@@ -557,7 +557,7 @@ bool Object::consumeAlchemyPotion(Creature* consumer) {
                 consumed = true;
         }
         else if(alc->getAction()== "python") {
-            if(gServer->runPython(alc->getPythonScript(), "", consumer, this))
+            if(gServer->runPython(alc->getPythonScript(), "", consumer, Containable::downcasted_shared_from_this<Object>()))
                 consumed = true;
         }
         else
@@ -573,7 +573,7 @@ bool Object::consumeAlchemyPotion(Creature* consumer) {
 // Apply this effect to the creature:
 // Returns: false failure, true success
 
-bool AlchemyEffect::apply(Creature* target) {
+bool AlchemyEffect::apply(const std::shared_ptr<Creature>& target) {
     // TODO: Check if it's an effect to add or something to apply immediately (death, heal, etc)
     bool add = true;
 

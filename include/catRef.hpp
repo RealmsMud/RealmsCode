@@ -31,7 +31,7 @@ public:
 
     CatRef();
     CatRef(std::string& pArea, short pId);
-    void    setDefault(const Creature* target);
+    void    setDefault(const std::shared_ptr<Creature> & target);
     void    clear();
     void    load(xmlNodePtr curNode);
 

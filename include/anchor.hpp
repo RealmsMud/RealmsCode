@@ -30,7 +30,7 @@ class UniqueRoom;
 class Anchor {
 public:
     Anchor();
-    Anchor(std::string_view a, const Player* player);
+    Anchor(std::string_view a, const std::shared_ptr<Player> player);
     ~Anchor();
     void reset();
 
@@ -38,15 +38,15 @@ public:
     void load(xmlNodePtr curNode);
     void save(xmlNodePtr curNode) const;
 
-    void bind(const Player* player);
-    void bind(const UniqueRoom* uRoom);
-    void bind(const AreaRoom* aRoom);
+    void bind(const std::shared_ptr<const Player> &player);
+    void bind(const std::shared_ptr<const UniqueRoom> &uRoom);
+    void bind(const std::shared_ptr<const AreaRoom> &aRoom);
     void setRoom(const CatRef& r);
 
-    bool is(const BaseRoom* room) const;
-    bool is(const Player* player) const;
-    bool is(const UniqueRoom* uRoom) const;
-    bool is(const AreaRoom* aRoom) const;
+    [[nodiscard]] bool is(const std::shared_ptr<const BaseRoom> room) const;
+    [[nodiscard]] bool is(const std::shared_ptr<const Player> &player) const;
+    [[nodiscard]] bool is(const std::shared_ptr<const UniqueRoom> &uRoom) const;
+    [[nodiscard]] bool is(const std::shared_ptr<const AreaRoom> &aRoom) const;
 
     [[nodiscard]] std::string getAlias() const;
     [[nodiscard]] std::string getRoomName() const;

@@ -59,7 +59,7 @@ int getFindWhere(TargetType targetType) {
     }
     return(0);
 }
-int cmdSkill(Creature* creature, cmd* cmnd) {
+int cmdSkill(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     *creature << "Attempting to use the " << cmnd->myCommand->getName() << " skill\n";
 
     if(!creature->ableToDoCommand(cmnd))
@@ -79,7 +79,7 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
     if(!skillCmd->checkResources(creature))
         return(0);
 
-    MudObject* target = nullptr;
+    std::shared_ptr<MudObject> target = nullptr;
     if(skillCmd->getTargetType() != TARGET_NONE) {
         std::string toFind = cmnd->str[1];
         int num = cmnd->val[1];
@@ -136,7 +136,7 @@ int cmdSkill(Creature* creature, cmd* cmnd) {
 //*********************************************************************
 // Return: true if the attack timer has expired, false if not
 
-bool Skill::checkTimer(Creature* creature, bool displayFail) {
+bool Skill::checkTimer(std::shared_ptr<Creature> creature, bool displayFail) {
     long i;
     if((i = timer.getTimeLeft()) != 0) {
         if(displayFail)
@@ -187,7 +187,7 @@ int SkillCommand::getFailCooldown() const {
 }
 
 
-bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) const {
+bool SkillCommand::runScript(std::shared_ptr<Creature> actor, std::shared_ptr<MudObject> target, Skill* skill) const {
     try {
         auto locals = py::dict();
         auto skillLibModule = py::module::import("skillLib");
@@ -195,8 +195,8 @@ bool SkillCommand::runScript(Creature* actor, MudObject* target, Skill* skill) c
         locals["skill"] = skill;
         locals["skillCmd"] = this;
 
-        PythonHandler::addMudObjectToDictionary(locals, "actor", actor);
-        PythonHandler::addMudObjectToDictionary(locals, "target", target);
+        PythonHandler::addMudObjectToDictionary(locals, "actor", actor.get());
+        PythonHandler::addMudObjectToDictionary(locals, "target", target.get());
 
         return (gServer->runPythonWithReturn(pyScript, locals));
     }
@@ -308,7 +308,7 @@ std::string getResourceName(ResourceType resType) {
 // Returns: True  - Sufficient resources
 //          False - Insufficient resources
 
-bool SkillCommand::checkResources(Creature* creature) const {
+bool SkillCommand::checkResources(std::shared_ptr<Creature> creature) const {
     for(const auto& res : resources) {
         if(!creature->checkResource(res.resource, res.cost)) {
             std::string failMsg = fmt::format("You need to have at least {} {}.\n", res.cost, getResourceName(res.resource));
@@ -317,13 +317,13 @@ bool SkillCommand::checkResources(Creature* creature) const {
     }
     return(true);
 }
-void SkillCommand::subResources(Creature* creature) {
+void SkillCommand::subResources(std::shared_ptr<Creature> creature) {
     for(SkillCost& res : resources) {
         creature->subResource(res.resource, res.cost);
     }
 }
 
-int SkillCommand::execute(Creature* player, cmd* cmnd) const {
+int SkillCommand::execute(const std::shared_ptr<Creature>& player, cmd* cmnd) const {
 
     return fn(player, cmnd);
 }

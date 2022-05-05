@@ -213,7 +213,7 @@ const char* colorSection(bool staff, const char* color, char colorChar = 0) {
     return(str);
 }
 
-int cmdColors(Player* player, cmd* cmnd) {
+int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
     bool staff = player->isStaff();
 
     if(!strcmp(cmnd->str[1], "reset")) {

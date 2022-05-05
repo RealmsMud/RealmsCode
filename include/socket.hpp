@@ -271,8 +271,8 @@ public:
     void setColorOpt(int opt);
 
     [[nodiscard]] bool hasPlayer() const;
-    [[nodiscard]] Player* getPlayer() const;
-    void setPlayer(Player* ply);
+    [[nodiscard]] std::shared_ptr<Player> getPlayer() const;
+    void setPlayer(std::shared_ptr<Player> ply);
     void freePlayer();
 
 
@@ -344,7 +344,7 @@ protected:
     std::string     inBuf;              // Input Buffer
     std::string     inLast;             // Last command
 
-    Player*     myPlayer{};
+    std::shared_ptr<Player>     myPlayer{};
 
 
 // For MCCP

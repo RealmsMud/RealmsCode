@@ -58,9 +58,9 @@
 
 
 
-Creature* Creature::findVictim(const std::string &toFind, int num, bool aggressive, bool selfOk, const std::string &noVictim, const std::string &notFound) {
-    Creature* victim=nullptr;
-    Player  *pVictim=nullptr;
+std::shared_ptr<Creature> Creature::findVictim(const std::string &toFind, int num, bool aggressive, bool selfOk, const std::string &noVictim, const std::string &notFound) {
+    std::shared_ptr<Creature> victim=nullptr;
+    std::shared_ptr<Player> pVictim=nullptr;
     if(toFind.empty()) {
         if(hasAttackableTarget()) {
             return(getTarget());
@@ -69,12 +69,12 @@ Creature* Creature::findVictim(const std::string &toFind, int num, bool aggressi
             *this << ColorOn << noVictim << ColorOff;;
         return(nullptr);
     } else {
-        victim = getRoomParent()->findCreature(this, toFind, num, true, true);
+        victim = getRoomParent()->findCreature(Containable::downcasted_shared_from_this<Creature>(), toFind, num, true, true);
 
         if(victim)
             pVictim = victim->getAsPlayer();
 
-        if(!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3) || (!selfOk && victim == this)) {
+        if(!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3) || (!selfOk && victim.get() == this)) {
             if(!notFound.empty())
                 *this << ColorOn << notFound << ColorOff;
             return(nullptr);
@@ -82,7 +82,7 @@ Creature* Creature::findVictim(const std::string &toFind, int num, bool aggressi
         return(victim);
     }
 }
-Creature* Creature::findVictim(cmd* cmnd, int cmndNo, bool aggressive, bool selfOk, const std::string &noVictim, const std::string &notFound) {
+std::shared_ptr<Creature> Creature::findVictim(cmd* cmnd, int cmndNo, bool aggressive, bool selfOk, const std::string &noVictim, const std::string &notFound) {
     return(findVictim(cmnd->str[cmndNo], cmnd->val[cmndNo], aggressive, selfOk, noVictim, notFound));
 }
 
@@ -92,18 +92,18 @@ Creature* Creature::findVictim(cmd* cmnd, int cmndNo, bool aggressive, bool self
 // This function allows the player pointed to by the first parameter
 // to attack a monster.
 
-int cmdAttack(Creature* creature, cmd* cmnd) {
-    Creature *victim=nullptr;
-    Player  *pVictim=nullptr, *pPlayer=nullptr;
+int cmdAttack(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
+    std::shared_ptr<Creature>victim=nullptr;
+    std::shared_ptr<Player> pVictim=nullptr, pPlayer=nullptr;
 
     if(!creature->ableToDoCommand())
         return(0);
 
     pPlayer = creature->getAsPlayer();
-    Monster* pet = creature->getAsMonster();
+    std::shared_ptr<Monster>  pet = creature->getAsMonster();
     if(pet) {
         if(cmnd->num < 2) {
-            pet->getMaster()->print("%M stops attacking.\n", pet);
+            pet->getMaster()->print("%M stops attacking.\n", pet.get());
             pet->clearEnemyList();
             return(0);
         }
@@ -124,16 +124,16 @@ int cmdAttack(Creature* creature, cmd* cmnd) {
             pet->getMaster()->smashInvis();
 
             if(pet->isEnemy(victim)) {
-                pet->getMaster()->print("%M is already attacking %N.\n", pet, victim);
+                pet->getMaster()->print("%M is already attacking %N.\n", pet.get(), victim.get());
             } else {
-                creature->getMaster()->print("%M attacks %N.\n", pet, victim);
+                creature->getMaster()->print("%M attacks %N.\n", pet.get(), victim.get());
                 broadcast(creature->getMaster()->getSock(), pet->getRoomParent(), "%M tells %N to attack %N.",
-                    pet->getMaster(), pet, victim);
+                    pet->getMaster().get(), pet.get(), victim.get());
                 pet->addEnemy(victim);
 
                 if(!pVictim) {
                     // monster will attack the owner if their pet attacks
-                    ((Monster*)victim)->addEnemy(pet->getMaster());
+                    victim->getAsMonster()->addEnemy(pet->getMaster());
                     // Activates lag protection.
                     if(pet->getMaster()->flagIsSet(P_LAG_PROTECTION_SET))
                         pet->getMaster()->setFlag(P_LAG_PROTECTION_ACTIVE);
@@ -150,9 +150,9 @@ int cmdAttack(Creature* creature, cmd* cmnd) {
 //                      canAttack
 //*********************************************************************
 
-bool Creature::canAttack(Creature* target, bool stealing) {
-    Creature *check=nullptr;
-    Player  *pCheck=nullptr, *pThis = getAsPlayer();
+bool Creature::canAttack(const std::shared_ptr<Creature>& target, bool stealing) {
+    std::shared_ptr<Creature>check=nullptr;
+    std::shared_ptr<Player> pCheck=nullptr, pThis = getAsPlayer();
     bool    holy_war;
     std::string verb = stealing ? "steal from" : "attack";
 
@@ -173,7 +173,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 
     clearFlag(P_AFK);
 
-    if( target->isPet() && target->getMaster() == this &&
+    if( target->isPet() && target->getMaster().get() == this &&
         !checkStaff("You cannot %s your pet.\n", verb.c_str()) )
         return(false);
 
@@ -189,9 +189,9 @@ bool Creature::canAttack(Creature* target, bool stealing) {
     // it's currently attacking them
     if( check->isStaff() &&
         cClass < check->getClass() &&
-        !(target->isPet() && ((Monster*)target)->isEnemy(this) ))
+        !(target->isPet() && target->getAsMonster()->isEnemy(Containable::downcasted_shared_from_this<Creature>()) ))
     {
-        print("You are not allowed to %s %N.\n", verb.c_str(), target);
+        print("You are not allowed to %s %N.\n", verb.c_str(), target.get());
         return(false);
     }
 
@@ -229,21 +229,21 @@ bool Creature::canAttack(Creature* target, bool stealing) {
     if(pCheck) {
 
         if(pCheck->flagIsSet(P_DIED_IN_DUEL)) {
-            print("%M just lost a duel!\nYou can't %s ", target, verb.c_str());
+            print("%M just lost a duel!\nYou can't %s ", target.get(), verb.c_str());
             if(pCheck==target)
                 print("%s", target->himHer());
             else
-                print("%N", target);
+                print("%N", target.get());
             print(" right now.\n");
             return(false);
         }
 
         if(pCheck->isEffected("petrification") && !isCt()) {
-            print("You can't %s %N!", verb.c_str(), target);
+            print("You can't %s %N!", verb.c_str(), target.get());
             if(pCheck==target)
                 print("%s", target->upHeShe());
             else
-                print("%M", pCheck);
+                print("%M", pCheck.get());
             print("'s petrified!\n");
             return(false);
         }
@@ -254,7 +254,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
             return(false);
         } else {
             if(target->isPlayer())
-                target->getAsPlayer()->delCharm(this);
+                target->getAsPlayer()->delCharm(Containable::downcasted_shared_from_this<Creature>());
         }
 
         // check outlawness
@@ -284,7 +284,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
             if(!induel(pThis, pCheck)) {
 
                 if(pCheck->flagIsSet(P_NO_PKILL)) {
-                    print("You cannot %s %N right now.\n", verb.c_str(), check);
+                    print("You cannot %s %N right now.\n", verb.c_str(), check.get());
                     return(false);
                 }
 
@@ -312,7 +312,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
                         return(false);
                     }
                     if(!pCheck->flagIsSet(P_CHAOTIC)) {
-                        print("Sorry, %N is lawful.\n", check);
+                        print("Sorry, %N is lawful.\n", check.get());
                         return(false);
                     }
                 }
@@ -334,7 +334,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
         clearFlag(P_NO_PKILL);
 
     } else {
-        Monster* mTarget = target->getAsMonster();
+        std::shared_ptr<Monster>  mTarget = target->getAsMonster();
 
         // attacking a mob
         if( mTarget->flagIsSet(M_UNKILLABLE) &&
@@ -345,7 +345,7 @@ bool Creature::canAttack(Creature* target, bool stealing) {
             level < 3 &&
             mTarget->getLevel() > level &&
             !getRoomParent()->flagIsSet(R_ONE_PERSON_ONLY) &&
-            !mTarget->isEnemy(this) &&
+            !mTarget->isEnemy(Containable::downcasted_shared_from_this<Creature>()) &&
             !checkStaff("That wouldn't be very prudent at this time.\n")
         )
             return(false);
@@ -354,15 +354,15 @@ bool Creature::canAttack(Creature* target, bool stealing) {
 
 
     if(!stealing && pThis && target->isPlayer()) {
-        for(Monster* pet : target->pets) {
+        for(const auto& pet : target->pets) {
             if(pet && pet->isPet() &&
                 pet->getMaster() == target &&
-                this != target->getMaster())
+                this != target->getMaster().get())
             {
-                if(!pet->isEnemy(this)) {
-                    pet->addEnemy(this);
+                if(!pet->isEnemy(Containable::downcasted_shared_from_this<Creature>())) {
+                    pet->addEnemy(Containable::downcasted_shared_from_this<Creature>());
 
-                    broadcast(target->getSock(), getRoomParent(), "%M stands loyally before its master!", pet);
+                    broadcast(target->getSock(), getRoomParent(), "%M stands loyally before its master!", pet.get());
                 }
                 break;
             }
@@ -393,23 +393,23 @@ std::string Player::getUnarmedWeaponSkill() const {
 // it handles the removing of the weapon, the ending of the attack (no more swings
 // with this weapon) and recalculating the player's attack power.
 
-void checkWeapon(Player* player, Object** weapon, bool alwaysRemove, int* loc, int* attacks, bool* wielding, bool multiWeapon, UnequipAction action = UNEQUIP_ADD_TO_INVENTORY) {
+void checkWeapon(const std::shared_ptr<Player>& player, std::shared_ptr<Object> &weapon, bool alwaysRemove, int* loc, int* attacks, bool* wielding, bool multiWeapon, UnequipAction action = UNEQUIP_ADD_TO_INVENTORY) {
     // Nothing to break
     if(!*wielding || !weapon)
         return;
 
     // Not broken!
-    if(!alwaysRemove && !player->breakObject(*weapon, *loc))
+    if(!alwaysRemove && !player->breakObject(weapon, *loc))
         return;
 
     if(*loc != -1) {
         player->unequip(*loc, action);
     } else {
         // ::isDm -> Global isDm function, not class local isDm function
-        broadcast(::isDm, "^g>>> Fumble: BadLoc (Loc:%d) %'s %s\n", *loc, player->getCName(), (*weapon)->getCName());
-        if(player->ready[WIELD-1] == *weapon) {
+        broadcast(::isDm, "^g>>> Fumble: BadLoc (Loc:%d) %'s %s\n", *loc, player->getCName(), weapon->getCName());
+        if(player->ready[WIELD-1] == weapon) {
             player->unequip(WIELD);
-        } else if(player->ready[HELD-1] == *weapon) {
+        } else if(player->ready[HELD-1] == weapon) {
             player->unequip(HELD);
         }
     }
@@ -417,7 +417,7 @@ void checkWeapon(Player* player, Object** weapon, bool alwaysRemove, int* loc, i
     if(multiWeapon)
         *attacks = 1;
 
-    *weapon = nullptr;
+    weapon.reset();
     *loc = -1;
     *wielding = false;
 
@@ -431,22 +431,22 @@ void checkWeapon(Player* player, Object** weapon, bool alwaysRemove, int* loc, i
 // a pointer to the attacker and the second contains a pointer to the
 // victim.  A 1 is returned if the attack results in death.
 
-int Player::attackCreature(Creature *victim, AttackType attackType) {
-    Player  *pVictim=nullptr;
-    Monster *mVictim=nullptr;
-    bool    duelWield = false, wielding = false;
-    bool    multiWeapon = false;
-    Object  *weapon=nullptr;
-    int     attacks=1, attacked=0;//, enchant=0;
-    int     loc = -1;
-    EffectInfo* deathSickness = getEffect("death-sickness");
+int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType attackType) {
+    std::shared_ptr<Player> pVictim = nullptr;
+    std::shared_ptr<Monster> mVictim = nullptr;
+    bool duelWield = false, wielding = false;
+    bool multiWeapon = false;
+    std::shared_ptr<Object> weapon = nullptr;
+    int attacks = 1, attacked = 0;//, enchant=0;
+    int loc = -1;
+    EffectInfo *deathSickness = getEffect("death-sickness");
     Damage attackDamage;
 
-    long    t = time(nullptr);
-    int     drain=0, hit=0, wcdmg=0;
-    bool    glow=true;
+    long t = time(nullptr);
+    unsigned int drain = 0, hit = 0, wcdmg = 0;
+    bool glow = true;
 
-    char    atk[50];
+    char atk[50];
 
     if(!victim)
         return(0);
@@ -506,18 +506,18 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
         if(flagIsSet(P_LAG_PROTECTION_SET))
             setFlag(P_LAG_PROTECTION_ACTIVE);
 
-        if(mVictim->addEnemy(this) && attackType == ATTACK_NORMAL) {
-            print("You attack %N.\n", mVictim);
-            broadcast(getSock(), getRoomParent(), "%M attacks %N.", this, mVictim);
+        if(mVictim->addEnemy(Containable::downcasted_shared_from_this<Player>()) && attackType == ATTACK_NORMAL) {
+            print("You attack %N.\n", mVictim.get());
+            broadcast(getSock(), getRoomParent(), "%M attacks %N.", this, mVictim.get());
         }
 
-        if(mVictim->flagIsSet(M_ONLY_HARMED_BY_MAGIC) && !checkStaff("Your weapon%s had no effect on %N.\n", duelWield ? "s" : "", mVictim)) {
+        if(mVictim->flagIsSet(M_ONLY_HARMED_BY_MAGIC) && !checkStaff("Your weapon%s had no effect on %N.\n", duelWield ? "s" : "", mVictim.get())) {
             getParent()->wake("Loud noises disturb your sleep.", true);
             return(0);
         }
     } else if(pVictim && attackType == ATTACK_NORMAL) {
         pVictim->print("%M attacked you!\n", this);
-        broadcast(getSock(), pVictim->getSock(), getRoomParent(), "%M attacked %N!", this, pVictim);
+        broadcast(getSock(), pVictim->getSock(), getRoomParent(), "%M attacked %N!", this, pVictim.get());
     }
 
     if(attackType != ATTACK_KICK && attackType != ATTACK_MAUL) {
@@ -573,7 +573,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
         // Using a do/while so we can do a break and drop to the end
         do {
 
-            checkWeapon(this, &weapon, false, &loc, &attacks, &wielding, multiWeapon);
+            checkWeapon(Containable::downcasted_shared_from_this<Player>(), weapon, false, &loc, &attacks, &wielding, multiWeapon);
             if(wielding) {
                 if(breakObject(weapon, loc)) {
                     weapon = nullptr;
@@ -643,11 +643,11 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 
                 // Return of 1 means the weapon was shattered or otherwise rendered unsuable
                 if(computeDamage(victim, weapon, attackType, result, attackDamage, computeBonus, drain, multiplier) == 1)
-                    checkWeapon(this, &weapon, true, &loc, &attacks, &wielding, multiWeapon, UNEQUIP_DELETE);
+                    checkWeapon(Containable::downcasted_shared_from_this<Player>(), weapon, true, &loc, &attacks, &wielding, multiWeapon, UNEQUIP_DELETE);
 
 
                 if(result == ATTACK_BLOCK) {
-                    printColor("^C%M partially blocked your attack!\n", victim);
+                    printColor("^C%M partially blocked your attack!\n", victim.get());
                     victim->printColor("^CYou manage to partially block %N's attack!\n", this);
                 }
 
@@ -679,13 +679,13 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                     strcpy(atk, "mauled");
                     showToRoom = true;
                 } else {
-                    getDamageString(atk, this, weapon, result == ATTACK_CRITICAL ? true : false);
+                    getDamageString(atk, Containable::downcasted_shared_from_this<Player>(), weapon, result == ATTACK_CRITICAL ? true : false);
                 }
 
                 if(showToRoom)
-                    broadcast(getSock(), getRoomParent(), "%M %s %N.", this, atk, victim);
-                log_immort(false,this, "%s %s %s for %d damage.\n", getCName(), atk, victim->getCName(), attackDamage.get());
-                printColor("You %s %N for %s%d^x damage.\n", atk, victim, customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                    broadcast(getSock(), getRoomParent(), "%M %s %N.", this, atk, victim.get());
+                log_immort(false, Containable::downcasted_shared_from_this<Player>(), "%s %s %s for %d damage.\n", getCName(), atk, victim->getCName(), attackDamage.get());
+                printColor("You %s %N for %s%d^x damage.\n", atk, victim.get(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
                 victim->printColor("%M %s you%s for %s%d^x damage!\n", this, atk,
                     victim->isBrittle() ? "r brittle body" : "", victim->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 
@@ -697,22 +697,23 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                     wcdmg += castWeapon(victim, weapon, wasKilled);
 
                 broadcastGroup(false, victim, "^M%M^x %s ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", this, atk,
-                    victim, attackDamage.get()+drain, victim->heShe(), victim->getStatusStr(attackDamage.get()+drain));
+                    victim.get(), attackDamage.get()+drain, victim->heShe(), victim->getStatusStr(attackDamage.get()+drain));
 
-                statistics.attackDamage(attackDamage.get()+drain, Statistics::damageWith(this, weapon));
+                statistics.attackDamage(attackDamage.get()+drain, Statistics::damageWith(Containable::downcasted_shared_from_this<Player>(), weapon));
 
                 if(weapon && !Random::get(0, 3))
                     weapon->decShotsCur();
 
 
-                checkWeapon(this, &weapon, false, &loc, &attacks, &wielding, multiWeapon);
+                checkWeapon(Containable::downcasted_shared_from_this<Player>(), weapon, false, &loc, &attacks, &wielding, multiWeapon);
 
 
                 attackDamage.add(wcdmg);
 
-                if(!meKilled && drain && victim->hp.getCur() - attackDamage.get() > 0) {
-                    drain = MIN<int>(victim->hp.getCur() - attackDamage.get(), drain);
-                    printColor("Your aura of evil drains %s%d^x hit point%s from your opponent.\n",
+                if(!meKilled && drain && victim->hp.getCur() > attackDamage.get()) {
+
+                    drain = MIN<unsigned int>(victim->hp.getCur() - attackDamage.get(), drain);
+                    printColor("Your aura of evil drains %s%ud^x hit point%s from your opponent.\n",
                         customColorize("*CC:DAMAGE*").c_str(), drain, drain == 1 ? "" : "s");
                     victim->printColor("^r%M drains %s%d^r hit points from you!\n", this, victim->customColorize("*CC:DAMAGE*").c_str(), drain);
                     attackDamage.add(drain);
@@ -743,7 +744,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                 } else if(attackType == ATTACK_KICK) {
                     checkImprove("kick", true);
                 } else if(!pVictim && mVictim) {
-                    std::string weaponSkill = "";
+                    std::string weaponSkill;
                     if(weapon)
                         weaponSkill = weapon->getWeaponType();
                     else
@@ -759,7 +760,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                     wasKilled ||
                     meKilled )
                 {
-                    Creature::simultaneousDeath(this, victim, false, freeTarget);
+                    Creature::simultaneousDeath(Containable::downcasted_shared_from_this<Player>(), victim, false, freeTarget);
                     return(1);
                 }
 
@@ -780,30 +781,30 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                     print("Your bash failed.\n");
                     checkImprove("bash", false);
                     victim->print("%M tried to bash you.\n", this);
-                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to bash %N.", this, victim);
+                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to bash %N.", this, victim.get());
                     break;
                 } else if(attackType == ATTACK_KICK) {
                     print("Your kick was ineffective.\n");
                     checkImprove("kick", false);
                     victim->print("%M tried to kick you.\n", this);
-                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to kick %N.", this, victim);
+                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to kick %N.", this, victim.get());
                     break;
                 } else if(attackType == ATTACK_MAUL) {
-                    print("You failed to maul %N.\n", victim);
+                    print("You failed to maul %N.\n", victim.get());
                     checkImprove("maul", false);
                     victim->print("%M tried to maul you.\n", this);
-                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to maul %N.", this,victim);
+                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to maul %N.", this, victim.get());
                     break;
                 }
 
                 printColor("^cYou missed.\n");
                 victim->printColor("^c%M missed.\n", this);
                 if(!pVictim)
-                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "^c%M missed %N.", this, victim);
+                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "^c%M missed %N.", this, victim.get());
 
                 // TODO: Weapons: Look at this rate of increase
                 if(!pVictim && mVictim) {
-                    std::string weaponSkill = "";
+                    std::string weaponSkill;
                     if(weapon)
                         weaponSkill = weapon->getWeaponType();
                     else
@@ -813,9 +814,9 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                         checkImprove(weaponSkill, false);
                 }
             }  else if(result == ATTACK_DODGE) {
-                victim->dodge(this);
+                victim->dodge(Containable::downcasted_shared_from_this<Player>());
             } else if(result == ATTACK_PARRY) {
-                int parryResult = victim->parry(this);
+                int parryResult = victim->parry(Containable::downcasted_shared_from_this<Player>());
                 // check riposte death here
                 if(parryResult == 2) {
                     // Damn, we're dead, no more attacks then
@@ -827,7 +828,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
                 printColor("^gYou FUMBLED your weapon.\n");
                 broadcast(getSock(), getRoomParent(), "^g%M fumbled %s weapon.", this, hisHer());
 
-                checkWeapon(this, &weapon, true, &loc, &attacks, &wielding, multiWeapon);
+                checkWeapon(Containable::downcasted_shared_from_this<Player>(), weapon, true, &loc, &attacks, &wielding, multiWeapon);
 
             }  else {
                 printColor("^RError!!! Unhandled attack result: %d\n", result);
@@ -857,7 +858,7 @@ int Player::attackCreature(Creature *victim, AttackType attackType) {
 //                      castWeapon
 //*********************************************************************
 
-int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
+unsigned int Creature::castWeapon(const std::shared_ptr<Creature>& target, std::shared_ptr<Object>weapon, bool &meKilled) {
     Damage attackDamage;
     const char  *spellname;
     osp_t   *osp;
@@ -887,7 +888,7 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
             return(0);
     osp = (osp_t *)&ospell[c];
 
-    if((int(*)(Creature* player, cmd* cmnd, SpellData* spellData, char*, osp_t*))fn == splOffensive) {
+    if((int(*)(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, char*, osp_t*))fn == splOffensive) {
 
         if(target->isMonster() && (get_spell_lvl(splno) > 0)) {
             slvl = get_spell_lvl(splno);
@@ -904,10 +905,10 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
         }
 
         attackDamage.set(MAX(1, osp->damage.roll()));
-        target->modifyDamage(this, MAGICAL, attackDamage, osp->realm, weapon, -1);
+        target->modifyDamage(Containable::downcasted_shared_from_this<Player>(), MAGICAL, attackDamage, osp->realm, weapon, -1);
 
         if(target->negAuraRepel()) {
-            printColor("^c%M's negative aura absorbed some of the damage.\n", target);
+            printColor("^c%M's negative aura absorbed some of the damage.\n", target.get());
             target->printColor("^cYour negative aura repels some of the damage.\n");
         }
 
@@ -915,7 +916,7 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
         printColor("Your %s casts a %s spell on %s for %s%d^x damage.\n", weapon->getCName(),
             spellname, target->getCName(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 
-        broadcast(getSock(), target->getSock(), getRoomParent(), "%M's %s casts a %s spell on %N.", this, weapon->getCName(), spellname, target);
+        broadcast(getSock(), target->getSock(), getRoomParent(), "%M's %s casts a %s spell on %N.", this, weapon->getCName(), spellname, target.get());
         target->printColor("^M%M's^x %s casts a %s spell on you for %s%d^x damage.\n",
             this, weapon->getCName(), spellname, target->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 
@@ -949,8 +950,8 @@ int Creature::castWeapon(Creature* target, Object *weapon, bool &meKilled) {
 //      15) Stoneskin spell
 //      16) Werewolf silver vulnerability
 
-void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, Realm pRealm, Object* weapon, short saveBonus, short offguard, bool computingBonus) {
-    Player  *player = getAsPlayer();
+void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType, Damage& attackDamage, Realm pRealm, const std::shared_ptr<Object>&  weapon, short saveBonus, short offguard, bool computingBonus) {
+    std::shared_ptr<Player> player = getAsPlayer();
     const EffectInfo *effect = nullptr;
     int     vHp = 0;
     dmgType = MAX(0, dmgType);
@@ -968,7 +969,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
                 if(enemy->isPlayer())
                     enemy->printColor("^rYou catch %N off guard!\n", this);
 
-                printColor("^r%M catches you off guard!\n", enemy);
+                printColor("^r%M catches you off guard!\n", enemy.get());
                 print("You %s up.\n", flagIsSet(P_SITTING) ? "stand" : "wake");
             }
 
@@ -986,7 +987,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             }
 
             if(offguard != OFFGUARD_NOPRINT && !computingBonus)
-                broadcast(enemy->getSock(), getSock(), getRoomParent(), "^r%M caught %N off guard!", enemy, this);
+                broadcast(enemy->getSock(), getSock(), getRoomParent(), "^r%M caught %N off guard!", enemy.get(), this);
         }
     }
 
@@ -1007,7 +1008,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         //
         // reflect-magic works against any magic attack
         //
-        if(enemy && enemy != this && isEffected("reflect-magic")) {
+        if(enemy && enemy.get() != this && isEffected("reflect-magic")) {
             effect = getEffect("reflect-magic");
             // the strength of the effect represents the chance to reflect the spell
             if(effect->getStrength() >= Random::get(1,100)) {
@@ -1025,7 +1026,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
                 attackDamage.set(attackDamage.get() / 2);
                 if(!computingBonus) {
                     printColor("^yYou avoided full damage!\n");
-                    if(enemy != this)
+                    if(enemy.get() != this)
                         enemy->print("%M avoided full damage.\n", this);
                 }
             }
@@ -1049,7 +1050,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         // Spells to damage attacker on physical attacks. The original damage is not changed.
         // Don't run when computing bonus damage
         //
-        if(!computingBonus && enemy && enemy != this && isEffected("fire-shield")) {
+        if(!computingBonus && enemy && enemy.get() != this && isEffected("fire-shield")) {
             effect = getEffect("fire-shield");
             Realm reflectedRealm = NO_REALM;
             Damage reflectedDamage;
@@ -1061,7 +1062,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 
             reflectedDamage.set(effect->getStrength());
 
-            enemy->modifyDamage(this, MAGICAL, reflectedDamage, reflectedRealm);
+            enemy->modifyDamage(Containable::downcasted_shared_from_this<Creature>(), MAGICAL, reflectedDamage, reflectedRealm);
 
             // physicalReflected will hurt enemy
             attackDamage.setPhysicalReflected(reflectedDamage.get());
@@ -1114,7 +1115,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
             // zerkers: 1/5
             // everyone else: 1/7
             attackDamage.set(attackDamage.get() - (attackDamage.get() / (cClass == CreatureClass::BERSERKER ? 5 : 7)));
-            attackDamage.set(MAX<int>(1, attackDamage.get()));
+            attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
         }
 
         // monsters do more damage while berserked
@@ -1123,7 +1124,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
 
         // armor damage reduction
         if(enemy) {
-            const float damageReduction = enemy->getDamageReduction(this);
+            const float damageReduction = enemy->getDamageReduction(Containable::downcasted_shared_from_this<Creature>());
             attackDamage.set(attackDamage.get() - (unsigned int)((float)attackDamage.get() * damageReduction));
         }
 
@@ -1140,7 +1141,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         if(resistPet)
             attackDamage.set(attackDamage.get() / 2);
         if(vulnPet)
-            attackDamage.add(Random::get(MAX<int>(1, attackDamage.get()/6),MAX<int>(2, attackDamage.get()/2)));
+            attackDamage.add(Random::get(MAX<unsigned int>(1, attackDamage.get()/6),MAX<unsigned int>(2, attackDamage.get()/2)));
         if(immunePet)
             attackDamage.set(1);
     }
@@ -1191,7 +1192,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
         attackDamage.set(attackDamage.get() / 2);
     }
 
-    attackDamage.set(MAX<int>(0, attackDamage.get()));
+    attackDamage.set(MAX<unsigned int>(0, attackDamage.get()));
 
     // check drain last
     if(dmgType == NEGATIVE_ENERGY || dmgType == MAGICAL_NEGATIVE) {
@@ -1202,7 +1203,7 @@ void Creature::modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, 
                 attackDamage.setDrain(Random::get<unsigned int>(0, attackDamage.get() / 4));
 
             // don't drain more than can be drained!
-            attackDamage.setDrain(MIN<int>(attackDamage.getDrain(), hp.getCur()));
+            attackDamage.setDrain(MIN<unsigned int>(attackDamage.getDrain(), hp.getCur()));
 
             // liches can't use drain damage as their HP is their MP
             // they can do more damage instead
@@ -1254,7 +1255,7 @@ unsigned int Creature::doWeaponResist(unsigned int dmg, const std::string &weapo
 //                      willAggro
 //*********************************************************************
 
-bool Monster::willAggro(const Player *player) const {
+bool Monster::willAggro(const std::shared_ptr<Player>& player) const {
 
     // sometimes we should never attack a player, no matter what
     if(!player || !canSee(player) || player->isStaff())
@@ -1342,20 +1343,20 @@ bool Monster::willAggro(const Player *player) const {
 //                      whoToAggro
 //*********************************************************************
 
-Player* Monster::whoToAggro() const {
-    std::list<Player*> players;
-    int total=0, pick=0;
-    const BaseRoom* myRoom = getConstRoomParent();
+std::shared_ptr<Player> Monster::whoToAggro() const {
+    std::list<std::shared_ptr<Player>> players;
+    unsigned int total=0, pick=0;
+    const std::shared_ptr<const BaseRoom> myRoom = getConstRoomParent();
 
     if(!myRoom) {
         broadcast(::isDm, "^g *** Monster '%s' has no room in whoToAggro!", getCName());
         return(nullptr);
     }
 
-    for(Player* player : myRoom->players) {
+    for(const auto& player : myRoom->players) {
         if(canSee(player) && !player->flagIsSet(P_HIDDEN)) {
             if(willAggro(player)) {
-                total += MAX<int>(1, 300 - player->piety.getCur());
+                total += MAX<unsigned int>(1, 300 - player->piety.getCur());
                 players.push_back(player);
             }
         }
@@ -1370,11 +1371,11 @@ Player* Monster::whoToAggro() const {
 
     // this logic is currently copied from old mordor lowest peity algorithm:
     // higher piety = lower chance of being picked
-    pick = Random::get(1, total);
+    pick = Random::get<unsigned int>(1, total);
     total = 0;
 
-    for(Player* player : players) {
-        total += MAX<int>(1, 300 - player->piety.getCur());
+    for(const auto& player : players) {
+        total += MAX<unsigned int>(1, 300 - player->piety.getCur());
         if(total >= pick)
             return(player);
     }

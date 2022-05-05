@@ -106,13 +106,13 @@ int Creature::doMpCheck(int splno) {
 //*********************************************************************
 // wrapper for doCast because doCast returns more information than we want
 
-int cmdCast(Creature* creature, cmd* cmnd) {
+int cmdCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     doCast(creature, cmnd);
     return(0);
 }
 
 
-void doCastPython(MudObject* caster, Creature* target, std::string_view spell, int strength) {
+void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creature>& target, std::string_view spell, int strength) {
     if(!caster || !target)
         return;
     int c = 0, n = 0;
@@ -167,13 +167,13 @@ void doCastPython(MudObject* caster, Creature* target, std::string_view spell, i
 // the second parsed word to find out if the spell-name is valid, and
 // then calls the appropriate spell function.
 
-CastResult doCast(Creature* creature, cmd* cmnd) {
+CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     long    i=0, t=0;
     int     (*fn)(SpellFn);
     int     c=0, match=0, n=0, num=0, lvl=0, reqMp=0;
-    Player* player = creature->getPlayerMaster();
+    std::shared_ptr<Player> player = creature->getPlayerMaster();
     bool    offensive=false, self = (!player || player == creature);
-    Creature* listen = (player ? player : creature);
+    std::shared_ptr<Creature> listen = (player ? player : creature);
     SpellData data;
 
 
@@ -198,7 +198,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
         if(self)
             listen->print("Cast what?\n");
         else
-            listen->print("Tell %N to cast what?\n", creature);
+            listen->print("Tell %N to cast what?\n", creature.get());
         return(CAST_RESULT_FAILURE);
     }
 
@@ -208,7 +208,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
             if(self)
                 listen->print("Your mind is too clouded for that right now.\n");
             else
-                listen->print("%M's mind is too clouded for that right now.\n", creature);
+                listen->print("%M's mind is too clouded for that right now.\n", creature.get());
             return(CAST_RESULT_CURRENT_FAILURE);
         }
         if(player && player->isBlind()) {
@@ -216,7 +216,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
             return(CAST_RESULT_CURRENT_FAILURE);
         }
         if(creature->isBlind()) {
-            listen->printColor("^C%M can't see to direct the incantation!\n", creature);
+            listen->printColor("^C%M can't see to direct the incantation!\n", creature.get());
             return(CAST_RESULT_CURRENT_FAILURE);
         }
         if(player && !player->canSpeak()) {
@@ -224,7 +224,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
             return(CAST_RESULT_CURRENT_FAILURE);
         }
         if(!creature->canSpeak()) {
-            listen->printColor("^y%M can't speak the incantation!\n", creature);
+            listen->printColor("^y%M can't speak the incantation!\n", creature.get());
             return(CAST_RESULT_CURRENT_FAILURE);
         }
     }
@@ -257,7 +257,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
         if(self)
             listen->print("You don't know that spell.\n");
         else
-            listen->print("%M doesn't know that spell.\n", creature);
+            listen->print("%M doesn't know that spell.\n", creature.get());
         return(CAST_RESULT_FAILURE);
     }
 
@@ -345,7 +345,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
             if(self)
                 listen->printColor("^yYour spell fails.\n");
             else
-                listen->printColor("^y%M's spell fails.\n", creature);
+                listen->printColor("^y%M's spell fails.\n", creature.get());
             return(CAST_RESULT_SPELL_FAILURE);
         }
     }
@@ -430,7 +430,7 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
             bool heavy = false;
             for(auto & z : player->ready) {
                 if(z && (z->isHeavyArmor() || z->isMediumArmor())) {
-                    player->printColor("^W%P^x hinders your movement!\n",z);
+                    player->printColor("^W%P^x hinders your movement!\n", z.get());
                     heavy = true;
                     break;
                 }
@@ -480,8 +480,8 @@ CastResult doCast(Creature* creature, cmd* cmnd) {
 //*********************************************************************
 // This function allowsspell-casters to teach other players basic spells
 
-int cmdTeach(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
+int cmdTeach(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
     int      splno=0, c=0, match=0;
     std::string skill = "";
 
@@ -527,7 +527,7 @@ int cmdTeach(Player* player, cmd* cmnd) {
     }
 
     if(target->pFlagIsSet(P_LINKDEAD)) {
-        player->print("%M doesn't want to be taught right now.\n", target);
+        player->print("%M doesn't want to be taught right now.\n", target.get());
         return(0);
     }
 
@@ -609,11 +609,11 @@ int cmdTeach(Player* player, cmd* cmnd) {
 
     if(target->spellIsKnown(get_spell_num(splno)) && target->isMonster() && player->isStaff()) {
         logn("log.teach", "%s caused %s to forget %s.\n", player->getCName(), target->getCName(), get_spell_name(splno));
-        player->print("Spell \"%s\" removed from %N's memory.\n", get_spell_name(splno), target);
+        player->print("Spell \"%s\" removed from %N's memory.\n", get_spell_name(splno), target.get());
         target->forgetSpell(get_spell_num(splno));
     } else if(target->spellIsKnown(get_spell_num(splno)) && target->isPlayer() && player->isDm()) {
         logn("log.teach", "%s caused %s to forget %s.\n", player->getCName(), target->getCName(), get_spell_name(splno));
-        player->print("Spell \"%s\" removed from %N's memory.\n", get_spell_name(splno), target);
+        player->print("Spell \"%s\" removed from %N's memory.\n", get_spell_name(splno), target.get());
         target->forgetSpell(get_spell_num(splno));
     } else {
         if(target->isPlayer()) {
@@ -624,19 +624,17 @@ int cmdTeach(Player* player, cmd* cmnd) {
                     return(0);
                 }
                 if( !target->knowsSkill(skill) &&
-                    player->checkStaff("%M is unable to learn %s spells.\n", target, gConfig->getSkillDisplayName(skill).c_str())
+                    player->checkStaff("%M is unable to learn %s spells.\n", target.get(), gConfig->getSkillDisplayName(skill).c_str())
                 )
                     return(0);
             }
         }
 
         target->learnSpell(get_spell_num(splno));
-        target->print("%M teaches you the %s spell.\n", player,
-              get_spell_name(splno));
-        player->print("Spell \"%s\" taught to %N.\n", get_spell_name(splno), target);
+        target->print("%M teaches you the %s spell.\n", player.get(), get_spell_name(splno));
+        player->print("Spell \"%s\" taught to %N.\n", get_spell_name(splno), target.get());
         if(!player->flagIsSet(P_DM_INVIS) && !player->isEffected("incognito")) {
-            broadcast(player->getSock(), target->getSock(), player->getParent(),
-                "%M taught %N the %s spell.", player, target, get_spell_name(splno));
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M taught %N the %s spell.", player.get(), target.get(), get_spell_name(splno));
         }
     }
 
@@ -650,8 +648,8 @@ int cmdTeach(Player* player, cmd* cmnd) {
 // This function finds the object the player is trying to study
 // and determines if they can study it.
 
-Object* studyFindObject(Player* player, const cmd* cmnd) {
-    Object  *object=nullptr;
+std::shared_ptr<Object>  studyFindObject(const std::shared_ptr<Player>& player, const cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
 
     if(cmnd->num < 2) {
         player->print("Study what?\n");
@@ -682,7 +680,7 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
 
             for(it = player->objIncrease.begin() ; it != player->objIncrease.end() ; it++) {
                 if( *it == object->info &&
-                    !player->checkStaff("You can gain no further understanding from %P.\n", object))
+                    !player->checkStaff("You can gain no further understanding from %P.\n", object.get()))
                     return(nullptr);
             }
         }
@@ -697,19 +695,19 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
                 return(nullptr);
             }
             if(!crtSkill && !object->increase->canAddIfNotKnown) {
-                player->printColor("You lack the training to understand %P properly.\n", object);
+                player->printColor("You lack the training to understand %P properly.\n", object.get());
                 return(nullptr);
             }
 
             // don't improve skills that don't need to improve
             if(crtSkill && skill->isKnownOnly()) {
-                player->printColor("You can gain no further understanding from %P.\n", object);
+                player->printColor("You can gain no further understanding from %P.\n", object.get());
                 return(nullptr);
             }
 
             // 10 skill points per level possible, can't go over that
             if(crtSkill && (crtSkill->getGained() + object->increase->amount) >= (player->getLevel()*10)) {
-                player->printColor("You can currently gain no further understanding from %P.\n", object);
+                player->printColor("You can currently gain no further understanding from %P.\n", object.get());
                 return(nullptr);
             }
 
@@ -727,7 +725,7 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
             }
 
         } else {
-            player->printColor("You don't understand how to use %P properly.\n", object);
+            player->printColor("You don't understand how to use %P properly.\n", object.get());
             return(nullptr);
         }
         
@@ -758,14 +756,14 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
         //
 
         if(object->getMagicpower() - 1 < 0 || object->getMagicpower() - 1 > MAXSPELL) {
-            player->print("%O is unintelligible.\n", object);
+            player->print("%O is unintelligible.\n", object.get());
             broadcast(isCt, "^y%s has a bad scroll: %s.\n", player->getCName(), object->getCName());
             loge("Study: %s has a bad scroll: %s.\n", player->getCName(), object->getCName());
             return(nullptr);
         }
 
 
-        std::string skill = "";
+        std::string skill;
         if(player->getCastingType() == Divine)
             skill = spellSkill(get_spell_domain(object->getMagicpower() - 1));
         else
@@ -799,7 +797,7 @@ Object* studyFindObject(Player* player, const cmd* cmnd) {
 //*********************************************************************
 // This function does the grunt work of studying the object.
 
-void doStudy(Player* player, Object* object, bool immediate) {
+void doStudy(const std::shared_ptr<Player>& player, std::shared_ptr<Object>  object, bool immediate) {
     player->unhide();
     
     if(object->increase) {
@@ -866,26 +864,25 @@ void doStudy(Player* player, Object* object, bool immediate) {
         
     }
 
-    player->printColor("%O disintegrates!\n", object);
-    if(immediate)
-        broadcast(player->getSock(), player->getParent(), "%M studies %1P.", player, object);
-    else
-        broadcast(player->getSock(), player->getParent(), "%M finishes studiying %1P.", player, object);
+    player->printColor("%O disintegrates!\n", object.get());
+    broadcast(player->getSock(), player->getParent(), "%M %s %1P.", player.get(), (immediate ? "studies" : "finishes studying"), object.get());
 
     player->delObj(object, true);
-    delete object;
+    object.reset();
 }
 
 // this function is called when we are ready to finish studying the object
 void doStudy(const DelayedAction* action) {
-    Player* player = action->target->getAsPlayer();
-    Object* object = studyFindObject(player, &action->cmnd);
+    auto target = action->target.lock();
+    if(!target) return;
+    std::shared_ptr<Player> player = target->getAsPlayer();
+    std::shared_ptr<Object>  object = studyFindObject(player, &action->cmnd);
 
     // nothing to study?
     if(!object)
         return;
 
-    player->printColor("You finish studying %P.\n", object);
+    player->printColor("You finish studying %P.\n", object.get());
     doStudy(player, object, false);
 }
 
@@ -895,8 +892,8 @@ void doStudy(const DelayedAction* action) {
 // This function allows a player to study a scroll, and learn the
 // spell / recipe / skill / language / song that is on it.
 
-int cmdStudy(Player* player, cmd* cmnd) {
-    Object* object = studyFindObject(player, cmnd);
+int cmdStudy(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object>  object = studyFindObject(player, cmnd);
 
     // nothing to study?
     if(!object)
@@ -921,8 +918,8 @@ int cmdStudy(Player* player, cmd* cmnd) {
         // doStudy calls unhide, no need to do it twice
         player->unhide();
 
-        player->printColor("You begin studying %P.\n", object);
-        broadcast(player->getSock(), player->getParent(), "%M begins studying %1P.", player, object);
+        player->printColor("You begin studying %P.\n", object.get());
+        broadcast(player->getSock(), player->getParent(), "%M begins studying %1P.", player.get(), object.get());
         gServer->addDelayedAction(doStudy, player, cmnd, ActionStudy, delay);
     } else {
         doStudy(player, object, true);
@@ -938,8 +935,8 @@ int cmdStudy(Player* player, cmd* cmnd) {
 // spell to be cast. If a third word is used in the command, then that
 // player or monster will be the target of the spell.
 
-int cmdReadScroll(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
+int cmdReadScroll(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
     int     (*fn)(SpellFn);
     long    i=0, t=0;
     int     n=0, match=0, c=0;
@@ -1034,9 +1031,9 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
     }
 
     if(player->spellFail( CastType::SCROLL)) {
-        player->printColor("%O disintegrates.\n", object);
+        player->printColor("%O disintegrates.\n", object.get());
         player->delObj(object, true);
-        delete object;
+        object.reset();
         return(0);
     }
 
@@ -1069,9 +1066,9 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
         if(object->use_output[0] && !dimensionalFailure)
             player->printColor("%s\n", object->use_output);
 
-        player->printColor("%O disintegrates.\n", object);
+        player->printColor("%O disintegrates.\n", object.get());
         player->delObj(object, true);
-        delete object;
+        object.reset();
     }
 
     return(0);
@@ -1087,32 +1084,31 @@ int cmdReadScroll(Player* player, cmd* cmnd) {
 // return 0 on failure, 1 on drink, 2 on deleted object
 // lagprot means we can bypass
 
-int Player::endConsume(Object* object, bool forceDelete) {
+int Player::endConsume(const std::shared_ptr<Object>&  object, bool forceDelete) {
     if(object->flagIsSet(O_EATABLE) || object->getType() == ObjectType::HERB) {
-        print("You eat %P.\n", object);
-        broadcast(getSock(), getParent(), "%M eats %1P.", this, object);
+        print("You eat %P.\n", object.get());
+        broadcast(getSock(), getParent(), "%M eats %1P.", this, object.get());
     }
     else {
         print("Potion drank.\n");
-        broadcast(getSock(), getParent(), "%M drinks %1P.", this, object);
+        broadcast(getSock(), getParent(), "%M drinks %1P.", this, object.get());
     }
 
     if(!forceDelete)
         object->decShotsCur();
     if(forceDelete || object->getShotsCur() < 1) {
         if(object->flagIsSet(O_EATABLE) || object->getType() == ObjectType::HERB)
-            printColor("You ate all of %P.\n", object);
+            printColor("You ate all of %P.\n", object.get());
         else
-            printColor("You drank all of %P.\n", object);
+            printColor("You drank all of %P.\n", object.get());
 
         delObj(object, true);
-        delete object;
         return(2);
     }
     return(1);
 }
 
-int Player::consume(Object* object, cmd* cmnd) {
+int Player::consume(const std::shared_ptr<Object>& object, cmd* cmnd) {
     int     c=0, splno=0, n=0;
     int     (*fn)(SpellFn);
     bool    dimensionalFailure=false;
@@ -1121,11 +1117,10 @@ int Player::consume(Object* object, cmd* cmnd) {
     fn = nullptr;
 
     if(isStaff() && object->getType() != ObjectType::POTION && !strcmp(cmnd->str[0], "eat")) {
-        broadcast(getSock(), getParent(), "%M eats %1P.", this, object);
-        printColor("You ate %P.\n", object);
+        broadcast(getSock(), getParent(), "%M eats %1P.", this, object.get());
+        printColor("You ate %P.\n", object.get());
 
         delObj(object);
-        delete object;
         return(0);
     }
 
@@ -1138,7 +1133,7 @@ int Player::consume(Object* object, cmd* cmnd) {
     }
 
 
-    if(object->doRestrict(this, true))
+    if(object->doRestrict(Containable::downcasted_shared_from_this<Player>(), true))
         return(0);
 
 
@@ -1162,16 +1157,16 @@ int Player::consume(Object* object, cmd* cmnd) {
     if( getRoomParent()->flagIsSet(R_NO_POTION) ||
         getRoomParent()->flagIsSet(R_LIMBO))
     {
-        if(!checkStaff("%O starts to %s before you %s it.\n",
-            object, eat ? "get moldy" : "evaporate", eat ? "eat" : "drink"))
+        if(!checkStaff("%O starts to %s before you %s it.\n", object.get(), eat ? "get moldy" : "evaporate", eat ? "eat" : "drink"))
             return(0);
     }
 
     unhide();
 
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
     // Handle Alchemy Potions
     if(object->isAlchemyPotion()) {
-        if(object->consumeAlchemyPotion(this))
+        if(object->consumeAlchemyPotion(pThis))
             return(endConsume(object,false));
         else
             return(0);
@@ -1194,7 +1189,7 @@ int Player::consume(Object* object, cmd* cmnd) {
     if(!dimensionalFailure) {
         SpellData data;
         data.splno = splno;
-        data.set(CastType::POTION, get_spell_school(data.splno), get_spell_domain(data.splno), object, this);
+        data.set(CastType::POTION, get_spell_school(data.splno), get_spell_domain(data.splno), object, pThis);
 
         if( (int(*)(SpellFn, char*, osp_t*))fn == splOffensive ||
             (int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive)
@@ -1203,9 +1198,9 @@ int Player::consume(Object* object, cmd* cmnd) {
                 if(ospell[c].splno == -1)
                     return(0);
             n = ((int(*)(SpellFn, const char*, osp_t*))*fn)
-            (this, cmnd, &data, get_spell_name(data.splno), &ospell[c]);
+            (pThis, cmnd, &data, get_spell_name(data.splno), &ospell[c]);
         } else {
-            n = ((int(*)(SpellFn))*fn) (this, cmnd, &data);
+            n = ((int(*)(SpellFn))*fn) (pThis, cmnd, &data);
         }
     }
 
@@ -1220,8 +1215,8 @@ int Player::consume(Object* object, cmd* cmnd) {
 
 // drink wrapper
 
-int cmdConsume(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
+int cmdConsume(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
     int      n=0, match=0;
 
     if(!player->ableToDoCommand())
@@ -1268,8 +1263,8 @@ int cmdConsume(Player* player, cmd* cmnd) {
 // This function allows players to zap a wand or staff at another player
 // or monster.
 
-int cmdUseWand(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
+int cmdUseWand(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
     long    i=0, t=0;
     int     (*fn)(SpellFn);
     bool    dimensionalFailure=false;
@@ -1350,7 +1345,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
     player->unhide();
 
     if(player->getRoomParent()->checkAntiMagic()) {
-        player->printColor("%O sputters and smokes.\n", object);
+        player->printColor("%O sputters and smokes.\n", object.get());
         return(0);
     }
 
@@ -1375,7 +1370,6 @@ int cmdUseWand(Player* player, cmd* cmnd) {
             object->decShotsCur();
         if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
             player->delObj(object, true);
-            delete object;
         }
         return(0);
     }
@@ -1413,7 +1407,6 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 
         if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
             player->delObj(object, true);
-            delete object;
         }
 
     }
@@ -1426,7 +1419,7 @@ int cmdUseWand(Player* player, cmd* cmnd) {
 //*********************************************************************
 // wrapper for the useRecallPotion function
 
-int cmdRecall(Player* player, cmd* cmnd) {
+int cmdRecall(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if((player->getLevel() <= 7 && !player->inCombat()) || player->isStaff())
         player->doRecall();
     else
@@ -1461,11 +1454,11 @@ void Player::recallLog(std::string_view name, std::string_view cname, std::strin
 // inside a bag means we need to reduce its shots. Plus, del_obj_crt
 // used from consume doesnt handle deleting it properly
 
-int Player::recallCheckBag(Object *cont, cmd* cmnd, int show, int log) {
+int Player::recallCheckBag(const std::shared_ptr<Object>&cont, cmd* cmnd, int show, int log) {
     int     drank=0;
-    std::string room = getRoomParent()->fullName(), name = "";
+    std::string room = getRoomParent()->fullName(), name;
 
-    for(Object* object : cont->objects) {
+    for(const auto& object : cont->objects) {
         name = object->getName();
 
         if(object->getMagicpower() == (S_WORD_OF_RECALL+1) && object->getType() == ObjectType::POTION) {
@@ -1491,9 +1484,9 @@ int Player::recallCheckBag(Object *cont, cmd* cmnd, int show, int log) {
 
 int Player::useRecallPotion(int show, int log) {
     cmd     *cmnd;
-    Object  *object=nullptr;
+    std::shared_ptr<Object> object=nullptr;
     int     i=0;
-    std::string room = getRoomParent()->fullName(), name = "";
+    std::string room = getRoomParent()->fullName(), name;
 
     if(isEffected("anchor")) {
         print("%s will not work while you are protected by a dimensional anchor.\n",
@@ -1532,7 +1525,7 @@ int Player::useRecallPotion(int show, int log) {
     }
 
     // check through their inventory
-    for(Object* obj : objects) {
+    for(const auto& obj : objects) {
         object = obj;
         name = object->getName();
 
@@ -1564,8 +1557,8 @@ int Player::useRecallPotion(int show, int log) {
 //                      logCast
 //*********************************************************************
 
-void logCast(Creature* caster, Creature* target, std::string_view spell, bool dmToo) {
-    Player* pCaster = caster->getAsPlayer();
+void logCast(const std::shared_ptr<Creature>& caster, std::shared_ptr<Creature> target, std::string_view spell, bool dmToo) {
+    std::shared_ptr<Player> pCaster = caster->getAsPlayer();
     if(!pCaster || !pCaster->isStaff() || (!dmToo && pCaster->isDm()))
         return;
     log_immort(true, pCaster, fmt::format("{} cast an {} spell on {} in room {}.\n",
@@ -1585,8 +1578,8 @@ bool noCastUndead(std::string_view effect) {
 //                      splGeneric
 //*********************************************************************
 
-int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength, long duration) {
-    Creature* target=nullptr;
+int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength, long duration) {
+    std::shared_ptr<Creature> target=nullptr;
 
     if(cmnd->num == 2) {
         target = player;
@@ -1599,7 +1592,7 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 
         if(spellData->how == CastType::CAST) {
             player->print("You cast %s %s spell.\n", article, spell);
-            broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player, article, spell);
+            broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player.get(), article, spell);
         }
     } else {
         if(player->noPotion( spellData))
@@ -1623,14 +1616,13 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
             return(0);
 
         if((effect == "drain-shield" || effect == "undead-ward") && target->isUndead()) {
-            player->print("The spell fizzles.\n%M naturally resisted your spell.\n", target);
+            player->print("The spell fizzles.\n%M naturally resisted your spell.\n", target.get());
             return(0);
         }
 
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s %s spell on %N.",
-            player, article, spell, target);
-        target->print("%M casts %s on you.\n", player, spell);
-        player->print("You cast %s %s spell on %N.\n", article, spell, target);
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s %s spell on %N.", player.get(), article, spell, target.get());
+        target->print("%M casts %s on you.\n", player.get(), spell);
+        player->print("You cast %s %s spell on %N.\n", article, spell, target.get());
     }
 
     if(target->inCombat(false))
@@ -1667,8 +1659,8 @@ int splGeneric(Creature* player, cmd* cmnd, SpellData* spellData, const char* ar
 //*********************************************************************
 // This allows a mage to transmute gold into magical charges for a wand
 
-int cmdTransmute(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
+int cmdTransmute(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
     unsigned long cost=0;
 
     if(!player->ableToDoCommand())
@@ -1695,7 +1687,7 @@ int cmdTransmute(Player* player, cmd* cmnd) {
     object = player->ready[HELD-1];
 
     if(object->getShotsCur()) {
-        player->printColor("That %P still has magic in it.\n", object);
+        player->printColor("That %P still has magic in it.\n", object.get());
         return(0);
     }
     if(!player->spellIsKnown(object->getMagicpower() - 1)) {
@@ -1757,8 +1749,8 @@ int cmdTransmute(Player* player, cmd* cmnd) {
 // results in a penalty on attacks, and an inability look at objects
 // players, rooms, or inventory. Also a player or monster cannot read.
 
-int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splBlind(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
 
 
     if(player->getClass() == CreatureClass::BUILDER) {
@@ -1772,7 +1764,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
         target = player;
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You are blind and can no longer see.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts blindness on %sself.", player, player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts blindness on %sself.", player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION)
             player->print("Everything goes dark.\n");
 
@@ -1795,16 +1787,16 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
         target->wake("Terrible nightmares disturb your sleep!");
 
         if(target->chkSave(SPL, player, 0) && !player->isCt()) {
-            target->print("%M tried to cast a blind spell on you!\n", player);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a blind spell on %N!", player, target);
+            target->print("%M tried to cast a blind spell on you!\n", player.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a blind spell on %N!", player.get(), target.get());
             player->print("Your spell fizzles.\n");
             return(0);
         }
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Blindness spell cast on %s.\n", target->getCName());
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a blindness spell on %N.", player, target);
-            target->print("%M casts a blindness spell on you.\n", player);
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a blindness spell on %N.", player.get(), target.get());
+            target->print("%M casts a blindness spell on you.\n", player.get());
         }
 
         if(target->isMonster()) {
@@ -1833,7 +1825,7 @@ int splBlind(Creature* player, cmd* cmnd, SpellData* spellData) {
 // sucessful.
 
 int Creature::spellFail(CastType how) {
-    Player  *pPlayer = getAsPlayer();
+    std::shared_ptr<Player> pPlayer = getAsPlayer();
     int     chance=0, n=0;
 
     if(how == CastType::POTION)
@@ -1910,9 +1902,9 @@ int Creature::spellFail(CastType how) {
 //*********************************************************************
 // This function allows a DM to teleport themself or another player to jail
 
-int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *target=nullptr;
-    UniqueRoom  *new_rom=nullptr;
+int splJudgement(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> target=nullptr;
+    std::shared_ptr<UniqueRoom> new_rom=nullptr;
 
     if(!player->isPlayer() || (!player->isCt() && spellData->how == CastType::CAST)) {
         player->print("That spell does not exist.\n");
@@ -1927,7 +1919,7 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
     CatRef  cr;
     cr.setArea("jail");
     cr.id = 1;
-    if(!loadRoom(cr, &new_rom)) {
+    if(!loadRoom(cr, new_rom)) {
         player->print("Spell failure.\n");
         return(0);
     }
@@ -1937,10 +1929,10 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
         target = player->getAsPlayer();
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You pass judgement upon yourself.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts word of Judgement on %sself.", player, player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts word of Judgement on %sself.", player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION) {
             player->print("You find yourself elsewhere.\n");
-            broadcast(player->getSock(), player->getParent(), "%M drinks a potion of judgement and disapears.", player, player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M drinks a potion of judgement and disapears.", player.get(), player->himHer());
         }
     // Cast word of judgement on another player
     } else {
@@ -1956,13 +1948,13 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("You pass judgemet on %N.\n", target);
-            target->print("%M passes judgement on you.\nYou have been judged.\n", player);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M passes judgement on %N.", player, target);
+            player->print("You pass judgemet on %N.\n", target.get());
+            target->print("%M passes judgement on you.\nYou have been judged.\n", player.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M passes judgement on %N.", player.get(), target.get());
 
             logCast(player, target, "judgement", true);
 
-            broadcast("The skies grow dark, and a fog begins to cover the ground.\nA shrill voice proclaims, \"Judgement has been passed upon %N\".\n", target);
+            broadcast("The skies grow dark, and a fog begins to cover the ground.\nA shrill voice proclaims, \"Judgement has been passed upon %N\".\n", target.get());
         }
     }
 
@@ -1976,7 +1968,7 @@ int splJudgement(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      cmdBarkskin
 //*********************************************************************
 
-int cmdBarkskin(Player *player, cmd *cmnd) {
+int cmdBarkskin(const std::shared_ptr<Player>& player, cmd *cmnd) {
     long    i=0, t = time(nullptr);
     int     adjustment=0;
 
@@ -2020,7 +2012,7 @@ int cmdBarkskin(Player *player, cmd *cmnd) {
     player->smashInvis();
     player->unhide();
 
-    broadcast(player->getSock(), player->getParent(), "%M's skin turns to bark.", player);
+    broadcast(player->getSock(), player->getParent(), "%M's skin turns to bark.", player.get());
 
     adjustment = Random::get(3,6);
     player->addEffect("barkskin", 120, adjustment, player, true, player);
@@ -2039,10 +2031,10 @@ int cmdBarkskin(Player *player, cmd *cmnd) {
 //                      cmdCommune
 //*********************************************************************
 
-int cmdCommune(Player *player, cmd *cmnd) {
+int cmdCommune(const std::shared_ptr<Player>& player, cmd *cmnd) {
     long    i=0, t = time(nullptr), first_exit=0;
     int     chance=0;
-    BaseRoom* newRoom=nullptr;
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
 
     player->clearFlag(P_AFK);
 
@@ -2080,7 +2072,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
         player->print("You sense any living creatures in your surroundings.\n");
 
         first_exit = 1;
-        for(Exit* ext : player->getRoomParent()->exits) {
+        for(const auto& ext : player->getRoomParent()->exits) {
             if( ext->flagIsSet(X_DESCRIPTION_ONLY) ||
                 ext->flagIsSet(X_SECRET) ||
                 ext->isConcealed(player) ||
@@ -2097,7 +2089,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
             player->print("%s:\n", ext->getCName());
             first_exit = 0;
 
-            if(!Move::getRoom(player, ext, &newRoom, true)) {
+            if(!Move::getRoom(player, ext, newRoom, true)) {
                 continue;
             }
 
@@ -2105,7 +2097,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
             PlayerSet::iterator pEnd;
             pIt = newRoom->players.begin();
             pEnd = newRoom->players.end();
-            Player* ply;
+            std::shared_ptr<Player> ply;
             while(pIt != pEnd) {
                 ply = (*pIt++);
                 if(ply->isUndead() && !player->isCt())
@@ -2117,14 +2109,14 @@ int cmdCommune(Player *player, cmd *cmnd) {
                 if(ply->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt())
                     continue;
 
-                player->print("   %M\n", ply);
+                player->print("   %M\n", ply.get());
             }
 
             MonsterSet::iterator mIt;
             MonsterSet::iterator mEnd;
             mIt = newRoom->monsters.begin();
             mEnd = newRoom->monsters.end();
-            Monster* mons;
+            std::shared_ptr<Monster>  mons;
             while(mIt != mEnd) {
                 mons = (*mIt++);
                 if(mons->isUndead() && !player->isCt())
@@ -2146,7 +2138,7 @@ int cmdCommune(Player *player, cmd *cmnd) {
         player->lasttime[LT_PRAY].interval = 60L;
     } else {
         player->print("You failed to commune with nature.\n");
-        broadcast(player->getSock(), player->getParent(), "%M tries to commune with nature.", player);
+        broadcast(player->getSock(), player->getParent(), "%M tries to commune with nature.", player.get());
         player->checkImprove("commune", false);
         player->lasttime[LT_PRAY].ltime = 10L;
     }
@@ -2175,7 +2167,7 @@ bool Creature::isMageLich() {
 //                      noPotion
 //*********************************************************************
 
-bool Creature::noPotion(SpellData* spellData) {
+bool Creature::noPotion(SpellData* spellData) const {
     if(spellData->how == CastType::POTION) {
         print("You can only use a potion on yourself.\n");
         return(true);

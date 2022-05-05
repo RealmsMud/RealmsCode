@@ -91,7 +91,7 @@ bool PlayerClass::needsDeity() { return(needDeity); }
 short PlayerClass::numProfs() { return(numProf); }
 LevelGain* PlayerClass::getLevelGain(int lvl) { return(levels[lvl]); }
 bool PlayerClass::hasDefaultStats() { return(hasAutomaticStats); }
-bool PlayerClass::setDefaultStats(Player* player) {
+bool PlayerClass::setDefaultStats(std::shared_ptr<Player> player) {
     if(!hasDefaultStats() || !player)
         return(false);
 
@@ -132,7 +132,7 @@ void Config::clearClasses() {
 //                      dmShowClasses
 //*********************************************************************
 
-int dmShowClasses(Player* admin, cmd* cmnd) {
+int dmShowClasses(const std::shared_ptr<Player>& admin, cmd* cmnd) {
 
     bool    more = admin->isDm() && cmnd->num > 1 && !strcmp(cmnd->str[1], "more");
     bool    all = admin->isDm() && cmnd->num > 1 && !strcmp(cmnd->str[1], "all");

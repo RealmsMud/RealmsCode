@@ -92,7 +92,7 @@ public:
     bool createExit();
     void removeExit();
     void spawnRaiders(ShipRaid* sRaid);
-    BaseRoom* getRoom(bool useOrigin);
+    std::shared_ptr<BaseRoom> getRoom(bool useOrigin);
     bool swap(const Swap& s);
 
     [[nodiscard]] std::string getName() const;
@@ -127,7 +127,7 @@ public:
     // announce room range
     std::list<Range> announce;
 
-    std::list<ShipExit*> exits;
+    std::list<std::shared_ptr<ShipExit>> exits;
     ShipRaid    *raid;
     
     // stored in minutes
@@ -173,7 +173,7 @@ public:
 
 
 void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message);
-int cmdQueryShips(Player* player, cmd* cmnd);
+int cmdQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd);
 int shipSetExits(Ship *ship, ShipStop *stop);
 int shipDeleteExits(Ship *ship, ShipStop *stop);
 

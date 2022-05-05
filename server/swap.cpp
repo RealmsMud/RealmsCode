@@ -122,7 +122,7 @@ std::string swapName(SwapType type) {
 //                          swap
 //*********************************************************************
 
-void swap(Player* player, cmd* cmnd, SwapType type) {
+void swap(const std::shared_ptr<Player>& player, cmd* cmnd, SwapType type) {
     std::string str = getFullstrText(cmnd->fullstr, 1);
     std::string name="";
     std::string cmd = " *swap";
@@ -188,7 +188,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
                            s.origin.str().c_str(), s.target.id == -1 ? s.target.area.c_str() : s.target.str().c_str());
 
         int loop=0;
-        std::string::size_type pos = o.find(":");
+        std::string::size_type pos = o.find(':');
         if(pos != std::string::npos) {
             // *rswap -range misc.100:120 test.1
             loop = atoi(o.substr(pos+1).c_str()) - s.origin.id;
@@ -241,7 +241,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
                 id = 1;
             player->printColor("^YRS: ^eSwap canceled.\n");
             if(name != player->getName() && name != "Someone") {
-                Player* p = gServer->findPlayer(name.c_str());
+                std::shared_ptr<Player> p = gServer->findPlayer(name);
                 if(p)
                     player->printColor("^RRS: ^eSwap canceled by %s.\n", player->getCName());
             }
@@ -286,7 +286,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
 
     if(type == SwapRoom) {
         if(!s.target.isArea(s.origin.area) && getFullstrText(cmnd->fullstr, 2) != "confirm") {
-            for(Exit* ext : player->getConstUniqueRoomParent()->exits) {
+            for(const auto& ext : player->getConstUniqueRoomParent()->exits) {
                 if(ext->flagIsSet(X_LOCKABLE) && ext->getKey()) {
                     player->printColor("^YRS: ^RError: ^xthis room contains a lockable exit and is being moved to a different area.\n");
                     player->printColor("   To continue, type ^W*rswap %s confirm^x. Make sure all keys work correctly.\n", s.target.area.c_str());
@@ -296,8 +296,7 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
         }
 
         if(player->getConstUniqueRoomParent()->flagIsSet(R_SHOP))
-            player->printColor("^YRS: ^GThis room is a shop - don't forget to swap the storage room: %s.\n",
-                               shopStorageRoom(player->getConstUniqueRoomParent()).str().c_str());
+            player->printColor("^YRS: ^GThis room is a shop - don't forget to swap the storage room: %s.\n", shopStorageRoom(player->getConstUniqueRoomParent()).str().c_str());
         else if(player->getConstUniqueRoomParent()->getTrapExit().id)
             player->printColor("^YRS: ^GThis room has a trap exit set: %s.\n",
                                player->getConstUniqueRoomParent()->getTrapExit().str().c_str());
@@ -320,19 +319,19 @@ void swap(Player* player, cmd* cmnd, SwapType type) {
 
 }
 
-int dmSwap(Player* player, cmd* cmnd) {
+int dmSwap(const std::shared_ptr<Player>& player, cmd* cmnd) {
     swap(player, cmnd, SwapNone);
     return(0);
 }
-int dmRoomSwap(Player* player, cmd* cmnd) {
+int dmRoomSwap(const std::shared_ptr<Player>& player, cmd* cmnd) {
     swap(player, cmnd, SwapRoom);
     return(0);
 }
-int dmObjSwap(Player* player, cmd* cmnd) {
+int dmObjSwap(const std::shared_ptr<Player>& player, cmd* cmnd) {
     swap(player, cmnd, SwapObject);
     return(0);
 }
-int dmMobSwap(Player* player, cmd* cmnd) {
+int dmMobSwap(const std::shared_ptr<Player>& player, cmd* cmnd) {
     swap(player, cmnd, SwapMonster);
     return(0);
 }
@@ -343,7 +342,7 @@ int dmMobSwap(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 bool Server::swap(const Swap& s) {
-    Player *player = gServer->findPlayer(s.player.c_str());
+    std::shared_ptr<Player> player = gServer->findPlayer(s.player);
     gConfig->setMovingRoom(s.origin, s.target);
     std::string output;
 
@@ -405,7 +404,7 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
     if(!isSwapping())
         return;
 
-    Player* player = gServer->findPlayer(child.extra);
+    std::shared_ptr<Player> player = gServer->findPlayer(child.extra);
 
     // a target has not yet been found
     if(currentSwap.target.id == -1) {
@@ -424,10 +423,10 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
                 player->printColor("^YRS: No empty rooms were found!\n");
             endSwap();
         } else {
-            UniqueRoom* uRoom=nullptr;
+            std::shared_ptr<UniqueRoom> uRoom=nullptr;
 
             // did we actually get a room where we were expecting none?
-            if(loadRoom(currentSwap.target, &uRoom)) {
+            if(loadRoom(currentSwap.target, uRoom)) {
                 if(roomSearchFailure) {
                     // we're only allowed 1 failure per go
                     if(player)
@@ -457,11 +456,11 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
 //*********************************************************************
 
 void Config::finishSwap(const std::string &mover) {
-    Player* player = gServer->findPlayer(mover);
+    std::shared_ptr<Player> player = gServer->findPlayer(mover);
     bool online=true;
 
     if(!player) {
-        if(!loadPlayer(mover, &player)) {
+        if(!loadPlayer(mover, player)) {
             broadcast(isStaff, fmt::format("^YRS: ^RError: ^xNon-existent player {} attempting to move rooms.\n", mover).c_str());
             endSwap();
             return;
@@ -474,8 +473,6 @@ void Config::finishSwap(const std::string &mover) {
     if(moveRoomRestrictedArea(currentSwap.target.area)) {
         if(online)
             player->printColor("^YRS: ^RError: ^x""%s"" is a restricted range. You cannot swap unique rooms into or out that area.\n", currentSwap.target.area.c_str());
-        else
-            delete player;
         endSwap();
         return;
     }
@@ -483,8 +480,6 @@ void Config::finishSwap(const std::string &mover) {
     if(!player->checkBuilder(currentSwap.target)) {
         if(online)
             player->printColor("^YRS: ^RError: ^xRoom number not inside any of your alotted ranges.\n");
-        else
-            delete player;
         endSwap();
         return;
     }
@@ -494,8 +489,6 @@ void Config::finishSwap(const std::string &mover) {
         if(online)
             player->printColor("^YRS: ^RError: ^xSorry, you cannot swap this room (%s) (Builder Waiting Room).\n",
                                currentSwap.origin.displayStr().c_str());
-        else
-            delete player;
         endSwap();
         return;
     }
@@ -503,8 +496,6 @@ void Config::finishSwap(const std::string &mover) {
         if(online)
             player->printColor("^YRS: ^RError: ^xSorry, you cannot swap that room (%s) (Builder Waiting Room).\n",
                                currentSwap.target.displayStr().c_str());
-        else
-            delete player;
         endSwap();
         return;
     }
@@ -528,11 +519,9 @@ void Config::finishSwap(const std::string &mover) {
     gServer->finishSwap(player, online, currentSwap.origin, currentSwap.target);
 }
 
-void Server::finishSwap(Player* player, bool online, const CatRef& origin, const CatRef& target) {
+void Server::finishSwap(const std::shared_ptr<Player>& player, bool online, const CatRef& origin, const CatRef& target) {
     // only one forked process at a time
     if(gServer->swapName() != "Someone") {
-        if(!online)
-            delete player;
         return;
     }
 
@@ -548,8 +537,7 @@ void Server::finishSwap(Player* player, bool online, const CatRef& origin, const
         if(online) {
             player->printColor("^YRS: ^eBeginning offline search sequence.\n");
             player->printColor("^YRS: ^eThis may take several minutes.\n");
-        } else
-            delete player;
+        }
         gConfig->swapLog((std::string)"r" + origin.str(), false);
         gConfig->swapLog((std::string)"r" + target.str(), false);
     }
@@ -561,17 +549,17 @@ void Server::finishSwap(Player* player, bool online, const CatRef& origin, const
 // the offline search function
 
 void Config::offlineSwap() {
-    std::list<Area*>::iterator aIt;
-    std::map<std::string, AreaRoom*>::iterator rIt;
+    std::list<std::shared_ptr<Area> >::iterator aIt;
+    std::map<std::string, std::shared_ptr<AreaRoom>>::iterator rIt;
     struct  dirent *dirp=nullptr, *dirq=nullptr;
     DIR     *dir=nullptr, *subdir=nullptr;
     std::string filename = "";
     std::string output = "";
 
-    UniqueRoom* uRoom=nullptr;
-    AreaRoom* aRoom=nullptr;
-    Player* player=nullptr;
-    Monster* monster=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
+    std::shared_ptr<AreaRoom> aRoom=nullptr;
+    std::shared_ptr<Player> player=nullptr;
+    std::shared_ptr<Monster>  monster=nullptr;
     // id = -1 tells the loadFromFile functions to rely on the monster/room
     CatRef placeholder;
     placeholder.id = -1;
@@ -587,13 +575,12 @@ void Config::offlineSwap() {
 
             dirp->d_name[strlen(dirp->d_name)-4] = 0;
 
-            if(!loadPlayer(dirp->d_name, &player))
+            if(!loadPlayer(dirp->d_name, player))
                 continue;
 
             if(player->swap(currentSwap))
                 printf("p%s%s", player->getCName(), sepType);
 
-            delete player;
         }
     }
 
@@ -608,13 +595,12 @@ void Config::offlineSwap() {
 
             dirp->d_name[strlen(dirp->d_name)-8] = 0;
 
-            if(!loadPlayer(dirp->d_name, &player, LoadType::LS_BACKUP))
+            if(!loadPlayer(dirp->d_name, player, LoadType::LS_BACKUP))
                 continue;
 
             if(player->swap(currentSwap))
                 printf("b%s%s", player->getCName(), sepType);
 
-            delete player;
         }
     }
 
@@ -639,7 +625,7 @@ void Config::offlineSwap() {
                     filename += "/";
                     filename += dirq->d_name;
 
-                    if(!loadRoomFromFile(placeholder, &uRoom, filename))
+                    if(!loadRoomFromFile(placeholder, uRoom, filename))
                         continue;
 
                     // we check origin and target already, so forget about it here
@@ -677,7 +663,7 @@ void Config::offlineSwap() {
                     filename += "/";
                     filename += dirq->d_name;
 
-                    if(!loadMonsterFromFile(placeholder, &monster, filename))
+                    if(!loadMonsterFromFile(placeholder, monster, filename))
                         continue;
 
                     // we check origin and target already, so forget about it here
@@ -686,7 +672,6 @@ void Config::offlineSwap() {
                         printf("m%s%s", output.c_str(), sepType);
                     }
 
-                    delete monster;;
                 }
             }
         }
@@ -708,12 +693,12 @@ void Config::offlineSwap() {
 void Config::offlineSwap(childProcess &child, bool onReap) {
     if(!isSwapping())
         return;
-    Player* player = gServer->findPlayer(child.extra.c_str());
+    std::shared_ptr<Player> player = gServer->findPlayer(child.extra);
     std::string toProcess = gServer->simpleChildRead(child);
 
     if(!toProcess.empty()) {
-        UniqueRoom *uRoom=nullptr;
-        Monster *monster=nullptr;
+        std::shared_ptr<UniqueRoom> uRoom=nullptr;
+        std::shared_ptr<Monster> monster=nullptr;
         CatRef cr;
         std::string input;
 
@@ -730,12 +715,11 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
             if(input.at(0) == 'r') {
                 getCatRef(input.substr(1), &cr, nullptr);
                 // this will put rooms in the queue
-                loadRoom(cr, &uRoom);
+                loadRoom(cr, uRoom);
             } else if(input.at(0) == 'm') {
                 getCatRef(input.substr(1), &cr, nullptr);
                 // this will put monsters in the queue
-                if(loadMonster(cr, &monster))
-                    delete monster;;
+                loadMonster(cr, monster);
             }
         }
     }
@@ -747,10 +731,10 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
 //                          swap
 //*********************************************************************
 
-void Config::swap(Player* player, std::string_view name) {
+void Config::swap(std::shared_ptr<Player> player, std::string_view name) {
     std::list<std::string>::iterator bIt;
     std::list<Swap>::iterator qIt;
-    UniqueRoom *uOrigin=nullptr, *uTarget=nullptr;
+    std::shared_ptr<UniqueRoom> uOrigin=nullptr, uTarget=nullptr;
     bool found;
 
     if(player)
@@ -761,7 +745,7 @@ void Config::swap(Player* player, std::string_view name) {
 
     // loop through each area
     found = false;
-    std::list<Area*>::iterator aIt;
+    std::list<std::shared_ptr<Area> >::iterator aIt;
     for(aIt = gServer->areas.begin() ; aIt != gServer->areas.end() ; aIt++) {
         if((*aIt)->swap(currentSwap))
             found = true;
@@ -814,7 +798,7 @@ void Config::swap(Player* player, std::string_view name) {
 
 
     // check all players online
-    Player* ply=nullptr;
+    std::shared_ptr<Player> ply=nullptr;
     for(const auto& p : gServer->players) {
         ply = p.second;
         if(ply->swap(currentSwap))
@@ -824,11 +808,11 @@ void Config::swap(Player* player, std::string_view name) {
 
     // remove the swapped rooms from the queue
     if(gServer->roomCache.contains(currentSwap.origin)) {
-        gServer->roomCache.fetch(currentSwap.origin, &uOrigin, true);
+        gServer->roomCache.fetch(currentSwap.origin, uOrigin, true);
         gServer->roomCache.remove(currentSwap.origin);
     }
     if(gServer->roomCache.contains(currentSwap.target)) {
-		gServer->roomCache.fetch(currentSwap.target, &uTarget, true);
+		gServer->roomCache.fetch(currentSwap.target, uTarget, true);
 		gServer->roomCache.remove(currentSwap.target);
 	} else {
         // the original room won't exist anymore
@@ -838,9 +822,9 @@ void Config::swap(Player* player, std::string_view name) {
     // readd them to the queue under their new names
     // DO NOT update now: the loop just after this will do it
     if(uOrigin)
-    	gServer->roomCache.insert(currentSwap.target, &uOrigin);
+    	gServer->roomCache.insert(currentSwap.target, uOrigin);
     if(uTarget)
-    	gServer->roomCache.insert(currentSwap.origin, &uTarget);
+    	gServer->roomCache.insert(currentSwap.origin, uTarget);
 
     // go through players, rooms, and arearooms saved while the offline search
     // was running, also includes results of the offline search
@@ -857,7 +841,7 @@ void Config::swap(Player* player, std::string_view name) {
         player->printColor("^YRS: Room swap complete.\n");
         found = true;
     } else
-        loadPlayer(name, &player);
+        loadPlayer(name, player);
 
     if(player)
         log_immort(true, player, fmt::format("{} has finished swapping {} with {}.\n", name,
@@ -866,9 +850,6 @@ void Config::swap(Player* player, std::string_view name) {
     else
         broadcast(isStaff, fmt::format("^y{} has finished swapping {} with {}.", name, currentSwap.origin.displayStr(),
                                        currentSwap.target.displayStr()).c_str());
-
-    if(!found && player)
-        delete player;
 
     endSwap();
 }
@@ -913,7 +894,7 @@ bool Swap::match(const CatRef& o, const CatRef& t) {
 //                          swapChecks
 //*********************************************************************
 
-bool Config::swapChecks(const Player* player, const Swap& s) {
+bool Config::swapChecks(const std::shared_ptr<Player>& player, const Swap& s) const {
     if(s.type == SwapNone) {
         player->printColor("^YRS: ^RError: ^xInvalid swap type.\n");
         return(false);
@@ -996,7 +977,7 @@ bool Config::moveRoomRestrictedArea(std::string_view area) const {
 //                          checkSpecialArea
 //*********************************************************************
 
-bool Config::checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), Player* player, bool online, std::string_view type) {
+bool Config::checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), const std::shared_ptr<Player>& player, bool online, std::string_view type) {
     Location l = getSpecialArea(toCheck, origin);
     bool t = origin == l.room;
     if(t || target == l.room) {
@@ -1004,8 +985,7 @@ bool Config::checkSpecialArea(const CatRef& origin, const CatRef& target, int (C
             player->bPrint(fmt::format("^YRS: ^RError: ^xRoom ({}) room is set as a {} Room under CatRefInfo.\n",
                                        t ? origin.displayStr() : target.displayStr(), type));
             player->print("It cannot be moved out of its area.\n");
-        } else
-            delete player;
+        }
         endSwap();
         return(false);
     }
@@ -1022,42 +1002,41 @@ void Config::swap(std::string str) {
     str = str.substr(1);
     if(type == 'p' || type == 'b') {
         // at this point, the player will always be offline
-        Player* player=nullptr;
+        std::shared_ptr<Player> player=nullptr;
         LoadType saveType = type == 'p' ? LoadType::LS_NORMAL : LoadType::LS_BACKUP;
 
-        if(!loadPlayer(str.c_str(), &player, saveType))
+        if(!loadPlayer(str.c_str(), player, saveType))
             return;
 
         if(player->swap(currentSwap))
             player->save(false, saveType);
-        delete player;
     } else if(type == 'm') {
         // the monster should have been loaded into the queue by now
-        Monster* monster=nullptr;
+        std::shared_ptr<Monster>  monster=nullptr;
         CatRef cr;
         getCatRef(str, &cr, nullptr);
 
-        if(!loadMonster(cr, &monster))
+        if(!loadMonster(cr, monster))
             return;
 
         if(monster->swap(currentSwap))
             monster->saveToFile();
-        delete monster;;
+
     } else if(type == 'r') {
         // the room should have been loaded into the queue by now
-        UniqueRoom* uRoom=nullptr;
+        std::shared_ptr<UniqueRoom> uRoom=nullptr;
         CatRef cr;
         getCatRef(str, &cr, nullptr);
 
-        if(!loadRoom(cr, &uRoom))
+        if(!loadRoom(cr, uRoom))
             return;
 
         if(uRoom->swap(currentSwap))
             uRoom->saveToFile(0);
     } else if(type == 'a') {
         // arearooms are always in memory
-        Area *area=nullptr;
-        AreaRoom* aRoom=nullptr;
+        std::shared_ptr<Area> area=nullptr;
+        std::shared_ptr<AreaRoom> aRoom=nullptr;
         MapMarker m;
 
         m.load(str);
@@ -1086,7 +1065,7 @@ void Config::swapLog(const std::string& log, bool external) {
     swapList.remove(log);
     swapList.push_back(log);
 
-    Player* player = gServer->findPlayer(gServer->swapName().c_str());
+    std::shared_ptr<Player> player = gServer->findPlayer(gServer->swapName());
 
     if(player) {
         std::string mvName = log.substr(1);
@@ -1167,7 +1146,7 @@ void Config::endSwap(int id) {
 //                          swapInfo
 //*********************************************************************
 
-void Config::swapInfo(const Player* player) {
+void Config::swapInfo(const std::shared_ptr<Player>& player) {
     bool canSee;
     char type;
     std::string mvName;
@@ -1204,7 +1183,7 @@ void Config::swapInfo(const Player* player) {
     }
 }
 
-void Server::swapInfo(const Player* player) {
+void Server::swapInfo(const std::shared_ptr<Player>& player) {
     player->printColor("^WSwap Server Info\n");
     player->print("   Child Processes Being Watched:\n");
     for(childProcess & child : children) {
@@ -1263,27 +1242,27 @@ void Config::swapAbort() {
 //                          Player swap
 //*********************************************************************
 
-bool Config::swapIsInteresting(const MudObject* target) const {
+bool Config::swapIsInteresting(const std::shared_ptr<const MudObject>& target) const {
     if(!isSwapping())
         return(false);
 
-    const Monster* monster = target->getAsConstMonster();
+    const std::shared_ptr<const Monster>  monster = target->getAsConstMonster();
     if(monster && monster->swapIsInteresting(currentSwap))
         return(true);
 
-    const Player* player = target->getAsConstPlayer();
+    const std::shared_ptr<const Player> player = target->getAsConstPlayer();
     if(player && player->swapIsInteresting(currentSwap))
         return(true);
 
-    const Object* object = target->getAsConstObject();
+    const std::shared_ptr<const Object>  object = target->getAsConstObject();
     if(object && object->swapIsInteresting(currentSwap))
         return(true);
 
-    const AreaRoom* aRoom = target->getAsConstAreaRoom();
+    const std::shared_ptr<const AreaRoom> aRoom = target->getAsConstAreaRoom();
     if(aRoom && aRoom->swapIsInteresting(currentSwap))
         return(true);
 
-    const UniqueRoom* uRoom = target->getAsConstUniqueRoom();
+    const std::shared_ptr<const UniqueRoom> uRoom = target->getAsConstUniqueRoom();
     return uRoom && uRoom->swapIsInteresting(currentSwap);
 
 }
@@ -1295,8 +1274,8 @@ bool Config::swapIsInteresting(const MudObject* target) const {
 char whichDelim(std::string_view code) {
     std::string::size_type qPos, aPos;
 
-    qPos = code.find("\"");
-    aPos = code.find("'");
+    qPos = code.find('\"');
+    aPos = code.find('\'');
 
     if(qPos == std::string::npos && aPos == std::string::npos)
         return(0);
@@ -1394,7 +1373,7 @@ bool Hooks::swap(const Swap& s) {
         if(s.type == SwapRoom) {
             param = getParamFromCode(p.second, "spawnObjects", s.type);
             if(!param.empty()) {
-                getCatRef(param, &cr, 0);
+                getCatRef(param, &cr, nullptr);
                 if(cr == s.origin) {
                     p.second = setParamInCode(p.second, "spawnObjects", s.type, param);
                     found = true;
@@ -1573,10 +1552,10 @@ bool Monster::swapIsInteresting(const Swap& s) const {
 //                          Object swap
 //*********************************************************************
 
-bool Object::swap(Swap s) {
+bool Object::swap(const Swap& s) {
     bool found=false;
 
-    if(hooks.swap(std::move(s)))
+    if(hooks.swap(s))
         found = true;
 
     return(found);
@@ -1586,9 +1565,9 @@ bool Object::swap(Swap s) {
 //                          Object swapIsInteresting
 //*********************************************************************
 
-bool Object::swapIsInteresting(Swap s) const {
+bool Object::swapIsInteresting(const Swap& s) const {
 
-    return hooks.swapIsInteresting(std::move(s));
+    return hooks.swapIsInteresting(s);
 
 }
 
@@ -1615,7 +1594,7 @@ bool UniqueRoom::swap(const Swap& s) {
         found = true;
     }
 
-    for(Monster* monster : monsters) {
+    for(const auto& monster : monsters) {
         if(monster->swap(s))
             found = true;
     }
@@ -1628,7 +1607,7 @@ bool UniqueRoom::swap(const Swap& s) {
         found = true;
     }
 
-    for(Exit* ext : exits) {
+    for(const auto& ext : exits) {
         if(ext->target.room == s.origin) {
             ext->target.room = s.target;
             found = true;
@@ -1652,7 +1631,7 @@ bool UniqueRoom::swapIsInteresting(const Swap& s) const {
     if(info == s.origin || info == s.target)
         return(true);
 
-    for(const Monster* monster : monsters) {
+    for(const auto &monster : monsters) {
         if(monster->swapIsInteresting(s))
             return(true);
     }
@@ -1660,7 +1639,7 @@ bool UniqueRoom::swapIsInteresting(const Swap& s) const {
     if(trapexit == s.origin || trapexit == s.target)
         return(true);
 
-    for(Exit* ext : exits) {
+    for(const auto& ext : exits) {
         if(ext->target.room == s.origin || ext->target.room == s.target)
             return(true);
     }
@@ -1684,7 +1663,7 @@ bool AreaRoom::swap(const Swap& s) {
         found = true;
     }
 
-    for(Exit* ext : exits) {
+    for(const auto& ext : exits) {
         if(ext->target.room == s.origin) {
             ext->target.room = s.target;
             found = true;
@@ -1693,7 +1672,7 @@ bool AreaRoom::swap(const Swap& s) {
             found = true;
         }
     }
-    for(Monster* monster : monsters) {
+    for(const auto& monster : monsters) {
         if(monster->swap(s))
             found = true;
     }
@@ -1712,12 +1691,12 @@ bool AreaRoom::swapIsInteresting(const Swap& s) const {
     if(unique == s.origin || unique == s.target)
         return(true);
 
-    for(Exit* ext : exits) {
+    for(const auto& ext : exits) {
         if(ext->target.room == s.origin || ext->target.room == s.target)
             return(true);
     }
 
-    for(const Monster* monster : monsters) {
+    for(const auto &monster : monsters) {
         if(monster->swapIsInteresting(s))
             return(true);
     }
@@ -1749,8 +1728,8 @@ bool AreaZone::swap(const Swap& s) {
 //*********************************************************************
 
 bool Area::swap(const Swap& s) {
-    //std::map<std::string, AreaRoom*>::iterator rIt;
-    std::list<AreaZone*>::iterator zIt;
+    //std::map<std::string, std::shared_ptr<AreaRoom>>::iterator rIt;
+    std::list<std::shared_ptr<AreaZone> >::iterator zIt;
     bool found=false;
 
     for(zIt = areaZones.begin() ; zIt != areaZones.end() ; zIt++) {
@@ -1816,10 +1795,9 @@ bool ShipExit::swap(const Swap& s) {
 //*********************************************************************
 
 bool ShipStop::swap(const Swap& s) {
-    std::list<ShipExit*>::iterator it;
     bool found=false;
 
-    for(it = exits.begin() ; it != exits.end() ; it++) {
+    for(auto it = exits.begin() ; it != exits.end() ; it++) {
         if((*it)->swap(s))
             found = true;
     }

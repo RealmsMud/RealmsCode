@@ -36,7 +36,6 @@
 #include "mudObjects/areaRooms.hpp"                 // for AreaRoom
 #include "mudObjects/rooms.hpp"                     // for NUM_PERM_SLOTS
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
-#include "os.hpp"                                   // for ASSERTLOG, merror
 #include "paths.hpp"                                // for checkDirExists
 #include "proto.hpp"                                // for roomPath, roomBac...
 #include "server.hpp"                               // for Server, gServer
@@ -49,13 +48,13 @@
 //                      loadRoom
 //*********************************************************************
 
-bool loadRoom(int index, UniqueRoom **pRoom, bool offline) {
+bool loadRoom(int index, std::shared_ptr<UniqueRoom>& pRoom, bool offline) {
     CatRef  cr;
     cr.id = index;
     return(loadRoom(cr, pRoom, offline));
 }
 
-bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline) {
+bool loadRoom(const CatRef& cr, std::shared_ptr<UniqueRoom> &pRoom, bool offline) {
     if(!validRoomId(cr))
         return(false);
 
@@ -64,7 +63,7 @@ bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline) {
             return(false);
         gServer->roomCache.insert(cr, pRoom);
         if(!offline) {
-            (*pRoom)->registerMo();
+            pRoom->registerMo();
         }
     }
 
@@ -76,7 +75,7 @@ bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline) {
 //*********************************************************************
 // if we're loading only from a filename, get CatRef from file
 
-bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, std::string filename, bool offline) {
+bool loadRoomFromFile(const CatRef& cr, std::shared_ptr<UniqueRoom> &pRoom, std::string filename, bool offline) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int         num;
@@ -92,12 +91,10 @@ bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, std::string filename
     bool toReturn = false;
 
     if(cr.id == -1 || num == cr.id) {
-        *pRoom = new UniqueRoom;
-        if(!*pRoom)
-            merror("loadRoomFromFile", FATAL);
-        (*pRoom)->setVersion(xml::getProp(rootNode, "Version"));
+        pRoom = std::make_shared<UniqueRoom>();
+        pRoom->setVersion(xml::getProp(rootNode, "Version"));
 
-        (*pRoom)->readFromXml(rootNode, offline);
+        pRoom->readFromXml(rootNode, offline);
         toReturn = true;
     }
     xmlFreeDoc(xmlDoc);
@@ -167,7 +164,7 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode, bool offline) {
         else if(NODE_NAME(curNode, "Exits")) {
             readExitsXml(curNode, offline);
         }
-        else if(NODE_NAME(curNode, "Effects")) effects.load(curNode, this);
+        else if(NODE_NAME(curNode, "Effects")) effects.load(curNode, getAsUniqueRoom());
         else if(NODE_NAME(curNode, "Size")) size = whatSize(xml::toNum<int>(curNode));
         else if(NODE_NAME(curNode, "Hooks")) hooks.load(curNode);
 
@@ -233,7 +230,6 @@ int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
     xmlNodePtr  rootNode;
     char        filename[256];
 
-    ASSERTLOG( info.id >= 0 );
     if(saveType == LoadType::LS_BACKUP)
         Path::checkDirExists(info.area, roomBackupPath);
     else
@@ -271,7 +267,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
         return(-1);
 
     // record rooms saved during swap
-    if(gConfig->swapIsInteresting(this))
+    if(gConfig->swapIsInteresting(getAsConstUniqueRoom()))
         gConfig->swapLog((std::string)"r" + info.str(), false);
 
     xml::newNumProp(rootNode, "Num", info.id);
@@ -369,7 +365,7 @@ void AreaRoom::load(xmlNodePtr rootNode) {
             readExitsXml(childNode);
         else if(NODE_NAME(childNode, "MapMarker")) {
             mapmarker.load(childNode);
-            area->rooms[mapmarker.str()] = this;
+            area->rooms[mapmarker.str()] = getAsAreaRoom();
         }
         else if(NODE_NAME(childNode, "Unique")) unique.load(childNode);
         else if(NODE_NAME(childNode, "NeedsCompass")) xml::copyToBool(needsCompass, childNode);

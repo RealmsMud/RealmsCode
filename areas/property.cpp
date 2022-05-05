@@ -58,7 +58,6 @@
 #include "mudObjects/players.hpp"           // for Player
 #include "mudObjects/rooms.hpp"             // for BaseRoom, ExitList
 #include "mudObjects/uniqueRooms.hpp"       // for UniqueRoom
-#include "os.hpp"                           // for merror
 #include "paths.hpp"                        // for Post
 #include "property.hpp"                     // for Property, PartialOwner
 #include "proto.hpp"                        // for link_rom, broadcast, up
@@ -310,7 +309,7 @@ bool Property::usePropFlags(PropType propType) {
 //                      canEnter
 //*********************************************************************
 
-bool Property::canEnter(const Player* player, const UniqueRoom* room, bool p) {
+bool Property::canEnter(const std::shared_ptr<const Player>& player, const std::shared_ptr<const UniqueRoom>& room, bool p) {
     // staff may always go anywhere
     int staff = player->isStaff();
 
@@ -371,7 +370,7 @@ bool Property::canEnter(const Player* player, const UniqueRoom* room, bool p) {
 //                      goodNameDesc
 //*********************************************************************
 
-bool Property::goodNameDesc(const Player* player, const std::string &str, const std::string &fail, const std::string &disallow) {
+bool Property::goodNameDesc(const std::shared_ptr<Player>& player, const std::string &str, const std::string &fail, const std::string &disallow) {
     if(str.empty()) {
         player->bPrint(fmt::format("{}\n", fail));
         return(false);
@@ -391,7 +390,7 @@ bool Property::goodNameDesc(const Player* player, const std::string &str, const 
 //                      goodExit
 //*********************************************************************
 
-bool Property::goodExit(const Player* player, const BaseRoom* room, const char *type, std::string_view xname) {
+bool Property::goodExit(const std::shared_ptr<Player>& player, const std::shared_ptr<BaseRoom>& room, const char *type, std::string_view xname) {
     if(xname.length() > 19) {
         player->print("%s exit name is too long!\n", type);
         return(false);
@@ -418,7 +417,7 @@ bool Property::goodExit(const Player* player, const BaseRoom* room, const char *
         }
     }
 
-    for(Exit* ext : room->exits) {
+    for(const auto& ext : room->exits) {
         if(ext->getName() == xname) {
             player->print("An exit with that name already exists in this room.\n");
             return(false);
@@ -433,20 +432,20 @@ bool Property::goodExit(const Player* player, const BaseRoom* room, const char *
 //*********************************************************************
 
 void Property::destroy() {
-    BaseRoom* outside=nullptr;
-    AreaRoom* aRoom=nullptr;
-    UniqueRoom  *room=nullptr, *uRoom=nullptr;
+    std::shared_ptr<BaseRoom> outside=nullptr;
+    std::shared_ptr<AreaRoom> aRoom=nullptr;
+    std::shared_ptr<UniqueRoom> room=nullptr, uRoom=nullptr;
     std::list<Range>::iterator rt;
 
     for(rt = ranges.begin() ; rt != ranges.end() ; rt++) {
         for(; (*rt).low.id <= (*rt).high; (*rt).low.id++) {
-            if(loadRoom((*rt).low, &room)) {
+            if(loadRoom((*rt).low, room)) {
                 // for every property besides storage rooms, we have to delete the
                 // exit leading to the property
 
                 if(type != PROP_STORAGE) {
                     // handle the exits that point outside
-                    for(Exit* ext : room->exits) {
+                    for(const auto& ext : room->exits) {
                         if( ext->target.mapmarker.getArea() ||
                             !ext->target.room.isArea(room->info.area) )
                         {
@@ -458,9 +457,9 @@ void Property::destroy() {
                                 // get rid of all exits
                                 ExitList::iterator xit;
                                 for(xit = outside->exits.begin() ; xit != outside->exits.end() ; ) {
-                                    Exit* oExit = (*xit++);
+                                    std::shared_ptr<Exit> oExit = (*xit++);
                                     if(oExit->target.room == room->info) {
-                                        broadcast(nullptr, outside, "%s closes its doors.", name.c_str());
+                                        broadcast(nullptr, outside.get(), "%s closes its doors.", name.c_str());
                                         outside->delExit(oExit);
                                     }
                                 }
@@ -601,7 +600,7 @@ void Config::addProperty(Property* p) {
 // cr.id = -1 means they have too many properties
 // otherwise, cr points to the property's first room
 
-CatRef Config::getSingleProperty(const Player* player, PropType type) {
+CatRef Config::getSingleProperty(const std::shared_ptr<const Player>& player, PropType type) {
     CatRef  cr;
 
     for(const auto &it : properties) {
@@ -637,16 +636,16 @@ bool Property::expelOnRemove() const {
 // can safely call this function; it will decide if the player needs
 // to be kicked out or not
 
-void Property::expelToExit(Player* player, bool offline) {
+void Property::expelToExit(const std::shared_ptr<Player>& player, bool offline) {
     if(!expelOnRemove() || player->inAreaRoom() || !belongs(player->currentLocation.room))
         return;
 
-    AreaRoom* aRoom=nullptr;
-    UniqueRoom* uRoom=nullptr;
-    BaseRoom* newRoom=nullptr;
+    std::shared_ptr<AreaRoom> aRoom=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
 
-    if(loadRoom(ranges.front().low, &uRoom)) {
-        for(Exit* ext : uRoom->exits ) {
+    if(loadRoom(ranges.front().low, uRoom)) {
+        for(const auto& ext : uRoom->exits ) {
             if(!ext->target.room.id || !belongs(ext->target.room)) {
                 newRoom = ext->target.loadRoom(player);
                 if(newRoom)
@@ -674,7 +673,7 @@ void Property::expelToExit(Player* player, bool offline) {
             player->currentLocation.mapmarker = aRoom->mapmarker;
     } else {
         player->print("You are escorted off the premises.\n");
-        broadcast(player->getSock(), player->getParent(), "%M is escorted off the premises.", player);
+        broadcast(player->getSock(), player->getParent(), "%M is escorted off the premises.", player.get());
         player->deleteFromRoom();
         player->addToRoom(newRoom);
         player->doPetFollow();
@@ -686,7 +685,7 @@ void Property::expelToExit(Player* player, bool offline) {
 //                      propCommands
 //*********************************************************************
 
-void propCommands(Player* player, Property *p) {
+void propCommands(const std::shared_ptr<Player>& player, Property *p) {
     player->print("Commands for this property:\n");
 
     if(p->isOwner(player->getName())) {
@@ -751,7 +750,7 @@ void propCommands(Player* player, Property *p) {
 //*********************************************************************
 // handles property logging
 
-void propLog(Player* player, cmd* cmnd, Property *p) {
+void propLog(const std::shared_ptr<Player>& player, cmd* cmnd, Property *p) {
     if(!cmnd || cmnd->num == 2) {
         player->print("Property Log For %s:\n", p->getName().c_str());
         player->printColor("^b--------------------------------------------------------------\n");
@@ -789,7 +788,7 @@ void propLog(Player* player, cmd* cmnd, Property *p) {
 //*********************************************************************
 // handles property destruction
 
-void propDestroy(Player* player, cmd* cmnd, Property *p) {
+void propDestroy(const std::shared_ptr<Player>& player, cmd* cmnd, Property *p) {
     if(strcmp(cmnd->str[2], "confirm") != 0) {
         player->printColor("^rAre you sure you wish to destroy this property?\n");
         player->printColor("Type \"property destroy confirm\" to destroy it.\n");
@@ -803,7 +802,7 @@ void propDestroy(Player* player, cmd* cmnd, Property *p) {
 //*********************************************************************
 // handles assigning/unassigning of partial owners
 
-void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
+void propAssignUnassign(const std::shared_ptr<Player>& player, cmd* cmnd, Property *p, bool assign) {
     if(p->getType() == PROP_GUILDHALL) {
         player->print("Partial ownership of guildhalls is handled by guild membership.\n");
         return;
@@ -818,10 +817,10 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
     }
 
     cmnd->str[2][0] = up(cmnd->str[2][0]);
-    Player* target = gServer->findPlayer(cmnd->str[2]);
+    std::shared_ptr<Player> target = gServer->findPlayer(cmnd->str[2]);
 
     if(!target) {
-        if(!loadPlayer(cmnd->str[2], &target)) {
+        if(!loadPlayer(cmnd->str[2], target)) {
             player->print("Player does not exist.\n");
             return;
         }
@@ -830,7 +829,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
     if((target->isStaff() && !player->isStaff()) || target == player) {
         player->print("That player is not a valid target.\n");
 
-        if(offline) delete target;;
+        if(offline) target.reset();
         return;
     }
 
@@ -839,12 +838,12 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
     if(assign && p->getPartialOwner(target->getName())) {
         player->print("%s is already a partial owner of this property.\n", target->getCName());
 
-        if(offline) delete target;;
+        if(offline) target.reset();
         return;
     } else if(!assign && !p->getPartialOwner(target->getName())) {
         player->print("%s is not a partial owner of this property.\n", target->getCName());
 
-        if(offline) delete target;;
+        if(offline) target.reset();
         return;
     }
 
@@ -852,7 +851,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
     if(assign) {
 
         if(Move::tooFarAway(player, target, "appoint as partial owner of this property")) {
-            if(offline) delete target;;
+            if(offline) target.reset();
             return;
         }
 
@@ -862,7 +861,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
             if(cr.id) {
                 player->print("%s may only be affiliated with one storage room at a time.\n", target->getCName());
 
-                if(offline) delete target;;
+                if(offline) target.reset();
                 return;
             }
         }
@@ -887,7 +886,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
     }
 
     gConfig->saveProperties();
-    if(offline) delete target;;
+    if(offline) target.reset();
 }
 
 //*********************************************************************
@@ -895,7 +894,7 @@ void propAssignUnassign(Player* player, cmd* cmnd, Property *p, bool assign) {
 //*********************************************************************
 // handles viewing/setting of flags on partial owners
 
-void propFlags(Player* player, cmd* cmnd, Property *p) {
+void propFlags(const std::shared_ptr<Player>& player, cmd* cmnd, Property *p) {
     MudFlagMap* list = p->getFlagList();
     MudFlagMap::iterator it;
     PartialOwner *po=nullptr;
@@ -1023,7 +1022,7 @@ void propFlags(Player* player, cmd* cmnd, Property *p) {
             else
                 po->toggleFlag(num);
 
-            Player* target = gServer->findPlayer(po->getName().c_str());
+            std::shared_ptr<Player> target = gServer->findPlayer(po->getName());
             if(po->flagIsSet(num)) {
                 player->printColor("Flag ^c""%s""^x set on %s.\n", f.name.c_str(),
                     po->getName().c_str());
@@ -1052,7 +1051,7 @@ void propFlags(Player* player, cmd* cmnd, Property *p) {
 //*********************************************************************
 // handles assigning/unassigning of partial owners
 
-void propRemove(Player* player, Property *p) {
+void propRemove(const std::shared_ptr<Player>& player, Property *p) {
     if(p->getType() == PROP_GUILDHALL) {
         player->print("Partial ownership of guildhalls is handled by guild membership.\n");
         return;
@@ -1061,7 +1060,7 @@ void propRemove(Player* player, Property *p) {
     p->unassignPartialOwner(player->getName());
     p->appendLog(player->getName(), "%s has resigned as partial owner.", player->getCName());
 
-    Player* owner = gServer->findPlayer(p->getOwner().c_str());
+    std::shared_ptr<Player> owner = gServer->findPlayer(p->getOwner());
     if(owner) {
         owner->printColor("^c%s has resigned as partial owner of %s.\n",
             player->getCName(), p->getName().c_str());
@@ -1075,7 +1074,7 @@ void propRemove(Player* player, Property *p) {
 //                      propHelp
 //*********************************************************************
 
-void propHelp(Player* player, cmd* cmnd, PropType propType) {
+void propHelp(const std::shared_ptr<Player>& player, cmd* cmnd, PropType propType) {
     if(propType == PROP_GUILDHALL)
         strcpy(cmnd->str[1], "guildhalls");
     else if(propType == PROP_HOUSE)
@@ -1089,7 +1088,7 @@ void propHelp(Player* player, cmd* cmnd, PropType propType) {
 //                      cmdProperties
 //*********************************************************************
 
-int cmdProperties(Player* player, cmd* cmnd) {
+int cmdProperties(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Property *p=nullptr;
     PartialOwner *po=nullptr;
 
@@ -1223,7 +1222,7 @@ int cmdProperties(Player* player, cmd* cmnd) {
 //                      dmProperties
 //*********************************************************************
 
-int dmProperties(Player* player, cmd* cmnd) {
+int dmProperties(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string id = getFullstrText(cmnd->fullstr, 1);
     if(id.empty()) {
         player->printColor("Properties: Type ^c*property [num]^x to view more info.\n");
@@ -1377,11 +1376,11 @@ std::string Property::show(bool isOwner, std::string_view player, int *i) {
 //*********************************************************************
 // player=0 means we're using the admin version
 
-void Config::showProperties(Player* viewer, Player* player, PropType propType) {
+void Config::showProperties(const std::shared_ptr<Player>& viewer, const std::shared_ptr<Player>& player, PropType propType) {
     std::list<Property*>::iterator it;
     std::ostringstream oStr;
     Property *p=nullptr;
-    std::string name = "";
+    std::string name;
     bool    isOwner=false, partialOwnerList=false;
     int     i=0;
 
@@ -1523,24 +1522,24 @@ CatRef Config::getAvailableProperty(PropType type, int numRequired) {
 //                      rename
 //*********************************************************************
 
-void storageName(UniqueRoom* room, const Player* player);
-void setupShop(Property *p, Player* player, const Guild* guild, UniqueRoom* shop, UniqueRoom* storage);
+void storageName(const std::shared_ptr<UniqueRoom>& room, const std::shared_ptr<Player>& player);
+void setupShop(Property *p, const std::shared_ptr<Player>& player, const Guild* guild, const std::shared_ptr<UniqueRoom>&shop, const std::shared_ptr<UniqueRoom>& storage);
 
-void Property::rename(Player *player) {
-    UniqueRoom  *shop=nullptr, *storage=nullptr;
+void Property::rename(const std::shared_ptr<Player>& player) {
+    std::shared_ptr<UniqueRoom> shop=nullptr, storage=nullptr;
     setOwner(player->getName());
 
     if(type == PROP_STORAGE) {
-        if(loadRoom(ranges.front().low, &storage)) {
+        if(loadRoom(ranges.front().low, storage)) {
             storageName(storage, player);
             setName(storage->getName());
             storage->saveToFile(0);
         }
     } else if(type == PROP_SHOP) {
         CatRef cr = ranges.front().low;
-        if(loadRoom(cr, &shop)) {
+        if(loadRoom(cr, shop)) {
             cr.id++;
-            if(loadRoom(cr, &storage)) {
+            if(loadRoom(cr, storage)) {
                 // only rename shops that aren't affiliated with a guild
                 if(!guild)
                     setupShop(this, player, nullptr, shop, storage);
@@ -1553,7 +1552,7 @@ void Property::rename(Player *player) {
 //                      renamePropertyOwner
 //*********************************************************************
 
-void Config::renamePropertyOwner(std::string_view oldName, Player *player) {
+void Config::renamePropertyOwner(std::string_view oldName, const std::shared_ptr<Player>& player) {
     std::list<Property*>::iterator it;
 
     for(it = properties.begin() ; it != properties.end() ; it++) {
@@ -1573,7 +1572,7 @@ std::string Property::getLog() const {
     if(log.empty())
         return("No entries in the log.\n");
 
-    std::string str = "";
+    std::string str;
     std::list<std::string>::const_iterator it;
 
     for(it = log.begin() ; it != log.end() ; it++) {
@@ -1633,7 +1632,7 @@ void Property::clearLog() {
 //*********************************************************************
 // this sets up the room to be part of the guild, then deletes it
 
-void Property::guildRoomSetup(UniqueRoom *room, const Guild* guild, bool outside) {
+void Property::guildRoomSetup(std::shared_ptr<UniqueRoom> &room, const Guild* guild, bool outside) {
     room->setName( guild->getName() + "'s Guild Hall");
 
     if(!outside) {
@@ -1646,7 +1645,7 @@ void Property::guildRoomSetup(UniqueRoom *room, const Guild* guild, bool outside
     room->appendShortDescription("'s guild hall.");
 
     room->saveToFile(0);
-    delete room;
+    room.reset();
 }
 
 //*********************************************************************
@@ -1654,7 +1653,7 @@ void Property::guildRoomSetup(UniqueRoom *room, const Guild* guild, bool outside
 //*********************************************************************
 // this sets up the room as a personal house, then deletes it
 
-void Property::houseRoomSetup(UniqueRoom *room, const Player* player, bool outside) {
+void Property::houseRoomSetup(std::shared_ptr<UniqueRoom> &room, const std::shared_ptr<Player>& player, bool outside) {
     room->setName( player->getName() + "'s Personal House");
 
     if(!outside) {
@@ -1667,14 +1666,14 @@ void Property::houseRoomSetup(UniqueRoom *room, const Player* player, bool outsi
     room->appendShortDescription("'s personal house.");
 
     room->saveToFile(0);
-    delete room;
+    room.reset();
 }
 
 //*********************************************************************
 //                      roomSetup
 //*********************************************************************
 
-void Property::roomSetup(UniqueRoom *room, PropType propType, const Player* player, const Guild* guild, bool outside) {
+void Property::roomSetup(std::shared_ptr<UniqueRoom> &room, PropType propType, const std::shared_ptr<Player> &player, const Guild* guild, bool outside) {
     if(propType == PROP_GUILDHALL)
         guildRoomSetup(room, guild, outside);
     else if(propType == PROP_HOUSE)
@@ -1685,9 +1684,9 @@ void Property::roomSetup(UniqueRoom *room, PropType propType, const Player* play
 //                      linkRoom
 //*********************************************************************
 
-void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, const std::string& xname) {
-    UniqueRoom* uRoom = outside->getAsUniqueRoom();
-    AreaRoom* aRoom = outside->getAsAreaRoom();
+void Property::linkRoom(const std::shared_ptr<BaseRoom> &inside, const std::shared_ptr<BaseRoom> &outside, const std::string& xname) {
+    std::shared_ptr<UniqueRoom> uRoom = outside->getAsUniqueRoom();
+    std::shared_ptr<AreaRoom> aRoom = outside->getAsAreaRoom();
     if(uRoom) {
         link_rom(inside, uRoom->info, xname.c_str());
         uRoom->saveToFile(0);
@@ -1711,23 +1710,24 @@ void Property::linkRoom(BaseRoom* inside, BaseRoom* outside, const std::string& 
 //                      makeNextRoom
 //*********************************************************************
 
-UniqueRoom* Property::makeNextRoom(UniqueRoom* r1, PropType propType, const CatRef& cr, bool exits, const Player* player, const Guild* guild, BaseRoom* room, const std::string &xname, const char *go, const char *back, bool save) {
-    auto *r2 = new UniqueRoom;
+std::shared_ptr<UniqueRoom> Property::makeNextRoom(const std::shared_ptr<UniqueRoom> &r1, PropType propType, const CatRef &cr, bool exits, const std::shared_ptr<Player> &player,
+                                                   const Guild *guild, std::shared_ptr<BaseRoom> &room, const std::string &xname, const char *go, const char *back, bool save) {
+    std::shared_ptr<UniqueRoom> r2 = std::make_shared<UniqueRoom>();
     r2->info = cr;
 
-    if(r1) {
+    if (r1) {
         link_rom(r1, r2->info, go);
         link_rom(r2, r1->info, back);
     }
 
-    if(exits)
+    if (exits)
         linkRoom(room, r2, xname);
 
-    if(save) {
+    if (save) {
         roomSetup(r2, propType, player, guild);
-        return(nullptr);
+        return (nullptr);
     }
-    return(r2);
+    return (r2);
 }
 
 //*********************************************************************
@@ -1753,7 +1753,7 @@ int Property::rotateHouse(char *dir1, char *dir2, int rotation) {
 //                      isInside
 //*********************************************************************
 
-bool Property::isInside(const Player* player, const UniqueRoom* room, Property** p) {
+bool Property::isInside(const std::shared_ptr<Player>& player, const std::shared_ptr<const UniqueRoom>& room, Property** p) {
     if(!(*p) || !room)
         return(false);
 
@@ -1771,7 +1771,7 @@ bool Property::isInside(const Player* player, const UniqueRoom* room, Property**
 //                      requireInside
 //*********************************************************************
 
-bool Property::requireInside(const Player* player, const UniqueRoom* room, Property** p, PropType propType) {
+bool Property::requireInside(const std::shared_ptr<Player>& player, const std::shared_ptr<const UniqueRoom>& room, Property** p, PropType propType) {
     if(room && !(*p))
         (*p) = gConfig->getProperty(room->info);
 
@@ -1793,7 +1793,7 @@ void Property::descEdit(Socket* sock, const std::string& str) {
     char    outcstr[160];
     int     ff=0;
 
-    Player* ply = sock->getPlayer();
+    std::shared_ptr<Player> ply = sock->getPlayer();
     if((str[0] == '.' || str[0] == '*') && !str[1]) {
         ply->clearFlag(P_READING_FILE);
         sock->restoreState();
@@ -1836,7 +1836,7 @@ void Property::descEdit(Socket* sock, const std::string& str) {
 
     ff = open(sock->tempstr[0], O_CREAT | O_APPEND | O_RDWR, ACC);
     if(ff < 0)
-        merror("Property::descEdit", FATAL);
+        throw std::runtime_error("Can't open file - Property:descEdit");
 
     outstr = postText(str);
     write(ff, outstr.c_str(), outstr.length());
@@ -1851,7 +1851,7 @@ void Property::descEdit(Socket* sock, const std::string& str) {
 //                      cmdHouse
 //*********************************************************************
 
-int cmdHouse(Player* player, cmd* cmnd) {
+int cmdHouse(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Property::manage(player, cmnd, PROP_HOUSE, 1);
     return(0);
 }
@@ -1860,7 +1860,7 @@ int cmdHouse(Player* player, cmd* cmnd) {
 //                      houseCanBuild
 //*********************************************************************
 
-bool Property::houseCanBuild(AreaRoom* aRoom, BaseRoom* room) {
+bool Property::houseCanBuild(const std::shared_ptr<AreaRoom>& aRoom, const std::shared_ptr<BaseRoom>& room) {
     return room->flagIsSet(R_BUILD_HOUSE);
 
 }
@@ -1879,7 +1879,7 @@ int Property::buildFlag(int propType) {
 //                      manageDesc
 //*********************************************************************
 
-void Property::manageDesc(Player* player, cmd* cmnd, PropType propType, int x) {
+void Property::manageDesc(const std::shared_ptr<Player>& player, cmd* cmnd, PropType propType, int x) {
     char    file[80];
     int     ff=0;
 
@@ -1918,7 +1918,7 @@ void Property::manageDesc(Player* player, cmd* cmnd, PropType propType, int x) {
 //                      manageShort
 //*********************************************************************
 
-void Property::manageShort(Player* player, cmd* cmnd, PropType propType, int x) {
+void Property::manageShort(const std::shared_ptr<Player>& player, cmd* cmnd, PropType propType, int x) {
     std::string desc = getFullstrText(cmnd->fullstr, 3-x);
 
     if(!Property::goodNameDesc(player, desc, "Set room short description to what?", "description string"))
@@ -1933,7 +1933,7 @@ void Property::manageShort(Player* player, cmd* cmnd, PropType propType, int x) 
 //                      manageName
 //*********************************************************************
 
-void Property::manageName(Player* player, cmd* cmnd, PropType propType, int x) {
+void Property::manageName(const std::shared_ptr<Player>& player, cmd* cmnd, PropType propType, int x) {
     std::string name = getFullstrText(cmnd->fullstr, 3-x);
 
     if(!Property::goodNameDesc(player, name, "Rename this room to what?", "room name"))
@@ -1949,11 +1949,11 @@ void Property::manageName(Player* player, cmd* cmnd, PropType propType, int x) {
 //                      manageFound
 //*********************************************************************
 
-void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const Guild* guild, int x) {
-    Object  *deed=nullptr, *oHidden=nullptr, *oConceal=nullptr, *oInvis=nullptr, *oFoyer=nullptr;
-    AreaRoom* aRoom = player->getAreaRoomParent();
-    UniqueRoom* uRoom = player->getUniqueRoomParent();
-    BaseRoom* room = player->getRoomParent();
+void Property::manageFound(const std::shared_ptr<Player>& player, cmd* cmnd, PropType propType, const Guild* guild, int x) {
+    std::shared_ptr<Object> deed=nullptr, oHidden=nullptr, oConceal=nullptr, oInvis=nullptr, oFoyer=nullptr;
+    std::shared_ptr<AreaRoom> aRoom = player->getAreaRoomParent();
+    std::shared_ptr<UniqueRoom> uRoom = player->getUniqueRoomParent();
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
     int canBuildFlag = Property::buildFlag(propType);
     CatRef cr;
 
@@ -1997,7 +1997,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 
     
     std::string oName;
-    for(Object* obj : player->objects) {
+    for(const auto& obj : player->objects) {
         // find their property related objects
         oName = obj->getName();
         if( (propType == PROP_GUILDHALL && oName.starts_with("guildhall ")) ||
@@ -2146,7 +2146,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     }
 
     // if they have a foyer, make one
-    UniqueRoom* rFoyer=nullptr;
+    std::shared_ptr<UniqueRoom> rFoyer=nullptr;
     std::string xPropName = xname;
     if(oFoyer) {
         rFoyer = makeNextRoom(nullptr, propType, cr, true, player, guild, room, xname, "", "", false);
@@ -2163,7 +2163,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     // this is where the work of creating the rooms is done.
     if(layout == "5 room cross") {
 
-        UniqueRoom* r1 = makeNextRoom(nullptr, propType, cr, false, player, guild, room, xname, "", "", false);
+        std::shared_ptr<UniqueRoom> r1 = makeNextRoom(nullptr, propType, cr, false, player, guild, room, xname, "", "", false);
 
         cr.id++; // north
         makeNextRoom(r1, propType, cr, roomId == 2, player, guild, room, xname, "north", "south", true);
@@ -2178,13 +2178,13 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 
     } else if(layout == "4 room square") {
 
-        UniqueRoom* nw = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
+        std::shared_ptr<UniqueRoom> nw = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
         cr.id++; // northeast
-        UniqueRoom* ne = makeNextRoom(nw, propType, cr, roomId == 2, player, guild, room, xname, "east", "west", false);
+        std::shared_ptr<UniqueRoom> ne = makeNextRoom(nw, propType, cr, roomId == 2, player, guild, room, xname, "east", "west", false);
         cr.id++; // southwest
-        UniqueRoom* sw = makeNextRoom(nw, propType, cr, roomId == 3, player, guild, room, xname, "south", "north", false);
+        std::shared_ptr<UniqueRoom> sw = makeNextRoom(nw, propType, cr, roomId == 3, player, guild, room, xname, "south", "north", false);
         cr.id++; // southeast
-        UniqueRoom* se = makeNextRoom(ne, propType, cr, roomId == 4, player, guild, room, xname, "south", "north", false);
+        std::shared_ptr<UniqueRoom> se = makeNextRoom(ne, propType, cr, roomId == 4, player, guild, room, xname, "south", "north", false);
 
         link_rom(se, sw->info, "west");
         link_rom(sw, se->info, "east");
@@ -2200,14 +2200,14 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 
     } else if(layout == "tower") {
 
-        UniqueRoom* r1 = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
+        std::shared_ptr<UniqueRoom> r1 = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
         int i=1;
 
         while(i < req) {
             i++;
             cr.id++;
 
-            UniqueRoom* r2 = makeNextRoom(r1, propType, cr, roomId == i, player, guild, room, xname, "up", "down", false);
+            std::shared_ptr<UniqueRoom> r2 = makeNextRoom(r1, propType, cr, roomId == i, player, guild, room, xname, "up", "down", false);
 
             r1->arrangeExits();
             roomSetup(r1, propType, player, guild);
@@ -2223,7 +2223,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 
     } else if(layout == "medium house") {
 
-        UniqueRoom* r1 = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
+        std::shared_ptr<UniqueRoom> r1 = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
 
         cr.id++;
         if(orientation == "n")
@@ -2235,7 +2235,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     } else if(layout == "large house") {
 
         char dir1[10], dir2[10];
-        UniqueRoom* r1 = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
+        std::shared_ptr<UniqueRoom> r1 = makeNextRoom(nullptr, propType, cr, roomId == 1, player, guild, room, xname, "", "", false);
 
         cr.id++;
         extra = rotateHouse(dir1, dir2, extra);
@@ -2253,7 +2253,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
         roomSetup(r1, propType, player, guild);
 
     } else {
-        delete rFoyer;
+        rFoyer.reset();
 
         player->print("There was an error in construction of your %s!\n", getTypeStr(propType).c_str());
         delete p;
@@ -2268,7 +2268,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     if(propType == PROP_GUILDHALL) {
         player->print("Congratulations! Your guild is now the owner of a brand new guild hall.\n");
         if(!player->flagIsSet(P_DM_INVIS)) {
-            broadcast(player->getSock(), player->getParent(), "%M just opened a guild hall!", player);
+            broadcast(player->getSock(), player->getParent(), "%M just opened a guild hall!", player.get());
             broadcast("### %s, leader of %s, just opened a guild hall!", player->getCName(), guild->getName().c_str());
         }
 
@@ -2278,16 +2278,16 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     } else if(propType == PROP_HOUSE) {
         player->print("Congratulations! You are now the owner of a brand new house.\n");
         if(!player->flagIsSet(P_DM_INVIS))
-            broadcast(player->getSock(), player->getParent(), "%M just built a house!", player);
+            broadcast(player->getSock(), player->getParent(), "%M just built a house!", player.get());
     }
 
     player->delObj(deed, true, false, true, false);
-    delete deed;
-    Exit* exit = findExit(player, xPropName, 1);
+    deed.reset();
+    std::shared_ptr<Exit> exit = findExit(player, xPropName, 1);
     if(oHidden) {
         if(exit) {
             player->delObj(oHidden, true, false, true, false);
-            delete oHidden;
+            oHidden.reset();
             exit->setFlag(X_SECRET);
             player->printColor("Exit '%s^x' is now hidden.\n", exit->getCName());
         } else {
@@ -2297,7 +2297,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     if(oConceal) {
         if(exit) {
             player->delObj(oConceal, true, false, true, false);
-            delete oConceal;
+            oConceal.reset();
             exit->setFlag(X_CONCEALED);
             player->printColor("Exit '%s^x' is now concealed.\n", exit->getCName());
         } else {
@@ -2307,7 +2307,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     if(oInvis) {
         if(exit) {
             player->delObj(oInvis, true, false, true, false);
-            delete oInvis;
+            oInvis.reset();
             exit->addEffect("invisibility", -1);
             player->printColor("Exit '%s^x' is now invisible.\n", exit->getCName());
         } else {
@@ -2316,7 +2316,7 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
     }
     if(oFoyer) {
         player->delObj(oFoyer, true, false, true, false);
-        delete oFoyer;
+         oFoyer.reset();
     }
     player->checkDarkness();
 
@@ -2334,9 +2334,9 @@ void Property::manageFound(Player* player, cmd* cmnd, PropType propType, const G
 //                      manageExtend
 //*********************************************************************
 
-void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Property* p, const Guild* guild, int x) {
-    BaseRoom* room = player->getRoomParent();
-    Object* obj = player->findObject(player, cmnd, 3-x);
+void Property::manageExtend(const std::shared_ptr<Player>& player, cmd* cmnd, PropType propType, Property* p, const Guild* guild, int x) {
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
+    std::shared_ptr<Object>  obj = player->findObject(player, cmnd, 3-x);
     CatRef cr;
 
     std::string xNameType = getTypeStr(propType);
@@ -2354,7 +2354,7 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
         (propType == PROP_HOUSE && !layout.starts_with("house extension"))
     ) {
         player->printColor("%O is not a %s extension permit.\nYou need to purchase %s extensions from a realty office.\n",
-            obj, getTypeStr(propType).c_str(), getTypeStr(propType).c_str());
+            obj.get(), getTypeStr(propType).c_str(), getTypeStr(propType).c_str());
         return;
     }
     layout = layout.substr(21);
@@ -2377,7 +2377,7 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
     }
 
 
-    auto* target = new UniqueRoom;
+    std::shared_ptr<UniqueRoom> target = std::make_shared<UniqueRoom>();
     bool outside=false;
 
     if(layout == "normal room") {
@@ -2407,7 +2407,7 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
 
     } else {
         player->print("The extension type for this permit could not be determined!\n");
-        delete target;
+        target.reset();
         return;
     }
 
@@ -2416,7 +2416,7 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
     roomSetup(target, propType, player, guild, outside);
 
     player->delObj(obj, true);
-    delete obj;
+    obj.reset();
 
     player->print("Extension has been added to your property!\n");
     p->addRange(cr.area, cr.id, cr.id);
@@ -2427,8 +2427,8 @@ void Property::manageExtend(Player* player, cmd* cmnd, PropType propType, Proper
 //                      manageRename
 //*********************************************************************
 
-void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x) {
-    BaseRoom* room = player->getRoomParent();
+void Property::manageRename(const std::shared_ptr<Player>& player, cmd* cmnd, PropType propType, int x) {
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
     std::string origExit = cmnd->str[3-x];
     std::string newExit = getFullstrText(cmnd->fullstr, 4-x);
 
@@ -2449,9 +2449,9 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
         return;
 
 
-    Exit* found = nullptr;
+    std::shared_ptr<Exit> found = nullptr;
     bool unique=true;
-    for(Exit* ext : room->exits ) {
+    for(const auto& ext : room->exits ) {
         // exact match
         if(ext->getName() == origExit) {
             unique = true;
@@ -2493,8 +2493,8 @@ void Property::manageRename(Player* player, cmd* cmnd, PropType propType, int x)
 //      PROP_GUILDHALL
 //      PROP_HOUSE
 
-void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
-    BaseRoom* room = player->getRoomParent();
+void Property::manage(const std::shared_ptr<Player>& player, cmd* cmnd, PropType propType, int x) {
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
     const Guild* guild=nullptr;
     Property *p=nullptr;
     int canBuildFlag = Property::buildFlag(propType);
@@ -2654,12 +2654,12 @@ void Property::manage(Player* player, cmd* cmnd, PropType propType, int x) {
 //                      found
 //*********************************************************************
 
-void Property::found(const Player* player, PropType propType, std::string location, bool shouldSetArea) {
+void Property::found(const std::shared_ptr<Player>& player, PropType propType, std::string pLocation, bool shouldSetArea) {
     setOwner(player->getName());
     setDateFounded();
-    if(location.empty())
-        location = player->getConstUniqueRoomParent()->getName();
-    setLocation(location);
+    if(pLocation.empty())
+        pLocation = player->getConstUniqueRoomParent()->getName();
+    setLocation(pLocation);
     if(shouldSetArea && player->inUniqueRoom()) {
         std::string pArea = player->getConstUniqueRoomParent()->info.area;
         if(player->getConstUniqueRoomParent()->info.isArea("guild")) {
@@ -2667,10 +2667,10 @@ void Property::found(const Player* player, PropType propType, std::string locati
             Property* p = gConfig->getProperty(player->getConstUniqueRoomParent()->info);
 
             CatRef cr = p->ranges.front().low;
-            UniqueRoom* room=nullptr;
-            if(loadRoom(cr, &room)) {
+            std::shared_ptr<UniqueRoom> room=nullptr;
+            if(loadRoom(cr, room)) {
                 // Look for the first exit not linking to the shop
-                for(Exit* ext : room->exits) {
+                for(const auto& ext : room->exits) {
                     if(!ext->target.room.isArea("guild")) {
                         pArea = ext->target.room.area;
                         break;

@@ -41,8 +41,8 @@
 //                      doSpecial
 //*********************************************************************
 
-int Object::doSpecial(Player* player) {
-    BaseRoom* room = player->getRoomParent();
+int Object::doSpecial(std::shared_ptr<Player> player) {
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
     Socket* sock = player->getSock();
     char    str[80], str2[160];
     unsigned int i=0;
@@ -72,14 +72,14 @@ int Object::doSpecial(Player* player) {
         if(player->getName() == "Bane")
             player->print("Combo so far: %s\n", sock->tempstr[3]);
 
-        broadcast(sock, room, "%M presses %P^x.", player, this);
+        broadcast(sock, room, "%M presses %P^x.", player.get(), this);
 
         if(strlen(sock->tempstr[3]) >= strlen(use_output)) {
             if(strcmp(sock->tempstr[3], use_output) != 0) {
                 dmg = Random::get(20,40 + player->getLevel());
                 player->hp.decrease(dmg);
                 player->printColor("You were zapped for %s%d^x damage!\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
-                broadcast(sock, room, "%M was zapped by %P^x!", player, this);
+                broadcast(sock, room, "%M was zapped by %P^x!", player.get(), this);
                 sock->tempstr[3][0] = 0;
 
                 if(player->hp.getCur() < 1) {
@@ -87,9 +87,9 @@ int Object::doSpecial(Player* player) {
                     player->die(ZAPPED);
                 }
             } else {
-                Exit* toOpen = nullptr;
+                std::shared_ptr<Exit> toOpen = nullptr;
                 i = 1;
-                for(Exit* ext : room->exits) {
+                for(const auto& ext : room->exits) {
                     if(i++ >= damage.getPlus())
                         toOpen = ext;
                 }
@@ -102,7 +102,7 @@ int Object::doSpecial(Player* player) {
                 player->statistics.combo();
                 player->print("You opened the %s!\n", toOpen->getCName());
                 broadcast(player->getSock(), player->getParent(),
-                    "%M opened the %s!", player, toOpen->getCName());
+                    "%M opened the %s!", player.get(), toOpen->getCName());
                 toOpen->clearFlag(X_LOCKED);
                 toOpen->clearFlag(X_CLOSED);
                 toOpen->ltime.ltime = time(nullptr);

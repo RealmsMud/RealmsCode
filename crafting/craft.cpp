@@ -69,9 +69,9 @@ int numIngredients(Size size);
 //                      findHot
 //*********************************************************************
 
-Object* findHot(const Player* player) {
+std::shared_ptr<Object>  findHot(const std::shared_ptr<const Player> &player) {
     // we can cook from any hot object
-    for(Object* obj : player->getConstRoomParent()->objects) {
+    for(const auto& obj : player->getConstRoomParent()->objects) {
         if(Recipe::goodObject(player, obj) && obj->flagIsSet(O_HOT))
             return(obj);
     }
@@ -104,11 +104,11 @@ void Recipe::setResult(const CatRef& cr) {
 }
 
 std::string Recipe::getResultName(bool appendCr) {
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
     if(resultName.empty() || resultName == "<unknown item>") {
-        if(object || loadObject(result, &object)) {
+        if(object || loadObject(result, object)) {
             resultName = object->getObjStr(nullptr, INV | MAG, 1);
-            delete object;
+            object.reset();
         } else
             resultName = "<unknown item>";
     }
@@ -130,7 +130,7 @@ void Recipe::setRequiresRecipe(bool r) { requireRecipe = r; }
 //                      isSkilled
 //**********************************************************************
 
-bool Recipe::isSkilled(const Player* player, Size recipeSize) const {
+bool Recipe::isSkilled(const std::shared_ptr<const Player> &player, Size recipeSize) const {
     if(skill.empty())
         return(true);
     if(!player->knowsSkill(skill))
@@ -160,7 +160,7 @@ bool Recipe::isValid() const {
 //**********************************************************************
 // id=0 means don't bother checking
 
-bool Recipe::goodObject(const Player* player, const Object* object, const CatRef* cr) {
+bool Recipe::goodObject(const std::shared_ptr<const Player> &player, const std::shared_ptr<Object>& object, const CatRef* cr) {
     return( (!cr || *&object->info == *cr) &&
             player->canSee(object) &&
             (   (   object->getShotsCur() > 0 &&
@@ -176,8 +176,8 @@ bool Recipe::goodObject(const Player* player, const Object* object, const CatRef
 //                      check
 //**********************************************************************
 
-bool Recipe::check(const Player* player, const std::list<CatRef>* list, std::string_view type, int numIngredients) const {
-    Object* object=nullptr;
+bool Recipe::check(const std::shared_ptr<const Player> &player, const std::list<CatRef>* list, std::string_view type, int numIngredients) const {
+    std::shared_ptr<Object>  object=nullptr;
     const ObjectSet *set;
     if(type == "equipment")
         set = &player->getConstRoomParent()->objects;
@@ -195,7 +195,7 @@ bool Recipe::check(const Player* player, const std::list<CatRef>* list, std::str
             object = (*oIt);
             has = 0;
             if(!object->flagIsSet(O_BEING_PREPARED) && Recipe::goodObject(player, object, &(*lIt))) {
-                player->printColor("You prepare %1P.\n", object);
+                player->printColor("You prepare %1P.\n", object.get());
                 if(type != "equipment")
                     object->setFlag(O_BEING_PREPARED);
 
@@ -204,7 +204,7 @@ bool Recipe::check(const Player* player, const std::list<CatRef>* list, std::str
                     object = (*oIt);
                     if(Recipe::goodObject(player, object, &(*lIt))) {
                         if(!object->flagIsSet(O_BEING_PREPARED)) {
-                            player->printColor("You prepare %1P.\n", object);
+                            player->printColor("You prepare %1P.\n", object.get());
                             if(type != "equipment")
                                 object->setFlag(O_BEING_PREPARED);
                         }
@@ -264,7 +264,7 @@ bool Recipe::check(std::list<CatRef>* list, const std::list<CatRef>* require, in
 //**********************************************************************
 
 std::string Recipe::listIngredients(const std::list<CatRef>* list) const {
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
     std::list<CatRef>::const_iterator it;
     std::ostringstream oStr;
     int     num=1;
@@ -285,9 +285,9 @@ std::string Recipe::listIngredients(const std::list<CatRef>* list) const {
         }
 
         oStr << "   |   ";
-        if(loadObject(lastObject, &object)) {
+        if(loadObject(lastObject, object)) {
             oStr << padColor(object->getObjStr(nullptr, INV | MAG, num), RECIPE_WIDTH);
-            delete object;
+            object.reset();
         } else {
             oStr << std::setw(RECIPE_WIDTH) << "<unknown item>";
         }
@@ -299,9 +299,9 @@ std::string Recipe::listIngredients(const std::list<CatRef>* list) const {
 
     // we offset by one, so do the last one now
     oStr << "   |   ";
-    if(loadObject(lastObject, &object)) {
+    if(loadObject(lastObject, object)) {
         oStr << padColor(object->getObjStr(nullptr, INV | MAG, num), RECIPE_WIDTH);
-        delete object;
+        object.reset();
     } else {
         oStr << std::setw(RECIPE_WIDTH) << "<unknown item>";
     }
@@ -385,14 +385,14 @@ std::string Recipe::display() {
 //                      canUseEquipment
 //**********************************************************************
 
-bool Recipe::canUseEquipment(const Player* player, std::string_view skill) const {
-    if(!equipment.empty() || skill == "cooking") {
-        for(Monster* mons : player->getConstRoomParent()->monsters) {
+bool Recipe::canUseEquipment(const std::shared_ptr<const Player> &player, std::string_view pSkill) const {
+    if(!equipment.empty() || pSkill == "cooking") {
+        for(const auto& mons : player->getConstRoomParent()->monsters) {
             if(mons->canSee(player)) {
                 if( mons->getAsConstMonster()->isEnemy(player) ||
                     !Faction::willDoBusinessWith(player, mons->getAsMonster()->getPrimeFaction())
                 ) {
-                    player->print("%M won't let you use any equipment in this room.", mons);
+                    player->print("%M won't let you use any equipment in this room.", mons.get());
                     return(false);
                 }
             }
@@ -406,10 +406,10 @@ bool Recipe::canUseEquipment(const Player* player, std::string_view skill) const
 //                      canBeEdittedBy
 //**********************************************************************
 
-bool Recipe::canBeEdittedBy(const Player* player) const {
+bool Recipe::canBeEdittedBy(const std::shared_ptr<const Player> player) const {
     if(player->isDm())
         return(true);
-    return(player->getName() == creator.c_str());
+    return(player->getName() == creator);
 }
 
 //**********************************************************************
@@ -444,27 +444,27 @@ void Config::remRecipe(Recipe* recipe) {
 // items in inventory are prepared, this sees if they match any known recipe
 // this function essentially lets people experiment and find new recipes
 
-Recipe* Config::searchRecipes(const Player* player, std::string_view skill, Size recipeSize, int numIngredients, const Object* object) {
+Recipe* Config::searchRecipes(const std::shared_ptr<const Player> &player, std::string_view skill, Size recipeSize, int numIngredients, const std::shared_ptr<Object> &object) {
     std::list<CatRef> list, tList;
     std::list<CatRef>::const_iterator iIt;
     RecipeMap::iterator rIt;
-    Object* hot=nullptr;
+    std::shared_ptr<Object>  hot=nullptr;
     Recipe* recipe=nullptr;
-    int     flags = player->displayFlags();
+    unsigned int     flags = player->displayFlags();
     unsigned int num=0;
-    std::string str = "";
+    std::string str;
     // passing in object means we don't want to print failures
     bool print = !object;
 
     if(object) {
         if(Recipe::goodObject(player, object)) {
-            player->printColor("You prepare %1P.\n", object);
+            player->printColor("You prepare %1P.\n", object.get());
             list.push_back(object->info);
             tList.push_back(object->info);
         }
     } else {
         // make our life easier and just make a list of objects
-        for( Object* obj : player->objects) {
+        for(const auto &obj : player->objects) {
             if(Recipe::goodObject(player, obj) && obj->flagIsSet(O_BEING_PREPARED)) {
                 list.push_back(obj->info);
                 tList.push_back(obj->info);
@@ -520,7 +520,7 @@ Recipe* Config::searchRecipes(const Player* player, std::string_view skill, Size
                 for(iIt = recipe->equipment.begin(); iIt != recipe->equipment.end() ; iIt++) {
 
                     for( oIt = player->getConstRoomParent()->objects.begin() ; oIt != player->getConstRoomParent()->objects.end() ; ) {
-                        Object *obj = (*oIt);
+                        std::shared_ptr<Object>obj = (*oIt);
                         if(Recipe::goodObject(player, obj, &(*iIt))) {
                             str += "You prepare ";
                             str += obj->getObjStr(nullptr, flags, 1);
@@ -561,12 +561,12 @@ Recipe* Config::searchRecipes(const Player* player, std::string_view skill, Size
 //                      cmdRecipes
 //**********************************************************************
 
-int cmdRecipes(Player* player, cmd* cmnd) {
+int cmdRecipes(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Recipe* recipe=nullptr;
     int     i=0, shown=0;
     std::list<int>::iterator it;
     std::ostringstream oStr;
-    std::string filter = "";
+    std::string filter;
 
     oStr.setf(std::ios::left, std::ios::adjustfield);
 
@@ -666,7 +666,7 @@ Recipe* Player::findRecipe(cmd* cmnd, std::string_view skill, bool* searchRecipe
         print("You don't know that recipe.\n");
     } else {
         Recipe* recipe = nullptr;
-        Object* object = this->findObject(this, cmnd, 1);
+        std::shared_ptr<Object>  object = this->findObject(Containable::downcasted_shared_from_this<Player>(), cmnd, 1);
         if(object) {
             // if the object they're using is a recipe
             if(object->getRecipe()) {
@@ -675,14 +675,14 @@ Recipe* Player::findRecipe(cmd* cmnd, std::string_view skill, bool* searchRecipe
                     return(recipe);
             }
             // if the object they're using is the only ingredient in the recipe
-            recipe = gConfig->searchRecipes(this, skill, recipeSize, numIngredients, object);
+            recipe = gConfig->searchRecipes(Containable::downcasted_shared_from_this<Player>(), skill, recipeSize, numIngredients, object);
             // the calling function needs to know we ran searchRecipes
             (*searchRecipes)=true;
             if(recipe) {
                 object->setFlag(O_BEING_PREPARED);
                 return(recipe);
             }
-            printColor("%O is not a recipe and is not the sole ingredient in a recipe.\n", object);
+            printColor("%O is not a recipe and is not the sole ingredient in a recipe.\n", object.get());
             printColor("Note that some recipes may require equipment in the room.\n");
         } else {
             print("Object not found.\n");
@@ -698,11 +698,11 @@ Recipe* Player::findRecipe(cmd* cmnd, std::string_view skill, bool* searchRecipe
 //                      dmCombine
 //**********************************************************************
 
-int dmCombine(Player* player, cmd* cmnd) {
+int dmCombine(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Recipe *recipe=nullptr;
     std::list<CatRef> objects;
     std::list<CatRef>* list;
-    std::string txt = "";
+    std::string txt;
 
     if(!player->canBuildObjects())
         return(cmdNoAuth(player));
@@ -739,12 +739,12 @@ int dmCombine(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    for(Object* obj : player->objects) {
+    for(const auto& obj : player->objects) {
         if(!obj->info.id)
-            player->printColor("Skipping %P, no index found.\n", obj);
+            player->printColor("Skipping %P, no index found.\n", obj.get());
         else if(obj->flagIsSet(O_BEING_PREPARED)) {
             if(!Recipe::goodObject(player, obj))
-                player->printColor("Skipping %P, it failed goodObject check.\n", obj);
+                player->printColor("Skipping %P, it failed goodObject check.\n", obj.get());
             else
                 objects.push_back(obj->info);
         }
@@ -764,9 +764,9 @@ int dmCombine(Player* player, cmd* cmnd) {
 //                      dmSetRecipe
 //**********************************************************************
 
-int dmSetRecipe(Player* player, cmd* cmnd) {
+int dmSetRecipe(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Recipe* recipe = gConfig->getRecipe(cmnd->val[1]);
-    std::string txt = "";
+    std::string txt;
 
     if(!player->canBuildObjects())
         return(cmdNoAuth(player));
@@ -812,12 +812,12 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
                 cr.id = cmnd->val[2];
                 recipe->setResult(cr);
         } else {
-                Object* object = player->findObject(player, cmnd, 3);
+                std::shared_ptr<Object>  object = player->findObject(player, cmnd, 3);
                 if(!object) {
                     player->print("Set result to what object?\n");
                     return(0);
                 } else if(!object->info.id) {
-                    player->printColor("%O does not have an index set.\n", object);
+                    player->printColor("%O does not have an index set.\n", object.get());
                     return(0);
                 } else {
                     recipe->setResult(object->info);
@@ -860,7 +860,7 @@ int dmSetRecipe(Player* player, cmd* cmnd) {
 //                      dmRecipes
 //**********************************************************************
 
-int dmRecipes(Player* player, cmd* cmnd) {
+int dmRecipes(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::list<CatRef>::iterator lIt;
     Recipe* recipe=nullptr;
     std::ostringstream oStr;
@@ -981,7 +981,7 @@ int dmRecipes(Player* player, cmd* cmnd) {
 //                      learnRecipe
 //**********************************************************************
 
-void Player::learnRecipe(int id) {
+void Player::learnRecipe(unsigned int id) {
     if(knowsRecipe(id))
         return;
     recipes.push_back(id);
@@ -995,7 +995,7 @@ void Player::learnRecipe(Recipe* recipe) {
 //                      knowsRecipe
 //**********************************************************************
 
-bool Player::knowsRecipe(int id) const {
+bool Player::knowsRecipe(unsigned int id) const {
     std::list<int>::const_iterator it;
     for(it = recipes.begin(); it != recipes.end() ; it++) {
         if((*it) == id)
@@ -1106,7 +1106,7 @@ Recipe* Config::getRecipe(int id) {
 //**********************************************************************
 
 void Player::unprepareAllObjects() const {
-    for(Object* obj : objects) {
+    for(const auto& obj : objects) {
         obj->clearFlag(O_BEING_PREPARED);
     }
 }
@@ -1122,8 +1122,8 @@ void Player::removeItems(const std::list<CatRef>* list, int numIngredients) {
     for(it = list->begin(); it != list->end() ; it++) {
         num = 0;
         while(num < numIngredients) {
-            for(Object *obj : objects) {
-                if(Recipe::goodObject(this, obj, &(*it)) && obj->flagIsSet(O_BEING_PREPARED)) {
+            for(const auto& obj : objects) {
+                if(Recipe::goodObject(Containable::downcasted_shared_from_this<Player>(), obj, &(*it)) && obj->flagIsSet(O_BEING_PREPARED)) {
                     delObj(obj, true, false, true, false);
                     break;
                 }
@@ -1140,8 +1140,8 @@ void Player::removeItems(const std::list<CatRef>* list, int numIngredients) {
 //                      cmdPrepareObject
 //**********************************************************************
 
-int cmdPrepareObject(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
+int cmdPrepareObject(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
 
     if(cmnd->num < 2) {
         player->print("Prepare what?\n");
@@ -1155,7 +1155,7 @@ int cmdPrepareObject(Player* player, cmd* cmnd) {
     }
 
     if(object->getType() == ObjectType::CONTAINER && !object->objects.empty()) {
-        player->printColor("You need to empty %P in order to prepare it.\n", object);
+        player->printColor("You need to empty %P in order to prepare it.\n", object.get());
         return(0);
     }
 
@@ -1164,8 +1164,8 @@ int cmdPrepareObject(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    player->printColor("You prepare %P.\n", object);
-    broadcast(player->getSock(), player->getParent(), "%M prepares %P.", player, object);
+    player->printColor("You prepare %P.\n", object.get());
+    broadcast(player->getSock(), player->getParent(), "%M prepares %P.", player.get(), object.get());
 
     object->setFlag(O_BEING_PREPARED);
     return(0);
@@ -1175,8 +1175,8 @@ int cmdPrepareObject(Player* player, cmd* cmnd) {
 //                      cmdUnprepareObject
 //**********************************************************************
 
-int cmdUnprepareObject(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
+int cmdUnprepareObject(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
     if(cmnd->num < 2) {
         player->print("Unprepare what?\n");
         return(0);
@@ -1194,8 +1194,8 @@ int cmdUnprepareObject(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    player->printColor("You no longer are preparing %P.\n", object);
-    broadcast(player->getSock(), player->getParent(), "%M stops preparing %P.", player, object);
+    player->printColor("You no longer are preparing %P.\n", object.get());
+    broadcast(player->getSock(), player->getParent(), "%M stops preparing %P.", player.get(), object.get());
 
     object->clearFlag(O_BEING_PREPARED);
     return(0);
@@ -1217,8 +1217,8 @@ void Player::checkFreeSkills(const std::string &skill) {
 //                      cmdCraft
 //**********************************************************************
 
-int cmdCraft(Player* player, cmd* cmnd) {
-    Object* object=nullptr;
+int cmdCraft(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object>  object=nullptr;
     const Recipe* recipe=nullptr;
     bool succeed=true, searchRecipes=false;
     std::list<int>::iterator it;
@@ -1358,7 +1358,7 @@ int cmdCraft(Player* player, cmd* cmnd) {
                 player->print("You lack the necessary cooking equipment for this recipe.\n");
                 return(0);
             } else {
-                player->printColor("You prepare %1P.\n", object);
+                player->printColor("You prepare %1P.\n", object.get());
             }
         } else if(!recipe->check(player, &recipe->equipment, "equipment", 1))
             return(0);
@@ -1366,7 +1366,7 @@ int cmdCraft(Player* player, cmd* cmnd) {
 
 
     // just check to make sure the item exists and we are set
-    if(!loadObject(recipe->getResult(), &object)) {
+    if(!loadObject(recipe->getResult(), object)) {
         player->unprepareAllObjects();
         player->print("Sorry, that recipe is faulty.\n");
         return(0);
@@ -1379,18 +1379,18 @@ int cmdCraft(Player* player, cmd* cmnd) {
         player->questIsSet(object->getQuestnum()-1) &&
         !player->checkStaff("You complete that recipe. You have already fulfilled that quest.\n")
     ) {
-        delete object;
+        object.reset();
         return(0);
     }
 
     if(!Lore::canHave(player, object, false)) {
         player->print("You already have enough of those.\nYou cannot currently have any more.\n");
-        delete object;
+        object.reset();
         return(0);
     }
     if(!Unique::canGet(player, object)) {
         player->print("That recipe results in a limited object.\nYou cannot currently have any more.\n");
-        delete object;
+        object.reset();
         return(0);
     }
 
@@ -1417,18 +1417,18 @@ int cmdCraft(Player* player, cmd* cmnd) {
         player->statistics.craft();
         object->setDroppedBy(player, "Craft:"+skill);
         doGetObject(object, player);
-        player->printColor("^yYou have successfully %s %1P^y.\n", result.c_str(), object);
+        player->printColor("^yYou have successfully %s %1P^y.\n", result.c_str(), object.get());
         if(recipe && recipe->getExperience()) {
             if(!player->halftolevel()) {
                 player->print("You %s %d experience.\n", gConfig->isAprilFools() ? "lose" : "gain", recipe->getExperience());
                 player->addExperience(recipe->getExperience());
             }
         }
-        broadcast(player->getSock(), player->getParent(), "%M successfully %s %1P.^x", player, result.c_str(), object);
+        broadcast(player->getSock(), player->getParent(), "%M successfully %s %1P.^x", player.get(), result.c_str(), object.get());
     } else {
-        player->printColor("^yYou attempted to %s %1P^y, but failed.\n", fail.c_str(), object);
-        broadcast(player->getSock(), player->getParent(), "%M tried to %s an object.", player, fail.c_str());
-        delete object;
+        player->printColor("^yYou attempted to %s %1P^y, but failed.\n", fail.c_str(), object.get());
+        broadcast(player->getSock(), player->getParent(), "%M tried to %s an object.", player.get(), fail.c_str());
+        object.reset();
     }
 
     return(0);

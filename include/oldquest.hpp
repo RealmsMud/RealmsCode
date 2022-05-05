@@ -18,7 +18,7 @@ public:
 
 // quests.cpp
 void freeQuest(questPtr toFree);
-void fulfillQuest(Player* player, Object* object);
+void fulfillQuest(std::shared_ptr<Player> player, std::shared_ptr<Object>  object);
 
 extern int numQuests;
 

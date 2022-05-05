@@ -107,7 +107,7 @@ bool titlePunctuation(char c) {
 //              cmdTitle
 //********************************************************************
 
-int cmdTitle(Player* player, cmd* cmnd) {
+int cmdTitle(const std::shared_ptr<Player>& player, cmd* cmnd) {
     double  punctuation=0;
     std::string title = getFullstrText(cmnd->fullstr, 1);
 
@@ -157,7 +157,7 @@ int cmdTitle(Player* player, cmd* cmnd) {
 //*********************************************************************
 
 void doTitle(Socket* sock, const std::string& str) {
-    Player* player = sock->getPlayer();
+    std::shared_ptr<Player> player = sock->getPlayer();
 
     if(low(str[0]) == 'y') {
         player->print("You are now known as %s the %s.\n", player->getCName(), player->getTempTitle().c_str());
@@ -181,7 +181,7 @@ void doTitle(Socket* sock, const std::string& str) {
 //                      cmdSurname
 //*********************************************************************
 
-int cmdSurname(Player* player, cmd* cmnd) {
+int cmdSurname(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     nonalpha=0;
     unsigned int i=0;
     bool    illegalNonAlpha=false;

@@ -116,7 +116,7 @@ bool isValidPassword(Socket* sock, const std::string &pass) {
 // This function cllls the function to allow
 // a player to change their password.
 
-int cmdPassword(Player* player, cmd* cmnd) {
+int cmdPassword(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
     if(player->isBraindead()) {
         player->print("You are brain-dead. You can't do that.\n");
@@ -148,7 +148,7 @@ int cmdPassword(Player* player, cmd* cmnd) {
 // the password will not be changed and the procedure is aborted.
 
 void changePassword(Socket* sock, const std::string& str) {
-    Player* player = sock->getPlayer();
+    std::shared_ptr<Player> player = sock->getPlayer();
     gServer->processOutput();
 
     switch (sock->getState()) {

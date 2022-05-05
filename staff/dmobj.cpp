@@ -56,7 +56,6 @@
 #include "mudObjects/rooms.hpp"                // for BaseRoom
 #include "objIncrease.hpp"                     // for ObjIncrease, LanguageI...
 #include "oldquest.hpp"                        // for numQuests, quest, ques...
-#include "os.hpp"                              // for merror
 #include "paths.hpp"
 #include "proto.hpp"                           // for log_immort, low, get_s...
 #include "raceData.hpp"                        // for RaceData
@@ -74,8 +73,8 @@
 // This function allows a DM to create an object that will appear
 // in their inventory.
 
-int dmCreateObj(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
+int dmCreateObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
 
     CatRef  cr;
     getCatRef(getFullstrText(cmnd->fullstr, 1), &cr, player);
@@ -85,13 +84,12 @@ int dmCreateObj(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(!loadObject(cr, &object)) {
+    if(!loadObject(cr, object)) {
         player->print("Error (%s)\n", cr.displayStr().c_str());
         return(0);
     }
     if(!object->getCName()[0] || object->getCName()[0] == ' ') {
         player->printColor("Error (%s)\n", cr.displayStr().c_str());
-        delete object;
         return(0);
     }
     if(object->flagIsSet(O_RANDOM_ENCHANT))
@@ -113,7 +111,7 @@ int dmCreateObj(Player* player, cmd* cmnd) {
 
 std::string Object::statObj(unsigned int statFlags) {
     std::ostringstream objStr;
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
     std::string str = "";
     std::string objName = getName();
     std::string objPlural = plural;
@@ -129,7 +127,7 @@ std::string Object::statObj(unsigned int statFlags) {
     }
     objStr << "CompStr: " << this->getCompareStr() << " ";
     objStr << "Id: " << getId() << " Registered(Obj/Svr): " << (isRegistered() ? "Y" : "N") << "/" << (gServer->lookupObjId(getId()) != nullptr ? "Y" : "N") << "\n";
-    const Unique* unique = gConfig->getUnique(this);
+    const Unique* unique = gConfig->getUnique(getAsConstObject());
     if(unique)
         objStr << "^y - Unique this (In Game: ^Y" << unique->getInGame()
                << "^y, Global Limit: ^Y" << unique->getGlobalLimit()<< "^y)^x\n";
@@ -376,13 +374,12 @@ std::string Object::statObj(unsigned int statFlags) {
         objStr << "^WRandomObjects:^x this item will turn into these random objects:\n";
         std::list<CatRef>::const_iterator it;
         for(it = randomObjects.begin(); it != randomObjects.end(); it++) {
-            loadObject(*it, &object);
+            loadObject(*it, object);
 
             objStr << "    " << std::setw(14) << (*it).displayStr("", 'y') << " ^y::^x "
                    << (object ? object->getCName() : "") << "\n";
 
             if(object) {
-                delete object;
                 object = nullptr;
             }
         }
@@ -429,7 +426,7 @@ std::string Object::statObj(unsigned int statFlags) {
 }
 
 
-int stat_obj(Player* player, Object* object) {
+int stat_obj(const std::shared_ptr<Player>& player, const std::shared_ptr<Object>&  object) {
     if(!player->canBuildObjects())
         return(cmdNoAuth(player));
 
@@ -458,7 +455,7 @@ int stat_obj(Player* player, Object* object) {
 //                      setWhich
 //*********************************************************************
 
-int setWhich(const Player* player, std::string options) {
+int setWhich(const std::shared_ptr<Player>& player, std::string options) {
     boost::replace_all(options, ",", "^x,^W");
     player->printColor("Which do you wish to set: ^W%s^x?\n", options.c_str());
     return(0);
@@ -468,7 +465,7 @@ int setWhich(const Player* player, std::string options) {
 //                      dmSetObj
 //*********************************************************************
 
-int dmSetObj(Player* player, cmd* cmnd) {
+int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
     /*
      *
      * I hate this function.
@@ -480,10 +477,10 @@ int dmSetObj(Player* player, cmd* cmnd) {
      */
 
 
-    Creature* creature=nullptr;
-    Monster* mTarget=nullptr;
-    BaseRoom* room = player->getRoomParent();
-    Object  *object=nullptr;
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Monster>  mTarget=nullptr;
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
+    std::shared_ptr<Object> object=nullptr;
     int     n=0, match=0, test=0;
     long    num=0;
     double  dNum=0.0;
@@ -614,8 +611,8 @@ int dmSetObj(Player* player, cmd* cmnd) {
     }
 
     long result = 0;
-    std::string resultTxt = "";
-    std::string setType = "";
+    std::string resultTxt;
+    std::string setType;
 
     // Save this object as a full object until *saved
     object->setFlag(O_SAVE_FULL);
@@ -630,7 +627,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
             break;
         case 'r':
             if(object->getType() != ObjectType::ARMOR) {
-                player->printColor("Please set %P to type 6(armor) first.\n", object);
+                player->printColor("Please set %P to type 6(armor) first.\n", object.get());
                 return(PROMPT);
             }
 
@@ -679,7 +676,7 @@ int dmSetObj(Player* player, cmd* cmnd) {
                 CatRef  cr;
                 getDestination(getFullstrText(cmnd->fullstr, cmnd->num+cmnd->val[2]-1), &mapmarker, &cr, player);
 
-                Area *area=nullptr;
+                std::shared_ptr<Area> area=nullptr;
                 if(mapmarker.getArea())
                     area = gServer->getArea(mapmarker.getArea());
 
@@ -858,11 +855,11 @@ int dmSetObj(Player* player, cmd* cmnd) {
             }
             if(object->flagIsSet(num - 1)) {
                 object->clearFlag(num - 1);
-                player->printColor("%O's flag #%d off.\n", object, num);
+                player->printColor("%O's flag #%d off.\n", object.get(), num);
                 test=0;
             } else {
                 object->setFlag(num - 1);
-                player->printColor("%O's flag #%d on.\n", object, num);
+                player->printColor("%O's flag #%d on.\n", object.get(), num);
                 test=1;
             }
             log_immort(2, player, "%s turned %s's flag %ld(%s) %s.\n",
@@ -1306,8 +1303,8 @@ int dmSetObj(Player* player, cmd* cmnd) {
 // object data base.  This is used to edit an object that may or may
 // not be saved to the database using the dmSaveObj function.
 
-int dmObjName(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
+int dmObjName(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
     int     i=0, num=0;
     char    which=0;
     std::string text = "";
@@ -1459,8 +1456,7 @@ int dmObjName(Player* player, cmd* cmnd) {
 //                      dmAddObj
 //*********************************************************************
 
-int dmAddObj(Player* player, cmd* cmnd) {
-    Object    *newObj=nullptr;
+int dmAddObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->canBuildObjects())
         return(cmdNoAuth(player));
@@ -1470,12 +1466,7 @@ int dmAddObj(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    newObj = new Object;
-    if(!newObj) {
-        merror("dmAddObj", NONFATAL);
-        player->print("Cannot allocate object.\n");
-        return(0);
-    }
+    std::shared_ptr<Object> newObj = std::make_shared<Object>();
     log_immort(true, player, "%s made a new Object!\n", player->getCName());
 
     newObj->setName( "small clay ball");
@@ -1496,9 +1487,9 @@ int dmAddObj(Player* player, cmd* cmnd) {
 //                      dmSaveObj
 //*********************************************************************
 
-void dmSaveObj(Player* player, cmd* cmnd, const CatRef& cr) {
+void dmSaveObj(const std::shared_ptr<Player>& player, cmd* cmnd, const CatRef& cr) {
     char    file[80];
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
 
     if(!player->canBuildObjects()) {
         cmdNoAuth(player);
@@ -1544,7 +1535,7 @@ void dmSaveObj(Player* player, cmd* cmnd, const CatRef& cr) {
 //                      dmResaveObject
 //*********************************************************************
 
-void dmResaveObject(const Player* player, Object* object, bool flush) {
+void dmResaveObject(const std::shared_ptr<Player>& player, const std::shared_ptr<Object>&  object, bool flush) {
     if(object->saveToFile() != 0) {
         loge("Error saving object in dmResaveObject()");
         player->print("Error: object was not saved.\n");
@@ -1554,14 +1545,14 @@ void dmResaveObject(const Player* player, Object* object, bool flush) {
 
     // swap this new Object if its in the queue
     if(flush || player->flagIsSet(P_NO_FLUSHCRTOBJ))
-        gServer->objectCache.insert(object->info, &object);
+        gServer->objectCache.insert(object->info, *object);
 }
 
 //*********************************************************************
 //                      dmSize
 //*********************************************************************
 
-int dmSize(Player* player, cmd* cmnd) {
+int dmSize(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
         player->print("Syntax: *size <object> <size>\n");
         return(0);
@@ -1578,8 +1569,8 @@ int dmSize(Player* player, cmd* cmnd) {
 //                      makeWeapon
 //*********************************************************************
 
-void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, const std::string &sub, const std::string &descBase, const std::string &descAll, bool twoHanded, int weight, double value, int bulk, short numAttacks) {
-    Object* newObj = nullptr;
+void makeWeapon(const std::shared_ptr<Player>& player, CatRef* cr, const std::shared_ptr<Object>&  object, const std::shared_ptr<Object>&random, const std::string &sub, const std::string &descBase, const std::string &descAll, bool twoHanded, int weight, double value, int bulk, short numAttacks) {
+    std::shared_ptr<Object>  newObj = nullptr;
     bool addToInventory = true;
 
     if(sub == object->getSubType()) {
@@ -1588,12 +1579,7 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
         addToInventory = false;
     } else {
         // create one if it doesn't
-        newObj = new Object;
-        if(!newObj) {
-            merror("makeWeapon", NONFATAL);
-            player->print("Cannot allocate object.\n");
-            return;
-        }
+        newObj = std::make_shared<Object>();
         *newObj = *object;
     }
 
@@ -1651,8 +1637,8 @@ void makeWeapon(Player *player, CatRef* cr, Object* object, Object *random, cons
 //                      makeArmor
 //*********************************************************************
 
-void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int wear, const std::string &base, const std::string &descBase, const std::string &descAll, long value, int weight, int bulk, bool somePrefix= false) {
-    Object* newObj = nullptr;
+void makeArmor(const std::shared_ptr<Player>& player, CatRef* cr, const std::shared_ptr<Object>&  object, const std::shared_ptr<Object>&random, int wear, const std::string &base, const std::string &descBase, const std::string &descAll, long value, int weight, int bulk, bool somePrefix= false) {
+    std::shared_ptr<Object>  newObj = nullptr;
     bool addToInventory = true;
 
     if(wear == object->getWearflag()) {
@@ -1661,12 +1647,7 @@ void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int w
         addToInventory = false;
     } else {
         // create one if it doesn't
-        newObj = new Object;
-        if(!newObj) {
-            merror("makeArmor", NONFATAL);
-            player->print("Cannot allocate object.\n");
-            return;
-        }
+        newObj = std::make_shared<Object>();
         *newObj = *object;
     }
 
@@ -1721,8 +1702,8 @@ void makeArmor(Player *player, CatRef* cr, Object* object, Object *random, int w
 //*********************************************************************
 // given an object, this code will create a set of armor
 
-int dmClone(Player* player, cmd* cmnd) {
-    Object* object=nullptr, *random=nullptr;
+int dmClone(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object>  object=nullptr, random=nullptr;
     bool isArmor=false, isWeapon = false;
 
     if(cmnd->num == 1) {
@@ -1788,12 +1769,7 @@ int dmClone(Player* player, cmd* cmnd) {
     }
 
     // create a random object container for this suit of armor
-    random = new Object;
-    if(!random) {
-        merror("dmClone", NONFATAL);
-        player->print("Cannot allocate object.\n");
-        return(0);
-    }
+    random = std::make_shared<Object>();
 
     strcpy(random->key[0], "random");
     strcpy(random->key[1], object->key[0]);

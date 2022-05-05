@@ -67,7 +67,7 @@ Exit::Exit() {
 
 Exit::~Exit() {
     if(!effects.effectList.empty()) {
-        //BaseRoom* parent = effects.list.front()->getParentRoom();
+        //std::shared_ptr<BaseRoom> parent = effects.list.front()->getParentRoom();
         effects.removeAll();
         //parent->removeEffectsIndex();
     }
@@ -91,7 +91,7 @@ std::string Exit::getDescription() const { return(description); }
 Size Exit::getSize() const { return(size); }
 Direction Exit::getDirection() const { return(direction); }
 std::string Exit::getEnter() const { return(enter); }
-BaseRoom* Exit::getRoom() const { return(parentRoom); }
+std::shared_ptr<BaseRoom> Exit::getRoom() const { return(parentRoom); }
 
 void Exit::setLevel(short lvl) { level = lvl; }
 void Exit::setOpen(std::string_view o) { open = o; }
@@ -105,11 +105,11 @@ void Exit::setDescription(std::string_view d) { description = d; }
 void Exit::setSize(Size s) { size = s; }
 void Exit::setDirection(Direction d) { direction = d; }
 void Exit::setEnter(std::string_view e) { enter = e; }
-void Exit::setRoom(BaseRoom* room) { parentRoom = room; }
+void Exit::setRoom(std::shared_ptr<BaseRoom> room) { parentRoom = room; }
 
 // Checks if the exit is flagged to relock after being used, and do as such
 
-void Exit::checkReLock(Creature* creature, bool sneaking) {
+void Exit::checkReLock(const std::shared_ptr<Creature>& creature, bool sneaking) {
     if(flagIsSet(X_LOCK_AFTER_USAGE) && !creature->isCt()) {
         bool nowLocked = false;
         bool nowClosed = false;
@@ -161,11 +161,11 @@ bool Exit::toggleFlag(int flag) {
 // and value by looking through the exit list headed by the second para-
 // meter.  If found, a pointer to the exit is returned.
 
-Exit *findExit(Creature* creature, cmd* cmnd, int val, BaseRoom* room) {
+std::shared_ptr<Exit> findExit(const std::shared_ptr<Creature>& creature, cmd* cmnd, int val, std::shared_ptr<BaseRoom> room) {
     return(findExit(creature, cmnd->str[val], cmnd->val[val], room));
 }
 
-Exit *findExit(Creature* creature, const std::string &inStr, int val, BaseRoom* room) {
+std::shared_ptr<Exit> findExit(const std::shared_ptr<Creature>& creature, const std::string &inStr, int val, std::shared_ptr<BaseRoom> room) {
     int  match=0;
     auto str = stripColor(inStr);
     bool minThree = (creature->getAsPlayer() && !creature->isStaff() && str.length() < 3);
@@ -173,7 +173,7 @@ Exit *findExit(Creature* creature, const std::string &inStr, int val, BaseRoom* 
     if(!room && ((room = creature->getRoomParent()) == nullptr))
         return(nullptr);
 
-    for(Exit* exit : room->exits) {
+    for(const auto& exit : room->exits) {
         auto name = stripColor(exit->getName());
         boost::algorithm::to_lower(name);
 
@@ -203,7 +203,7 @@ Exit *findExit(Creature* creature, const std::string &inStr, int val, BaseRoom* 
 //                          raceRestrict
 //*********************************************************************
 
-bool Exit::raceRestrict(const Creature* creature) const {
+bool Exit::raceRestrict(const std::shared_ptr<const Creature> & creature) const {
     bool pass = false;
 
     // if no flags are set
@@ -265,7 +265,7 @@ bool Exit::raceRestrict(const Creature* creature) const {
 //                          classRestrict
 //*********************************************************************
 
-bool Exit::classRestrict(const Creature* creature) const {
+bool Exit::classRestrict(const std::shared_ptr<const Creature> & creature) const {
     bool pass = false;
 
     // if no flags are set
@@ -317,7 +317,7 @@ bool Exit::classRestrict(const Creature* creature) const {
 //                      clanRestrict
 //*********************************************************************
 
-bool Exit::clanRestrict(const Creature* creature) const {
+bool Exit::clanRestrict(const std::shared_ptr<const Creature> & creature) const {
 
     // if the exit requires pledging, let any clan pass
     if(flagIsSet(X_PLEDGE_ONLY))
@@ -360,7 +360,7 @@ bool Exit::clanRestrict(const Creature* creature) const {
 //                      alignRestrict
 //*********************************************************************
 
-bool Exit::alignRestrict(const Creature* creature) const {
+bool Exit::alignRestrict(const std::shared_ptr<const Creature> & creature) const {
     return(
         (flagIsSet(X_NO_GOOD_ALIGN) && creature->getAdjustedAlignment() > NEUTRAL) ||
         (flagIsSet(X_NO_EVIL_ALIGN) && creature->getAdjustedAlignment() < NEUTRAL) ||
@@ -374,18 +374,18 @@ bool Exit::alignRestrict(const Creature* creature) const {
 // Tries to find a return exit. Will only return an exit if there is
 // only one unique exit back to the parent room.
 
-Exit* Exit::getReturnExit(const BaseRoom* parent, BaseRoom** targetRoom) const {
-    (*targetRoom) = target.loadRoom();
-    if(!*targetRoom)
+std::shared_ptr<Exit> Exit::getReturnExit(const std::shared_ptr<const BaseRoom>& parent, std::shared_ptr<BaseRoom> &targetRoom) const {
+    (*targetRoom) = *target.loadRoom();
+    if(!targetRoom)
         return(nullptr);
 
-    Exit* exit=nullptr;
+    std::shared_ptr<Exit> exit=nullptr;
     bool found = false;
 
-    const AreaRoom* aRoom = parent->getAsConstAreaRoom();
-    const UniqueRoom* uRoom = parent->getAsConstUniqueRoom();
+    const std::shared_ptr<const AreaRoom> aRoom = parent->getAsConstAreaRoom();
+    const std::shared_ptr<const UniqueRoom> uRoom = parent->getAsConstUniqueRoom();
 
-    for(Exit* ext : (*targetRoom)->exits) {
+    for(const auto& ext : (targetRoom)->exits) {
         if(ext->target.mapmarker.getArea()) {
             if(aRoom && ext->target.mapmarker == aRoom->mapmarker) {
                 if(found)
@@ -433,15 +433,15 @@ std::string Exit::blockedByStr(char color, std::string_view spell, std::string_v
 //                      showExit
 //*********************************************************************
 
-bool Player::showExit(const Exit* exit, int magicShowHidden) const {
+bool Player::showExit(const std::shared_ptr<Exit>& exit, int magicShowHidden) const {
     if(isStaff())
         return(true);
-    if(exit->isDiscoverable() && exit->hasBeenUsedBy(this)){
+    if(exit->isDiscoverable() && exit->hasBeenUsedBy(Containable::downcasted_shared_from_this<Player>())){
         return(true);
     }
     return( canSee(exit) &&
         (!exit->flagIsSet(X_SECRET) || magicShowHidden) &&
-        (!exit->isConcealed(this) || magicShowHidden) &&
+        (!exit->isConcealed(Containable::downcasted_shared_from_this<Creature>()) || magicShowHidden) &&
         !exit->flagIsSet(X_DESCRIPTION_ONLY) &&
         (isEffected("fly") ? 1:!exit->flagIsSet(X_NEEDS_FLY))
     );
@@ -453,12 +453,12 @@ bool Player::showExit(const Exit* exit, int magicShowHidden) const {
 // Add an effect to the given exit and the return exit (ie, an exit in
 // the room it points to that points back to this room)
 
-void Exit::addEffectReturnExit(const std::string &effect, long duration, int strength, const Creature* owner) {
-    BaseRoom *targetRoom=nullptr;
+void Exit::addEffectReturnExit(const std::string &effect, long duration, int strength, const std::shared_ptr<Creature> & owner) {
+    std::shared_ptr<BaseRoom> targetRoom=nullptr;
 
     addEffect(effect, duration, strength, nullptr, true, owner);
     // switch the meaning of exit
-    Exit* exit = getReturnExit(owner->getConstRoomParent(), &targetRoom);
+    std::shared_ptr<Exit> exit = getReturnExit(owner->getConstRoomParent(), targetRoom);
     if(exit)
         exit->addEffect(effect, duration, strength, nullptr, true, owner);
 }
@@ -469,12 +469,12 @@ void Exit::addEffectReturnExit(const std::string &effect, long duration, int str
 // Add an effect to the given exit and the return exit (ie, an exit in
 // the room it points to that points back to this room)
 
-void Exit::removeEffectReturnExit(const std::string &effect, BaseRoom* rParent) {
-    BaseRoom *targetRoom=nullptr;
+void Exit::removeEffectReturnExit(const std::string &effect, const std::shared_ptr<BaseRoom>& rParent) {
+    std::shared_ptr<BaseRoom> targetRoom=nullptr;
 
     removeEffect(effect, true, false);
     // switch the meaning of exit
-    Exit* exit = getReturnExit(rParent, &targetRoom);
+    std::shared_ptr<Exit> exit = getReturnExit(rParent, targetRoom);
     if(exit)
         exit->removeEffect(effect, true, false);
 }
@@ -497,7 +497,7 @@ bool Exit::isWall(std::string_view name) const {
 //                      isConcealed
 //*********************************************************************
 
-bool Exit::isConcealed(const Creature* viewer) const {
+bool Exit::isConcealed(const std::shared_ptr<const Creature> & viewer) const {
     if(flagIsSet(X_CONCEALED))
         return(true);
     if(isEffected("concealed") && (!viewer || !viewer->willIgnoreIllusion()))
@@ -526,13 +526,10 @@ bool Exit::isDiscoverable() const {
 //                      hasBeenUsedBy
 //**********************************************************************
 
-bool Exit::hasBeenUsedBy(std::string id) const {
+bool Exit::hasBeenUsedBy(const std::string& id) const {
     return std::find(usedBy.begin(), usedBy.end(), id) != usedBy.end();
 }
-bool Exit::hasBeenUsedBy(const Player* player) const {
-    return(hasBeenUsedBy(player->getId()));
-}
-bool Exit::hasBeenUsedBy(const Creature* creature) const {
+bool Exit::hasBeenUsedBy(const std::shared_ptr<const Creature> & creature) const {
     return(hasBeenUsedBy(creature->getId()));
 }
 
