@@ -758,7 +758,7 @@ MudObject* Creature::findTarget(unsigned int findWhere, unsigned int findFlags, 
             for(n=0; n<MAXWEAR; n++) {
                 if(!ready[n])
                     continue;
-                if(keyTxtEqual(ready[n], str.c_str()))
+                if(keyTxtEqual(ready[n], str.c_str()) || (ready[n]->isLabeledBy(this) && ready[n]->isLabelMatch(str)))
                     match++;
                 else
                     continue;

@@ -260,6 +260,17 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
         else if(NODE_NAME(curNode, "AlchemyEffects")) {
             loadAlchemyEffects(curNode);
         }
+        else if(NODE_NAME(curNode, "CustomLabel")) {
+            childNode = curNode->children;
+            while(childNode) {
+                if(NODE_NAME(childNode, "PlayerId")) {
+                    xml::copyToString(label.playerId, childNode);
+                } else if (NODE_NAME(childNode, "Label")) {
+                    xml::copyToString(label.label, childNode);
+                }
+                childNode = childNode->next;
+            }
+        }
         else if(NODE_NAME(curNode, "Hooks")) hooks.load(curNode);
         else if(NODE_NAME(curNode, "RandomObjects")) {
             childNode = curNode->children;
@@ -577,6 +588,10 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     xml::saveNonZeroNum(rootNode, "Recipe", recipe);
     xml::saveNonZeroNum(rootNode, "Made", made);
     xml::saveNonNullString(rootNode, "Owner", questOwner);
+
+    childNode = xml::newStringChild(rootNode, "CustomLabel");
+    xml::saveNonNullString(childNode, "PlayerId", label.playerId);
+    xml::saveNonNullString(childNode, "Label", label.label);
 
     if(saveType != LoadType::LS_FULL && saveType != LoadType::LS_PROTOTYPE) {
         // Save only a subset of flags for obj references

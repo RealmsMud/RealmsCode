@@ -25,6 +25,7 @@
 #include "mudObjects/players.hpp"  // for Player
 #include "size.hpp"                // for Size
 #include "utils.hpp"               // for MAX, MIN
+#include "proto.hpp"               // for keyTxtCompare
 
 
 
@@ -84,6 +85,11 @@ void Object::setRecipe(int r) { recipe = r; }
 void Object::setMaterial(Material m) { material = m; }
 void Object::setQuestOwner(const Player* player) { questOwner = player->getName(); }
 
+void Object::setLabel(const Player* player, std::string text) {
+    label.playerId = player->getId();
+    label.label = text;
+}
+
 void Object::clearEffect() {
     setEffect("");
     setEffectDuration(0);
@@ -132,4 +138,12 @@ bool Object::isLightArmor() const {
 
 bool Object::isBroken() const {
     return(shotsCur == 0 && shotsMax >= 0 && (type == ObjectType::ARMOR || type == ObjectType::KEY || type == ObjectType::WEAPON));
+}
+
+bool Object::isLabeledBy(const Creature* creature) const {
+    return creature->getId() == label.playerId;
+}
+
+bool Object::isLabelMatch(std::string str) const {
+    return keyTxtCompare(label.label.c_str(), str.c_str(), str.length());
 }

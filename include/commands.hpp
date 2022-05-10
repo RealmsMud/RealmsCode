@@ -407,6 +407,7 @@ int cmdDice(Creature* player, cmd* cmnd);
 int cmdChooseAlignment(Player* player, cmd* cmnd);
 int cmdKeep(Player* player, cmd* cmnd);
 int cmdUnkeep(Player* player, cmd* cmnd);
+int cmdLabel(Player* player, cmd* cmnd);
 int cmdGo(Player* player, cmd* cmnd);
 int cmdSing(Creature* creature, cmd* cmnd);
 

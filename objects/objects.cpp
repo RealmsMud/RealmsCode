@@ -1089,6 +1089,9 @@ std::string Object::getObjStr(const Creature* viewer, unsigned int ioFlags, int 
         }
     }
 
+    if (viewer != nullptr && isLabeledBy(viewer) && !label.label.empty()) {
+        objStr << " (" << label.label << ")";
+    }
 
     if(flagIsSet(O_NULL_MAGIC) && ((ioFlags & ISDM) || (ioFlags & ISCT))) {
         objStr << " (+" << adjustment << ")(n)";
