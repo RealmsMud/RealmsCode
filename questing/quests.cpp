@@ -87,9 +87,9 @@ CatRef QuestInfo::getQuestId(xmlNodePtr curNode) {
 
     return toReturn;
 }
-CatRef QuestInfo::getQuestId(std::string strId) {
+CatRef QuestInfo::getQuestId(const std::string& strId) {
     CatRef toReturn;
-    getCatRef(std::move(strId), &toReturn, nullptr);
+    getCatRef(std::move(strId), toReturn, nullptr);
 
     return toReturn;
 }
@@ -124,7 +124,7 @@ QuestCompletion::QuestCompletion(QuestInfo* parent, std::shared_ptr<Player> play
 }
 
 
-QuestCompletion::QuestCompletion(xmlNodePtr rootNode, std::shared_ptr<Player> player) {
+QuestCompletion::QuestCompletion(xmlNodePtr rootNode, const std::shared_ptr<Player>& player) {
     questId = QuestInfo::getQuestId(rootNode);
     resetParentQuest();
 
@@ -543,7 +543,7 @@ QuestTurninStatus Monster::checkQuestTurninStatus(const std::shared_ptr<const Cr
     bool hasRepeatableTurnin = false;
 
     QuestCompletion* quest;
-    for(auto p : pViewer->questsInProgress) {
+    for(const auto& p : pViewer->questsInProgress) {
         quest = p.second;
         if (info == quest->getParentQuest()->getTurnInMob()) {
             // We're the turnin for this quest
@@ -600,19 +600,20 @@ void Player::updateRooms(const std::shared_ptr<UniqueRoom>& room) {
     }
 }
 void QuestCompletion::updateMobKills(const std::shared_ptr<Monster>&  monster) {
-    //std::list<QuestCatRef> mobsKilled;
-    for(QuestCatRef & qcr : mobsKilled) {
-        if(qcr == monster->info) {
-            if(qcr.reqNum != qcr.curNum) {
-                if(++(qcr.curNum) == qcr.reqNum) {
-                    *parentPlayer << ColorOn << fmt::format(
-                            "Quest Update: {} - Required number of ^W{}^x have been killed.\n",
-                            parentQuest->getName(), monster->getName()) << ColorOff;
-                } else {
-                    *parentPlayer << ColorOn << fmt::format(
-                            "Quest Update: {} - Killed ^W {} / {}^x.\n",
-                            parentQuest->getName(), intToText(qcr.curNum),
-                            monster->getCrtStr(parentPlayer, INV, qcr.reqNum))  << ColorOff;
+    if(auto myPlayer = parentPlayer.lock()) {
+        for (QuestCatRef &qcr: mobsKilled) {
+            if (qcr == monster->info) {
+                if (qcr.reqNum != qcr.curNum) {
+                    if (++(qcr.curNum) == qcr.reqNum) {
+                        *myPlayer << ColorOn << fmt::format(
+                                "Quest Update: {} - Required number of ^W{}^x have been killed.\n",
+                                parentQuest->getName(), monster->getName()) << ColorOff;
+                    } else {
+                        *myPlayer << ColorOn << fmt::format(
+                                "Quest Update: {} - Killed ^W {} / {}^x.\n",
+                                parentQuest->getName(), intToText(qcr.curNum),
+                                monster->getCrtStr(myPlayer, INV, qcr.reqNum)) << ColorOff;
+                    }
                 }
             }
         }
@@ -622,21 +623,23 @@ void QuestCompletion::updateMobKills(const std::shared_ptr<Monster>&  monster) {
 
 // Called when adding an item to inventory, but before it is put in the list of items
 void QuestCompletion::updateItems(const std::shared_ptr<Object>&  object) {
-    for(QuestCatRef & qcr : parentQuest->itemsToGet) {
-        if(qcr == object->info && object->isQuestOwner(parentPlayer)) {
-            int curNum = parentPlayer->countItems(qcr)-1;
+    if(auto myPlayer = parentPlayer.lock()) {
+        for (QuestCatRef &qcr: parentQuest->itemsToGet) {
+            if (qcr == object->info && object->isQuestOwner(myPlayer)) {
+                int curNum = myPlayer->countItems(qcr) - 1;
 
-            if(curNum < qcr.reqNum) {
-                itemsCompleted = false;
-                if(++curNum == qcr.reqNum) {
-                    *parentPlayer << ColorOn << fmt::format(
-                        "Quest Update: {} - Required number of ^W{}^x have been obtained.\n",
-                        parentQuest->getName(), object->getName()) << ColorOff;
-                } else {
-                    *parentPlayer << ColorOn << fmt::format(
-                        "Quest Update: {} - Obtained ^W{} / {}^x.\n",
-                        parentQuest->getName(), intToText(curNum),
-                        object->getObjStr(parentPlayer, INV, qcr.reqNum)) << ColorOff;
+                if (curNum < qcr.reqNum) {
+                    itemsCompleted = false;
+                    if (++curNum == qcr.reqNum) {
+                        *myPlayer << ColorOn << fmt::format(
+                                "Quest Update: {} - Required number of ^W{}^x have been obtained.\n",
+                                parentQuest->getName(), object->getName()) << ColorOff;
+                    } else {
+                        *myPlayer << ColorOn << fmt::format(
+                                "Quest Update: {} - Obtained ^W{} / {}^x.\n",
+                                parentQuest->getName(), intToText(curNum),
+                                object->getObjStr(myPlayer, INV, qcr.reqNum)) << ColorOff;
+                    }
                 }
             }
         }
@@ -646,13 +649,14 @@ void QuestCompletion::updateItems(const std::shared_ptr<Object>&  object) {
 void QuestCompletion::updateRooms(const std::shared_ptr<UniqueRoom>& room) {
     if(roomsCompleted)
         return;
-    for(QuestCatRef & qcr : roomsVisited) {
-        if(qcr == room->info) {
-            if(qcr.curNum != 1) {
-                if(++qcr.curNum == 1) {
-                    // ReqNum should always be one
-                    *parentPlayer << ColorOn << fmt::format("Quest Update: {} - Visited ^W{}^x.\n",
-                            parentQuest->getName(), room->getName());
+    if(auto myPlayer = parentPlayer.lock()) {
+        for (QuestCatRef &qcr: roomsVisited) {
+            if (qcr == room->info) {
+                if (qcr.curNum != 1) {
+                    if (++qcr.curNum == 1) {
+                        // ReqNum should always be one
+                        *myPlayer << ColorOn << fmt::format("Quest Update: {} - Visited ^W{}^x.\n", parentQuest->getName(), room->getName());
+                    }
                 }
             }
         }
@@ -688,10 +692,12 @@ bool QuestCompletion::checkQuestCompletion(bool showMessage) {
         if(showMessage && !alreadyCompleted) {
             std::shared_ptr<Monster>  endMonster = nullptr;
 
-            *parentPlayer << ColorOn << fmt::format("You have fufilled all of the requirements for ^W{}^x!\n", parentQuest->getName()) << ColorOff;
-            if(loadMonster(parentQuest->turnInMob, endMonster)) {
-                *parentPlayer << ColorOn << fmt::format("Return to ^W{}^x to claim your reward.\n", endMonster->getName()) << ColorOff;
-                endMonster.reset();
+            if(auto myPlayer = parentPlayer.lock()) {
+                *myPlayer << ColorOn << fmt::format("You have fufilled all of the requirements for ^W{}^x!\n", parentQuest->getName()) << ColorOff;
+                if (loadMonster(parentQuest->turnInMob, endMonster)) {
+                    *myPlayer << ColorOn << fmt::format("Return to ^W{}^x to claim your reward.\n", endMonster->getName()) << ColorOff;
+                    endMonster.reset();
+                }
             }
         }
         return(true);
@@ -711,11 +717,13 @@ bool QuestCompletion::hasRequiredMobs() const {
 }
 bool QuestCompletion::hasRequiredItems() const {
     int curNum;
-    for(const QuestCatRef & obj : parentQuest->itemsToGet) {
-        curNum = parentPlayer->countItems(obj);
-        curNum = MIN(curNum, obj.reqNum);
-        if(curNum != obj.reqNum) {
-            return(false);
+    if(auto myPlayer = parentPlayer.lock()) {
+        for (const QuestCatRef &obj: parentQuest->itemsToGet) {
+            curNum = myPlayer->countItems(obj);
+            curNum = MIN(curNum, obj.reqNum);
+            if (curNum != obj.reqNum) {
+                return (false);
+            }
         }
     }
     return(true);
@@ -730,9 +738,11 @@ bool QuestCompletion::hasRequiredRooms() const {
     return(true);
 }
 std::string QuestCompletion::getStatusDisplay() {
+    auto myPlayer = parentPlayer.lock();
+    if(!myPlayer) return "";
+
     std::ostringstream displayStr;
     int i;
-
     checkQuestCompletion(false);
 
     if(mobsCompleted && itemsCompleted && roomsCompleted)
@@ -807,7 +817,7 @@ std::string QuestCompletion::getStatusDisplay() {
         std::shared_ptr<Object>  object;
         i = 1;
         for(QuestCatRef & obj : parentQuest->itemsToGet) {
-            int curNum = parentPlayer->countItems(obj);
+            int curNum = myPlayer->countItems(obj);
             curNum = MIN(curNum, obj.reqNum);
             displayStr << "\t";
             if(curNum == obj.reqNum)
@@ -911,9 +921,10 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
     std::map<std::string, long>::const_iterator it;
     std::list<std::shared_ptr<Object> > objects;
     std::list<std::shared_ptr<Object> >::iterator oIt;
+    auto myPlayer = parentPlayer.lock();
 
     if(!checkQuestCompletion()) {
-        *parentPlayer <<"You have not fulfilled all the requirements to complete this quest.\n";
+        *myPlayer <<"You have not fulfilled all the requirements to complete this quest.\n";
         return(false);
     }
 
@@ -926,7 +937,7 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
 
         while(cur++ < num) {
             if(loadObject(obj, object)) {
-                if(!prepareItemList(parentPlayer, objects, object, monster, false, true, 0))
+                if(!prepareItemList(myPlayer, objects, object, monster, false, true, 0))
                     return(false);
             }
         }
@@ -936,8 +947,8 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
     // it doesn't try to update this quest.  We will delete this quest at the end of the
     // function right before we return
 
-    parentPlayer->questsInProgress.erase(parentQuest->questId);
-    parentQuest->printCompletionString(parentPlayer, monster);
+    myPlayer->questsInProgress.erase(parentQuest->questId);
+    parentQuest->printCompletionString(myPlayer, monster);
 
     // First, remove all of the items from the player
     for(QuestCatRef & obj : parentQuest->itemsToGet) {
@@ -946,11 +957,11 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
         ObjectSet::iterator osIt;
         int num = obj.reqNum;
 
-        for(osIt = parentPlayer->objects.begin() ; osIt != parentPlayer->objects.end() && num > 0 ; ) {
+        for(osIt = myPlayer->objects.begin() ; osIt != myPlayer->objects.end() && num > 0 ; ) {
             object = (*osIt++);
             if(object->info == obj && object->isQuestValid()) {
                 oName = object->getName();
-                parentPlayer->delObj(object, true, false, true, false);
+                myPlayer->delObj(object, true, false, true, false);
                 object.reset();
                 num--;
                 continue;
@@ -962,7 +973,7 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
                     subObject = (*sIt++);
                     if(subObject->info == obj && subObject->isQuestValid()) {
                         oName = subObject->getName();
-                        parentPlayer->delObj(subObject, true, false, true, false);
+                        myPlayer->delObj(subObject, true, false, true, false);
                         subObject.reset();
                         num--;
                         continue;
@@ -971,18 +982,18 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
             }
         }
         if(loadObject(obj, object)) {
-            *parentPlayer << ColorOn << setf(CAP) << monster << " takes ^W" << setn(obj.reqNum) << object << "^x from you.\n" << ColorOff;
+            *myPlayer << ColorOn << setf(CAP) << monster << " takes ^W" << setn(obj.reqNum) << object << "^x from you.\n" << ColorOff;
             object.reset();
         }
     }
 
     for(oIt = objects.begin(); oIt != objects.end(); oIt++) {
-        *parentPlayer << ColorOn << setf(CAP) << monster << " gives you ^C" << *oIt << "^x.\n" << ColorOff;
+        *myPlayer << ColorOn << setf(CAP) << monster << " gives you ^C" << *oIt << "^x.\n" << ColorOff;
         (*oIt)->setDroppedBy(monster, "QuestCompletion");
-        doGetObject(*oIt, parentPlayer);
+        doGetObject(*oIt, myPlayer);
     }
 
-    parentPlayer->checkDarkness();
+    myPlayer->checkDarkness();
 
     //float multiplier = 1.0;
     // TODO: Adjust multiplier based on level difference
@@ -991,35 +1002,35 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
     }
 
     if(!parentQuest->cashReward.isZero()) {
-        parentPlayer->coins.add(parentQuest->cashReward);
-        Server::logGold(GOLD_IN, parentPlayer, parentQuest->cashReward, nullptr, "QuestCompletion");
-        *parentPlayer << ColorOn << setf(CAP) << monster << " gives you ^C" << parentQuest->cashReward.str() << "^x. You now have " << parentPlayer->coins.str() << ".\n" << ColorOff;
+        myPlayer->coins.add(parentQuest->cashReward);
+        Server::logGold(GOLD_IN, myPlayer, parentQuest->cashReward, nullptr, "QuestCompletion");
+        *myPlayer << ColorOn << setf(CAP) << monster << " gives you ^C" << parentQuest->cashReward.str() << "^x. You now have " << myPlayer->coins.str() << ".\n" << ColorOff;
     }
     if(parentQuest->expReward) {
-        if(!parentPlayer->halftolevel()) {
-            *parentPlayer << ColorOn << fmt::format("You {} ^C{}^x experience.\n", gConfig->isAprilFools() ? "lose" : "gain", parentQuest->expReward);
-            parentPlayer->addExperience(parentQuest->expReward);
+        if(!myPlayer->halftolevel()) {
+            *myPlayer << ColorOn << fmt::format("You {} ^C{}^x experience.\n", gConfig->isAprilFools() ? "lose" : "gain", parentQuest->expReward);
+            myPlayer->addExperience(parentQuest->expReward);
         }
     }
     if(parentQuest->alignmentChange) {
         std::ostringstream oStr;
         oStr << (parentQuest->alignmentChange < 0 ? "^r" : "^b") << "Your alignment has shifted towards " << (parentQuest->alignmentChange < 0 ? "^Revil" : "^Bgood") << ".";
-        if (parentPlayer->isStaff())
+        if (myPlayer->isStaff())
             oStr << " (" << parentQuest->alignmentChange << ")";
-        *parentPlayer << ColorOn << oStr.str() << ColorOff << "\n";
+        *myPlayer << ColorOn << oStr.str() << ColorOff << "\n";
 
-        parentPlayer->setAlignment(MAX<short>(-1000, MIN<short>(1000,(parentPlayer->getAlignment()+parentQuest->alignmentChange))));
-        parentPlayer->alignAdjustAcThaco();
+        myPlayer->setAlignment(MAX<short>(-1000, MIN<short>(1000,(myPlayer->getAlignment()+parentQuest->alignmentChange))));
+        myPlayer->alignAdjustAcThaco();
     }
     if(!parentQuest->factionRewards.empty())
-        parentPlayer->adjustFactionStanding(parentQuest->factionRewards);
+        myPlayer->adjustFactionStanding(parentQuest->factionRewards);
 
-    auto completionPtr = parentPlayer->questsCompleted.find(parentQuest->questId);
+    auto completionPtr = myPlayer->questsCompleted.find(parentQuest->questId);
     QuestCompleted *questCompleted = nullptr;
 
-    if (completionPtr == parentPlayer->questsCompleted.end()) {
+    if (completionPtr == myPlayer->questsCompleted.end()) {
         questCompleted = new QuestCompleted();
-        parentPlayer->questsCompleted.insert(std::make_pair(parentQuest->questId, questCompleted));
+        myPlayer->questsCompleted.insert(std::make_pair(parentQuest->questId, questCompleted));
     } else {
         questCompleted = completionPtr->second;
     }

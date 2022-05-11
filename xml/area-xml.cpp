@@ -86,9 +86,9 @@ void AreaZone::save(xmlNodePtr curNode) const {
 
     childNode = xml::newStringChild(curNode, "Coords");
     std::map<int, MapMarker*>::const_iterator it;
-    for(it = coords.begin() ; it != coords.end() ; it++) {
+    for(const auto& [mId, marker] : coords) {
         subNode = xml::newStringChild(childNode, "MapMarker");
-        (*it).second->save(subNode);
+        marker.save(subNode);
     }
 }
 
@@ -99,7 +99,6 @@ void AreaZone::save(xmlNodePtr curNode) const {
 
 void AreaZone::load(xmlNodePtr curNode) {
     xmlNodePtr mNode, childNode = curNode->children;
-    MapMarker *mapmarker=nullptr;
     int     i=0;
 
     while(childNode) {
@@ -115,26 +114,25 @@ void AreaZone::load(xmlNodePtr curNode) {
             mNode = childNode->children;
             while(mNode) {
                 if(NODE_NAME(mNode, "MapMarker")) {
-                    mapmarker = new MapMarker;
-                    mapmarker->load(mNode);
+                    auto& mapmarker = coords[i++];
+                    mapmarker.load(mNode);
 
                     // load min/max while running through the coords
-                    if(mapmarker->getX() > max.getX())
-                        max.setX(mapmarker->getX());
-                    if(mapmarker->getX() < min.getX())
-                        min.setX(mapmarker->getX());
+                    if(mapmarker.getX() > max.getX())
+                        max.setX(mapmarker.getX());
+                    if(mapmarker.getX() < min.getX())
+                        min.setX(mapmarker.getX());
 
-                    if(mapmarker->getY() > max.getY())
-                        max.setY(mapmarker->getY());
-                    if(mapmarker->getY() < min.getY())
-                        min.setY(mapmarker->getY());
+                    if(mapmarker.getY() > max.getY())
+                        max.setY(mapmarker.getY());
+                    if(mapmarker.getY() < min.getY())
+                        min.setY(mapmarker.getY());
 
-                    if(mapmarker->getZ() > max.getZ())
-                        max.setZ(mapmarker->getZ());
-                    if(mapmarker->getZ() < min.getZ())
-                        min.setZ(mapmarker->getZ());
+                    if(mapmarker.getZ() > max.getZ())
+                        max.setZ(mapmarker.getZ());
+                    if(mapmarker.getZ() < min.getZ())
+                        min.setZ(mapmarker.getZ());
 
-                    coords[i++] = mapmarker;
                 }
                 mNode = mNode->next;
             }
@@ -250,12 +248,12 @@ void TileInfo::save(xmlNodePtr curNode) const {
 //*********************************************************************
 // only checks to see if the room is in memory or on disk
 
-std::shared_ptr<AreaRoom> Area::getRoom(const MapMarker *mapmarker) {
+std::shared_ptr<AreaRoom> Area::getRoom(const MapMarker& mapmarker) {
     std::shared_ptr<AreaRoom> room=nullptr;
-    MapMarker m = *mapmarker;
+    MapMarker m = mapmarker;
 
     // this will modify the mapmarker, but if it's pointing to invalid rooms, this is desired behavior
-    checkCycle(&m);
+    checkCycle(m);
 
     if(rooms.find(m.str()) != rooms.end())
         return(rooms[m.str()]);
@@ -272,8 +270,8 @@ std::shared_ptr<AreaRoom> Area::getRoom(const MapMarker *mapmarker) {
         rootNode = xmlDocGetRootElement(xmlDoc);
 
         room = std::make_shared<AreaRoom>(shared_from_this());
-        rooms[m.str()] = room;
         room->load(rootNode);
+        setMapMarker(room, room->mapmarker);
 
         xmlFreeDoc(xmlDoc);
         xmlCleanupParser();
@@ -342,7 +340,7 @@ void Area::load(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
     char    temp[2];
 
-    id = xml::getIntProp(curNode, "id");
+    id = (short)xml::getIntProp(curNode, "id");
 
     while(childNode) {
         if(NODE_NAME(childNode, "Name")) xml::copyToString(name, childNode);
@@ -402,9 +400,9 @@ void Area::loadZones(xmlNodePtr curNode) {
 //*********************************************************************
 
 void Area::loadRooms() {
-    struct dirent *dirp=nullptr;
-    DIR         *dir=nullptr;
-    std::shared_ptr<AreaRoom>    room=nullptr;
+    struct dirent *dirp;
+    DIR         *dir;
+    std::shared_ptr<AreaRoom>    room;
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     char        filename[256];
@@ -429,6 +427,7 @@ void Area::loadRooms() {
         room = std::make_shared<AreaRoom>(shared_from_this());
         room->setVersion(xml::getProp(rootNode, "Version"));
         room->load(rootNode);
+        rooms[room->mapmarker.str()] = room;
 
         xmlFreeDoc(xmlDoc);
     }
@@ -466,10 +465,10 @@ void Area::loadTiles(xmlNodePtr curNode, bool ter) {
 //                      areaInit
 //*********************************************************************
 
-void Server::areaInit(std::shared_ptr<Creature> player, xmlNodePtr curNode) {
+void Server::areaInit(const std::shared_ptr<Creature>& player, xmlNodePtr curNode) {
     MapMarker mapmarker;
     mapmarker.load(curNode);
-    areaInit(std::move(player), mapmarker);
+    areaInit(player, mapmarker);
 }
 
 
@@ -483,7 +482,7 @@ bool Server::loadAreas() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
-    std::shared_ptr<Area> area=nullptr;
+    std::shared_ptr<Area> area;
 
     sprintf(filename, "%s/areas.xml", Path::AreaData.c_str());
 
@@ -496,7 +495,6 @@ bool Server::loadAreas() {
     rootNode = xmlDocGetRootElement(xmlDoc);
     curNode = rootNode->children;
 
-//    clearAreas();
     while(curNode) {
         if(NODE_NAME(curNode, "Area")) {
             area = std::make_shared<Area>();

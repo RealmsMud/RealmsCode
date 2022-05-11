@@ -32,8 +32,8 @@
 #include "proto.hpp"            // for loge, is_num, handle_args, startup_mo...
 #include "server.hpp"           // for Server, gServer
 #include "version.hpp"          // for VERSION
-
-
+#include "toNum.hpp"
+#include "xml.hpp"
 
 
 unsigned short  Port;
@@ -112,7 +112,7 @@ void handle_args(int argc, char *argv[]) {
             break;
         default:
             if(is_num(argv[i])) {
-                gConfig->setPortNum((unsigned short)atoi(argv[i]));
+                gConfig->setPortNum(toNum<unsigned short>(argv[i]));
             } else {
                 std::clog << "Unknown option\n";
                 usage(argv[0]);

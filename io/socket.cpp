@@ -213,11 +213,10 @@ void Socket::reset() {
     opts.lastColor = '\0';
 
     opts.compressing = false;
-    inPlayerList = false;
 
     outCompressBuf = nullptr;
     outCompress = nullptr;
-    myPlayer = nullptr;
+    myPlayer.reset();
 
     tState = NEG_NONE;
     oneIAC = watchBrokenClient = false;
@@ -297,7 +296,8 @@ void Socket::cleanUp() {
             myPlayer->save(true);
             myPlayer->uninit();
         }
-        freePlayer();
+        gServer->clearPlayer(myPlayer->getName());
+        myPlayer.reset();
     }
     endCompress();
     if(fd > -1) {
@@ -315,28 +315,6 @@ Socket::~Socket() {
     numSockets--;
     std::cout << "Num sockets: " << numSockets << std::endl;
     cleanUp();
-}
-
-//********************************************************************
-//                      addToPlayerList
-//********************************************************************
-
-void Socket::addToPlayerList() {
-    inPlayerList = true;
-}
-
-//********************************************************************
-//                      freePlayer
-//********************************************************************
-
-void Socket::freePlayer() {
-    if (myPlayer) {
-        if(inPlayerList)
-            gServer->clearPlayer(myPlayer);
-        myPlayer.reset();
-    }
-    myPlayer = nullptr;
-    inPlayerList = false;
 }
 
 // End - Constructors, Destructors, etc
@@ -1161,7 +1139,10 @@ void Socket::reconnect(bool pauseScreen) {
     clearSpiedOn();
     msdpClearReporting();
 
-    freePlayer();
+    if(myPlayer) {
+        gServer->clearPlayer(myPlayer->getName());
+        myPlayer.reset();
+    }
 
     if (pauseScreen) {
         setState(LOGIN_PAUSE_SCREEN);
@@ -1464,6 +1445,8 @@ void Socket::printColor(const char* fmt, ...) {
 // Flush pending output and send a prompt
 
 void Socket::flush() {
+    if (fd == -1) return;
+
     ssize_t n;
     if(!processedOutput.empty()) {
         n = write(processedOutput, false, false);
@@ -1841,8 +1824,11 @@ void Socket::setHostname(std::string_view pName) {
 void Socket::setIp(std::string_view pIp) {
     host.ip = pIp;
 }
-void Socket::setPlayer(std::shared_ptr<Player> ply) {
+void Socket::setPlayer(std::shared_ptr<Player> &ply) {
     myPlayer = ply;
+}
+void Socket::clearPlayer() {
+    myPlayer = nullptr;
 }
 
 bool Socket::hasPlayer() const {

@@ -66,6 +66,7 @@
 #include "socket.hpp"                       // for Socket
 #include "structs.hpp"                      // for MudFlag
 #include "xml.hpp"                          // for loadRoom, loadPlayer
+#include "toNum.hpp"
 
 
 
@@ -935,7 +936,7 @@ void propFlags(const std::shared_ptr<Player>& player, cmd* cmnd, Property *p) {
 
         } else if(action == "set" || action == "clear" || action == "toggle") {
 
-            int num = atoi(getFullstrText(cmnd->fullstr, 3).c_str());
+            int num = toNum<int>(getFullstrText(cmnd->fullstr, 3));
             bool found=false;
 
             for(it = list->begin(); it != list->end() ; it++) {
@@ -999,7 +1000,7 @@ void propFlags(const std::shared_ptr<Player>& player, cmd* cmnd, Property *p) {
 
         } else if(action == "set" || action == "clear" || action == "toggle") {
 
-            int num = atoi(getFullstrText(cmnd->fullstr, 4).c_str());
+            int num = toNum<int>(getFullstrText(cmnd->fullstr, 4));
             bool found=false;
 
             for(it = list->begin(); it != list->end() ; it++) {
@@ -1265,7 +1266,7 @@ int dmProperties(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->printColor("^b--------------------------------------------------------------\n");
         gConfig->showProperties(player, nullptr, propType);
     } else {
-        int num = atoi(id.c_str());
+        int num = toNum<int>(id);
         int i=1;
 
         player->print("Property #%d\n", num);
@@ -1691,7 +1692,7 @@ void Property::linkRoom(const std::shared_ptr<BaseRoom> &inside, const std::shar
         link_rom(inside, uRoom->info, xname.c_str());
         uRoom->saveToFile(0);
     } else {
-        link_rom(inside, &aRoom->mapmarker, xname.c_str());
+        link_rom(inside, aRoom->mapmarker, xname.c_str());
         aRoom->save();
     }
 
@@ -1701,7 +1702,7 @@ void Property::linkRoom(const std::shared_ptr<BaseRoom> &inside, const std::shar
         link_rom(outside, uRoom->info, "out");
         uRoom->saveToFile(0);
     } else {
-        link_rom(outside, &aRoom->mapmarker, "out");
+        link_rom(outside, aRoom->mapmarker, "out");
         aRoom->save();
     }
 }
@@ -2054,7 +2055,7 @@ void Property::manageFound(const std::shared_ptr<Player>& player, cmd* cmnd, Pro
     int roomId=0;
     for(int i = xname.length()-1; i>0; i--) {
         if(xname.at(i) == ' ') {
-            roomId = atoi(xname.substr(i).c_str());
+            roomId = toNum<int>(xname.substr(i));
             xname = xname.substr(0, i);
             break;
         }
@@ -2080,7 +2081,7 @@ void Property::manageFound(const std::shared_ptr<Player>& player, cmd* cmnd, Pro
     } else if(layout.ends_with("tower")) {
         // 5 room tower
         layout = layout.substr(layout.length() - 12);
-        req = atoi(layout.substr(0, 1).c_str());
+        req = toNum<int>(layout.substr(0, 1));
         layout = layout.substr(layout.length() - 5);
     } else if(layout.ends_with("small house")) {
         layout = layout.substr(layout.length() - 11);

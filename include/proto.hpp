@@ -19,9 +19,11 @@
 #define PROTO_H
 
 #include <cstdarg>
+#include <filesystem>
 
 #include "structs.hpp"
 
+namespace fs = std::filesystem;
 
 class cmd;
 
@@ -108,9 +110,9 @@ void showRoomFlags(const std::shared_ptr<const Player>& player, const std::share
 
 
 
-void getCatRef(std::string str, CatRef* cr, const std::shared_ptr<Creature> & target);
-void getDestination(const std::string &str, Location* l, const std::shared_ptr<Creature> & target);
-void getDestination(std::string str, MapMarker* mapmarker, CatRef* cr, const std::shared_ptr<Creature> & target);
+void getCatRef(std::string str, CatRef& cr, const std::shared_ptr<Creature> & target);
+void getDestination(const std::string &str, Location& l, const std::shared_ptr<Creature> & target);
+void getDestination(std::string str, MapMarker& mapmarker, CatRef& cr, const std::shared_ptr<Creature> & target);
 
 void spawnObjects(const std::string &room, const std::string &objects);
 
@@ -119,7 +121,7 @@ void spawnObjects(const std::string &room, const std::string &objects);
 
 void link_rom(const std::shared_ptr<BaseRoom>& room, const Location& l, std::string_view str);
 void link_rom(const std::shared_ptr<BaseRoom> &room, const CatRef& cr, std::string_view str);
-void link_rom(const std::shared_ptr<BaseRoom> &room, MapMarker *mapmarker, std::string_view str);
+void link_rom(const std::shared_ptr<BaseRoom> &room, const MapMarker& mapmarker, std::string_view str);
 
 int room_track(const std::shared_ptr<Creature>& player);
 
@@ -196,12 +198,6 @@ void give_money(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 
-
-// files1.cpp
-char* objectPath(const CatRef& cr);
-char* monsterPath(const CatRef& cr);
-char* roomPath(const CatRef& cr);
-char* roomBackupPath(const CatRef& cr);
 
 // files3.cpp
 int loadCreature_tlk(std::shared_ptr<Creature> creature);
@@ -401,7 +397,7 @@ void update_time(long t);
 void update_shutdown(long t);
 void update_dust_oldPrint(long t);
 void crash(int sig);
-void cleanUpMemory(void);
+void cleanUpMemory();
 void subtractMobBroadcast(const std::shared_ptr<Creature>&monster, int num);
 int countTotalEnemies(const std::shared_ptr<Creature>&monster);
 bool isDay();

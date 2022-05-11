@@ -184,7 +184,6 @@ public:
     void continueTelnetNeg(bool queryTType);
     void setState(int pState, char pFnParam = 1);
     void restoreState();
-    void addToPlayerList();
 
     void finishLogin();
 
@@ -272,9 +271,8 @@ public:
 
     [[nodiscard]] bool hasPlayer() const;
     [[nodiscard]] std::shared_ptr<Player> getPlayer() const;
-    void setPlayer(std::shared_ptr<Player> ply);
-    void freePlayer();
-
+    void setPlayer(std::shared_ptr<Player> &ply);
+    void clearPlayer();
 
 
     void clearSpying();
@@ -325,7 +323,6 @@ protected:
     Host        host;
     Term        term;
     SockOptions opts{};
-    bool inPlayerList{};
 
     int         lastState{};
     int         connState{};

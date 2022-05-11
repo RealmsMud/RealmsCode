@@ -123,9 +123,8 @@ bool loadObjectFromFile(const CatRef& cr, std::shared_ptr<Object>&  pObject, boo
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int         num;
-    char        filename[256];
 
-    sprintf(filename, "%s", objectPath(cr));
+    auto filename = Path::objectPath(cr);
 
     if((xmlDoc = xml::loadFile(filename, "Object")) == nullptr)
         return(false);
@@ -428,12 +427,11 @@ xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, 
 int Object::saveToFile() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    char        filename[256];
 
     // Invalid Number
     if(info.id < 0)
         return(-1);
-    Path::checkDirExists(info.area, objectPath);
+    Path::checkDirExists(info.area, Path::objectPath);
 
     gServer->saveIds();
 
@@ -452,7 +450,7 @@ int Object::saveToFile() {
     saveToXml(rootNode, ALLITEMS, LoadType::LS_PROTOTYPE, false);
     id = idTemp;
 
-    strcpy(filename, objectPath(info));
+    auto filename = Path::objectPath(info);
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(0);

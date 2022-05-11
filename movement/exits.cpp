@@ -60,7 +60,7 @@ Exit::Exit() {
     passlang = 0;
     size = NO_SIZE;
     hooks.setParent(this);
-    parentRoom = nullptr;
+    parentRoom.reset();
     direction = NoDirection;
     usedBy = {};
 }
@@ -91,7 +91,7 @@ std::string Exit::getDescription() const { return(description); }
 Size Exit::getSize() const { return(size); }
 Direction Exit::getDirection() const { return(direction); }
 std::string Exit::getEnter() const { return(enter); }
-std::shared_ptr<BaseRoom> Exit::getRoom() const { return(parentRoom); }
+std::shared_ptr<BaseRoom> Exit::getRoom() const { return(parentRoom.lock()); }
 
 void Exit::setLevel(short lvl) { level = lvl; }
 void Exit::setOpen(std::string_view o) { open = o; }
@@ -105,7 +105,7 @@ void Exit::setDescription(std::string_view d) { description = d; }
 void Exit::setSize(Size s) { size = s; }
 void Exit::setDirection(Direction d) { direction = d; }
 void Exit::setEnter(std::string_view e) { enter = e; }
-void Exit::setRoom(std::shared_ptr<BaseRoom> room) { parentRoom = room; }
+void Exit::setRoom(const std::shared_ptr<BaseRoom>& room) { parentRoom = room; }
 
 // Checks if the exit is flagged to relock after being used, and do as such
 
@@ -131,10 +131,12 @@ void Exit::checkReLock(const std::shared_ptr<Creature>& creature, bool sneaking)
             exitAction = "locks";
         }
         if(nowClosed || nowLocked) {
-            if(!sneaking) {
-                broadcast(creature->getSock(), parentRoom, "The %s %s.^x", getCName(), exitAction.c_str());
-            } else {
-                 broadcast(isCt, creature->getSock(), parentRoom, "*STAFF* The %s %s^x.", getCName(), exitAction.c_str());
+            if(auto tRoom = parentRoom.lock()) {
+                if (!sneaking) {
+                    broadcast(creature->getSock(), tRoom, "The %s %s.^x", getCName(), exitAction.c_str());
+                } else {
+                    broadcast(isCt, creature->getSock(), tRoom, "*STAFF* The %s %s^x.", getCName(), exitAction.c_str());
+                }
             }
         }
     }

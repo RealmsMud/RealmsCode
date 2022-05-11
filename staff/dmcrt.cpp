@@ -79,6 +79,7 @@
 #include "utils.hpp"                           // for MAX, MIN
 #include "wanderInfo.hpp"                      // for WanderInfo
 #include "xml.hpp"                             // for loadMonster
+#include "toNum.hpp"
 
 
 
@@ -95,7 +96,7 @@ int dmCreateMob(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string noMonsters = "^mNo monsters were summoned.\n";
 
     CatRef  cr;
-    getCatRef(getFullstrText(cmnd->fullstr, 1), &cr, player);
+    getCatRef(getFullstrText(cmnd->fullstr, 1), cr, player);
 
 
     if(cr.id && !player->checkBuilder(cr)) {
@@ -124,7 +125,7 @@ int dmCreateMob(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(getFullstrText(cmnd->fullstr, 2).starts_with('n'))
-        total = MIN(atoi(getFullstrText(cmnd->fullstr, 3).c_str()), MAX_MOBS_IN_ROOM);
+        total = MIN<int>(toNum<int>(getFullstrText(cmnd->fullstr, 3)), MAX_MOBS_IN_ROOM);
     /*
      * nobody uses this
      *
@@ -831,7 +832,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(PROMPT);
         }
 
-        num = atoi(&cmnd->str[3][1]);
+        num = toNum<int>(&cmnd->str[3][1]);
         if(num < 1 || num > NUM_ASSIST_MOB) {
             player->print("Error: %d is out of range for assist mobs (1-%d).\n", num, NUM_ASSIST_MOB);
             return(PROMPT);
@@ -842,7 +843,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(PROMPT);
         }
 
-        getCatRef(getFullstrText(cmnd->fullstr, 4), &mTarget->assist_mob[num-1], mTarget);
+        getCatRef(getFullstrText(cmnd->fullstr, 4), mTarget->assist_mob[num-1], mTarget);
         player->print("%M's assist mob #%d set to creature %s.\n", mTarget.get(), num,
                       mTarget->assist_mob[num - 1].displayStr().c_str());
 
@@ -876,7 +877,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
             }
 
-            getDestination(getFullstrText(cmnd->fullstr, 4), &pTarget->bound, player);
+            getDestination(getFullstrText(cmnd->fullstr, 4), pTarget->bound, player);
             player->print("Bound room set to %s.\n", pTarget->bound.str().c_str());
 
             log_immort(true, player, "%s set %s %s's bound room to %s.\n",
@@ -1104,10 +1105,10 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
             std::string txt = getFullstrText(cmnd->fullstr, 5);
             if(!txt.empty())
-                duration = atoi(txt.c_str());
+                duration = toNum<long>(txt);
             txt = getFullstrText(cmnd->fullstr, 6);
             if(!txt.empty())
-                strength = atoi(txt.c_str());
+                strength = toNum<int>(txt);
 
             if(duration > EFFECT_MAX_DURATION || duration < -1) {
                 player->print("Duration must be between -1 and %d.\n", EFFECT_MAX_DURATION);
@@ -1167,7 +1168,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
         }
 
-        num = atoi(&cmnd->str[3][1]);
+        num = toNum<int>(&cmnd->str[3][1]);
         if(num < 1 || num > NUM_ENEMY_MOB) {
             player->print("Error: %d is out of range for enemy mobs (1-%d).\n", num, NUM_ENEMY_MOB);
             return(0);
@@ -1178,7 +1179,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
 
-        getCatRef(getFullstrText(cmnd->fullstr, 4), &mTarget->enemy_mob[num-1], mTarget);
+        getCatRef(getFullstrText(cmnd->fullstr, 4), mTarget->enemy_mob[num-1], mTarget);
         player->print("%M's enemy mob #%d set to creature %s.\n", mTarget.get(), num, mTarget->enemy_mob[num - 1].displayStr().c_str());
         log_immort(true, player, "%s set %s %s's EnemyMob#%d to %s.\n",
             player->getCName(), PLYCRT(mTarget), mTarget->getCName(), num, mTarget->enemy_mob[num - 1].displayStr().c_str());
@@ -1363,8 +1364,8 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         if(!strcmp(cmnd->str[3], "inum") && mTarget) {
-            int inv = atoi(getFullstrText(cmnd->fullstr, 4).c_str());
-            int numTrade = atoi(getFullstrText(cmnd->fullstr, 5).c_str());
+            int inv = toNum<int>(getFullstrText(cmnd->fullstr, 4));
+            int numTrade = toNum<int>(getFullstrText(cmnd->fullstr, 5));
 
             if(inv > 10 || inv < 1) {
                 player->print("Carry slot number invalid.\n");
@@ -1396,7 +1397,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             char action=0;
 
             if(!txt.empty()) {
-                inv = atoi(txt.c_str());
+                inv = toNum<int>(txt);
                 if(!inv) {
                     action = txt.at(0);
                 } else {
@@ -1456,7 +1457,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
 
-        getCatRef(getFullstrText(cmnd->fullstr, 4), &mTarget->jail, player);
+        getCatRef(getFullstrText(cmnd->fullstr, 4), mTarget->jail, player);
 
         player->print("Jail room set to %s.\n", mTarget->jail.displayStr().c_str());
         log_immort(true, player, "%s set %s %s's jail room to %s.\n",
@@ -1764,7 +1765,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     return(0);
                 }
 
-                rnum = MAX(0, MIN(atoi(&cmnd->str[3][2]), MAX_BUILDER_RANGE));
+                rnum = MAX(0, MIN(toNum<int>(&cmnd->str[3][2]), MAX_BUILDER_RANGE));
                 pTarget->bRange[rnum-1].low.setArea(cmnd->str[4]);
 
                 player->print("%s's range #%d area set to %s.\n", pTarget->getCName(), rnum,
@@ -1792,8 +1793,8 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
             }
 
-            rnum = MAX(1, MIN(atoi(&cmnd->str[3][strlen(cmnd->str[3])-1]), NUM_RESCUE))-1;
-            getCatRef(getFullstrText(cmnd->fullstr, 4), &mTarget->rescue[rnum], mTarget);
+            rnum = MAX(1, MIN(toNum<int>(&cmnd->str[3][strlen(cmnd->str[3])-1]), NUM_RESCUE))-1;
+            getCatRef(getFullstrText(cmnd->fullstr, 4), mTarget->rescue[rnum], mTarget);
 
             player->print("%s's rescue mob #%d set to %s.\n", mTarget->getCName(), rnum+1,
                           mTarget->rescue[rnum].displayStr().c_str());
@@ -1827,7 +1828,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
             }
 
-            rnum = MAX(0, MIN(atoi(&cmnd->str[3][2]), MAX_BUILDER_RANGE));
+            rnum = MAX(0, MIN(toNum<int>(&cmnd->str[3][2]), MAX_BUILDER_RANGE));
             pTarget->bRange[rnum-1].low.id = MAX(-1, MIN(RMAX, (int)cmnd->val[3]));
 
             player->print("%s's low range #%d set to %d.\n", pTarget->getCName(), rnum,
@@ -1846,7 +1847,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
             }
 
-            rnum = MIN(MAX_BUILDER_RANGE, MAX(atoi(&cmnd->str[3][2]),0));
+            rnum = MIN(MAX_BUILDER_RANGE, MAX(toNum<int>(&cmnd->str[3][2]),0));
             pTarget->bRange[rnum-1].high = MAX(-1, MIN(RMAX, (int)cmnd->val[3]));
 
             player->print("%s's high range #%d set to %d.\n", pTarget->getCName(), rnum,
@@ -1856,7 +1857,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
         default:
 
-            Realm r = (Realm)MAX((int)MIN_REALM, MIN((int)MAX_REALM-1, atoi(&cmnd->str[3][1])));
+            Realm r = (Realm)MAX((int)MIN_REALM, MIN((int)MAX_REALM-1, toNum<int>(&cmnd->str[3][1])));
             target->setRealm(cmnd->val[3], r);
             player->print("%M given %d shots in realm#%d.\n", target.get(), target->getRealm(r), num);
             log_immort(true, player, "%s set %s %s's %s%d to %ld.\n",
@@ -2010,7 +2011,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 break;
             } else {
 
-                num = atoi(&cmnd->str[3][1]);
+                num = toNum<int>(&cmnd->str[3][1]);
                 if(num < 0 || num > 5) {
                     player->print("Error: save out of range.\n");
                     return(0);
@@ -2159,7 +2160,7 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     cmnd->val[1]= 1;
     if(isdigit(cmnd->fullstr[i]))
-        cmnd->val[1] = atoi(&cmnd->fullstr[i]);
+        cmnd->val[1] = toNum<long>(&cmnd->fullstr[i]);
 
     target = player->getParent()->findMonster(player, cmnd);
     if(!target) {
@@ -2194,7 +2195,7 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         } else if(cmnd->fullstr[i+1] == 'a') {
             i += 2;
             which = 5;
-            num = atoi(&cmnd->fullstr[i]);
+            num = toNum<int>(&cmnd->fullstr[i]);
             if(num <1 || num > 3)
                 num = 0;
             while(isdigit(cmnd->fullstr[i]))
@@ -2202,7 +2203,7 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         } else if(cmnd->fullstr[i+1] == 'k') {
             i += 2;
             which = 3;
-            num = atoi(&cmnd->fullstr[i]);
+            num = toNum<int>(&cmnd->fullstr[i]);
             if(num <1 || num > 3)
                 num = 0;
             while(isdigit(cmnd->fullstr[i]))
@@ -2210,7 +2211,7 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         } else if(cmnd->fullstr[i+1] == 'm') {
             i += 2;
             which = 6;
-            num = atoi(&cmnd->fullstr[i]);
+            num = toNum<int>(&cmnd->fullstr[i]);
             if(num <1 || num > 3)
                 num = 0;
             while(isdigit(cmnd->fullstr[i]))
@@ -2582,7 +2583,6 @@ int dmListCharm(const std::shared_ptr<Player>& player, cmd* cmnd) {
 void dmSaveMob(const std::shared_ptr<Player>& player, cmd* cmnd, const CatRef& cr) {
     std::shared_ptr<Monster> target=nullptr;
     ttag    *tp=nullptr, *tempt=nullptr;
-    char    file[80];
     int     i=0, x=0;
 
     if(!player->canBuildMonsters()) {
@@ -2668,8 +2668,7 @@ void dmSaveMob(const std::shared_ptr<Player>& player, cmd* cmnd, const CatRef& c
 
     target->info = cr;
 
-    sprintf(file, "%s", monsterPath(target->info));
-    if(fs::exists(file))
+    if(fs::exists(Path::monsterPath(target->info)))
         player->print( "Monster %s might already exist.\n", cr.displayStr().c_str());
 
     if(target->saveToFile()!= 0) {

@@ -390,7 +390,10 @@ const FishingItem* Fishing::getItem(short skill, short quality) const {
 //*********************************************************************
 
 const Fishing* AreaRoom::doGetFishing(short y, short x) const {
-    const std::shared_ptr<TileInfo>  tile = area->getTile(area->getTerrain(nullptr, &mapmarker, y, x, 0, true), area->getSeasonFlags(&mapmarker));
+    auto myArea = area.lock();
+    if(!myArea) return(0);
+
+    const std::shared_ptr<TileInfo>  tile = myArea->getTile(myArea->getTerrain(nullptr, mapmarker, y, x, 0, true), myArea->getSeasonFlags(mapmarker));
     std::shared_ptr<const AreaZone>  zone;
     const Fishing* list;
     std::list<std::shared_ptr<AreaZone> >::const_iterator it;
@@ -399,9 +402,9 @@ const Fishing* AreaRoom::doGetFishing(short y, short x) const {
         return(nullptr);
 
     // zone comes first
-    for(it = area->areaZones.begin() ; it != area->areaZones.end() ; it++) {
+    for(it = myArea->areaZones.begin() ; it != myArea->areaZones.end() ; it++) {
         zone = (*it);
-        if(zone->inside(area, &mapmarker) && !zone->getFishing().empty()) {
+        if(zone->inside(myArea, mapmarker) && !zone->getFishing().empty()) {
             list = gConfig->getFishing(zone->getFishing());
             if(list)
                 return(list);

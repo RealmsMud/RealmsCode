@@ -384,7 +384,7 @@ int splDimensionalAnchor(const std::shared_ptr<Creature>& player, cmd* cmnd, Spe
 
 int splPortal(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     std::shared_ptr<Player> pPlayer = player->getAsPlayer();
-    const Anchor* destination=0;
+    const Anchor* destination=nullptr;
     std::shared_ptr<BaseRoom> newRoom=nullptr;
     std::shared_ptr<UniqueRoom> uRoom=nullptr;
     std::shared_ptr<AreaRoom> aRoom=nullptr;
@@ -439,8 +439,8 @@ int splPortal(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spe
         return(0);
     }
 
-    if(destination->getMapMarker()) {
-        std::shared_ptr<Area> area = gServer->getArea(destination->getMapMarker()->getArea());
+    if(destination->hasMarker()) {
+        std::shared_ptr<Area> area = gServer->getArea(destination->getMapMarker().getArea());
         if(!area) {
             player->printColor("Massive dimensional interference detected.\n^yYour spell fails.\n");
             return(0);
@@ -491,7 +491,7 @@ void Move::createPortal(const std::shared_ptr<BaseRoom>& room, const std::shared
         link_rom(room, uRoom->info, "uniqueportalname");
     } else {
         std::shared_ptr<AreaRoom> aRoom = target->getAsAreaRoom();
-        link_rom(room, &aRoom->mapmarker, "uniqueportalname");
+        link_rom(room, aRoom->mapmarker, "uniqueportalname");
     }
 
     // the new portal is always the last exit in the room
@@ -503,7 +503,7 @@ void Move::createPortal(const std::shared_ptr<BaseRoom>& room, const std::shared
     ext->setFlag(X_CAN_LOOK);
     ext->setEnter("You step through the portal and find yourself in another location.");
     ext->setPassPhrase(player->getName());
-    ext->setKey(MAX(1, ((int)player->getLevel() - 28) / 2));
+    ext->setKey(MAX<short>(1, ((int)player->getLevel() - 28) / 2));
     ext->setDescription("You see a shimmering portal of mystical origin.");
 
     broadcast(nullptr, room, "^YA dimensional portal forms in the room!");
@@ -517,7 +517,7 @@ void Move::createPortal(const std::shared_ptr<BaseRoom>& room, const std::shared
 //*********************************************************************
 // return true if the portal is used up
 
-bool Move::usePortal(std::shared_ptr<Creature> player, const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Exit>& exit, bool initial) {
+bool Move::usePortal(const std::shared_ptr<Creature> &creature, const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Exit>& exit, bool initial) {
     if(!exit->flagIsSet(X_PORTAL))
         return(false);
 
@@ -537,7 +537,7 @@ bool Move::usePortal(std::shared_ptr<Creature> player, const std::shared_ptr<Bas
         }
 
         if(toUse)
-            return(Move::usePortal(player, target, toUse, false));
+            return(Move::usePortal(creature, target, toUse, false));
     }
 
     return(false);
@@ -719,24 +719,22 @@ int splTeleport(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
                 return(0);
             }
 
-            if(destination->getMapMarker()) {
-                std::shared_ptr<Area> area = gServer->getArea(destination->getMapMarker()->getArea());
-                if(!area) {
+            if (destination->hasMarker()) {
+                std::shared_ptr<Area> area = gServer->getArea(destination->getMapMarker().getArea());
+                if (!area) {
                     player->printColor("Massive dimensional interference detected.\n^yYour spell fails.\n");
-                    return(0);
+                    return (0);
                 }
                 aRoom = area->loadRoom(pPlayer, destination->getMapMarker(), false);
-                if(!aRoom) {
+                if (!aRoom) {
                     player->printColor("Dimensional interference at destination detected.\n^yYour spell fails.^x\n");
-                    return(0);
+                    return (0);
                 }
                 newRoom = aRoom;
             } else {
-                if( !loadRoom(destination->getRoom(), uRoom) ||
-                    !pPlayer->canEnter(uRoom)
-                ) {
+                if (!loadRoom(destination->getRoom(), uRoom) || !pPlayer->canEnter(uRoom)) {
                     player->printColor("Dimensional interference at destination detected.\n^yYour spell fails.^x\n");
-                    return(0);
+                    return (0);
                 }
                 newRoom = uRoom;
             }

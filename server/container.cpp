@@ -101,23 +101,29 @@ bool Container::purgeObjects() {
     return(purgedAll);
 }
 
-std::shared_ptr<Container> Container::remove(const std::shared_ptr<Containable>& toRemove) {
+std::shared_ptr<Container> Container::remove(Containable* toRemove) {
     if(!toRemove)
         return(nullptr);
 
-    auto remObject = dynamic_pointer_cast<Object>(toRemove);
-    auto remPlayer = dynamic_pointer_cast<Player>(toRemove);
-    auto remMonster = dynamic_pointer_cast<Monster>(toRemove);
+    auto remObject = dynamic_cast<Object*>(toRemove);
+    auto remPlayer = dynamic_cast<Player*>(toRemove);
+    auto remMonster = dynamic_cast<Monster*>(toRemove);
 
     bool toReturn;
     if(remObject) {
-        objects.erase(remObject);
+        std::erase_if(objects, [&toRemove](auto& item) {
+            return item.get() == toRemove;
+        });
         toReturn = true;
     } else if(remPlayer) {
-        players.erase(remPlayer);
+        std::erase_if(players, [&toRemove](auto& item) {
+            return item.get() == toRemove;
+        });
         toReturn = true;
     } else if(remMonster) {
-        monsters.erase(remMonster);
+        std::erase_if(monsters, [&toRemove](auto& item) {
+            return item.get() == toRemove;
+        });
         toReturn = true;
     } else {
         std::clog << "Don't know how to remove " << toRemove << std::endl;
@@ -146,7 +152,7 @@ bool Container::add(const std::shared_ptr<Containable>& toAdd) {
     // If we're adding an object or a monster, we're registered and the item we're adding is not,
     // then register the item
     if((addObject || addMonster) && isRegistered() && !toAdd->isRegistered()) {
-        toAdd->registerMo();
+        toAdd->registerMo(toAdd);
     }
 
 
@@ -175,15 +181,11 @@ bool Container::add(const std::shared_ptr<Containable>& toAdd) {
 
 void Container::registerContainedItems() {
     // Player registration is handled by the server
-    MonsterSet::iterator mIt;
-    for(mIt = monsters.begin() ; mIt != monsters.end() ; ) {
-        std::shared_ptr<Monster>  mons = *mIt++;
-        mons->registerMo();
+    for(const auto& mons : monsters) {
+        mons->registerMo(mons);
     }
-    ObjectSet::iterator oIt;
-    for(oIt = objects.begin() ; oIt != objects.end() ; ) {
-        std::shared_ptr<Object>  obj = *oIt++;
-        obj->registerMo();
+    for(const auto& obj : objects) {
+        obj->registerMo(obj);
     }
 }
 void Container::unRegisterContainedItems() {
@@ -403,7 +405,6 @@ std::shared_ptr<Player> Container::findPlayer(const std::shared_ptr<const Creatu
 //################################################################################
 
 Containable::Containable() {
-    parent = nullptr;
     lastParent = nullptr;
 }
 
@@ -419,10 +420,11 @@ void Containable::addToSet() {
 bool Containable::addTo(const std::shared_ptr<Container>& container) {
     if(container == nullptr)
         return(removeFrom() != nullptr);
-
-    if(this->parent != nullptr && parent->getAsMudObject() != container->getAsMudObject()) {
-        std::clog << "Non Null Parent" << std::endl;
-        return(false);
+    if(auto myParent = parent.lock()) {
+        if (myParent->getAsMudObject() != container->getAsMudObject()) {
+            std::clog << "Non Null Parent" << std::endl;
+            return (false);
+        }
     }
 
     if(this->isCreature()) {
@@ -436,7 +438,8 @@ bool Containable::addTo(const std::shared_ptr<Container>& container) {
 }
 
 std::shared_ptr<Container> Containable::removeFrom() {
-    if(!parent) {
+    auto myParent = parent.lock();
+    if(!myParent) {
         return(nullptr);
     }
 
@@ -444,108 +447,143 @@ std::shared_ptr<Container> Containable::removeFrom() {
         getAsCreature()->currentLocation.room.clear();
         getAsCreature()->currentLocation.mapmarker.reset();
     }
-    return(parent->remove(shared_from_this()));
+    return(myParent->remove(this));
 }
 
-void Containable::setParent(std::shared_ptr<Container> container) {
+void Containable::setParent(const std::shared_ptr<Container>& container) {
     parent = container;
 }
 std::shared_ptr<Container> Containable::getParent() const {
-    return(parent);
+    return(parent.lock());
 }
 
 
 bool Containable::inRoom() const {
-    return(parent && parent->isRoom());
+    if(auto myParent = parent.lock()) {
+        return myParent->isRoom();
+    }
+    return false;
 }
 bool Containable::inUniqueRoom() const {
-    return(parent && parent->isUniqueRoom());
+    if(auto myParent = parent.lock()) {
+        return myParent->isUniqueRoom();
+    }
+    return false;
 }
 bool Containable::inAreaRoom() const {
-    return(parent && parent->isAreaRoom());
+    if(auto myParent = parent.lock()) {
+        return myParent->isAreaRoom();
+    }
+    return false;
 }
 bool Containable::inObject() const {
-    return(parent && parent->isObject());
+    if(auto myParent = parent.lock()) {
+        return myParent->isObject();
+    }
+    return false;
 }
 bool Containable::inPlayer() const {
-    return(parent && parent->isPlayer());
+    if(auto myParent = parent.lock()) {
+        return myParent->isPlayer();
+    }
+    return false;
 }
 bool Containable::inMonster() const {
-    return(parent && parent->isMonster());
+    if(auto myParent = parent.lock()) {
+        return myParent->isMonster();
+    }
+    return false;
 }
 bool Containable::inCreature() const {
-    return(parent && parent->isCreature());
+    if(auto myParent = parent.lock()) {
+        return myParent->isCreature();
+    }
+    return false;
 }
 
 std::shared_ptr<BaseRoom> Containable::getRoomParent() {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsRoom());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsRoom();
+    }
+    return nullptr;
 }
 std::shared_ptr<UniqueRoom> Containable::getUniqueRoomParent() {
-    if(!parent)
-            return(nullptr);
-    return(parent->getAsUniqueRoom());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsUniqueRoom();
+    }
+    return nullptr;
 }
 std::shared_ptr<AreaRoom> Containable::getAreaRoomParent() {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsAreaRoom());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsAreaRoom();
+    }
+    return nullptr;
 }
 std::shared_ptr<Object>  Containable::getObjectParent() {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsObject());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsObject();
+    }
+    return nullptr;
 }
 std::shared_ptr<Player> Containable::getPlayerParent() {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsPlayer());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsPlayer();
+    }
+    return nullptr;
 }
 std::shared_ptr<Monster>  Containable::getMonsterParent() {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsMonster());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsMonster();
+    }
+    return nullptr;
 }
 std::shared_ptr<Creature> Containable::getCreatureParent() {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsCreature());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsCreature();
+    }
+    return nullptr;
 }
 
 std::shared_ptr<const BaseRoom> Containable::getConstRoomParent() const {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsConstRoom());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsConstRoom();
+    }
+    return nullptr;
 }
 std::shared_ptr<const UniqueRoom> Containable::getConstUniqueRoomParent() const {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsConstUniqueRoom());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsConstUniqueRoom();
+    }
+    return nullptr;
 }
 std::shared_ptr<const AreaRoom> Containable::getConstAreaRoomParent() const {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsConstAreaRoom());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsConstAreaRoom();
+    }
+    return nullptr;
 }
 std::shared_ptr<const Object>  Containable::getConstObjectParent() const {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsConstObject());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsConstObject();
+    }
+    return nullptr;
 }
 std::shared_ptr<const Player> Containable::getConstPlayerParent() const {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsConstPlayer());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsConstPlayer();
+    }
+    return nullptr;
 }
 std::shared_ptr<const Monster>  Containable::getConstMonsterParent() const {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsConstMonster());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsConstMonster();
+    }
+    return nullptr;
 }
 
 std::shared_ptr<const Creature> Containable::getConstCreatureParent() const {
-    if(!parent)
-        return(nullptr);
-    return(parent->getAsConstCreature());
+    if(auto myParent = parent.lock()) {
+        return myParent->getAsConstCreature();
+    }
+    return nullptr;
 }

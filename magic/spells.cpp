@@ -59,11 +59,9 @@ void Config::clearSpells() {
 //*********************************************************************
 
 int dmSpellList(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    const Spell* spell=nullptr;
-
     player->printColor("^YSpells\n");
-    for(const auto& sp : gConfig->spells) {
-        *player << ColorOn << fmt::format("  {}   {} - {}\n    Script: ^y{}^x\n", spell->name, spell->priority, spell->description, spell->script);
+    for(const auto& spell : gConfig->spells) {
+        *player << ColorOn << fmt::format("  {}   {} - {}\n    Script: ^y{}^x\n", spell.name, spell.priority, spell.description, spell.script);
     }
 
     return(0);
@@ -366,7 +364,7 @@ void infoSpells(const std::shared_ptr<Player> viewer, const std::shared_ptr<Crea
                     anchor->getRoomName().c_str());
 
                 if(viewer->isStaff())
-                    viewer->print("  %s", (anchor->getMapMarker() ? anchor->getMapMarker()->str() : anchor->getRoom().displayStr()).c_str());
+                    viewer->print("  %s", (anchor->hasMarker() ? anchor->getMapMarker().str() : anchor->getRoom().displayStr()).c_str());
 
                 viewer->print("\n");
             }

@@ -268,8 +268,10 @@ int Creature::deleteFromRoom(bool delPortal) {
         std::shared_ptr<AreaRoom> room = getAreaRoomParent();
         int i = doDeleteFromRoom(room, delPortal);
         if(room->canDelete()) {
-            room->area->remove(room);
-            i |= DEL_ROOM_DESTROYED;
+            if(auto roomArea = room->area.lock()) {
+                roomArea->remove(room);
+                i |= DEL_ROOM_DESTROYED;
+            }
         }
         return(i);
     }
@@ -437,7 +439,7 @@ int Monster::doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) {
 
 void UniqueRoom::addPermCrt() {
     std::map<int, crlasttime>::iterator it, nt;
-    crlasttime* crtm=nullptr;
+    crlasttime* crtm;
     std::map<int, bool> checklist;
     std::shared_ptr<Monster> monster=nullptr;
     long    t = time(nullptr);
@@ -601,7 +603,8 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
     const std::shared_ptr<Player>pCreature=nullptr;
     std::shared_ptr<Creature> creature=nullptr;
     char    name[256];
-    int     n=0, m=0, flags = (player->displayFlags() | QUEST), staff=0;
+    int     n, m,  staff=0;
+    unsigned int flags = (player->displayFlags() | QUEST);
     std::ostringstream oStr;
     std::string str;
     bool    wallOfFire=false, wallOfThorns=false, canSee=false;
@@ -636,16 +639,16 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
         if(!uRoom->getLongDescription().empty())
             oStr << uRoom->getLongDescription() << "\n";
 
-    } else {
+    } else if(auto roomArea = aRoom->area.lock()) {
 
-        if(!aRoom->area->name.empty()) {
-            oStr << aRoom->area->name;
+        if(!roomArea->name.empty()) {
+            oStr << roomArea->name;
             if(player->isCt())
                 oStr << " " << aRoom->fullName();
             oStr << "^x\n\n";
         }
 
-        oStr << aRoom->area->showGrid(player, &aRoom->mapmarker, player->getAreaRoomParent() == aRoom);
+        oStr << roomArea->showGrid(player, aRoom->mapmarker, player->getAreaRoomParent() == aRoom);
     }
 
     oStr << "^g" << (staff ? "All" : "Obvious") << " exits: ";
@@ -1015,7 +1018,7 @@ void doRoomHarms(const std::shared_ptr<BaseRoom>& inRoom, const std::shared_ptr<
         }
 
         roll = Random::get(1,20);
-        toHit = 10 - target->getArmor()/10;
+        toHit = 10 - (int)target->getArmor()/10;
         toHit = MAX(MIN(toHit,20), 1);
 
 

@@ -213,7 +213,7 @@ std::string Server::delayedActionStrings(const std::shared_ptr<MudObject>& targe
 void MudObject::interruptDelayedActions() {
     if(!delayedActionQueue.empty()) {
         // true means we are only removing interrupt-able actions
-        if(gServer->removeDelayedActions(shared_from_this(), true)) {
+        if(gServer->removeDelayedActions(this, true)) {
             const std::shared_ptr<const Creature> & creature = getAsConstCreature();
             if(creature)
                 creature->print("You stop what you are doing.\n");

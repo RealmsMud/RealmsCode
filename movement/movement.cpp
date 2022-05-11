@@ -62,6 +62,7 @@
 #include "unique.hpp"                  // for Unique
 #include "utils.hpp"                   // for MAX
 #include "xml.hpp"                     // for loadRoom
+#include "toNum.hpp"
 
 class EffectInfo;
 
@@ -205,12 +206,14 @@ bool Move::isOrdinal(cmd* cmnd) {
 // recycling of the room
 
 std::shared_ptr<AreaRoom> Move::recycle(std::shared_ptr<AreaRoom> room, const std::shared_ptr<Exit>& exit) {
-    if(room->canDelete()) {
-        room->setMapMarker(&exit->target.mapmarker);
-        room->recycle();
-    } else {
-        room = std::make_shared<AreaRoom>(room->area, &exit->target.mapmarker);
-        room->area->rooms[room->mapmarker.str()] = room;
+    if(auto area = room->area.lock()) {
+        if(room->canDelete()) {
+            area->moveMapMarker(room, exit->target.mapmarker);
+        } else {
+            room = std::make_shared<AreaRoom>(area);
+            area->setMapMarker(room, exit->target.mapmarker);
+        }
+
     }
     return(room);
 }
@@ -272,7 +275,7 @@ void Move::broadMove(const std::shared_ptr<Creature>& player, const std::shared_
 //*********************************************************************
 // takes care of any tracks we leave
 
-bool Move::track(const std::shared_ptr<UniqueRoom>& room, MapMarker *mapmarker, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Player>& player, bool reset) {
+bool Move::track(const std::shared_ptr<UniqueRoom>& room, const MapMarker& mapmarker, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Player>& player, bool reset) {
     if(room && room->flagIsSet(R_PERMENANT_TRACKS))
         return(reset);
     if(exit->flagIsSet(X_DESCRIPTION_ONLY) || exit->flagIsSet(X_PORTAL))
@@ -288,16 +291,16 @@ bool Move::track(const std::shared_ptr<UniqueRoom>& room, MapMarker *mapmarker, 
 
         if(room)
             track = &room->track;
-        else if(mapmarker) {
+        else if(mapmarker.isValid()){
 
-            std::shared_ptr<Area> area = gServer->getArea(mapmarker->getArea());
+            std::shared_ptr<Area> area = gServer->getArea(mapmarker.getArea());
             if(area) {
                 track = area->getTrack(mapmarker);
                 // only make tracks if they will last longer than 0 minutes
                 if(!track && area->getTrackDuration(mapmarker)) {
                     auto aTrack = std::make_shared<AreaTrack>();
 
-                    aTrack->mapmarker = *mapmarker;
+                    aTrack->mapmarker = mapmarker;
                     aTrack->setDuration(area->getTrackDuration(mapmarker));
 
                     area->addTrack(aTrack);
@@ -321,11 +324,11 @@ bool Move::track(const std::shared_ptr<UniqueRoom>& room, MapMarker *mapmarker, 
     return(reset);
 }
 
-void Move::track(const std::shared_ptr<UniqueRoom>& room, MapMarker *mapmarker, const std::shared_ptr<Exit>& exit, std::shared_ptr<Player>leader, std::list<std::shared_ptr<Creature>> *followers) {
+void Move::track(const std::shared_ptr<UniqueRoom>& room, const MapMarker& mapmarker, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Player>&leader, std::list<std::shared_ptr<Creature>> *followers) {
     std::list<std::shared_ptr<Creature>>::iterator it;
     bool    reset=false;
 
-    if(!room && !mapmarker)
+    if(!room && !mapmarker.isValid())
         return;
     if(room && room->flagIsSet(R_PERMENANT_TRACKS))
         return;
@@ -889,7 +892,7 @@ bool Move::getRoom(const std::shared_ptr<Creature>& creature, const std::shared_
         // if we're in a unique room, don't activate any unique-room triggers on
         // the overland unless we're teleporting
         if(teleport || !creature || !creature->inUniqueRoom())
-            l.room = area->getUnique(&l.mapmarker);
+            l.room = area->getUnique(l.mapmarker);
         if(!l.room.id) {
             // don't recycle if we are teleporting or leaving
             // a unique room
@@ -900,9 +903,9 @@ bool Move::getRoom(const std::shared_ptr<Creature>& creature, const std::shared_
             // if we're only looking, don't use the function that will create a new room
             // if one doesnt already exit
             if(justLooking)
-                (newRoom) = area->getRoom(&l.mapmarker);
+                (newRoom) = area->getRoom(l.mapmarker);
             else
-                (newRoom) = area->loadRoom(creature, &l.mapmarker, recycle);
+                (newRoom) = area->loadRoom(creature, l.mapmarker, recycle);
             if(!newRoom)
                 return(false);
             // getUnique gets called again later, so skip the decrement process here
@@ -1022,9 +1025,10 @@ std::shared_ptr<BaseRoom> Move::start(const std::shared_ptr<Creature>& creature,
     if(sneaking && player && player->checkHeavyRestrict("sneak"))
         return(nullptr);
 
-    if(newRoom->isAreaRoom()) {
-        mem = newRoom->getAsAreaRoom()->getStayInMemory();
-        newRoom->getAsAreaRoom()->setStayInMemory(true);
+    auto aRoom = newRoom->isAreaRoom() ? newRoom->getAsAreaRoom() : nullptr;
+    if(aRoom) {
+        mem = aRoom->getStayInMemory();
+        aRoom->setStayInMemory(true);
     }
 
     // we have to run a manual isFull check here because nobody is
@@ -1034,8 +1038,8 @@ std::shared_ptr<BaseRoom> Move::start(const std::shared_ptr<Creature>& creature,
         if(newRoom->maxCapacity() && (newRoom->countVisPly() + *numPeople) > newRoom->maxCapacity()) {
             creature->print("That room is full.\n");
             // reset stayInMemory
-            if(newRoom->isAreaRoom())
-                newRoom->getAsAreaRoom()->setStayInMemory(mem);
+            if(aRoom)
+                aRoom->setStayInMemory(mem);
             return(nullptr);
         }
     }
@@ -1149,7 +1153,7 @@ std::shared_ptr<BaseRoom> Move::start(const std::shared_ptr<Creature>& creature,
 // following to run the Move::start and Move::finish functions
 
 int cmdGo(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    MapMarker *oldMarker=nullptr;
+    MapMarker oldMarker;
     std::shared_ptr<UniqueRoom> oldRoom = player->getUniqueRoomParent();
     std::shared_ptr<Exit>   exit;
     int     numPeople=0;
@@ -1169,8 +1173,7 @@ int cmdGo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::list<std::shared_ptr<Creature>> followers;
 
     if(aRoom) {
-        oldMarker = new MapMarker;
-        *oldMarker = aRoom->mapmarker;
+        oldMarker = aRoom->mapmarker;
     }
 
     bool roomPurged = false;
@@ -1188,8 +1191,6 @@ int cmdGo(const std::shared_ptr<Player>& player, cmd* cmnd) {
             oldRoom->getAsUniqueRoom()->saveToFile(1);
         }
     }
-
-    delete oldMarker;
 
     // for display reasons, we only need to kill objects in
     // the room they're entering
@@ -1686,8 +1687,8 @@ int cmdLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // we're given a string and expected to find a) the area and
 // b) the room id.
 
-void getCatRef(std::string str, CatRef* cr, const std::shared_ptr<Creature> & target) {
-    cr->setDefault(target);
+void getCatRef(std::string str, CatRef& cr, const std::shared_ptr<Creature> & target) {
+    cr.setDefault(target);
 
     // chop off the end!
     std::string::size_type pos = str.find(' ');
@@ -1698,16 +1699,16 @@ void getCatRef(std::string str, CatRef* cr, const std::shared_ptr<Creature> & ta
     if(pos == std::string::npos)
         pos = str.find(':');
     if(pos != std::string::npos) {
-        cr->setArea(str.substr(0, pos));
+        cr.setArea(str.substr(0, pos));
         str.erase(0, pos+1);
     }
 
     if(!str.empty() && isdigit(str.at(0)))
-        cr->id = atoi(str.c_str());
+        cr.id = toNum<short>(str);
     else {
         if(!str.empty())
-            cr->setArea(str);
-        cr->id = -1;
+            cr.setArea(str);
+        cr.id = -1;
     }
 }
 
@@ -1718,19 +1719,19 @@ void getCatRef(std::string str, CatRef* cr, const std::shared_ptr<Creature> & ta
 // b) a CatRef. the string will start at the point we wish
 // to search, but may contain extra crap at the end
 
-void getDestination(const std::string &str, Location* l, const std::shared_ptr<Creature> & target) {
-    l->mapmarker.reset();
-    l->room.id = 0;
-    getDestination(str, &l->mapmarker, &l->room, target);
+void getDestination(const std::string &str, Location& l, const std::shared_ptr<Creature> & target) {
+    l.mapmarker.reset();
+    l.room.id = 0;
+    getDestination(str, l.mapmarker, l.room, target);
 }
 
-void getDestination(std::string str, MapMarker* mapmarker, CatRef* cr, const std::shared_ptr<Creature> & target) {
+void getDestination(std::string str, MapMarker& mapmarker, CatRef& cr, const std::shared_ptr<Creature> & target) {
     std::string::size_type pos=0;
     char    *txt;
     int     x=0, y=0, z=0;
 
     // chop off the end!
-    pos = str.find(" ", 0);
+    pos = str.find(' ', 0);
     if(pos != std::string::npos)
         str = str.substr(0, pos);
 
@@ -1738,20 +1739,20 @@ void getDestination(std::string str, MapMarker* mapmarker, CatRef* cr, const std
     txt = (char*)strstr(str.c_str(), ".");
     if(txt && isdigit(str.at(0))) {
         txt++;
-        x = atoi(txt);
+        x = toNum<int>(txt);
 
         txt = strstr(txt, ".");
         if(txt) {
             txt++;
-            y = atoi(txt);
+            y = toNum<int>(txt);
             txt = strstr(txt, ".");
             if(txt) {
                 txt++;
-                z = atoi(txt);
+                z = toNum<int>(txt);
             }
         }
 
-        mapmarker->set(atoi(str.c_str()), x, y, z);
+        mapmarker.set(toNum<int>(str), x, y, z);
     } else
         getCatRef(str, cr, target);
 }

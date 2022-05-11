@@ -55,7 +55,7 @@ std::shared_ptr<BaseRoom> Location::loadRoom(const std::shared_ptr<Player>& play
 
     std::shared_ptr<Area>  area = gServer->getArea(mapmarker.getArea());
     if(area) {
-        std::shared_ptr<AreaRoom> aRoom = area->loadRoom(player, &mapmarker, false);
+        std::shared_ptr<AreaRoom> aRoom = area->loadRoom(player, mapmarker, false);
         return(aRoom);
     }
 

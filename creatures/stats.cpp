@@ -113,8 +113,7 @@ void Stat::reCalc() {
     cur = initial;
     max = initial;
 
-    for(const ModifierMap::value_type& p : modifiers) {
-        StatModifier *mod = p.second;
+    for(const auto& [modId, mod] : modifiers) {
         if(!mod) continue;
         switch(mod->getModType()) {
         case MOD_MAX:
@@ -156,15 +155,19 @@ void Stat::reCalc() {
     }
     dirty = false;
 }
-StatModifier* Stat::getModifier(const std::string &pName) {
+bool Stat::hasModifier(const std::string &pName) {
+    return (modifiers.find(pName) != modifiers.end());
+}
+std::shared_ptr<StatModifier>& Stat::getModifier(const std::string &pName) {
     auto it = modifiers.find(pName);
-    if(it == modifiers.end()) return(nullptr);
-    else                      return(it->second);
+    if(it == modifiers.end())
+        throw std::runtime_error("Requested unknown modifier " + pName);
+    return(it->second);
 }
 int Stat::getModifierAmt(const std::string &pName) {
-    StatModifier* mod = getModifier(pName);
-    if(mod) return(mod->getModAmt());
-    else    return(0);
+    if(!hasModifier(pName)) return(0);
+
+    return getModifier(pName)->getModAmt();
 }
 Stat* Creature::getStat(std::string_view statName) {
     if     (statName == "strength")            return(&strength);
@@ -230,26 +233,20 @@ bool Stat::removeModifier(const std::string &pName) {
     auto it = modifiers.find(pName);
     if(it == modifiers.end()) return(false);
 
-    delete it->second;
     modifiers.erase(it);
     setDirty();
     return(true);
 }
 void Stat::clearModifiers() {
-    auto it = modifiers.begin();
-
-    while(it != modifiers.end()) {
-        delete it->second;
-        modifiers.erase(it++);
-    }
+    modifiers.clear();
 }
 bool Stat::adjustModifier(const std::string &pName, int modAmt, ModifierType modType) {
-    StatModifier* mod = getModifier(pName);
-    if(!mod) {
+    if(!hasModifier(pName)) {
         if(modAmt == 0) return(true);
-        mod = new StatModifier(pName, 0, modType);
+        auto mod = std::make_shared<StatModifier>(pName, 0, modType);
         modifiers.insert(ModifierMap::value_type(pName, mod));
     }
+    auto mod = getModifier(pName);
     mod->adjust(modAmt);
 
     if(mod->getModAmt() == 0) return(removeModifier(pName));
@@ -260,15 +257,16 @@ bool Stat::adjustModifier(const std::string &pName, int modAmt, ModifierType mod
 }
 
 bool Stat::setModifier(const std::string &pName, int newAmt, ModifierType modType) {
-    StatModifier* mod = getModifier(pName);
+    bool hasMod = hasModifier(pName);
     if(newAmt == 0) {
-        if(!mod) return(true);
+        if(!hasMod) return(true);
         else return(removeModifier(pName));
     }
-    if(!mod) {
-        mod = new StatModifier(pName, 0, modType);
+    if(!hasMod) {
+        auto mod = new StatModifier(pName, 0, modType);
         modifiers.insert(ModifierMap::value_type(pName, mod));
     }
+    auto mod = getModifier(pName);
     mod->set(newAmt);
     mod->setType(modType);
     setDirty();
@@ -298,11 +296,9 @@ Stat& Stat::operator=(const Stat& st) {
     return(*this);
 }
 void Stat::doCopy(const Stat& st) {
-    StatModifier* mod = nullptr;
-    for(const ModifierMap::value_type& p : st.modifiers) {
-        mod = new StatModifier();
-        (*mod) = (*p.second);
-        modifiers.insert(ModifierMap::value_type(mod->getName(), mod));
+    for(const auto& [modId, mod] : st.modifiers) {
+        auto newMod = std::make_shared<StatModifier>(*mod.get());
+        modifiers.insert(ModifierMap::value_type(newMod->getName(), newMod));
     }
     name = st.name;
     cur = st.cur;
@@ -314,9 +310,6 @@ void Stat::doCopy(const Stat& st) {
 }
 
 Stat::~Stat() {
-    for(const ModifierMap::value_type& p : modifiers) {
-        delete p.second;
-    }
     modifiers.clear();
 }
 
@@ -477,8 +470,7 @@ std::string Stat::toString() {
 
     oStr << "^C" << name << ": ^c" << getCur() << "/" << getMax() << "(" << getInitial() << ")\n";
     int i = 1;
-    for(const ModifierMap::value_type& p : modifiers) {
-        StatModifier* mod = p.second;
+    for(const auto& [modId, mod] : modifiers) {
         oStr << "\t" << i++ << ") ";
         oStr << "^C" << mod->getName() << "^c ";
         switch(mod->getModType()) {
@@ -521,7 +513,7 @@ unsigned int Stat::restore() {
 //                      modifyStatTotalByEffect
 //*********************************************************************
 
-int modifyStatTotalByEffect(const std::shared_ptr<Player> player, std::string_view effect) {
+int modifyStatTotalByEffect(const std::shared_ptr<Player>& player, std::string_view effect) {
     const EffectInfo* ef = player->getEffect(effect);
     if(ef) return(ef->getStrength());
     return(0);
@@ -685,7 +677,7 @@ void Stat::upgradeSetCur(unsigned int newCur) {
 }
 
 // Note: Used for upgradeStats
-void checkEffect(std::shared_ptr<Creature> creature, std::string_view effName, unsigned int &stat, bool positive)  {
+void checkEffect(const std::shared_ptr<Creature>& creature, std::string_view effName, unsigned int &stat, bool positive)  {
     EffectInfo* eff = creature->getEffect(effName);
     if(eff) {
         int str = eff->getStrength();

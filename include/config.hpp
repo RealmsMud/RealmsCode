@@ -278,17 +278,16 @@ public:
 // Ships
     bool loadShips();
     void saveShips() const;
-    void clearShips();
 
 // Calendar
     void loadCalendar();
     [[nodiscard]] const Calendar* getCalendar() const;
 
-    int classtoNum(std::string_view str);
+    static int classtoNum(std::string_view str);
     int racetoNum(std::string_view str);
     int deitytoNum(std::string_view str);
-    int stattoNum(std::string_view str);
-    int savetoNum(std::string_view str);
+    static int stattoNum(std::string_view str);
+    static int savetoNum(std::string_view str);
 
 // Uniques
     bool loadLimited();
@@ -347,7 +346,7 @@ public:
     void saveCatRefInfo() const;
     [[nodiscard]] std::string catRefName(std::string_view area) const;
     [[nodiscard]] const CatRefInfo* getCatRefInfo(std::string_view area, int id=0, int shouldGetParent=0) const;
-    [[nodiscard]] const CatRefInfo* getCatRefInfo(const std::shared_ptr<const BaseRoom> room, int shouldGetParent=0) const;
+    [[nodiscard]] const CatRefInfo* getCatRefInfo(const std::shared_ptr<const BaseRoom>& room, int shouldGetParent=0) const;
     [[nodiscard]] const CatRefInfo* getRandomCatRefInfo(int zone) const;
 
 
@@ -457,7 +456,7 @@ public:
 // Races
     bool loadRaces();
     void clearRaces();
-    unsigned short raceCount();
+    unsigned short raceCount() const;
     unsigned short getPlayableRaceCount();
 
 // Deities
@@ -645,7 +644,7 @@ public:
     inline std::string getOFlag(int flagNum) { return getFlag(flagNum, oflags); };
 
     Calendar    *calendar{};
-    std::list<Ship*> ships;
+    std::list<Ship> ships;
 
 public:
     void setListing(bool isListing);

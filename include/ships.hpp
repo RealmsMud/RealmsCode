@@ -92,7 +92,7 @@ public:
     bool createExit();
     void removeExit();
     void spawnRaiders(ShipRaid* sRaid);
-    std::shared_ptr<BaseRoom> getRoom(bool useOrigin);
+    std::shared_ptr<BaseRoom> getRoom(bool useOrigin) const;
     bool swap(const Swap& s);
 
     [[nodiscard]] std::string getName() const;
@@ -144,7 +144,7 @@ public:
     void load(xmlNodePtr curNode);
     void loadStops(xmlNodePtr curNode);
     void save(xmlNodePtr rootNode) const;
-    bool belongs(const CatRef& cr);
+    bool belongs(const CatRef& cr) const;
     bool swap(const Swap& s);
     
     // this info gets changed by the mud to keep track of where stuff is
@@ -172,9 +172,9 @@ public:
 
 
 
-void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message);
+void shipBroadcastRange(const Ship &ship, ShipStop *stop, const std::string& message);
 int cmdQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd);
-int shipSetExits(Ship *ship, ShipStop *stop);
-int shipDeleteExits(Ship *ship, ShipStop *stop);
+int shipSetExits(Ship &ship, ShipStop *stop);
+int shipDeleteExits(Ship &ship, ShipStop *stop);
 
 #endif /*SHIPS_H_*/

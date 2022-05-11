@@ -60,6 +60,7 @@
 #include "unique.hpp"                // for Unique
 #include "utils.hpp"                 // for MAX, MIN
 #include "xml.hpp"                   // for loadRoom
+#include "toNum.hpp"
 
 class UniqueRoom;
 
@@ -712,7 +713,7 @@ std::shared_ptr<Object>  studyFindObject(const std::shared_ptr<Player>& player, 
             }
 
         } else if(object->increase->type == LanguageIncrease) {
-            int lang = atoi(object->increase->increase.c_str());
+            int lang = toNum<int>(object->increase->increase);
 
             if(lang < 1 || lang > LANGUAGE_COUNT) {
                 player->printColor("The language set on this object is not a valid language.\n");
@@ -823,7 +824,7 @@ void doStudy(const std::shared_ptr<Player>& player, std::shared_ptr<Object>  obj
 
         } else if(object->increase->type == LanguageIncrease) {
             
-            int lang = atoi(object->increase->increase.c_str());
+            int lang = toNum<int>(object->increase->increase);
 
             player->printColor("You learn know how to speak ^W%s^x!\n", get_language_adj(lang-1));
             player->learnLanguage(lang-1);

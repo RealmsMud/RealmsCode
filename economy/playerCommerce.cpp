@@ -67,6 +67,7 @@
 #include "unique.hpp"                  // for Lore, addOwner, isLimited, Unique
 #include "utils.hpp"                   // for MAX, MIN
 #include "xml.hpp"                     // for loadRoom, loadObject, loadPlayer
+#include "toNum.hpp"
 
 
 const int SHOP_FOUND = 1,
@@ -644,7 +645,7 @@ int cmdShop(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
 
         if(cmnd->num > 3 && cmnd->str[3][0] == '$') {
-            value = atoi(cmnd->str[3]+1);
+            value = toNum<int>(cmnd->str[3]+1);
             value = MAX(0, value);
         }
         if(!value)
@@ -671,7 +672,7 @@ int cmdShop(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         if(cmnd->str[3][0] == '$') {
-            value = atoi(cmnd->str[3]+1);
+            value = toNum<int>(cmnd->str[3]+1);
             value = MAX(0, value);
         }
         if(cmnd->str[3][0] != '$' || !value) {
@@ -826,7 +827,7 @@ void playerShopBuy(const std::shared_ptr<Player>& player, cmd* cmnd, Property* p
         player->print("What item would you like to buy?\n");
         return;
     }
-    num = atoi(cmnd->str[1]+1);
+    num = toNum<int>(cmnd->str[1]+1);
     ObjectSet::iterator it, next;
     for( it = storage->objects.begin() ; it != storage->objects.end() && num != n; ) {
         while(it != storage->objects.end()) {

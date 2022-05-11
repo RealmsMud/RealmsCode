@@ -79,6 +79,7 @@
 #include "unique.hpp"                       // for remove, deleteOwner
 #include "utils.hpp"                        // for MIN, MAX
 #include "xml.hpp"                          // for loadRoom
+#include "toNum.hpp"
 
 
 //********************************************************************
@@ -283,7 +284,7 @@ void Player::init() {
     if(currentLocation.mapmarker.getArea() != 0) {
         std::shared_ptr<Area> area = gServer->getArea(currentLocation.mapmarker.getArea());
         if(area)
-            newRoom = area->loadRoom(nullptr, &currentLocation.mapmarker, false);
+            newRoom = area->loadRoom(nullptr, currentLocation.mapmarker, false);
 
     }
     // load up parent_rom for the broadcast below, but don't add the
@@ -305,7 +306,7 @@ void Player::init() {
             if(this->currentLocation.mapmarker.getArea() != 0) {
                 std::shared_ptr<Area> area = gServer->getArea(currentLocation.mapmarker.getArea());
                 if(area)
-                    newRoom = area->loadRoom(nullptr, &currentLocation.mapmarker, false);
+                    newRoom = area->loadRoom(nullptr, currentLocation.mapmarker, false);
             }
         }
     }
@@ -2084,19 +2085,19 @@ int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd) {
         player->print(Syntax);
         return(0);
     }
-    diceNum = atoi(tok);
+    diceNum = toNum<int>(tok);
 
     tok = strtok(nullptr, "+");
     if(!tok) {
         player->print(Syntax);
         return(0);
     }
-    diceSides = atoi(tok);
+    diceSides = toNum<int>(tok);
 
     tok = strtok(nullptr, "+");
 
     if(tok)
-        diceAdd = atoi(tok);
+        diceAdd = toNum<int>(tok);
 
     if(diceNum < 0) {
         player->print("How can you roll a negative number of dice?\n");

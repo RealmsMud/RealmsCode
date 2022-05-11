@@ -124,10 +124,8 @@ void Ship::save(xmlNodePtr rootNode) const {
 //*********************************************************************
 
 void Config::saveShips() const {
-    std::list<Ship*>::const_iterator it;
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    char            filename[80];
 
     // we only save if we're up on the main port
     if(getPortNum() != 3333)
@@ -137,10 +135,10 @@ void Config::saveShips() const {
     rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Ships", nullptr);
     xmlDocSetRootElement(xmlDoc, rootNode);
 
-    for(it = ships.begin() ; it != ships.end() ; it++)
-        (*it)->save(rootNode);
+    for(const auto& ship : ships)
+        ship.save(rootNode);
 
-    sprintf(filename, "%s/ships.xml", Path::Game.c_str());
+    auto filename = Path::Game / "ships.xml";
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }
@@ -168,21 +166,19 @@ bool Config::loadShips() {
     rootNode = xmlDocGetRootElement(xmlDoc);
     curNode = rootNode->children;
 
-    clearShips();
+    ships.clear();
     while(curNode) {
         if(NODE_NAME(curNode, "Ship")) {
-            lShip = new Ship;
-            lShip->load(curNode);
-            ships.push_back(lShip);
+            ships.emplace_back().load(curNode);
         }
         curNode = curNode->next;
     }
 
     // exits have all been deleted - go and set the current ones
-    for(const auto& aShip : ships) {
+    for(auto& aShip : ships) {
         // if at a stop, make the exits
-        if(aShip->inPort)
-            shipSetExits(aShip, aShip->stops.front());
+        if(aShip.inPort)
+            shipSetExits(aShip, aShip.stops.front());
     }
 
     xmlFreeDoc(xmlDoc);

@@ -40,6 +40,7 @@
 #include "range.hpp"
 #include "realm.hpp"
 #include "skills.hpp"
+#include "specials.hpp"                        // for SpecialAttack
 #include "statistics.hpp"
 #include "structs.hpp"
 #include "threat.hpp"
@@ -103,7 +104,7 @@ class SpellData;
 #define NUM_RESCUE              2
 
 class SkillGain;
-class SpecialAttack;
+
 
 enum DamageType {
     DMG_NONE = 0,
@@ -283,7 +284,7 @@ public:
     std::map<std::string, long> factions;
     SkillMap skills;
     char key[3][CRT_KEY_LENGTH]{};
-    short fd{}; // Socket number
+    int fd{}; // Socket number
     short current_language{};
     long proficiency[6]{}; // Weapon proficiencies: 6 now..added cleaving weapons
     int afterProf{};
@@ -321,7 +322,7 @@ public:
 
     //EffectList effects; // List of all effects on this creature
     Timer attackTimer;
-    std::list<SpecialAttack*> specials; // List of all special attack this creature has
+    std::list<SpecialAttack> specials; // List of all special attack this creature has
     std::list<std::string> minions; // vampire minions
 
 
@@ -497,17 +498,15 @@ public:
 
 // Special Attacks
     std::string getSpecialsFullList() const;
-    bool useSpecial(std::string_view special, std::shared_ptr<Creature> victim);
-    bool useSpecial(SpecialAttack* attack, std::shared_ptr<Creature> victim);
+    bool useSpecial(SpecialAttack &attack, std::shared_ptr<Creature> victim);
     bool runOpeners(std::shared_ptr<Creature> victim); // Run any opening attacks
     bool runSpecialAttacks(std::shared_ptr<Creature> victim); // Pick a special attack and do it on the target
     std::string getSpecialsList() const;
     SpecialAttack* addSpecial(std::string_view specialName);
     bool delSpecials();
-    SpecialAttack* getSpecial(std::string_view special);
 
     // Do Special should only be run from useSpecial, should not be called from elsewhere
-    bool doSpecial(SpecialAttack* attack, std::shared_ptr<Creature> victim); // Do the selected attack on the given victim
+    bool doSpecial(SpecialAttack &attack, std::shared_ptr<Creature> victim); // Do the selected attack on the given victim
 
 // Traits
     bool doesntBreathe() const;

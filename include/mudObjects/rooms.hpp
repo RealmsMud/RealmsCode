@@ -76,7 +76,7 @@ public:
 
 
     [[nodiscard]] std::shared_ptr<Monster>  getGuardingExit(const std::shared_ptr<Exit>& exit, const std::shared_ptr<const Player>& player) const;
-    void addExit(std::shared_ptr<Exit> ext);
+    void addExit(const std::shared_ptr<Exit>& ext);
     void checkExits();
     [[nodiscard]] bool deityRestrict(const std::shared_ptr<const Creature> & creature) const;
     [[nodiscard]] int maxCapacity() const;

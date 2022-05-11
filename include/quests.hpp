@@ -63,7 +63,7 @@ enum class QuestTurninStatus {
 class QuestInfo {
 public:
     static CatRef getQuestId(xmlNodePtr curNode);
-    static CatRef getQuestId(std::string strId);
+    static CatRef getQuestId(const std::string& strId);
     static void saveQuestId(xmlNodePtr curNode, const CatRef& questId);
 
 public:
@@ -130,7 +130,7 @@ private:
 class QuestCompletion {
 public:
     QuestCompletion(QuestInfo* parent, std::shared_ptr<Player> player);
-    QuestCompletion(xmlNodePtr rootNode, std::shared_ptr<Player> player);
+    QuestCompletion(xmlNodePtr rootNode, const std::shared_ptr<Player>& player);
     xmlNodePtr save(xmlNodePtr rootNode) const;
 
     //int getQuestId();
@@ -138,8 +138,8 @@ public:
     [[nodiscard]] QuestInfo* getParentQuest() const;
 private:
     CatRef questId;
-    QuestInfo* parentQuest{}; // What quest are we keeping track of?
-    std::shared_ptr<Player> parentPlayer;   // Parent Player for this quest
+    QuestInfo *parentQuest{}; // What quest are we keeping track of?
+    std::weak_ptr<Player> parentPlayer;   // Parent Player for this quest
     std::string revision;
 
     std::list<QuestCatRef> mobsKilled;      // How many of the required monsters have we killed

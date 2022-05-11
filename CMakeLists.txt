@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.15...3.19)
 project(RealmsCode)
 include(FetchContent)
 
-set(CMAKE_C_COMPILER "/usr/bin/clang")
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+#set(CMAKE_C_COMPILER "/usr/bin/gcc")
+#set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -38,8 +38,8 @@ message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 
 include_directories("include")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++ -fmodules")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g ")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++ -fmodules")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-int-in-bool-context -g ")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 if($ENV{LEAK})
@@ -52,13 +52,15 @@ ENDIF()
 
 message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
 
-FetchContent_Declare(json     URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz    )
-FetchContent_Declare(pybind11 GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v2.9.2      )
-FetchContent_Declare(crow     GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.0+1      )
-FetchContent_Declare(dpp      GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.0.6     )
-FetchContent_Declare(jwt-cpp  GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git  GIT_TAG v0.6.0      )
+FetchContent_Declare(json        URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz       )
+FetchContent_Declare(pybind11    GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v2.9.2         )
+FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.0+1         )
+FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.0.6        )
+FetchContent_Declare(jwt-cpp     GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git  GIT_TAG v0.6.0         )
+FetchContent_Declare(googletest  GIT_REPOSITORY https://github.com/google/googletest.git   GIT_TAG release-1.11.0 )
 
-FetchContent_MakeAvailable(pybind11 json crow dpp jwt-cpp)
+
+FetchContent_MakeAvailable(pybind11 json crow dpp jwt-cpp googletest)
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR} "include")
 

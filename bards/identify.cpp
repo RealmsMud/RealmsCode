@@ -40,6 +40,7 @@
 #include "skills.hpp"              // for SkillInfo
 #include "stats.hpp"               // for Stat
 #include "utils.hpp"               // for MAX, MIN
+#include "toNum.hpp"
 
 
 
@@ -156,7 +157,7 @@ int cmdIdentify(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     player->printColor("%O can increase your knowledge of %s.\n", object.get(), output.c_str());
                 }
             } else if(object->increase->type == LanguageIncrease) {
-                int lang = atoi(object->increase->increase.c_str());
+                int lang = toNum<int>(object->increase->increase);
                 if(lang < 1 || lang > LANGUAGE_COUNT)
                     player->printColor("^rThe language set on this object is not a valid language.\n");
                 else

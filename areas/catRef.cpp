@@ -62,9 +62,11 @@ void CatRef::setDefault(const std::shared_ptr<Creature> & target) {
         if(target->inUniqueRoom()) {
             setArea(target->getConstUniqueRoomParent()->info.area);
         } else if(target->inAreaRoom()) {
-            const CatRefInfo* cri = gConfig->getCatRefInfo("area", target->getConstAreaRoomParent()->area->id, true);
-            if(cri)
-                setArea(cri->getArea());
+            if(auto targetArea = target->getConstAreaRoomParent()->area.lock()){
+                const CatRefInfo *cri = gConfig->getCatRefInfo("area", targetArea->id, true);
+                if (cri)
+                    setArea(cri->getArea());
+            }
         }
     }
 }

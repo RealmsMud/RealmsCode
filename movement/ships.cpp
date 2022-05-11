@@ -53,6 +53,7 @@
 #include "utils.hpp"                                // for MAX
 #include "wanderInfo.hpp"                           // for WanderInfo
 #include "xml.hpp"                                  // for copyToString, sav...
+#include "toNum.hpp"
 
 
 #define PIRATE_QUEST (54 - 1)
@@ -84,15 +85,14 @@ bool ShipStop::belongs(const CatRef& cr) {
     return(false);
 }
 
-bool Ship::belongs(const CatRef& cr) {
-    std::list<Range>::iterator rt;
-    for(rt = ranges.begin() ; rt != ranges.end() ; rt++)
+bool Ship::belongs(const CatRef& cr) const {
+    for(auto rt = ranges.begin() ; rt != ranges.end() ; rt++)
         if((*rt).belongs(cr))
             return(true);
     return(false);
 }
 
-void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message) {
+void shipBroadcastRange(const Ship &ship, ShipStop *stop, const std::string& message) {
 
     if(message.empty())
         return;
@@ -113,7 +113,7 @@ void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message) 
         if(!target->inUniqueRoom())
             continue;
 
-        if( ship->belongs(target->getUniqueRoomParent()->info) ||
+        if( ship.belongs(target->getUniqueRoomParent()->info) ||
             stop->belongs(target->getUniqueRoomParent()->info)
         )
             target->print("%s\n", message.c_str());
@@ -174,7 +174,7 @@ void ShipExit::spawnRaiders(ShipRaid* sRaid) {
 //                      getRoom
 //*********************************************************************
 
-std::shared_ptr<BaseRoom> ShipExit::getRoom(bool useOrigin) {
+std::shared_ptr<BaseRoom> ShipExit::getRoom(bool useOrigin) const {
     if(useOrigin)
         return(origin.loadRoom());
     return(target.loadRoom());
@@ -233,7 +233,7 @@ bool ShipExit::createExit() {
 
 // hand on that responsibility!
 // but do broadcasting and raider-spawning
-int shipSetExits(Ship *ship, ShipStop *stop) {
+int shipSetExits(Ship &ship, ShipStop *stop) {
     bool        broad = false;
 
     for(const auto& exit : stop->exits)
@@ -257,18 +257,18 @@ void ShipExit::removeExit() {
     std::shared_ptr<Monster> raider;
     std::shared_ptr<BaseRoom> newRoom;
     std::shared_ptr<AreaRoom> aRoom;
-    int     i=0, n;
+    int i = 0, n;
 
     newRoom = getRoom(true);
-    if(!newRoom)
+    if (!newRoom)
         return;
 
     // kill all raiders
     auto mIt = newRoom->monsters.begin();
-    while(mIt != newRoom->monsters.end()) {
+    while (mIt != newRoom->monsters.end()) {
         raider = (*mIt++);
 
-        if(raider && raider->flagIsSet(M_RAIDING)) {
+        if (raider && raider->flagIsSet(M_RAIDING)) {
             broadcast(nullptr, newRoom, "%1M just %s away.", raider.get(), Move::getString(raider).c_str());
             gServer->delActive(raider.get());
             raider->deleteFromRoom();
@@ -277,18 +277,18 @@ void ShipExit::removeExit() {
     }
 
 
-    if(!departs.empty())
+    if (!departs.empty())
         broadcast(nullptr, newRoom, "%s", departs.c_str());
 
     aRoom = newRoom->getAsAreaRoom();
-    for(auto xit = newRoom->exits.begin() ; xit != newRoom->exits.end() ; ) {
+    for (auto xit = newRoom->exits.begin(); xit != newRoom->exits.end();) {
         const auto &ext = *xit;
         // if we're given an exit, delete it; otherwise delete all exits
-        if(ext->flagIsSet(X_MOVING) && ext->getName() == name) {
+        if (ext->flagIsSet(X_MOVING) && ext->getName() == name) {
             //oldPrintColor(4, "^rDeleting^w exit %s in room %d.\n", xt->name, room);
-            if(i < 8 && aRoom) {
+            if (i < 8 && aRoom) {
                 // it's a cardinal direction, clear all flags
-                for(n=0; n<MAX_EXIT_FLAGS; n++)
+                for (n = 0; n < MAX_EXIT_FLAGS; n++)
                     ext->clearFlag(n);
                 ext->target.room.id = 0;
                 aRoom->updateExits();
@@ -304,7 +304,7 @@ void ShipExit::removeExit() {
 
 // hand on that responsibility!
 // but do broadcasting and kicking people off a raiding vessel
-int shipDeleteExits(Ship *ship, ShipStop *stop) {
+int shipDeleteExits(Ship &ship, ShipStop *stop) {
     std::shared_ptr<Monster> raider=nullptr;
     std::shared_ptr<UniqueRoom> room=nullptr, newRoom=nullptr;
     int         found=1;
@@ -312,7 +312,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
     if(stop->raid) {
         // record when the last pirate raid was
         if(stop->raid->getRecord())
-            gConfig->calendar->setLastPirate(ship->name);
+            gConfig->calendar->setLastPirate(ship.name);
 
         // kick people off the ship!
         if( stop->raid->getSearchMob() && (stop->raid->getDump().id || stop->raid->getPrison().id) && loadMonster(stop->raid->getSearchMob(), raider)) {
@@ -326,7 +326,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                 if(!ply->inUniqueRoom())
                     continue;
 
-                if(!ship->belongs(ply->getUniqueRoomParent()->info))
+                if(!ship.belongs(ply->getUniqueRoomParent()->info))
                     continue;
 
 
@@ -688,13 +688,11 @@ void shipPrintRange(const std::shared_ptr<Player>& player, std::list<Range>* lis
 
 int dmQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int         mod=0, id=0;
-    std::list<Ship*>::iterator it;
     std::list<ShipStop*>::iterator st;
     std::list<ShipExit*>::iterator xt;
-    Ship        *ship=nullptr;
     ShipStop    *stop=nullptr;
-    int shipID = atoi(getFullstrText(cmnd->fullstr, 1).c_str());
-    int stopID = atoi(getFullstrText(cmnd->fullstr, 2).c_str());
+    int shipID = toNum<int>(getFullstrText(cmnd->fullstr, 1));
+    int stopID = toNum<int>(getFullstrText(cmnd->fullstr, 2));
     const Calendar* calendar = nullptr;
 
     if(!shipID) {
@@ -703,14 +701,13 @@ int dmQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->printColor("^b-------------------------------------------------------------------------------\n");
 
         id = 1;
-        for(it = gConfig->ships.begin() ; it != gConfig->ships.end() ; it++) {
-            ship = (*it);
-            player->print("  %-25s %s", ship->name.c_str(), ship->inPort ? "Stopped at " : "In transit, going to ");
+        for(auto& ship : gConfig->ships) {
+            player->print("  %-25s %s", ship.name.c_str(), ship.inPort ? "Stopped at " : "In transit, going to ");
 
-            st = ship->stops.begin();
+            st = ship.stops.begin();
             stop = (*st);
             player->print("%s.\n     #%-25dWill ", stop->name.c_str(), id);
-            if(ship->inPort) {
+            if(ship.inPort) {
                 st++;
                 stop = (*st);
                 player->print("depart for %s", stop->name.c_str());
@@ -718,10 +715,10 @@ int dmQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 player->print("arrive");
             }
             player->print(" in ");
-            mod = ship->timeLeft / 60;
+            mod = ship.timeLeft / 60;
             if(mod)
-                player->print("%d hour%s%s", mod, mod==1 ? "" : "s", ship->timeLeft % 60 ? " " : "");
-            mod = ship->timeLeft % 60;
+                player->print("%d hour%s%s", mod, mod==1 ? "" : "s", ship.timeLeft % 60 ? " " : "");
+            mod = ship.timeLeft % 60;
             if(mod)
                 player->print("%d minute%s", mod, mod==1 ? "" : "s");
             player->print(".\n");
@@ -739,43 +736,44 @@ int dmQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     mod = 1;
     // find the ship we're looking at
-    for(it = gConfig->ships.begin() ; it != gConfig->ships.end() && mod != shipID ; it++)
+    auto it = gConfig->ships.begin();
+    for( ; it != gConfig->ships.end() && mod != shipID ; it++)
         mod++;
-    ship = (*it);
+    auto ship = (*it);
 
-    if(!ship) {
+    if(mod != shipID) {
         player->print("Invalid ship!\n");
         return(0);
     }
 
-    player->print("Information on %s:\n", ship->name.c_str());
+    player->print("Information on %s:\n", ship.name.c_str());
     player->printColor("^b-------------------------------------------------------------------------------\n");
 
-    stop = ship->stops.front();
-    player->print("In Port:   %s\n", ship->inPort ? "Yes" : "No");
-    player->print("Time Left: %d minutes\n", ship->timeLeft);
+    stop = ship.stops.front();
+    player->print("In Port:   %s\n", ship.inPort ? "Yes" : "No");
+    player->print("Time Left: %d minutes\n", ship.timeLeft);
 
     if(!stopID) {
 
-        player->print("Can Query: %s\n", ship->canQuery ? "Yes" : "No");
-        if(!ship->transit.empty())
-            player->print("Transit:   %s\n", ship->transit.c_str());
-        if(!ship->movement.empty())
-            player->print("Movement:  %s\n", ship->movement.c_str());
-        if(!ship->docked.empty())
-            player->print("Docked:    %s\n", ship->docked.c_str());
+        player->print("Can Query: %s\n", ship.canQuery ? "Yes" : "No");
+        if(!ship.transit.empty())
+            player->print("Transit:   %s\n", ship.transit.c_str());
+        if(!ship.movement.empty())
+            player->print("Movement:  %s\n", ship.movement.c_str());
+        if(!ship.docked.empty())
+            player->print("Docked:    %s\n", ship.docked.c_str());
         player->print("\n");
 
         // boat range
         player->print("Boat Ranges:\n");
-        shipPrintRange(player, &ship->ranges);
+        shipPrintRange(player, &ship.ranges);
         player->print("\n");
 
         player->print("Stops:\n");
 
         id = 1;
 
-        for(st = ship->stops.begin() ; st != ship->stops.end() ; st++) {
+        for(st = ship.stops.begin() ; st != ship.stops.end() ; st++) {
             stop = (*st);
             player->print("-----------------------\n");
             player->print("  Stop: %d - %s\n", id, stop->name.c_str());
@@ -799,7 +797,7 @@ int dmQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         mod = 1;
         // find the stop we're looking at
-        for(st = ship->stops.begin() ; st != ship->stops.end() && mod != stopID ; st++)
+        for(st = ship.stops.begin() ; st != ship.stops.end() && mod != stopID ; st++)
             mod++;
 
         stop = (*st);
@@ -876,9 +874,7 @@ int dmQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     mod=0;
-    std::list<Ship*>::iterator it;
-    std::list<ShipStop*>::iterator st;
-    Ship    *ship=nullptr;
+    std::list<ShipStop*>::const_iterator st;
     ShipStop *stop=nullptr;
 
     if(!player->ableToDoCommand())
@@ -886,21 +882,20 @@ int cmdQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->print("Location of Chartered Ships:\n");
     player->printColor("^b-------------------------------------------------------------------------------\n");
-
-    for(it = gConfig->ships.begin() ; it != gConfig->ships.end() ; it++) {
-        ship = (*it);
+    
+    for(const auto& ship : gConfig->ships) {
         // the wizard's eye tower can be viewed by clan members
-        if(ship->canQuery || (ship->clan && ship->clan == player->getClan())) {
-            player->print("  %-25s ", ship->name.c_str());
-            if(ship->inPort)
-                player->print("%s at ", ship->docked.c_str());
+        if(ship.canQuery || (ship.clan && ship.clan == player->getClan())) {
+            player->print("  %-25s ", ship.name.c_str());
+            if(ship.inPort)
+                player->print("%s at ", ship.docked.c_str());
             else
-                player->print("%s, %s to ", ship->transit.c_str(), ship->movement.c_str());
+                player->print("%s, %s to ", ship.transit.c_str(), ship.movement.c_str());
 
-            st = ship->stops.begin();
+            st = ship.stops.begin();
             stop = (*st);
             player->print("%s.\n%-31sWill ", stop->name.c_str(), " ");
-            if(ship->inPort) {
+            if(ship.inPort) {
                 st++;
                 stop = (*st);
                 player->print("depart for %s", stop->name.c_str());
@@ -908,18 +903,17 @@ int cmdQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 player->print("arrive");
 
             player->print(" in ");
-            mod = ship->timeLeft / 60;
+            mod = ship.timeLeft / 60;
             if(mod)
-                player->print("%d hour%s%s", mod, mod==1 ? "" : "s", ship->timeLeft % 60 ? " " : "");
-            mod = ship->timeLeft % 60;
+                player->print("%d hour%s%s", mod, mod==1 ? "" : "s", ship.timeLeft % 60 ? " " : "");
+            mod = ship.timeLeft % 60;
             if(mod)
                 player->print("%d minute%s", mod, mod==1 ? "" : "s");
             player->print(".\n");
         }
     }
 
-    // Dont let staff cheat and set the quest on themselves
-    // to see where the Marauder will be.
+    // Don't let staff cheat and set the quest on themselves to see where the Marauder will be.
     if(player->isStaff() && !player->isDm())
         return(0);
 
@@ -927,19 +921,4 @@ int cmdQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("\nThe last pirate raid was: %s\n", gConfig->getCalendar()->getLastPirate().c_str());
 
     return(0);
-}
-
-//*********************************************************************
-//                      clearShips
-//*********************************************************************
-
-void Config::clearShips() {
-    Ship    *ship=nullptr;
-
-    while(!ships.empty()) {
-        ship = ships.front();
-        delete ship;
-        ships.pop_front();
-    }
-    ships.clear();
 }

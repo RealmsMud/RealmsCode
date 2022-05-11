@@ -400,9 +400,10 @@ int cmdSearch(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //*********************************************************************
 
 bool AreaRoom::spawnHerbs() {
-    if(!area)
+    auto myArea = area.lock();
+    if(!myArea)
         return(false);
-    const std::shared_ptr<TileInfo>  tile = area->getTile(area->getTerrain(nullptr, &mapmarker, 0, 0, 0, true), area->getSeasonFlags(&mapmarker));
+    const std::shared_ptr<TileInfo>  tile = myArea->getTile(myArea->getTerrain(nullptr, mapmarker, 0, 0, 0, true), myArea->getSeasonFlags(mapmarker));
     if(!tile)
         return(false);
     return(tile->spawnHerbs(Container::downcasted_shared_from_this<AreaRoom>()));
@@ -672,10 +673,10 @@ bool doScout(std::shared_ptr<Player> player, const std::shared_ptr<Exit> exit) {
         player->print("\n");
         if(!area->name.empty())
             player->printColor("%s%s^x\n\n",
-                (!player->flagIsSet(P_NO_EXTRA_COLOR) && area->isSunlight(&exit->target.mapmarker) ? "^C" : "^c"),
+                (!player->flagIsSet(P_NO_EXTRA_COLOR) && area->isSunlight(exit->target.mapmarker) ? "^C" : "^c"),
                 area->name.c_str());
 
-        player->printColor("%s", area->showGrid(player, &exit->target.mapmarker, false).c_str());
+        player->printColor("%s", area->showGrid(player, exit->target.mapmarker, false).c_str());
         player->printColor("^g%s exits: north, east, south, west, northeast, northwest, southeast, southwest.^w\n\n",
             player->isStaff() ? "All" : "Obvious");
 
@@ -796,7 +797,7 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 player->printColor("^eArea does not exist.\n");
             return(0);
         }
-        if( !area->canPass(player, &exit->target.mapmarker, true) &&
+        if( !area->canPass(player, exit->target.mapmarker, true) &&
             !player->checkStaff("You cannot scout that way.\n") )
             return(0);
     }

@@ -267,8 +267,14 @@ int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             room->wake("Loud noises disturb your sleep.", true);
             finishDropObject(object, room, creature, false, false, true);
 
-            if(newRoom->isAreaRoom() && newRoom->getAsAreaRoom()->canDelete())
-                newRoom->getAsAreaRoom()->area->remove(newRoom->getAsAreaRoom());
+            if(newRoom->isAreaRoom()) {
+                auto aNewRoom = newRoom->getAsAreaRoom();
+                if (aNewRoom->canDelete()) {
+                    if (auto area = aNewRoom->area.lock()) {
+                        area->remove(aNewRoom);
+                    }
+                }
+            }
         }
 
         creature->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);

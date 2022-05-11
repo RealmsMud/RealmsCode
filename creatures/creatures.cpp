@@ -188,7 +188,7 @@ bool Creature::canEnter(const std::shared_ptr<Exit>& exit, bool p, bool blinking
             return(false);
         // y coords are stored upside down in the array
         // impassable terrain
-        if(!area->canPass(Containable::downcasted_shared_from_this<Creature>(), &exit->target.mapmarker, true)) {
+        if(!area->canPass(Containable::downcasted_shared_from_this<Creature>(), exit->target.mapmarker, true)) {
             if(p) checkStaff("You can't go there!\n");
             if(!staff) return(false);
         }

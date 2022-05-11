@@ -50,6 +50,7 @@
 #include "server.hpp"                               // for Server, gServer
 #include "unique.hpp"                               // for Unique, UniqueOwner
 #include "xml.hpp"                                  // for copyToNum, saveNo...
+#include "toNum.hpp"
 
 //*********************************************************************
 //                          UniqueObject
@@ -1112,7 +1113,7 @@ int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     // they want to look at information
     if(!strcmp(cmnd->str[1], "list")) {
-        id = atoi(getFullstrText(cmnd->fullstr, 2).c_str());
+        id = toNum<int>(getFullstrText(cmnd->fullstr, 2));
         if(!id) {
 
             gConfig->listLimited(player);
@@ -1131,7 +1132,7 @@ int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     // setting some info on a unique group
     if(!strcmp(cmnd->str[1], "set")) {
-        id = atoi(getFullstrText(cmnd->fullstr, 2).c_str());
+        id = toNum<int>(getFullstrText(cmnd->fullstr, 2));
         if(id)
             unique = gConfig->getUnique(id);
         if(!unique) {
@@ -1149,14 +1150,14 @@ int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd) {
         std::string command = getFullstrText(cmnd->fullstr, 4);
         if(!strncmp(command.c_str(), "limit", 5)) {
 
-            id = atoi(getFullstrText(cmnd->fullstr, 5).c_str());
+            id = toNum<int>(getFullstrText(cmnd->fullstr, 5));
             if(id < 0) {
                 player->print("That is not a valid number.\n");
                 return(0);
             }
 
             CatRef  cr;
-            getCatRef(getFullstrText(cmnd->fullstr, 3), &cr, nullptr);
+            getCatRef(getFullstrText(cmnd->fullstr, 3), cr, nullptr);
 
             if(!unique->setObjectLimit(cr, id)) {
                 player->printColor("^c%s^x is not in that unique group.\n", cr.displayStr().c_str());
@@ -1166,7 +1167,7 @@ int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->printColor("ItemLimit set to ^c%d^x.\n", id);
 
         } else {
-            id = atoi(command.c_str());
+            id = toNum<int>(command);
             if(id < 0) {
                 player->print("That is not a valid number.\n");
                 return(0);
@@ -1230,7 +1231,7 @@ int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->print("That object is already part of a unique group.\n");
             return(0);
         }
-        id = atoi(getFullstrText(cmnd->fullstr, 3).c_str());
+        id = toNum<int>(getFullstrText(cmnd->fullstr, 3));
         unique = nullptr;
         if(id)
             unique = gConfig->getUnique(id);

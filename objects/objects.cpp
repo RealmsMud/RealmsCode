@@ -135,7 +135,9 @@ void Object::setDroppedBy(const std::shared_ptr<MudObject>& dropper, std::string
     } else if(rDropper) {
         droppedBy.index = rDropper->info.str();
     } else if(aDropper) {
-        droppedBy.index = aDropper->area->name + aDropper->fullName();
+        if(auto area = aDropper->area.lock()) {
+            droppedBy.index = area->name + aDropper->fullName();
+        }
     }
     else {
         droppedBy.index = "";
@@ -972,23 +974,19 @@ std::string Object::getCompass(const std::shared_ptr<const Creature> & creature,
         oStr << "appears to be broken.\n";
         return(oStr.str());
     }
+    if(!creature->inAreaRoom()) {
+        oStr << "is currently spinning in circles.\n";
+        return(oStr.str());
 
-    const MapMarker *mapmarker=nullptr;
-    if(creature->inAreaRoom())
-        mapmarker = &creature->getConstAreaRoomParent()->mapmarker;
+    }
+    const MapMarker& mapmarker = creature->getConstAreaRoomParent()->mapmarker;
 
-    if( !creature->inAreaRoom() ||
-        !mapmarker->getArea() ||
-        !compass->getArea() ||
-        mapmarker->getArea() != compass->getArea() ||
-        *mapmarker == *compass
-    ) {
+    if( !mapmarker.getArea() || !compass->getArea() || mapmarker.getArea() != compass->getArea() || mapmarker == *compass) {
         oStr << "is currently spinning in circles.\n";
         return(oStr.str());
     }
 
-    oStr << "points " << mapmarker->direction(compass) << ". The target is "
-         << mapmarker->distance(compass) << ".\n";
+    oStr << "points " << mapmarker.direction(*compass) << ". The target is " << mapmarker.distance(*compass) << ".\n";
     return(oStr.str());
 }
 
@@ -999,7 +997,7 @@ std::string Object::getCompass(const std::shared_ptr<const Creature> & creature,
 
 std::string Object::getObjStr(const std::shared_ptr<const Creature> & viewer, unsigned int ioFlags, int num) const {
     std::ostringstream objStr;
-    std::string toReturn = "";
+    std::string toReturn;
     char ch;
 
     if(flagIsSet(O_DARKNESS))
@@ -1172,7 +1170,7 @@ void spawnObjects(const std::string &room, const std::string &objects) {
     std::shared_ptr<Object>  object=nullptr;
     CatRef  cr;
 
-    getCatRef(room, &cr, nullptr);
+    getCatRef(room, cr, nullptr);
 
     if(!loadRoom(cr, dest))
         return;
@@ -1187,7 +1185,7 @@ void spawnObjects(const std::string &room, const std::string &objects) {
             obj = getFullstrTextTrun(objects, i++);
             if(!obj.empty())
             {
-                getCatRef(obj, &cr, nullptr);
+                getCatRef(obj, cr, nullptr);
                 ObjectSet::iterator it;
                 for( it = dest->objects.begin() ; it != dest->objects.end() ; ) {
                     object = (*it++);
@@ -1208,7 +1206,7 @@ void spawnObjects(const std::string &room, const std::string &objects) {
         obj = getFullstrTextTrun(objects, i++);
         if(!obj.empty())
         {
-            getCatRef(obj, &cr, nullptr);
+            getCatRef(obj, cr, nullptr);
 
             if(loadObject(cr, object)) {
                 // no need to spawn darkmetal items in a sunlit room

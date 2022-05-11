@@ -105,7 +105,7 @@ int cmdReconnect(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->uninit();
     gServer->clearPlayer(player);
-    sock->setPlayer(nullptr);
+    sock->clearPlayer();
 
     sock->reconnect();
     return(0);
@@ -174,8 +174,7 @@ void login(Socket* sock, const std::string& inStr) {
         sock->askFor("Please enter name: ");
 
         sock->setState(LOGIN_GET_NAME);
-//      sock->print("\n\nChoose - [A]nsi color, [M]irc color, [X] MXP + Ansi, or [N]o color\n: ");
-//      sock->setState(LOGIN_GET_COLOR);
+
         return;
         // End LOGIN_GET_LOCKOUT_PASSWORD
     case LOGIN_GET_NAME:
@@ -226,7 +225,6 @@ void login(Socket* sock, const std::string& inStr) {
             }
 
             player->fd = -1;
-            //gServer->addPlayer(player);
             sock->setPlayer(player);
 
             if(gServer->checkDuplicateName(*sock, false)) {
@@ -267,7 +265,6 @@ void login(Socket* sock, const std::string& inStr) {
             return;
         } else {
             player->fd = -1;
-            //gServer->addPlayer(player);
             sock->setPlayer(player);
 
             sock->print("%s", echo_off);
@@ -294,10 +291,10 @@ void login(Socket* sock, const std::string& inStr) {
         }
         // End LOGIN_CHECK_CREATE_NEW
     case LOGIN_GET_PASSWORD:
-
-        if(!sock->getPlayer()->isPassword(str)) {
+        player = sock->getPlayer();
+        if(!player || !player->isPassword(str)) {
             sock->write("\255\252\1\n\rIncorrect.\n\r");
-            logn("log.incorrect", fmt::format("Invalid password({}) for {} from {}\n", str, sock->getPlayer()->getName(), sock->getHostname()).c_str());
+            logn("log.incorrect", fmt::format("Invalid password({}) for {} from {}\n", str, player ? player->getName() : "", sock->getHostname()).c_str());
             sock->disconnect();
             return;
         } else {
@@ -323,22 +320,19 @@ void login(Socket* sock, const std::string& inStr) {
 
 void Socket::finishLogin() {
     char    charName[25];
-    std::shared_ptr<Player> player = nullptr;
 
     print("%s", echo_on);
     strcpy(charName, getPlayer()->getCName());
 
     gServer->checkDuplicateName(*this, true);
     if(gServer->checkDouble(*this)) {
-//      gServer->cleanUp();
         return;
     }
-//  gServer->cleanUp();
 
-    player = getPlayer();
+    auto player = getPlayer();
     std::string proxyName = player->getProxyName();
     std::string proxyId = player->getProxyId();
-    setPlayer(nullptr);
+    myPlayer.reset();
 
     if(!loadPlayer(charName, player)) {
         askFor("Player no longer exists!\n\nPlease enter name: ");
@@ -386,7 +380,7 @@ void Socket::finishLogin() {
 
 }
 
-// Blah I know its a big hack...fix it later if you don't like it
+// Blah I know it's a big hack...fix it later if you don't like it
 
 int setPlyClass(Socket* sock, int cClass) {
     // Make sure they both start off at 0

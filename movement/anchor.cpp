@@ -36,15 +36,13 @@ Anchor::Anchor() {
     reset();
 }
 
-Anchor::Anchor(std::string_view a, const std::shared_ptr<Player> player) {
+Anchor::Anchor(std::string_view a, const std::shared_ptr<Player>& player) {
     reset();
     alias = a;
     bind(player);
 }
 
-Anchor::~Anchor() {
-        delete mapmarker;
-}
+Anchor::~Anchor() = default;
 
 //*********************************************************************
 //                      getRoom
@@ -62,7 +60,7 @@ void Anchor::setRoom(const CatRef& r) { room = r; }
 //                      getMapMarker
 //*********************************************************************
 
-const MapMarker* Anchor::getMapMarker() const { return(mapmarker); }
+const MapMarker& Anchor::getMapMarker() const { return(mapmarker); }
 
 //*********************************************************************
 //                      getAlias
@@ -82,7 +80,7 @@ std::string Anchor::getRoomName() const { return(roomName); }
 
 void Anchor::reset() {
     alias = roomName = "";
-    mapmarker = nullptr;
+    mapmarker.reset();
 }
 
 //*********************************************************************
@@ -101,24 +99,22 @@ void Anchor::bind(const std::shared_ptr<const UniqueRoom> &uRoom) {
     room = uRoom->info;
 }
 void Anchor::bind(const std::shared_ptr<const AreaRoom> &aRoom) {
-    roomName = aRoom->area->getTile(
-            aRoom->area->getTerrain(nullptr, &aRoom->mapmarker, 0, 0, 0, true), false
-        )->getName().c_str();
-        delete mapmarker;
-    mapmarker = new MapMarker;
-    *mapmarker = *&aRoom->mapmarker;
+    if(auto myArea = aRoom->area.lock()) {
+        roomName = myArea->getTile(myArea->getTerrain(nullptr, aRoom->mapmarker, 0, 0, 0, true), false)->getName();
+        mapmarker = aRoom->mapmarker;
+    }
 }
 
 //*********************************************************************
 //                      is
 //*********************************************************************
 
-bool Anchor::is(const std::shared_ptr<const BaseRoom> room) const {
-    const std::shared_ptr<const UniqueRoom> uRoom = room->getAsConstUniqueRoom();
+bool Anchor::is(const std::shared_ptr<const BaseRoom> &pRoom) const {
+    const std::shared_ptr<const UniqueRoom> uRoom = pRoom->getAsConstUniqueRoom();
     if(uRoom)
         return(is(uRoom));
     else
-        return(is(room->getAsConstAreaRoom()));
+        return(is(pRoom->getAsConstAreaRoom()));
 }
 bool Anchor::is(const std::shared_ptr<const Player>& player) const {
     if(player->inUniqueRoom())
@@ -130,7 +126,7 @@ bool Anchor::is(const std::shared_ptr<const UniqueRoom>& uRoom) const {
     return(room.id && room == uRoom->info);
 }
 bool Anchor::is(const std::shared_ptr<const AreaRoom>& aRoom) const {
-    return(mapmarker && *mapmarker == *&aRoom->mapmarker);
+    return(_hasMarker && mapmarker == aRoom->mapmarker);
 }
 
 //*********************************************************************
@@ -144,10 +140,8 @@ Anchor& Anchor::operator=(const Anchor& a) {
     alias = a.alias;
     roomName = a.roomName;
     room = a.room;
-    if(a.mapmarker) {
-        delete mapmarker;
-        mapmarker = new MapMarker;
-        *mapmarker = *a.mapmarker;
+    if(_hasMarker) {
+        mapmarker = a.mapmarker;
     }
     return(*this);
 }
@@ -164,8 +158,8 @@ void Anchor::load(xmlNodePtr curNode) {
         else if(NODE_NAME(childNode, "RoomName")) xml::copyToString(roomName, childNode);
         else if(NODE_NAME(childNode, "Room")) room.load(childNode);
         else if(NODE_NAME(childNode, "MapMarker")) {
-            mapmarker = new MapMarker;
-            mapmarker->load(childNode);
+            _hasMarker = true;
+            mapmarker.load(childNode);
         }
 
         childNode = childNode->next;
@@ -180,8 +174,12 @@ void Anchor::save(xmlNodePtr curNode) const {
     xml::newStringChild(curNode, "Alias", alias);
     xml::newStringChild(curNode, "RoomName", roomName);
     room.save(curNode, "Room", false);
-    if(mapmarker) {
+    if(_hasMarker) {
         xmlNodePtr childNode = xml::newStringChild(curNode, "MapMarker");
-        mapmarker->save(childNode);
+        mapmarker.save(childNode);
     }
+}
+
+bool Anchor::hasMarker() const {
+    return _hasMarker;
 }

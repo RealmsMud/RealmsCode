@@ -61,6 +61,7 @@
 #include "unique.hpp"                          // for remove, Lore, is, dele...
 #include "utils.hpp"                           // for MAX, MIN
 #include "xml.hpp"                             // for loadObject, loadPlayer
+#include "toNum.hpp"
 
 class Socket;
 
@@ -2765,7 +2766,7 @@ void give_money(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 match = keyword == pay;
                 // investigate level-based cost
                 if(!match && keyword.starts_with("$pay level")) {
-                    cost = atoi(keyword.substr(11).c_str());
+                    cost = toNum<int>(keyword.substr(11));
                     match = cost * player->getLevel() == amt;
                 }
                 if(match) {

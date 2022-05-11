@@ -38,7 +38,7 @@
 //*********************************************************************
 // Reads an exit from the given xml document and root node
 
-int Exit::readFromXml(xmlNodePtr rootNode, std::shared_ptr<BaseRoom> room, bool offline) {
+int Exit::readFromXml(xmlNodePtr rootNode, bool offline, const std::string &version) {
     xmlNodePtr curNode, childNode;
 
     setName(xml::getProp(rootNode, "Name"));
@@ -71,9 +71,9 @@ int Exit::readFromXml(xmlNodePtr rootNode, std::shared_ptr<BaseRoom> room, bool 
         else if(NODE_NAME(curNode, "Effects")) effects.load(curNode, getAsExit());
         else if(NODE_NAME(curNode, "Hooks")) hooks.load(curNode);
 
-            // depreciated, but there's no version function
-            // TODO: Use room->getVersion()
-        else if(NODE_NAME(curNode, "Room")) target.room.load(curNode);
+        // deprecated: use `Target`
+        else if(NODE_NAME(curNode, "Room") && version < "v2.54h") target.room.load(curNode);
+
         else if(NODE_NAME(curNode, "AreaRoom")) target.mapmarker.load(curNode);
         else if(NODE_NAME(curNode, "UsedBy")) {
             childNode = curNode->children;
@@ -89,14 +89,11 @@ int Exit::readFromXml(xmlNodePtr rootNode, std::shared_ptr<BaseRoom> room, bool 
 
         curNode = curNode->next;
     }
-    if(room) {
-        room->addExit(getAsExit());
 
 #define X_OLD_INVISIBLE             1         // Invisible
-        if(room->getVersion() < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
-            addEffect("invisibility", -1);
-            clearFlag(X_OLD_INVISIBLE);
-        }
+    if(!version.empty() && version < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
+        addEffect("invisibility", -1);
+        clearFlag(X_OLD_INVISIBLE);
     }
     escapeText();
     return(0);
@@ -111,14 +108,15 @@ void BaseRoom::readExitsXml(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode = curNode->children;
     std::shared_ptr<AreaRoom> aRoom = getAsAreaRoom();
 
-    while(childNode) {
-        if(NODE_NAME(childNode , "Exit")) {
+    while (childNode) {
+        if (NODE_NAME(childNode, "Exit")) {
             auto ext = std::make_shared<Exit>();
-            ext->readFromXml(childNode, getAsRoom(), offline);
+            ext->readFromXml(childNode, offline, getVersion());
+            addExit(ext);
 
-            if(!ext->flagIsSet(X_PORTAL)) {
+            if (!ext->flagIsSet(X_PORTAL)) {
                 // moving cardinal exit on the overland?
-                if(ext->flagIsSet(X_MOVING) && aRoom && aRoom->updateExit(ext->getName()))
+                if (ext->flagIsSet(X_MOVING) && aRoom && aRoom->updateExit(ext->getName()))
                     delExit(ext);
             } else
                 delExit(ext);

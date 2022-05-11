@@ -90,11 +90,11 @@ void Player::disarmSelf() {
 //*********************************************************************
 
 int cmdDisarm(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Creature> creature;
     std::shared_ptr<Player> pCreature=nullptr;
     std::shared_ptr<BaseRoom> room = player->getRoomParent();
-    long    i=0, t=0;
-    int     chance=0, drop=0;
+    long    i, t;
+    int     chance, drop;
 
     if(!player->ableToDoCommand())
         return(0);
@@ -256,8 +256,8 @@ int cmdDisarm(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdMistbane(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    long    i=0, t=0;
-    int     chance=0;
+    long    i, t;
+    int     chance;
 
     if(!player->ableToDoCommand())
         return(0);
@@ -394,8 +394,8 @@ int cmdSecond(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //*********************************************************************
 
 int cmdBerserk(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    long    i=0, t=time(nullptr), timeBetweenBerserks=480;
-    int     chance=0;
+    long    i, t=time(nullptr), timeBetweenBerserks=480;
+    int     chance;
 
     player->clearFlag(P_AFK);
 
@@ -507,11 +507,11 @@ int cmdBerserk(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // enemy, confusing it for several seconds.
 
 int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    std::shared_ptr<Creature> target=nullptr;
-    std::shared_ptr<Monster> mTarget=nullptr;
-    std::shared_ptr<Player> pTarget=nullptr;
-    int     chance=0, delay=0;
-    double level = 0.0;
+    std::shared_ptr<Creature> target;
+    std::shared_ptr<Monster> mTarget;
+    std::shared_ptr<Player> pTarget;
+    int     chance, delay;
+    double level;
 
     if(!player->ableToDoCommand())
         return(0);
@@ -653,11 +653,11 @@ int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // over for a few seconds, leaving them unable to attack back.
 
 int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Creature> creature;
     std::shared_ptr<Player> pCreature=nullptr;
     long    t = time(nullptr);
-    int     chance=0;
-    double level=0.0;
+    int     chance;
+    double level;
 
     if(!player->ableToDoCommand())
         return(0);
@@ -767,9 +767,9 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // seconds, in order to do a little extra damage. -- TC
 
 int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    std::shared_ptr<Creature> creature=nullptr;
-    long    i=0, t=0;
-    int     chance=0;
+    std::shared_ptr<Creature> creature;
+    long    i, t;
+    int     chance;
 
 
     if(!player->ableToDoCommand())
@@ -901,7 +901,7 @@ bool Player::canTrack() {
 
 void Player::doTrack() {
     Track*  track=nullptr;
-    int     chance=0;
+    int     chance;
     int     skLevel = (int)getSkillLevel("track");
 
     clearFlag(P_AFK);
@@ -910,8 +910,11 @@ void Player::doTrack() {
     if(!canTrack())
         return;
 
-    if(inAreaRoom())
-        track = getAreaRoomParent()->area->getTrack(&getAreaRoomParent()->mapmarker);
+    if(inAreaRoom()) {
+        if(auto area = getAreaRoomParent()->area.lock()) {
+            track = area->getTrack(getAreaRoomParent()->mapmarker);
+        }
+    }
     else if(inUniqueRoom())
         track = &getUniqueRoomParent()->track;
 
@@ -952,7 +955,7 @@ void doTrack(const DelayedAction* action) {
 // direction the last person who was in the room went.
 
 int cmdTrack(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    long    i=0, t=0;
+    long    i, t;
 
     player->clearFlag(P_AFK);
     
@@ -1002,9 +1005,9 @@ int cmdTrack(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // This will allow death knights to harm touch once reaching 16th level.
 
 int cmdHarmTouch(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    std::shared_ptr<Creature> creature=nullptr;
-    int     num=0, chance=0, modifier=0;
-    long    t=time(nullptr), i=0;
+    std::shared_ptr<Creature> creature;
+    int     num, chance, modifier=0;
+    long    t=time(nullptr), i;
 
 
     player->clearFlag(P_AFK);
@@ -1122,8 +1125,8 @@ int cmdHarmTouch(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // 2 minutes out of every 10.
 
 int cmdBloodsacrifice(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    long    i=0, t=0;
-    int     chance=0;
+    long    i, t;
+    int     chance;
 
     player->clearFlag(P_AFK);
 

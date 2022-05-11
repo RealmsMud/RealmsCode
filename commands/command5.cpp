@@ -541,7 +541,6 @@ int cmdSuicide(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // Does a true delete of a player and their files
 
 void Player::deletePlayer() {
-    char    file[80];
     bool hardcore = isHardcore();
     // cache the name because we will be deleting the player object
     std::string name = getName();
@@ -588,9 +587,8 @@ void Player::deletePlayer() {
     // this deletes the player object
     Socket* sock = getSock();
     uninit();
-    gServer->clearPlayer(pThis);
-    //gServer->clearPlayer(name);
-    sock->setPlayer(nullptr);
+    gServer->clearPlayer(name);
+    sock->clearPlayer();
 
     // get rid of any files the player was using
     fs::remove((Path::Player / name).replace_extension("xml"));

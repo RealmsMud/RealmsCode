@@ -42,6 +42,7 @@
 #include "mxp.hpp"             // for MxpElement
 #include "paths.hpp"           // for checkDirExists, checkPaths
 #include "proxy.hpp"           // for ProxyManager
+#include "ships.hpp"           // for Ship
 #include "skills.hpp"          // for SkillInfo
 #include "skillCommand.hpp"    // for SkillCommand
 #include "socials.hpp"         // for SocialCommand
@@ -125,7 +126,7 @@ void Config::cleanUp() {
     clearFactionList();
     clearSkills();
     calendar->clear();
-    clearShips();
+    ships.clear();
     clearClasses();
     clearRaces();
     clearRecipes();
@@ -410,37 +411,29 @@ bool Config::writeHelpFiles() const {
 //                      path functions
 //*********************************************************************
 
-char* objectPath(const CatRef& cr) {
-    static char filename[256];
+fs::path Path::objectPath(const CatRef& cr) {
+    auto path = Path::Object / cr.area;
     if(cr.id < 0)
-        sprintf(filename, "%s/%s/", Path::Object.c_str(), cr.area.c_str());
-    else
-        sprintf(filename, "%s/%s/o%05d.xml", Path::Object.c_str(), cr.area.c_str(), cr.id);
-    return(filename);
+        return path;
+    return (path / fmt::format("o{:05d}", cr.id)).replace_extension("xml");
 }
-char* monsterPath(const CatRef& cr) {
-    static char filename[256];
+fs::path Path::monsterPath(const CatRef& cr) {
+    auto path = Path::Monster / cr.area;
     if(cr.id < 0)
-        sprintf(filename, "%s/%s/", Path::Monster.c_str(), cr.area.c_str());
-    else
-        sprintf(filename, "%s/%s/m%05d.xml", Path::Monster.c_str(), cr.area.c_str(), cr.id);
-    return(filename);
+        return path;
+    return (path / fmt::format("m{:05d}", cr.id)).replace_extension("xml");
 }
-char* roomPath(const CatRef& cr) {
-    static char filename[256];
+fs::path Path::roomPath(const CatRef& cr) {
+    auto path = Path::UniqueRoom / cr.area;
     if(cr.id < 0)
-        sprintf(filename, "%s/%s/", Path::UniqueRoom.c_str(), cr.area.c_str());
-    else
-        sprintf(filename, "%s/%s/r%05d.xml", Path::UniqueRoom.c_str(), cr.area.c_str(), cr.id);
-    return(filename);
+        return path;
+    return (path / fmt::format("r{:05d}", cr.id)).replace_extension("xml");
 }
-char* roomBackupPath(const CatRef& cr) {
-    static char filename[256];
+fs::path Path::roomBackupPath(const CatRef& cr) {
+    auto path = Path::UniqueRoom / cr.area / "backup";
     if(cr.id < 0)
-        sprintf(filename, "%s/%s/backup/", Path::UniqueRoom.c_str(), cr.area.c_str());
-    else
-        sprintf(filename, "%s/%s/backup/r%05d.xml", Path::UniqueRoom.c_str(), cr.area.c_str(), cr.id);
-    return(filename);
+        return path;
+    return (path / fmt::format("r{:05d}", cr.id)).replace_extension("xml");
 }
 
 //*********************************************************************
@@ -492,24 +485,21 @@ bool Path::checkPaths() {
 //                      checkDirExists
 //*********************************************************************
 
-bool Path::checkDirExists(const char* filename) {
-    struct stat     f_stat{};
-    if(stat(filename, &f_stat)) {
-        return(!mkdir(filename, 0755));
+bool Path::checkDirExists(const fs::path& path) {
+    if(!fs::exists(path)) {
+        return(fs::create_directory(path));
     }
     return(true);
 }
 
-bool Path::checkDirExists(const std::string &area, char* (*fn)(const CatRef&)) {
-    char    filename[256];
+bool Path::checkDirExists(const std::string &area, fs::path (*fn)(const CatRef&)) {
     CatRef  cr;
 
     // this will trigger the dir-only mode
     cr.setArea(area);
     cr.id = -1;
-    strcpy(filename, (*fn)(cr));
 
-    return(checkDirExists(filename));
+    return(checkDirExists((*fn)(cr)));
 }
 
 
