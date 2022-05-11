@@ -66,6 +66,7 @@
 #include "unique.hpp"                          // for Unique, Lore
 #include "utils.hpp"                           // for MAX, MIN
 #include "xml.hpp"                             // for loadObject
+#include "toNum.hpp"
 
 //*********************************************************************
 //                      dmCreateObj
@@ -77,7 +78,7 @@ int dmCreateObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Object> object=nullptr;
 
     CatRef  cr;
-    getCatRef(getFullstrText(cmnd->fullstr, 1), &cr, player);
+    getCatRef(getFullstrText(cmnd->fullstr, 1), cr, player);
 
     if(!player->checkBuilder(cr)) {
         player->print("Error: %s out of your allowed range.\n", cr.displayStr().c_str());
@@ -395,7 +396,7 @@ std::string Object::statObj(unsigned int statFlags) {
                 objStr << "^W  Skill:^x     " << skill->getDisplayName() << "\n";
             objStr << "^W  Can Add If Not Known:^x " << (increase->canAddIfNotKnown ? "Yes" : "No") << "\n";
         } else if(increase->type == LanguageIncrease) {
-            int lang = atoi(increase->increase.c_str());
+            int lang = toNum<int>(increase->increase);
             if(lang < 1 || lang > LANGUAGE_COUNT)
                 objStr << "^rThe language set on this object is not a valid language.^x\n";
             else
@@ -511,7 +512,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
     ) {
         strcpy(flags, cmnd->str[3]);
         num = cmnd->val[3];
-        dNum = atof(getFullstrText(cmnd->fullstr, 4).c_str());
+        dNum = toNum<double>(getFullstrText(cmnd->fullstr, 4));
 
         object = player->findObject(player, cmnd, 2);
         if(!object)
@@ -526,7 +527,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
     } else if(cmnd->num == 5) {
         strncpy(flags, cmnd->str[4], 24);
         num = cmnd->val[4];
-        dNum = atof(getFullstrText(cmnd->fullstr, 5).c_str());
+        dNum = toNum<double>(getFullstrText(cmnd->fullstr, 5));
 
         cmnd->str[3][0] = up(cmnd->str[3][0]);
         creature = gServer->findPlayer(cmnd->str[3]);
@@ -674,7 +675,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
                 MapMarker mapmarker;
                 CatRef  cr;
-                getDestination(getFullstrText(cmnd->fullstr, cmnd->num+cmnd->val[2]-1), &mapmarker, &cr, player);
+                getDestination(getFullstrText(cmnd->fullstr, cmnd->num+cmnd->val[2]-1), mapmarker, cr, player);
 
                 std::shared_ptr<Area> area=nullptr;
                 if(mapmarker.getArea())
@@ -798,10 +799,10 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
             std::string txt = getFullstrText(cmnd->fullstr, 5);
             if(!txt.empty())
-                duration = atoi(txt.c_str());
+                duration = toNum<long>(txt);
             txt = getFullstrText(cmnd->fullstr, 6);
             if(!txt.empty())
-                strength = atoi(txt.c_str());
+                strength = toNum<long>(txt);
 
             if(duration > EFFECT_MAX_DURATION || duration < -1) {
                 player->print("Duration must be between -1 and %d.\n", EFFECT_MAX_DURATION);
@@ -1011,7 +1012,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 player->print("Object must be a container.\n");
                 return(0);
             }
-            num = atoi(&cmnd->str[3][1]);
+            num = toNum<int>(&cmnd->str[3][1]);
 
             object->in_bag[num-1].id = cmnd->val[3];
 
@@ -1334,7 +1335,7 @@ int dmObjName(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     cmnd->val[1]= 1;
     if(isdigit(cmnd->fullstr[i]))
-        cmnd->val[1] = atoi(&cmnd->fullstr[i]);
+        cmnd->val[1] = toNum<int>(&cmnd->fullstr[i]);
 
     object = player->findObject(player, cmnd, 1);
     if(!object)
@@ -1363,7 +1364,7 @@ int dmObjName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         } else if(cmnd->fullstr[i+1] == 'k') {
             i += 2;
             which = 4;
-            num = atoi(&cmnd->fullstr[i]);
+            num = toNum<int>(&cmnd->fullstr[i]);
             if(num <1 || num > 3)
                 num = 0;
             while(isdigit(cmnd->fullstr[i]))
@@ -1488,7 +1489,6 @@ int dmAddObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //*********************************************************************
 
 void dmSaveObj(const std::shared_ptr<Player>& player, cmd* cmnd, const CatRef& cr) {
-    char    file[80];
     std::shared_ptr<Object>  object=nullptr;
 
     if(!player->canBuildObjects()) {
@@ -1524,8 +1524,7 @@ void dmSaveObj(const std::shared_ptr<Player>& player, cmd* cmnd, const CatRef& c
 
     object->info = cr;
 
-    sprintf(file, "%s", objectPath(object->info));
-    if(fs::exists(file))
+    if(fs::exists(Path::objectPath(object->info)))
         player->print("Object might already exist.\n");
 
     dmResaveObject(player, object);
@@ -1748,7 +1747,7 @@ int dmClone(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     CatRef  cr;
-    getCatRef(getFullstrText(cmnd->fullstr, 2), &cr, player);
+    getCatRef(getFullstrText(cmnd->fullstr, 2), cr, player);
 
     if(!validObjId(cr)) {
         player->print("Index error: object number invalid.\n");

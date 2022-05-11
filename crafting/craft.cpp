@@ -59,6 +59,7 @@
 #include "unique.hpp"                // for Lore, Unique
 #include "utils.hpp"                 // for MAX
 #include "xml.hpp"                   // for loadObject, getIntProp, loadFile
+#include "toNum.hpp"
 
 #define RECIPE_WIDTH    40
 
@@ -656,7 +657,7 @@ Recipe* Player::findRecipe(cmd* cmnd, std::string_view skill, bool* searchRecipe
         int id=0, n=0;
         if(txt.at(0) == '#')
             txt.erase(0, 1);
-        id = atoi(txt.c_str());
+        id = toNum<int>(txt);
 
         for(it = recipes.begin(); it != recipes.end() ; it++) {
             n++;
@@ -874,7 +875,7 @@ int dmRecipes(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!txt.empty() && isdigit(txt.at(0))) {
         bool    i=false;
 
-        recipe = gConfig->getRecipe(atoi(txt.c_str()));
+        recipe = gConfig->getRecipe(toNum<int>(txt));
 
         if(!recipe) {
             player->print("That is not a valid recipe!\n");

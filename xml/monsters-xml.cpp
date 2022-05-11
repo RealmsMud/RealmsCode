@@ -85,31 +85,31 @@ bool loadMonster(const CatRef& cr, std::shared_ptr<Monster>& pMonster, bool offl
 //*********************************************************************
 
 bool loadMonsterFromFile(const CatRef& cr, std::shared_ptr<Monster>& pMonster, std::string filename, bool offline) {
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode;
-    int     num=0;
+    xmlDocPtr xmlDoc;
+    xmlNodePtr rootNode;
+    int num;
 
-    if(filename.empty())
-        filename = monsterPath(cr);
+    if (filename.empty())
+        filename = Path::monsterPath(cr);
 
-    if((xmlDoc = xml::loadFile(filename.c_str(), "Creature")) == nullptr)
-        return(false);
+    if ((xmlDoc = xml::loadFile(filename.c_str(), "Creature")) == nullptr)
+        return (false);
 
-    if(xmlDoc == nullptr) {
+    if (xmlDoc == nullptr) {
         std::clog << "Error parsing file " << filename;
-        return(false);
+        return (false);
     }
     rootNode = xmlDocGetRootElement(xmlDoc);
     num = xml::getIntProp(rootNode, "Num");
 
-    if(cr.id == -1 || num == cr.id) {
+    if (cr.id == -1 || num == cr.id) {
         pMonster = std::make_shared<Monster>();
         pMonster->setVersion(rootNode);
 
         pMonster->readFromXml(rootNode, offline);
         pMonster->setId("-1");
 
-        if(pMonster->flagIsSet(M_TALKS)) {
+        if (pMonster->flagIsSet(M_TALKS)) {
             loadCreature_tlk(pMonster);
             pMonster->convertOldTalks();
         }
@@ -117,7 +117,7 @@ bool loadMonsterFromFile(const CatRef& cr, std::shared_ptr<Monster>& pMonster, s
 
     xmlFreeDoc(xmlDoc);
     xmlCleanupParser();
-    return(true);
+    return (true);
 }
 
 
@@ -235,7 +235,6 @@ void loadCarryArray(xmlNodePtr curNode, Carry array[], const char* name, int max
 int Monster::saveToFile() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    char        filename[256];
 
     // If we can't clean the monster properly, don't save anything
     if(cleanMobForSaving() != 1)
@@ -244,7 +243,7 @@ int Monster::saveToFile() {
     // Invalid Number
     if(info.id < 0)
         return(-1);
-    Path::checkDirExists(info.area, monsterPath);
+    Path::checkDirExists(info.area, Path::monsterPath);
 
     gServer->saveIds();
 
@@ -258,8 +257,7 @@ int Monster::saveToFile() {
     saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
     id = idTemp;
 
-    strcpy(filename, monsterPath(info));
-    xml::saveFile(filename, xmlDoc);
+    xml::saveFile(Path::monsterPath(info), xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(0);
 }

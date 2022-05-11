@@ -16,13 +16,13 @@
  *
  */
 
-#include <assert.h>                                 // for assert
+#include <cassert>                                  // for assert
 #include <bits/types/struct_tm.h>                   // for tm
 #include <libxml/parser.h>                          // for xmlFreeDoc, xmlDo...
 #include <netdb.h>                                  // for getnameinfo, EAI_...
 #include <netinet/in.h>                             // for sockaddr_in, htons
 #include <poll.h>                                   // for pollfd, poll, POL...
-#include <signal.h>                                 // for sigaction, signal
+#include <csignal>                                  // for sigaction, signal
 #include <sys/resource.h>                           // for rlimit, setrlimit
 #include <sys/select.h>                             // for FD_ZERO, FD_ISSET
 #include <sys/socket.h>                             // for AF_INET, accept
@@ -80,6 +80,7 @@
 #include "proto.hpp"                                // for broadcast, isDay
 #include "pythonHandler.hpp"                        // for PythonHandler
 #include "random.hpp"                               // for Random
+#include "ships.hpp"                                // for Ship
 #include "server.hpp"                               // for Server, Server::c...
 #include "serverTimer.hpp"                          // for ServerTimer
 #include "socket.hpp"                               // for Socket, xmlNode
@@ -175,6 +176,8 @@ Server::~Server() {
     }
     sockets.clear();
     players.clear();
+    areas.clear();
+    activeList.clear();
     flushRoom();
     flushObject();
     flushMonster();
@@ -184,7 +187,6 @@ Server::~Server() {
     cleanupHttpServer();
 
 
-    clearAreas();
     delete vSockets;
 #ifdef SQL_LOGGER
     cleanUpSql();
@@ -833,8 +835,11 @@ void Server::updateRandom(long t) {
             continue;
 
         // if the monster can't go there, they won't wander there
-        if(aRoom && !aRoom->area->canPass(monster, &aRoom->mapmarker, true)) {
-            continue;
+        if(aRoom) {
+            auto aArea = aRoom->area.lock();
+            if(!aArea || !aArea->canPass(monster, aRoom->mapmarker, true)) {
+                continue;
+            }
         }
 
         if(!monster->flagIsSet(M_CUSTOM))
@@ -1495,8 +1500,8 @@ void Server::saveDnsCache() {
     std::list<dnsCache>::iterator it;
     for( it = cachedDns.begin(); it != cachedDns.end() ; it++) {
         curNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Dns", nullptr);
-        xml::newStringChild(curNode, "Ip", (*it).ip.c_str());
-        xml::newStringChild(curNode, "HostName", (*it).hostName.c_str());
+        xml::newStringChild(curNode, "Ip", (*it).ip);
+        xml::newStringChild(curNode, "HostName", (*it).hostName);
         xml::newNumChild(curNode, "Time", (long)(*it).time);
     }
 
@@ -1586,10 +1591,10 @@ bool Server::startReboot(bool resetShips) {
                 sock.endCompress();
             }
             player->save(true);
-            players[player->getName()] = nullptr;
             player->uninit();
             player = nullptr;
-            sock.setPlayer(nullptr);
+            players[player->getName()] = nullptr;
+            sock.clearPlayer();
         } else {
             sock.write("\n\r\n\r\n\rSorry, we are rebooting. You may reconnect in a few seconds.\n\r");
             sock.disconnect();
@@ -1656,8 +1661,8 @@ bool Server::saveRebootFile(bool resetShips) {
             curNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Player", nullptr);
             xml::newStringChild(curNode, "Name", player->getCName());
             xml::newNumChild(curNode, "Fd", sock.getFd());
-            xml::newStringChild(curNode, "Ip", std::string(sock.getIp()).c_str());
-            xml::newStringChild(curNode, "HostName", std::string(sock.getHostname()).c_str());
+            xml::newStringChild(curNode, "Ip", std::string(sock.getIp()));
+            xml::newStringChild(curNode, "HostName", std::string(sock.getHostname()));
             xml::newStringChild(curNode, "ProxyName", player->getProxyName());
             xml::newStringChild(curNode, "ProxyId", player->getProxyId());
             sock.saveTelopts(curNode);
@@ -1878,8 +1883,7 @@ bool Server::clearPlayer(const std::shared_ptr<Player>& player) {
 bool Server::addPlayer(const std::shared_ptr<Player>& player) {
     player->validateId();
     players[player->getName()] = player;
-    player->getSock()->addToPlayerList();
-    player->registerMo();
+    player->registerMo(player);
     return(true);
 }
 
@@ -2061,7 +2065,7 @@ int Server::getNumPlayers() {
 // Functions that deal with unique IDs
 // *************************************
 
-bool Server::registerMudObject(std::shared_ptr<MudObject> toRegister, bool reassignId) {
+bool Server::registerMudObject(const std::shared_ptr<MudObject>& toRegister, bool reassignId) {
     assert(toRegister != nullptr);
 
     if(toRegister->getId() =="-1")
@@ -2094,7 +2098,7 @@ bool Server::registerMudObject(std::shared_ptr<MudObject> toRegister, bool reass
     return(true);
 }
 
-bool Server::unRegisterMudObject(std::shared_ptr<MudObject> toUnRegister) {
+bool Server::unRegisterMudObject(MudObject* toUnRegister) {
     assert(toUnRegister != nullptr);
 
     if(toUnRegister->getId() == "-1")
@@ -2120,7 +2124,8 @@ bool Server::unRegisterMudObject(std::shared_ptr<MudObject> toUnRegister) {
     }
     if(!registered) {
         std::ostringstream oStr;
-        if((*it).second == toUnRegister) {
+
+        if(!it->second.expired() && it->second.lock().get() == toUnRegister) {
             oStr << "ERROR: ID: " << toUnRegister->getId() << " thought it wasn't registered, but the server thought it was.";
             broadcast(isDm, "%s", oStr.str().c_str());
             std::clog << oStr.str() << std::endl;
@@ -2147,9 +2152,10 @@ std::shared_ptr<Object>  Server::lookupObjId(const std::string &toLookup) {
 
     if(it == registeredIds.end())
         return(nullptr);
-    else
-        return(((*it).second)->getAsObject());
-
+    else {
+        auto res = it->second.lock();
+        return res ? res->getAsObject() : nullptr;
+    }
 }
 
 std::shared_ptr<Creature> Server::lookupCrtId(const std::string &toLookup) {
@@ -2160,9 +2166,10 @@ std::shared_ptr<Creature> Server::lookupCrtId(const std::string &toLookup) {
 
     if(it == registeredIds.end())
         return(nullptr);
-    else
-        return(((*it).second)->getAsCreature());
-
+    else {
+        auto res = it->second.lock();
+        return res ? res->getAsCreature() : nullptr;
+    }
 }
 std::shared_ptr<Player> Server::lookupPlyId(const std::string &toLookup) {
     if(toLookup[0] != 'P')
@@ -2171,14 +2178,16 @@ std::shared_ptr<Player> Server::lookupPlyId(const std::string &toLookup) {
 
     if(it == registeredIds.end())
         return(nullptr);
-    else
-        return(((*it).second)->getAsPlayer());
-
+    else{
+        auto res = it->second.lock();
+        return res ? res->getAsPlayer() : nullptr;
+    }
 }
 std::string Server::getRegisteredList() {
     std::ostringstream oStr;
-    for(const auto& p : registeredIds) {
-        oStr << p.first << " - " << p.second->getName() << std::endl;
+    for(const auto& [id, mo] : registeredIds) {
+        if(auto locked = mo.lock())
+            oStr << id << " - " << locked->getName() << std::endl;
     }
     return(oStr.str());
 }
@@ -2272,12 +2281,12 @@ void Server::saveIds() {
     idDirty = false;
 }
 
-void Server::logGold(GoldLog dir, std::shared_ptr<Player> player, Money amt, std::shared_ptr<MudObject> target, std::string_view logType) {
+void Server::logGold(GoldLog dir, const std::shared_ptr<Player>& player, Money amt, std::shared_ptr<MudObject> target, std::string_view logType) {
     std::string pName = player->getName();
     std::string pId = player->getId();
     // long amt
-    std::string targetStr = "";
-    std::string source = "";
+    std::string targetStr;
+    std::string source;
 
     if(target) {
         targetStr = stripColor(target->getName());
@@ -2289,13 +2298,13 @@ void Server::logGold(GoldLog dir, std::shared_ptr<Player> player, Money amt, std
             }
         }
     }
-    std::string room = "";
-    if(player->getRoomParent()) {
-        if(player->getRoomParent()->getAsUniqueRoom()) {
-            room = std::string(player->getRoomParent()->getName()) + "(" +
-                    player->getRoomParent()->getAsUniqueRoom()->info.displayStr() + ")";
-        } else if (player->getRoomParent()->getAsAreaRoom()) {
-            room = player->getRoomParent()->getAsAreaRoom()->area->name + "(" + player->getRoomParent()->getAsAreaRoom()->mapmarker.str() + ")";
+    std::string room;
+    if(auto parentRoom = player->getRoomParent()) {
+        if(auto uniqueRoom = parentRoom->getAsUniqueRoom()) {
+            room = std::string(parentRoom->getName()) + "(" + uniqueRoom->info.displayStr() + ")";
+        } else if (auto areaRoom = parentRoom->getAsAreaRoom()) {
+            auto area = areaRoom->area.lock();
+            room = (area ? area->name : "<invalid>") + "(" + areaRoom->mapmarker.str() + ")";
         }
     }
     // logType
@@ -2314,21 +2323,21 @@ void Server::logGold(GoldLog dir, std::shared_ptr<Player> player, Money amt, std
 // allows you to make changes to a room, and then reload it, even if it's
 // already in the memory room queue.
 
-bool Server::reloadRoom(std::shared_ptr<BaseRoom> room) {
-    std::shared_ptr<UniqueRoom> uRoom = room->getAsUniqueRoom();
+bool Server::reloadRoom(const std::shared_ptr<BaseRoom>& room) {
+    auto uRoom = room->getAsUniqueRoom();
 
     if(uRoom) {
     	CatRef cr = uRoom->info;
-        if(reloadRoom(cr))
-        {
+        if(reloadRoom(cr)) {
             roomCache.fetch(cr, false)->addPermCrt();
             return(true);
         }
-    } else {
+    } else  {
 
-        std::shared_ptr<AreaRoom> aRoom = room->getAsAreaRoom();
+        auto aRoom = room->getAsAreaRoom();
+        auto area = aRoom->area.lock();
         char    filename[256];
-        sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), aRoom->area->id, aRoom->mapmarker.filename().c_str());
+        sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), area->id, aRoom->mapmarker.filename().c_str());
 
         if(fs::exists(filename)) {
             xmlDocPtr   xmlDoc;
@@ -2339,7 +2348,6 @@ bool Server::reloadRoom(std::shared_ptr<BaseRoom> room) {
 
             rootNode = xmlDocGetRootElement(xmlDoc);
 
-            std::shared_ptr<Area> area = aRoom->area;
             aRoom->reset();
             aRoom->area = area;
             aRoom->load(rootNode);
@@ -2384,7 +2392,7 @@ std::shared_ptr<UniqueRoom> Server::reloadRoom(const CatRef& cr) {
 
     roomCache.insert(cr, room);
 
-    room->registerMo();
+    room->registerMo(room);
 
     return(room);
 }
@@ -2403,7 +2411,7 @@ int Server::resaveRoom(const CatRef& cr) {
 }
 
 
-int Server::saveStorage(std::shared_ptr<UniqueRoom> uRoom) {
+int Server::saveStorage(const std::shared_ptr<UniqueRoom>& uRoom) {
     if(uRoom->flagIsSet(R_SHOP))
         saveStorage(shopStorageRoom(uRoom));
     return(saveStorage(uRoom->info));

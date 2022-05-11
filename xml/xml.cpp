@@ -152,11 +152,11 @@ namespace xml {
     }
 
     //#define getIntProp(node, name)    )
-    xmlDocPtr loadFile(const char *filename, const char *expectedRoot) {
+    xmlDocPtr loadFile(const fs::path& filename, const char *expectedRoot) {
         xmlDocPtr doc;
         xmlNodePtr cur;
 
-        doc = xmlReadFile(filename, nullptr, XML_PARSE_NOERROR|XML_PARSE_NOWARNING|XML_PARSE_NOBLANKS );
+        doc = xmlReadFile(filename.c_str(), nullptr, XML_PARSE_NOERROR|XML_PARSE_NOWARNING|XML_PARSE_NOBLANKS );
 
         if(doc == nullptr)
             return(nullptr);
@@ -177,9 +177,9 @@ namespace xml {
         return(doc);
     }
 
-    int saveFile(const char * filename, xmlDocPtr cur) {
+    int saveFile(const fs::path& filename, xmlDocPtr cur) {
         //xmlSaveFile(filename, cur);
-        return(xmlSaveFormatFile(filename, cur, 1));
+        return(xmlSaveFormatFile(filename.c_str(), cur, 1));
     }
 
 } // End xml namespace

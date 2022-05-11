@@ -65,10 +65,15 @@ struct Path {
     static inline const fs::path BuilderHelp = BaseHelp / "bhelp";
     static inline const fs::path HelpTemplate = BaseHelp / "template";
 
-    static bool checkDirExists(const char* filename);
-    static bool checkDirExists(const std::string &area, char* (*fn)(const CatRef &cr));
+    static bool checkDirExists(const fs::path& path);
+    static bool checkDirExists(const std::string &area, fs::path (*fn)(const CatRef &cr));
 
     static bool checkPaths();
+
+    static fs::path objectPath(const CatRef& cr);
+    static fs::path monsterPath(const CatRef& cr);
+    static fs::path roomPath(const CatRef& cr);
+    static fs::path roomBackupPath(const CatRef& cr);
 };
 
 

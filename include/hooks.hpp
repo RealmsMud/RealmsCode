@@ -38,7 +38,7 @@ public:
     bool executeWithReturn(const std::string &event, const std::shared_ptr<MudObject>& target=nullptr, const std::string &param1="", const std::string &param2="", const std::string &param3="") const;
     void setParent(MudObject* target);
 
-    static bool run(const std::shared_ptr<MudObject>& trigger1, const std::string &event1, std::shared_ptr<MudObject> trigger2, const std::string &event2, const std::string &param1="", const std::string &param2="", const std::string &param3="");
+    static bool run(const std::shared_ptr<MudObject>& trigger1, const std::string &event1, const std::shared_ptr<MudObject>& trigger2, const std::string &event2, const std::string &param1="", const std::string &param2="", const std::string &param3="");
 
     template<class Type, class Compare>
     inline static bool run(std::set<Type, Compare>& set, std::shared_ptr<MudObject> trigger, const std::string &event, const std::string &param1= "", const std::string &param2= "", const std::string &param3= "") {
@@ -56,7 +56,7 @@ public:
     bool swapIsInteresting(const Swap& s) const;
 private:
     std::map<std::string,std::string> hooks;
-    MudObject* parent;
+    MudObject* parent{};
 };
 
 #endif  /* _HOOKS_H */

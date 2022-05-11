@@ -1222,14 +1222,12 @@ bool BaseRoom::needsEffectsIndex() const {
 bool BaseRoom::removeEffectsIndex() {
     if(needsEffectsIndex())
         return(false);
-    gServer->removeEffectsIndex(Container::downcasted_shared_from_this<BaseRoom>());
+    gServer->removeEffectsIndex(this);
     return(true);
 }
-
-void Server::removeEffectsIndex(const std::shared_ptr<BaseRoom>& room) {
-    std::list<std::shared_ptr<BaseRoom>>::iterator it;
-    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-        if((*it) == room) {
+void Server::removeEffectsIndex(const BaseRoom* room) {
+    for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
+        if(it->get() == room) {
             effectsIndex.erase(it);
             return;
         }

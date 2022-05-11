@@ -65,6 +65,7 @@
 #include "utils.hpp"                 // for MAX, MIN
 #include "web.hpp"                   // for callWebserver
 #include "xml.hpp"                   // for loadPlayer, loadRoom
+#include "toNum.hpp"
 
 class UniqueRoom;
 
@@ -1121,7 +1122,7 @@ int dmMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     log << " to room ";
 
-    getDestination(getFullstrText(cmnd->fullstr, 2), &mapmarker, &cr, player);
+    getDestination(getFullstrText(cmnd->fullstr, 2), mapmarker, cr, player);
 
     if(!cr.id) {
         std::shared_ptr<Area> area = gServer->getArea(mapmarker.getArea());
@@ -2224,7 +2225,7 @@ int dmKillSwitch(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(!strcmp(cmnd->str[i], "-u")) {
             unconscious=1;
             if(i < cmnd->num)
-                uncon_length = atoi(cmnd->str[i+1]);
+                uncon_length = toNum<int>(cmnd->str[i+1]);
 
             uncon_length = MIN(120, MAX(15, uncon_length ) );
         }

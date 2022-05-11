@@ -72,13 +72,13 @@ void MudObject::setUnRegistered() {
 }
 
 
-bool MudObject::registerMo() {
+bool MudObject::registerMo(const std::shared_ptr<MudObject>& mo) {
     if(registered) {
         //std::clog << "ERROR: Attempting to register a MudObject that thinks it is already registered" << std::endl;
         return(false);
     }
 
-    if(gServer->registerMudObject(shared_from_this())) {
+    if(gServer->registerMudObject(mo)) {
         registerContainedItems();
         return(true);
     }
@@ -89,7 +89,7 @@ bool MudObject::registerMo() {
 bool MudObject::unRegisterMo() {
     if(!registered)
         return(false);
-    if(gServer->unRegisterMudObject(shared_from_this())) {
+    if(gServer->unRegisterMudObject(this)) {
         unRegisterContainedItems();
         return(true);
     }

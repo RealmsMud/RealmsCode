@@ -1327,16 +1327,14 @@ bool Monster::willAggro(const std::shared_ptr<Player>& player) const {
     }
 
     // will they aggro anyone based on their deity?
-    DeityDataMap::iterator dIt;
-    DeityData* dData=nullptr;
-    for(dIt = gConfig->deities.begin() ; dIt != gConfig->deities.end() ; dIt++) {
-        dData = (*dIt).second;
-
-        if(player->getDeity() == dData->getId() && isDeityAggro(dData->getId(), true))
-            return(true);
+    if(player->getDeity()) {
+        const auto deity = gConfig->getDeity(player->getDeity());
+        if (deity &&isDeityAggro(deity->getId(), true)) {
+            return true;
+        }
     }
 
-    return(false);
+    return false;
 }
 
 //*********************************************************************
@@ -1350,7 +1348,7 @@ std::shared_ptr<Player> Monster::whoToAggro() const {
 
     if(!myRoom) {
         broadcast(::isDm, "^g *** Monster '%s' has no room in whoToAggro!", getCName());
-        return(nullptr);
+        return (nullptr);
     }
 
     for(const auto& player : myRoom->players) {

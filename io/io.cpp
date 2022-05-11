@@ -55,6 +55,7 @@
 #include "raceData.hpp"                          // for RaceData
 #include "server.hpp"                            // for Server, gServer, Pla...
 #include "socket.hpp"                            // for Socket
+#include "toNum.hpp"
 
 
 // Communication.cpp
@@ -587,7 +588,7 @@ std::string unxsc(std::string_view txt) {
 
         if(c == '&' && txt[i+1] == '#') {
             // get the number from the string
-            c = atoi(&txt[i+2]);
+            c = toNum<int>(&txt[i+2]);
             // advance i appropriately
             i += 2;
             while(txt[i] != ';') {
@@ -728,7 +729,7 @@ bool keyTxtCompare(const char* key, const char* txt, int tLen) {
 
         if(key[kI] == '&' && key[kI+1] == '#') {
             // get the number from the string
-            convert = atoi(&key[kI+2]);
+            convert = toNum<int>(&key[kI+2]);
             // advance kI appropriately
             kI += 2;
             while(key[kI] != ';') {

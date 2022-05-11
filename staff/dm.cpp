@@ -478,7 +478,7 @@ int dmTeleport(const std::shared_ptr<Player>& player, cmd* cmnd) {
     } else if(cmnd->num < 2 || (!txt.empty() && txt.at(0))) {
         std::shared_ptr<Area> area=nullptr;
 
-        getDestination(str, &l, player);
+        getDestination(str, l, player);
 
         if(player->getClass() !=  CreatureClass::BUILDER && l.mapmarker.getArea()) {
             if(player->inAreaRoom() && l.mapmarker == player->currentLocation.mapmarker) {
@@ -494,7 +494,7 @@ int dmTeleport(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
             // pointer to old room
             player->dmPoof(player->getRoomParent(), nullptr);
-            area->move(player, &l.mapmarker);
+            area->move(player, l.mapmarker);
             // manual
             if(player->flagIsSet(P_ALIASING))
                 player->getAlias()->addToRoom(player->getRoomParent());
@@ -788,7 +788,7 @@ int dmResave(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         CatRef  cr;
-        getCatRef(str, &cr, player);
+        getCatRef(str, cr, player);
 
         if(!strcmp(cmnd->str[1], "c"))
             dmSaveMob(player, cmnd, cr);
@@ -2275,7 +2275,7 @@ int dmStat(const std::shared_ptr<Player>& player, cmd* cmnd) {
             }
         } else {
 
-            getDestination(str, &mapmarker, &cr, player);
+            getDestination(str, mapmarker, cr, player);
 
         }
 
@@ -2288,13 +2288,14 @@ int dmStat(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     return(0);
                 }
 
-                aRoom = area->loadRoom(nullptr, &mapmarker, false);
+                aRoom = area->loadRoom(nullptr, mapmarker, false);
             }
 
             stat_rom(player, aRoom);
 
-            if(aRoom->canDelete())
-                aRoom->area->remove(aRoom);
+            if(aRoom->canDelete()) {
+                area->remove(aRoom);
+            }
 
         } else if(cr.id) {
 

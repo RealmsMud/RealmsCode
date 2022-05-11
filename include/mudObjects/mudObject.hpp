@@ -57,7 +57,7 @@ public:
     void setRegistered();
     void setUnRegistered();
 
-    bool registerMo();
+    bool registerMo(const std::shared_ptr<MudObject>& mo);
     bool unRegisterMo();
 
     virtual void registerContainedItems();

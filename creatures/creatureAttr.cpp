@@ -663,6 +663,7 @@ void Player::reset() {
 //*********************************************************************
 
 Creature::Creature(): ready(MAXWEAR) {
+    std::clog << "Creature ctor" << std::endl;
     hooks.setParent(this);
 }
 void Creature::doCopy(const Creature &cr) {
@@ -772,12 +773,8 @@ void Creature::doCopy(const Creature &cr) {
         minions.push_back(*mIt);
     }
 
-    SpecialAttack* attack;
-    std::list<SpecialAttack*>::const_iterator sIt;
-    for(sIt = cr.specials.begin() ; sIt != cr.specials.end() ; sIt++) {
-        attack = new SpecialAttack();
-        (*attack) = *(*sIt);
-        specials.push_back(attack);
+    for(const auto& special : cr.specials) {
+        specials.push_back(special);
     }
 
     for(const auto& pet : cr.pets) {
@@ -1023,6 +1020,7 @@ Monster& Monster::operator=(const Monster& cr) {
 //*********************************************************************
 
 Player::Player() {
+    std::clog << "Player ctor" << std::endl;
     reset();
     mySock = nullptr;
 }
@@ -1059,7 +1057,7 @@ Monster::~Monster() {
     	delete response;
     }
     responses.clear();
-
+    specials.clear();
     if(threatTable) {
         delete threatTable;
         threatTable = nullptr;
@@ -1071,6 +1069,7 @@ Monster::~Monster() {
 //*********************************************************************
 
 Player::~Player() {
+    std::clog << "~Player: " << getName() << std::endl;
     int i = 0;
 
     if(birthday) {
@@ -1640,7 +1639,7 @@ bool Creature::canSpeak() const {
         return(true);
     if(isEffected("silence"))
         return(false);
-    if(getParent()->isEffected("globe-of-silence"))
+    if(getParent() && getParent()->isEffected("globe-of-silence"))
         return(false);
     return(true);
 }

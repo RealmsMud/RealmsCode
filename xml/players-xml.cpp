@@ -63,7 +63,7 @@ bool loadPlayer(std::string_view name, std::shared_ptr<Player>& player, enum Loa
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     fs::path    filename;
-    std::string     pass = "", loadName = "";
+    std::string     pass, loadName;
 
     if(loadType == LoadType::LS_BACKUP)
         filename = (Path::PlayerBackup / name).replace_extension("bak.xml");
@@ -124,7 +124,7 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
     else if(NODE_NAME(curNode, "Wrap")) xml::copyToNum(wrap, curNode);
     else if(NODE_NAME(curNode, "Forum")) xml::copyToString(forum, curNode);
     else if(NODE_NAME(curNode, "Ranges"))
-        loadRanges(curNode, getAsPlayer());
+        loadRanges(curNode, this);
     else if(NODE_NAME(curNode, "Wimpy")) setWimpy(xml::toNum<unsigned short>(curNode));
 
     else if(NODE_NAME(curNode, "Songs")) {
@@ -210,11 +210,12 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
         }
     }
     else if(NODE_NAME(curNode, "QuestsInProgress")) {
+        auto pThis = getAsPlayer();
         childNode = curNode->children;
         QuestCompletion* qc;
         while(childNode) {
             if(NODE_NAME(childNode, "QuestCompletion")) {
-                qc = new QuestCompletion(childNode, getAsPlayer());
+                qc = new QuestCompletion(childNode, pThis);
                 questsInProgress[qc->getParentQuest()->getId()] = qc;
             }
             childNode = childNode->next;
@@ -326,7 +327,7 @@ void Player::loadAnchors(xmlNodePtr curNode) {
 //*********************************************************************
 // Loads builder ranges into the provided creature
 
-void loadRanges(xmlNodePtr curNode, std::shared_ptr<Player>pPlayer) {
+void loadRanges(xmlNodePtr curNode, Player* player) {
     xmlNodePtr childNode = curNode->children;
     int i=0;
 
@@ -334,7 +335,7 @@ void loadRanges(xmlNodePtr curNode, std::shared_ptr<Player>pPlayer) {
         if(NODE_NAME(childNode, "Range")) {
             i = xml::getIntProp(childNode, "Num");
             if(i >= 0 && i < MAX_BUILDER_RANGE)
-                pPlayer->bRange[i].load(childNode);
+                player->bRange[i].load(childNode);
         }
         childNode = childNode->next;
     }

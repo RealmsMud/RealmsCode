@@ -60,7 +60,7 @@
 #include "utils.hpp"                   // for MAX
 #include "wanderInfo.hpp"              // for WanderInfo
 #include "xml.hpp"                     // for loadRoom
-
+#include "paths.hpp"
 
 
 BaseRoom::BaseRoom() {
@@ -165,7 +165,7 @@ void BaseRoom::BaseDestroy() {
 
     effects.removeAll();
     removeEffectsIndex();
-    gServer->removeDelayedActions(shared_from_this());
+    gServer->removeDelayedActions(this);
 }
 
 UniqueRoom::~UniqueRoom() {
@@ -174,7 +174,8 @@ UniqueRoom::~UniqueRoom() {
 
 AreaRoom::~AreaRoom() {
     BaseDestroy();
-    reset();
+    decCompass = needsCompass = stayInMemory = false;
+    exits.clear();
 }
 bool AreaRoom::operator< (const AreaRoom& t) const {
     if(this->mapmarker.getX() == t.mapmarker.getX()) {
@@ -193,7 +194,8 @@ bool AreaRoom::operator< (const AreaRoom& t) const {
 //*********************************************************************
 
 void AreaRoom::reset() {
-    area = nullptr;
+    if (!area.expired())
+        area.reset();
     decCompass = needsCompass = stayInMemory = false;
     exits.clear();
 
@@ -203,14 +205,9 @@ void AreaRoom::reset() {
 //                      AreaRoom
 //*********************************************************************
 
-AreaRoom::AreaRoom(std::shared_ptr<Area> a, const MapMarker *m) {
+AreaRoom::AreaRoom(const std::shared_ptr<Area>& a) {
     reset();
-
-    area = std::move(a);
-    if(m) {
-        setMapMarker(m);
-        recycle();
-    }
+    area = a;
 }
 
 Size AreaRoom::getSize() const { return(SIZE_COLOSSAL); }
@@ -236,16 +233,10 @@ void AreaRoom::recycle() {
 //                      setMapMarker
 //*********************************************************************
 
-void AreaRoom::setMapMarker(const MapMarker* m) {
-    unRegisterMo();
-    setId("-1");
-    std::string str = mapmarker.str();
-    area->rooms.erase(str);
-    *&mapmarker = *m;
-    str = mapmarker.str();
-    area->rooms[str] = std::shared_ptr<AreaRoom>(this);
-    setId(std::string("R") + str);
-    registerMo();
+void AreaRoom::setMapMarker(const MapMarker &m) {
+    // The caller is responsible for registering/unregistering the room
+    mapmarker = m;
+    setId(std::string("R") + m.str());
 }
 
 //*********************************************************************
@@ -255,42 +246,42 @@ void AreaRoom::setMapMarker(const MapMarker* m) {
 bool AreaRoom::updateExit(std::string_view dir) {
     if(dir == "north") {
         mapmarker.add(0, 1, 0);
-        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), mapmarker, dir);
         mapmarker.add(0, -1, 0);
 
     } else if(dir == "east") {
         mapmarker.add(1, 0, 0);
-        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), mapmarker, dir);
         mapmarker.add(-1, 0, 0);
 
     } else if(dir == "south") {
         mapmarker.add(0, -1, 0);
-        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), mapmarker, dir);
         mapmarker.add(0, 1, 0);
 
     } else if(dir == "west") {
         mapmarker.add(-1, 0, 0);
-        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), mapmarker, dir);
         mapmarker.add(1, 0, 0);
 
     } else if(dir == "northeast") {
         mapmarker.add(1, 1, 0);
-        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), mapmarker, dir);
         mapmarker.add(-1, -1, 0);
 
     } else if(dir == "northwest") {
         mapmarker.add(-1, 1, 0);
-        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), mapmarker, dir);
         mapmarker.add(1, -1, 0);
 
     } else if(dir == "southeast") {
         mapmarker.add(1, -1, 0);
-        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), mapmarker, dir);
         mapmarker.add(-1, 1, 0);
 
     } else if(dir == "southwest") {
         mapmarker.add(-1, -1, 0);
-        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), &mapmarker, dir);
+        link_rom(Container::downcasted_shared_from_this<AreaRoom>(), mapmarker, dir);
         mapmarker.add(1, 1, 0);
 
     } else
@@ -359,24 +350,26 @@ bool AreaRoom::canSave() const {
 //                      getRandomWanderInfo
 //*********************************************************************
 
-WanderInfo* AreaRoom::getRandomWanderInfo() {
+WanderInfo* AreaRoom::getRandomWanderInfo() const {
     std::list<std::shared_ptr<AreaZone> >::iterator it;
-    std::shared_ptr<AreaZone> zone=nullptr;
-    std::shared_ptr<TileInfo>  tile=nullptr;
+    std::shared_ptr<AreaZone> zone;
+    std::shared_ptr<TileInfo>  tile;
     std::map<int, WanderInfo*> w;
     int i=0;
 
     // we want to randomly pick one of the zones
-    for(it = area->areaZones.begin() ; it != area->areaZones.end() ; it++) {
-        zone = (*it);
-        if(zone->wander.getTraffic() && zone->inside(area, &mapmarker)) {
-            w[i++] = &zone->wander;
+    if(auto myArea = area.lock()) {
+        for (it = myArea->areaZones.begin(); it != myArea->areaZones.end(); it++) {
+            zone = (*it);
+            if (zone->wander.getTraffic() && zone->inside(myArea, mapmarker)) {
+                w[i++] = &zone->wander;
+            }
         }
-    }
 
-    tile = area->getTile(area->getTerrain(nullptr, &mapmarker, 0, 0, 0, true), area->getSeasonFlags(&mapmarker));
-    if(tile && tile->wander.getTraffic())
-        w[i++] = &tile->wander;
+        tile = myArea->getTile(myArea->getTerrain(nullptr, mapmarker, 0, 0, 0, true), myArea->getSeasonFlags(mapmarker));
+        if (tile && tile->wander.getTraffic())
+            w[i++] = &tile->wander;
+    }
 
     if(!i)
         return(nullptr);
@@ -460,7 +453,7 @@ bool AreaRoom::canDelete() {
         for(const auto& ext : exits) {
             if(ext->getName() != exitNameByOrder(i++))
                 return(false);
-            // doesnt check rooms leading to other area rooms
+            // doesn't check rooms leading to other area rooms
             if(ext->target.room.id)
                 return(false);
         }
@@ -476,8 +469,8 @@ bool AreaRoom::canDelete() {
 // This will determine whether the looker will see anything of
 // interest in the room. This is used by cmdScout.
 
-bool AreaRoom::isInteresting(const std::shared_ptr<Player> viewer) const {
-    int     i=0;
+bool AreaRoom::isInteresting(const std::shared_ptr<const Player> &viewer) const {
+    int     i;
 
     if(unique.id)
         return(true);
@@ -510,7 +503,8 @@ bool AreaRoom::isInteresting(const std::shared_ptr<Player> viewer) const {
 
 bool AreaRoom::flagIsSet(int flag) const {
     MapMarker m = mapmarker;
-    return(area->flagIsSet(flag, &m));
+    auto myArea = area.lock();
+    return(myArea && myArea->flagIsSet(flag, m));
 }
 
 void AreaRoom::setFlag(int flag) {
@@ -576,7 +570,7 @@ bool BaseRoom::isNormalDark() const {
 }
 
 
-void BaseRoom::addExit(std::shared_ptr<Exit> ext) {
+void BaseRoom::addExit(const std::shared_ptr<Exit>& ext) {
     ext->setRoom(Container::downcasted_shared_from_this<BaseRoom>());
 
     exits.push_back(ext);
@@ -794,7 +788,8 @@ bool BaseRoom::isForest() const {
 // therefore we need a different isWater function
 
 bool AreaRoom::isWater() const {
-    return(area->isWater(mapmarker.getX(), mapmarker.getY(), mapmarker.getZ(), true));
+    auto myArea = area.lock();
+    return(myArea && myArea->isWater(mapmarker.getX(), mapmarker.getY(), mapmarker.getZ(), true));
 }
 
 //*********************************************************************
@@ -802,7 +797,8 @@ bool AreaRoom::isWater() const {
 //*********************************************************************
 
 bool AreaRoom::isRoad() const {
-    return(area->isRoad(mapmarker.getX(), mapmarker.getY(), mapmarker.getZ(), true));
+    auto myArea = area.lock();
+    return(myArea && myArea->isRoad(mapmarker.getX(), mapmarker.getY(), mapmarker.getZ(), true));
 }
 
 //*********************************************************************
@@ -810,7 +806,7 @@ bool AreaRoom::isRoad() const {
 //*********************************************************************
 // creature is allowed to be null
 
-CatRef AreaRoom::getUnique(std::shared_ptr<Creature>creature, bool skipDec) {
+CatRef AreaRoom::getUnique(const std::shared_ptr<Creature>&creature, bool skipDec) {
     if(!needsCompass)
         return(unique);
     CatRef  cr;
@@ -840,9 +836,13 @@ CatRef AreaRoom::getUnique(std::shared_ptr<Creature>creature, bool skipDec) {
 bool BaseRoom::isDropDestroy() const {
     if(!flagIsSet(R_DESTROYS_ITEMS))
         return(false);
-    const std::shared_ptr<const AreaRoom> aRoom = getAsConstAreaRoom();
-    return !(aRoom &&
-             aRoom->area->isRoad(aRoom->mapmarker.getX(), aRoom->mapmarker.getY(), aRoom->mapmarker.getZ(), true));
+    const auto aRoom = getAsConstAreaRoom();
+    if(aRoom) {
+        if(auto myArea = aRoom->area.lock()) {
+            return (!myArea->isRoad(aRoom->mapmarker.getX(), aRoom->mapmarker.getY(), aRoom->mapmarker.getZ(), true));
+        }
+    }
+    return false;
 }
 bool BaseRoom::hasRealmBonus(Realm realm) const {
     return(flagIsSet(R_ROOM_REALM_BONUS) && flagIsSet(getRealmRoomBonusFlag(realm)));
@@ -866,7 +866,7 @@ std::shared_ptr<Monster>  BaseRoom::getTollkeeper() const {
 // the first version is isSunlight is only called when an AreaRoom
 // does not exist - when rogues scout, for example
 
-bool Area::isSunlight(const MapMarker* mapmarker) const {
+bool Area::isSunlight(const MapMarker& mapmarker) const {
     if(!isDay())
         return(false);
 
@@ -926,11 +926,10 @@ bool BaseRoom::isSunlight() const {
 
 void UniqueRoom::destroy() {
     saveToFile(0, LoadType::LS_BACKUP);
-    char    filename[256];
-    strcpy(filename, roomPath(info));
+    auto path = Path::roomPath(info);
     expelPlayers(true, true, true);
     gServer->roomCache.remove(info);
-    unlink(filename);
+    fs::remove(path);
 }
 
 //*********************************************************************
@@ -938,7 +937,7 @@ void UniqueRoom::destroy() {
 //*********************************************************************
 
 void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelStaff) {
-    std::shared_ptr<Player> target=nullptr;
+    std::shared_ptr<Player> target;
     std::shared_ptr<BaseRoom> newRoom=nullptr;
     std::shared_ptr<UniqueRoom> uRoom=nullptr;
 
@@ -996,7 +995,9 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const std::shared_ptr<const 
     if(creature) {
         if(creature->inAreaRoom()) {
             l.room.setArea("area");
-            l.room.id = creature->getConstAreaRoomParent()->area->id;
+            if(auto roomArea = creature->getConstAreaRoomParent()->area.lock()){
+                l.room.id = roomArea->id;
+            }
         } else {
             l.room.setArea(creature->currentLocation.room.area);
         }
@@ -1013,7 +1014,7 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const std::shared_ptr<const 
         cri = gConfig->getCatRefInfo(gConfig->getDefaultArea());
     if(cri) {
         l.room.setArea(cri->getArea());
-        l.room.id = (cri->*toCheck);
+        l.room.id = static_cast<short>(cri->*toCheck);
     } else {
         // failure!
         l.room.setArea(gConfig->getDefaultArea());

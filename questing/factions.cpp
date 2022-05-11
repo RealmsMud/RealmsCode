@@ -73,10 +73,15 @@ void FactionRegard::load(xmlNodePtr rootNode) {
     while(curNode) {
         if(NODE_NAME(curNode, "Class")) {
             xml::copyPropToString(temp, curNode, "Name");
-            xml::copyToNum(classRegard[gConfig->classtoNum(temp)], curNode);
+            xml::copyToNum(classRegard[Config::classtoNum(temp)], curNode);
         }
         else if(NODE_NAME(curNode, "Race")) {
             xml::copyPropToString(temp, curNode, "Name");
+            int raceNum = gConfig->racetoNum(temp);
+            if(raceNum == -1) {
+                std::clog << "Invalid Race found " << temp << std::endl;
+                continue;
+            }
             xml::copyToNum(raceRegard[gConfig->racetoNum(temp)], curNode);
         }
         else if(NODE_NAME(curNode, "Deity")) {

@@ -754,7 +754,7 @@ bool WebInterface::handleInput() {
         tempBuf.erase(0, 4);
 
         // Now we need to find what area/index we're working on.  If no area is found we assume misc
-        getCatRef(tempBuf, &cr, nullptr);
+        getCatRef(tempBuf, cr, nullptr);
 
         std::clog << "WebInterface: Found command: " << command << " " << type << " " << cr.area << "." << cr.id << std::endl;
 

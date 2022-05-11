@@ -21,6 +21,7 @@
 #include <string>                   // for string
 #include <string_view>              // for string_view
 #include <utility>                  // for pair
+#include <filesystem>
 
 #include "catRef.hpp"               // for CatRef
 #include "mudObjects/monsters.hpp"  // for Monster
@@ -30,6 +31,7 @@
 #include "wanderInfo.hpp"           // for WanderInfo
 #include "xml.hpp"                  // for loadMonster
 
+namespace fs = std::filesystem;
 
 //*********************************************************************
 //                      WanderInfo

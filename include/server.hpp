@@ -90,7 +90,7 @@ struct idComp : public std::binary_function<const std::string&, const std::strin
 
 #include "async.hpp"
 
-typedef std::map<std::string, std::shared_ptr<MudObject>,idComp> IdMap;
+typedef std::map<std::string, std::weak_ptr<MudObject>,idComp> IdMap;
 using WeakMonsterList = std::list<std::weak_ptr<Monster> >;
 using MonsterList = std::list<std::shared_ptr<Monster> >;
 using GroupList = std::list<Group*>;
@@ -284,14 +284,14 @@ public:
     void clearAsEnemy(const std::shared_ptr<Player>& player);
     std::string showActiveList();
 
-    static void logGold(GoldLog dir, std::shared_ptr<Player> player, Money amt, std::shared_ptr<MudObject> target, std::string_view logType);
+    static void logGold(GoldLog dir, const std::shared_ptr<Player>& player, Money amt, std::shared_ptr<MudObject> target, std::string_view logType);
 
     bool registerGroup(Group* toRegister);
     bool unRegisterGroup(Group* toUnRegister);
     std::string getGroupList();
 
-    bool registerMudObject(std::shared_ptr<MudObject> toRegister, bool reassignId = false);
-    bool unRegisterMudObject(std::shared_ptr<MudObject> toUnRegister);
+    bool registerMudObject(const std::shared_ptr<MudObject>& toRegister, bool reassignId = false);
+    bool unRegisterMudObject(MudObject* toUnRegister);
     std::string getRegisteredList();
     std::shared_ptr<Creature> lookupCrtId(const std::string &toLookup);
     std::shared_ptr<Object>  lookupObjId(const std::string &toLookup);
@@ -323,18 +323,17 @@ public:
     void flushMonster();
     void flushObject();
 
-    bool reloadRoom(std::shared_ptr<BaseRoom> room);
+    bool reloadRoom(const std::shared_ptr<BaseRoom>& room);
     std::shared_ptr<UniqueRoom> reloadRoom(const CatRef& cr);
     int resaveRoom(const CatRef& cr);
-    int saveStorage(std::shared_ptr<UniqueRoom> uRoom);
+    int saveStorage(const std::shared_ptr<UniqueRoom>& uRoom);
     int saveStorage(const CatRef& cr);
     void resaveAllRooms(char permonly);
 
     // Areas
     std::shared_ptr<Area> getArea(int id);
     bool loadAreas();
-    void clearAreas();
-    void areaInit(std::shared_ptr<Creature> player, xmlNodePtr curNode);
+    void areaInit(const std::shared_ptr<Creature>& player, xmlNodePtr curNode);
     void areaInit(const std::shared_ptr<Creature>& player, MapMarker mapmarker);
     void saveAreas(bool saveRooms) const;
     void cleanUpAreas();
@@ -423,7 +422,7 @@ public:
 
     // Effects
     void addEffectsIndex(const std::shared_ptr<BaseRoom>& room);
-    void removeEffectsIndex(const std::shared_ptr<BaseRoom>& room);
+    void removeEffectsIndex(const BaseRoom* room);
     void removeEffectsOwner(const std::shared_ptr<Creature> & owner);
     void showEffectsIndex(const std::shared_ptr<Player> &player);
 

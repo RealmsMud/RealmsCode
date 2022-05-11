@@ -1914,7 +1914,7 @@ Guild* Config::getGuild(int guildId) {
 Guild* Config::getGuild(const std::shared_ptr<Player> player, std::string txt) {
     Guild* guild=nullptr;
     // 0 = not found, -1 = not unique
-    int check = 0, len = txt.length();
+    int check = 0;
     boost::to_lower(txt);
 
     GuildMap::iterator it;

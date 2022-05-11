@@ -58,6 +58,7 @@
 #include "threat.hpp"                            // for ThreatTable
 #include "weather.hpp"                           // for WEATHER_SUNRISE, WEA...
 #include "web.hpp"                               // for webCrash
+#include "toNum.hpp"
 
 
 bool            firstLoop=true;
@@ -744,7 +745,7 @@ void Server::updateAction(long t) {
                     resp = act->response;
                     if(isdigit(*(resp))) {
 
-                        num = 10*(atoi(resp));
+                        num = 10*(toNum<int>(resp));
                         ++resp;
                         num = (num == 0) ? 100:num;
 
@@ -1061,26 +1062,26 @@ void Server::updateShips(long n) {
         return;
     gConfig->calendar->shipUpdates++;
 
-    for(const auto& ship : gConfig->ships) {
-        ship->timeLeft--;
-        stop = ship->stops.front();
+    for(auto& ship : gConfig->ships) {
+        ship.timeLeft--;
+        stop = ship.stops.front();
         // only do last call if we're in port
-        if(ship->inPort && ship->timeLeft==60)
+        if(ship.inPort && ship.timeLeft==60)
             shipBroadcastRange(ship, stop, stop->lastcall);
         // while loop because a ship might take 0 time to get to the next stop
-        while(ship->timeLeft <= 0) {
-            if(ship->inPort) {
-                ship->timeLeft = stop->to_next;
+        while(ship.timeLeft <= 0) {
+            if(ship.inPort) {
+                ship.timeLeft = stop->to_next;
                 shipDeleteExits(ship, stop);
 
-                ship->stops.push_back(stop);
-                ship->stops.pop_front();
+                ship.stops.push_back(stop);
+                ship.stops.pop_front();
             } else {
-                ship->timeLeft = stop->in_dock;
+                ship.timeLeft = stop->in_dock;
                 shipSetExits(ship, stop);
             }
-            stop = ship->stops.front();
-            ship->inPort = !ship->inPort;
+            stop = ship.stops.front();
+            ship.inPort = !ship.inPort;
         }
     }
 

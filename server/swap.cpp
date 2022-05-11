@@ -70,6 +70,7 @@
 #include "tokenizer.hpp"                       // for charTokenizer
 #include "utils.hpp"                           // for MAX
 #include "xml.hpp"                             // for loadPlayer, loadRoom
+#include "toNum.hpp"
 
 
 const char* sepType = " ";
@@ -181,8 +182,8 @@ void swap(const std::shared_ptr<Player>& player, cmd* cmnd, SwapType type) {
         return;
     } else if(str.starts_with("-range") && type != SwapNone) {
         std::string o = getFullstrText(cmnd->fullstr, 2);
-        getCatRef(o, &s.origin, nullptr);
-        getCatRef(getFullstrText(cmnd->fullstr, 3), &s.target, nullptr);
+        getCatRef(o, s.origin, nullptr);
+        getCatRef(getFullstrText(cmnd->fullstr, 3), s.target, nullptr);
 
         player->printColor("^YRS: ^xLooking to swap %s ranges starting at %s to %s.\n", swapType.c_str(),
                            s.origin.str().c_str(), s.target.id == -1 ? s.target.area.c_str() : s.target.str().c_str());
@@ -191,10 +192,10 @@ void swap(const std::shared_ptr<Player>& player, cmd* cmnd, SwapType type) {
         std::string::size_type pos = o.find(':');
         if(pos != std::string::npos) {
             // *rswap -range misc.100:120 test.1
-            loop = atoi(o.substr(pos+1).c_str()) - s.origin.id;
+            loop = toNum<int>(o.substr(pos+1)) - s.origin.id;
         } else {
             // *rswap -range misc.100 test.1 20
-            loop = atoi(getFullstrText(cmnd->fullstr, 4).c_str());
+            loop = toNum<int>(getFullstrText(cmnd->fullstr, 4));
         }
         loop = MAX(0, loop);
 
@@ -267,7 +268,7 @@ void swap(const std::shared_ptr<Player>& player, cmd* cmnd, SwapType type) {
 
         s.origin = player->getConstUniqueRoomParent()->info;
     } else {
-        getCatRef(str, &s.origin, player);
+        getCatRef(str, s.origin, player);
         str = getFullstrText(str, 1);
     }
 
@@ -276,7 +277,7 @@ void swap(const std::shared_ptr<Player>& player, cmd* cmnd, SwapType type) {
         return;
     }
 
-    getCatRef(str, &s.target, player);
+    getCatRef(str, s.target, player);
 
     // these checks done here for convenience of user,
     // not to ensure data validity: this is why the checks
@@ -411,7 +412,7 @@ void Config::findNextEmpty(childProcess &child, bool onReap) {
         std::string toProcess = gServer->simpleChildRead(child);
 
         if(!toProcess.empty()) {
-            getCatRef(toProcess, &currentSwap.target, nullptr);
+            getCatRef(toProcess, currentSwap.target, nullptr);
             if(player)
                 player->printColor("^YRS: ^eRoom found: %s.\n", currentSwap.target.str().c_str());
         }
@@ -713,11 +714,11 @@ void Config::offlineSwap(childProcess &child, bool onReap) {
             swapLog(input);
 
             if(input.at(0) == 'r') {
-                getCatRef(input.substr(1), &cr, nullptr);
+                getCatRef(input.substr(1), cr, nullptr);
                 // this will put rooms in the queue
                 loadRoom(cr, uRoom);
             } else if(input.at(0) == 'm') {
-                getCatRef(input.substr(1), &cr, nullptr);
+                getCatRef(input.substr(1), cr, nullptr);
                 // this will put monsters in the queue
                 loadMonster(cr, monster);
             }
@@ -771,11 +772,11 @@ void Config::swap(std::shared_ptr<Player> player, std::string_view name) {
     // loop through each ship
     // TODO: Dom: midnight ship file?
     found = false;
-    std::list<Ship*>::iterator sIt;
+    std::list<Ship>::iterator sIt;
     for(sIt = ships.begin() ; sIt != ships.end() ; sIt++) {
-        if((*sIt)->swap(currentSwap)) {
+        if((*sIt).swap(currentSwap)) {
             if(player)
-                player->printColor("^GRS: Be sure to update the midnight ship file for %s.\n", (*sIt)->name.c_str());
+                player->printColor("^GRS: Be sure to update the midnight ship file for %s.\n", (*sIt).name.c_str());
             found = true;
         }
     }
@@ -816,7 +817,7 @@ void Config::swap(std::shared_ptr<Player> player, std::string_view name) {
 		gServer->roomCache.remove(currentSwap.target);
 	} else {
         // the original room won't exist anymore
-        unlink(roomPath(currentSwap.origin));
+        fs::remove(Path::roomPath(currentSwap.origin));
     }
 
     // readd them to the queue under their new names
@@ -1014,7 +1015,7 @@ void Config::swap(std::string str) {
         // the monster should have been loaded into the queue by now
         std::shared_ptr<Monster>  monster=nullptr;
         CatRef cr;
-        getCatRef(str, &cr, nullptr);
+        getCatRef(str, cr, nullptr);
 
         if(!loadMonster(cr, monster))
             return;
@@ -1026,7 +1027,7 @@ void Config::swap(std::string str) {
         // the room should have been loaded into the queue by now
         std::shared_ptr<UniqueRoom> uRoom=nullptr;
         CatRef cr;
-        getCatRef(str, &cr, nullptr);
+        getCatRef(str, cr, nullptr);
 
         if(!loadRoom(cr, uRoom))
             return;
@@ -1043,7 +1044,7 @@ void Config::swap(std::string str) {
         area = gServer->getArea(m.getArea());
         if(!area)
             return;
-        aRoom = area->loadRoom(nullptr, &m, false);
+        aRoom = area->loadRoom(nullptr, m, false);
         if(!aRoom)
             return;
 
@@ -1373,7 +1374,7 @@ bool Hooks::swap(const Swap& s) {
         if(s.type == SwapRoom) {
             param = getParamFromCode(p.second, "spawnObjects", s.type);
             if(!param.empty()) {
-                getCatRef(param, &cr, nullptr);
+                getCatRef(param, cr, nullptr);
                 if(cr == s.origin) {
                     p.second = setParamInCode(p.second, "spawnObjects", s.type, param);
                     found = true;
@@ -1399,7 +1400,7 @@ bool Hooks::swapIsInteresting(const Swap& s) const {
         if(s.type == SwapRoom) {
             param = getParamFromCode(p.second, "spawnObjects", s.type);
             if(!param.empty()) {
-                getCatRef(param, &cr, nullptr);
+                getCatRef(param, cr, nullptr);
                 if(cr == s.origin || cr == s.target)
                     return(true);
             }
@@ -1413,7 +1414,7 @@ bool Hooks::swapIsInteresting(const Swap& s) const {
                     obj = getFullstrTextTrun(param, i++);
                     if(!obj.empty())
                     {
-                        getCatRef(obj, &cr, nullptr);
+                        getCatRef(obj, cr, nullptr);
                         if(cr == s.origin || cr == s.target)
                             return(true);
                     }

@@ -70,7 +70,7 @@ public:
     bool purgeObjects();
 
 
-    std::shared_ptr<Container> remove(const std::shared_ptr<Containable>& toRemove);
+    std::shared_ptr<Container> remove(Containable* toRemove);
     bool add(const std::shared_ptr<Containable>& toAdd);
 
 
@@ -119,7 +119,7 @@ public:
     bool addTo(const std::shared_ptr<Container>& container);
     std::shared_ptr<Container> removeFrom();
 
-    void setParent(std::shared_ptr<Container> container);
+    void setParent(const std::shared_ptr<Container>& container);
 
     std::shared_ptr<Container> getParent() const;
 
@@ -150,7 +150,7 @@ public:
     [[nodiscard]] std::shared_ptr<const Creature> getConstCreatureParent() const;
 
 protected:
-    std::shared_ptr<Container> parent;   // Parent Container
+    std::weak_ptr<Container> parent;   // Parent Container
 
     // Last parent is only used in removeFromSet and addToSet and should not be used anywhere else
     std::shared_ptr<Container> lastParent;

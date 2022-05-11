@@ -67,6 +67,7 @@
 #include "utils.hpp"                   // for MAX, MIN
 #include "xml.hpp"                     // for loadRoom, loadObject, loadPlayer
 #include "commerce.hpp"
+#include "toNum.hpp"
 
 
 
@@ -1417,7 +1418,7 @@ int cmdAuction(const std::shared_ptr<Player>& player, cmd* cmnd) {
         // batch auction
         if(cmnd->str[2][0] == '#') {
             i = 3;
-            batch = atoi(&cmnd->str[2][1]);
+            batch = toNum<long>(&cmnd->str[2][1]);
 
             if(batch < 1) {
                 *player << "You must sell at least 1 item.\n";

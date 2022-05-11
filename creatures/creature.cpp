@@ -31,6 +31,8 @@
 #include <string>                                // for string, operator<<
 #include <string_view>                           // for operator<<, string_view
 #include <utility>                               // for pair
+#include <fstream>
+#include <streambuf>
 
 #include "area.hpp"                              // for MapMarker
 #include "calendar.hpp"                          // for Calendar
@@ -245,9 +247,9 @@ void Object::tempPerm() {
 
 void Monster::diePermCrt() {
     std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=nullptr;
+    crlasttime* crtm;
     std::shared_ptr<Monster> temp_mob=nullptr;
-    std::shared_ptr<UniqueRoom> room=nullptr;
+    std::shared_ptr<UniqueRoom> room;
     char    perm[80];
     long    t = time(nullptr);
     int     i=0;
@@ -277,21 +279,18 @@ void Monster::diePermCrt() {
     if(flagIsSet(M_DEATH_SCENE) && !flagIsSet(M_FOLLOW_ATTACKER)) {
         int     fd;
         size_t  n;
-        char    tmp[2048], file[80],pName[80];
+        char    tmp[2048];
 
-        strcpy(pName, getCName());
-        for(i=0; pName[i]; i++)
-            if(pName[i] == ' ')
-                pName[i] = '_';
+        std::string pName = getName();
+        std::replace(pName.begin(), pName.end(), ' ', '_');
 
-        sprintf(file,"%s/%s_%d", Path::Desc.c_str(), pName, level);
-        fd = open(file,O_RDONLY,0);
-        if(fd) {
-            n = read(fd,tmp,2048);
-            tmp[n] = 0;
-            broadcast(nullptr, getRoomParent(), "\n%s", tmp);
+        fs::path file = Path::Desc / fmt::format("{}_{}", pName, level);
+        if(fs::exists(file)) {
+            std::ifstream f(file);
+            std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+
+            broadcast(nullptr, getRoomParent(), "\n%s", str.c_str());
         }
-        close(fd);
     }
 }
 
@@ -1406,7 +1405,7 @@ bool Creature::doFlee(bool magicTerror) {
             pThis->removeEffect("berserk");
         }
 
-        Move::track(getUniqueRoomParent(), &currentLocation.mapmarker, exit, pThis, false);
+        Move::track(getUniqueRoomParent(), currentLocation.mapmarker, exit, pThis, false);
 
         if(pThis->flagIsSet(P_ALIASING)) {
             pThis->getAlias()->deleteFromRoom();
@@ -1457,6 +1456,7 @@ bool Creature::doFlee(bool magicTerror) {
 
 
 Creature::~Creature() {
+    std::clog << "~Creature: " << getName() << std::endl;
     for(const auto& targeter : targetingThis) {
         targeter->clearTarget(false);
     }
@@ -1475,14 +1475,6 @@ Creature::~Creature() {
 
     effects.removeAll();
     minions.clear();
-
-    SpecialAttack* attack;
-    std::list<SpecialAttack*>::iterator sIt;
-    for(sIt = specials.begin() ; sIt != specials.end() ; sIt++) {
-        attack = (*sIt);
-        delete attack;
-        (*sIt) = nullptr;
-    }
     specials.clear();
 
     ttag    *tp=nullptr, *tempt=nullptr;
@@ -1635,7 +1627,7 @@ std::shared_ptr<BaseRoom> Creature::teleportWhere() {
         if(cri->getArea() == "area") {
             area = gServer->getArea(cri->getId());
             l.mapmarker.set(area->id, Random::get<short>(0, area->width), Random::get<short>(0, area->height), Random::get<short>(0, area->depth));
-            if(area->canPass(nullptr, &l.mapmarker, true)) {
+            if(area->canPass(nullptr, l.mapmarker, true)) {
                 //area->adjustCoords(&mapmarker.x, &mapmarker.y, &mapmarker.z);
 
                 // don't bother sending a creature because we've already done

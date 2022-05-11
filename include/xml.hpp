@@ -20,16 +20,17 @@
 #define XML_H_
 
 #include <map>
-
+#include <filesystem>
 
 #include <libxml/parser.h>           // for xmlNodePtr
-
 #include <boost/lexical_cast.hpp>
 #include <boost/dynamic_bitset.hpp>
 
 #include "carry.hpp"
 #include "mudObjects/container.hpp"
 #include "enums/loadType.hpp"
+
+namespace fs = std::filesystem;
 
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
@@ -193,8 +194,8 @@ namespace xml {
     xmlChar* ConvertInput(const char *in, const char *encoding);
     char *doStrCpy(char *dest, char *src);
     char *doStrDup(char *src);
-    xmlDocPtr loadFile(const char *filename, const char *expectedRoot);
-    int saveFile(const char * filename, xmlDocPtr cur);
+    xmlDocPtr loadFile(const fs::path&, const char *expectedRoot);
+    int saveFile(const fs::path& filename, xmlDocPtr cur);
 
 } // End xml namespace
 
@@ -229,7 +230,7 @@ void loadLastTime(xmlNodePtr curNode, struct lasttime* pLastTime);
 void loadLastTimes(xmlNodePtr curNode, struct lasttime* pLastTimes);
 void loadSavingThrow(xmlNodePtr curNode, struct saves* pSavingThrow);
 void loadSavingThrows(xmlNodePtr curNode, struct saves* pSavingThrows);
-void loadRanges(xmlNodePtr curNode, std::shared_ptr<Player>pPlayer);
+void loadRanges(xmlNodePtr curNode, Player* player);
 
 
 //**********************

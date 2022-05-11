@@ -44,8 +44,8 @@ namespace Move {
     std::shared_ptr<UniqueRoom> getUniqueRoom(std::shared_ptr<Creature> creature, std::shared_ptr<Player> player, std::shared_ptr<Exit> exit, MapMarker* tMapmarker);
     void update(const std::shared_ptr<Player>& player);
     void broadMove(const std::shared_ptr<Creature>& player, const std::shared_ptr<Exit>& exit, cmd* cmnd, bool sneaking);
-    bool track(const std::shared_ptr<UniqueRoom>& room, MapMarker *mapmarker, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Player>& player, bool reset);
-    void track(const std::shared_ptr<UniqueRoom>& room, MapMarker *mapmarker, const std::shared_ptr<Exit>& exit, std::shared_ptr<Player>leader, std::list<std::shared_ptr<Creature>> *followers);
+    bool track(const std::shared_ptr<UniqueRoom>& room, const MapMarker& mapmarker, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Player>& player, bool reset);
+    void track(const std::shared_ptr<UniqueRoom>& room, const MapMarker& mapmarker, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Player>&leader, std::list<std::shared_ptr<Creature>> *followers);
     bool sneak(const std::shared_ptr<Player>& player, bool sneaking);
     bool canEnter(const std::shared_ptr<Player>& player, const std::shared_ptr<Exit>& exit, bool leader);
     bool canMove(const std::shared_ptr<Player>& player, cmd* cmnd);
@@ -57,7 +57,7 @@ namespace Move {
     std::shared_ptr<BaseRoom> start(const std::shared_ptr<Creature>& creature, cmd* cmnd, std::shared_ptr<Exit> *gExit, bool leader, std::list<std::shared_ptr<Creature>> *followers, int* numPeople, bool& roomPurged);
 
     void createPortal(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<BaseRoom>& target, const std::shared_ptr<Player>& player, bool initial=true);
-    bool usePortal(std::shared_ptr<Creature> player, const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Exit>& exit, bool initial=true);
+    bool usePortal(const std::shared_ptr<Creature> &creature, const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Exit>& exit, bool initial=true);
     bool deletePortal(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Creature> & leader=0, std::list<std::shared_ptr<Creature>> *followers=0, bool initial=true);
     bool deletePortal(const std::shared_ptr<BaseRoom>& room, const std::string &name, const std::shared_ptr<Creature> & leader=0, std::list<std::shared_ptr<Creature>> *followers=0, bool initial=true);
 }

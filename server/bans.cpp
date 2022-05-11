@@ -38,6 +38,7 @@
 #include "server.hpp"              // for Server, gServer, SocketList
 #include "socket.hpp"              // for Socket
 #include "utils.hpp"               // for MAX, MIN
+#include "toNum.hpp"
 
 
 Ban::Ban() {
@@ -224,7 +225,7 @@ int dmBan(const std::shared_ptr<Player>& player, cmd* cmnd) {
         // was specified, assume indefinite, and use the rest of the str as the
         // comment.
         if(isdigit(str[0])) {
-            dur = atoi(str);
+            dur = toNum<int>(str);
             // Anything less than 0 becomes 0 (indefinite) anything greater than
             // 1825 (5 years) becomes 1825
             dur = MAX(MIN(dur, 1825), 0);

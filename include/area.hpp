@@ -53,49 +53,29 @@ class Player;
 class MapMarker {
 public:
     MapMarker();
-
     MapMarker &operator=(const MapMarker &m);
-
     bool operator==(const MapMarker &m) const;
-
     bool operator!=(const MapMarker &m) const;
-
     void save(xmlNodePtr curNode) const;
-
     void load(xmlNodePtr curNode);
-
     void load(std::string str);
-
     void reset();
 
     [[nodiscard]] std::string str(bool color = false) const;
-
-    std::string direction(const MapMarker *mapmarker) const;
-
-    std::string distance(const MapMarker *mapmarker) const;
-
+    [[nodiscard]] std::string direction(const MapMarker &mapmarker) const;
+    [[nodiscard]] std::string distance(const MapMarker &mapmarker) const;
     [[nodiscard]] std::string filename() const;
-
     [[nodiscard]] short getArea() const;
-
     [[nodiscard]] short getX() const;
-
     [[nodiscard]] short getY() const;
-
     [[nodiscard]] short getZ() const;
-
+    [[nodiscard]] bool isValid() const;
     void setArea(short n);
-
     void setX(short n);
-
     void setY(short n);
-
     void setZ(short n);
-
     void set(short _area, short _x, short _y, short _z);
-
     void add(short _x, short _y, short _z);
-
 protected:
     short area{};
     short x{};
@@ -123,21 +103,15 @@ protected:
 class AreaZone {
 public:
     AreaZone();
-
     ~AreaZone();
 
     [[nodiscard]] std::string getFishing() const;
-
-    bool inside(const std::shared_ptr<const Area>& area, const MapMarker *mapmarker) const;
-
-    bool inRestrict(char tile, const char *list) const;
+    [[nodiscard]] bool inside(const std::shared_ptr<const Area> &area, const MapMarker &mapmarker) const;
+    [[nodiscard]] bool inRestrict(char tile, const char *list) const;
 
     void load(xmlNodePtr curNode);
-
     void save(xmlNodePtr curNode) const;
-
-    bool swap(const Swap &s);
-
+    [[nodiscard]] bool swap(const Swap &s);
     [[nodiscard]] bool flagIsSet(int flag) const;
 
 
@@ -154,7 +128,7 @@ public:
 
     MapMarker min;
     MapMarker max;
-    std::map<int, MapMarker *> coords;
+    std::map<int, MapMarker> coords;
 
 protected:
     std::string fishing;
@@ -167,7 +141,7 @@ public:
     void load(xmlNodePtr curNode);
     void save(xmlNodePtr curNode) const;
 
-    [[nodiscard]] char getStyle(const std::shared_ptr<Player>& player = nullptr) const;
+    [[nodiscard]] char getStyle(const std::shared_ptr<Player> &player = nullptr) const;
     [[nodiscard]] char getId() const;
     [[nodiscard]] std::string getName() const;
     [[nodiscard]] std::string getDescription() const;
@@ -179,7 +153,7 @@ public:
     [[nodiscard]] bool isWater() const;
     [[nodiscard]] bool isRoad() const;
     [[nodiscard]] short getFly() const;
-    bool spawnHerbs(std::shared_ptr<BaseRoom> room) const;
+    [[nodiscard]] bool spawnHerbs(std::shared_ptr<BaseRoom> room) const;
 
     [[nodiscard]] std::string getFishing() const;
 
@@ -212,7 +186,7 @@ public:
 
     char get(short x, short y, short z) const;
     std::vector<std::vector<std::vector<char>>> data;
-    void setArea(const std::weak_ptr<Area>& a);
+    void setArea(const std::weak_ptr<Area> &a);
     void setTerrain(bool t);
 
 protected:
@@ -221,7 +195,7 @@ protected:
 };
 
 
-class Area: public std::enable_shared_from_this<Area> {
+class Area : public std::enable_shared_from_this<Area> {
 protected:
 
 public:
@@ -229,28 +203,30 @@ public:
     ~Area();
 
 
-    CatRef getUnique(const MapMarker *mapmarker) const;
-    bool move(const std::shared_ptr<Player>& player, MapMarker *mapmarker);
-    void remove(const std::shared_ptr<AreaRoom>& room);
-    std::shared_ptr<AreaRoom> getRoom(const MapMarker *mapmarker);
-    std::shared_ptr<AreaRoom> loadRoom(const std::shared_ptr<Creature>&creature, const MapMarker *mapmarker, bool recycle, bool p = false);
-    void checkCycle(MapMarker *mapmarker) const;
+    CatRef getUnique(const MapMarker &mapmarker) const;
+    bool move(const std::shared_ptr<Player> &player, const MapMarker &mapmarker);
+    bool moveMapMarker(std::shared_ptr<AreaRoom> room, const MapMarker &mapmarker);
+    void setMapMarker(std::shared_ptr<AreaRoom> room, const MapMarker &mapmarker);
+    void remove(const std::shared_ptr<AreaRoom> &room);
+    std::shared_ptr<AreaRoom> getRoom(const MapMarker &mapmarker);
+    std::shared_ptr<AreaRoom> loadRoom(const std::shared_ptr<Creature> &creature, const MapMarker &mapmarker, bool recycle, bool p = false);
+    void checkCycle(MapMarker mapmarker) const;
     short checkCycle(short vector, short critical) const;
-    bool canPass(const std::shared_ptr<const Creature>& creature, const MapMarker *mapmarker, bool adjust = false) const;
+    bool canPass(const std::shared_ptr<const Creature> &creature, const MapMarker &mapmarker, bool adjust = false) const;
     bool isRoad(short x, short y, short z, bool adjust = false) const;
     bool isWater(short x, short y, short z, bool adjust = false) const;
     std::shared_ptr<TileInfo> getTile(char grid, char seasonFlags, Season season = NO_SEASON, bool checkSeason = true) const;
-    char getTerrain(const std::shared_ptr<Player>& player, const MapMarker *mapmarker, short y, short x, short z, bool terOnly) const;
-    char getSeasonFlags(const MapMarker *mapmarker, short y = 0, short x = 0, short z = 0) const;
-    float getLosPower(const std::shared_ptr<Player>& player, int xVision, int yVision) const;
-    void getGridText(char grid[][80], int pHeight, const MapMarker *mapmarker, int maxWidth) const;
-    std::string showGrid(const std::shared_ptr<Player>& player, const MapMarker *mapmarker, bool compass) const;
+    char getTerrain(const std::shared_ptr<Player> &player, const MapMarker &mapmarker, short y, short x, short z, bool terOnly) const;
+    char getSeasonFlags(const MapMarker &mapmarker, short y = 0, short x = 0, short z = 0) const;
+    float getLosPower(const std::shared_ptr<Player> &player, int xVision, int yVision) const;
+    void getGridText(char grid[][80], int pHeight, const MapMarker &mapmarker, int maxWidth) const;
+    std::string showGrid(const std::shared_ptr<Player> &player, const MapMarker &mapmarker, bool compass) const;
     bool outOfBounds(short x, short y, short z) const;
     void adjustCoords(short *x, short *y, short *z) const;
     void cleanUpRooms();
-    Track *getTrack(MapMarker *mapmarker) const;
-    void addTrack(const std::shared_ptr<AreaTrack>& aTrack);
-    int getTrackDuration(const MapMarker *mapmarker) const;
+    Track *getTrack(const MapMarker &mapmarker) const;
+    void addTrack(const std::shared_ptr<AreaTrack> &aTrack);
+    int getTrackDuration(const MapMarker &mapmarker) const;
     void updateTrack(int t);
     bool swap(const Swap &s);
     void load(xmlNodePtr curNode);
@@ -260,13 +236,14 @@ public:
     void loadTiles(xmlNodePtr curNode, bool ter);
     void save(xmlNodePtr curNode, bool saveRooms) const;
     void checkFileSize(int &size, const char *filename) const;
-    bool isSunlight(const MapMarker *mapmarker) const;
-    bool flagIsSet(int flag, const MapMarker *mapmarker) const;
+    bool isSunlight(const MapMarker &mapmarker) const;
+    bool flagIsSet(int flag, const MapMarker &mapmarker) const;
 
     // line of sight functions
     void losCloser(int *x, int *y, int me_x, int me_y, int i) const;
-    float lineOfSight(float *grid, const std::shared_ptr<Player>& player, int pWidth, int *y, int *x, int me_y, int me_x, int *i, const MapMarker *mapmarker) const;
-    void makeLosGrid(float *grid, const std::shared_ptr<Player>& player, int pHeight, int pWidth, const MapMarker *mapmarker) const;
+    float
+    lineOfSight(float *grid, const std::shared_ptr<Player> &player, int pWidth, int *y, int *x, int me_y, int me_x, int *i, const MapMarker &mapmarker) const;
+    void makeLosGrid(float *grid, const std::shared_ptr<Player> &player, int pHeight, int pWidth, const MapMarker &mapmarker) const;
 
 public:
     short id;

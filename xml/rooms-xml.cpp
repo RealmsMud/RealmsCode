@@ -63,7 +63,7 @@ bool loadRoom(const CatRef& cr, std::shared_ptr<UniqueRoom> &pRoom, bool offline
             return(false);
         gServer->roomCache.insert(cr, pRoom);
         if(!offline) {
-            pRoom->registerMo();
+            pRoom->registerMo(pRoom);
         }
     }
 
@@ -81,7 +81,7 @@ bool loadRoomFromFile(const CatRef& cr, std::shared_ptr<UniqueRoom> &pRoom, std:
     int         num;
 
     if(filename.empty())
-        filename = roomPath(cr);
+        filename = Path::roomPath(cr);
 
     if((xmlDoc = xml::loadFile(filename.c_str(), "Room")) == nullptr)
         return(false);
@@ -228,12 +228,12 @@ void loadCrLastTimes(xmlNodePtr curNode, std::map<int, crlasttime>& pCrLastTimes
 int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    char        filename[256];
+    fs::path filename;
 
     if(saveType == LoadType::LS_BACKUP)
-        Path::checkDirExists(info.area, roomBackupPath);
+        Path::checkDirExists(info.area, Path::roomBackupPath);
     else
-        Path::checkDirExists(info.area, roomPath);
+        Path::checkDirExists(info.area, Path::roomPath);
 
     gServer->saveIds();
 
@@ -245,9 +245,9 @@ int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
     saveToXml(rootNode, permOnly);
 
     if(saveType == LoadType::LS_BACKUP)
-        strcpy(filename, roomBackupPath(info));
+        filename = Path::roomBackupPath(info);
     else
-        strcpy(filename, roomPath(info));
+        filename =Path::roomPath(info);
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(0);
