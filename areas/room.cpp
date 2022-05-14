@@ -600,8 +600,6 @@ std::string roomEffStr(const std::string& effect, std::string str, const std::sh
 
 void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<BaseRoom>& room, int magicShowHidden) {
     std::shared_ptr<UniqueRoom> target=nullptr;
-    const std::shared_ptr<Player>pCreature=nullptr;
-    std::shared_ptr<Creature> creature=nullptr;
     char    name[256];
     int     n, m,  staff=0;
     unsigned int flags = (player->displayFlags() | QUEST);
@@ -768,7 +766,7 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
                     // if we're using magic to see hidden creatures
                     if(!magicShowHidden)
                         continue;
-                    if(pCreature->isEffected("resist-magic")) {
+                    if(ply->isEffected("resist-magic")) {
                         // if resisting magic, we use the strength of each spell to
                         // determine if they are seen
                         EffectInfo* effect = ply->getEffect("resist-magic");
@@ -824,7 +822,7 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
 
     auto mIt = room->monsters.begin();
     while(mIt != room->monsters.end()) {
-        creature = (*mIt++);
+        auto creature = (*mIt++);
 
         if(staff || (player->canSee(creature) && (!creature->flagIsSet(M_HIDDEN) || magicShowHidden))) {
             m=1;
@@ -839,26 +837,17 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
                     break;
             }
 
-            if(n)
-                oStr << ", ";
-            else
-                oStr << "You see ";
-
-            oStr << creature->getCrtStr(player, flags, m);
+            oStr << (n ? ", " : "You see ") << creature->getCrtStr(player, flags, m);
 
             if(staff) {
-                if(creature->flagIsSet(M_HIDDEN))
-                    oStr << "(h)";
-                if(creature->isInvisible())
-                    oStr << "(*)";
+                if(creature->flagIsSet(M_HIDDEN))oStr << "(h)";
+                if(creature->isInvisible())      oStr << "(*)";
             }
-
             n++;
         }
     }
 
-    if(n)
-        oStr << ".\n";
+    if(n) oStr << ".\n";
 
     str = room->listObjects(player, false, 'y');
     if(!str.empty())
@@ -868,7 +857,7 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
 
     for(const auto& mons : room->monsters) {
         if(mons && mons->hasEnemy()) {
-            creature = mons->getTarget();
+            auto creature = mons->getTarget();
 
 
             if(creature == player)

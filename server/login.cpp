@@ -299,6 +299,7 @@ void login(Socket* sock, const std::string& inStr) {
             return;
         } else {
             sock->finishLogin();
+            player.reset();
             return;
         }
         break;
@@ -332,6 +333,7 @@ void Socket::finishLogin() {
     auto player = getPlayer();
     std::string proxyName = player->getProxyName();
     std::string proxyId = player->getProxyId();
+    player.reset();
     myPlayer.reset();
 
     if(!loadPlayer(charName, player)) {

@@ -882,14 +882,9 @@ void Monster::checkScavange(long t) {
     if(flagIsSet(M_TAKE_LOOT) || flagIsSet(M_STREET_SWEEPER)) {
         i = lasttime[LT_MOB_THIEF].ltime;
         if(t - i > 5) {
-            std::shared_ptr<Object> hide_obj = nullptr;
-            char    buf[2048], *s = buf;
-            int     buflen = 0;
-            int     namelen;
-
-
+            std::weak_ptr<Object> hide_obj;
+            std::ostringstream oStr;
             lasttime[LT_MOB_THIEF].ltime = t;
-            buf[0] = 0;
             ObjectSet::iterator it;
             for(it = room->objects.begin() ; it != room->objects.end() ; ) {
                 object = (*it++);
@@ -898,19 +893,12 @@ void Monster::checkScavange(long t) {
                         canScavange(object) )
                 {
                     if(getWeight() + object->getActualWeight() > maxWeight()) {
-                        if(!hide_obj && !flagIsSet(M_STREET_SWEEPER)) {
+                        if(hide_obj.expired() && !flagIsSet(M_STREET_SWEEPER)) {
                             hide_obj = object;
                         }
                         continue;
                     }
-                    namelen = object->getName().length();
-                    if(buflen + namelen + 2 >= 2048)
-                        break;
-                    strcpy(s, object->getCName());
-                    s += namelen;
-                    strcpy(s, "^x, ");
-                    s += 4;
-                    buflen += namelen + 4;
+                    oStr << object->getName() << "^x, ";
                     object->deleteFromRoom();
                     if(object->getType() == ObjectType::MONEY || !object->info.id) {
                         coins.add(object->value);
@@ -920,15 +908,15 @@ void Monster::checkScavange(long t) {
                     }
                 }
             }
-            if(buflen) {
-                buf[buflen - 2] = 0;
-                broadcast(nullptr, room, "%M picked up %s.", this, buf);
+            auto str = oStr.str();
+            if(!str.empty()) {
+                str = str.substr(0, str.length() - 2);
+                broadcast(nullptr, room, "%M picked up %s.", this, str.c_str());
             }
-            if(hide_obj) {
-                object = hide_obj;
-                broadcast(getSock(), room, "%M attempts to hide %1P.", this, object.get());
+            if(auto obj = hide_obj.lock()) {
+                broadcast(getSock(), room, "%M attempts to hide %1P.", this, obj.get());
                 if(Random::get(1, 100) <= level * 10) {
-                    object->setFlag(O_HIDDEN);
+                    obj->setFlag(O_HIDDEN);
                 }
             }
         }

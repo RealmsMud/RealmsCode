@@ -82,7 +82,7 @@ public:
     char attack[3][CRT_ATTACK_LENGTH]{};
     std::list<TalkResponse*> responses;
     boost::dynamic_bitset<> cClassAggro{32};
-    boost::dynamic_bitset<> raceAggro{32};
+    boost::dynamic_bitset<> raceAggro{64};
     boost::dynamic_bitset<> deityAggro{32};
 
     CatRef info;
