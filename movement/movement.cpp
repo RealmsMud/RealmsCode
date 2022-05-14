@@ -25,6 +25,10 @@
 #include <set>                         // for set
 #include <string>                      // for string, allocator, operator==
 #include <string_view>                 // for operator==, basic_string_view
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/token_functions.hpp>
+#include <boost/tokenizer.hpp>
 
 #include "area.hpp"                    // for MapMarker, Area, AreaTrack
 #include "catRef.hpp"                  // for CatRef
@@ -1727,32 +1731,37 @@ void getDestination(const std::string &str, Location& l, const std::shared_ptr<C
 
 void getDestination(std::string str, MapMarker& mapmarker, CatRef& cr, const std::shared_ptr<Creature> & target) {
     std::string::size_type pos=0;
-    char    *txt;
-    int     x=0, y=0, z=0;
+    short area=0, x=0, y=0, z=0;
+    bool found = false;
 
     // chop off the end!
     pos = str.find(' ', 0);
     if(pos != std::string::npos)
         str = str.substr(0, pos);
 
+    boost::char_separator<char> sep(".");
+    boost::tokenizer<boost::char_separator<char> > tokens(str, sep);
+    auto it = tokens.begin();
+    if(it != tokens.end() && it->length() > 0 && std::isdigit(it->at(0))) {
+        area = toNum<short>(*it++);
+        found = true;
+    }
+    if(it != tokens.end() && found) {
+        // Only consider found if it's #.#
+        x = toNum<short>(*it++);
+    } else {
+        found = false;
+    }
+    if(found) {
+        if (it != tokens.end())
+            y = toNum<short>(*it++);
+        if (it != tokens.end())
+            z = toNum<short>(*it++);
+    }
+
     // 1.-10.7
-    txt = (char*)strstr(str.c_str(), ".");
-    if(txt && isdigit(str.at(0))) {
-        txt++;
-        x = toNum<int>(txt);
-
-        txt = strstr(txt, ".");
-        if(txt) {
-            txt++;
-            y = toNum<int>(txt);
-            txt = strstr(txt, ".");
-            if(txt) {
-                txt++;
-                z = toNum<int>(txt);
-            }
-        }
-
-        mapmarker.set(toNum<int>(str), x, y, z);
+    if(found) {
+        mapmarker.set(area, x, y, z);
     } else
         getCatRef(str, cr, target);
 }

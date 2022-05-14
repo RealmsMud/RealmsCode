@@ -1824,7 +1824,7 @@ void Socket::setHostname(std::string_view pName) {
 void Socket::setIp(std::string_view pIp) {
     host.ip = pIp;
 }
-void Socket::setPlayer(std::shared_ptr<Player> &ply) {
+void Socket::setPlayer(std::shared_ptr<Player> ply) {
     myPlayer = ply;
 }
 void Socket::clearPlayer() {

@@ -1866,13 +1866,15 @@ void Server::saveAllPly() {
 // This will NOT free up the player, it will just remove them from the list
 
 bool Server::clearPlayer(const std::string &name) {
-    players.erase(name);
-    return(true);
+    auto pIt = players.find(name);
+    if (pIt != players.end())
+        return clearPlayer(pIt->second);
+    return false;
 }
 
 bool Server::clearPlayer(const std::shared_ptr<Player>& player) {
-    players.erase(player->getName());
     player->unRegisterMo();
+    players.erase(player->getName());
     return(true);
 }
 

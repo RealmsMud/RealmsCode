@@ -271,7 +271,7 @@ public:
 
     [[nodiscard]] bool hasPlayer() const;
     [[nodiscard]] std::shared_ptr<Player> getPlayer() const;
-    void setPlayer(std::shared_ptr<Player> &ply);
+    void setPlayer(std::shared_ptr<Player> ply);
     void clearPlayer();
 
 
