@@ -121,7 +121,7 @@ public:
     bool pulseEffects(time_t t);
 
     void addEffectsIndex();
-    bool removeEffectsIndex();
+    bool removeEffectsIndex() const;
     [[nodiscard]] bool needsEffectsIndex() const;
 
 

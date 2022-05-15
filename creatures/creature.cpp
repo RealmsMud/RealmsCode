@@ -250,11 +250,8 @@ void Monster::diePermCrt() {
     crlasttime* crtm;
     std::shared_ptr<Monster> temp_mob=nullptr;
     std::shared_ptr<UniqueRoom> room;
-    char    perm[80];
     long    t = time(nullptr);
-    int     i=0;
-
-    strcpy(perm,getCName());
+    auto pName = getName();
 
     if(!inUniqueRoom())
         return;
@@ -277,11 +274,6 @@ void Monster::diePermCrt() {
     }
 
     if(flagIsSet(M_DEATH_SCENE) && !flagIsSet(M_FOLLOW_ATTACKER)) {
-        int     fd;
-        size_t  n;
-        char    tmp[2048];
-
-        std::string pName = getName();
         std::replace(pName.begin(), pName.end(), ' ', '_');
 
         fs::path file = Path::Desc / fmt::format("{}_{}", pName, level);

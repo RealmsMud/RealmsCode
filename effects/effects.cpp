@@ -1136,15 +1136,16 @@ void Server::pulseCreatureEffects(long t) {
 //*********************************************************************
 
 void Server::pulseRoomEffects(long t) {
-    std::list<std::shared_ptr<BaseRoom>>::iterator it;
+    for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ; ) {
+        auto eff = it->lock();
+        bool remove = (!eff);
+        if(!remove) {
+            eff->pulseEffects(t);
+            remove = !eff->needsEffectsIndex();
+        }
 
-    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; ) {
-        (*it)->pulseEffects(t);
-
-        if(!(*it)->needsEffectsIndex())
-            it = effectsIndex.erase(it);
-        else
-            it++;
+        if(remove) it = effectsIndex.erase(it);
+        else       it++;
     }
 
     lastRoomPulseUpdate = t;
@@ -1155,14 +1156,17 @@ void Server::pulseRoomEffects(long t) {
 //*********************************************************************
 
 void Server::showEffectsIndex(const std::shared_ptr<Player> &player) {
-    std::list<std::shared_ptr<BaseRoom>>::const_iterator it;
     int i=0;
 
     player->printColor("^YRoom Effects Index\n");
 
-    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-        player->print("%s\n", (*it)->fullName().c_str());
-        i++;
+    for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ; ) {
+        if(auto eff = it->lock()) {
+            player->print("%s\n", eff->fullName().c_str());
+            i++;
+            it++;
+        } else {}
+        it = effectsIndex.erase(it);
     }
 
     player->print("%d room%s in effects index.\n", i, i==1 ? "" : "s");
@@ -1188,9 +1192,8 @@ void BaseRoom::addEffectsIndex() {
 
 void Server::addEffectsIndex(const std::shared_ptr<BaseRoom>& room) {
     // you can only be in the list once!
-    std::list<std::shared_ptr<BaseRoom>>::const_iterator it;
-    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-        if((*it) == room)
+    for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
+        if(it->lock() == room)
             return;
     }
 
@@ -1219,7 +1222,7 @@ bool BaseRoom::needsEffectsIndex() const {
 //                      removeEffectsIndex
 //*********************************************************************
 
-bool BaseRoom::removeEffectsIndex() {
+bool BaseRoom::removeEffectsIndex() const {
     if(needsEffectsIndex())
         return(false);
     gServer->removeEffectsIndex(this);
@@ -1227,9 +1230,11 @@ bool BaseRoom::removeEffectsIndex() {
 }
 void Server::removeEffectsIndex(const BaseRoom* room) {
     for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-        if(it->get() == room) {
-            effectsIndex.erase(it);
-            return;
+        if(auto locked = it->lock()) {
+            if(locked.get() == room) {
+                effectsIndex.erase(it);
+                return;
+            }
         }
     }
 }
@@ -1240,12 +1245,15 @@ void Server::removeEffectsIndex(const BaseRoom* room) {
 // on suicide, we remove the owner of the effect
 
 void Server::removeEffectsOwner(const std::shared_ptr<Creature> & owner) {
-    std::list<std::shared_ptr<BaseRoom>>::iterator it;
-
-    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-        (*it)->effects.removeOwner(owner);
-        for(const auto& exit : (*it)->exits) {
-            exit->effects.removeOwner(owner);
+    for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ;) {
+        if(auto eff = it->lock()) {
+            eff->effects.removeOwner(owner);
+            for (const auto &exit: eff->exits) {
+                exit->effects.removeOwner(owner);
+            }
+            it++;
+        } else {
+            it = effectsIndex.erase(it);
         }
     }
 }

@@ -288,7 +288,7 @@ char *get_language_adj(int nIndex) {
 // language verb
 
 char *get_language_verb(int lang) {
-    int num=0;
+    int num;
 
     num = Random::get(1,3);
     lang = MAX(0, MIN(lang, LANGUAGE_COUNT-1));
@@ -326,18 +326,27 @@ char *getClassAbbrev(int nIndex) {
     return(class_abbrev[nIndex] );
 }
 
-char *getClassName(std::shared_ptr<Player> player) {
-    static char classname[1024];
+std::string getFullClassName(CreatureClass cClass, CreatureClass secondClass) {
+    if (secondClass == CreatureClass::NONE) {
+        return(get_class_string( static_cast<int>(cClass)));
+    }
+    std::ostringstream oStr;
+    oStr <<  get_class_string(static_cast<int>(cClass) ) << "/" << get_class_string( static_cast<int>(secondClass) );
+    return (oStr.str());
 
-    if(!player->hasSecondClass())
-        return(get_class_string( static_cast<int>(player->getClass())));
+}
+std::string getClassName(CreatureClass cClass, CreatureClass secondClass) {
+    if (secondClass == CreatureClass::NONE) {
+        return(get_class_string( static_cast<int>(cClass)));
+    }
+    std::ostringstream oStr;
+    oStr <<  getShortClassAbbrev(static_cast<int>(cClass) ) << "/" << getShortClassAbbrev( static_cast<int>(secondClass) );
+    return (oStr.str());
 
-    strcpy(classname, "");
-    strcpy(classname, getShortClassAbbrev( player->getClassInt() ) );
-    strcat(classname, "/");
-    strcat(classname, getShortClassAbbrev( player->getSecondClassInt() ) );
+}
 
-    return(classname);
+std::string getClassName(const std::shared_ptr<Player>& player) {
+    return getClassName(player->getClass(), player->getSecondClass());
 }
 
 
@@ -352,37 +361,30 @@ std::string getShortClassName(const std::shared_ptr<const Player> &player) {
     if(!player->hasSecondClass())
         return(get_class_string(static_cast<int>(player->getClass())));
 
-    std::ostringstream ostr;
-    ostr << getShortClassAbbrev(player->getClassInt()) << "/" << getShortClassAbbrev(player->getSecondClassInt());
+    std::ostringstream oStr;
+    oStr << getShortClassAbbrev(player->getClassInt()) << "/" << getShortClassAbbrev(player->getSecondClassInt());
 
-    return(ostr.str());
+    return(oStr.str());
 }
 
 
 //*********************************************************************
 //                      int_to_test()
 //*********************************************************************
-char *int_to_text(int nNumber) {
-    static char strNum[15];
-    char *strReturn;
-
+std::string int_to_text(int nNumber) {
     // check for array bounds
-    if(nNumber < 31 && nNumber >= 0) {
-        strReturn = number[nNumber];
-    } else {
-        sprintf(strNum, "%d", nNumber );
-        strReturn = strNum;
-    }
-
-    return(strReturn);
+    if(nNumber < 31 && nNumber >= 0)
+        return number[nNumber];
+    else
+        return std::to_string(nNumber);
 }
 
 bool isTitle(std::string_view str) {
     std::map<int, PlayerTitle*>::iterator tt;
 
     std::map<std::string, PlayerClass*>::iterator cIt;
-    PlayerClass* pClass=nullptr;
-    PlayerTitle* title=nullptr;
+    PlayerClass* pClass;
+    PlayerTitle* title;
     for(cIt = gConfig->classes.begin() ; cIt != gConfig->classes.end() ; cIt++) {
         pClass = (*cIt).second;
         for(tt = pClass->titles.begin() ; tt != pClass->titles.end(); tt++) {
@@ -393,7 +395,7 @@ bool isTitle(std::string_view str) {
     }
 
     DeityDataMap::iterator it;
-    DeityData* data=nullptr;
+    DeityData* data;
     for(it = gConfig->deities.begin() ; it != gConfig->deities.end() ; it++) {
         data = (*it).second;
         for(tt = data->titles.begin() ; tt != data->titles.end(); tt++) {

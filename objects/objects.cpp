@@ -1041,25 +1041,22 @@ std::string Object::getObjStr(const std::shared_ptr<const Creature> & viewer, un
             objStr << getName();
         }
         else {
-            char tempStr[2056];
-            strcpy( tempStr, int_to_text(num) );
-            strcat(tempStr, " ");
+            auto nameStr = int_to_text(num) + " ";
 
             if(flagIsSet(O_SOME_PREFIX))
-                strcat(tempStr, "sets of ");
+                nameStr += "sets of ";
 
-            strcat(tempStr, getCName());
+            nameStr += getName();
+
             if(!flagIsSet(O_SOME_PREFIX)) {
-                tempStr[strlen(tempStr)+1] = 0;
-                tempStr[strlen(tempStr)+2] = 0;
-                if(tempStr[strlen(tempStr)-1] == 's' ||
-                        tempStr[strlen(tempStr)-1] == 'x') {
-                    tempStr[strlen(tempStr)] = 'e';
-                    tempStr[strlen(tempStr)] = 's';
-                } else
-                    tempStr[strlen(tempStr)] = 's';
+                auto last = nameStr.at(nameStr.length() - 1);
+                if(last == 's' || last == 'x') {
+                    nameStr += "es";
+                } else {
+                    nameStr += 's';
+                }
             }
-            objStr << tempStr;
+            objStr << nameStr;
         }
     }
 
