@@ -145,30 +145,30 @@ bool Monster::addEnemy(const std::shared_ptr<Creature>& target, bool print) {
     return(true);
 }
 bool Monster::isEnemy(const std::shared_ptr<const Creature> & target) const {
-    return(threatTable->isEnemy(target));
+    return(threatTable.isEnemy(target));
 }
 
 bool Monster::hasEnemy() const {
-    return(threatTable->hasEnemy());
+    return(threatTable.hasEnemy());
 }
 
-long Monster::adjustContribution(const std::shared_ptr<Creature>& target, long modAmt) const {
-    return(threatTable->adjustThreat(target, modAmt, 0));
+long Monster::adjustContribution(const std::shared_ptr<Creature>& target, long modAmt) {
+    return(threatTable.adjustThreat(target, modAmt, 0));
 }
 long Monster::adjustThreat(const std::shared_ptr<Creature>& target, long modAmt, double threatFactor) {
     target->checkTarget(Containable::downcasted_shared_from_this<Creature>());
-    return(threatTable->adjustThreat(target, modAmt, threatFactor));
+    return(threatTable.adjustThreat(target, modAmt, threatFactor));
 }
 long Monster::clearEnemy(const std::shared_ptr<Creature>& target) {
-    return(threatTable->removeThreat(target));
+    return(threatTable.removeThreat(target));
 }
 //**********************************************************************
 //* getTarget
 //**********************************************************************
 // Returns the first valid creature with the highest threat
 // (in the same room if sameRoom == true)
-std::shared_ptr<Creature> Monster::getTarget(bool sameRoom) const {
-    return(threatTable->getTarget(sameRoom));
+std::shared_ptr<Creature> Monster::getTarget(bool sameRoom) {
+    return(threatTable.getTarget(sameRoom));
 }
 
 
@@ -709,8 +709,8 @@ std::shared_ptr<Creature>enm_in_group(std::shared_ptr<Creature>target) {
 //                      clearEnemyList
 //*********************************************************************
 
-void Monster::clearEnemyList() const {
-    threatTable->clear();
+void Monster::clearEnemyList() {
+    threatTable.clear();
 }
 
 //*********************************************************************
@@ -1448,7 +1448,7 @@ bool Creature::doFlee(bool magicTerror) {
 
 
 Creature::~Creature() {
-    std::clog << "~Creature: " << getName() << std::endl;
+    std::clog << "~Creature: " << getName() << "("<< this << ")" << std::endl;
     for(const auto& targeter : targetingThis) {
         targeter->clearTarget(false);
     }

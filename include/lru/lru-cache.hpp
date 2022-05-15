@@ -28,6 +28,7 @@
 #include <unordered_map>
 #include <list>
 #include <vector>
+#include <functional>
 
 //#ifdef _REENTRANT
 //#include <boost/thread/mutex.hpp>
@@ -179,8 +180,7 @@ public:
 		map_iter_t m_iter = find(key, touch);
 		if(m_iter == end())
 			return data_t();
-        data_t tmp = m_iter->second->second;
-		return tmp;
+        return m_iter->second->second;
 	}
 
     inline data_t* fetch_ptr(const key_t &key, bool touch = true ) {
@@ -215,10 +215,9 @@ public:
 			_remove(m_iter);
 
 		if (_is_shared) {
-            _items_list.push_front(std::make_pair(key, data));
+            _items_list.emplace_front(key, std::ref(data));
 		} else {
-            // TODO: How do we make a copy of data
-            _items_list.emplace_front(std::make_pair(key, data_t(data)));
+            _items_list.emplace_front(key, data);
 		}
 
 		// Ok, do the actual insert at the head of the list

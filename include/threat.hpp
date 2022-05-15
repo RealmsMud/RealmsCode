@@ -66,7 +66,7 @@ public:
     ThreatTable(Creature *cParent);
     ~ThreatTable();
 
-    bool isEnemy(const std::shared_ptr<const Creature> & target);
+    bool isEnemy(const std::shared_ptr<const Creature> & target) const;
     long getTotalThreat();
     long getThreat(const std::shared_ptr<Creature>& target);
     long adjustThreat(const std::shared_ptr<Creature>& target, long modAmt, double threatFactor = 1.0);

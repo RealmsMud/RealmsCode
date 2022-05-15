@@ -1233,9 +1233,11 @@ void Creature::unApplyTongues() {
 }
 
 Creature::Creature(Creature &cr): ready(MAXWEAR) {
+    std::clog << "Creature copy ctor" << "("<< this << ")" << std::endl;
     doCopy(cr);
 }
 Creature::Creature(const Creature &cr): ready(MAXWEAR) {
+    std::clog << "Creature copy ctor" << "("<< this << ")" << std::endl;
     doCopy(cr);
 }
 

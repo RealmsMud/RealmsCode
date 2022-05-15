@@ -57,14 +57,13 @@ bool loadMonster(const CatRef& cr, std::shared_ptr<Monster>& pMonster, bool offl
 
     // Check if monster is already loaded, and if so return pointer
     if(gServer->monsterCache.contains(cr)) {
-        pMonster = std::make_shared<Monster>();
-        *pMonster = gServer->monsterCache.fetch(cr, false);
+        pMonster = std::make_shared<Monster>(*gServer->monsterCache.fetch_ptr(cr, false));
     } else {
         // Otherwise load the monster and return a pointer to the newly loaded monster
         // Load the creature from its file
         if(!loadMonsterFromFile(cr, pMonster, "", offline))
             return(false);
-        gServer->monsterCache.insert(cr, *pMonster.get());
+        gServer->monsterCache.insert(cr, *pMonster);
     }
 
     pMonster->fd = -1;

@@ -141,7 +141,7 @@ long ThreatTable::adjustThreat(const std::shared_ptr<Creature>& target, long mod
     return(endThreat);
 }
 
-bool ThreatTable::isEnemy(const std::shared_ptr<const Creature> &target) {
+bool ThreatTable::isEnemy(const std::shared_ptr<const Creature> &target) const {
     if(!target) {
         return(false);
     }
