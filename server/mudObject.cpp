@@ -115,7 +115,7 @@ bool ObjectPtrLess::operator()(const std::shared_ptr<Object>&  lhs, const std::s
     return *lhs < *rhs;
 }
 
-MudObject::MudObject() {
+MudObject::MudObject(): hooks(this) {
     moReset();
     registered = false;
 }

@@ -101,14 +101,14 @@ public:
     bool hasEnemy() const;
 
     long adjustThreat(const std::shared_ptr<Creature>& target, long modAmt, double threatFactor = 1.0);
-    long adjustContribution(const std::shared_ptr<Creature>& target, long modAmt) const;
-    void clearEnemyList() const;
+    long adjustContribution(const std::shared_ptr<Creature>& target, long modAmt);
+    void clearEnemyList();
     bool checkForYell(const std::shared_ptr<Creature>& target);
 
-    std::shared_ptr<Creature> getTarget(bool sameRoom=true) const;
+    std::shared_ptr<Creature> getTarget(bool sameRoom=true);
     bool nearEnemy(const std::shared_ptr<Creature> & target) const;
 
-    ThreatTable* threatTable{};
+    ThreatTable threatTable;
 
     void setMaster(std::shared_ptr<Creature> pMaster);
     std::shared_ptr<Creature> getMaster() const;

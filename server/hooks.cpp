@@ -40,7 +40,11 @@
 //*********************************************************************
 // View the "hooks" dm help file to view available hooks.
 
-Hooks::Hooks() = default;
+//Hooks::Hooks() = default;
+
+Hooks::Hooks(MudObject* target) {
+    setParent(target);
+}
 
 //*********************************************************************
 //                      doCopy

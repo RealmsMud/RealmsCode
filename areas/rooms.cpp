@@ -66,7 +66,6 @@
 BaseRoom::BaseRoom() {
     tempNoKillDarkmetal = false;
     memset(misc, 0, sizeof(misc));
-    hooks.setParent(this);
 }
 
 

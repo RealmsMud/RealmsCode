@@ -663,8 +663,7 @@ void Player::reset() {
 //*********************************************************************
 
 Creature::Creature(): ready(MAXWEAR) {
-    std::clog << "Creature ctor" << std::endl;
-    hooks.setParent(this);
+    std::clog << "Creature ctor" << "("<< this << ")" << std::endl;
 }
 void Creature::doCopy(const Creature &cr) {
     int     i=0;
@@ -992,16 +991,15 @@ void Monster::doCopy(const Monster& cr) {
 //                      getLocation
 //*********************************************************************
 
-Monster::Monster() {
+Monster::Monster() : threatTable(this) {
     reset();
-    threatTable = new ThreatTable(this);
 }
 
-Monster::Monster(Monster& cr) : Creature(cr)  {
+Monster::Monster(Monster& cr) : Creature(cr), threatTable(this)  {
     doCopy(cr);
 }
 
-Monster::Monster(const Monster& cr) : Creature(cr) {
+Monster::Monster(const Monster& cr) : Creature(cr), threatTable(this) {
     doCopy(cr);
 }
 
@@ -1058,10 +1056,6 @@ Monster::~Monster() {
     }
     responses.clear();
     specials.clear();
-    if(threatTable) {
-        delete threatTable;
-        threatTable = nullptr;
-    }
 }
 
 //*********************************************************************

@@ -458,8 +458,6 @@ int Player::autosplit(long amount) {
                 party++;
         }
     }
-    for(const auto& crt : group->members) {
-    }
     // If group is 1, return with no split.
     if(party < 2)
         return(0);

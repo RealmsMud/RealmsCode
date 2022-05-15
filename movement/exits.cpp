@@ -59,7 +59,6 @@ Exit::Exit() {
     keyArea = passphrase = open = enter = description = "";
     passlang = 0;
     size = NO_SIZE;
-    hooks.setParent(this);
     parentRoom.reset();
     direction = NoDirection;
     usedBy = {};

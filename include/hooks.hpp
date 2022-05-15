@@ -27,7 +27,8 @@ class Swap;
 
 class Hooks {
 public:
-    Hooks();
+//    Hooks();
+    Hooks(MudObject* target);
     Hooks& operator=(const Hooks& h);
     void doCopy(const Hooks& h);
     void save(xmlNodePtr curNode, const char* name) const;

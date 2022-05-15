@@ -92,8 +92,7 @@ bool loadObject(const CatRef& cr, std::shared_ptr<Object>&  pObject, bool offlin
 
     // Check if object is already loaded, and if so return pointer
     if(gServer->objectCache.contains(cr)) {
-        pObject = std::make_shared<Object>();
-        gServer->objectCache.fetch(cr, *pObject, false);
+        pObject = std::make_shared<Object>(*gServer->objectCache.fetch_ptr(cr, false));
     } else {
         // Otherwise load the object and return a pointer to the newly loaded object
         // Load the object from it's file

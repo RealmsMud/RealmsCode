@@ -981,7 +981,7 @@ int countTotalEnemies(const std::shared_ptr<Creature>&monster) {
     if(monster->isPlayer())
         return(0);
     std::shared_ptr<Monster>  mons = monster->getAsMonster();
-    return(mons->threatTable->size());
+    return(mons->threatTable.size());
 }
 
 //*********************************************************************

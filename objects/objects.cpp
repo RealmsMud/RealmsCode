@@ -178,8 +178,6 @@ Object::Object() {
     recipe = 0;
     made = 0;
     extra = 0;
-
-    hooks.setParent(this);
 }
 
 Object::~Object() {

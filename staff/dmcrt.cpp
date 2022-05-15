@@ -126,20 +126,6 @@ int dmCreateMob(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(getFullstrText(cmnd->fullstr, 2).starts_with('n'))
         total = MIN<int>(toNum<int>(getFullstrText(cmnd->fullstr, 3)), MAX_MOBS_IN_ROOM);
-    /*
-     * nobody uses this
-     *
-    else if(getFullstrText(cmnd->fullstr, 2).left(1) == "g") {
-        total = Random::get(1, room->countVisPly());
-        if(cmnd->val[1] == 1) {
-            cr = wander->getRandom();
-            if(!cr.id) {
-                player->printColor(noMonsters.c_str());
-                return(0);
-            }
-        }
-    }
-    */
 
     total = MIN(total, MAX_MOBS_IN_ROOM - room->countCrt());
 

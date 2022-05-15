@@ -1494,10 +1494,10 @@ void Monster::distributeExperience(const std::shared_ptr<Creature>&killer) {
     // Now handle everyone else on the list
     std::map<std::shared_ptr<Player>, int> expList;
 
-    auto tIt = threatTable->threatSet.begin();
+    auto tIt = threatTable.threatSet.begin();
     ThreatEntry* threat = nullptr;
     std::shared_ptr<Creature> crt = nullptr;
-    while(tIt != threatTable->threatSet.end()) {
+    while(tIt != threatTable.threatSet.end()) {
     // Iterate it because we will be invaliding this iterator
         threat = (*tIt++);
         crt = gServer->lookupCrtId(threat->getUid());
