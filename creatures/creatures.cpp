@@ -1116,20 +1116,14 @@ std::string Creature::getCrtStr(const std::shared_ptr<const Creature> & viewer, 
             crtStr << " " ;
             crtStr << plural;
         } else {
-            char tempStr[2056];
-            strcpy(tempStr, int_to_text(num));
-            strcat(tempStr, " ");
-            strcat(tempStr, getCName());
-
-            tempStr[strlen(tempStr)+1] = 0;
-            tempStr[strlen(tempStr)+2] = 0;
-            if(tempStr[strlen(tempStr)-1] == 's' || tempStr[strlen(tempStr)-1] == 'x') {
-                tempStr[strlen(tempStr)] = 'e';
-                tempStr[strlen(tempStr)] = 's';
+            auto nameStr = int_to_text(num) + " " + getName();
+            auto last = nameStr.at(nameStr.length() - 1);
+            if(last == 's' || last == 'x') {
+                nameStr += "es";
             } else {
-                tempStr[strlen(tempStr)] = 's';
+                nameStr += 's';
             }
-            crtStr << tempStr;
+            crtStr << nameStr;
         }
 
         if((ioFlags & QUEST)) {

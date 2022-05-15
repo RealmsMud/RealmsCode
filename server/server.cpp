@@ -1230,7 +1230,7 @@ int Server::reapChildren() {
     pollfd *fds = nullptr;
 
     while(!children.empty()) {
-        delete fds;
+        delete[] fds;
         fds = new pollfd[children.size()];
         int i = 0;
         for(const childProcess& c : children) {
@@ -1325,7 +1325,7 @@ int Server::reapChildren() {
     if(dnsChild)
         saveDnsCache();
     if(fds != nullptr) {
-        delete fds;
+        delete[] fds;
         fds = nullptr;
     }
     // just in case, kill off any zombies

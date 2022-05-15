@@ -867,7 +867,7 @@ int Player::checkLevel() {
     int n = exp_to_lev(experience);
     // De-Level!
     if(level > n) {
-        print("You have deleveled to level %s!\n", int_to_text(n));
+        print("You have deleveled to level %s!\n", int_to_text(n).c_str());
         while(level > n)
             downLevel();
 
@@ -882,11 +882,11 @@ int Player::checkLevel() {
             print("You have enough experience to relevel, but cannot do so in this room.\n");
             return(0);
         }
-        print("You have releveled to level %s!\n", int_to_text(n));
+        print("You have releveled to level %s!\n", int_to_text(n).c_str());
         logn("log.relevel", "%s just releveled to level %d from level %d in room %s.\n",
                 getCName(), n, level, getRoomParent()->fullName().c_str());
         if(!isStaff())
-            broadcast("### %s just releveled to %s!", getCName(), int_to_text(n));
+            broadcast("### %s just releveled to %s!", getCName(), int_to_text(n).c_str());
         while(level < n)
             upLevel();
         return(1); // Relevel

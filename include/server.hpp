@@ -163,7 +163,7 @@ private:
     PythonHandler* pythonHandler;
     HttpServer* httpServer;
 
-    std::list<std::shared_ptr<BaseRoom>> effectsIndex;
+    std::list<std::weak_ptr<BaseRoom>> effectsIndex;
 
     fd_set inSet{};
     fd_set outSet{};

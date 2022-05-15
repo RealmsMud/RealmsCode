@@ -778,14 +778,12 @@ void Statistics::setPkwon(unsigned long p) { numPkWon = p; }
 
 int cmdLevelHistory(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Player> target = player;
-    bool online=true;
 
     if(player->isDm() && cmnd->num > 1) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         if(!target) {
             loadPlayer(cmnd->str[1], target);
-            online = false;
             // If the player is offline, init() won't be run and the statistics object won't
             // get its parent set. Do so now.
             if(target)
@@ -809,7 +807,6 @@ int cmdLevelHistory(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdStatistics(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Player> target = player;
-    bool online=true;
 
     if(!strcmp(cmnd->str[1], "reset")) {
         player->statistics.reset();
@@ -823,7 +820,6 @@ int cmdStatistics(const std::shared_ptr<Player>& player, cmd* cmnd) {
         target = gServer->findPlayer(cmnd->str[1]);
         if(!target) {
             loadPlayer(cmnd->str[1], target);
-            online = false;
             // If the player is offline, init() won't be run and the statistics object won't
             // get its parent set. Do so now.
             if(target)
