@@ -49,7 +49,7 @@
 //                      socialHooks
 //*********************************************************************
 
-void socialHooks(const std::shared_ptr<Creature>&creature, std::shared_ptr<MudObject> target, const std::string &action, const std::string &result) {
+void socialHooks(const std::shared_ptr<Creature>&creature, const std::shared_ptr<MudObject> &target, const std::string &action, const std::string &result) {
     Hooks::run(creature, "doSocial", target, "receiveSocial", action, result);
 }
 

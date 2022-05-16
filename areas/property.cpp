@@ -829,8 +829,6 @@ void propAssignUnassign(const std::shared_ptr<Player>& player, cmd* cmnd, Proper
     }
     if((target->isStaff() && !player->isStaff()) || target == player) {
         player->print("That player is not a valid target.\n");
-
-        if(offline) target.reset();
         return;
     }
 
@@ -839,20 +837,15 @@ void propAssignUnassign(const std::shared_ptr<Player>& player, cmd* cmnd, Proper
     if(assign && p->getPartialOwner(target->getName())) {
         player->print("%s is already a partial owner of this property.\n", target->getCName());
 
-        if(offline) target.reset();
         return;
     } else if(!assign && !p->getPartialOwner(target->getName())) {
         player->print("%s is not a partial owner of this property.\n", target->getCName());
-
-        if(offline) target.reset();
         return;
     }
 
     // their action is valid: let's continue
     if(assign) {
-
         if(Move::tooFarAway(player, target, "appoint as partial owner of this property")) {
-            if(offline) target.reset();
             return;
         }
 
@@ -861,8 +854,6 @@ void propAssignUnassign(const std::shared_ptr<Player>& player, cmd* cmnd, Proper
             CatRef  cr = gConfig->getSingleProperty(target, PROP_STORAGE);
             if(cr.id) {
                 player->print("%s may only be affiliated with one storage room at a time.\n", target->getCName());
-
-                if(offline) target.reset();
                 return;
             }
         }
@@ -871,8 +862,7 @@ void propAssignUnassign(const std::shared_ptr<Player>& player, cmd* cmnd, Proper
         p->appendLog(target->getName(), "%s is now a partial owner.", target->getCName());
         player->print("%s is now a partial owner of this property.\n", target->getCName());
         if(!offline) {
-            target->printColor( "^c%s has appointed you partial owner of %s.\n",
-                player->getCName(), p->getName().c_str());
+            target->printColor( "^c%s has appointed you partial owner of %s.\n", player->getCName(), p->getName().c_str());
             target->print("Type \"property\" for instructions on how to remove yourself\nif you do not wish to be partial owner.\n");
         }
     } else {
@@ -880,14 +870,12 @@ void propAssignUnassign(const std::shared_ptr<Player>& player, cmd* cmnd, Proper
         p->appendLog(target->getName(), "%s is no longer a partial owner.", target->getCName());
         player->print("%s is no longer a partial owner of this property.\n", target->getCName());
         if(!offline) {
-            target->printColor( "^c%s has removed you as partial owner of %s.\n",
-                player->getCName(), p->getName().c_str());
+            target->printColor( "^c%s has removed you as partial owner of %s.\n", player->getCName(), p->getName().c_str());
         }
         p->expelToExit(target, offline);
     }
 
     gConfig->saveProperties();
-    if(offline) target.reset();
 }
 
 //*********************************************************************

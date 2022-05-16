@@ -273,8 +273,7 @@ bool Creature::equip(const std::shared_ptr<Object>&  object, bool showMessage) {
 
 std::shared_ptr<Object>  Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool showEffect) {
     wearloc--;
-    std::shared_ptr<Object>& object = ready[wearloc];
-    ready[wearloc] = nullptr;
+    std::shared_ptr<Object> object = ready[wearloc];
     if(object) {
         object->clearFlag(O_WORN);
 
@@ -293,6 +292,7 @@ std::shared_ptr<Object>  Creature::unequip(int wearloc, UnequipAction action, bo
             addObj(object);
         }
     }
+    ready[wearloc] = nullptr;
     if(darkness)
         checkDarkness();
     return(object);

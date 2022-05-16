@@ -172,7 +172,7 @@ bool Hooks::execute(const std::string &event, const std::shared_ptr<MudObject>& 
 
         broadcast(seeHooks, fmt::format("^orunning hook {}: {}^o on {}^o{}: ^x{}", event,
             hookMudObjName(parent), hookMudObjName(target), params, it->second).c_str());
-        gServer->runPython(it->second, param1 + "," + param2 + "," + param3, std::shared_ptr<MudObject>(parent), target);
+        gServer->runPython(it->second, param1 + "," + param2 + "," + param3, parent->shared_from_this(), target);
     }
     return(ran);
 }
@@ -201,7 +201,7 @@ bool Hooks::executeWithReturn(const std::string &event, const std::shared_ptr<Mu
         broadcast(seeHooks, fmt::format("^orunning hook {}: {}^o on {}^o{}: ^x", event,
             hookMudObjName(parent), hookMudObjName(target), params).c_str());
 
-        returnValue = gServer->runPythonWithReturn(it->second, param1 + "," + param2 + "," + param3, std::shared_ptr<MudObject>(parent), target);
+        returnValue = gServer->runPythonWithReturn(it->second, param1 + "," + param2 + "," + param3, parent->shared_from_this(), target);
     }
     return(returnValue);
 }
