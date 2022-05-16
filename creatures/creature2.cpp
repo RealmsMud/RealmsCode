@@ -234,15 +234,15 @@ void Monster::adjust(int buffswitch) {
 
 // Initializes last times, inventory, scrolls, etc
 int Monster::initMonster(bool loadOriginal, bool prototype) {
-    int n=0, alnum=0, x=0;
-    long t=0;
+    int n, alnum, x;
+    long t;
     std::shared_ptr<Object>  object=nullptr;
 
     t = time(nullptr);
     // init the timers
-    lasttime[LT_MON_SCAVANGE].ltime =
-    lasttime[LT_MON_WANDER].ltime =
-    lasttime[LT_MOB_THIEF].ltime =
+    lasttime[LT_MON_SCAVANGE].ltime = t;
+    lasttime[LT_MON_WANDER].ltime = t;
+    lasttime[LT_MOB_THIEF].ltime = t;
     lasttime[LT_TICK].ltime = t;
     lasttime[LT_TICK_SECONDARY].ltime = t;
     lasttime[LT_TICK_HARMFUL].ltime = t;
@@ -291,24 +291,23 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     // Now load up any always drop objects (Trading perms don't drop inventory items)
     if(!flagIsSet(M_TRADES)) {
         for(x=0;x<10;x++) {
+            const auto cacheObj = getCachedObject(carry[x].info);
+            if(!cacheObj || !cacheObj->flagIsSet(O_ALWAYS_DROPPED) || cacheObj->getName().empty()) continue;
+
             if(!loadObject(carry[x].info, object))
                 continue;
             object->init(!prototype);
-            if( object->flagIsSet(O_ALWAYS_DROPPED) &&
-                !object->getName().empty() &&
-                object->getName()[0] != ' ' )
-            {
+            if( object->flagIsSet(O_ALWAYS_DROPPED) && !object->getName().empty()) {
                 addObj(object);
                 object->setFlag(O_JUST_LOADED);
             } else {
-                object.reset();
-                continue;
+                throw std::runtime_error("Cached object was always drop & valid, but loaded object wasn't");
             }
         }
 
         object = nullptr;
 
-        int numDrops = Random::get(1,100), whichDrop=0;
+        int numDrops = Random::get(1,100), whichDrop;
 
         if (numDrops < 90) numDrops = 1;
         else if (numDrops < 96) numDrops = 2;
@@ -322,19 +321,21 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
             else
                 whichDrop = Random::get(0,9);
             if(carry[whichDrop].info.id && !flagIsSet(M_TRADES)) {
+                const auto cacheObj = getCachedObject(carry[x].info);
+                if(!cacheObj || cacheObj->flagIsSet(O_ALWAYS_DROPPED) || cacheObj->getName().empty()) continue;
+
                 if(!loadObject(carry[whichDrop].info, object))
                     continue;
-                if( object->getName().empty() || object->getName()[0] == ' ') {
-                    object.reset();
-                    continue;
+
+                if( object->getName().empty()) {
+                    throw std::runtime_error("Cached object was always drop & valid, but loaded object wasn't");
                 }
 
                 object->init(!prototype);
 
                 // so we don't get more than one always drop item.
                 if(object->flagIsSet(O_ALWAYS_DROPPED)) {
-                    object.reset();
-                    continue;
+                    throw std::runtime_error("Cached object was not always drop & was valid, but loaded object wasn't");
                 }
 
                 object->value.set(Random::get((object->value[GOLD]*9)/10,(object->value[GOLD]*11)/10), GOLD);

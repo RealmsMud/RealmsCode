@@ -663,7 +663,7 @@ void Player::reset() {
 //*********************************************************************
 
 Creature::Creature(): ready(MAXWEAR) {
-    std::clog << "Creature ctor" << "("<< this << ")" << std::endl;
+
 }
 void Creature::doCopy(const Creature &cr) {
     int     i=0;

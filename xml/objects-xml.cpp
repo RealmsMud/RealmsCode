@@ -114,6 +114,24 @@ bool loadObject(const CatRef& cr, std::shared_ptr<Object>&  pObject, bool offlin
     return(true);
 }
 
+const Object* getCachedObject(const CatRef& cr) {
+    /*
+     * Get a const pointer directly to the cached object.  Useful for checking O_ALWAYS_DROP and other conditions
+     * before making a more expensive copy.
+     */
+    if(!validObjId(cr))
+        return(nullptr);
+
+    // Check if object is already loaded, and if so return pointer
+    if(!gServer->objectCache.contains(cr)) {
+        std::shared_ptr<Object> pObject;
+        if(!loadObjectFromFile(cr, pObject))
+            return(nullptr);
+        gServer->objectCache.insert(cr, *pObject);
+    }
+    return gServer->objectCache.fetch_ptr(cr, false);
+}
+
 //*********************************************************************
 //                      loadObjectFromFile
 //*********************************************************************
@@ -312,20 +330,19 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
 
 void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode = curNode->children;
-    std::shared_ptr<Object>  object=nullptr, object2=nullptr;
+    std::shared_ptr<Object>  object=nullptr, object2;
     CatRef  cr;
-    int     i=0,quantity=0;
+    int     i,quantity;
 
     std::shared_ptr<Creature> cParent = getAsCreature();
 //  std::shared_ptr<Monster>  mParent = parent->getMonster();
 //  std::shared_ptr<Player> pParent = parent->getPlayer();
     std::shared_ptr<UniqueRoom> rParent = getAsUniqueRoom();
     std::shared_ptr<Object>  oParent = getAsObject();
-    std::list<std::string> *idList = nullptr;
+    std::list<std::string> *idList;
 
     while(childNode) {
         object = nullptr;
-        object2 = nullptr;
         quantity = xml::getIntProp(childNode, "Quantity");
         if(quantity < 1)
             quantity = 1;
@@ -339,6 +356,8 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                 object = std::make_shared<Object>();
                 object->readFromXml(childNode, idList);
             } else if(NODE_NAME(childNode, "ObjRef")) {
+                if(object)
+                    std::clog << "HMMM" << std::endl;
                 // If it's an object reference, we want to first load the parent object
                 // and then use readObjectXml to update any fields that may have changed
                 cr.load(childNode);
@@ -356,18 +375,17 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
             }
             if(object) {
                 std::list<std::string>::iterator idIt;
-                if(quantity > 1)
+                if(quantity > 1 && idList)
                     idIt = idList->begin();
 
                 for(i=0; i<quantity; i++) {
                     if(!i) {
                         object2 = object;  // just a reference
                     } else {
-                        object2 = std::make_shared<Object>();
-                        *object2 = *object;
+                        object2 = std::make_shared<Object>(*object);
                     }
                     try {
-                        if(quantity > 1 && idIt != idList->end())
+                        if(quantity > 1 && idList && idIt != idList->end())
                             object2->setId(*idIt++);
                         // Add it to the appropriate parent
                         if(oParent) {
@@ -380,7 +398,6 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                     } catch(std::runtime_error &e) {
                         std::clog << "Error setting ID: " << e.what() << std::endl;
                         if(object2) {
-                            object2 = nullptr;
                         }
                     }
                 }
@@ -391,10 +408,8 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                 object = nullptr;
             }
         }
-        if(idList) {
-            delete idList;
-            idList = nullptr;
-        }
+        delete idList;
+
         childNode = childNode->next;
     }
 }
@@ -468,7 +483,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     xmlNodePtr      curNode;
     xmlNodePtr      childNode;
 
-    int i=0;
+    int i;
 
     if(rootNode == nullptr)
         return(-1);
@@ -653,7 +668,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 
 int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet &set, int permOnly) {
     xmlNodePtr curNode;
-    int quantity = 0;
+    int quantity;
     LoadType lt;
     ObjectSet::const_iterator it;
 

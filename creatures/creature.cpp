@@ -1448,7 +1448,6 @@ bool Creature::doFlee(bool magicTerror) {
 
 
 Creature::~Creature() {
-    std::clog << "~Creature: " << getName() << "("<< this << ")" << std::endl;
     for(const auto& targeter : targetingThis) {
         targeter->clearTarget(false);
     }

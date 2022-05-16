@@ -211,6 +211,7 @@ bool loadMonsterFromFile(const CatRef& cr, std::shared_ptr<Monster>& pMonster, s
 bool loadObject(int index, std::shared_ptr<Object>&  pObject, bool offline=false);
 bool loadObject(const CatRef& cr, std::shared_ptr<Object>&  pObject, bool offline=false);
 bool loadObjectFromFile(const CatRef& cr, std::shared_ptr<Object>&  pObject, bool offline=false);
+const Object* getCachedObject(const CatRef& cr);
 bool loadRoom(int index, std::shared_ptr<UniqueRoom>& pRoom, bool offline=false);
 bool loadRoom(const CatRef& cr, std::shared_ptr<UniqueRoom> &pRoom, bool offline=false);
 bool loadRoomFromFile(const CatRef& cr, std::shared_ptr<UniqueRoom> &pRoom, std::string filename="", bool offline=false);
