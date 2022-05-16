@@ -123,7 +123,8 @@ public:
 public:
     Object();
     ~Object() override;
-    Object& operator=(const Object& o);
+    Object(Object& o);
+    Object(const Object& o);
     [[nodiscard]] std::string getCompareStr() const ;
     bool operator==(const Object& o) const;
     bool operator!=(const Object& o) const;
@@ -179,7 +180,7 @@ protected:
 // Public member variables
 public:
     CatRef info;
-    ObjIncrease* increase;
+    ObjIncrease* increase = nullptr;
 
     // Strings
     std::string description;
@@ -207,7 +208,7 @@ public:
     // where we store refund information - this never needs to be loaded
     // or saved from file because if they log, they can't refund!
     Money refund;
-    MapMarker *compass; // for compass objects
+    MapMarker *compass = nullptr; // for compass objects
     std::string plural;
 
     // List of effects that are conferred by this item.  Name, duration, and strength.

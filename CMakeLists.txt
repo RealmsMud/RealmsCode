@@ -38,8 +38,8 @@ message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 
 include_directories("include")
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++ -fmodules")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-int-in-bool-context -g ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++ -fmodules")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-int-in-bool-context -g ")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 if($ENV{LEAK})

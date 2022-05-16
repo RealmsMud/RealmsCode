@@ -299,12 +299,14 @@ void Object::doCopy(const Object& o) {
     size = o.size;
 
     if(o.compass) {
-        delete compass;
+        if(compass != nullptr)
+            delete compass;
         compass = new MapMarker;
         *compass = *o.compass;
     }
     if(o.increase) {
-        delete increase;
+        if(increase != nullptr)
+            delete increase;
         increase = new ObjIncrease;
         *increase = *o.increase;
     }
@@ -317,8 +319,7 @@ void Object::doCopy(const Object& o) {
     // copy everything contained inside this object
     std::shared_ptr<Object>newObj;
     for(const auto& obj : o.objects) {
-        newObj = std::make_shared<Object>();
-        *newObj = *obj;
+        newObj = std::make_shared<Object>(*obj);
         addObj(newObj, false);
     }
     for(const auto& p : o.alchemyEffects) {
@@ -344,12 +345,11 @@ DroppedBy& DroppedBy::operator=(const DroppedBy& o) {
     return(*this);
 }
 
-Object& Object::operator=(const Object& o) {
-    if(this == &o)
-        return(*this);
-
+Object::Object(Object& o) {
     doCopy(o);
-    return(*this);
+}
+Object::Object(const Object& o) {
+    doCopy(o);
 }
 
 bool Object::operator==(const Object& o) const {
