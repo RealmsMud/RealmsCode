@@ -458,7 +458,7 @@ int cmdBerserk(const std::shared_ptr<Player>& player, cmd* cmnd) {
         timeBetweenBerserks = 300;   
 
     if(Random::get(1, 10000) <= chance) {
-        *player << ColorOn << "^RYou go berserk! " << ColorOff;
+        *player << ColorOn << "^RYou go berserk!\n" << ColorOff;
         broadcast(player->getSock(), player->getParent(), "%M goes berserk!", player.get());
         player->checkImprove("berserk", true);
 
