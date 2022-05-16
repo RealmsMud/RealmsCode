@@ -217,7 +217,7 @@ std::shared_ptr<Creature> ThreatTable::getTarget(bool sameRoom) {
     }
 
     std::shared_ptr<Creature> toReturn = nullptr;
-    std::shared_ptr<Creature> crt = nullptr;
+    std::shared_ptr<Creature> crt;
 
     ThreatSet::reverse_iterator it;
     for(it = threatSet.rbegin() ; it != threatSet.rend() ; ) {

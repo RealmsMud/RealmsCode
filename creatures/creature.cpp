@@ -988,8 +988,7 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
         std::shared_ptr<Creature> firstEnm = nullptr;
         if((firstEnm = mTarget->getTarget(false)) != nullptr) {
             if(firstEnm.get() == this) {
-                if(  !mTarget->flagIsSet(M_HIDDEN) &&
-                    !(mTarget->isInvisible() && isEffected("detect-invisible")))
+                if(  !mTarget->flagIsSet(M_HIDDEN) && !(mTarget->isInvisible() && isEffected("detect-invisible")))
                     oStr << mTarget->upHeShe() << " is attacking you.\n";
             } else
                 oStr << mTarget->upHeShe() << " is attacking " << firstEnm->getName() << ".\n";
