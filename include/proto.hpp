@@ -93,6 +93,7 @@ namespace Pueblo {
     bool is(const std::string& txt);
 }
 
+bool keyTxtCompare(const char* key, const char* txt, int tLen);
 char keyTxtConvert(unsigned char c);
 std::string keyTxtConvert(std::string_view txt);
 bool keyTxtEqual(const Creature* target, const char* txt);

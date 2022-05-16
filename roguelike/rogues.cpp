@@ -58,6 +58,9 @@
 #include "stats.hpp"                   // for Stat
 #include "utils.hpp"                   // for MIN, MAX
 #include "xml.hpp"                     // for loadObject, loadRoom
+#include "login.hpp"                   // for connection states
+#include "socket.hpp"                  // for Socket
+#include "cards.hpp"                   // for Card, Deck
 
 
 //*********************************************************************
@@ -191,15 +194,57 @@ int cmdBribe(Player* player, cmd* cmnd) {
 //*********************************************************************
 // Code for people to gamble money
 
+void playBlackjack(Socket* sock, const std::string& str) {
+    std::ostringstream oStr;
+    switch(sock->getState()) {
+        case BLACKJACK_START:
+            sock->printColor("Blackjack start.\n");
+            new Deck();
+            break;
+    }
+    sock->print(str.c_str());
+    sock->print("\n");
+    sock->print("Bet: %d\n", sock->getPlayer()->gamblingState.betAmount);
+    sock->setState(CON_PLAYING);
+}
+
+void playSlots(Socket* sock, const std::string& str) {
+    return;
+}
+
 int cmdGamble(Player* player, cmd* cmnd) {
     if(!player->getRoomParent()->flagIsSet(R_CASINO) && !player->isCt()) {
-        player->print("You can't gamble here.\n");
+        player->printColor("You can't gamble here.\n");
         return(0);
     }
 
+    if (cmnd->num < 2) {
+        player->printColor("Gamble how? (blackjack, slots)\n");
+        return(0);
+    }
+
+    bool isBlackjack = keyTxtCompare("blackjack", cmnd->str[1], strlen(cmnd->str[1]));
+    bool isSlots = keyTxtCompare("slots", cmnd->str[1], strlen(cmnd->str[1]));
+
+    if (!isBlackjack && !isSlots) {
+        player->printColor("You can't do that. Blackjack or slots.\n");
+        return(0);
+    }
+
+    if (cmnd->val[1] < 100) {
+        player->printColor("You must bet at least 100 gold!\n");
+        return(0);
+    }
+
+    player->gamblingState.betAmount = cmnd->val[1];
     player->unhide();
 
-    player->print("Not implemented yet.\n");
+    if (isBlackjack) {
+        player->getSock()->setState(BLACKJACK_START);
+    } else if (isSlots) {
+        //getSock()->setState(SLOTS_START);
+        player->printColor("Not implemented yet.\n");
+    }
     return(0);
 }
 

@@ -104,6 +104,12 @@ typedef enum {
 
     CREATE_END,
 
+    // gambling
+    BLACKJACK_START,
+    BLACKJACK_END,
+    SLOTS_START,
+    SLOTS_END,
+
     UNUSED_STATE
 } connectedStates;
 
