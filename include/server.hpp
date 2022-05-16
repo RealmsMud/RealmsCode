@@ -94,8 +94,8 @@ typedef std::map<std::string, std::weak_ptr<MudObject>,idComp> IdMap;
 using WeakMonsterList = std::list<std::weak_ptr<Monster> >;
 using MonsterList = std::list<std::shared_ptr<Monster> >;
 using GroupList = std::list<Group*>;
-using SocketList = std::list<Socket>;
-using SocketVector= std::vector<Socket*>;
+using SocketList = std::list<std::shared_ptr<Socket>>;
+using SocketVector= std::vector<std::weak_ptr<Socket>>;
 using PlayerMap = std::map<std::string, std::shared_ptr<Player>>;
 
 using RoomCache = LRU::lru_cache<CatRef, std::shared_ptr<UniqueRoom>, CleanupRoomFn, CanCleanupRoomFn>;
@@ -410,8 +410,8 @@ public:
     void swapInfo(const std::shared_ptr<Player>& player);
 
     // Queries
-    bool checkDuplicateName(Socket &sock, bool dis);
-    bool checkDouble(Socket &sock);
+    bool checkDuplicateName(Socket *sock, bool dis);
+    bool checkDouble(Socket *sock);
 
     // Bans
     void checkBans();

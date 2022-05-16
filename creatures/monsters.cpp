@@ -492,7 +492,7 @@ int Monster::castSpell(const std::shared_ptr<Creature>&target) {
     // pets are smarter
     if(isPet()) {
         // Pets only cast offensive spells in combat
-        if((int(*)(SpellFn, char*, osp_t*)) get_spell_function(spl) != splOffensive) {
+        if((int(*)(SpellFn, const char*, osp_t*)) get_spell_function(spl) != splOffensive) {
             realm = proficiency[1];
             if (realm <= NO_REALM || realm >= MAX_REALM) {
                 // Non casting pet class if realm is zero
@@ -504,12 +504,12 @@ int Monster::castSpell(const std::shared_ptr<Creature>&target) {
             spl = ospell[(realm-1)].splno;
         }
 
-        if( (int(*)(SpellFn, char*, osp_t*)) get_spell_function(spl) == splOffensive &&
+        if( (int(*)(SpellFn, const char*, osp_t*)) get_spell_function(spl) == splOffensive &&
             get_spell_lvl(spl) < 5) {
             // They will cast higher level offensive spells if they have the mana
             for(i=1;i <knowctr; i++) {
                 if( get_spell_lvl(known[i-1]) > get_spell_lvl(spl) &&
-                    (int(*)(SpellFn, char*, osp_t*))get_spell_function(known[i-1]) == splOffensive
+                    (int(*)(SpellFn, const char*, osp_t*))get_spell_function(known[i-1]) == splOffensive
                 ) {
                     for(c=0; ospell[c].splno != get_spell_num(known[i-1]); c++)
                         if(ospell[c].splno == -1) {
@@ -523,7 +523,7 @@ int Monster::castSpell(const std::shared_ptr<Creature>&target) {
     }
 
     int splNo = get_spell_num(spl);
-    if( (int(*)(SpellFn, char*, osp_t*))get_spell_function(spl) == splOffensive ||
+    if( (int(*)(SpellFn, const char*, osp_t*))get_spell_function(spl) == splOffensive ||
         splNo == S_TELEPORT ||
         splNo == S_STUN ||
         splNo == S_WORD_OF_RECALL ||
@@ -594,7 +594,7 @@ int Monster::castSpell(const std::shared_ptr<Creature>&target) {
     data.set(CastType::CAST, get_spell_school(spl), get_spell_domain(spl), nullptr, Containable::downcasted_shared_from_this<Monster>());
     data.splno = spl;
 
-    if((int(*)(SpellFn, char*, osp_t*))fn == splOffensive) {
+    if((int(*)(SpellFn, const char*, osp_t*))fn == splOffensive) {
         for(c=0; ospell[c].splno != get_spell_num(spl); c++)
             if(ospell[c].splno == -1)
                 return(13);

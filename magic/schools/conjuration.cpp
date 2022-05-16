@@ -382,8 +382,7 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
         skLevel = player->getLevel();
     }
     */
-    // TODO: conjure/animate is no longer a skill until progression
-    // has been fixed
+    // TODO: conjure/animate is no longer a skill until progression has been fixed
     skLevel = player->getLevel();
 
     if (spellData->how == CastType::SKILL &&

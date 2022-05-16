@@ -559,8 +559,8 @@ std::shared_ptr<Creature> Creature::findMagicVictim(const std::string &toFind, i
         }
     }
 }
-int splOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp) {
-    std::shared_ptr<Creature> target=nullptr;
+int splOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char *spellname, osp_t *osp) {
+    std::shared_ptr<Creature> target;
 
     if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == nullptr)
         return(0);
@@ -573,8 +573,8 @@ int splOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
 //*********************************************************************
 // the actual routine to do the AOE damage
 
-int doMultiOffensive(std::shared_ptr<Creature> player, std::shared_ptr<Creature> target, int *found_something, int *something_died, SpellData* spellData, char *spellname, osp_t *osp) {
-    int     ret=0;
+int doMultiOffensive(std::shared_ptr<Creature> player, std::shared_ptr<Creature> target, int *found_something, int *something_died, SpellData* spellData, const char *spellname, osp_t *osp) {
+    int     ret;
 
     if(!*found_something)
         player->getParent()->wake("Loud noises disturb your sleep.", true);
@@ -600,10 +600,10 @@ int doMultiOffensive(std::shared_ptr<Creature> player, std::shared_ptr<Creature>
 //*********************************************************************
 // this type of spell causes damage to everyone in a given room
 
-int splMultiOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp) {
-    std::shared_ptr<Creature> target=nullptr;
+int splMultiOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char *spellname, osp_t *osp) {
+    std::shared_ptr<Creature> target;
     int     monsters=0, players=0;
-    size_t  len=0;
+    size_t  len;
     int     something_died=0, found_something=0;
 
 
@@ -692,7 +692,7 @@ int splMultiOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellD
 
 int splDarkness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     std::shared_ptr<Player> pPlayer = player->getAsPlayer();
-    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Creature> target;
     std::shared_ptr<Object>  object=nullptr;
 
     player->smashInvis();

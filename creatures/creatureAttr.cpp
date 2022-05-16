@@ -583,7 +583,7 @@ void Monster::reset() {
     for(i=0; i<NUM_RESCUE; i++)
         rescue[i].clear();
 
-    myMaster = nullptr;
+    myMaster.reset();
     updateAggro = 0;
     cast = 0;
     magicResistance = 0;

@@ -1115,9 +1115,9 @@ void Server::pulseCreatureEffects(long t) {
 //        ply->pulseEffects(t);
 //    }
     for (const auto& sock : sockets) {
-        if(!sock.isConnected()) continue;
-        if(sock.hasPlayer())
-            sock.getPlayer()->pulseEffects(t);
+        if(!sock->isConnected()) continue;
+        if(sock->hasPlayer())
+            sock->getPlayer()->pulseEffects(t);
     }
 
     auto mIt = activeList.begin();

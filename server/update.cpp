@@ -264,10 +264,10 @@ void Server::weather(WeatherString w) {
         color = 'w';
 
 
-    for(Socket &sock : gServer->sockets) {
-        if (!sock.hasPlayer()) continue;
+    for(const auto  &sock : gServer->sockets) {
+        if (!sock->hasPlayer()) continue;
 
-        std::shared_ptr<Player> player = sock.getPlayer();
+        std::shared_ptr<Player> player = sock->getPlayer();
 
         if(player->fd < 0)
             continue;
@@ -881,17 +881,17 @@ void doCrash(int sig) {
     oStr << "People online: ";
     std::shared_ptr<Player> player=nullptr;
     int i=0;
-    for(Socket &sock : gServer->sockets) {
-        if (!sock.hasPlayer()) continue;
-        player = sock.getPlayer();
+    for(const auto &sock : gServer->sockets) {
+        if (!sock->hasPlayer()) continue;
+        player = sock->getPlayer();
 
         if(i++)
             oStr << ", ";
 
-        if(!sock.isConnected())
+        if(!sock->isConnected())
             oStr << player->getName() << " (connecting)";
         else
-            oStr << player->getName() << " (^xcmd:" + player->getLastCommand() << ":" << (t-sock.ltime) << "^W)";
+            oStr << player->getName() << " (^xcmd:" + player->getLastCommand() << ":" << (t-sock->ltime) << "^W)";
     }
     if(!i)
         oStr << "No one";

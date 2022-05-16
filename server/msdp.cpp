@@ -49,19 +49,19 @@
 #define MSDP_DEBUG
 
 void Server::processMsdp() {
-    for(auto &sock : sockets) {
-        if(sock.getState() == CON_DISCONNECTING)
+    for(auto sock : sockets) {
+        if(sock->getState() == CON_DISCONNECTING)
             continue;
 
-        if(sock.mccpEnabled()) {
-            for(auto& [vName, var] : sock.msdpReporting) {
-                if(var.getRequiresPlayer() && (!sock.getPlayer() || sock.getState() != CON_PLAYING)) continue;
+        if(sock->mccpEnabled()) {
+            for(auto& [vName, var] : sock->msdpReporting) {
+                if(var.getRequiresPlayer() && (!sock->getPlayer() || sock->getState() != CON_PLAYING)) continue;
                 if(!var.checkTimer()) continue;
 
                 var.update();
                 if(!var.isDirty()) continue;
 
-                var.send(sock);
+                var.send(*sock);
                 var.setDirty(false);
             }
         }

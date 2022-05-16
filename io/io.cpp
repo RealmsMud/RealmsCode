@@ -101,16 +101,16 @@ bool hearBroadcast(std::shared_ptr<Creature> target, Socket* ignore1, Socket* ig
 
 // global broadcast
 void doBroadCast(bool showTo(Socket*), bool showAlso(Socket*), const char *fmt, va_list ap, const std::shared_ptr<Creature>& player) {
-    for(Socket &sock : gServer->sockets) {
-        const std::shared_ptr<Player> ply = sock.getPlayer();
+    for(const auto& sock : gServer->sockets) {
+        const std::shared_ptr<Player> ply = sock->getPlayer();
 
         if(!ply)
             continue;
         if(ply->fd < 0)
             continue;
-        if(!showTo(&sock))
+        if(!showTo(sock.get()))
             continue;
-        if(showAlso && !showAlso(&sock))
+        if(showAlso && !showAlso(sock.get()))
             continue;
         // No gagging staff!
         if(player && ply->isGagging(player->getName()) && !player->isCt())

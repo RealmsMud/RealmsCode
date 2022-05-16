@@ -227,7 +227,7 @@ void login(Socket* sock, const std::string& inStr) {
             player->fd = -1;
             sock->setPlayer(player);
 
-            if(gServer->checkDuplicateName(*sock, false)) {
+            if(gServer->checkDuplicateName(sock, false)) {
                 // Don't free player here or ask for name again because checkDuplicateName does that
                 // We only need to worry about freeing proxy
                 return;
@@ -324,8 +324,8 @@ void Socket::finishLogin() {
     print("%s", echo_on);
     strcpy(charName, getPlayer()->getCName());
 
-    gServer->checkDuplicateName(*this, true);
-    if(gServer->checkDouble(*this)) {
+    gServer->checkDuplicateName(this, true);
+    if(gServer->checkDouble(this)) {
         return;
     }
 
@@ -1722,9 +1722,9 @@ void Create::done(Socket* sock, const std::string &str, int mode) {
 
         player->setName( sock->tempstr[0]);
 
-        if(gServer->checkDuplicateName(*sock, false))
+        if(gServer->checkDuplicateName(sock, false))
             return;
-        if(gServer->checkDouble(*sock))
+        if(gServer->checkDouble(sock))
             return;
         if(Player::exists(player->getName())) {
             sock->printColor("\n\n^ySorry, that player already exists.^x\n\n\n");

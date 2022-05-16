@@ -70,7 +70,7 @@ protected:
     int weaponSkill{};
     int defenseSkill{};
 
-    std::shared_ptr<Creature> myMaster;
+    std::weak_ptr<Creature> myMaster;
 
     std::list<QuestInfo*> quests;
 

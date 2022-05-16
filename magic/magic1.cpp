@@ -149,8 +149,8 @@ void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creat
 
     parse(cmnd.fullstr, &cmnd);
 
-    offensive = (int(*)(SpellFn, char*, osp_t*))fn == splOffensive ||
-        (int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive;
+    offensive = (int(*)(SpellFn, const char*, osp_t*))fn == splOffensive ||
+        (int(*)(SpellFn, const char*, osp_t*))fn == splMultiOffensive;
 
     if(offensive) {
         for(c=0; ospell[c].splno != get_spell_num(data.splno); c++)
@@ -262,6 +262,7 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         return(CAST_RESULT_FAILURE);
     }
 
+    data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), nullptr, player);
 
     if(!creature->isStaff()) {
         switch(creature->getCastingType()) {
@@ -287,8 +288,7 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     }
     
 
-    if( creature->getRoomParent()->flagIsSet(R_NO_MAGIC) &&
-        !creature->checkStaff("Nothing happens.\n")
+    if( creature->getRoomParent()->flagIsSet(R_NO_MAGIC) && !creature->checkStaff("Nothing happens.\n")
     )
         return(CAST_RESULT_FAILURE);
 
@@ -362,8 +362,8 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         return(CAST_RESULT_FAILURE);
 
 
-    offensive = (int(*)(SpellFn, char*, osp_t*))fn == splOffensive ||
-        (int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive;
+    offensive = (int(*)(SpellFn, const char*, osp_t*))fn == splOffensive ||
+        (int(*)(SpellFn, const char*, osp_t*))fn == splMultiOffensive;
 
 
     if(offensive) {
@@ -1052,8 +1052,8 @@ int cmdReadScroll(const std::shared_ptr<Player>& player, cmd* cmnd) {
     // if the spell failed due to dimensional anchor, don't even run this
     if(!dimensionalFailure) {
 
-        if((int(*)(SpellFn, char*, osp_t*))fn == splOffensive ||
-            (int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive) {
+        if((int(*)(SpellFn, const char*, osp_t*))fn == splOffensive ||
+            (int(*)(SpellFn, const char*, osp_t*))fn == splMultiOffensive) {
             for(c = 0; ospell[c].splno != get_spell_num(data.splno); c++)
                 if(ospell[c].splno == -1)
                     return(0);
@@ -1192,8 +1192,8 @@ int Player::consume(const std::shared_ptr<Object>& object, cmd* cmnd) {
         data.splno = splno;
         data.set(CastType::POTION, get_spell_school(data.splno), get_spell_domain(data.splno), object, pThis);
 
-        if( (int(*)(SpellFn, char*, osp_t*))fn == splOffensive ||
-            (int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive)
+        if( (int(*)(SpellFn, const char*, osp_t*))fn == splOffensive ||
+            (int(*)(SpellFn, const char*, osp_t*))fn == splMultiOffensive)
         {
             for(c = 0; ospell[c].splno != get_spell_num(data.splno); c++)
                 if(ospell[c].splno == -1)
@@ -1385,8 +1385,8 @@ int cmdUseWand(const std::shared_ptr<Player>& player, cmd* cmnd) {
     // if the spell failed due to dimensional anchor, don't even run this
     if(!dimensionalFailure) {
 
-        if( (int(*)(SpellFn, char*, osp_t*))fn == splOffensive ||
-            (int(*)(SpellFn, char*, osp_t*))fn == splMultiOffensive
+        if( (int(*)(SpellFn, const char*, osp_t*))fn == splOffensive ||
+            (int(*)(SpellFn, const char*, osp_t*))fn == splMultiOffensive
         ) {
             for(c = 0; ospell[c].splno != get_spell_num(data.splno); c++)
                 if(ospell[c].splno == -1)
