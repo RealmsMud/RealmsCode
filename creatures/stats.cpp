@@ -211,7 +211,7 @@ bool Creature::setStatDirty(std::string_view statName) {
 bool Stat::addModifier(StatModifier* toAdd) {
     if(!toAdd) return(false);
 
-    if(getModifier(toAdd->getName()) != nullptr) {
+    if(hasModifier(toAdd->getName())) {
         std::clog << "Not adding modifer " << toAdd->getName() << std::endl;
         delete toAdd;
         return(false);
@@ -225,7 +225,7 @@ void Stat::setDirty() {
     if(influences) influences->setDirty();
 }
 bool Stat::addModifier(const std::string &pName, int modAmt, ModifierType modType) {
-    if(getModifier(pName) != nullptr) return(false);
+    if(hasModifier(pName)) return(false);
     return(addModifier(new StatModifier(pName, modAmt, modType)));
 }
 
@@ -535,7 +535,7 @@ bool Player::statsAddUp() const {
 //*********************************************************************
 
 bool Creature::addStatModEffect(EffectInfo* effect) {
-    Stat* stat=nullptr;
+    Stat* stat;
     std::shared_ptr<Player> pThis = getAsPlayer();
     bool good;
     ModifierType modType = MOD_CUR_MAX;
