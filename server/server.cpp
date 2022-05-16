@@ -597,14 +597,15 @@ int Server::processCommands() {
 int Server::updatePlayerCombat() {
     for(const auto &unlockedSock : *vSockets) {
         if(auto sock = unlockedSock.lock()) {
-            auto player = sock->getPlayer();
-            if(player->isFleeing() && player->canFlee(false)) {
-                player->doFlee();
-            } else if(player->autoAttackEnabled() && !player->isFleeing() && player->hasAttackableTarget() && player->isAttackingTarget()) {
-                if(!player->checkAttackTimer(false))
-                    continue;
+            if(auto player = sock->getPlayer()) {
+                if (player->isFleeing() && player->canFlee(false)) {
+                    player->doFlee();
+                } else if (player->autoAttackEnabled() && !player->isFleeing() && player->hasAttackableTarget() && player->isAttackingTarget()) {
+                    if (!player->checkAttackTimer(false))
+                        continue;
 
-                player->attackCreature(player->getTarget(), ATTACK_NORMAL);
+                    player->attackCreature(player->getTarget(), ATTACK_NORMAL);
+                }
             }
         }
     }
