@@ -619,8 +619,6 @@ int dmSkills(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->printPaged(
                 fmt::format("\n^xSkills\n%{:<20} - {:30} - {:<15}\n-------------------------------------------------------------\n",
                 "Name", "DisplayName", "Group"));
-        SkillInfo* skill;
-
         for (const auto& [groupName, groupDisplayName] : gConfig->skillGroups) {
             for(const auto& [skillName, skillInfo] : gConfig->skills) {
                 if (skillInfo.getGroup() == groupName) {

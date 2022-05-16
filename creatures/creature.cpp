@@ -1471,8 +1471,8 @@ Creature::~Creature() {
     ttag    *tp=nullptr, *tempt=nullptr;
     int i;
     for(i=0; i<MAXWEAR; i++) {
-        if(ready[i])
-            unequip(i+1, UNEQUIP_DELETE, false);
+        if(ready[i]) ready[i] = nullptr;
+//            unequip(i+1, UNEQUIP_DELETE, false);
     }
 
     objects.clear();

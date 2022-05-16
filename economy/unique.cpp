@@ -185,8 +185,6 @@ void UniqueOwner::doRemove(std::shared_ptr<Player> player, const std::shared_ptr
 
     if(player) {
         player->save(online);
-        if(!online)
-            player.reset();
     }
 }
 
@@ -231,8 +229,6 @@ void UniqueOwner::removeUnique(bool destroy) {
                 }
             }
         }
-
-        if(!online) player.reset();
     }
 
     // for properties, we only have to worry about primary owners

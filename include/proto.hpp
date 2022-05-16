@@ -54,7 +54,7 @@ bool isMatch(const std::shared_ptr<const Creature>& searcher, const std::shared_
 
 
 // Socials
-void socialHooks(const std::shared_ptr<Creature>&creature, std::shared_ptr<MudObject> target, const std::string &action, const std::string &result = "");
+void socialHooks(const std::shared_ptr<Creature>&creature, const std::shared_ptr<MudObject> &target, const std::string &action, const std::string &result = "");
 void socialHooks(const std::shared_ptr<Creature>&target, const std::string &action, const std::string &result = "");
 bool actionShow(const std::shared_ptr<Player>& pTarget, const std::shared_ptr<Creature>& creature);
 

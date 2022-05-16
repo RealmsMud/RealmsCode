@@ -216,7 +216,7 @@ void Socket::reset() {
 
     outCompressBuf = nullptr;
     outCompress = nullptr;
-    myPlayer.reset();
+    myPlayer = nullptr;
 
     tState = NEG_NONE;
     oneIAC = watchBrokenClient = false;
@@ -297,7 +297,7 @@ void Socket::cleanUp() {
             myPlayer->uninit();
         }
         gServer->clearPlayer(myPlayer->getName());
-        myPlayer.reset();
+        myPlayer = nullptr;
     }
     endCompress();
     if(fd > -1) {
@@ -1141,7 +1141,7 @@ void Socket::reconnect(bool pauseScreen) {
 
     if(myPlayer) {
         gServer->clearPlayer(myPlayer->getName());
-        myPlayer.reset();
+        myPlayer = nullptr;
     }
 
     if (pauseScreen) {

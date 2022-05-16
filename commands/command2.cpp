@@ -578,14 +578,14 @@ int cmdBreak(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 broadcast(player->getSock(), player->getParent(), "%O explodes in a retributive strike!", object.get());
 
                 player->delObj(object, true);
-                object.reset();
+                object = nullptr;
             } else {
                 player->printColor("%O explodes!\n", object.get());
                 broadcast(player->getSock(), player->getParent(), "%O explodes!", object.get());
                 broadcast(player->getSock(), player->getParent(), "%M is engulfed by magical energy!", player.get());
 
                 player->delObj(object, true);
-                object.reset();
+                object = nullptr;
             }
 
             broadcast(player->getSock(), player->getParent(), "%M is engulfed by a magical vortex!", player.get());
