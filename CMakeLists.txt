@@ -315,6 +315,7 @@ set(COMMON_SOURCE_FILES
     roguelike/rogues.cpp
     roguelike/steal.cpp
     roguelike/traps.cpp
+    roguelike/cards.cpp
 
     server/access.cpp
     server/async.cpp

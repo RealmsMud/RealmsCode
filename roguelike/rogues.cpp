@@ -198,10 +198,16 @@ void playBlackjack(Socket* sock, const std::string& str) {
     std::ostringstream oStr;
     switch(sock->getState()) {
         case BLACKJACK_START:
-            sock->printColor("Blackjack start.\n");
-            new Deck();
+            oStr << "Blackjack start." << "\n";
+            Deck deck = Deck(2);
+            deck.shuffle();
+            for (auto rit = std::rbegin(deck.cards); rit != std::rend(deck.cards); rit++) {
+                oStr << "Size: " << std::to_string(deck.cards.size()) << " " << cardToString(deck.takeCard()) << "\n";
+            }
             break;
     }
+    sock->printColor(oStr.str().c_str());
+    sock->print("\n");
     sock->print(str.c_str());
     sock->print("\n");
     sock->print("Bet: %d\n", sock->getPlayer()->gamblingState.betAmount);

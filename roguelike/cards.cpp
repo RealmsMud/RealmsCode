@@ -20,6 +20,7 @@
 #include <cards.hpp>              // Card, Deck
 #include <algorithm>              // for shuffle
 #include <random>                 // for random_engine
+#include <chrono>                 // std::chrono::system_clock
 
 // template <typename CharT, typename Traits>
 // auto operator<<(std::basic_ostream<CharT, Traits>& out, CardSuit s) -> std::basic_ostream<CharT, Traits>& {
@@ -121,8 +122,8 @@ Deck::Deck(int decks) {
 }
 
 void Deck::shuffle() {
-  std::default_random_engine rng = {};
-  std::shuffle(std::begin(cards), std::end(cards), rng);
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::shuffle(std::begin(cards), std::end(cards), std::default_random_engine(seed));
 }
 
 Card Deck::takeCard() {
