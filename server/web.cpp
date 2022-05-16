@@ -109,8 +109,8 @@ void latestPost(std::string_view view, std::string_view subject, std::string_vie
     if(view.empty() || boardname.empty() || username.empty() || post.empty())
         return;
 
-    for(Socket &sock : gServer->sockets) {
-        const std::shared_ptr<Player> player = sock.getPlayer();
+    for(auto sock : gServer->sockets) {
+        const std::shared_ptr<Player> player = sock->getPlayer();
 
         if(!player || player->fd < 0)
             continue;

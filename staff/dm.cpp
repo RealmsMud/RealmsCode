@@ -181,9 +181,9 @@ int dmSockets(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->print("Connected Sockets:\n");
 
-    for(Socket &sock : gServer->sockets) {
+    for(const auto &sock : gServer->sockets) {
         num += 1;
-        player->bPrint(fmt::format("Fd: {:-2}   {} ({})\n", sock.getFd(), sock.getHostname(), sock.getIdle()));
+        player->bPrint(fmt::format("Fd: {:-2}   {} ({})\n", sock->getFd(), sock->getHostname(), sock->getIdle()));
     }
     player->print("%d total connection%s.\n", num, num != 1 ? "s" : "");
     return(PROMPT);
@@ -623,9 +623,9 @@ int dmUsers(const std::shared_ptr<Player>& player, cmd* cmnd) {
         oStr << "Room                 Address             Last Command      Idle";
     oStr << "\n---------------------------------------------------------------------------------------\n";
 
-    auto cmp = [](const Socket* a, const Socket* b) { return a->getHostname() < b->getHostname(); };
-    std::multiset<Socket*, decltype(cmp)> sortedSockets;
-    for(auto &sock : gServer->sockets) sortedSockets.insert(&sock);
+    auto cmp = [](const std::shared_ptr<Socket>& a, const std::shared_ptr<Socket>& b) { return a->getHostname() < b->getHostname(); };
+    std::multiset<std::shared_ptr<Socket>, decltype(cmp)> sortedSockets;
+    for(const auto &sock : gServer->sockets) sortedSockets.insert(sock);
 
     for(const auto &sock : sortedSockets) {
         user = sock->getPlayer();

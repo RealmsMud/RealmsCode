@@ -888,7 +888,7 @@ unsigned int Creature::castWeapon(const std::shared_ptr<Creature>& target, std::
             return(0);
     osp = (osp_t *)&ospell[c];
 
-    if((int(*)(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, char*, osp_t*))fn == splOffensive) {
+    if((int(*)(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char*, osp_t*))fn == splOffensive) {
 
         if(target->isMonster() && (get_spell_lvl(splno) > 0)) {
             slvl = get_spell_lvl(splno);

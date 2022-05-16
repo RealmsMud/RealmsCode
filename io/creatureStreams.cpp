@@ -77,13 +77,14 @@ Streamable& Streamable::operator<< ( const MudObject& mo) {
     int mNum = this->getManipNum();
     const std::shared_ptr<const Creature> & creature = mo.getAsConstCreature();
     if(creature) {
-        doPrint(creature->getCrtStr(thisPlayer->getAsPlayer(), mFlags, mNum));
+
+        doPrint(creature->getCrtStr((thisPlayer ? thisPlayer->getAsPlayer() : nullptr), mFlags, mNum));
         return(*this);
     }
 
     const std::shared_ptr<const Object>  object = mo.getAsConstObject();
     if(object) {
-        doPrint(object->getObjStr(thisPlayer->getAsPlayer(), mFlags, mNum));
+        doPrint(object->getObjStr((thisPlayer ? thisPlayer->getAsPlayer() : nullptr), mFlags, mNum));
         return(*this);
     }
 

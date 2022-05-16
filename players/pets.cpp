@@ -69,7 +69,7 @@ void Monster::setMaster(std::shared_ptr<Creature> pMaster) {
 }
 
 std::shared_ptr<Creature> Monster::getMaster() const {
-    return(myMaster);
+    return(myMaster.lock());
 }
 
 std::shared_ptr<Monster>  Creature::findPet(const std::string& pName, int pNum) {

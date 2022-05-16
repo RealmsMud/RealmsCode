@@ -350,11 +350,11 @@ void Server::checkBans() {
     static const char* banString = "\n\rThe watcher just arrived.\n\rThe watcher says, \"Begone from this place!\".\n\rThe watcher banishes your soul from this world.\n\r\n\r\n\r";
 
     for(auto &sock : sockets) {
-        if(sock.getPlayer() && (gConfig->isBanned(sock.getIp()) ||
-            gConfig->isBanned(sock.getHostname()))) {
-            if(sock.getPlayer()->getClass() <= CreatureClass::BUILDER) {
-                sock.write(banString);
-                sock.disconnect();
+        if(sock->getPlayer() && (gConfig->isBanned(sock->getIp()) ||
+            gConfig->isBanned(sock->getHostname()))) {
+            if(sock->getPlayer()->getClass() <= CreatureClass::BUILDER) {
+                sock->write(banString);
+                sock->disconnect();
             }
         }
     }

@@ -1618,6 +1618,7 @@ int Socket::endCompress() {
 
         delete[] outCompressBuf;
 
+        free(outCompress);
         outCompress = nullptr;
         outCompressBuf = nullptr;
 

@@ -396,8 +396,8 @@ int splWellOfMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
 int splWordOfRecall(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 
 int doOffensive(std::shared_ptr<Creature>caster, std::shared_ptr<Creature> target, SpellData* spellData, const char *spellname, osp_t *osp, bool multi=false);
-int splOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp);
-int splMultiOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp);
+int splOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char *spellname, osp_t *osp);
+int splMultiOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char *spellname, osp_t *osp);
 
 
 void bringDownTheWall(EffectInfo* effect, const std::shared_ptr<BaseRoom>& room, std::shared_ptr<Exit> exit);
