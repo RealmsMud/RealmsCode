@@ -21,6 +21,7 @@
 #include <string>
 
 #include "mudObjects/creatures.hpp"
+#include "blackjack.hpp"
 
 class Player : public Creature {
 public:
@@ -140,6 +141,10 @@ public:
     Statistics statistics;
     Range   bRange[MAX_BUILDER_RANGE];
 
+    struct GamblingState { // for interactive gambling games
+        Blackjack *bjGame{};
+    };
+    GamblingState gamblingState;
 
     bool checkProxyAccess(Player* proxy);
 

@@ -106,6 +106,7 @@ typedef enum {
 
     // gambling
     BLACKJACK_START,
+    BLACKJACK_DEAL,
     BLACKJACK_END,
     SLOTS_START,
     SLOTS_END,

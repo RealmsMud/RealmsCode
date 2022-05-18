@@ -19,6 +19,7 @@
 #define CARDS_H
 
 #include <vector>
+#include <string>
 
 enum class CardSuit : unsigned char {
   Spades,
@@ -44,16 +45,20 @@ enum class CardRank : unsigned char {
 };
 
 struct Card {
-    CardSuit suit;
-    CardRank rank;
+  CardSuit suit;
+  CardRank rank;
 };
 
+std::ostream& operator<<(std::ostream& os, const Card& card);
 std::string cardToString(Card card);
 
 class Deck {
   public:
     std::vector<Card> cards;
+
+    Deck();
     Deck(int decks); // a deck can also be a shoe of multiple decks
+
     void shuffle();
     Card takeCard();
 };

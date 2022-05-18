@@ -17,53 +17,35 @@
  */
 
 #include <ostream>                // for operator<<, basic_ostream, ostring...
+#include <iomanip>                // for stream formatting
 #include <cards.hpp>              // Card, Deck
 #include <algorithm>              // for shuffle
 #include <random>                 // for random_engine
 #include <chrono>                 // std::chrono::system_clock
 
-// template <typename CharT, typename Traits>
-// auto operator<<(std::basic_ostream<CharT, Traits>& out, CardSuit s) -> std::basic_ostream<CharT, Traits>& {
-//   switch (s) {
-//     case CardSuit::Spades:
-//       out << "spades";
-//       break;
-//     case CardSuit::Clubs:
-//       out << "clubs";
-//       break;
-//     case CardSuit::Hearts:
-//       out << "hearts";
-//       break;
-//     case CardSuit::Diamonds:
-//       out << "diamonds";
-//       break;
-//   }
-//   return out;
-// }
+std::ostream& operator<<(std::ostream& os, const Card& card) {
+  os << std::setw(2);
+  if (card.rank == CardRank::Ace) os << "A";
+  else if (card.rank == CardRank::Two) os << "2";
+  else if (card.rank == CardRank::Three) os << "3";
+  else if (card.rank == CardRank::Four) os << "4";
+  else if (card.rank == CardRank::Five) os << "5";
+  else if (card.rank == CardRank::Six) os << "6";
+  else if (card.rank == CardRank::Seven) os << "7";
+  else if (card.rank == CardRank::Eight) os << "8";
+  else if (card.rank == CardRank::Nine) os << "9";
+  else if (card.rank == CardRank::Ten) os << "10";
+  else if (card.rank == CardRank::Jack) os << "J";
+  else if (card.rank == CardRank::Queen) os << "Q";
+  else if (card.rank == CardRank::King) os << "K";
 
-// constexpr auto toValue(CardRank r) noexcept -> int {
-//   switch (r) {
-//     case CardRank::Jack:
-//       [[fallthrough]];
-//     case CardRank::Queen:
-//       [[fallthrough]];
-//     case CardRank::King:
-//       return 10;
-//     default:
-//       return static_cast<int>(r);
-//   }
-// }
+  if (card.suit == CardSuit::Spades) os << "S";
+  else if (card.suit == CardSuit::Clubs) os << "C";
+  else if (card.suit == CardSuit::Hearts) os << "H";
+  else if (card.suit == CardSuit::Diamonds) os << "D";
 
-// template <typename CharT, typename Traits>
-// auto operator<<(std::basic_ostream<CharT, Traits>& out, Card c) -> std::basic_ostream<CharT, Traits>& {
-//   if (out) {
-//     auto oss = std::basic_ostringstream<CharT, Traits>{};
-//     oss << c.rank << " of " << c.suit;
-
-//     out << oss.view();
-//   }
-//   return out;
-// }
+  return os;
+}
 
 std::string cardToString(Card card) {
   std::string out;
@@ -89,6 +71,8 @@ std::string cardToString(Card card) {
 
   return out;
 }
+
+Deck::Deck() { }
 
 Deck::Deck(int decks) {
   Card card;
