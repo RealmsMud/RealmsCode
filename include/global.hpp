@@ -128,7 +128,7 @@ enum CrtStats {
     PTY = 5,
     CHA = 6
 };
-const int MAX_STAT = PTY;
+const int MAX_STAT = PTY + 1;
 
 const int MIN_STAT_NUM = 10;
 const int MAX_STAT_NUM = MAXALVL*10;

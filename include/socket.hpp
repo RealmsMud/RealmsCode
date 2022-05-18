@@ -172,6 +172,7 @@ public:
     void viewFile(const std::string& str, bool shouldPage=false);
     void viewFileReverse(const std::string& str);
     void viewFileReverseReal(const std::string& str);
+    void registerPlayer();
 public:
     explicit Socket(int pFd);
     Socket(int pFd, sockaddr_in pAddr, bool dnsDone);
@@ -341,6 +342,7 @@ protected:
     std::string     inBuf;              // Input Buffer
     std::string     inLast;             // Last command
 
+    bool registered{};
     std::shared_ptr<Player>     myPlayer{};
 
 

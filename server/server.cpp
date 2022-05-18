@@ -607,6 +607,8 @@ int Server::updatePlayerCombat() {
                     player->attackCreature(player->getTarget(), ATTACK_NORMAL);
                 }
             }
+        } else {
+            std::clog << "Error locking socket" << std::endl;
         }
     }
     return(0);
@@ -909,6 +911,7 @@ void Server::updateActive(long t) {
         std::shared_ptr<Monster>  monster;
         // Increment the iterator in case this monster dies during the update and is removed from the active list
         if(!(monster = it->lock())) {
+            std::clog << "UpdateActive: Can't lock monster" << std::endl;
             it = activeList.erase(it);
             continue;
         }
@@ -916,8 +919,7 @@ void Server::updateActive(long t) {
 
         // Better be a monster to be on the active list
         if(!monster->inRoom()) {
-            broadcast(isStaff, "^y%s without a parent/area room on the active list. Info: %s. Deleting.",
-                monster->getCName(), monster->info.displayStr().c_str());
+            broadcast(isStaff, "^y%s without a parent/area room on the active list. Info: %s. Deleting.", monster->getCName(), monster->info.displayStr().c_str());
             monster->deleteFromRoom();
             it = activeList.erase(it);
             continue;
@@ -930,10 +932,7 @@ void Server::updateActive(long t) {
         if(tt == 7 && ((t - last_time_update) / 2) == 0)
             monster->daily[DL_BROAD].cur = 20;
 
-        if( (monster->flagIsSet(M_NIGHT_ONLY) && isDay()) ||
-            (monster->flagIsSet(M_DAY_ONLY) && !isDay()))
-        {
-
+        if( (monster->flagIsSet(M_NIGHT_ONLY) && isDay()) || (monster->flagIsSet(M_DAY_ONLY) && !isDay())) {
             for(const auto& ply: room->players) {
                 if(ply->isStaff()) {
                     immort = 1;
@@ -962,6 +961,7 @@ void Server::updateActive(long t) {
             !monster->flagIsSet(M_PERMENANT_MONSTER) &&
             !monster->flagIsSet(M_AGGRESSIVE))
         {
+            std::clog << "Removing " << monster->getName() << " from active list" << std::endl;
             it = activeList.erase(it);
             continue;
         }
@@ -977,10 +977,7 @@ void Server::updateActive(long t) {
             for(const auto& mons : room->monsters) {
                 if(mons == monster)
                     continue;
-                if( mons->flagIsSet(M_PERMENANT_MONSTER) &&
-                    !monster->willAssist(mons->getAsMonster()) &&
-                    !monster->isEnemy(mons)
-                )
+                if( mons->flagIsSet(M_PERMENANT_MONSTER) && !monster->willAssist(mons->getAsMonster()) && !monster->isEnemy(mons))
                     monster->addEnemy(mons);
             }
         }
@@ -1026,7 +1023,7 @@ void Server::updateActive(long t) {
 
 
         if(monster->doHarmfulAuras()) {
-            it = activeList.erase(it);
+            it = activeList.begin();
             continue;
         }
 
@@ -1075,8 +1072,8 @@ void Server::updateActive(long t) {
             it++;
             continue;
         } if(mobileResult == 2) {
-            monster->deleteFromRoom();
             it = activeList.erase(it);
+            monster->deleteFromRoom();
             continue;
         }
 
@@ -1097,13 +1094,13 @@ void Server::updateActive(long t) {
             monster->canSpeak() &&
             monster->mobDeathScream()
         ) {
-            it = activeList.erase(it);
+            it = activeList.begin();
             continue;
         }
 
         // Update combat here
         if( monster->hasEnemy() && !timetowander && monster->updateCombat()) {
-            it = activeList.erase(it);
+            it = activeList.begin();
             continue;
         }
 

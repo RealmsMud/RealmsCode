@@ -97,6 +97,7 @@ public:
     bool addEnemy(const std::shared_ptr<Creature>& target, bool print=false);
     long clearEnemy(const std::shared_ptr<Creature>& target);
 
+    bool isEnemy(const Creature* target) const;
     bool isEnemy(const std::shared_ptr<const Creature> & target) const;
     bool hasEnemy() const;
 

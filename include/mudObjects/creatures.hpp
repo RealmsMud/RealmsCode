@@ -243,9 +243,9 @@ public:
     void subResource(ResourceType resType, int resCost);
     void subMp(int reqMp);
 
-    std::shared_ptr<Creature> myTarget{};
+    std::weak_ptr<Creature> myTarget{};
     PetList pets;
-    std::list<std::shared_ptr<Creature>> targetingThis;
+    std::list<std::weak_ptr<Creature>> targetingThis;
 
     MagicType getCastingType() const;
     int doHeal(const std::shared_ptr<Creature>& target, int amt, double threatFactor = 0.5);
@@ -271,7 +271,7 @@ public:
     void checkTarget(const std::shared_ptr<Creature>& toTarget);
     void addTargetingThis(const std::shared_ptr<Creature>& targeter);
     void clearTarget(bool clearTargetsList = true);
-    void clearTargetingThis(const std::shared_ptr<Creature>& targeter);
+    void clearTargetingThis(Creature *targeter);
 
     long getLTLeft(int myLT, long t = -1); // gets the time left on a LT
     void setLastTime(int myLT, long t, long interval); // Sets a LT
@@ -498,15 +498,15 @@ public:
 
 // Special Attacks
     std::string getSpecialsFullList() const;
-    bool useSpecial(SpecialAttack &attack, std::shared_ptr<Creature> victim);
+    bool useSpecial(SpecialAttack &attack, const std::shared_ptr<Creature> &victim);
     bool runOpeners(std::shared_ptr<Creature> victim); // Run any opening attacks
-    bool runSpecialAttacks(std::shared_ptr<Creature> victim); // Pick a special attack and do it on the target
+    bool runSpecialAttacks(const std::shared_ptr<Creature>& victim); // Pick a special attack and do it on the target
     std::string getSpecialsList() const;
     SpecialAttack* addSpecial(std::string_view specialName);
     bool delSpecials();
 
     // Do Special should only be run from useSpecial, should not be called from elsewhere
-    bool doSpecial(SpecialAttack &attack, std::shared_ptr<Creature> victim); // Do the selected attack on the given victim
+    bool doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>& victim); // Do the selected attack on the given victim
 
 // Traits
     bool doesntBreathe() const;

@@ -201,14 +201,13 @@ bool Monster::updateCombat() {
     }
 
 
-// Don't jump to your aid if it is itself...lol
+    // Don't jump to your aid if it is itself...lol
     if(pTarget) {
         for(const auto& pet : pTarget->pets) {
-            if( pet->isPet() && getMaster() != pTarget && pet->getMaster() == pTarget &&
-                !pet->isEnemy(Containable::downcasted_shared_from_this<Monster>()) && pet.get() != this )
-            {
-                pet->addEnemy(findFirstEnemyCrt(pet));
-                pTarget->print("%M jumps to your aid!!\n", pet.get());
+            if( pet->isPet() && getMaster() != pTarget && pet->getMaster() == pTarget && !pet->isEnemy(this) && pet.get() != this ) {
+                auto enemy = findFirstEnemyCrt(pet);
+                pet->addEnemy(enemy);
+                pTarget->print("%M jumps to your aid against %M!!\n", pet.get(), enemy.get());
                 break;
             }
         }
@@ -258,10 +257,7 @@ bool Monster::updateCombat() {
     // Check resisting of elemental pets
     if(isPet()) {
         target->checkResistPet(Containable::downcasted_shared_from_this<Monster>(), resistPet, immunePet, vulnPet);
-        if( !pTarget &&
-            !casted &&
-            (target->flagIsSet(M_ONLY_HARMED_BY_MAGIC) || immunePet))
-        {
+        if( !pTarget && !casted && (target->flagIsSet(M_ONLY_HARMED_BY_MAGIC) || immunePet)) {
             getMaster()->print("%M's attack has no effect on %N.\n", this, target.get());
             return(false);
         }
@@ -322,8 +318,7 @@ bool Monster::updateCombat() {
                 attackDamage.add(castWeapon(target, ready[WIELD - 1], wasKilled));
         }
 
-        broadcastGroup(false, target, "^M%M^x %s ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", this, atk,
-            target.get(), attackDamage.get(), target->heShe(), target->getStatusStr(attackDamage.get()));
+        broadcastGroup(false, target, "^M%M^x %s ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", this, atk, target.get(), attackDamage.get(), target->heShe(), target->getStatusStr(attackDamage.get()));
 
         if(target->pFlagIsSet(P_LAG_PROTECTION_SET))
             target->pSetFlag(P_LAG_PROTECTION_ACTIVE); // lagprotect auto-activated on being hit.
@@ -1154,11 +1149,8 @@ std::shared_ptr<Creature>Creature::findFirstEnemyCrt(const std::shared_ptr<Creat
         return(Containable::downcasted_shared_from_this<Creature>());
 
     for(const auto& mons : pet->getRoomParent()->monsters) {
-        if(mons == pet)
-            continue;
-        if(mons->getAsMonster()->isEnemy(pet->getMaster()) && mons->getName() == getName())
-            return(mons);
-
+        if(mons == pet) continue;
+        if(mons->getAsMonster()->isEnemy(pet->getMaster()) && mons->getName() == getName()) return(mons);
     }
 
     return(Containable::downcasted_shared_from_this<Creature>());

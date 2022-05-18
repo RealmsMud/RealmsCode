@@ -479,11 +479,15 @@ void Creature::crtReset() {
     // Reset other related
     moReset();
     playing = nullptr;
-    myTarget = nullptr;
+    myTarget.reset();
 
-    for(const auto& targeter : targetingThis) {
-        targeter->clearTarget(false);
+    for(auto it = targetingThis.begin() ; it != targetingThis.end() ; ) {
+        if(auto targeter = it->lock()) {
+            targeter->clearTarget(false);
+        }
+        it++;
     }
+    targetingThis.clear();
 
     zero(key, sizeof(key));
 
@@ -492,8 +496,7 @@ void Creature::crtReset() {
 
     fd = -1;
     cClass = CreatureClass::NONE;
-    level = race = alignment = experience =
-        temp_experience = clan = 0;
+    level = race = alignment = experience = temp_experience = clan = 0;
     size = NO_SIZE;
     type = PLAYER;
     deathtype = DT_NONE;

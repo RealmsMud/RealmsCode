@@ -66,16 +66,17 @@ public:
     ThreatTable(Creature *cParent);
     ~ThreatTable();
 
-    bool isEnemy(const std::shared_ptr<const Creature> & target) const;
+    [[nodiscard]] bool isEnemy(const std::shared_ptr<const Creature> & target) const;
+    [[nodiscard]] bool isEnemy(const Creature *target) const;
     long getTotalThreat();
     long getThreat(const std::shared_ptr<Creature>& target);
     long adjustThreat(const std::shared_ptr<Creature>& target, long modAmt, double threatFactor = 1.0);
     long removeThreat(const std::string &pUid);
     long removeThreat(const std::shared_ptr<Creature>& target);
     void setParent(Creature *cParent);
-    bool hasEnemy() const;
+    [[nodiscard]] bool hasEnemy() const;
 
-    ThreatMap::size_type size() const;
+    [[nodiscard]] ThreatMap::size_type size() const;
     void clear();
 
     std::shared_ptr<Creature> getTarget(bool sameRoom=true);

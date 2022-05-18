@@ -106,6 +106,7 @@ void Server::updateGame() {
     // Prune Dns once a day
     if(t - lastDnsPrune >= 86400)
         pruneDns();
+
     if(t - lastTickUpdate >= 1) {
         pulseTicks(t);
         pulseCreatureEffects(t);
