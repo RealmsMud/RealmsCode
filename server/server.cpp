@@ -624,7 +624,7 @@ int Server::processOutput() {
     populateVSockets();
     for(const auto& unlockedSock : *vSockets) {
         if(auto sock = unlockedSock.lock()) {
-            if (FD_ISSET(sock->getFd(), &outSet) && sock->hasOutput()) {
+            if (sock->getFd() != -1 && FD_ISSET(sock->getFd(), &outSet) && sock->hasOutput()) {
                 sock->flush();
             }
         }
