@@ -53,7 +53,7 @@
 #include "xml.hpp"                               // for numToStr
 
 
-bool Creature::runSpecialAttacks(std::shared_ptr<Creature> victim) {
+bool Creature::runSpecialAttacks(const std::shared_ptr<Creature>& victim) {
     if(specials.empty())
         return(false);
 
@@ -68,7 +68,7 @@ bool Creature::runSpecialAttacks(std::shared_ptr<Creature> victim) {
 }
 
 
-bool Creature::useSpecial(SpecialAttack &attack, std::shared_ptr<Creature> victim) {
+bool Creature::useSpecial(SpecialAttack &attack, const std::shared_ptr<Creature> &victim) {
     if(attack.flagIsSet(SA_REQUIRE_HIDE) && !isHidden())
         return(false);
 
@@ -146,7 +146,7 @@ bool Creature::useSpecial(SpecialAttack &attack, std::shared_ptr<Creature> victi
 
 
 // Run the given special on a target, should only be called from useSpecial
-bool Creature::doSpecial(SpecialAttack &attack, std::shared_ptr<Creature> victim) {
+bool Creature::doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>& victim) {
     auto cThis = Containable::downcasted_shared_from_this<Creature>();
     std::shared_ptr<Player> pVictim = victim->getAsPlayer();
     std::shared_ptr<Monster>  mThis = getAsMonster();
@@ -273,8 +273,7 @@ bool Creature::doSpecial(SpecialAttack &attack, std::shared_ptr<Creature> victim
             case SAVE_PIETY:
                 break;
             case SAVE_DEXTERITY:
-                chance = 50 + (level - victim->getLevel()) * 10 +
-                        (dexterity.getCur() - victim->dexterity.getCur())/5 ;
+                chance = 50 + (level - victim->getLevel()) * 10 + (dexterity.getCur() - victim->dexterity.getCur())/5 ;
                 break;
             case SAVE_LEVEL:
                 chance = 35 + ((level - victim->getLevel()) * 20);
@@ -396,7 +395,7 @@ bool Creature::doSpecial(SpecialAttack &attack, std::shared_ptr<Creature> victim
         if(!saved && attack.flagIsSet(SA_CAN_DISINTEGRATE) && Random::get(1,100) < 2) {
             victim->printColor("^Y%M seriously damages you!\n", this);
             attackDamage.set(victim->hp.getCur() - 5);
-            attackDamage.set(MAX<int>(attackDamage.get(), 1));
+            attackDamage.set(MAX<unsigned int>(attackDamage.get(), 1));
         }
     }
 

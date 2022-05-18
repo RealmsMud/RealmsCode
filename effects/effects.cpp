@@ -1015,9 +1015,9 @@ bool Exit::doEffectDamage(const std::shared_ptr<Creature>& pTarget) {
 //*********************************************************************
 
 std::string Creature::doReplace(std::string fmt, const std::shared_ptr<MudObject>& actor, const std::shared_ptr<MudObject>& applier) const {
-    const std::shared_ptr<const Creature> & cActor = actor->getAsConstCreature();
-    const std::shared_ptr<const Exit> xActor = actor->getAsConstExit();
-    const std::shared_ptr<const Creature> & cApplier = applier->getAsConstCreature();
+    const std::shared_ptr<const Creature> cActor = actor ? actor->getAsConstCreature() : nullptr;
+    const std::shared_ptr<const Exit> xActor = actor ? actor->getAsConstExit() : nullptr;
+    const std::shared_ptr<const Creature> cApplier = applier ? applier->getAsConstCreature() : nullptr;
     auto cThis = Containable::downcasted_shared_from_this<Creature>();
     if(cActor) {
         boost::replace_all(fmt, "*ACTOR*", cActor->getCrtStr(cThis, CAP).c_str());

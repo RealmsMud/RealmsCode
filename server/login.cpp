@@ -358,7 +358,7 @@ void Socket::finishLogin() {
     player->setSock(this);
     player->init();
 
-    gServer->addPlayer(player);
+    registerPlayer();
     setState(CON_PLAYING);
 
     if(player->flagIsSet(P_HARDCORE)) {
@@ -1865,7 +1865,7 @@ void Create::done(Socket* sock, const std::string &str, int mode) {
             player->learnSong(SONG_HEAL);
 
         player->save(true);
-        gServer->addPlayer(player);
+        sock->registerPlayer();
 
         sock->print("Type 'welcome' at prompt to get more info on the game\nand help you get started.\n");
 

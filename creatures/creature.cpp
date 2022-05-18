@@ -144,6 +144,9 @@ bool Monster::addEnemy(const std::shared_ptr<Creature>& target, bool print) {
     adjustThreat(target, 0);
     return(true);
 }
+bool Monster::isEnemy(const Creature* target) const {
+    return(threatTable.isEnemy(target));
+}
 bool Monster::isEnemy(const std::shared_ptr<const Creature> & target) const {
     return(threatTable.isEnemy(target));
 }
@@ -1447,9 +1450,13 @@ bool Creature::doFlee(bool magicTerror) {
 
 
 Creature::~Creature() {
-    for(const auto& targeter : targetingThis) {
-        targeter->clearTarget(false);
+    for(auto it = targetingThis.begin() ; it != targetingThis.end() ; ) {
+        if(auto targeter = it->lock()) {
+            targeter->clearTarget(false);
+        }
+        it++;
     }
+    targetingThis.clear();
 
     clearTarget();
 
@@ -1471,7 +1478,6 @@ Creature::~Creature() {
     int i;
     for(i=0; i<MAXWEAR; i++) {
         if(ready[i]) ready[i] = nullptr;
-//            unequip(i+1, UNEQUIP_DELETE, false);
     }
 
     objects.clear();

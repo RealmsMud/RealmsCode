@@ -270,7 +270,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
             if(alnum == 1)
                 alignment = 0;
             else if(alnum < 51)
-                alignment = Random::get<short>((short)1, (short)std::abs(alignment)) * -1;
+                alignment = Random::get<short>((short)1, (short)std::abs(alignment)) * (short)-1;
             else
                 alignment = Random::get<short>((short)1, (short)std::abs(alignment));
         }
@@ -291,51 +291,50 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     // Now load up any always drop objects (Trading perms don't drop inventory items)
     if(!flagIsSet(M_TRADES)) {
         for(x=0;x<10;x++) {
-            const auto cacheObj = getCachedObject(carry[x].info);
+            const auto &dropInfo = carry[x].info;
+            const auto cacheObj = getCachedObject(dropInfo);
             if(!cacheObj || !cacheObj->flagIsSet(O_ALWAYS_DROPPED) || cacheObj->getName().empty()) continue;
 
-            if(!loadObject(carry[x].info, object))
+            if(!loadObject(dropInfo, object))
                 continue;
             object->init(!prototype);
             if( object->flagIsSet(O_ALWAYS_DROPPED) && !object->getName().empty()) {
                 addObj(object);
                 object->setFlag(O_JUST_LOADED);
             } else {
-                throw std::runtime_error("Cached object was always drop & valid, but loaded object wasn't");
+                throw std::runtime_error("Cached object (" + cacheObj->getName() + ") was always drop & valid, but loaded object wasn't (" + object->getName() +")");
             }
         }
 
         object = nullptr;
 
-        int numDrops = Random::get(1,100), whichDrop;
+        int whichDrop, numDrops = Random::get(1,100);
 
-        if (numDrops < 90) numDrops = 1;
+        if(prototype) numDrops = 10;
+        else if (numDrops < 90) numDrops = 1;
         else if (numDrops < 96) numDrops = 2;
         else numDrops = 3;
 
-        if(prototype)
-            numDrops = 10;
+
         for(x=0; x<numDrops; x++) {
-            if(prototype)
-                whichDrop=x;
-            else
-                whichDrop = Random::get(0,9);
-            if(carry[whichDrop].info.id && !flagIsSet(M_TRADES)) {
-                const auto cacheObj = getCachedObject(carry[x].info);
+            whichDrop= prototype ? x : Random::get(0,9);
+            const auto &dropInfo = carry[whichDrop].info;
+            if(dropInfo.id && !flagIsSet(M_TRADES)) {
+                const auto cacheObj = getCachedObject(dropInfo);
                 if(!cacheObj || cacheObj->flagIsSet(O_ALWAYS_DROPPED) || cacheObj->getName().empty()) continue;
 
-                if(!loadObject(carry[whichDrop].info, object))
+                if(!loadObject(dropInfo, object))
                     continue;
 
                 if( object->getName().empty()) {
-                    throw std::runtime_error("Cached object was always drop & valid, but loaded object wasn't");
+                    throw std::runtime_error("Cached object (" + cacheObj->getName() + ") was always drop & valid, but loaded object wasn't");
                 }
 
                 object->init(!prototype);
 
                 // so we don't get more than one always drop item.
                 if(object->flagIsSet(O_ALWAYS_DROPPED)) {
-                    throw std::runtime_error("Cached object was not always drop & was valid, but loaded object wasn't");
+                    throw std::runtime_error("Cached object (" + cacheObj->getName() + ") was not always drop & was valid, but loaded object wasn't (" + object->getName() +")");
                 }
 
                 object->value.set(Random::get((object->value[GOLD]*9)/10,(object->value[GOLD]*11)/10), GOLD);

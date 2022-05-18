@@ -296,7 +296,10 @@ void Socket::cleanUp() {
             myPlayer->save(true);
             myPlayer->uninit();
         }
-        gServer->clearPlayer(myPlayer->getName());
+        if(registered) {
+            gServer->clearPlayer(myPlayer->getName());
+            registered=false;
+        }
         myPlayer = nullptr;
     }
     endCompress();
@@ -1140,6 +1143,7 @@ void Socket::reconnect(bool pauseScreen) {
     msdpClearReporting();
 
     if(myPlayer) {
+        // TODO: Only clear if we're the one who registered the player
         gServer->clearPlayer(myPlayer->getName());
         myPlayer = nullptr;
     }
@@ -2249,6 +2253,15 @@ void Socket::viewFileReverse(const std::string& str) {
 
 bool Socket::hasPagerOutput() {
     return(!pagerOutput.empty());
+}
+
+void Socket::registerPlayer() {
+    if(myPlayer) {
+        registered = true;
+        gServer->addPlayer(myPlayer);
+    } else {
+        registered = false;
+    }
 }
 
 

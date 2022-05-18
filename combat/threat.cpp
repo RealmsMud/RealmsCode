@@ -140,18 +140,21 @@ long ThreatTable::adjustThreat(const std::shared_ptr<Creature>& target, long mod
 
     return(endThreat);
 }
-
-bool ThreatTable::isEnemy(const std::shared_ptr<const Creature> &target) const {
-    if(!target) {
-        return(false);
-    }
+bool ThreatTable::isEnemy(const Creature *target) const {
+    if(!target) return false;
     auto it = threatMap.find(target->getId());
 
     return !(it == threatMap.end());
 }
+
+bool ThreatTable::isEnemy(const std::shared_ptr<const Creature> &target) const {
+    return isEnemy(target.get());
+}
+
 bool ThreatTable::hasEnemy() const {
     return(!threatMap.empty());
 }
+
 //*********************************************************************
 //* RemoveFromSet
 //*********************************************************************
@@ -218,6 +221,7 @@ std::shared_ptr<Creature> ThreatTable::getTarget(bool sameRoom) {
 
     std::shared_ptr<Creature> toReturn = nullptr;
     std::shared_ptr<Creature> crt;
+    auto myRoom = myParent->getRoomParent();
 
     ThreatSet::reverse_iterator it;
     for(it = threatSet.rbegin() ; it != threatSet.rend() ; ) {
@@ -232,7 +236,7 @@ std::shared_ptr<Creature> ThreatTable::getTarget(bool sameRoom) {
         }
         // If we're looking for someone who isn't in the same room, we don't care if we can see them
         // however if we want the target in the current room, we must be able to see them!
-        if(!crt || (sameRoom && (crt->getRoomParent() != myParent->getRoomParent() || !myParent->canSee(crt)))) continue;
+        if(!crt || (sameRoom && (crt->getRoomParent() != myRoom || !myParent->canSee(crt)))) continue;
 
         // The highest threat creature (in the same room if sameRoom is true)
         toReturn = crt;
@@ -358,8 +362,9 @@ std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& t
         return(nullptr);
 
     // We've already got them targetted!
-    if(toTarget == myTarget)
-        return(myTarget);
+    auto lockedTarget = myTarget.lock();
+    if(toTarget == lockedTarget)
+        return(lockedTarget);
 
     clearTarget();
 
@@ -368,10 +373,10 @@ std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& t
 
     std::shared_ptr<Player> ply = getAsPlayer();
     if(ply) {
-        ply->printColor("You are now targeting %s.\n", myTarget->getCName());
+        ply->printColor("You are now targeting %s.\n", toTarget->getCName());
     }
 
-    return(myTarget);
+    return(lockedTarget);
 
 }
 
@@ -392,31 +397,33 @@ void Creature::addTargetingThis(const std::shared_ptr<Creature>& targeter) {
 //*********************************************************************
 
 void Creature::clearTarget(bool clearTargetsList) {
-    if(!myTarget)
-        return;
-
-    std::shared_ptr<Player> ply = getAsPlayer();
-    if(ply) {
-        ply->printColor("You are no longer targeting %s!\n", myTarget->getCName());
+    auto lockedTarget = myTarget.lock();
+    if(isPlayer()) {
+        if(lockedTarget)
+            this->printColor("You are no longer targeting %s!\n", lockedTarget->getCName());
+        else
+            this->printColor("You no longer have a target!\n");
     }
 
-    if(clearTargetsList)
-        myTarget->clearTargetingThis(Containable::downcasted_shared_from_this<Creature>());
+    if(lockedTarget && clearTargetsList)
+        lockedTarget->clearTargetingThis(this);
 
-    myTarget = nullptr;
+    myTarget.reset();
 }
 
 //*********************************************************************
 //                          clearTargetingThis
 //*********************************************************************
 
-void Creature::clearTargetingThis(const std::shared_ptr<Creature>& targeter) {
+void Creature::clearTargetingThis(Creature *targeter) {
     std::shared_ptr<Player> ply = getAsPlayer();
     if(ply) {
         ply->printColor("%s is no longer targeting you!\n", targeter->getCName());
     }
 
-    targetingThis.remove(targeter);
+    targetingThis.remove_if([&targeter](const std::weak_ptr<Creature>& ptr) {
+        return ptr.lock().get() == targeter;
+    });
 }
 
 //*********************************************************************
@@ -451,18 +458,23 @@ int cmdAssist(const std::shared_ptr<Player>& player, cmd* cmnd) {
 int cmdTarget(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
         player->print("You are targeting: ");
-        if(player->myTarget)
-            player->print("%s\n", player->myTarget->getCName());
+        if(auto target = player->myTarget.lock())
+            player->print("%s\n", target->getCName());
         else
             player->print("No-one!\n");
 
         if(player->isCt()) {
             player->print("People targeting you: ");
             int numTargets = 0;
-            for(const auto& targetter : player->targetingThis) {
-                if(numTargets++ != 0)
-                    player->print(", ");
-                player->print("%s", targetter->getCName());
+            for(auto it = player->targetingThis.begin() ; it != player->targetingThis.end() ; ) {
+                if(auto targetter = it->lock()) {
+                    if (numTargets++ != 0)
+                        player->print(", ");
+                    player->print("%s", targetter->getCName());
+                    it++;
+                } else {
+                    it = player->targetingThis.erase(it);
+                }
             }
             if(numTargets == 0)
                 player->print("Nobody!");
@@ -494,7 +506,7 @@ int cmdTarget(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //*********************************************************************
 
 std::shared_ptr<Creature> Creature::getTarget() {
-    return(myTarget);
+    return(myTarget.lock());
 }
 
 //*********************************************************************
