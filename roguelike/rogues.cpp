@@ -21,6 +21,7 @@
 #include <list>                        // for list, operator==, list<>::cons...
 #include <set>                         // for operator==, _Rb_tree_const_ite...
 #include <string>                      // for allocator, string, operator==
+#include <strings.h>                   // for strncasecmp
 
 #include "area.hpp"                    // for Area, TileInfo, MapMarker
 #include "catRef.hpp"                  // for CatRef
@@ -58,9 +59,8 @@
 #include "stats.hpp"                   // for Stat
 #include "utils.hpp"                   // for MIN, MAX
 #include "xml.hpp"                     // for loadObject, loadRoom
-#include "login.hpp"                   // for connection states
 #include "socket.hpp"                  // for Socket
-#include "cards.hpp"                   // for Card, Deck
+#include "login.hpp"                   // connection states
 #include "blackjack.hpp"               // for Blackjack
 
 
@@ -194,69 +194,6 @@ int cmdBribe(Player* player, cmd* cmnd) {
 //                      cmdGamble
 //*********************************************************************
 // Code for people to gamble money
-
-void playBlackjack(Socket* sock, const std::string& str) {
-    std::ostringstream oStr;
-    short decksInShoe = 6;
-    Blackjack *game = sock->getPlayer()->gamblingState.bjGame;
-
-    switch(sock->getState()) {
-        case BLACKJACK_START:
-            if (!game) {
-                // set up game with new shoe
-                oStr << "Preparing new shoe...\n\n";
-                Deck shoe = Deck(decksInShoe);
-                shoe.shuffle();
-                sock->getPlayer()->gamblingState.bjGame = new Blackjack(shoe);
-            }
-
-            oStr << "Enter bet for each hand you'd like to play, separated by a space.\n";
-            oStr << "Each bet must be at least 100 and no more than 10,000,000.\n";
-            oStr << "WARNING: Ending the game before hand resolution will forfeit your bet.\n";
-            oStr << "You may play up to six hands at once.\n\n";
-            sock->setState(BLACKJACK_DEAL);
-            break;
-        case BLACKJACK_DEAL:
-            if (str.length() < 1) {
-                oStr << "Aborted.\n";
-                sock->setState(CON_PLAYING);
-                break;
-            }
-
-            std::vector<std::string> inputArgs = splitString(str, " ");
-            std::vector<int> bets;
-            std::transform(inputArgs.begin(), inputArgs.end(), std::back_inserter(bets), [](std::string s) { return std::stoi(s); });
-
-            if (bets.size() < 1) {
-                oStr << "Must play at least one hand.\n";
-                break;
-            }
-            if (bets.size() > 6) {
-                oStr << "Can play at most six hands at once.\n";
-                break;
-            }
-            if (std::any_of(bets.begin(), bets.end(), [](int i){ return i < 100 || i > 10000000; })){
-                oStr << "No bets < 100 or > 10,000,000.\n";
-                break;
-            }
-
-            game->deal(bets);
-            oStr << *game;
-
-            // for (auto rit = std::rbegin(deck.cards); rit != std::rend(deck.cards); rit++) {
-            //     oStr << "Size: " << std::to_string(deck.cards.size()) << " " << cardToString(deck.takeCard()) << "\n";
-            // }
-            break;
-    }
-    sock->printColor(oStr.str().c_str());
-    // sock->print("\n");
-    // sock->print(str.c_str());
-    //sock->setState(CON_PLAYING);
-}
-
-void playSlots(Socket* sock, const std::string& str) {
-    return;
-}
 
 int cmdGamble(Player* player, cmd* cmnd) {
     if(!player->getRoomParent()->flagIsSet(R_CASINO) && !player->isCt()) {

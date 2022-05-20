@@ -20,11 +20,47 @@
 
 #include <cards.hpp>              // Card, Deck
 
+class Player;
+
 class Blackjack {
   public:
-    struct Hand {
-      std::vector<Card> cards;
-      int bet;
+    enum HandStatus {
+      Unresolved,
+      Loss,
+      Push,
+      Win,
+      NaturalPush,
+      NaturalWin
+    };
+
+    class Hand {
+      private:
+        std::vector<Card> cards;
+        int bet;
+        short sum;
+        std::string sumStr;
+        HandStatus status;
+      public:
+        Hand();
+
+        void resolve(HandStatus result, Player *player);
+
+        bool canDoubleDown();
+        bool canSplit();
+        bool isResolved();
+
+        HandStatus getStatus() const;
+        void setStatus(HandStatus state);
+
+        int getBet() const;
+        void setBet(int amount);
+
+        std::vector<Card> getCards() const;
+        void addCard(Card card);
+
+        void updateSum();
+        short getSum() const;
+        std::string getSumStr() const;
     };
 
     Deck shoe;
@@ -35,14 +71,10 @@ class Blackjack {
     Blackjack(Deck shoe);
 
     void deal(std::vector<int> bets);
-    void placeBet(Hand& hand, int amount);
-    void hit(Hand& hand);
-    void split(Hand& hand);
-    void doubleDown(Hand& hand);
-
-    static std::string getHandStatusStr(Hand& hand);
 
     friend std::ostream& operator<<(std::ostream& os, const Blackjack& game);
 };
+
+void playBlackjack(Socket* sock, const std::string& str);
 
 #endif

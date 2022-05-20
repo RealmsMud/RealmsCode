@@ -21,7 +21,8 @@
 #include <string>
 
 #include "mudObjects/creatures.hpp"
-#include "blackjack.hpp"
+
+class Blackjack;
 
 class Player : public Creature {
 public:

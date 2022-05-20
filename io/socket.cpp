@@ -75,7 +75,7 @@
 #include "utils.hpp"                                // for MIN, MAX
 #include "version.hpp"                              // for VERSION
 #include "xml.hpp"                                  // for copyToBool, newBo...
-#include "rogues.hpp"                               // for interactive gambling
+#include "blackjack.hpp"                            // for interactive gambling
 
 const int MIN_PAGES = 10;
 
@@ -1229,8 +1229,6 @@ void Socket::setState(int pState, char pFnParam) {
         fn = command;
     else if (pState >= BLACKJACK_START && pState <= BLACKJACK_END)
         fn = playBlackjack;
-    else if (pState >= SLOTS_START && pState <= SLOTS_END)
-        fn = playSlots;
     else if (pState > CON_STATS_START && pState < CON_STATS_END)
         fn = changingStats;
     else if (pState == CON_CONFIRM_SURNAME)
