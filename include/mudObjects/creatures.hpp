@@ -248,7 +248,7 @@ public:
     std::list<std::weak_ptr<Creature>> targetingThis;
 
     MagicType getCastingType() const;
-    int doHeal(const std::shared_ptr<Creature>& target, int amt, double threatFactor = 0.5);
+    unsigned int doHeal(const std::shared_ptr<Creature>& target, int amt, double threatFactor = 0.5);
 
     std::string doReplace(std::string fmt, const std::shared_ptr<MudObject>& actor=nullptr, const std::shared_ptr<MudObject>& applier=nullptr) const;
 
@@ -540,7 +540,7 @@ public:
 
 // Equipment / Inventory
     void addObj(const std::shared_ptr<Object>&  object);
-    void delObj(const std::shared_ptr<Object>&  object, bool breakUnique=false, bool removeUnique=false, bool darkmetal=true, bool darkness=true, bool keep=false);
+    void delObj(std::shared_ptr<Object>  object, bool breakUnique=false, bool removeUnique=false, bool darkmetal=true, bool darkness=true, bool keep=false);
     void finishDelObj(const std::shared_ptr<Object>&  object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep);
     int getWeight() const;
     int maxWeight();

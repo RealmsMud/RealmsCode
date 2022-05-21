@@ -93,7 +93,7 @@ void Creature::finishDelObj(const std::shared_ptr<Object>&  object, bool breakUn
 //                      delObj
 //*********************************************************************
 
-void Creature::delObj(const std::shared_ptr<Object>&  object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep) {
+void Creature::delObj(std::shared_ptr<Object>  object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep) {
     Hooks::run(Containable::downcasted_shared_from_this<Creature>(), "beforeRemoveObject", object, "beforeRemoveFromCreature");
 
     // don't run checkDarkness if this isnt a dark item

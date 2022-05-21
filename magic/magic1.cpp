@@ -262,8 +262,6 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         return(CAST_RESULT_FAILURE);
     }
 
-    data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), nullptr, player);
-
     if(!creature->isStaff()) {
         switch(creature->getCastingType()) {
             case Divine:
@@ -288,8 +286,7 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     }
     
 
-    if( creature->getRoomParent()->flagIsSet(R_NO_MAGIC) && !creature->checkStaff("Nothing happens.\n")
-    )
+    if( creature->getRoomParent()->flagIsSet(R_NO_MAGIC) && !creature->checkStaff("Nothing happens.\n"))
         return(CAST_RESULT_FAILURE);
 
 
@@ -362,8 +359,7 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         return(CAST_RESULT_FAILURE);
 
 
-    offensive = (int(*)(SpellFn, const char*, osp_t*))fn == splOffensive ||
-        (int(*)(SpellFn, const char*, osp_t*))fn == splMultiOffensive;
+    offensive = (int(*)(SpellFn, const char*, osp_t*))fn == splOffensive || (int(*)(SpellFn, const char*, osp_t*))fn == splMultiOffensive;
 
 
     if(offensive) {
@@ -1139,10 +1135,7 @@ int Player::consume(const std::shared_ptr<Object>& object, cmd* cmnd) {
 
 
     // they are eating a non-potion object
-    if( object->getShotsCur() < 1 ||
-        (object->getMagicpower() - 1 < 0) ||
-        object->getType() != ObjectType::POTION)
-    {
+    if( object->getShotsCur() < 1 || (object->getMagicpower() - 1 < 0) || object->getType() != ObjectType::POTION) {
         unhide();
 
         if(object->use_output[0])
@@ -1607,8 +1600,7 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
             return(0);
         }
 
-        if( noCastUndead(effect) &&
-            target->isUndead() &&
+        if( noCastUndead(effect) && target->isUndead() &&
             !player->checkStaff("You cannot cast that spell on the undead.\n")
         )
             return(0);

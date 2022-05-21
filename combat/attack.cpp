@@ -446,7 +446,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
     unsigned int drain = 0, hit = 0, wcdmg = 0;
     bool glow = true;
 
-    char atk[50];
+    std::string atk;
 
     if(!victim)
         return(0);
@@ -457,10 +457,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
     if(!ableToDoCommand())
         return(0);
 
-    if(attackType != ATTACK_BASH && attackType != ATTACK_AMBUSH &&
-        attackType != ATTACK_MAUL && attackType != ATTACK_KICK)
-    {
-
+    if(attackType != ATTACK_BASH && attackType != ATTACK_AMBUSH && attackType != ATTACK_MAUL && attackType != ATTACK_KICK) {
         if(!checkAttackTimer())
             return(0);
 
@@ -522,11 +519,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 
     if(attackType != ATTACK_KICK && attackType != ATTACK_MAUL) {
         // A monk that has no weapon, no holding item, but is wearing gloves gets to use the enchant off of them
-        if (cClass == CreatureClass::MONK &&
-            !ready[WIELD - 1] &&
-            !ready[HELD - 1] &&
-            ready[HANDS - 1])
-        {
+        if (cClass == CreatureClass::MONK && !ready[WIELD - 1] && !ready[HELD - 1] && ready[HANDS - 1]) {
             //enchant = abs(ready[HANDS-1]->adjustment);
             weapon = nullptr;
             wielding = false;
@@ -557,9 +550,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
     }
 
     // No numAttacks for ambush
-    if(weapon && weapon->getNumAttacks() && attackType != ATTACK_AMBUSH && attackType != ATTACK_BASH
-            && attackType != ATTACK_MAUL)
-    {
+    if(weapon && weapon->getNumAttacks() && attackType != ATTACK_AMBUSH && attackType != ATTACK_BASH && attackType != ATTACK_MAUL) {
         // Random number of attacks 1-numAttacks
         attacks = Random::get<short>(1, weapon->getNumAttacks());
         // TODO: maybe add a flag so always certain # of attacks
@@ -613,11 +604,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 
             statistics.swing();
 
-            if( result == ATTACK_HIT ||
-                result == ATTACK_CRITICAL ||
-                result == ATTACK_BLOCK ||
-                result == ATTACK_GLANCING )
-            {
+            if( result == ATTACK_HIT || result == ATTACK_CRITICAL || result == ATTACK_BLOCK || result == ATTACK_GLANCING ) {
                 // move glow string into hit if so we arent glowing if we miss
                 if(!canHit(victim, weapon, glow))
                     break;
@@ -670,24 +657,23 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 bool wasKilled = false, freeTarget = false, meKilled;
 
                 if(attackType == ATTACK_BASH) {
-                    strcpy(atk, "bashed");
+                    atk =" bashed";
                     showToRoom = true;
                 } else if(attackType == ATTACK_KICK) {
-                    strcpy(atk, "kicked");
+                    atk =" kicked";
                     showToRoom = true;
                 } else if(attackType == ATTACK_MAUL) {
-                    strcpy(atk, "mauled");
+                    atk =" mauled";
                     showToRoom = true;
                 } else {
-                    getDamageString(atk, Containable::downcasted_shared_from_this<Player>(), weapon, result == ATTACK_CRITICAL ? true : false);
+                    atk = getDamageString(Containable::downcasted_shared_from_this<Player>(), weapon, result == ATTACK_CRITICAL ? true : false);
                 }
 
                 if(showToRoom)
-                    broadcast(getSock(), getRoomParent(), "%M %s %N.", this, atk, victim.get());
-                log_immort(false, Containable::downcasted_shared_from_this<Player>(), "%s %s %s for %d damage.\n", getCName(), atk, victim->getCName(), attackDamage.get());
-                printColor("You %s %N for %s%d^x damage.\n", atk, victim.get(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
-                victim->printColor("%M %s you%s for %s%d^x damage!\n", this, atk,
-                    victim->isBrittle() ? "r brittle body" : "", victim->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                    broadcast(getSock(), getRoomParent(), "%M %s %N.", this, atk.c_str(), victim.get());
+                log_immort(false, Containable::downcasted_shared_from_this<Player>(), "%s %s %s for %d damage.\n", getCName(), atk.c_str(), victim->getCName(), attackDamage.get());
+                printColor("You %s %N for %s%d^x damage.\n", atk.c_str(), victim.get(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                victim->printColor("%M %s you%s for %s%d^x damage!\n", this, atk.c_str(), victim->isBrittle() ? "r brittle body" : "", victim->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
 
 
 
@@ -696,8 +682,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 if(!meKilled && weapon && weapon->getMagicpower() && weapon->flagIsSet(O_WEAPON_CASTS) && weapon->getChargesCur() > 0)
                     wcdmg += castWeapon(victim, weapon, wasKilled);
 
-                broadcastGroup(false, victim, "^M%M^x %s ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", this, atk,
-                    victim.get(), attackDamage.get()+drain, victim->heShe(), victim->getStatusStr(attackDamage.get()+drain));
+                broadcastGroup(false, victim, "^M%M^x %s ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", this, atk.c_str(), victim.get(), attackDamage.get()+drain, victim->heShe(), victim->getStatusStr(attackDamage.get()+drain));
 
                 statistics.attackDamage(attackDamage.get()+drain, Statistics::damageWith(Containable::downcasted_shared_from_this<Player>(), weapon));
 

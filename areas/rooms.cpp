@@ -125,7 +125,9 @@ std::string UniqueRoom::getShortDescription() const { return(short_desc); }
 std::string UniqueRoom::getLongDescription() const { return(long_desc); }
 short UniqueRoom::getLowLevel() const { return(lowLevel); }
 short UniqueRoom::getHighLevel() const { return(highLevel); }
-int UniqueRoom::getMaxMobs() const { return(maxmobs); }
+int UniqueRoom::getMaxMobs() const {
+    return(maxmobs ? maxmobs : MAX_MOBS_IN_ROOM);
+}
 short UniqueRoom::getTrap() const { return(trap); }
 CatRef UniqueRoom::getTrapExit() const { return(trapexit); }
 short UniqueRoom::getTrapWeight() const { return(trapweight); }
@@ -694,10 +696,7 @@ int BaseRoom::countCrt() const {
 //*********************************************************************
 
 int BaseRoom::getMaxMobs() const {
-    const std::shared_ptr<const UniqueRoom> room = getAsConstUniqueRoom();
-    if(!room)
-        return(MAX_MOBS_IN_ROOM);
-    return(room->getMaxMobs() ? room->getMaxMobs() : MAX_MOBS_IN_ROOM);
+    return(MAX_MOBS_IN_ROOM);
 }
 
 

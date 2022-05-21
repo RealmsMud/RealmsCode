@@ -442,7 +442,7 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
 
     if(oldEffect && !newEffect->willOverWrite(oldEffect)) {
         // The new effect won't overwrite, so don't add it
-        if(pParent->getAsPlayer() && show)
+        if(pParent && pParent->getAsPlayer() && show)
             pParent->getAsPlayer()->print("The effect didn't take hold.\n");
         delete newEffect;
         return(nullptr);

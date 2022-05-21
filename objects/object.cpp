@@ -558,53 +558,54 @@ int displayObject(const std::shared_ptr<const Player> &player, const std::shared
 //                      getDamageString
 //*********************************************************************
 
-void getDamageString(char atk[50], std::shared_ptr<Creature> player, std::shared_ptr<Object>weapon, bool critical) {
+std::string getDamageString(const std::shared_ptr<Creature>& player, std::shared_ptr<Object> weapon, bool critical) {
     if(!weapon) {
-        strcpy(atk, "^Rpunched^x");
-
         if(player->getClass() == CreatureClass::MONK) {
             switch(critical ? Random::get(11,14) : Random::get(1,10)) {
-            case 1: strcpy(atk, "punched");             break;
-            case 2: strcpy(atk, "backhanded");          break;
-            case 3: strcpy(atk, "smacked");             break;
-            case 4: strcpy(atk, "roundhouse kicked");   break;
-            case 5: strcpy(atk, "chopped");             break;
-            case 6: strcpy(atk, "slapped");             break;
-            case 7: strcpy(atk, "whacked");             break;
-            case 8: strcpy(atk, "jabbed");              break;
-            case 9: strcpy(atk, "throttled");           break;
-            case 10: strcpy(atk, "clouted");            break;
-            case 11: strcpy(atk, "decimated");          break;
-            case 12: strcpy(atk, "annihilated");        break;
-            case 13: strcpy(atk, "obliterated");        break;
-            case 14: strcpy(atk, "demolished");         break;
+            case 1:  return "punched";
+            case 2:  return "backhanded";
+            case 3:  return "smacked";
+            case 4:  return "roundhouse kicked";
+            case 5:  return "chopped";
+            case 6:  return "slapped";
+            case 7:  return "whacked";
+            case 8:  return "jabbed";
+            case 9:  return "throttled";
+            case 10: return "clouted";
+            case 11: return "decimated";
+            case 12: return "annihilated";
+            case 13: return "obliterated";
+            case 14: return "demolished";
             default:
                 break;
             }
         } else if(player->isEffected("lycanthropy")) {
             switch(critical ? Random::get(11,14) : Random::get(1,10)) {
-            case 1: strcpy(atk, "clawed");          break;
-            case 2: strcpy(atk, "rended");          break;
-            case 3: strcpy(atk, "ripped");          break;
-            case 4: strcpy(atk, "slashed");         break;
-            case 5: strcpy(atk, "ravaged");         break;
-            case 6: strcpy(atk, "shredded");        break;
-            case 7: strcpy(atk, "thrashed");        break;
-            case 8: strcpy(atk, "maimed");          break;
-            case 9: strcpy(atk, "mangled");         break;
-            case 10: strcpy(atk, "lacerated");      break;
-            case 11: strcpy(atk, "mutilated");      break;
-            case 12: strcpy(atk, "eviscerated");    break;
-            case 13: strcpy(atk, "disembowled");    break;
-            case 14: strcpy(atk, "slaughtered");    break;
-            default: strcpy(atk, "clawed");         break;
+            case 1: return  "clawed";
+            case 2: return  "rended";
+            case 3: return  "ripped";
+            case 4: return  "slashed";
+            case 5: return  "ravaged";
+            case 6: return  "shredded";
+            case 7: return  "thrashed";
+            case 8: return  "maimed";
+            case 9: return  "mangled";
+            case 10: return "lacerated";
+            case 11: return "mutilated";
+            case 12: return "eviscerated";
+            case 13: return "disembowled";
+            case 14: return "slaughtered";
+            default: return "clawed";
             }
         }
+
+        return "^Rpunched^x";
     } else if(weapon->use_attack[0]) {
-        strcpy(atk, weapon->use_attack);
+        return weapon->use_attack;
     } else {
-        strcpy(atk, weapon->getWeaponVerbPast().c_str());
+        return weapon->getWeaponVerbPast().c_str();
     }
+    return "slapped";
 }
 
 //*********************************************************************
