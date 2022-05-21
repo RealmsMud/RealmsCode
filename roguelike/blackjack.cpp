@@ -29,31 +29,16 @@ Blackjack::Hand::Hand() {
   status = Blackjack::HandStatus::Unresolved;
 }
 
-void Blackjack::Hand::resolve(Blackjack::HandStatus result, Player *player) {
-  switch (result) {
-    case Blackjack::HandStatus::Win: {
-      // win bet
-      player->coins.add(bet * 2, GOLD);
-    } case Blackjack::HandStatus::NaturalWin: {
-      // win 1.5x bet
-      player->coins.add(bet * 2.5, GOLD);
-    } case Blackjack::HandStatus::Push:
-      case Blackjack::HandStatus::NaturalPush: {
-      // refund bet
-      player->coins.add(bet, GOLD);
-    } case Blackjack::HandStatus::Unresolved:
-      case Blackjack::HandStatus::Loss: {
-      // player gets nothing
-    } 
-  }
-  setStatus(result);
+Blackjack::Hand::Hand(int betAmount) {
+  status = Blackjack::HandStatus::Unresolved;
+  bet = betAmount;
 }
 
-bool Blackjack::Hand::canDoubleDown() {
+bool Blackjack::Hand::canDoubleDown() const {
   return cards.size() == 2;
 }
 
-bool Blackjack::Hand::canSplit() {
+bool Blackjack::Hand::canSplit() const {
   return cards.size() == 2 && cards[0].rank == cards[1].rank;
 }
 
@@ -61,21 +46,15 @@ bool Blackjack::Hand::isResolved() {
   return status != Blackjack::HandStatus::Unresolved;
 }
 
-// void Blackjack::split(Hand& hand) {
-//   Hand newHand = Hand();
-//   newHand.bet = hand.bet;
-//   newHand.cards.push_back(hand.cards.back());
-//   hand.cards.pop_back();
-//   playerHands.push_back(newHand);
-// }
-
-// void Blackjack::doubleDown(Hand& hand) {
-
-// }
-
 void Blackjack::Hand::addCard(Card card) {
   cards.push_back(card);
-  updateSum();
+  update();
+}
+
+Card Blackjack::Hand::popCard() {
+  Card card = cards.back();
+  cards.pop_back();
+  return card;
 }
 
 std::vector<Card> Blackjack::Hand::getCards() const {
@@ -83,7 +62,7 @@ std::vector<Card> Blackjack::Hand::getCards() const {
 }
 
 int Blackjack::Hand::getBet() const {
-  return status;
+  return bet;
 }
 
 void Blackjack::Hand::setBet(int amount) {
@@ -96,55 +75,72 @@ Blackjack::HandStatus Blackjack::Hand::getStatus() const {
 
 void Blackjack::Hand::setStatus(HandStatus state) {
   status = state;
+  update();
 }
 
-short Blackjack::Hand::getSum() const {
+int Blackjack::Hand::getSum() {
   return sum;
 }
 
-std::string Blackjack::Hand::getSumStr() const {
-  return sumStr;
+std::string Blackjack::Hand::getStatusStr() const {
+  return statusStr;
 }
 
-void Blackjack::Hand::updateSum() {
-  int sum = 0;
+void Blackjack::Hand::update() {
+  int newSum = 0;
   int aces = 0;
 
   for (Card card : cards) {
-    if (card.rank == CardRank::King) sum += 10;
-    else if (card.rank == CardRank::Queen) sum += 10;
-    else if (card.rank == CardRank::Jack) sum += 10;
-    else if (card.rank == CardRank::Ten) sum += 10;
-    else if (card.rank == CardRank::Nine) sum += 9;
-    else if (card.rank == CardRank::Eight) sum += 8;
-    else if (card.rank == CardRank::Seven) sum += 7;
-    else if (card.rank == CardRank::Six) sum += 6;
-    else if (card.rank == CardRank::Five) sum += 5;
-    else if (card.rank == CardRank::Four) sum += 4;
-    else if (card.rank == CardRank::Three) sum += 3;
-    else if (card.rank == CardRank::Two) sum += 2;
+    if (card.rank == CardRank::King) newSum += 10;
+    else if (card.rank == CardRank::Queen) newSum += 10;
+    else if (card.rank == CardRank::Jack) newSum += 10;
+    else if (card.rank == CardRank::Ten) newSum += 10;
+    else if (card.rank == CardRank::Nine) newSum += 9;
+    else if (card.rank == CardRank::Eight) newSum += 8;
+    else if (card.rank == CardRank::Seven) newSum += 7;
+    else if (card.rank == CardRank::Six) newSum += 6;
+    else if (card.rank == CardRank::Five) newSum += 5;
+    else if (card.rank == CardRank::Four) newSum += 4;
+    else if (card.rank == CardRank::Three) newSum += 3;
+    else if (card.rank == CardRank::Two) newSum += 2;
     else if (card.rank == CardRank::Ace) aces += 1; // keep track of aces
   }
 
   for (int i = 1; i <= aces; i++) {
     // only one ace can count as 11 before busting, all others must be 1
     // so we need only check the last ace
-    if (i == aces && sum + 11 <= 21) {
-      sum += 11;
+    if (i == aces && newSum + 11 <= 21) {
+      newSum += 11;
     } else {
-      sum += 1;
+      newSum += 1;
     }
   }
 
+  sum = newSum;
+
+  statusStr = std::to_string(sum);
   if (sum > 21) {
-    sumStr = std::to_string(sum) + " BUST";
+    statusStr += " BUST";
   } else if (sum == 21 && cards.size() == 2) {
-    sumStr = std::to_string(sum) + " NATURAL";
+    statusStr += " NATURAL";
+  } else if (status == Blackjack::HandStatus::Standing) {
+    statusStr += " STANDING";
   } else if (aces > 0) {
-    sumStr = std::to_string(sum) + " or " + std::to_string(sum - 10);
-  } else {
-    sumStr = std::to_string(sum);
+    statusStr += " or " + std::to_string(sum - 10);
   }
+}
+
+std::string Blackjack::Hand::getOptionsMenu() const {
+  std::string menu = "[V] View Table, [S] Stand, [H] Hit";
+  if (canSplit()) {
+    menu += ", [P] Split";
+  }
+  if (canDoubleDown()) {
+    menu += ", [D] Double Down";
+  }
+
+  menu += "\n";
+  return menu;
 }
 
 Blackjack::Blackjack() {
@@ -160,9 +156,8 @@ void Blackjack::deal(std::vector<int> bets) {
   Hand hand;
 
   // create hand for each player/bet
-  for (short i = 0; i < bets.size(); i++) {
-    hand = Hand();
-    hand.setBet(bets[i]);
+  for (int i = 0; i < bets.size(); i++) {
+    hand = Hand(bets[i]);
     hands.push_back(hand);
   }
 
@@ -171,7 +166,7 @@ void Blackjack::deal(std::vector<int> bets) {
   hands.push_back(hand);
 
   // everyone gets 2 cards, one at a time, in rotation
-  short cardsToDeal = (bets.size() * 2) + 2;
+  int cardsToDeal = (bets.size() * 2) + 2;
   while (cardsToDeal > 0) {
     for (auto it = std::begin(hands); it != std::end(hands); it++) {
       it->addCard(shoe.takeCard());
@@ -183,6 +178,10 @@ void Blackjack::deal(std::vector<int> bets) {
   dealerHand = hands.back();
   hands.pop_back();
   playerHands = hands;
+}
+
+bool Blackjack::allPlayerHandsResolved() {
+  return std::all_of(playerHands.begin(), playerHands.end(), [](Blackjack::Hand h){ return h.isResolved(); });
 }
 
 std::ostream& operator<<(std::ostream& os, const Blackjack::Hand& hand) {
@@ -205,13 +204,13 @@ std::ostream& operator<<(std::ostream& os, const Blackjack& game) {
     }
   }
   os << std::setw(handPadding) << " ";
-  os << "Sum: " + game.dealerHand.getSumStr();
+  os << "Sum: " + game.dealerHand.getStatusStr();
 
   os << "\n\nPlayer:\n";
   for (int i = 0; i < game.playerHands.size(); i++) {
     handPadding = 29 - (game.playerHands[i].getCards().size() * 4);
     os << std::to_string(i+1)+") " << game.playerHands[i] << std::setw(handPadding) << " ";
-    os << std::left << std::setw(14) << "Sum: " + game.playerHands[i].getSumStr();
+    os << std::left << std::setw(17) << "Sum: " + game.playerHands[i].getStatusStr();
     os << "Bet: " << std::right << std::setw(11) << game.playerHands[i].getBet() << "\n";
   }
   os << "\n";
@@ -219,98 +218,248 @@ std::ostream& operator<<(std::ostream& os, const Blackjack& game) {
 }
 
 void playBlackjack(Socket* sock, const std::string& str) {
-    std::ostringstream os;
-    short decksInShoe = 6;
-    Player *player = sock->getPlayer();
-    Blackjack *game = sock->getPlayer()->gamblingState.bjGame;
+  std::ostringstream os;
+  short decksInShoe = 6;
+  Player *player = sock->getPlayer();
+  Blackjack *game = sock->getPlayer()->gamblingState.bjGame;
 
-    if (strncasecmp(str.c_str(), "Q", 1) == 0) {
-        os << "Aborted.\n";
-        sock->setState(CON_PLAYING);
-    }
+  if (strncasecmp(str.c_str(), "Q", 1) == 0) {
+    os << "Aborted.\n";
+    sock->setState(CON_PLAYING);
+  }
 
-    switch(sock->getState()) {
-        case BLACKJACK_START: {
-            if (!game) {
-                // set up game with new shoe
-                os << "Preparing new shoe...\n\n";
-                Deck shoe = Deck(decksInShoe);
-                shoe.shuffle();
-                player->gamblingState.bjGame = new Blackjack(shoe);
-            }
+  switch(sock->getState()) {
+    case BLACKJACK_START: {
+      if (!game) {
+        // set up game with new shoe
+        os << "Preparing new shoe...\n\n";
+        Deck shoe = Deck(decksInShoe);
+        shoe.shuffle();
+        game = new Blackjack(shoe);
+      } else {
+        os << "Continuing with current shoe...\n\n";
+      }
 
-            os << "Enter bet for each hand you'd like to play, separated by a space.\n";
-            os << "Each bet must be at least 100 and no more than 10,000,000.\n";
-            os << "You may play up to six hands at once.\n\n";
-            os << "Enter Q at any time to quit.\n";
-            os << "WARNING: Ending the game before hand resolution will forfeit your bet.\n";
-            sock->setState(BLACKJACK_DEAL);
-            break;
-        } case BLACKJACK_DEAL: {
-            std::vector<std::string> inputArgs = splitString(str, " ");
-            std::vector<int> bets;
-            std::transform(inputArgs.begin(), inputArgs.end(), std::back_inserter(bets), [](std::string s) { return std::stoi(s); });
+      if (game->shoe.cards.size() < 60) {
+        os << "Too few cards left in shoe, reshuffling...\n";
+        game->shoe.shuffle();
+      }
 
-            if (bets.size() < 1) {
-                os << "Must play at least one hand.\n";
-                break;
-            }
-            if (bets.size() > 6) {
-                os << "Can play at most six hands at once.\n";
-                break;
-            }
-            if (std::any_of(bets.begin(), bets.end(), [](int i){ return i < 100 || i > 10000000; })){
-                os << "No bets < 100 or > 10,000,000.\n";
-                break;
-            }
+      os << "Enter bet for each hand you'd like to play, separated by a space.\n";
+      os << "Each bet must be at least 100 and no more than 10,000,000.\n";
+      os << "You may play up to six hands at once.\n\n";
+      os << "WARNING: Ending the game before hand resolution will forfeit your bet.\n";
+      sock->setState(BLACKJACK_DEAL);
+      break;
+    } case BLACKJACK_DEAL: {
+      std::vector<std::string> inputArgs = splitString(str, " ");
+      std::vector<int> bets;
+      std::transform(inputArgs.begin(), inputArgs.end(), std::back_inserter(bets), [](std::string s) { return std::stoi(s); });
 
-            // take bets before dealing to prevent abuse
-            
+      if (bets.size() < 1) {
+        os << "Must play at least one hand.\n";
+        break;
+      }
+      if (bets.size() > 6) {
+        os << "Can play at most six hands at once.\n";
+        break;
+      }
+      if (std::any_of(bets.begin(), bets.end(), [](int i){ return i < 100 || i > 10000000; })){
+        os << "No bets < 100 or > 10,000,000.\n";
+        break;
+      }
 
-            os << "\nDealing...\n\n";
-            game->deal(bets);
-            os << *game;
+      // take bets before dealing to prevent abuse
+      int betSum = 0;
+      for (int bet : bets) {
+        betSum += bet;
+      }
+      if (betSum > player->coins[GOLD]) {
+        os << "You don't have enough money to satisfy those bets!\n";
+        break;
+      }
+      player->coins.sub(betSum, GOLD);
 
-            // check for naturals (first two cards total 21)
-            bool dealerNatural = game->dealerHand.getSum() == 21;
-            for (Blackjack::Hand hand : game->playerHands) {
-                bool playerNatural = hand.getSum() == 21;
-                
-                if (playerNatural){
-                    if (dealerNatural) {
-                        // push, refund bet
-                        hand.resolve(Blackjack::NaturalPush, player);
-                    } else {
-                        // player wins 1.5x
-                        hand.resolve(Blackjack::NaturalWin, player);
-                    }
-                } else if (dealerNatural) {
-                    // player loses
-                    hand.resolve(Blackjack::Loss, player);
-                }
-            }
-            sock->setState(BLACKJACK_PLAYER_TURN);
-            break;
-        } case BLACKJACK_PLAYER_TURN: {
-            if (std::all_of(game->playerHands.begin(), game->playerHands.end(), [](Blackjack::Hand h){ return h.isResolved(); })){
-                // dealer turn
-                sock->setState(BLACKJACK_DEALER_TURN);
-                break;
-            }
+      os << "\nDealing...\n";
+      game->deal(bets);
+      os << *game;
 
-            // next player hand
-            for (int i = 0; i < game->playerHands.size(); i++) {
-                if (game->playerHands[i].isResolved()) {
-                    continue;
-                }
-                // found active player hand
+      // check for naturals (first two cards total 21) and settle right away
+      bool dealerNatural = game->dealerHand.getSum() == 21;
+      if (dealerNatural) {
+        os << "The dealer got a natural!\n";
+      }
 
-            }
-            break;
+      for (int i = 0; i < game->playerHands.size(); i++) {
+        bool playerNatural = game->playerHands[i].getSum() == 21;
+        
+        if (playerNatural){
+          int net;
+          if (dealerNatural) {
+            // push, refund bet
+            net = game->playerHands[i].getBet();
+            game->playerHands[i].setStatus(Blackjack::NaturalPush);
+            os << "Hand "+std::to_string(i+1)+" got a natural! Push.\n";
+            player->coins.add(net, GOLD);
+            os << "You were refunded your bet of $"+std::to_string(net)+".\n";
+          } else {
+            // player wins 1.5x
+            net = game->playerHands[i].getBet() * 2.5;
+            game->playerHands[i].setStatus(Blackjack::NaturalWin);
+            os << "Hand "+std::to_string(i+1)+" got a natural!\n";
+            player->coins.add(net, GOLD);
+            os << "You won 1.5x your bet: $"+std::to_string(net - game->playerHands[i].getBet())+".\n";
+          }
+        } else if (dealerNatural) {
+          // player loses
+          game->playerHands[i].setStatus(Blackjack::Loss);
+          os << "Hand "+std::to_string(i+1)+" loses its bet of $"+std::to_string(game->playerHands[i].getBet())+"\n";
         }
+      }
+
+      if (dealerNatural) {
+        // if dealer got a natural all hands should be resolved
+        sock->setState(BLACKJACK_END);
+      } else {
+        sock->setState(BLACKJACK_PLAY);
+      }
+      os << "All hands dealt! Press [enter] to continue.\n";
+      break;
+    } case BLACKJACK_PLAY: {
+      // next player hand
+      for (int i = 0; i < game->playerHands.size(); i++) {
+        if (game->playerHands[i].isResolved()) {
+          continue;
+        }
+
+        std::string handNumber = std::to_string(i+1);
+        Blackjack::Hand &hand = game->playerHands[i];
+        
+        // Options: [V] View Table, [S] Stand, [H] Hit, [P] Split, [D] Double Down
+        if (strncasecmp(str.c_str(), "V", 1) == 0) {
+          // View table
+          os << *game;
+        } else if (strncasecmp(str.c_str(), "S", 1) == 0) {
+          // Stand
+          hand.setStatus(Blackjack::Standing);
+        } else if (strncasecmp(str.c_str(), "H", 1) == 0) {
+          // Hit
+          Card card = game->shoe.takeCard();
+          hand.addCard(card);
+          if (hand.getSum() > 21) {
+            hand.setStatus(Blackjack::Loss);
+          } else if (hand.getSum() == 21) {
+            hand.setStatus(Blackjack::Standing);
+          }
+        } else if (strncasecmp(str.c_str(), "P", 1) == 0) {
+          // Split
+          if (hand.canSplit()) {
+            // separate the pair into two hands with equal bet
+            Blackjack::Hand newHand = Blackjack::Hand(hand.getBet());
+            newHand.addCard(hand.popCard());
+            game->playerHands.insert(game->playerHands.begin() + i + 1, newHand);
+          }
+        } else if (strncasecmp(str.c_str(), "D", 1) == 0) {
+          // Double Down
+          if (hand.canDoubleDown()) {
+            // double the bet and receive only one more card
+            int newBet = hand.getBet() * 2;
+            hand.setBet(newBet);
+            hand.addCard(game->shoe.takeCard());
+            hand.setStatus(Blackjack::Standing);
+          }
+        }
+
+        // prompt next hand if current has resolved, or re-prompt current
+        if (hand.isResolved()) {
+          os << handNumber+") " << hand << " Sum: " + hand.getStatusStr() + "\n";
+
+          if (game->playerHands.size() > i+1) {
+            os << "\nChoose action for hand "+std::to_string(i+2)+":\n" << game->playerHands[i+1] << " Sum: " + game->playerHands[i+1].getStatusStr() + "\n";
+            os << game->playerHands[i+1].getOptionsMenu();
+          } else {
+            // this is the last player hand
+            os << "All hands standing, dealer's turn...\n";
+            sock->setState(BLACKJACK_DEALER_TURN);
+          }
+        } else {
+          os << "\nChoose action for hand "+handNumber+":\n" << hand << " Sum: " + hand.getStatusStr() + "\n";
+          os << hand.getOptionsMenu();
+        }
+        break;
+      }
+
+      // check for prompt or progress to next phase
+      bool isDealersTurn = true;
+      for (int i = 0; i < game->playerHands.size(); i++) {
+        if (game->playerHands[i].isResolved()) {
+          continue;
+        }
+        isDealersTurn = false;
+        os << "\nChoose action for hand "+std::to_string(i+1)+":\n" << game->playerHands[i] << " Sum: " + game->playerHands[i].getStatusStr() + "\n";
+        os << game->playerHands[i].getOptionsMenu();
+        break;
+      }
+      if (isDealersTurn) {
+        os << "\nAll hands standing, dealer's turn...\nPress [enter] to continue.\n\n";
+        sock->setState(BLACKJACK_DEALER_TURN);
+      }
+      break;
+    } case BLACKJACK_DEALER_TURN: {
+      os << game->dealerHand << " Sum: "+game->dealerHand.getStatusStr()+"\n";
+      while (game->dealerHand.getSum() < 17) {
+        os << "Dealer hits.\n";
+        game->dealerHand.addCard(game->shoe.takeCard());
+        os << game->dealerHand << " Sum: "+game->dealerHand.getStatusStr()+"\n";
+      }
+
+      int dealerSum = game->dealerHand.getSum();
+      if (dealerSum > 21) {
+        os << "Dealer busted!\n";
+      } else {
+        os << "Dealer stands.\n";
+      }
+
+      os << *game;
+      os << "Settling bets...\n";
+
+      for (int i = 0; i < game->playerHands.size(); i++) {
+        // only standing hands are unsettled at this point
+        if (game->playerHands[i].getStatus() != Blackjack::Standing) {
+          continue;
+        }
+
+        int sum = game->playerHands[i].getSum();
+        int bet = game->playerHands[i].getBet();
+        if (sum > dealerSum) {
+          // player win
+          os << "Hand "+std::to_string(i+1)+" wins its bet of $"+std::to_string(bet)+"!\n";
+          player->coins.add(bet * 2, GOLD);
+        } else if (sum < dealerSum) {
+          // player lose
+          os << "Hand "+std::to_string(i+1)+" loses its bet of $"+std::to_string(bet)+"!\n";
+        } else if (sum == dealerSum) {
+          // push
+          os << "Hand "+std::to_string(i+1)+" pushes! Its bet of $"+std::to_string(bet)+" has been refunded.\n";
+          player->coins.add(bet, GOLD);
+        }
+      }
+
+      os << "Good game! Would you like to play again?\n";
+      os << "[Y] Yes  [N] No\n";
+      sock->setState(BLACKJACK_END);
+      break;
+    } case BLACKJACK_END: {
+      if (strncasecmp(str.c_str(), "Y", 1) == 0) {
+        os << "Press [enter] to continue.\n";
+        sock->setState(BLACKJACK_START);
+      } else if (strncasecmp(str.c_str(), "N", 1) == 0) {
+        os << "Goodbye!\n";
+        sock->setState(CON_PLAYING);
+      }
+      break;
     }
-    sock->printColor(os.str().c_str());
-    // sock->print("\n");
-    // sock->print(str.c_str());
-    //sock->setState(CON_PLAYING);
+  }
+  player->gamblingState.bjGame = game;
+  sock->printColor(os.str().c_str());
 }

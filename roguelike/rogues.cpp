@@ -217,7 +217,7 @@ int cmdGamble(Player* player, cmd* cmnd) {
     player->unhide();
 
     if (isBlackjack) {
-        player->printColor("Welcome to blackjack.\nPress enter to continue.\n");
+        player->printColor("Welcome to blackjack.\nPress [enter] to continue.\nEnter Q at any time to quit.\n");
         player->getSock()->setState(BLACKJACK_START);
     } else if (isSlots) {
         //getSock()->setState(SLOTS_START);
