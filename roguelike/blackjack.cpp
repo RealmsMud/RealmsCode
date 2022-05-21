@@ -290,6 +290,7 @@ void playBlackjack(Socket* sock, const std::string& str) {
         os << "The dealer got a natural!\n";
       }
 
+      int firstHandIdx = -1;
       for (int i = 0; i < game->playerHands.size(); i++) {
         bool playerNatural = game->playerHands[i].getSum() == 21;
         
@@ -315,15 +316,22 @@ void playBlackjack(Socket* sock, const std::string& str) {
           game->playerHands[i].setStatus(Blackjack::Loss);
           os << "Hand "+std::to_string(i+1)+" loses its bet of $"+std::to_string(game->playerHands[i].getBet())+"\n";
         }
+
+        if (firstHandIdx == -1 && !game->playerHands[i].isResolved()) {
+          firstHandIdx = i;
+        }
       }
+
+      os << "All hands dealt! Press [enter] to continue.\n";
 
       if (dealerNatural) {
         // if dealer got a natural all hands should be resolved
         sock->setState(BLACKJACK_END);
       } else {
+        os << "\nChoose action for hand "+std::to_string(firstHandIdx+1)+":\n" << game->playerHands[firstHandIdx] << " Sum: " + game->playerHands[firstHandIdx].getStatusStr() + "\n";
+        os << game->playerHands[firstHandIdx].getOptionsMenu();
         sock->setState(BLACKJACK_PLAY);
       }
-      os << "All hands dealt! Press [enter] to continue.\n";
       break;
     } case BLACKJACK_PLAY: {
       // next player hand
@@ -341,9 +349,11 @@ void playBlackjack(Socket* sock, const std::string& str) {
           os << *game;
         } else if (strncasecmp(str.c_str(), "S", 1) == 0) {
           // Stand
+          os << "Hand "+handNumber+" stands!\n";
           hand.setStatus(Blackjack::Standing);
         } else if (strncasecmp(str.c_str(), "H", 1) == 0) {
           // Hit
+          os << "Hand "+handNumber+" hits!\n";
           Card card = game->shoe.takeCard();
           hand.addCard(card);
           if (hand.getSum() > 21) {
@@ -354,6 +364,7 @@ void playBlackjack(Socket* sock, const std::string& str) {
         } else if (strncasecmp(str.c_str(), "P", 1) == 0) {
           // Split
           if (hand.canSplit()) {
+            os << "Hand "+handNumber+" splits!\n";
             // separate the pair into two hands with equal bet
             Blackjack::Hand newHand = Blackjack::Hand(hand.getBet());
             newHand.addCard(hand.popCard());
@@ -362,6 +373,7 @@ void playBlackjack(Socket* sock, const std::string& str) {
         } else if (strncasecmp(str.c_str(), "D", 1) == 0) {
           // Double Down
           if (hand.canDoubleDown()) {
+            os << "Hand "+handNumber+" doubles down!\n";
             // double the bet and receive only one more card
             int newBet = hand.getBet() * 2;
             hand.setBet(newBet);
@@ -370,26 +382,14 @@ void playBlackjack(Socket* sock, const std::string& str) {
           }
         }
 
-        // prompt next hand if current has resolved, or re-prompt current
+        // if hand is now resolved, display it once more
         if (hand.isResolved()) {
-          os << handNumber+") " << hand << " Sum: " + hand.getStatusStr() + "\n";
-
-          if (game->playerHands.size() > i+1) {
-            os << "\nChoose action for hand "+std::to_string(i+2)+":\n" << game->playerHands[i+1] << " Sum: " + game->playerHands[i+1].getStatusStr() + "\n";
-            os << game->playerHands[i+1].getOptionsMenu();
-          } else {
-            // this is the last player hand
-            os << "All hands standing, dealer's turn...\n";
-            sock->setState(BLACKJACK_DEALER_TURN);
-          }
-        } else {
-          os << "\nChoose action for hand "+handNumber+":\n" << hand << " Sum: " + hand.getStatusStr() + "\n";
-          os << hand.getOptionsMenu();
+          os << handNumber+") " << game->playerHands[i] << " Sum: " + game->playerHands[i].getStatusStr() + "\n";
         }
         break;
       }
 
-      // check for prompt or progress to next phase
+      // check for next prompt or progress to next phase
       bool isDealersTurn = true;
       for (int i = 0; i < game->playerHands.size(); i++) {
         if (game->playerHands[i].isResolved()) {
@@ -445,7 +445,7 @@ void playBlackjack(Socket* sock, const std::string& str) {
         }
       }
 
-      os << "Good game! Would you like to play again?\n";
+      os << "\nGood game! Would you like to play again?\n";
       os << "[Y] Yes  [N] No\n";
       sock->setState(BLACKJACK_END);
       break;
