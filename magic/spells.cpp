@@ -220,11 +220,13 @@ void SpellData::set(CastType h, SchoolOfMagic s, DomainOfMagic d, std::shared_pt
     school = s;
     domain = d;
     object = obj;
-    if(caster->getCastingType() == Divine)
+    if(caster) {
+        level = caster->getLevel();
+    }
+    if(caster && caster->getCastingType() == Divine) {
         skill = spellSkill(domain);
-    else
+    } else
         skill = spellSkill(school);
-    level = caster->getLevel();
     /*
      * Start small: don't do skill-based levels yet
     if(skill == "") {

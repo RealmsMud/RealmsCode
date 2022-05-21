@@ -1862,7 +1862,7 @@ void Player::validateId() {
 bool Player::checkConfusion() {
     int     action=0, dmg=0;
     mType   targetType = PLAYER;
-    char    atk[50];
+    std::string atk;
     std::shared_ptr<Creature> target=nullptr;
     std::shared_ptr<Exit> newExit=nullptr;
     std::shared_ptr<BaseRoom> room = getRoomParent(), bRoom=nullptr;
@@ -1875,14 +1875,12 @@ bool Player::checkConfusion() {
     action = Random::get(1,4);
     switch(action) {
         case 1: // Stand confused
-
             broadcast(getSock(), room, "%M stands with a confused look on %s face.", this, hisHer());
             printColor("^BYou are confused and dizzy. You stand and look around cluelessly.\n");
             stun(Random::get(5,10));
             return(true);
             break;
         case 2: // Wander to random exit
-
             newExit = getFleeableExit();
             if(!newExit)
                 return(false);
@@ -1953,11 +1951,11 @@ bool Player::checkConfusion() {
                             dmg = damage.roll();
                     }
 
-                    getDamageString(atk, Containable::downcasted_shared_from_this<Player>(), ready[WIELD - 1]);
+                    atk = getDamageString(Containable::downcasted_shared_from_this<Player>(), ready[WIELD - 1], false);
 
-                    printColor("^BYou %s yourself for %d damage!\n", atk, dmg);
+                    printColor("^BYou %s yourself for %d damage!\n", atk.c_str(), dmg);
 
-                    broadcast(getSock(), room, "%M %s %sself!", this, atk, himHer());
+                    broadcast(getSock(), room, "%M %s %sself!", this, atk.c_str(), himHer());
                     hp.decrease(dmg);
                     if(hp.getCur() < 1) {
 

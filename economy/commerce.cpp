@@ -670,9 +670,7 @@ void shopBuy(const std::shared_ptr<Player>& player, cmd* cmnd, Property* p, std:
             }
             // Not a lottery Ticket
         } else {
-            object2 = std::make_shared<Object>();
-
-            *object2 = *object;
+            object2 = std::make_shared<Object>(*object);
             object2->clearFlag(O_PERM_INV_ITEM);
             object2->clearFlag(O_PERM_ITEM);
             object2->clearFlag(O_TEMP_PERM);
@@ -778,7 +776,6 @@ void shopBuy(const std::shared_ptr<Player>& player, cmd* cmnd, Property* p, std:
         }
 
         if(object->hooks.executeWithReturn("afterPurchase", player)) {
-
             Limited::addOwner(player, object2);
             player->addObj(object2);
         } else {

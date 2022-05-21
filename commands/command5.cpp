@@ -691,17 +691,24 @@ void Player::changingStats(std::string str) {
     case CON_CHANGING_STATS:
         // empty input would cause crash here
         if (str.length() < 1) {
-            getSock()->print("Aborted.\n");
+            sock->print("Aborted.\n");
             sock->setState(CON_PLAYING);
             return;
         }
 
         inputArgs = splitString(str, " ");
-        std::transform(inputArgs.begin(), inputArgs.end(), std::back_inserter(statInput), [](const std::string& s) { return std::stoi(s); });
+        try {
+            std::transform(inputArgs.begin(), inputArgs.end(), std::back_inserter(statInput), [](const std::string &s) { return std::stoi(s); });
+        } catch (std::invalid_argument &) {
+            sock->print("Invalid input\n");
+            sock->print("Aborted.\n");
+            sock->setState(CON_PLAYING);
+            return;
+        }
 
         if(statInput.size() < 5) {
             sock->print("Please enter all 5 numbers.\n");
-            getSock()->print("Aborted.\n");
+            sock->print("Aborted.\n");
             sock->setState(CON_PLAYING);
             return;
         }

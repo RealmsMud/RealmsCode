@@ -315,15 +315,14 @@ const std::string & ThreatEntry::getUid() const {
 //*********************************************************************
 // Heal a target and dish out threat as needed!
 
-int Creature::doHeal(const std::shared_ptr<Creature>& target, int amt, double threatFactor) {
+unsigned int Creature::doHeal(const std::shared_ptr<Creature>& target, int amt, double threatFactor) {
     auto cThis = Containable::downcasted_shared_from_this<Creature>();
     if(threatFactor < 0.0)
         threatFactor = 1.0;
 
     unsigned int healed = target->hp.increase(amt);
 
-    // If the target is a player/pet and they're in combat
-    // then this counts towards the damage done/hatred on that monster
+    // If the target is a player/pet and they're in combat then this counts towards the damage done/hatred on that monster
     if((target->isPlayer() || target->isPet()) && target->inCombat(false)) {
         for(const auto& mons : getRoomParent()->monsters) {
             if(mons->isEnemy(target)) {
@@ -400,9 +399,9 @@ void Creature::clearTarget(bool clearTargetsList) {
     auto lockedTarget = myTarget.lock();
     if(isPlayer()) {
         if(lockedTarget)
-            this->printColor("You are no longer targeting %s!\n", lockedTarget->getCName());
+            printColor("You are no longer targeting %s!\n", lockedTarget->getCName());
         else
-            this->printColor("You no longer have a target!\n");
+            printColor("You no longer have a target!\n");
     }
 
     if(lockedTarget && clearTargetsList)
@@ -416,9 +415,8 @@ void Creature::clearTarget(bool clearTargetsList) {
 //*********************************************************************
 
 void Creature::clearTargetingThis(Creature *targeter) {
-    std::shared_ptr<Player> ply = getAsPlayer();
-    if(ply) {
-        ply->printColor("%s is no longer targeting you!\n", targeter->getCName());
+    if(isPlayer()) {
+        printColor("%s is no longer targeting you!\n", targeter->getCName());
     }
 
     targetingThis.remove_if([&targeter](const std::weak_ptr<Creature>& ptr) {
