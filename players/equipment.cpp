@@ -981,11 +981,9 @@ void getAllObj(const std::shared_ptr<Creature>& creature, const std::shared_ptr<
     std::shared_ptr<Player> player = creature->getPlayerMaster();
     Property *p=nullptr;
     std::shared_ptr<Object> object=nullptr, last_obj=nullptr;
-    char    str[2048];
-    const char *str2;
+    std::ostringstream oStr;
     int     n=1, found=0, heavy=0;
     bool    doUnique=false, saveLimited=false;
-    str[0] = 0;
 
     // we're being sent either a player or a pet
     //  - creature will be the one getting the object
@@ -1004,20 +1002,19 @@ void getAllObj(const std::shared_ptr<Creature>& creature, const std::shared_ptr<
         return;
     doUnique = !container->inCreature() && !p;
 
-    ObjectSet::iterator it;
-    for( it = container->objects.begin() ; it != container->objects.end() ; ) {
+    for( auto it = container->objects.begin() ; it != container->objects.end() ; ) {
         object = (*it++);
         if( !object->flagIsSet(O_SCENERY) && !object->flagIsSet(O_NO_TAKE) &&
             !object->flagIsSet(O_HIDDEN) && player->canSee(object) )
         {
             found++;
 
-            if(player->getWeight() + object->getActualWeight() > player->maxWeight()) {
+            if((creature->getWeight() + object->getActualWeight()) > creature->maxWeight()) {
                 heavy++;
                 continue;
             }
 
-            if(player->tooBulky(object->getActualBulk())) {
+            if(creature->tooBulky(object->getActualBulk())) {
                 heavy++;
                 continue;
             }
@@ -1052,13 +1049,8 @@ void getAllObj(const std::shared_ptr<Creature>& creature, const std::shared_ptr<
                 n++;
             else if(last_obj) {
                 // BUGFIX: Assigning the c_str() of a std::string to a char, and it's still being accessed after the std::string goes out of scope (this line)
-                std::string lastObjStr = last_obj->getObjStr(nullptr, 0, n);
-                str2 = lastObjStr.c_str();
-                if(strlen(str2)+strlen(str) < 2040) {
-                    strcat(str, str2);
-                    strcat(str, ", ");
-                    n = 1;
-                }
+                oStr << last_obj->getObjStr(nullptr, 0, n) << ", ";
+                n = 1;
             }
 
             if(object->getType() == ObjectType::MONEY) {
@@ -1075,9 +1067,7 @@ void getAllObj(const std::shared_ptr<Creature>& creature, const std::shared_ptr<
     }
 
     if(found && last_obj) {
-        std::string objStr = object->getObjStr(nullptr, 0, n);
-        if(objStr.length() +strlen(str) < 2040)
-            strcat(str, objStr.c_str());
+        oStr << object->getObjStr(nullptr, 0, n);
     } else if(!found) {
         player->print("There's nothing in it.\n");
         return;
@@ -1092,18 +1082,19 @@ void getAllObj(const std::shared_ptr<Creature>& creature, const std::shared_ptr<
             return;
     }
 
-    if(!strlen(str))
+    std::string str = oStr.str();
+    if(str.empty())
         return;
 
-    broadcast(player->getSock(), player->getParent(), "%M gets %s from %1P.", creature.get(), str, container.get());
+    broadcast(player->getSock(), player->getParent(), "%M gets %s from %1P.", creature.get(), str.c_str(), container.get());
 
     if(player == creature)
-        player->printColor("You get %s from %1P.\n", str, container.get());
+        player->printColor("You get %s from %1P.\n", str.c_str(), container.get());
     else
-        player->printColor("%M gets %s from %1P.\n", creature.get(), str, container.get());
+        player->printColor("%M gets %s from %1P.\n", creature.get(), str.c_str(), container.get());
 
     if(p)
-        p->appendLog(player->getName(), "%s gets %s.", player->getCName(), str);
+        p->appendLog(player->getName(), "%s gets %s.", player->getCName(), str.c_str());
 
     if(saveLimited)
         player->save(true);
@@ -1119,8 +1110,7 @@ void get_all_rom(const std::shared_ptr<Creature>& creature, char *item) {
     std::shared_ptr<Player> player = creature->getPlayerMaster();
     std::shared_ptr<BaseRoom> room = creature->getRoomParent();
     std::shared_ptr<Object> object=nullptr, last_obj=nullptr;
-    char    str[2048];
-    const char *str2;
+    std::ostringstream oStr;
     int     n=1, found=0, heavy=0, dogoldmsg=0;
 
     // we're being sent either a player or a pet
@@ -1137,24 +1127,17 @@ void get_all_rom(const std::shared_ptr<Creature>& creature, char *item) {
         return;
 
     last_obj = nullptr;
-    str[0] = 0;
 
     if(!player->isStaff()) {
         for(const auto& ply: room->players) {
-            if( ply != player &&
-                player->canSee(ply) &&
-                !ply->flagIsSet(P_HIDDEN) &&
-                !player->inSameGroup(ply) &&
-                !ply->isStaff())
-            {
+            if( ply != player && player->canSee(ply) && !ply->flagIsSet(P_HIDDEN) && !player->inSameGroup(ply) && !ply->isStaff()) {
                 player->print("You cannot do that when someone else is in the room.\n");
                 return;
             }
         }
     }
 
-    ObjectSet::iterator it;
-    for( it = room->objects.begin() ; it != room->objects.end() && strlen(str) < 2040 ; ) {
+    for( auto it = room->objects.begin() ; it != room->objects.end() ; ) {
         object = (*it++);
         if( !object->flagIsSet(O_SCENERY) && !object->flagIsSet(O_NO_TAKE) &&
             !object->flagIsSet(O_HIDDEN) && player->canSee(object) )
@@ -1164,11 +1147,11 @@ void get_all_rom(const std::shared_ptr<Creature>& creature, char *item) {
             if(item && !keyTxtEqual(object, item))
                 continue;
 
-            if(player->getWeight() + object->getActualWeight() > player->maxWeight()) {
+            if(creature->getWeight() + object->getActualWeight() > creature->maxWeight()) {
                 heavy++;
                 continue;
             }
-            if(player->tooBulky(object->getActualBulk())) {
+            if(creature->tooBulky(object->getActualBulk())) {
                 heavy++;
                 continue;
             }
@@ -1201,21 +1184,11 @@ void get_all_rom(const std::shared_ptr<Creature>& creature, char *item) {
             if(last_obj && last_obj->showAsSame(player, object))
                 n++;
             else if(last_obj) {
-                std::string oStr = last_obj->getObjStr(nullptr, 0, n);
-                str2 = oStr.c_str();
-                if(strlen(str2)+strlen(str) < 2040) {
-                    strcat(str, str2);
-                    strcat(str, ", ");
-                    n=1;
-                }
+                oStr << last_obj->getObjStr(nullptr, 0, n) << ", ";
+                n=1;
             }
             if(object->getType() == ObjectType::MONEY) {
-                std::string strtmp = object->getObjStr(nullptr, 0, 1);
-                str2 = strtmp.c_str();
-                if(strlen(str2)+strlen(str) < 2040) {
-                    strcat(str, str2);
-                    strcat(str, ", ");
-                }
+                oStr << object->getObjStr(nullptr, 0, 1) << ", ";
                 last_obj = nullptr;
                 dogoldmsg = 1;
             } else {
@@ -1237,17 +1210,16 @@ void get_all_rom(const std::shared_ptr<Creature>& creature, char *item) {
     }
 
     if(found && last_obj) {
-        std::string objStr = last_obj->getObjStr(nullptr, 0, n);
-        str2 = objStr.c_str();
-        if(strlen(str2)+strlen(str) < 2040)
-            strcat(str, str2);
+        oStr << last_obj->getObjStr(nullptr, 0, n);
     } else if(!found) {
         player->print("There's nothing here.\n");
         return;
     }
+    std::string str = oStr.str();
 
-    if(dogoldmsg && !last_obj)
-        str[strlen(str)-2] = 0;
+
+    if(dogoldmsg && !last_obj && str.length() > 2)
+        str = str.substr(0, str.length() - 2);
 
     if(heavy) {
         if(creature == player)
@@ -1258,15 +1230,15 @@ void get_all_rom(const std::shared_ptr<Creature>& creature, char *item) {
             return;
     }
 
-    if(!strlen(str))
+    if(str.empty())
         return;
 
-    broadcast(player->getSock(), room, "%M gets %s.", creature.get(), str);
+    broadcast(player->getSock(), room, "%M gets %s.", creature.get(), str.c_str());
 
     if(player == creature)
-        player->printColor("You get %s.\n", str);
+        player->printColor("You get %s.\n", str.c_str());
     else
-        player->printColor("%M gets %s.\n", creature.get(), str);
+        player->printColor("%M gets %s.\n", creature.get(), str.c_str());
 
     if(dogoldmsg)
         player->print("You now have %ld gold pieces.\n", player->coins[GOLD]);
@@ -1379,12 +1351,12 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         )
             return(0);
 
-        if( (player->getWeight() + object->getActualWeight()) > player->maxWeight() &&
+        if( (creature->getWeight() + object->getActualWeight()) > player->maxWeight() &&
             !player->checkStaff("You can't carry anymore.\n")
         )
             return(0);
 
-        if( player->tooBulky(object->getActualBulk()) &&
+        if( creature->tooBulky(object->getActualBulk()) &&
             !player->checkStaff("That is too bulky to fit in your inventory right now.\n")
         )
             return(0);
@@ -1554,19 +1526,15 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             }
         }
 
-
-// TODO: Dom: add monster weight check so we don't have monsters carrying tons of items!
-// right now they are forced to obey player's weight/bulk rules
-
         // Weight has already been taken into account if it's in a container in the inventory,
         // but not if it is in the room or on the pet
-        if( player->getWeight() + object->getActualWeight() > player->maxWeight() &&
+        if( creature->getWeight() + object->getActualWeight() > creature->maxWeight() &&
             ((container && container->inRoom()) || pet) &&
             !player->checkStaff("You can't carry anymore.\n")
         ) return(0);
 
         // Make sure it's not too bulky to fit in the player's inventory
-        if(player->tooBulky(object->getActualBulk()) &&
+        if(creature->tooBulky(object->getActualBulk()) &&
             !player->checkStaff("That is too bulky to fit in your inventory right now.\n"))
             return(0);
 
@@ -2496,17 +2464,6 @@ int canGiveTransport(const std::shared_ptr<Creature>& creature, const std::share
             return(0);
         }
 
-        if(!pTarget->isStaff()) {
-            if(pTarget->getWeight() + object->getActualWeight() > pTarget->maxWeight()) {
-                player->print("%s can't hold anymore.\n", pTarget->getCName());
-                return(0);
-            }
-            if(target->tooBulky(object->getActualBulk())) {
-                player->print("%M cannot carry that much.\n", pTarget.get());
-                return(0);
-            }
-        }
-
         if(!Unique::canGet(pTarget, object, true)){
             player->print("%M cannot carry that limited object.\n", pTarget.get());
             return(0);
@@ -2520,6 +2477,18 @@ int canGiveTransport(const std::shared_ptr<Creature>& creature, const std::share
             return(false);
 
     }
+
+    if(!target->isStaff()) {
+        if(target->getWeight() + object->getActualWeight() > target->maxWeight()) {
+            player->print("%s can't hold anymore.\n", target->getCName());
+            return(0);
+        }
+        if(target->tooBulky(object->getActualBulk())) {
+            player->print("%M cannot carry that much.\n", target.get());
+            return(0);
+        }
+    }
+
 
     if(object->flagIsSet(O_KEEP)) {
         player->printColor("%O is currently in safe keeping.\nYou must unkeep it to %s.\n", object.get(), give ? "give it away" : "transport it");

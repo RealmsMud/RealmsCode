@@ -465,22 +465,10 @@ int Creature::maxWeight() {
 //********************************************************************
 
 bool Creature::tooBulky(int n) const {
-    int     total=0, i=0, max=0;
-
     if(isCt())
         return(false);
 
-    for(const auto& obj : objects) {
-        total += obj->getActualBulk();
-    }
-
-    for(i=0; i<MAXWEAR; i++)
-        if(ready[i])
-            total += (ready[i]->getActualBulk()/2);
-
-    max = getMaxBulk();
-
-    return(n + getTotalBulk() > max);
+    return(n + getTotalBulk() > getMaxBulk());
 }
 
 //********************************************************************
