@@ -71,6 +71,8 @@ class Blackjack {
     Blackjack();
     Blackjack(Deck shoe);
 
+    static std::string getRules();
+
     void deal(std::vector<int> bets);
 
     bool allPlayerHandsResolved();

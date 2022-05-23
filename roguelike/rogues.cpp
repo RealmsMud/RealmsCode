@@ -202,27 +202,29 @@ int cmdGamble(Player* player, cmd* cmnd) {
     }
 
     if (cmnd->num < 2) {
-        player->printColor("Gamble how? (blackjack, slots)\n");
+        player->printColor("Gamble how? (blackjack, war)\n");
         return(0);
     }
 
     bool isBlackjack = keyTxtCompare("blackjack", cmnd->str[1], strlen(cmnd->str[1]));
-    bool isSlots = keyTxtCompare("slots", cmnd->str[1], strlen(cmnd->str[1]));
+    bool isWar = keyTxtCompare("war", cmnd->str[1], strlen(cmnd->str[1]));
 
-    if (!isBlackjack && !isSlots) {
-        player->printColor("You can't do that. Blackjack or slots.\n");
+    if (!isBlackjack && !isWar) {
+        player->printColor("You can't do that. Blackjack or war.\n");
         return(0);
     }
 
     player->unhide();
 
     if (isBlackjack) {
-        player->printColor("Welcome to blackjack.\nPress [enter] to continue.\nEnter Q at any time to quit.\n");
+        player->printColor("Welcome to blackjack.\n");
         player->getSock()->setState(BLACKJACK_START);
-    } else if (isSlots) {
-        //getSock()->setState(SLOTS_START);
+    } else if (isWar) {
         player->printColor("Not implemented yet.\n");
+        // player->printColor("Welcome to casino war.\n");
+        // player->getSock()->setState(CASINO_WAR_START);
     }
+    player->printColor("Enter [Q] at any time to quit. Enter [R] at any time to view the rules.\nPress [enter] to continue.\n");
     return(0);
 }
 

@@ -144,7 +144,7 @@ std::string Blackjack::Hand::getOptionsMenu() const {
 }
 
 Blackjack::Blackjack() {
-
+  
 }
 
 Blackjack::Blackjack(Deck deck) {
@@ -182,6 +182,40 @@ void Blackjack::deal(std::vector<int> bets) {
 
 bool Blackjack::allPlayerHandsResolved() {
   return std::all_of(playerHands.begin(), playerHands.end(), [](Blackjack::Hand h){ return h.isResolved(); });
+}
+
+std::string Blackjack::getRules() {
+  std::string rules = "";
+  rules += "\n\nBlackjack\n";
+  rules += "----------------------------------------------------------------------------------------------------\n";
+  rules += "Each hand will attempt to beat the dealer by getting up to 21 without going over.\n";
+  rules += "Aces may be worth 11 or 1. Face cards are 10 and every other card is its printed value.\n";
+  rules += "Dealing:\n";
+  rules += "Cards will be dealt from a shoe of six decks. The shoe will be shuffled when less than\n";
+  rules += "60 cards remain. Bets are placed on each hand before dealing. Each player and the dealer\n";
+  rules += "is dealt one card face up. Each player is dealt a 2nd card face up, and the dealer takes\n";
+  rules += "a 2nd card face down.\n";
+  rules += "Naturals:\n";
+  rules += "If the first two cards total 21, the hand is a \"natural\".\n";
+  rules += "If the player has a natural and the dealer does not, the player wins 1.5x their bet.\n";
+  rules += "If the dealer has a natural and the player does not, the player loses their bet.\n";
+  rules += "If both the dealer and player have naturals, it's a \"push\" and the bet is refunded.\n";
+  rules += "Play:\n";
+  rules += "Each player may choose to \"hit\" taking one card at a time, as many times as they like,\n";
+  rules += "to get closer to 21. When they are done hitting, they may \"stand\" and play passes to the\n";
+  rules += "next player. If the player goes over 21, the hand is a \"bust\" and they lose their bet.\n";
+  rules += "Split:\n";
+  rules += "When the player's first two cards are a pair, they may split them into separate hands.\n";
+  rules += "A 2nd hand is created with the same bet as the original. Each hand is then played separately.\n";
+  rules += "Double Down:\n";
+  rules += "A player may choose to \"double down\" on their first two cards. Their bet is doubled\n";
+  rules += "and the hand receives one more card, then automatically stands.\n";
+  rules += "Settlement:\n";
+  rules += "When all player hands are standing, the dealer takes their turn. The dealer reveals their\n";
+  rules += "face-down card. If the total is 16 or under, the dealer must hit until the total is 17 or more.\n";
+  rules += "If the dealer has an ace and counting it as 11 would bring the sum to 17 or over, the dealer\n";
+  rules += "must stand. Any player hand with a lower total than the dealer loses, and vice versa.\n\n";
+  return rules;
 }
 
 std::ostream& operator<<(std::ostream& os, const Blackjack::Hand& hand) {
@@ -226,6 +260,11 @@ void playBlackjack(Socket* sock, const std::string& str) {
   if (strncasecmp(str.c_str(), "Q", 1) == 0) {
     os << "Aborted.\n";
     sock->setState(CON_PLAYING);
+  }
+  if (strncasecmp(str.c_str(), "R", 1) == 0) {
+    os << Blackjack::getRules();
+    sock->printColor(os.str().c_str());
+    return;
   }
 
   switch(sock->getState()) {
