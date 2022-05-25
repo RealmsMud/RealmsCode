@@ -39,21 +39,22 @@ Zone::~Zone() {
 
 
 bool Config::loadZones() {
-    auto zoneIndex = Path::Zone / "zones.json";
-    std::ifstream ifs(zoneIndex);
-    json j = json::parse(ifs);
-
-    for (const auto& [key, zoneJson] : j.items()) {
-        zones.emplace(key, zoneJson);
-    }
-
-    for (const auto& [name, zone] : zones) {
-        std::clog << "Zone: <" << name << ">: " << zone << std::endl;
-    }
-
-    json blah = zones;
-    std::clog << blah["hp"] << std::endl;
     return true;
+//    auto zoneIndex = Path::Zone / "zones.json";
+//    std::ifstream ifs(zoneIndex);
+//    json j = json::parse(ifs);
+//
+//    for (const auto& [key, zoneJson] : j.items()) {
+//        zones.emplace(key, zoneJson);
+//    }
+//
+//    for (const auto& [name, zone] : zones) {
+//        std::clog << "Zone: <" << name << ">: " << zone << std::endl;
+//    }
+//
+//    json blah = zones;
+//    std::clog << blah["hp"] << std::endl;
+//    return true;
 }
 
 std::ostream& operator<<(std::ostream& strm, const Zone& zone) {
