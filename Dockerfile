@@ -99,6 +99,7 @@ COPY --from=BUILD /build/Updater .
 # Temporary Workaround
 COPY --from=BUILD /build/libRealmsLib.so .
 COPY --from=build /build/_deps/dpp-build/libdpp.so.2.9.2 .
+COPY --from=BUILD /build/MyLSan.supp .
 
 ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8
@@ -106,6 +107,9 @@ ENV LANGUAGE en_US.UTF-8
 
 # Temporary Workaround
 ENV LD_LIBRARY_PATH=./
+
+ENV ASAN_OPTIONS="detect_odr_violation=0,detect_leaks=0"
+ENV LSAN_OPTIONS="LSAN_OPTIONS=suppressions=../MyLSan.supp"
 
 CMD ["/mud/RealmsCode"]
 
