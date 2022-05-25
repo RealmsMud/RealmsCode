@@ -76,7 +76,6 @@
 #include "swap.hpp"                            // for SwapRoom
 #include "track.hpp"                           // for Track
 #include "traps.hpp"                           // for TRAP_ACID, TRAP_ALARM
-#include "utils.hpp"                           // for MAX, MIN
 #include "wanderInfo.hpp"                      // for WanderInfo
 #include "xml.hpp"                             // for loadRoom, loadMonster
 #include "toNum.hpp"
@@ -305,7 +304,7 @@ int dmEcho(const std::shared_ptr<Player>& player, cmd* cmnd) {
         broadcast(isStaff, "^G*** %s (%s) echoed: %s",
             player->getCName(), player->getRoomParent()->fullName().c_str(), text.c_str());
 
-    broadcast(nullptr, player->getRoomParent(), "%s", text.c_str());
+    broadcast((Socket*)nullptr, player->getRoomParent(), "%s", text.c_str());
     return(0);
 }
 
@@ -853,7 +852,7 @@ int stat_rom(const std::shared_ptr<Player>& player, const std::shared_ptr<Unique
         loadObject((*it).second.cr, object);
 
         player->printColor("^y%2d) ^x%14s ^y::^x %-30s ^yInterval:^x %-5d  ^yTime Until Spawn:^x %-5d", (*it).first+1,
-                           crtm->cr.displayStr("", 'y').c_str(), object ? object->getCName() : "", crtm->interval, MAX<long>(0, crtm->ltime + crtm->interval - t));
+                           crtm->cr.displayStr("", 'y').c_str(), object ? object->getCName() : "", crtm->interval, std::max<long>(0, crtm->ltime + crtm->interval - t));
 
         if(room->flagIsSet(R_SHOP_STORAGE) && object)
             player->printColor(" ^yCost:^x %s", object->value.str().c_str());
@@ -876,7 +875,7 @@ int stat_rom(const std::shared_ptr<Player>& player, const std::shared_ptr<Unique
         loadMonster((*it).second.cr, monster);
 
         player->printColor("^m%2d) ^x%14s ^m::^x %-30s ^mInterval:^x %d  ^yTime until Spawn:^x %-5d\n", (*it).first+1,
-                           crtm->cr.displayStr("", 'm').c_str(), monster ? monster->getCName() : "", crtm->interval, MAX<long>(0, crtm->ltime + crtm->interval - t));
+                           crtm->cr.displayStr("", 'm').c_str(), monster ? monster->getCName() : "", crtm->interval, std::max<long>(0, crtm->ltime + crtm->interval - t));
 
         if(monster) {
             monster = nullptr;
@@ -1089,7 +1088,7 @@ int dmAddRoom(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Path::checkDirExists(cr.area, Path::roomPath);
 
     if(!strcmp(cmnd->str[extra ? 3 : 2], "loop"))
-        i = MAX(1, MIN(100, (int)cmnd->val[extra ? 3 : 2]));
+        i = std::max(1, std::min(100, (int)cmnd->val[extra ? 3 : 2]));
 
     for(; i; i--) {
         if(!player->checkBuilder(cr, false)) {

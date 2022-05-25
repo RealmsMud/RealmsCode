@@ -46,7 +46,6 @@
 #include "skills.hpp"                // for Skill
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MIN, MAX
 #include "xml.hpp"                   // for loadPlayer
 
 
@@ -118,7 +117,7 @@ int cmdCreepingDoom(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
-    chance = MIN(chance, 80);
+    chance = std::min(chance, 80);
 
     dmg = Random::get((int)(level*2), (int)(level*3));
 
@@ -228,7 +227,7 @@ int cmdPoison(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
-    chance = MIN(chance, 80);
+    chance = std::min(chance, 80);
     dur = standardPoisonDuration((short)level, creature->constitution.getCur());
 
     if(mCreature)
@@ -403,7 +402,7 @@ unsigned int standardPoisonDuration(short level, short con) {
         percent *= dur;
         dur = (int)percent;
     }
-    return(MAX(60,dur));
+    return(std::max(60,dur));
 }
 
 // low con, level 40:  1-3 mins

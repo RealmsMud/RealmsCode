@@ -153,8 +153,6 @@ bool Config::loadShips() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
-    Ship    *lShip;
-
     sprintf(filename, "%s/ships.xml", Path::Game.c_str());
 
     if(!fs::exists(filename))

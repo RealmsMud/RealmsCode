@@ -47,7 +47,6 @@
 #include "stats.hpp"                   // for Stat, MOD_CUR_MAX
 #include "structs.hpp"                 // for saves
 #include "unique.hpp"                  // for isLimited, remove
-#include "utils.hpp"                   // for MIN, MAX
 #include "wanderInfo.hpp"              // for WanderInfo
 #include "xml.hpp"                     // for loadMonster
 
@@ -246,7 +245,7 @@ bool Monster::updateCombat() {
     }
 
     if( flagIsSet(M_YELLED_FOR_HELP) &&
-        (Random::get(1,100) < (MAX(15, inUniqueRoom() ? getUniqueRoomParent()->wander.getTraffic() : 15))) &&
+        (Random::get(1,100) < (std::max(15, inUniqueRoom() ? getUniqueRoomParent()->wander.getTraffic() : 15))) &&
         !flagIsSet(M_WILL_YELL_FOR_HELP)
     ) {
         setFlag(M_WILL_YELL_FOR_HELP);
@@ -303,7 +302,7 @@ bool Monster::updateCombat() {
         }
 
         target->printColor("^r%M %s you%s for ^R%d^r damage.\n", this, atk,
-            target->isBrittle() ? "r brittle body" : "", MAX<unsigned int>(1, attackDamage.get()));
+            target->isBrittle() ? "r brittle body" : "", std::max<unsigned int>(1, attackDamage.get()));
 
         if(!isPet())
             target->checkImprove("defense", false);
@@ -477,7 +476,7 @@ bool Monster::zapMp(std::shared_ptr<Creature>victim, SpecialAttack* attack) {
     if(victim->mp.getCur() <= 0)
         return(false);
 
-    n = MIN<int>(victim->mp.getCur(), (Random::get<unsigned short>(1+level/2, level) + bonus(intelligence.getCur())));
+    n = std::min<int>(victim->mp.getCur(), (Random::get<unsigned short>(1+level/2, level) + bonus(intelligence.getCur())));
 
     victim->printColor("^M%M zaps your magical talents!\n", this);
     victim->printColor("%M stole %d magic points!\n", this, n);
@@ -541,9 +540,9 @@ bool Monster::steal(std::shared_ptr<Player>victim) {
     // Any mob has a minimum of 95% to steal a non-bag, despite how much higher level they are than a player
     //   They always have a 5% chance to fail.
     if(isContainer)
-        chance = MIN(5,(level * (level - victim->getLevel())));
+        chance = std::min(5,(level * (level - victim->getLevel())));
     else
-        chance = MIN(95,MAX(1,4 * (level - victim->getLevel())));
+        chance = std::min(95,std::max(1,4 * (level - victim->getLevel())));
 
     // If a player is 10+ levels higher than a mob, they never have to worry about a mob succeeding in stealing. 
     // The 1% min chance above for stealing non-bags is nullified. The mob will still try though.
@@ -580,7 +579,7 @@ bool Monster::steal(std::shared_ptr<Player>victim) {
              object->flagIsSet(O_CUSTOM_OBJ))
         chance = 0;
 
-    chance = MAX(0,chance);
+    chance = std::max(0,chance);
 
     if(Random::get(1, 100) <= chance) {
         victim->delObj(object, false, true);
@@ -608,7 +607,7 @@ void Monster::berserk() {
     clearFlag(M_WILL_BERSERK);
     strength.addModifier("Berserk", 50, MOD_CUR_MAX);
 
-    broadcast(nullptr, getRoomParent(), "^R%M goes berserk!", this);
+    broadcast((Socket*)nullptr, getRoomParent(), "^R%M goes berserk!", this);
 }
 
 //*********************************************************************
@@ -907,7 +906,7 @@ bool Creature::chkSave(short savetype, const std::shared_ptr<Creature>& target, 
     if(pCreature && pCreature->getClass() == CreatureClass::CLERIC && pCreature->getDeity() == KAMIRA)
         chance += 1000;
 
-    chance = MAX(1,MIN(9900, chance)); // always a 1% chance to fail
+    chance = std::max(1,std::min(9900, chance)); // always a 1% chance to fail
 
      // Gaining saves is on a timer so people can't easily spam in/out/in/out room to instantly raise various save types
      // They can still do it, but it takes a little more work
@@ -943,7 +942,7 @@ bool Creature::chkSave(short savetype, const std::shared_ptr<Creature>& target, 
             if(roll <=2000) printColor("^GCritical save success!! ^y(%d <= 2000)\n", roll);
         }
           
-        upchance = MAX(20,(99 - saves[savetype].chance)); // Always at least a 20% chance save will go up
+        upchance = std::max(20,(99 - saves[savetype].chance)); // Always at least a 20% chance save will go up
         if(bns == -1 ||                                   // Calling function indicates specific circumstance will not raise the save
            savetype == LCK ||                             // Luck save is an average of all other saves and does not raise
            level < 10 ||                                  // Won't start raising until level 10; this has to do with the level 40 max and overall spread
@@ -1175,7 +1174,7 @@ int Creature::doDamage(const std::shared_ptr<Creature>& target, unsigned int dmg
     std::shared_ptr<Player> pThis = getAsPlayer();
     std::shared_ptr<Monster>  mThis = getAsMonster();
 
-    unsigned int m = MIN(target->hp.getCur(), dmg);
+    unsigned int m = std::min(target->hp.getCur(), dmg);
 
     target->hp.decrease(dmg);
     //checkTarget(target);
@@ -1278,7 +1277,7 @@ bool Monster::tryToPoison(const std::shared_ptr<Creature>& target, SpecialAttack
 
         if(poison_dur) {
             duration = poison_dur - 12*bonus(target->constitution.getCur());
-            duration = MAX(120, MIN(duration, 1200));
+            duration = std::max(120, std::min(duration, 1200));
         } else {
             duration = (Random::get(2,3)*60) - 12*bonus(target->constitution.getCur());
         }
@@ -1322,7 +1321,7 @@ bool Monster::tryToStone(const std::shared_ptr<Creature>& target, SpecialAttack*
     if(pAttack)
         bns += pAttack->saveBonus;
 
-    bns = MAX(0,MIN(bns,75));
+    bns = std::max(0,std::min(bns,75));
 
     if(pTarget->isStaff() || avoid || pTarget->chkSave(DEA, pTarget, bns)) {
         broadcast(getSock(), getRoomParent(), "%M tried to petrify %N!", this, pTarget.get());

@@ -16,11 +16,46 @@
  *
  */
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <nlohmann/json.hpp>
 
 #include "catRef.hpp"   // for CatRef
+#include "config.hpp"
+#include "paths.hpp"
 #include "quests.hpp"   // for QuestInfo
 #include "zone.hpp"
 
+using json = nlohmann::json;
+
 Zone::Zone() {
-    /* TODO: Init */
+//    std::clog << "Zone ctor" << std::endl;
+}
+
+Zone::~Zone() {
+//    std::clog << "~Zone" << std::endl;
+}
+
+
+bool Config::loadZones() {
+    auto zoneIndex = Path::Zone / "zones.json";
+    std::ifstream ifs(zoneIndex);
+    json j = json::parse(ifs);
+
+    for (const auto& [key, zoneJson] : j.items()) {
+        zones.emplace(key, zoneJson);
+    }
+
+    for (const auto& [name, zone] : zones) {
+        std::clog << "Zone: <" << name << ">: " << zone << std::endl;
+    }
+
+    json blah = zones;
+    std::clog << blah["hp"] << std::endl;
+    return true;
+}
+
+std::ostream& operator<<(std::ostream& strm, const Zone& zone) {
+    return strm << "Zone<" << zone.name << ", " << zone.display << ">";
 }

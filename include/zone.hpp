@@ -19,6 +19,7 @@
 #pragma once
 
 #include <string>                       // for hash, string
+#include <memory>
 #include <boost/dynamic_bitset.hpp>
 #include <nlohmann/json_fwd.hpp>
 
@@ -26,15 +27,17 @@ class QuestInfo;
 
 class CatRef;
 
-typedef std::map<CatRef, QuestInfo> ZoneQuestInfoMap;
+typedef std::map<CatRef, std::shared_ptr<QuestInfo>> ZoneQuestInfoMap;
 
 class Zone {
 public:
     Zone();
+    ~Zone();
 
 public:
     friend void to_json(nlohmann::json &j, const Zone &zone);
     friend void from_json(const nlohmann::json &j, Zone &zone);
+    friend std::ostream& operator<<(std::ostream&, const Zone&);
 
 private:
     std::string name;

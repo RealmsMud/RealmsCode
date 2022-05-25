@@ -30,7 +30,6 @@
 #include "oldquest.hpp"                             // for quest, questPtr
 #include "paths.hpp"                                // for Game
 #include "proto.hpp"                                // for get_quest_exp
-#include "utils.hpp"                                // for MAX, MIN
 #include "xml.hpp"                                  // for toNum, bad_lexica...
 
 
@@ -150,7 +149,7 @@ long get_quest_exp(int nQuest) {
     // so subtract one first
     nQuest--;
 
-    nQuest = MAX(0, MIN(nQuest, numQuests ) );
+    nQuest = std::max(0, std::min(nQuest, numQuests ) );
 
     return(gConfig->questTable[nQuest]->exp);
 }
@@ -159,7 +158,7 @@ long get_quest_exp(int nQuest) {
 //                      get_quest_name()
 //*********************************************************************
 const char *get_quest_name(int nIndex) {
-    nIndex = MAX(-1, MIN(nIndex, numQuests));
+    nIndex = std::max(-1, std::min(nIndex, numQuests));
 
     if(nIndex==-1)
         return("None");

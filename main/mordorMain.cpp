@@ -84,8 +84,7 @@ void usage(char *szName) {
 void handle_args(int argc, char *argv[]) {
     int i=0;
 
-    strncpy(gConfig->cmdline, argv[0], 255);
-    gConfig->cmdline[255] = 0;
+    gConfig->cmdline = argv[0];
 
     for(i = 1; i < argc; i++) {
         switch (argv[i][0]) {

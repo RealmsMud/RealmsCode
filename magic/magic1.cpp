@@ -58,7 +58,6 @@
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for osp_t, daily
 #include "unique.hpp"                // for Unique
-#include "utils.hpp"                 // for MAX, MIN
 #include "xml.hpp"                   // for loadRoom
 #include "toNum.hpp"
 
@@ -95,7 +94,7 @@ int Creature::doMpCheck(int splno) {
         // Handle spell fail here now if the spell doesn't handle mp on it's own
         if(!(splno == S_VIGOR || splno == S_MEND_WOUNDS) && spellFail(CastType::CAST)) {
             // Reduced spell fails to half mp
-            subMp(MAX(1,reqMp/2));
+            subMp(std::max(1,reqMp/2));
             return(0);
         }
     }
@@ -261,6 +260,7 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             listen->print("%M doesn't know that spell.\n", creature.get());
         return(CAST_RESULT_FAILURE);
     }
+    data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), nullptr, creature);
 
     if(!creature->isStaff()) {
         switch(creature->getCastingType()) {
@@ -290,23 +290,15 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         return(CAST_RESULT_FAILURE);
 
 
-    if( player == creature &&
-        player->pFlagIsSet(P_SITTING) &&
-        data.splno != S_VIGOR &&
-        data.splno != S_MEND_WOUNDS &&
-        data.splno != S_BLESS &&
-        data.splno != S_PROTECTION &&
-        data.splno != S_HEAL
+    if( player == creature && player->pFlagIsSet(P_SITTING) &&
+        data.splno != S_VIGOR && data.splno != S_MEND_WOUNDS && data.splno != S_BLESS && data.splno != S_PROTECTION && data.splno != S_HEAL
     ) {
         listen->print("You cannot cast that while sitting.\n");
         return(CAST_RESULT_FAILURE);
     }
 
 
-    if(player == creature)
-        i = MAX(LT(creature, LT_SPELL), creature->lasttime[LT_READ_SCROLL].interval + 2);
-    else
-        i = LT(creature, LT_SPELL);
+    i = (player == creature) ? std::max(LT(creature, LT_SPELL), creature->lasttime[LT_READ_SCROLL].interval + 2) : LT(creature, LT_SPELL);
     t = time(nullptr);
 
     if(t < i && i != MAXINT) {
@@ -354,7 +346,6 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     fn = get_spell_function(data.splno);
 
 
-    data.set(CastType::CAST, get_spell_school(data.splno), get_spell_domain(data.splno), nullptr, creature);
     if(!data.check(creature))
         return(CAST_RESULT_FAILURE);
 
@@ -977,7 +968,7 @@ int cmdReadScroll(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(object->getSpecial()) {
         n = object->doSpecial(player);
         if(n != -2)
-            return(MAX(0, n));
+            return(std::max(0, n));
     }
 
     if(object->getType() != ObjectType::SCROLL) {
@@ -997,7 +988,7 @@ int cmdReadScroll(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    i = MAX(LT(player, LT_READ_SCROLL), player->lasttime[LT_SPELL].ltime + 2);
+    i = std::max(LT(player, LT_READ_SCROLL), player->lasttime[LT_SPELL].ltime + 2);
     t = time(nullptr);
 
     if(i > t) {
@@ -1328,7 +1319,7 @@ int cmdUseWand(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    i = MAX(LT(player, LT_SPELL), player->lasttime[LT_READ_SCROLL].interval + 2);
+    i = std::max(LT(player, LT_SPELL), player->lasttime[LT_READ_SCROLL].interval + 2);
     t = time(nullptr);
 
     if(!player->isCt() && i > t) {
@@ -2054,7 +2045,7 @@ int cmdCommune(const std::shared_ptr<Player>& player, cmd *cmnd) {
     }
     int level = (int)player->getSkillLevel(("commune"));
 
-    chance = MIN(85, level * 20 + bonus(player->piety.getCur()));
+    chance = std::min(85, level * 20 + bonus(player->piety.getCur()));
 
     if(player->isStaff())
         chance = 100;
@@ -2092,15 +2083,11 @@ int cmdCommune(const std::shared_ptr<Player>& player, cmd *cmnd) {
             pEnd = newRoom->players.end();
             std::shared_ptr<Player> ply;
             while(pIt != pEnd) {
-                ply = (*pIt++);
-                if(ply->isUndead() && !player->isCt())
-                    continue;
-
-                if(ply->flagIsSet(P_DM_INVIS) && !player->isDm())
-                    continue;
-
-                if(ply->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt())
-                    continue;
+                ply = (*pIt++).lock();
+                if(!ply) continue;
+                if(ply->isUndead() && !player->isCt()) continue;
+                if(ply->flagIsSet(P_DM_INVIS) && !player->isDm()) continue;
+                if(ply->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt()) continue;
 
                 player->print("   %M\n", ply.get());
             }
@@ -2112,17 +2099,10 @@ int cmdCommune(const std::shared_ptr<Player>& player, cmd *cmnd) {
             std::shared_ptr<Monster>  mons;
             while(mIt != mEnd) {
                 mons = (*mIt++);
-                if(mons->isUndead() && !player->isCt())
-                    continue;
-
-                if(mons->isPet() && !player->isCt())
-                    continue;
-
-                if(mons->isUndead() && !player->isCt())
-                    continue;
-
-                if(mons->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt())
-                    continue;
+                if(mons->isUndead() && !player->isCt()) continue;
+                if(mons->isPet() && !player->isCt()) continue;
+                if(mons->isUndead() && !player->isCt()) continue;
+                if(mons->isInvisible() && !player->isEffected("detect-invisible") && !player->isCt()) continue;
 
                 player->print("   %s\n", mons->getCName());
             }

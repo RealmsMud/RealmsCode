@@ -58,7 +58,6 @@
 #include "socket.hpp"                            // for Socket
 #include "stats.hpp"                             // for Stat
 #include "structs.hpp"                           // for daily
-#include "utils.hpp"                             // for MAX, MIN
 
 #include <boost/algorithm/string.hpp>            // split, join
 
@@ -146,7 +145,7 @@ int statBonus[MAXALVL] = {
     5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };   // 28+
 
 int bonus(unsigned int num) {
-    return( statBonus[MIN<int>(num/10, MAXALVL - 1)] );
+    return( statBonus[std::min<int>(num/10, MAXALVL - 1)] );
 }
 
 int crtWisdom(std::shared_ptr<Creature> creature) {
@@ -253,10 +252,10 @@ int exp_to_lev(unsigned long exp) {
     if(level == MAXALVL) {
         level = exp/(Config::expNeeded(MAXALVL));
         level++;
-        level= MAX(MAXALVL, level);
+        level= std::max(MAXALVL, level);
     }
 
-    return(MAX(1,level));
+    return(std::max(1,level));
 }
 
 //*********************************************************************
@@ -640,7 +639,7 @@ int getLastDigit(int n, int digits) {
     double  num=0.0, sub=0.0;
     int     a=0, temp=0, digit=0;
 
-    digits = MAX(1,MIN(4,digits));
+    digits = std::max(1,std::min(4,digits));
 
     num = (double)n;
     for(a=5; a>digits-1; a--)   // start with 10^5th power (100000)
@@ -694,19 +693,40 @@ char *ltoa(
 //                      findCrt
 //*********************************************************************
 
-template<class SetType>
-std::shared_ptr<MudObject> findCrtTarget(std::shared_ptr<Creature> player, SetType& set, int findFlags, const char *str, int val, int* match) {
+std::shared_ptr<MudObject> findMonTarget(std::shared_ptr<Creature> player, MonsterSet& set, int findFlags, const char *str, int val, int* match) {
 
     if(!player || !str || set.empty())
         return(nullptr);
 
-    for(typename SetType::key_type crt : set) {
+    for(auto crt : set) {
+        if(!crt) continue;
+        if(!player->canSee(crt)) continue;
+
+        if(keyTxtEqual(crt, str)) {
+            (*match)++;
+            if(*match == val) {
+                return(crt);
+            }
+        }
+
+    }
+    return(nullptr);
+}
+std::shared_ptr<MudObject> findPlyTarget(std::shared_ptr<Creature> player, PlayerSet& set, int findFlags, const char *str, int val, int* match) {
+
+    if(!player || !str || set.empty())
+        return(nullptr);
+
+    for(auto pIt = set.begin() ; pIt != set.end() ; ) {
+        auto crt = pIt->lock();
         if(!crt) {
+            pIt = set.erase(pIt);
             continue;
         }
-        if(!player->canSee(crt)) {
-            continue;
-        }
+        pIt++;
+
+        if(!crt) continue;
+        if(!player->canSee(crt)) continue;
 
         if(keyTxtEqual(crt, str)) {
             (*match)++;
@@ -763,13 +783,13 @@ std::shared_ptr<MudObject> Creature::findTarget(unsigned int findWhere, unsigned
         }
 
         if(findWhere & FIND_MON_ROOM) {
-            if((target = findCrtTarget<MonsterSet>(getAsCreature(), getParent()->monsters, findFlags, str.c_str(), val, &match))) {
+            if((target = findMonTarget(getAsCreature(), getParent()->monsters, findFlags, str.c_str(), val, &match))) {
                 break;
             }
         }
 
         if(findWhere & FIND_PLY_ROOM) {
-            if((target = findCrtTarget<PlayerSet>(getAsCreature(), getParent()->players, findFlags, str.c_str(), val, &match))) {
+            if((target = findPlyTarget(getAsCreature(), getParent()->players, findFlags, str.c_str(), val, &match))) {
                 break;
             }
         }
@@ -786,7 +806,7 @@ std::shared_ptr<MudObject> Creature::findTarget(unsigned int findWhere, unsigned
 
 //*********************************************************************
 //                      timeStr
-//*********************************************************************
+//******************************************************************
 
 std::string timeStr(int secs) {
     int hours = 0;
@@ -813,7 +833,7 @@ std::string timeStr(int secs) {
 //*********************************************************************
 
 std::string progressBar(int barLength, float percentFull, const std::string &text, char progressChar, bool enclosed) {
-    std::string str = "";
+    std::string str;
     int i=0, progress = (int)(barLength * percentFull);
     int lowTextBound=-1, highTextBound=-1;
 

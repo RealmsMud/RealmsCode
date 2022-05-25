@@ -48,6 +48,7 @@
 #include "stats.hpp"                           // for Stat
 #include "wanderInfo.hpp"                      // for WanderInfo
 #include "xml.hpp"                             // for loadFile
+#include "zone.hpp"
 
 
 using json = nlohmann::json;
@@ -203,22 +204,12 @@ std::list<std::string> zones = {"airship", "alc", "anhoni", "avenger", "azure", 
     "nexus", "niamei", "nikola", "oce", "ocean", "orym", "pirate", "plane", "quest", "seawolf", "shadow", "shop", "sigil", "srunner", "stor", "trade", "tut",
     "voodan", "wave", "wizard", "wolf", "wville", "yuanti"};
 
-void create_zones() {
-    for (const auto& zone : zones) {
-
-    }
-}
-
 int main(int argc, char *argv[]) {
     gConfig = Config::getInstance();
     gServer = Server::getInstance();
 
     gConfig->setListing(true);
     gServer->init();
-
-    // Create Zones
-    std::cout << "Creating Zones" << std::endl;
-    create_zones();
 
     // Update quests first, so we can update the quests on the monsters
     std::cout << "Updating Quests" << std::endl;

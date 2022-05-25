@@ -49,7 +49,6 @@
 #include "server.hpp"                            // for Server, gServer
 #include "specials.hpp"                          // for SpecialAttack, SA_SI...
 #include "stats.hpp"                             // for Stat
-#include "utils.hpp"                             // for MAX, MIN
 #include "xml.hpp"                               // for numToStr
 
 
@@ -113,7 +112,8 @@ bool Creature::useSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>
             // First hit players
             auto pIt = room->players.begin();
             while(pIt != room->players.end()) {
-                std::shared_ptr<Player> ply = (*pIt++);
+                std::shared_ptr<Player> ply = (*pIt++).lock();
+                if(!ply) continue;
                 doSpecial(attack, ply);
                 attacked = true;
             }
@@ -260,7 +260,7 @@ bool Creature::doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>&
         else if(maxBonus == 0)
             maxBonus = 100;
 
-        bns = MAX(0,MIN(bns,maxBonus));
+        bns = std::max(0,std::min(bns,maxBonus));
         // Save types are saves + 1 to account for NO_SAVE
         if(victim->chkSave(attack.saveType - 1, cThis, bns))
             saved = true;
@@ -282,7 +282,7 @@ bool Creature::doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>&
                 break;
         }
         //chance -= attack.saveBonus;
-        chance = MAX(1, MIN(90, chance));
+        chance = std::max(1, std::min(90, chance));
         // Chance is chance for the attacker to succeed...so invert the check to see if the victim saved
         if(Random::get(1, 100) > chance)
             saved = true;
@@ -309,7 +309,7 @@ bool Creature::doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>&
 
     if(attack.type == SPECIAL_EXP_DRAIN) {
         attackDamage.set(attack.damage.roll());
-        attackDamage.set(MIN<unsigned long>((unsigned)attackDamage.get(), victim->getExperience()));
+        attackDamage.set(std::min<unsigned long>((unsigned)attackDamage.get(), victim->getExperience()));
 
         if(saved)
             attackDamage.set(attackDamage.get() / 2);
@@ -355,7 +355,7 @@ bool Creature::doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>&
                     dn -= 2; // more reduction!
 
                 // Can't reduce it past 1
-                dn = MAX(dn, 1);
+                dn = std::max(dn, 1);
             }
             attackDamage.set(dice(dn, ds, dp));
         }
@@ -394,8 +394,8 @@ bool Creature::doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>&
         // Put here to avoid other damage reducers
         if(!saved && attack.flagIsSet(SA_CAN_DISINTEGRATE) && Random::get(1,100) < 2) {
             victim->printColor("^Y%M seriously damages you!\n", this);
-            attackDamage.set(victim->hp.getCur() - 5);
-            attackDamage.set(MAX<unsigned int>(attackDamage.get(), 1));
+            attackDamage.set(std::max<unsigned int>(victim->hp.getCur(), 5) - 5);
+            attackDamage.set(std::max<unsigned int>(attackDamage.get(), 1));
         }
     }
 
@@ -471,7 +471,7 @@ bool Creature::doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>&
         int stunLength = 0;
         if(attack.flagIsSet(SA_RANDOMIZE_STUN)) {
             stunLength = Random::get(attack.stunLength - 3, attack.stunLength + 3);
-            stunLength = MAX(1, stunLength);
+            stunLength = std::max(1, stunLength);
         } else
             stunLength = attack.stunLength;
         victim->print("You have been stunned for %d seconds!\n", stunLength);
@@ -538,7 +538,8 @@ void SpecialAttack::printToRoom(std::shared_ptr<BaseRoom> room, std::string_view
         return;
 
     std::string toPrint;
-    for(const auto& ply: room->players) {
+    for(const auto& pIt: room->players) {
+        auto ply = pIt.lock();
         if(!ply || ply == target)
             continue;
 

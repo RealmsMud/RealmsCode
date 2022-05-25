@@ -117,7 +117,8 @@ std::shared_ptr<Container> Container::remove(Containable* toRemove) {
         toReturn = true;
     } else if(remPlayer) {
         std::erase_if(players, [&toRemove](auto& item) {
-            return item.get() == toRemove;
+            auto locked = item.lock();
+            return locked && locked.get() == toRemove;
         });
         toReturn = true;
     } else if(remMonster) {
@@ -204,8 +205,10 @@ void Container::unRegisterContainedItems() {
 //*********************************************************************
 
 void Container::wake(const std::string &str, bool noise) const {
-    for(const auto& ply: players) {
-        ply->wake(str, noise);
+    for(const auto& pIt: players) {
+        if(auto ply = pIt.lock()) {
+            ply->wake(str, noise);
+        }
     }
 }
 
@@ -214,7 +217,7 @@ bool Container::checkAntiMagic(const std::shared_ptr<Monster>&  ignore) {
         if(mons == ignore)
             continue;
         if(mons->flagIsSet(M_ANTI_MAGIC_AURA)) {
-            broadcast(nullptr,  this, "^B%M glows bright blue.", mons.get());
+            broadcast((Socket*)nullptr,  getAsRoom(), "^B%M glows bright blue.", mons.get());
             return(true);
         }
     }
@@ -388,15 +391,30 @@ std::shared_ptr<Player> Container::findPlayer(const std::shared_ptr<const Creatu
     return(findPlayer(searcher, name, num, exactMatch, match));
 }
 std::shared_ptr<Player> Container::findPlayer(const std::shared_ptr<const Creature>& searcher, const std::string& name, const int num, bool exactMatch, int& match) const {
-    for(const auto& ply: searcher->getParent()->players) {
-        if(isMatch(searcher, ply, name, exactMatch, true)) {
-            match++;
-            if(match == num) {
-                return(ply);
+    for(const auto& pIt: searcher->getParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (isMatch(searcher, ply, name, exactMatch, true)) {
+                match++;
+                if (match == num) {
+                    return (ply);
+                }
             }
         }
     }
     return(nullptr);
+}
+
+std::list<std::shared_ptr<Player>> Container::getPlayers() {
+    std::list<std::shared_ptr<Player>> playerList;
+    for(auto pIt = players.begin() ; pIt != players.end() ; ) {
+        if(auto ply = pIt->lock()) {
+            playerList.emplace_back(ply);
+            pIt++;
+        } else {
+            pIt = players.erase(pIt);
+        }
+    }
+    return playerList;
 }
 
 

@@ -35,7 +35,6 @@
 #include "proto.hpp"                               // for isCt, isDm, isStaff
 #include "server.hpp"                              // for Server, gServer
 #include "socket.hpp"                              // for Socket
-#include "utils.hpp"                               // for MAX
 
 
 // having a pref that starts with a hyphen (-) is instead a category
@@ -395,7 +394,7 @@ int cmdPrefs(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
         if(pref->name == "wimpy") {
             player->setWimpy(cmnd->val[1] == 1L ? 10 : cmnd->val[1]);
-            player->setWimpy(MAX<unsigned short>(player->getWimpy(), 2));
+            player->setWimpy(std::max<unsigned short>(player->getWimpy(), 2));
         }
         set = true;
 

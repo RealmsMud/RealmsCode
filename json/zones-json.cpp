@@ -21,19 +21,29 @@
 
 #include "zone.hpp"
 
+namespace boost {
+    void to_json(nlohmann::json& j, const boost::dynamic_bitset<>& b) {
+        std::string str;
+        to_string(b, str);
+        j = str;
+    }
+
+    void from_json(const nlohmann::json& j, boost::dynamic_bitset<>& b) {
+        b = boost::dynamic_bitset<>(j.get<std::string>());
+    }
+}
+
 void to_json(nlohmann::json &j, const Zone &zone) {
     j["name"] = zone.name;
     j["display"] = zone.display;
 
-    std::string flags;
-    to_string(zone.flags, flags);
-    j["flags"] = flags;
+    j["flags"] = zone.flags;
 }
 
 void from_json(const nlohmann::json &j, Zone &zone) {
     zone.name = j.at("name").get<std::string>();
     zone.display = j.at("display").get<std::string>();
-    zone.flags = boost::dynamic_bitset<>(j.at("flags").get<std::string>());
+    if(j.contains("flags")) zone.flags = j.at("flags");
 }
 
 

@@ -39,7 +39,6 @@
 #include "proto.hpp"                 // for broadcast, logn
 #include "server.hpp"                // for Server, GOLD_IN, GOLD_OUT
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MIN
 
 
 //*********************************************************************
@@ -298,7 +297,7 @@ int cmdRescind(const std::shared_ptr<Player>& player, cmd* cmnd) {
          player->getCName(), player->getLevel(), clan->getId(), clan->getName().c_str());
 
 
-    amte = MIN<unsigned long>(clan->getRescind(), player->getExperience());
+    amte = std::min<unsigned long>(clan->getRescind(), player->getExperience());
     player->print("You lose %d experience and %d gold!\n", amte, clan->getRescind() * 2);
     player->subExperience(amte);
     player->coins.sub(clan->getRescind(), GOLD);

@@ -40,7 +40,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for osp_t, daily
-#include "utils.hpp"                 // for MIN, MAX
 #include "xml.hpp"                   // for loadMonster
 
 
@@ -99,7 +98,7 @@ int splHarm(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
         } else {
             if(spellData->how == CastType::CAST && player->isPlayer())
                 player->getAsPlayer()->statistics.offensiveCast();
-            player->hp.setCur(MIN<int>(player->hp.getCur(), Random::get(1,10)));
+            player->hp.setCur(std::min<int>(player->hp.getCur(), Random::get(1,10)));
             player->print("Your lifeforce is nearly sucked away by deadly magic.\n");
             return(0);
         }
@@ -186,7 +185,7 @@ int splHarm(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
             roll = Random::get(1,10);
             dmg = target->hp.getCur() - roll;
 
-            target->hp.setCur(MIN<int>(target->hp.getCur(), roll));
+            target->hp.setCur(std::min<int>(target->hp.getCur(), roll));
             target->print("Your lifeforce is nearly sucked away by deadly magic.\n");
             player->print("Your harm spell nearly sucks the life out of %N!\n", target.get());
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's harm spell sucks away %N's life.", player.get(), target.get());
@@ -239,7 +238,7 @@ int drain_exp(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spe
         else if(spellData->how == CastType::CAST)
             loss = dice(player->getLevel(), player->getLevel(), 1);
 
-        loss = MIN(loss, player->getExperience());
+        loss = std::min(loss, player->getExperience());
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::WAND) {
             player->print("You cast an energy drain spell on yourself.\n");
@@ -267,7 +266,7 @@ int drain_exp(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spe
         }
 
 
-        loss = MIN(loss, target->getExperience());
+        loss = std::min(loss, target->getExperience());
         if(spellData->how == CastType::CAST || spellData->how == CastType::WAND) {
             player->print("You cast energy drain on %N.\n", target.get());
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts energy drain on %N.", player.get(), target.get());
@@ -364,7 +363,7 @@ int animate_dead(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
 
 
     if(player->getClass() == CreatureClass::CLERIC && pPlayer->getSecondClass() == CreatureClass::ASSASSIN)
-        skLevel = MAX(1, skLevel-3);
+        skLevel = std::max(1, skLevel-3);
 
     if(spellData->object) {
         level = spellData->object->getQuality()/10;
@@ -393,7 +392,7 @@ int animate_dead(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
     }
 
 
-    crt_num = MAX(BASE_UNDEAD, BASE_UNDEAD + 3*(title-1));
+    crt_num = std::max(BASE_UNDEAD, BASE_UNDEAD + 3*(title-1));
     // 0 = weak, 1 = normal, 2 = buff
     buff = Random::get(1,3) - 1;
 
@@ -423,7 +422,7 @@ int animate_dead(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
         break;
     }
 
-    level = MAX(MIN(MAXALVL, level), 1);
+    level = std::max(std::min(MAXALVL, level), 1);
 
     //  player->print("Title-1: %d     crt_num: %d        buff: %d\n", title-1, crt_num, buff);
     // load the undead Creature

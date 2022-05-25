@@ -55,7 +55,6 @@
 #include "raceData.hpp"                          // for RaceData
 #include "server.hpp"                            // for Server, gServer, GOL...
 #include "socket.hpp"                            // for Socket
-#include "utils.hpp"                             // for MAX, MIN
 #include "xml.hpp"                               // for loadPlayer
 
 class UniqueRoom;
@@ -228,7 +227,7 @@ void parse(std::string_view str, cmd *cmnd) {
             else if(isdigit((int)token[0]) || (token[0] == '-' &&
                     isdigit((int)token[1]))) {
                 // this is a value for the previous command
-                cmnd->val[MAX(0, n - 1)] = atol(token.c_str());
+                cmnd->val[std::max(0, n - 1)] = atol(token.c_str());
             } else {
                 strncpy(cmnd->str[n], token.c_str(), MAX_TOKEN_SIZE);
                 cmnd->str[n][MAX_TOKEN_SIZE - 1] = '\0';
@@ -484,7 +483,7 @@ int cmdPayToll(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    amt = MIN<unsigned long>(amt, 30000);
+    amt = std::min<unsigned long>(amt, 30000);
 
     target = player->getParent()->findMonster(player, cmnd, 2);
     if(!target) {

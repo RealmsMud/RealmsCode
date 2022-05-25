@@ -16,7 +16,7 @@
  *
  */
 
-#include <utils.hpp>
+#include <algorithm>
 #include "damage.hpp"
 
 //*********************************************************************
@@ -38,7 +38,7 @@ ReflectedDamageType Damage::getPhysicalReflectedType() const { return(physicalRe
 unsigned int Damage::getPhysicalBonusReflected() const { return(physicalBonusReflected); }
 
 void Damage::add(unsigned int d) {
-    damage = MAX<int>(1, (int)damage + d);
+    damage = std::max<int>(1, (int)damage + d);
 }
 
 void Damage::set(unsigned int d) { damage = d; }

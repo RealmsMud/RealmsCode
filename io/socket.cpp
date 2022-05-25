@@ -70,7 +70,6 @@
 #include "security.hpp"                             // for changePassword
 #include "server.hpp"                               // for Server, gServer
 #include "socket.hpp"                               // for Socket, Socket::S...
-#include "utils.hpp"                                // for MIN, MAX
 #include "version.hpp"                              // for VERSION
 #include "xml.hpp"                                  // for copyToBool, newBo...
 
@@ -900,7 +899,7 @@ int Socket::processInput() {
     // handle backspaces
     n = inBuf.length();
 
-    for (i = MAX<int>(n - tmp.length(), 0); i < (unsigned) n; i++) {
+    for (i = std::max<int>(n - tmp.length(), 0); i < (unsigned) n; i++) {
         if (inBuf.at(i) == '\b' || inBuf.at(i) == 127) {
             if (n < 2) {
                 inBuf = "";
@@ -1178,7 +1177,7 @@ void Socket::sendPages(int numPages) {
 
 void Socket::handlePaging(const std::string& inStr) {
     if(inStr == "") {
-        int numPages = MIN<int>(getMaxPages(), pagerOutput.size());
+        int numPages = std::min<int>(getMaxPages(), pagerOutput.size());
         sendPages(numPages);
 
         if(!pagerOutput.empty()) {
@@ -1356,14 +1355,14 @@ void Socket::printPaged(std::string_view toPrint) {
 }
 
 int Socket::getMaxPages() const {
-    return MAX(term.rows - 2, MIN_PAGES);
+    return std::max(term.rows - 2, MIN_PAGES);
 }
 
 void Socket::donePaging() {
     const int maxRows = getMaxPages();
     if (paged < maxRows) {
         // Send lines up to the first page size
-        sendPages(MIN<int>(pagerOutput.size(), maxRows - paged));
+        sendPages(std::min<int>(pagerOutput.size(), maxRows - paged));
         if(paged == maxRows)
             askFor("\n[Hit Return, Any Key to Quit]: ");
     }
@@ -1644,7 +1643,7 @@ size_t Socket::processCompressed() {
 
     if (len > 0) {
         for (i = 0, n = 0; i < len; i += n) {
-            block = MIN<size_t>(len - i, 4096);
+            block = std::min<size_t>(len - i, 4096);
             if ((n = ::write(fd, outCompressBuf + i, block)) < 0)
                 return (-1);
             written += n;

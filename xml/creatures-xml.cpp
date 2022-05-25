@@ -55,14 +55,13 @@
 #include "specials.hpp"                             // for SpecialAttack
 #include "stats.hpp"                                // for Stat
 #include "structs.hpp"                              // for daily, saves
-#include "utils.hpp"                                // for MAX
 #include "xml.hpp"                                  // for newStringChild
 
 class Object;
 
 int convertProf(const std::shared_ptr<Creature>& player, Realm realm) {
     int skill = player->getLevel()*7 + player->getLevel()*3 * mprofic(player, realm) / 100 - 5;
-    skill = MAX(0, skill);
+    skill = std::max(0, skill);
     return(skill);
 }
 
@@ -316,7 +315,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 skill *= 7;
             }
             skill -= 5;
-            skill = MAX(0, skill);
+            skill = std::max(0, skill);
 
             addSkill("abjuration", skill);
             addSkill("conjuration", skill);
@@ -343,7 +342,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 skill *= 7;
             }
             skill -= 5;
-            skill = MAX(0, skill);
+            skill = std::max(0, skill);
 
             addSkill("healing", skill);
             addSkill("destruction", (int)getSkillGained("evocation"));
@@ -379,7 +378,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             getDeity() == ARES || getDeity() == GRADIUS)))
             {
                 int initialSkill = (int)getSkillGained("chain");
-                initialSkill = MAX(1,initialSkill-(initialSkill/10));
+                initialSkill = std::max(1,initialSkill-(initialSkill/10));
                 addSkill("scale",initialSkill);
                 addSkill("ring",initialSkill);
             }
@@ -406,7 +405,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
              //reset all saves to max of 99
               if(getVersion() < "2.54c") {
                 for(int a=POI; a<=SPL;a++)
-                    saves[a].chance = MIN<short>(99,saves[a].chance);
+                    saves[a].chance = std::min<short>(99,saves[a].chance);
              }
 
               if(getVersion() < "2.54f") {
@@ -415,7 +414,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 else
                     daily[DL_TELEP].cur = 3;
                 if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
-                    daily[DL_TELEP].cur = MIN(10, (int)getSkillLevel("translocation")/5);
+                    daily[DL_TELEP].cur = std::min(10, (int)getSkillLevel("translocation")/5);
 
              }
         }

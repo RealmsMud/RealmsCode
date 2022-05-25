@@ -23,7 +23,6 @@
 #include "mudObjects/rooms.hpp"             // for BaseRoom, ExitList
 #include "proto.hpp"                        // for bonus, broadcast, abortFindRoom
 #include "unique.hpp"                       // for remove, deleteOwner
-#include "utils.hpp"                        // for MAX, MIN
 
 //*********************************************************************
 //                      addObj
@@ -161,7 +160,7 @@ int Creature::countInv(bool permOnly) {
         if(!permOnly || (permOnly && (obj->flagIsSet(O_PERM_ITEM))))
             total++;
     }
-    return(MIN(100,total));
+    return(std::min(100,total));
 }
 
 

@@ -23,7 +23,6 @@
 
 #include "proto.hpp"   // for dice
 #include "random.hpp"  // for Random
-#include "utils.hpp"   // for MAX
 
 //*********************************************************************
 //                      Dice
@@ -90,7 +89,7 @@ int Dice::average() const {
 
 int Dice::low() const {
     if(mean)
-        return(MAX(1.0,mean*2/3));
+        return(std::max(1.0,mean*2/3));
     return(number + plus);
 }
 
@@ -100,7 +99,7 @@ int Dice::low() const {
 
 int Dice::high() const {
     if(mean)
-        return(MAX(1.0, mean*1.35));
+        return(std::max(1.0, mean*1.35));
     return(number * sides + plus);
 }
 

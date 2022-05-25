@@ -933,15 +933,17 @@ void Server::updateActive(long t) {
             monster->daily[DL_BROAD].cur = 20;
 
         if( (monster->flagIsSet(M_NIGHT_ONLY) && isDay()) || (monster->flagIsSet(M_DAY_ONLY) && !isDay())) {
-            for(const auto& ply: room->players) {
-                if(ply->isStaff()) {
-                    immort = 1;
-                    break;
+            for(const auto& pIt: room->players) {
+                if(auto ply = pIt.lock()) {
+                    if (ply->isStaff()) {
+                        immort = 1;
+                        break;
+                    }
                 }
             }
             if(!immort) {
                 timetowander=1;
-                broadcast(nullptr, monster->getRoomParent(), "%M wanders slowly away.", monster.get());
+                broadcast((Socket*)nullptr, monster->getRoomParent(), "%M wanders slowly away.", monster.get());
                 monster->deleteFromRoom();
                 it = activeList.erase(it);
                 continue;
@@ -1004,7 +1006,7 @@ void Server::updateActive(long t) {
                 monster->mp.getCur() >=6 &&
                 (Random::get(1,100) < (30+monster->intelligence.getCur()/10)))
             {
-                broadcast(nullptr, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster.get(), monster->himHer());
+                broadcast((Socket*)nullptr, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster.get(), monster->himHer());
                 monster->mp.decrease(6);
                 monster->curePoison();
                 it++;
@@ -1044,9 +1046,9 @@ void Server::updateActive(long t) {
         // summoned monsters expire here
         if( monster->isPet() && (t > LT(monster, LT_INVOKE) || t > LT(monster, LT_ANIMATE))) {
             if(monster->isUndead())
-                broadcast(nullptr, room, "%1M wanders away.", monster.get());
+                broadcast((Socket*)nullptr, room, "%1M wanders away.", monster.get());
             else
-                broadcast(nullptr, room, "%1M fades away.", monster.get());
+                broadcast((Socket*)nullptr, room, "%1M fades away.", monster.get());
 
             it = activeList.erase(it);
             monster->die(monster->getMaster());
@@ -1606,12 +1608,9 @@ bool Server::startReboot(bool resetShips) {
     if(resetShips)
         Config::resetShipsFile();
 
-    char port[10], path[80];
-
-    sprintf(port, "%d", Port);
-    strcpy(path, gConfig->cmdline);
-
-    execl(path, path, "-r", port, (char *)nullptr);
+//    char port[10], path[80];
+    std::string port = std::to_string(Port);
+    execl(gConfig->cmdline.c_str(), gConfig->cmdline.c_str(), "-r", port.c_str(), (char *)nullptr);
 
     std::error_code ec;
     fs::remove(Path::Config / "config.xml", ec);
@@ -2370,9 +2369,11 @@ std::shared_ptr<UniqueRoom> Server::reloadRoom(const CatRef& cr) {
         return(nullptr);
 
     // Move any current players & monsters into the new room
-    for(const auto& ply: oldRoom->players) {
-        room->players.insert(ply);
-        ply->setParent(room);
+    for(const auto& pIt: oldRoom->players) {
+        if(auto ply = pIt.lock()) {
+            room->players.insert(ply);
+            ply->setParent(room);
+        }
     }
     oldRoom->players.clear();
 

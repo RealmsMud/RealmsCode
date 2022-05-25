@@ -32,7 +32,6 @@
 #include "playerTitle.hpp"         // for PlayerTitle
 #include "proto.hpp"               // for getLastDigit, ltoa, up, getClassAb...
 #include "random.hpp"              // for Random
-#include "utils.hpp"               // for MAX, MIN
 
 //
 //      class
@@ -258,7 +257,7 @@ std::string getOrdinal(int num) {
 }
 
 int get_perm_ac(int nIndex) {
-    nIndex = MAX( 0, MIN(nIndex, 29 ) );
+    nIndex = std::max( 0, std::min(nIndex, 29 ) );
 
     return(permAC[nIndex]);
 }
@@ -267,20 +266,20 @@ int get_perm_ac(int nIndex) {
 //*********************************************************************
 char *get_class_string(int nIndex) {
     // do bounds checking
-    nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
+    nIndex = std::max( 0, std::min(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(class_str[nIndex]);
 }
 
 char* get_lang_color(int nIndex) {
-    nIndex = MAX( 0, MIN(nIndex, LANGUAGE_COUNT-1 ) );
+    nIndex = std::max( 0, std::min(nIndex, LANGUAGE_COUNT-1 ) );
 
     return(lang_color[nIndex]);
 }
 
 char *get_language_adj(int nIndex) {
     // do bounds checking
-    nIndex = MAX( 0, MIN(nIndex, LANGUAGE_COUNT - 1 ) );
+    nIndex = std::max( 0, std::min(nIndex, LANGUAGE_COUNT - 1 ) );
 
     return(language_adj[nIndex]);
 }
@@ -291,7 +290,7 @@ char *get_language_verb(int lang) {
     int num;
 
     num = Random::get(1,3);
-    lang = MAX(0, MIN(lang, LANGUAGE_COUNT-1));
+    lang = std::max(0, std::min(lang, LANGUAGE_COUNT-1));
 
     return(language_verb[lang][num-1]);
 }
@@ -302,26 +301,26 @@ char *get_language_verb(int lang) {
 
 char *get_skill_string(int nIndex) {
     // do bounds checking
-    nIndex = MAX( 0, MIN(nIndex, 10) );
+    nIndex = std::max( 0, std::min(nIndex, 10) );
 
     return(mob_skill_str[nIndex]);
 }
 char *get_save_string(int nIndex) {
     // do bounds checking
-    nIndex = MAX( 0, MIN(nIndex, MAX_SAVE_COLOR-1 ) );
+    nIndex = std::max( 0, std::min(nIndex, MAX_SAVE_COLOR-1 ) );
 
     return(save_str[nIndex]);
 }
 
 char get_save_color(int nIndex) {
-    nIndex = MAX( 0, MIN(nIndex, MAX_SAVE_COLOR-1 ) );
+    nIndex = std::max( 0, std::min(nIndex, MAX_SAVE_COLOR-1 ) );
 
     return(save_color[nIndex]);
 }
 
 char *getClassAbbrev(int nIndex) {
     // do bounds checking
-    nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
+    nIndex = std::max( 0, std::min(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(class_abbrev[nIndex] );
 }
@@ -352,7 +351,7 @@ std::string getClassName(const std::shared_ptr<Player>& player) {
 
 char *getShortClassAbbrev(int nIndex) {
     // do bounds checking
-    nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
+    nIndex = std::max( 0, std::min(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(shortClassAbbrev[nIndex-1] );
 }

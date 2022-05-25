@@ -49,7 +49,6 @@
 #include "socket.hpp"                  // for Socket
 #include "statistics.hpp"              // for Statistics
 #include "stats.hpp"                   // for Stat
-#include "utils.hpp"                   // for MAX, MIN
 #include "xml.hpp"                     // for loadRoom
 
 #define STONE_SCROLL_INDEX      10
@@ -256,14 +255,14 @@ int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         // closed, or off map, or being guarded
         if(!loadExit || (!newRoom)) {
             if(guard)
-                broadcast(nullptr, room, "%M knocks %P to the ground.", guard.get(), object.get());
+                broadcast((Socket*)nullptr, room, "%M knocks %P to the ground.", guard.get(), object.get());
             else
-                broadcast(nullptr, room, "%O hits the %s^x and falls to the ground.", object.get(), exit->getCName());
+                broadcast((Socket*)nullptr, room, "%O hits the %s^x and falls to the ground.", object.get(), exit->getCName());
             finishDropObject(object, room, creature);
         } else {
             room = newRoom;
 
-            broadcast(nullptr, room, "%1O comes flying into the room.", object.get());
+            broadcast((Socket*)nullptr, room, "%1O comes flying into the room.", object.get());
             room->wake("Loud noises disturb your sleep.", true);
             finishDropObject(object, room, creature, false, false, true);
 
@@ -404,9 +403,9 @@ int cmdKnock(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     targetRoom->wake("You awaken suddenly!", true);
 
     if(exit)
-        broadcast(nullptr, targetRoom, "You hear someone knocking on the %s.", exit.get());
+        broadcast((Socket*)nullptr, targetRoom, "You hear someone knocking on the %s.", exit.get());
     else
-        broadcast(nullptr, targetRoom, "You hear the sound of someone knocking.");
+        broadcast((Socket*)nullptr, targetRoom, "You hear the sound of someone knocking.");
     return(0);
 }
 
@@ -499,7 +498,7 @@ int cmdBreak(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isDm())
         player->print("Chance(wgt): -%d%\n",object->getWeight()/10 );
 
-    chance = MAX(1, chance);
+    chance = std::max(1, chance);
 
 
     if(object->getQuestnum())
@@ -591,7 +590,7 @@ int cmdBreak(const std::shared_ptr<Player>& player, cmd* cmnd) {
             broadcast(player->getSock(), player->getParent(), "%M is engulfed by a magical vortex!", player.get());
 
             dmg = Random::get(1,5);
-            dmg += MAX(5,(Random::get(splvl*2, splvl*6)))+((int)mtbf/2);
+            dmg += std::max(5,(Random::get(splvl*2, splvl*6)))+((int)mtbf/2);
 
             if(player->chkSave(BRE, player, 0))
                 dmg /= 2;
@@ -599,12 +598,14 @@ int cmdBreak(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->printColor("You take %s%d^x damage from the release of magical energy!\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg);
 
             if(splvl >= 4) {
-                auto pIt = player->getRoomParent()->players.begin();
-                auto pEnd = player->getRoomParent()->players.end();
+                auto room = player->getRoomParent();
+                auto pIt = room->players.begin();
+                auto pEnd = room->players.end();
 
                 std::shared_ptr<Player> ply=nullptr;
                 while(pIt != pEnd) {
-                    ply = (*pIt++);
+                    ply = (*pIt++).lock();
+                    if(!ply) continue;
                     if(ply != player && !ply->inCombat()) {
                         dmg = Random::get(splvl*4, splvl*8);
 
@@ -658,7 +659,7 @@ int cmdBreak(const std::shared_ptr<Player>& player, cmd* cmnd) {
             xpgain = object->getEffectStrength()*15;
             // no super fast leveling by breaking poison over and over.
             if(player->getLevel() < 9)
-                xpgain = MIN(xpgain, player->getLevel()*10);
+                xpgain = std::min(xpgain, player->getLevel()*10);
 
             if(!player->halftolevel()) {
                 player->print("You %s %d experience for your deed.\n", gConfig->isAprilFools() ? "lose" : "gain", xpgain);

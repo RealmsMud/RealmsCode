@@ -45,7 +45,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for osong_t, PFNCOMPARE
-#include "utils.hpp"                 // for MAX, MIN
 
 
 //*********************************************************************
@@ -144,10 +143,10 @@ int cmdSing(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 int songMultiOffensive(const std::shared_ptr<Player>& player, cmd* cmnd, char *songname, osong_t *oso) {
     int     len=0, ret=0;
     int     monsters=0, players=0;
-    char    lastname[80];
     int     count=0;
     int     something_died=0;
     int     found_something=0;
+    std::string lastname;
 
     if(!player->ableToDoCommand())
         return(0);
@@ -156,6 +155,7 @@ int songMultiOffensive(const std::shared_ptr<Player>& player, cmd* cmnd, char *s
         player->print("You don't know that song.\n");
         return(0);
     }
+    auto room = player->getRoomParent();
 
     if(cmnd->num == 2) {
         monsters = 1;
@@ -175,22 +175,21 @@ int songMultiOffensive(const std::shared_ptr<Player>& player, cmd* cmnd, char *s
     }
     cmnd->num = 3;
     if(monsters) {
-        auto mIt = player->getRoomParent()->monsters.begin();
-        lastname[0] = 0;
-        while(mIt != player->getRoomParent()->monsters.end()) {
-            std::shared_ptr<Monster>  mons = (*mIt++);
+        lastname = "";
+        for(auto mIt = room->monsters.begin() ; mIt != room->monsters.end() ; ) {
+            auto mons = (*mIt++);
             // skip caster's pet
             if(mons->isPet() && mons->getMaster() == player) {
                 continue;
             }
-            if(lastname[0] && mons->getName() ==  lastname) {
+            if(mons->getName() ==  lastname) {
                 count++;
             } else {
                 count = 1;
             }
             strncpy(cmnd->str[2], mons->getCName(), 25);
             cmnd->val[2] = count;
-            strncpy(lastname, mons->getCName(), 79);
+            lastname = mons->getName();
             ret = songOffensive(player, cmnd, songname, oso);
             if(ret == 0)
                 return(found_something);
@@ -203,22 +202,24 @@ int songMultiOffensive(const std::shared_ptr<Player>& player, cmd* cmnd, char *s
         }
     }
     if(players) {
-        auto pIt = player->getRoomParent()->players.begin();
-        lastname[0] = 0;
-        while(pIt != player->getRoomParent()->players.end()) {
-            std::shared_ptr<Player> ply = (*pIt++);
-            // skip self
-            if(ply == player) {
+        lastname = "";
+        for(auto pIt = room->players.begin() ; pIt != room->players.end() ; ) {
+            auto ply = pIt->lock();
+            if(!ply) {
+                pIt = room->players.erase(pIt);
                 continue;
             }
-            if(lastname[0] && ply->getName() == lastname) {
+            pIt++;
+            // skip self
+            if(!ply || ply == player) continue;
+            if(ply->getName() == lastname) {
                 count++;
             } else {
                 count = 1;
             }
             strncpy(cmnd->str[2], ply->getCName(), 25);
             cmnd->val[2] = count;
-            strncpy(lastname, ply->getCName(), 79);
+            lastname = ply->getName();
             ret = songOffensive(player, cmnd, songname, oso);
             if(ret == 0)
                 return(found_something);
@@ -308,12 +309,12 @@ int songOffensive(const std::shared_ptr<Player>& player, cmd* cmnd, char *songna
 
         // dmg = dice(oso->ndice, oso->sdice, oso->pdice + bns);
         dmg = (Random::get(7,14) + player->getLevel() * 2) + bns;
-        dmg = MAX<int>(1, dmg);
+        dmg = std::max<int>(1, dmg);
 
         if(!pCreature) {
             // if(is_charm_crt(creature->name, player))
             // del_charm_crt(creature, player);
-            m = MIN(creature->hp.getCur(), dmg);
+            m = std::min(creature->hp.getCur(), dmg);
 
             creature->getAsMonster()->adjustThreat(player, m);
         }
@@ -430,11 +431,13 @@ int songHeal(const std::shared_ptr<Player>& player, cmd* cmnd) {
         heal += Random::get(5, 10);
     }
 
-    for(const auto& ply: player->getRoomParent()->players) {
-        if(ply->getClass() !=  CreatureClass::LICH) {
-            if(ply != player)
-                ply->print("%M's song rejuvinates you.\n", player.get());
-            player->doHeal(ply, heal);
+    for(const auto& pIt: player->getRoomParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->getClass() != CreatureClass::LICH) {
+                if (ply != player)
+                    ply->print("%M's song rejuvinates you.\n", player.get());
+                player->doHeal(ply, heal);
+            }
         }
     }
 
@@ -464,11 +467,13 @@ int songMPHeal(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("The room's magical properties increase the power of your song.\n");
         heal += Random::get(5, 10);
     }
-    for(const auto& ply: player->getRoomParent()->players) {
-        if(ply->hasMp()) {
-            if(ply != player)
-                ply->print("%M's song mentally revitalizes you.\n", player.get());
-            ply->mp.increase(heal);
+    for(const auto& pIt: player->getRoomParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->hasMp()) {
+                if (ply != player)
+                    ply->print("%M's song mentally revitalizes you.\n", player.get());
+                ply->mp.increase(heal);
+            }
         }
     }
     for(const auto& mons : player->getRoomParent()->monsters) {
@@ -497,12 +502,14 @@ int songRestore(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("The room's magical properties increase the power of your song.\n");
         heal += Random::get(5, 10);
     }
-    for(const auto& ply: player->getRoomParent()->players) {
-        if(ply->getClass() !=  CreatureClass::LICH) {
-            if(ply != player)
-                ply->print("%M's song restores your spirits.\n", player.get());
-            player->doHeal(ply, heal);
-            ply->mp.increase(heal/2);
+    for(const auto& pIt: player->getRoomParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->getClass() != CreatureClass::LICH) {
+                if (ply != player)
+                    ply->print("%M's song restores your spirits.\n", player.get());
+                player->doHeal(ply, heal);
+                ply->mp.increase(heal / 2);
+            }
         }
     }
     for(const auto& mons : player->getRoomParent()->monsters) {
@@ -527,10 +534,12 @@ int songBless(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->getRoomParent()->magicBonus())
         duration += 300L;
 
-    for(const auto& ply: player->getRoomParent()->players) {
-        if(ply != player)
-            ply->print("%M sings a song of holiness.\n", player.get());
-        ply->addEffect("bless", duration, 1, player, true, player);
+    for(const auto& pIt: player->getRoomParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (ply != player)
+                ply->print("%M sings a song of holiness.\n", player.get());
+            ply->addEffect("bless", duration, 1, player, true, player);
+        }
     }
     for(const auto& mons : player->getRoomParent()->monsters) {
         if(mons->isPet()) {
@@ -550,15 +559,17 @@ int songBless(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int songProtection(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("You sing a song of protection.\n");
-    int duration = MAX(300, 1200 + bonus(player->intelligence.getCur()) * 600);
+    int duration = std::max(300, 1200 + bonus(player->intelligence.getCur()) * 600);
 
     if(player->getRoomParent()->magicBonus())
         duration += 800L;
 
-    for(const auto& ply: player->getRoomParent()->players) {
-        if(ply != player)
-            ply->print("%M sings a song of protection.\n", player.get());
-        ply->addEffect("protection", duration, 1, player, true, player);
+    for(const auto& pIt: player->getRoomParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (ply != player)
+                ply->print("%M sings a song of protection.\n", player.get());
+            ply->addEffect("protection", duration, 1, player, true, player);
+        }
     }
     for(const auto& mons : player->getRoomParent()->monsters) {
         if(mons->isPet()) {
@@ -800,7 +811,7 @@ int cmdCharm(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->lasttime[LT_HYPNOTIZE].interval = 600L;
 
 
-    chance = MIN(90, 40 + ((level) - (creature->getLevel())) * 20 + 4 * bonus(player->intelligence.getCur()));
+    chance = std::min(90, 40 + ((level) - (creature->getLevel())) * 20 + 4 * bonus(player->intelligence.getCur()));
 
     if(creature->flagIsSet(M_PERMENANT_MONSTER) && creature->isMonster())
         chance /= 2;

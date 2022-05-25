@@ -54,7 +54,6 @@
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for osp_t
 #include "unique.hpp"                  // for Unique, Lore
-#include "utils.hpp"                   // for MAX, MIN
 #include "xml.hpp"                     // for loadObject
 
 class MudObject;
@@ -248,7 +247,7 @@ int new_scroll(int level, std::shared_ptr<Object> &new_obj) {
     else
         lvl = 5;
 
-    lvl = MIN(lvl,(Random::get(1,100)<=10 ? 3:2));
+    lvl = std::min(lvl,(Random::get(1,100)<=10 ? 3:2));
 
     if(Random::get(1,100) > 10)
         realm = Random::get<int>(EARTH,WATER);
@@ -514,7 +513,7 @@ int displayObject(const std::shared_ptr<const Player> &player, const std::shared
         oStr << "^gIt drips with poison.\n";
         if((player->getClass() == CreatureClass::ASSASSIN && player->getLevel() >= 10) || player->isCt()) {
             oStr << "^gTime remaining before poison deludes: " <<
-               timestr(MAX<long>(0,(target->lasttime[LT_ENVEN].ltime+target->lasttime[LT_ENVEN].interval-time(nullptr)))) << ".\n";
+               timestr(std::max<long>(0,(target->lasttime[LT_ENVEN].ltime+target->lasttime[LT_ENVEN].interval-time(nullptr)))) << ".\n";
         }
     }
 
@@ -656,10 +655,10 @@ void BaseRoom::killMortalObjectsOnFloor() {
             continue;
 
         if(sunlight && object->flagIsSet(O_DARKMETAL)) {
-            broadcast(nullptr, this, "^yThe %s^y was destroyed by the sunlight!", object->getCName());
+            broadcast((Socket*)nullptr, getAsRoom(), "^yThe %s^y was destroyed by the sunlight!", object->getCName());
             object->deleteFromRoom();
         } else if(!Unique::canLoad(object)) {
-            broadcast(nullptr, this, "^yThe %s^y vanishes!", object->getCName());
+            broadcast((Socket*)nullptr, getAsRoom(), "^yThe %s^y vanishes!", object->getCName());
             object->deleteFromRoom();
         } else
             object->killUniques();
@@ -675,8 +674,10 @@ void BaseRoom::killMortalObjects(bool floor) {
         return;
     if(isSunlight()) {
         // kill all players' darkmetal
-        for(const auto& ply: players) {
-            ply->killDarkmetal();
+        for(const auto& pIt: players) {
+            if(auto ply = pIt.lock()) {
+                ply->killDarkmetal();
+            }
         }
         for(const auto& mons : monsters) {
             mons->killDarkmetal();
@@ -802,13 +803,13 @@ short Object::getChargesCur() const { return(chargesCur); }
 float Object::getDurabilityPercent(bool charges) const {
     if(charges) {
         if(chargesCur > 0) {
-            return chargesCur / MAX<float>(chargesMax,1.0);
+            return chargesCur / std::max<float>(chargesMax,1.0);
         } else {
             return 0;
         }
     } else {
         if(shotsCur > 0) {
-            return shotsCur / MAX<float>(shotsMax,1.0);
+            return shotsCur / std::max<float>(shotsMax,1.0);
         } else {
             return 0;
         }

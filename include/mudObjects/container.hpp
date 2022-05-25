@@ -37,8 +37,8 @@ class UniqueRoom;
 
 class cmd;
 
-struct PlayerPtrLess : public std::binary_function<const std::shared_ptr<Player>, const std::shared_ptr<Player>, bool> {
-    bool operator()(const std::shared_ptr<Player>& lhs, const std::shared_ptr<Player>& rhs) const;
+struct PlayerPtrLess : public std::binary_function<const std::weak_ptr<Player>, const std::weak_ptr<Player>, bool> {
+    bool operator()(const std::weak_ptr<Player>& lhs, const std::weak_ptr<Player>& rhs) const;
 };
 
 struct MonsterPtrLess : public std::binary_function<const std::shared_ptr<Monster> , const std::shared_ptr<Monster> , bool> {
@@ -49,7 +49,7 @@ struct ObjectPtrLess : public std::binary_function<const std::shared_ptr<Object>
     bool operator()(const std::shared_ptr<Object>&  lhs, const std::shared_ptr<Object>&  rhs) const;
 };
 
-typedef std::set<std::shared_ptr<Player>, PlayerPtrLess> PlayerSet;
+typedef std::set<std::weak_ptr<Player>, PlayerPtrLess> PlayerSet;
 typedef std::set<std::shared_ptr<Monster> , MonsterPtrLess> MonsterSet;
 typedef std::set<std::shared_ptr<Object> , ObjectPtrLess> ObjectSet;
 
@@ -68,6 +68,8 @@ public:
     bool purge(bool includePets = false);
     bool purgeMonsters(bool includePets = false);
     bool purgeObjects();
+
+    std::list<std::shared_ptr<Player>> getPlayers();
 
 
     std::shared_ptr<Container> remove(Containable* toRemove);

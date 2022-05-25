@@ -64,7 +64,6 @@
 #include "structs.hpp"                 // for ALCOHOL_DRUNK, ALCOHOL_INEBRIATED
 #include "track.hpp"                   // for Track
 #include "unique.hpp"                  // for Unique
-#include "utils.hpp"                   // for MAX
 #include "xml.hpp"                     // for loadRoom
 #include "toNum.hpp"
 
@@ -531,7 +530,7 @@ bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(!player->checkAttackTimer())
             return(false);
     } else {
-        chance = MAX<int>(1, ((5+(player->dexterity.getCur()/10)*3) - player->getArmorWeight() + player->strength.getCur()));
+        chance = std::max<int>(1, ((5+(player->dexterity.getCur()/10)*3) - player->getArmorWeight() + player->strength.getCur()));
 
         if(player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID)
             chance += 5;
@@ -1373,7 +1372,7 @@ int cmdOpen(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(exit->flagIsSet(X_ONOPEN_PLAYER)) {
             player->print("%s.\n", exit->getOpen().c_str());
         } else {
-            broadcast(nullptr, player->getRoomParent(), exit->getOpen().c_str());
+            broadcast((Socket*)nullptr, player->getRoomParent(), exit->getOpen().c_str());
         }
     }
 
@@ -1422,10 +1421,12 @@ int cmdClose(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    for(const auto& ply: player->getRoomParent()->players) {
-        if(ply->inCombat()) {
-            player->print("You cannot do that right now.\n");
-            return(0);
+    for(const auto& pIt: player->getRoomParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->inCombat()) {
+                player->print("You cannot do that right now.\n");
+                return (0);
+            }
         }
     }
 

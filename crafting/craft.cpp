@@ -57,7 +57,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "structs.hpp"               // for Command
 #include "unique.hpp"                // for Lore, Unique
-#include "utils.hpp"                 // for MAX
 #include "xml.hpp"                   // for loadObject, getIntProp, loadFile
 #include "toNum.hpp"
 
@@ -423,7 +422,7 @@ void Config::addRecipe(Recipe* recipe) {
     unsigned int id = 0;
 
     for(rIt = recipes.begin(); rIt != recipes.end() ; rIt++) {
-        id = MAX(id, (*rIt).first);
+        id = std::max(id, (*rIt).first);
     }
 
     id++;

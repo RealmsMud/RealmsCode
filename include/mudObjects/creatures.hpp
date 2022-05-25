@@ -244,6 +244,7 @@ public:
     void subMp(int reqMp);
 
     std::weak_ptr<Creature> myTarget{};
+    bool hasTarget{};
     PetList pets;
     std::list<std::weak_ptr<Creature>> targetingThis;
 

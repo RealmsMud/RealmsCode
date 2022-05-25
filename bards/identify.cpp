@@ -39,7 +39,6 @@
 #include "size.hpp"                // for getSizeName
 #include "skills.hpp"              // for SkillInfo
 #include "stats.hpp"               // for Stat
-#include "utils.hpp"               // for MAX, MIN
 #include "toNum.hpp"
 
 
@@ -120,7 +119,7 @@ int cmdIdentify(const std::shared_ptr<Player>& player, cmd* cmnd) {
         avgbns = player->piety.getCur();
 
     chance = (int)(5*player->getSkillLevel("identify")) + (bonus(avgbns)) - object->getLevel();
-    chance = MIN(90, chance);
+    chance = std::min(90, chance);
 
     if(player->isStaff())
         chance = 101;
@@ -168,7 +167,7 @@ int cmdIdentify(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         } else if(object->getType() == ObjectType::WEAPON) {
             player->printColor("%O is a %s, with an average damage of %d.\n", object.get(), object->getTypeName().c_str(),
-                  MAX(1, object->damage.average() + object->getAdjustment()));
+                  std::max(1, object->damage.average() + object->getAdjustment()));
         } else if(object->getType() == ObjectType::POISON) {
             player->printColor("%O is a poison.\n", object.get());
             player->print("It has a maximum duration of %d seconds.\n", object->getEffectDuration());

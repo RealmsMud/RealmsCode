@@ -374,7 +374,7 @@ std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& t
     if(ply) {
         ply->printColor("You are now targeting %s.\n", toTarget->getCName());
     }
-
+    hasTarget = true;
     return(lockedTarget);
 
 }
@@ -400,13 +400,13 @@ void Creature::clearTarget(bool clearTargetsList) {
     if(isPlayer()) {
         if(lockedTarget)
             printColor("You are no longer targeting %s!\n", lockedTarget->getCName());
-        else
+        else if (hasTarget)
             printColor("You no longer have a target!\n");
     }
 
     if(lockedTarget && clearTargetsList)
         lockedTarget->clearTargetingThis(this);
-
+    hasTarget = false;
     myTarget.reset();
 }
 

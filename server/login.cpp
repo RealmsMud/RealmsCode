@@ -64,7 +64,6 @@
 #include "socket.hpp"                            // for Socket
 #include "stats.hpp"                             // for Stat
 #include "structs.hpp"                           // for SEX_FEMALE, SEX_MALE
-#include "utils.hpp"                             // for MAX
 #include "xml.hpp"                               // for loadPlayer, loadObject
 
 class StartLoc;
@@ -1352,11 +1351,11 @@ void Create::finishStats(Socket* sock) {
     ply->intelligence.addInitial(  gConfig->getRace(ply->getRace())->getStatAdj(INT));
     ply->piety.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(PTY));
 
-    ply->strength.setInitial(MAX<int>(10, ply->strength.getInitial()));
-    ply->dexterity.setInitial(MAX<int>(10, ply->dexterity.getInitial()));
-    ply->constitution.setInitial(MAX<int>(10, ply->constitution.getInitial()));
-    ply->intelligence.setInitial(MAX<int>(10, ply->intelligence.getInitial()));
-    ply->piety.setInitial(MAX<int>(10, ply->piety.getInitial()));
+    ply->strength.setInitial(std::max<int>(10, ply->strength.getInitial()));
+    ply->dexterity.setInitial(std::max<int>(10, ply->dexterity.getInitial()));
+    ply->constitution.setInitial(std::max<int>(10, ply->constitution.getInitial()));
+    ply->intelligence.setInitial(std::max<int>(10, ply->intelligence.getInitial()));
+    ply->piety.setInitial(std::max<int>(10, ply->piety.getInitial()));
 
     sock->print("Your stats: %d %d %d %d %d\n",
         ply->strength.getMax(),

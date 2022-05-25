@@ -412,17 +412,19 @@ int cmdAction(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         } else {
             OUT("You let rip a nasty one.\n", "%M lets out a deadly fart.");
             sock->print("You knock everyone in the room unconscious!\n");
-            for(const auto& ply: room->players) {
-                if( ply != player &&
-                    !ply->flagIsSet(P_DM_INVIS) &&
-                    !ply->isUnconscious() &&
-                    !ply->isDm() &&
-                    !ply->inCombat()
-                ) {
-                    ply->print("%M's fart knocks you unconscious!\n", creature.get());
-                    ply->knockUnconscious(30);
-                    broadcast(sock, ply->getSock(), room,
-                        "%M falls to the ground unconscious.", ply.get());
+            for(const auto& pIt: room->players) {
+                if(auto ply = pIt.lock()) {
+                    if (ply != player &&
+                        !ply->flagIsSet(P_DM_INVIS) &&
+                        !ply->isUnconscious() &&
+                        !ply->isDm() &&
+                        !ply->inCombat()
+                            ) {
+                        ply->print("%M's fart knocks you unconscious!\n", creature.get());
+                        ply->knockUnconscious(30);
+                        broadcast(sock, ply->getSock(), room,
+                                  "%M falls to the ground unconscious.", ply.get());
+                    }
                 }
             }
 

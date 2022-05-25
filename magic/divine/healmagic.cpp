@@ -45,7 +45,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for daily
-#include "utils.hpp"                 // for MAX
 #include "web.hpp"                   // for updateRecentActivity
 
 
@@ -189,7 +188,7 @@ int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> ta
         break;
 
     case CreatureClass::DRUID:
-        statBns = MAX(bonus(healer->intelligence.getCur()), bonus(healer->constitution.getCur()));
+        statBns = std::max(bonus(healer->intelligence.getCur()), bonus(healer->constitution.getCur()));
         mod = level/4 + Random::get(1, 1 + level / 5);
         break;
     case CreatureClass::THIEF:
@@ -210,17 +209,17 @@ int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> ta
     case CreatureClass::RANGER:
     case CreatureClass::BARD:
     case CreatureClass::PUREBLOOD:
-        statBns = MAX(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
+        statBns = std::max(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
         mod = Random::get(1,6);
         break;
     case CreatureClass::MAGE:
-        statBns = MAX(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
+        statBns = std::max(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
         mod = 0;
         break;
 
     case CreatureClass::CARETAKER:
     case CreatureClass::DUNGEONMASTER:
-        statBns = MAX(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
+        statBns = std::max(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
         mod = Random::get(level/2, level);
         break;
 
@@ -370,7 +369,7 @@ int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> ta
             heal = Random::get(1,3);
     }
 
-    return(MAX(1, heal));
+    return(std::max(1, heal));
 }
 
 
@@ -389,9 +388,9 @@ void niceExp(const std::shared_ptr<Creature>&healer, const std::shared_ptr<Creat
         return;
 
     if(player->getDeity() == CERIS || player->getDeity() == ENOCH || player->getDeity() == LINOTHAN)
-        exp = MAX(1, heal) / 4;
+        exp = std::max(1, heal) / 4;
     else
-        exp = MAX(1, heal) / 3;
+        exp = std::max(1, heal) / 3;
 
     if(player->getDeity() == ARAMON)
         exp = 0;
@@ -828,9 +827,9 @@ int splHeal(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
 
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
-            int healed = MAX<int>(creature->hp.getMax() - creature->hp.getCur() - Random::get(1,4), 0);
+            int healed = std::max<int>(creature->hp.getMax() - creature->hp.getCur() - Random::get(1,4), 0);
             player->doHeal(creature, healed, 0.33);
-            //creature->hp.setCur(MAX(1, creature->hp.getMax() - Random::get(1,4)));
+            //creature->hp.setCur(std::max(1, creature->hp.getMax() - Random::get(1,4)));
 
             player->print("Heal spell cast on %N.\n", creature.get());
             creature->print("%M casts a heal spell on you.\n", player.get());
@@ -872,7 +871,7 @@ void Creature::removeStatEffects() {
 //*********************************************************************
 
 int doResLoss(int curr, int prev, bool full) {
-    return(MAX(0, (prev - (full ? 0 : (prev - curr) / 5))));
+    return(std::max(0, (prev - (full ? 0 : (prev - curr) / 5))));
 }
 
 //*********************************************************************
@@ -1209,13 +1208,15 @@ int splRoomVigor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
         player->print("\nThe room's magical properties increase the power of your spell\n");
     }
 
-    for(const auto& ply: player->getRoomParent()->players) {
-        if(canCastHealing(player, ply, false, false, false)) {
-            if(ply != player)
-                ply->print("%M casts vigor on you.\n", player.get());
-            player->doHeal(ply, heal);
-            if(ply->inCombat(false))
-                player->smashInvis();
+    for(const auto& pIt: player->getRoomParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (canCastHealing(player, ply, false, false, false)) {
+                if (ply != player)
+                    ply->print("%M casts vigor on you.\n", player.get());
+                player->doHeal(ply, heal);
+                if (ply->inCombat(false))
+                    player->smashInvis();
+            }
         }
     }
 

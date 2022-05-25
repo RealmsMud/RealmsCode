@@ -63,7 +63,6 @@
 #include "structs.hpp"                           // for saves
 #include "threat.hpp"                            // for ThreatSet, ThreatTable
 #include "unique.hpp"                            // for Lore
-#include "utils.hpp"                             // for MAX, MIN
 #include "web.hpp"                               // for updateRecentActivity
 #include "xml.hpp"                               // for loadObject
 
@@ -433,7 +432,7 @@ void Monster::dieToPet(const std::shared_ptr<Monster>& killer, bool &freeTarget)
     }
 
 
-    broadcast(nullptr, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller.get(), petKiller->getCName(), this);
+    broadcast((Socket*)nullptr, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller.get(), petKiller->getCName(), this);
 
     mobDeath(pKiller, freeTarget);
 }
@@ -448,7 +447,7 @@ void Monster::dieToPet(const std::shared_ptr<Monster>& killer, bool &freeTarget)
 // Handles monsters killing monsters
 void Monster::dieToMonster(const std::shared_ptr<Monster>& killer, bool &freeTarget) {
     if(this != killer.get())
-        broadcast(nullptr, killer->getRoomParent(), "%M killed %N.", killer.get(), this);
+        broadcast((Socket*)nullptr, killer->getRoomParent(), "%M killed %N.", killer.get(), this);
     mobDeath(killer, freeTarget);
 }
 
@@ -661,7 +660,7 @@ int Player::guildKill(const std::shared_ptr<Player>& killer) {
     else if(guildRank == GUILD_OFFICER)
         bns = (bns*3)/2;
 
-    total = MAX(1, Random::get((base + bns)/2, base + bns));
+    total = std::max(1, Random::get((base + bns)/2, base + bns));
 
     if(killer->halftolevel())
         total = 0;
@@ -669,7 +668,7 @@ int Player::guildKill(const std::shared_ptr<Player>& killer) {
     if(killer->hasSecondClass())
         total = total * 3 / 4;
 
-    penalty = MIN(Random::get(1000,1500), (bns*3)/2);
+    penalty = std::min(Random::get(1000,1500), (bns*3)/2);
 
     if(killer->getLevel() > level + 6)
         penalty = 100;
@@ -738,7 +737,7 @@ int Player::godKill(const std::shared_ptr<Player>& killer) {
         bns += levelDiff * 50;
 
 
-    total = MAX(1, Random::get((base + bns)/2, base + bns));
+    total = std::max(1, Random::get((base + bns)/2, base + bns));
 
     if(killer->halftolevel())
         total = 0;
@@ -746,7 +745,7 @@ int Player::godKill(const std::shared_ptr<Player>& killer) {
     if(killer->hasSecondClass())
         total = total * 3 / 4;
 
-    penalty = MIN(Random::get(1000,1500), (bns*3)/2);
+    penalty = std::min(Random::get(1000,1500), (bns*3)/2);
 
     if(killer->getLevel() > level + 6)
         penalty = 100;
@@ -1188,8 +1187,8 @@ void Player::resetPlayer(const std::shared_ptr<Creature>& killer) {
     unhide();
 
     if(killer->isPlayer() || duel) {
-        hp.setCur( MAX<unsigned int>(1, MAX(hp.getMax()/2, hp.getCur())));
-        mp.setCur(MAX(mp.getCur(),(mp.getMax())/10));
+        hp.setCur( std::max<unsigned int>(1, std::max(hp.getMax()/2, hp.getCur())));
+        mp.setCur(std::max(mp.getCur(),(mp.getMax())/10));
     } else {
         hp.restore();
         mp.restore();
@@ -1369,7 +1368,7 @@ void Player::loseExperience(const std::shared_ptr<Monster>& killer) {
 
     } else {
         // Level 10 and over, 2% exp loss with a minimum of 10k
-        xploss = MAX<long>((long)( (float)experience * 0.02), 10000);
+        xploss = std::max<long>((long)( (float)experience * 0.02), 10000);
         statistics.experienceLost((long)xploss);
         experience -= (long)xploss;
     }
@@ -1392,8 +1391,8 @@ void Player::loseExperience(const std::shared_ptr<Monster>& killer) {
         if(Random::get(1,100) <= 25) {
             saves[count].chance -= 1;
             saves[count].gained -= 1;
-            saves[count].chance = MAX<short>(1, saves[count].chance);
-            saves[count].gained = MAX<short>(1, saves[count].gained);
+            saves[count].chance = std::max<short>(1, saves[count].chance);
+            saves[count].gained = std::max<short>(1, saves[count].gained);
         }
     }
 }
@@ -1463,14 +1462,14 @@ void Monster::distributeExperience(const std::shared_ptr<Creature>&killer) {
                     it = group->members.erase(it);
                 }
             }
-            float xpPercent = (float)MIN<unsigned int>(totalGroupDamage, hp.getMax())/(float)hp.getMax();
+            float xpPercent = (float)std::min<unsigned int>(totalGroupDamage, hp.getMax())/(float)hp.getMax();
             long adjustedExp = (long)((xpPercent*experience) * (1.0 + (.25*numGroupMembers)));
 
             // Exp is split amoungst the group based on their level,
             // since we split it evenly, in this case pets do NOT give their master
             // any extra experience.
 
-            int averageEffort = totalGroupDamage / MAX<unsigned int>(expList.size(), 1);
+            int averageEffort = totalGroupDamage / std::max<unsigned int>(expList.size(), 1);
             std::clog << "GROUP EXP: TGD:" << totalGroupDamage << " Num:" << expList.size() << " AVG EFF:" << averageEffort << std::endl;
             for(std::pair<std::shared_ptr<Player>, int> p : expList) {
                 std::shared_ptr<Player> ply = p.first;
@@ -1484,7 +1483,7 @@ void Monster::distributeExperience(const std::shared_ptr<Creature>&killer) {
                         ply->printColor("You receive reduced experience because you contributed less than half of the average effort.\n");
                         expGain *= (((float)effort)/totalGroupDamage);
                     }
-                    expGain = MAX<long>(1, expGain);
+                    expGain = std::max<long>(1, expGain);
                     ply->gainExperience(mThis, killer, expGain, true);
                 }
             }
@@ -1517,8 +1516,8 @@ void Monster::distributeExperience(const std::shared_ptr<Creature>&killer) {
         }
         int effort = p.second;
 
-        expGain = (experience * effort) / MAX<int>(hp.getMax(), 1);
-        expGain = MIN<long>(MAX<long>(0,expGain), experience);
+        expGain = (experience * effort) / std::max<int>(hp.getMax(), 1);
+        expGain = std::min<long>(std::max<long>(0,expGain), experience);
 
         ply->gainExperience(mThis, killer, expGain);
 
@@ -1549,7 +1548,7 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
     }
 
     if(player->getRace() == HUMAN && expAmount)
-        expAmount += MAX(Random::get(4,6),expAmount/3/10);
+        expAmount += std::max(Random::get(4,6),expAmount/3/10);
 
     if(player->hasSecondClass()) {
         // Penalty is 12.5% at level 30 and above
@@ -1585,14 +1584,14 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
     if(multiplier < 1.0) {
 //      player->printColor("^YExp Adjustment: %d%% (%d level difference) %d -> %d\n", (int)(multiplier*100), levelDiff, expAmount, (int)(expAmount*multiplier));
         expAmount = (int)(expAmount * multiplier);
-        expAmount = MAX(1, expAmount);
+        expAmount = std::max(1, expAmount);
     }
 
     // Add in holiday experience
     std::string holidayStr = isHoliday();
 
     if(!holidayStr.empty())
-        holidayExp = MAX(1, (int)(expAmount * 0.5));
+        holidayExp = std::max(1, (int)(expAmount * 0.5));
 
     if(victim->flagIsSet(M_PERMENANT_MONSTER))
         holidayExp = 0;
@@ -2099,7 +2098,7 @@ void Player::die(DeathType dt) {
             xploss = (int)((float)experience / 10.0);
         } else {
             // Level 10 and over, 2% exp loss with a minimum of 10k
-            xploss = MAX<long>((long)( (float)experience * 0.02), 10000);
+            xploss = std::max<long>((long)( (float)experience * 0.02), 10000);
             print("You have lost %ld experience.\n", (long)xploss);
         }
         subExperience((long)xploss);

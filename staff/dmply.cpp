@@ -62,7 +62,6 @@
 #include "socket.hpp"                // for Socket
 #include "stats.hpp"                 // for Stat
 #include "unique.hpp"                // for addOwner, deleteOwner
-#include "utils.hpp"                 // for MAX, MIN
 #include "web.hpp"                   // for callWebserver
 #include "xml.hpp"                   // for loadPlayer, loadRoom
 #include "toNum.hpp"
@@ -587,7 +586,7 @@ int dmAward(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(amount < 2) {
         amount = target->getExperience() / 100;     // 1% of current xp is default award.
-        amount = MAX(amount, 500L);                 // or 500XP if it's higher
+        amount = std::max(amount, 500L);                 // or 500XP if it's higher
     }
 
     i = LT(target, LT_RP_AWARDED);
@@ -620,9 +619,9 @@ int dmAward(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!strcmp(cmnd->str[2], "-g") && player->isCt()) { // Watchers cannot award gold
         if(cmnd->val[2] > 0)
-            gp = MAX(500L, MIN(cmnd->val[2], player->isDm() ? 5000000L:500000L));
+            gp = std::max(500L, std::min(cmnd->val[2], player->isDm() ? 5000000L:500000L));
         else
-            gp = MAX(500L, MIN(player->isDm() ? 5000000L:500000L, amount));         
+            gp = std::max(500L, std::min(player->isDm() ? 5000000L:500000L, amount));
         player->printColor("^cYou also awarded ^y%ld gold^c.\n", gp);
         target->printColor("^GYou have been awarded ^Y%ld gold^G as well! It was put in your bank account.\n", gp);
         target->bank.add(gp, GOLD);
@@ -2158,10 +2157,11 @@ int dmKill(std::shared_ptr<Player> player, std::shared_ptr<Player>victim, int ty
         }
     }
 
-    auto pIt = victim->getRoomParent()->players.begin();
-    auto pEnd = victim->getRoomParent()->players.end();
+    auto room = victim->getRoomParent();
+    auto pIt = room->players.begin();
+    auto pEnd = room->players.end();
     while(pIt != pEnd) {
-        player = (*pIt++);
+        player = (*pIt++).lock();
         if(!player || (player->isStaff() && player!=victim))
             continue;
 
@@ -2227,7 +2227,7 @@ int dmKillSwitch(const std::shared_ptr<Player>& player, cmd* cmnd) {
             if(i < cmnd->num)
                 uncon_length = toNum<int>(cmnd->str[i+1]);
 
-            uncon_length = MIN(120, MAX(15, uncon_length ) );
+            uncon_length = std::min(120, std::max(15, uncon_length ) );
         }
         if(!strcmp(cmnd->str[i], "-l"))
             hpmp_loss=1;
@@ -2717,10 +2717,10 @@ int dmJailPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    tm = MAX(1, (int)cmnd->val[1]);
+    tm = std::max(1, (int)cmnd->val[1]);
 
     if(player->isWatcher())
-        tm = MIN(60, (int)cmnd->val[1]);
+        tm = std::min(60, (int)cmnd->val[1]);
 
     t = (long)tm*60;
 
@@ -2763,7 +2763,7 @@ int dmJailPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         } else {
             player->print("%s is now jailed.\n", target->getCName());
-            broadcast(nullptr, target->getRoomParent(),
+            broadcast((Socket*)nullptr, target->getRoomParent(),
                 "^RA demonic jailer just arrived.\nThe demonic jailer opens a portal to Hell.\nThe demonic jailer drags %s screaming to the Dungeon of Despair.", target->getCName());
 
             target->printColor("^RThe demonic jailer grips your soul and drags you to the Dungeon of Despair.\n");

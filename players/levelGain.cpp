@@ -44,7 +44,6 @@
 #include "statistics.hpp"                           // for LevelInfo, Statis...
 #include "stats.hpp"                                // for Stat, MOD_CUR_MAX
 #include "structs.hpp"                              // for saves
-#include "utils.hpp"                                // for MIN
 #include "web.hpp"                                  // for updateRecentActivity
 #include "xml.hpp"                                  // for NODE_NAME, copyToNum
 
@@ -610,7 +609,7 @@ int cmdTrain(const std::shared_ptr<Player>& player, cmd* cmnd) {
     else
         maxgold = ((player->getLevel()-22)*500000) + 3000000;
 
-    goldneeded = MIN(maxgold, expneeded / 2L);
+    goldneeded = std::min(maxgold, expneeded / 2L);
 
     if(player->getRace() == HUMAN)
         goldneeded += goldneeded/3/10; // Humans have +10% training costs.

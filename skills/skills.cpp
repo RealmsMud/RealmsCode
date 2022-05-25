@@ -44,7 +44,6 @@
 #include "server.hpp"                // for Server, gServer
 #include "skills.hpp"                // for Skill, SkillInfo, SkillGainType
 #include "skillCommand.hpp"          // for SkillCommand
-#include "utils.hpp"                 // for MIN, MAX
 #include "xml.hpp"                   // for loadPlayer
 
 #define NOT_A_SKILL (-10)
@@ -223,7 +222,7 @@ void Creature::checkImprove(const std::string&  skillName, bool success, int att
     }
 
     // Unless max for level, 3% chance minimum
-    chance = MAX(chance, 3);
+    chance = std::max(chance, 3);
 
     // 10 skill points per level possible, can't go over that
     if (gained >= (level * 10))
@@ -245,7 +244,7 @@ void Creature::checkImprove(const std::string&  skillName, bool success, int att
             lasttime[LT_SKILL_INCREASE].ltime = t;
             // Length of wait is based on skill level, not player level
             long wait = 10L + (gained / 10);
-            wait = MIN(wait, 150L);
+            wait = std::min(wait, 150L);
             lasttime[LT_SKILL_INCREASE].interval = wait;
         }
         // Chance for a double improve for a hard skill
@@ -400,8 +399,8 @@ const char skillLevelStr[][SKILL_CHART_SIZE] = { "^rHorrible^x",          // 0-2
         };
 
 std::string getSkillLevelStr(int gained) {
-	int displayNum = MIN<int>(gained, MAXALVL * 10.0) / 25;
-	return skillLevelStr[MAX<int>(0, MIN<int>(SKILL_CHART_SIZE-1, displayNum))];
+	int displayNum = std::min<int>(gained, MAXALVL * 10.0) / 25;
+	return skillLevelStr[std::max<int>(0, std::min<int>(SKILL_CHART_SIZE-1, displayNum))];
 }
 
 
@@ -456,8 +455,8 @@ int showSkills(const std::shared_ptr<Player>& toShow, std::shared_ptr<Creature> 
 
                 int curSkill = 0;
                 float maxSkill = 0;
-                maxSkill = MIN<int>(player->getLevel()*10.0, MAXALVL*10.0);
-                curSkill = MIN<int>(crtSkill->getGained(), maxSkill);
+                maxSkill = std::min<int>(player->getLevel()*10.0, MAXALVL*10.0);
+                curSkill = std::min<int>(crtSkill->getGained(), maxSkill);
 
                 skill = curSkill;
                 if (clan)
@@ -574,11 +573,11 @@ double Creature::getTradeSkillGained(const std::string& skillName, bool useBase)
     double gained = (skill->getGained() * 1.0);
 
     if (level < 7) {
-        gained = MIN(gained, 75.0);
+        gained = std::min(gained, 75.0);
     } else if (level < 13) {
-        gained = MIN(gained, 150.0);
+        gained = std::min(gained, 150.0);
     } else {
-        gained = MIN(gained, 300.0);
+        gained = std::min(gained, 300.0);
     }
 
     return (gained);
@@ -752,7 +751,7 @@ int songlist_size = sizeof(songlist) / sizeof(*songlist);
 //**********************************************************************
 const char *get_song_name(int nIndex) {
     // do bounds checking
-    nIndex = MAX(0, MIN(nIndex, songlist_size));
+    nIndex = std::max(0, std::min(nIndex, songlist_size));
 
     return (songlist[nIndex].songstr);
 }
@@ -762,7 +761,7 @@ const char *get_song_name(int nIndex) {
 //**********************************************************************
 int get_song_num(int nIndex) {
     // do bounds checking
-    nIndex = MAX(0, MIN(nIndex, songlist_size));
+    nIndex = std::max(0, std::min(nIndex, songlist_size));
 
     return (songlist[nIndex].songno);
 }
@@ -772,7 +771,7 @@ int get_song_num(int nIndex) {
 //**********************************************************************
 SONGFN get_song_function(int nIndex) {
     // do bounds checking
-    nIndex = MAX(0, MIN(nIndex, songlist_size));
+    nIndex = std::max(0, std::min(nIndex, songlist_size));
 
     return (songlist[nIndex].songfn);
 }

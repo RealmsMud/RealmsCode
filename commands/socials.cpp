@@ -178,16 +178,18 @@ void Container::doSocialEcho(std::string str, const std::shared_ptr<Creature> & 
     boost::replace_all(str, "*A-UPHESHE*", actor->upHeShe());
 
 
-    for(const auto& ply: players) {
-        if(ply == actor || ply == target) continue;
+    for(const auto& pIt: players) {
+        if(auto ply = pIt.lock()) {
+            if (ply == actor || ply == target) continue;
 
-        std::string out = str;
-        boost::replace_all(out, "*ACTOR*", actor->getCrtStr(ply, CAP));
-        if(target) {
-            boost::replace_all(out, "*TARGET*", target->getCrtStr(ply));
-            boost::replace_all(out, "*VICTIM*", target->getCrtStr(ply));
+            std::string out = str;
+            boost::replace_all(out, "*ACTOR*", actor->getCrtStr(ply, CAP));
+            if (target) {
+                boost::replace_all(out, "*TARGET*", target->getCrtStr(ply));
+                boost::replace_all(out, "*VICTIM*", target->getCrtStr(ply));
+            }
+            *ply << out << "\n";
         }
-        *ply << out << "\n";
     }
 
 }

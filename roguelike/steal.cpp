@@ -39,7 +39,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "unique.hpp"                // for Unique, transferOwner, Lore
-#include "utils.hpp"                 // for MAX, MIN
 
 //*********************************************************************
 //                      steal_gold
@@ -139,7 +138,7 @@ void steal_gold(std::shared_ptr<Player> player, std::shared_ptr<Creature> creatu
         chance+=5;
     if(creature->pFlagIsSet(P_OUTLAW))
         chance += 10;
-    chance = MIN(chance, 60);
+    chance = std::min(chance, 60);
 
     if(creature->getLevel() > level + 2)
         chance = 0;
@@ -161,7 +160,7 @@ void steal_gold(std::shared_ptr<Player> player, std::shared_ptr<Creature> creatu
         }
 
         formula = Random::get(creature->coins[GOLD]/10, creature->coins[GOLD]/3);
-        amt = MIN(creature->coins[GOLD], MAX(1UL, formula));
+        amt = std::min(creature->coins[GOLD], std::max(1UL, formula));
         player->print("You grabbed %d coins.\n", amt);
         creature->coins.sub(amt, GOLD);
         player->coins.add(amt, GOLD);
@@ -227,13 +226,13 @@ int get_steal_chance(std::shared_ptr<Player> player, std::shared_ptr<Creature> t
     // Level modifications for multi-classed thieves
     level = (int)player->getSkillLevel("steal");
     if(player->getSecondClass() == CreatureClass::THIEF && player->getClass() == CreatureClass::FIGHTER)
-        level = MAX(1, level-3);
+        level = std::max(1, level-3);
     if(player->getSecondClass() == CreatureClass::THIEF && player->getClass() == CreatureClass::MAGE)
-        level = MAX(1, level-3);
+        level = std::max(1, level-3);
     if(player->getClass() == CreatureClass::THIEF && player->getSecondClass() == CreatureClass::MAGE)
-        level = MAX(1, level-3);
+        level = std::max(1, level-3);
     if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA)
-        level = MAX(1, level-3);
+        level = std::max(1, level-3);
 
     // Base success % chance set here
     chance = (player->getClass() == CreatureClass::THIEF) ? 4*level : 3*level;
@@ -337,7 +336,7 @@ int get_steal_chance(std::shared_ptr<Player> player, std::shared_ptr<Creature> t
 
     // Maximum chance to steal ever is 90%
     // There's always a 10% chance to fail.
-    chance = MIN(chance, 90);
+    chance = std::min(chance, 90);
 
     // If chance is less than 0, and thief is level 10+,
     // then there is always a 1% chance to succeed
@@ -346,7 +345,7 @@ int get_steal_chance(std::shared_ptr<Player> player, std::shared_ptr<Creature> t
         level >= 10 &&
         chance < 0
     )
-        chance = MAX(1,chance);
+        chance = std::max(1,chance);
 
     return(chance);
 }
@@ -562,10 +561,11 @@ int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
              room->fullName().c_str());
 
         // Other people in the room will possibly notice what's going on.
-        for(const auto& bystander : room->players ) {
+        for(const auto& pIt : room->players ) {
+            auto bystander = pIt.lock();
 
             // We only want to test bystanders.
-            if(bystander == player || bystander == target)
+            if(!bystander || bystander == player || bystander == target)
                 continue;
 
             // If player is in combat, they're too busy to notice.
@@ -596,11 +596,11 @@ int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
             //***************************************************
             roll += crtAwareness(target)*2;
             roll -= crtAwareness(bystander)*2;
-            roll = MAX(1,roll);
+            roll = std::max(1,roll);
             //***************************************************
 
             caught = 100 - chance;
-            caught = MAX(1,MIN(50,caught));
+            caught = std::max(1,std::min(50,caught));
             if(roll <= caught || isCt(bystander)) {
                 // If roll is less than 10% of chance, bystander will see
                 // what was trying to be stolen.
@@ -645,10 +645,10 @@ int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 //**************************************************
                 roll += crtAwareness(target)*2;
                 roll -= crtAwareness(assist)*2;
-                roll = MAX(1,roll);
+                roll = std::max(1,roll);
                 //***************************************************
                 caught = 100 - chance;
-                caught = MAX(1,MIN(50,caught));
+                caught = std::max(1,std::min(50,caught));
                 if(roll > caught && !player->isCt()) {
                     player->printColor("^r%M notices you in the act and attacks!\n", assist.get());
                     broadcast(player->getSock(), room, "^r%M catches %N stealing and attacks!", assist.get(), player.get());
@@ -663,7 +663,7 @@ int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
             // experience for stealing this item
             long expGain = target->getExperience() / 10;
             object->setDroppedBy(target, "Theft");
-            expGain = MAX(expGain, 1L);
+            expGain = std::max(expGain, 1L);
             if(!player->halftolevel()) {
                 player->printColor("You %s ^Y%d^x experience for the theft of %P.\n", gConfig->isAprilFools() ? "lose" : "gain", expGain, object.get());
                 player->addExperience(expGain);

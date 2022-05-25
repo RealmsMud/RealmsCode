@@ -40,7 +40,6 @@
 #include "statistics.hpp"              // for Statistics
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for daily, saves
-#include "utils.hpp"                   // for MAX, MIN
 #include "wanderInfo.hpp"              // for WanderInfo
 
 
@@ -462,7 +461,7 @@ int splCourage(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
     }
 
     if(spellData->how == CastType::CAST) {
-        dur = MAX(300, 900 + bonus(player->intelligence.getCur()) * 300);
+        dur = std::max(300, 900 + bonus(player->intelligence.getCur()) * 300);
 
         if(player->getRoomParent()->magicBonus()) {
             player->print("The room's magical properties increase the power of your spell.\n");
@@ -838,9 +837,9 @@ int splEnchant(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         return(0);
 
     if((pPlayer->getClass() == CreatureClass::MAGE || pPlayer->getClass() == CreatureClass::LICH || pPlayer->isStaff()) && spellData->how == CastType::CAST)
-        adj = MIN<int>(4, (spellData->level / 5));
+        adj = std::min<int>(4, (spellData->level / 5));
 
-    object->setAdjustment(MAX<int>(adj, object->getAdjustment()));
+    object->setAdjustment(std::max<int>(adj, object->getAdjustment()));
 
     if(object->getType() == ObjectType::WEAPON) {
         object->setShotsMax(object->getShotsMax() + adj * 10);
@@ -903,7 +902,7 @@ int cmdEnchant(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //  }
 
 
-    dur = MAX(600, MIN(7200, (int)(player->getSkillLevel("enchant")*100) + bonus(player->intelligence.getCur()) * 100));
+    dur = std::max(600, std::min(7200, (int)(player->getSkillLevel("enchant")*100) + bonus(player->intelligence.getCur()) * 100));
     object->lasttime[LT_ENCHA].interval = dur;
     object->lasttime[LT_ENCHA].ltime = time(nullptr);
 
@@ -952,7 +951,7 @@ int splStun(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
         } else
             dur = dice(2, 6, 0);
 
-        dur = MAX(5, dur);
+        dur = std::max(5, dur);
         player->updateAttackTimer(true, dur*10);
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
@@ -1026,7 +1025,7 @@ int splStun(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
             else
                 dur = 3;
         } else
-            dur = MAX(5, dur);
+            dur = std::max(5, dur);
 
         if(mTarget) {
 
@@ -1044,9 +1043,9 @@ int splStun(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
                 mTarget->flagIsSet(M_LEVEL_BASED_STUN)
             ) {
                 if(((int)mTarget->getLevel() - (int)spellData->level) > ((player->getClass() == CreatureClass::LICH || player->getClass() == CreatureClass::MAGE) ? 6:4))
-                    dur = MAX(3, bonus(player->intelligence.getCur()));
+                    dur = std::max(3, bonus(player->intelligence.getCur()));
                 else
-                    dur = MAX(5, dur);
+                    dur = std::max(5, dur);
             }
 
             if(player->isEffected("reflect-magic") && mTarget->isEffected("reflect-magic")) {
@@ -1112,7 +1111,7 @@ int splStun(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
             logCast(player, target, "stun");
 
             if(mTarget && player->isPlayer()) {
-                if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (Random::get(1,100) <= (MAX(25, mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 25)))) {
+                if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (Random::get(1,100) <= (std::max(25, mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 25)))) {
                     mTarget->summonMobs(player);
                     mTarget->clearFlag(M_YELLED_FOR_HELP);
                     mTarget->setFlag(M_WILL_YELL_FOR_HELP);
@@ -1178,7 +1177,7 @@ int splStun(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
                     if(target->isPlayer())
                         broadcast(player->getSock(), player->getParent(), "%M avoided a full stun.", target.get());
                     dur /= 2;
-                    dur = MIN(5,dur);
+                    dur = std::min(5,dur);
                     target->print("You avoided a full stun.\n");
                 }
             }

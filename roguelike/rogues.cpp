@@ -54,7 +54,6 @@
 #include "size.hpp"                    // for searchMod, SIZE_GARGANTUAN
 #include "statistics.hpp"              // for Statistics
 #include "stats.hpp"                   // for Stat
-#include "utils.hpp"                   // for MIN, MAX
 #include "xml.hpp"                     // for loadObject, loadRoom
 
 
@@ -242,7 +241,7 @@ void doSearch(std::shared_ptr<Player> player, bool immediate) {
 
     // TODO: SKILLS: tweak the formula
     chance = 15 + 5*bonus(player->piety.getCur()) + level * 2;
-    chance = MIN(chance, 90);
+    chance = std::min(chance, 90);
     if(player->getClass() == CreatureClass::RANGER)
         chance += level*8;
     if(player->getClass() == CreatureClass::WEREWOLF)
@@ -289,13 +288,12 @@ void doSearch(std::shared_ptr<Player> player, bool immediate) {
         }
     }
 
-    for(const auto& ply: room->players) {
-        if( ply->flagIsSet(P_HIDDEN) &&
-            player->canSee(ply) &&
-            Random::get(1,100) <= (chance + searchMod(ply->getSize())))
-        {
-            found = true;
-            player->print("You found %s hiding.\n", ply->getCName());
+    for(const auto& pIt: room->players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->flagIsSet(P_HIDDEN) && player->canSee(ply) && Random::get(1, 100) <= (chance + searchMod(ply->getSize()))) {
+                found = true;
+                player->print("You found %s hiding.\n", ply->getCName());
+            }
         }
     }
 
@@ -416,7 +414,7 @@ bool AreaRoom::spawnHerbs() {
 bool TileInfo::spawnHerbs(std::shared_ptr<BaseRoom> room) const {
     std::shared_ptr<Object>  object=nullptr;
     int     max = herbs.size();
-    short   num = Random::get(1,MAX(1,max)), i=0, n=0, k=0;
+    short   num = Random::get(1,std::max(1,max)), i=0, n=0, k=0;
     std::list<CatRef>::const_iterator it;
     bool    found=false;
 
@@ -503,37 +501,37 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
         switch(player->getClass()) {
         case CreatureClass::THIEF:
             if(player->getSecondClass() == CreatureClass::MAGE) {
-                chance = MIN(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
                 player->lasttime[LT_HIDE].interval = 8;
             } else
-                chance = MIN(90, 5 + 6*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 6*level + 3*bonus(player->dexterity.getCur()));
             break;
         case CreatureClass::ASSASSIN:
-            chance = MIN(90, 5 + 6*level + 3*bonus(player->dexterity.getCur()));
+            chance = std::min(90, 5 + 6*level + 3*bonus(player->dexterity.getCur()));
             break;
         case CreatureClass::FIGHTER:
             if(player->getSecondClass() == CreatureClass::THIEF)
-                chance = MIN(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
             else
-                chance = MIN(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
             break;
         case CreatureClass::MAGE:
             if(player->getSecondClass() == CreatureClass::ASSASSIN || player->getSecondClass() == CreatureClass::THIEF) {
-                chance = MIN(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
                 player->lasttime[LT_HIDE].interval = 8;
             } else
-                chance = MIN(90, 5 + 2*level +
+                chance = std::min(90, 5 + 2*level +
                         3*bonus(player->dexterity.getCur()));
             break;
         case CreatureClass::CLERIC:
             if(player->getSecondClass() == CreatureClass::ASSASSIN) {
-                chance = MIN(90, 5 + 5*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 5*level + 3*bonus(player->dexterity.getCur()));
             } else if( (player->getDeity() == KAMIRA && player->getAdjustedAlignment() >= NEUTRAL) ||
                 (player->getDeity() == ARACHNUS && player->alignInOrder())
             ) {
-                chance = MIN(90, 5 + 4*level + 3*bonus(player->piety.getCur()));
+                chance = std::min(90, 5 + 4*level + 3*bonus(player->piety.getCur()));
             } else
-                chance = MIN(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
 
             break;
         case CreatureClass::RANGER:
@@ -541,10 +539,10 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
             chance = 5 + 10*level + 3*bonus(player->dexterity.getCur());
             break;
         case CreatureClass::ROGUE:
-            chance = MIN(90, 5 + 5*level + 3*bonus(player->dexterity.getCur()));
+            chance = std::min(90, 5 + 5*level + 3*bonus(player->dexterity.getCur()));
             break;
         default:
-            chance = MIN(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
+            chance = std::min(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
             break;
         }
 
@@ -569,7 +567,7 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         if((player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID) && !player->getRoomParent()->isOutdoors()) {
             chance /= 2;
-            chance = MAX(25, chance);
+            chance = std::max(25, chance);
             player->print("You have trouble hiding while inside.\n");
         }
 
@@ -577,7 +575,7 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
             chance = 0;
 
         if(player->isBlind())
-            chance = MIN(chance, 20);
+            chance = std::min(chance, 20);
 
         if(Random::get(1,100) <= chance || player->isEffected("mist")) {
             player->setFlag(P_HIDDEN);
@@ -612,11 +610,11 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isDm())
         chance = 100;
     else if(player->getClass() == CreatureClass::THIEF || player->getClass() == CreatureClass::ASSASSIN || player->getClass() == CreatureClass::ROGUE)
-        chance = MIN(90, 10 + 5*level + 5*bonus(player->dexterity.getCur()));
+        chance = std::min(90, 10 + 5*level + 5*bonus(player->dexterity.getCur()));
     else if(player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID)
         chance = 5 + 9*level + 3*bonus(player->dexterity.getCur());
     else
-        chance = MIN(90, 5 + 3*level + 3*bonus(player->dexterity.getCur()));
+        chance = std::min(90, 5 + 3*level + 3*bonus(player->dexterity.getCur()));
 
 
 
@@ -768,7 +766,7 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(exit->isEffected("wall-of-thorns"))
             chance -= 15;
 
-        chance = MIN(85, chance);
+        chance = std::min(85, chance);
 
         if(!player->isStaff() && Random::get(1, 100) > chance) {
             player->print("You fail scout in that direction.\n");
@@ -1094,7 +1092,7 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
         chance += 5;
 
 
-    chance = MIN(70, MAX(2,chance));
+    chance = std::min(70, std::max(2,chance));
     if(player->isCt())
         player->print("Chance: %d%\n", chance);
 
@@ -1359,7 +1357,7 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         if(cap > 0)
-            stabMod = MIN<float>(cap, stabMod-1);
+            stabMod = std::min<float>(cap, stabMod-1);
 
         // Version 2.43c Update -- I'm multiplying the stabMod by 2.0 to compensate for the increase
         // in armor absorb, and the removal of multiplier for attackPower
@@ -1565,7 +1563,7 @@ int Player::checkPoison(std::shared_ptr<Creature> target, std::shared_ptr<Object
     if(target->mFlagIsSet(M_WILL_POISON))
         poisonchance /= 2;
 
-    poisonchance = MAX(0,MIN(poisonchance, 80));
+    poisonchance = std::max(0,std::min(poisonchance, 80));
 
     // Can't poison them if they're immune to poison
     if(target->immuneToPoison())
@@ -1581,7 +1579,7 @@ int Player::checkPoison(std::shared_ptr<Creature> target, std::shared_ptr<Object
 
     // Less of a chance to poison a perm
     if(!target && target->flagIsSet(M_PERMENANT_MONSTER))
-        poisonchance = MIN(poisonchance, 10);
+        poisonchance = std::min(poisonchance, 10);
 
     // We can always poison someone if we're a ct
     if(isCt())
@@ -1793,7 +1791,7 @@ int cmdPickLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
         chance = 0;
     }
 
-    chance = MAX(0, chance);
+    chance = std::max(0, chance);
 
     if(player->isCt())
         chance = 101;
@@ -1943,7 +1941,7 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    chance = MIN(90, (player->getClass() == CreatureClass::ASSASSIN ? (level*4):(15 + level*5)));
+    chance = std::min(90, (player->getClass() == CreatureClass::ASSASSIN ? (level*4):(15 + level*5)));
 
     if(Random::get(1,100) > chance && !player->isStaff()) {
         creature->print("%M peeked at your inventory.\n", player.get());
@@ -1964,7 +1962,7 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     goldchance = (5+(level*5)) - creature->getLevel();
-    goldchance = MIN(MAX(1,goldchance),90);
+    goldchance = std::min(std::max(1,goldchance),90);
 
     if(player->isCt())
         goldchance = 101;

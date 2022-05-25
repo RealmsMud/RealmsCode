@@ -36,7 +36,6 @@
 #include "proto.hpp"                 // for broadcast, bonus, up
 #include "size.hpp"                  // for Size, NO_SIZE, SIZE_COLOSSAL
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MIN, MAX
 
 //*********************************************************************
 //                      getSize
@@ -170,7 +169,7 @@ int searchMod(Size size) {
 //*********************************************************************
 
 int sizePower(int lvl) {
-    return(MIN(3, (lvl+10)/10));
+    return(std::min(3, (lvl+10)/10));
 }
 
 //*********************************************************************
@@ -269,7 +268,7 @@ int splChangeSize(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 
     if(spellData->how == CastType::CAST) {
         strength = sizePower(player->getLevel());
-        num = MAX(300, 400 + bonus(player->intelligence.getCur()) * 400) + 20 * player->getLevel();
+        num = std::max(300, 400 + bonus(player->intelligence.getCur()) * 400) + 20 * player->getLevel();
 
         if(player->getRoomParent()->magicBonus()) {
             player->print("The room's magical properties increase the power of your spell.\n");
@@ -302,12 +301,12 @@ int splChangeSize(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
         }
         if(effect == "enlarge") {
             std::clog << "O:" << strength;
-            strength = MIN(strength, MAX_SIZE - target->getSize());
+            strength = std::min(strength, MAX_SIZE - target->getSize());
             std::clog << " N:" << strength << std::endl;
         }
         else {
             std::clog << "O:" << strength;
-            strength = MIN(strength, target->getSize() - NO_SIZE - 1);
+            strength = std::min(strength, target->getSize() - NO_SIZE - 1);
             std::clog << " N:" << strength << std::endl;
         }
 

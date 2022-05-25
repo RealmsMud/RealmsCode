@@ -40,7 +40,6 @@
 #include "random.hpp"                // for Random
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for saves
-#include "utils.hpp"                 // for MIN, MAX
 
 //*********************************************************************
 //                      cmdMeditate
@@ -67,12 +66,12 @@ int cmdMeditate(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    chance = MIN(85, (int)(player->getSkillLevel("meditate")*10)+bonus(player->piety.getCur()));
+    chance = std::min(85, (int)(player->getSkillLevel("meditate")*10)+bonus(player->piety.getCur()));
 
     if(Random::get(1, 100) > player->getLuck() + (int)(player->getSkillLevel("meditate") * 2))
         chance = 10;
 
-    int level = MAX(1,(int)player->getSkillLevel("meditate"));
+    int level = std::max(1,(int)player->getSkillLevel("meditate"));
 
     broadcast(player->getSock(), player->getParent(), "%M meditates.", player.get());
 
@@ -89,7 +88,7 @@ int cmdMeditate(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         player->checkImprove("meditate", true);
 
-        int heal = (MAX(0,(level / inCombatModifier // heals for a little less when in combat with mobs
+        int heal = (std::max(0,(level / inCombatModifier // heals for a little less when in combat with mobs
             + Random::get(1, level)
                            + bonus(player->constitution.getCur()) * Random::get(1, 4))));
 
@@ -196,7 +195,7 @@ int cmdTouchOfDeath(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     chance = (int)((player->getSkillLevel("touch") - creature->getLevel())*20)+ bonus(player->constitution.getCur()) * 10;
-    chance = MIN(chance, 85);
+    chance = std::min(chance, 85);
 
     if(player->isCt())
         chance = 101;
@@ -248,7 +247,7 @@ int cmdTouchOfDeath(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     } else {
 
-        damage.set(MAX<int>(1, creature->hp.getCur() / 2));
+        damage.set(std::max<int>(1, creature->hp.getCur() / 2));
 
         creature->modifyDamage(player, ABILITY, damage);
         //player->statistics.attackDamage(dmg, "touch-of-death");
@@ -299,7 +298,7 @@ int cmdFocus(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->pleaseWait(600L-t+i);
         return(0);
     }
-    chance = MIN(80, (int)(player->getSkillLevel("focus") * 20) + bonus(player->piety.getCur()));
+    chance = std::min(80, (int)(player->getSkillLevel("focus") * 20) + bonus(player->piety.getCur()));
 
     double level = player->getSkillLevel("focus");
     if(Random::get(1, 100) > player->getLuck() + (int)(level * 2))
@@ -380,7 +379,7 @@ int cmdFrenzy(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    chance = MIN(85, (int)(player->getSkillLevel("frenzy") * 20) + bonus(player->dexterity.getCur()));
+    chance = std::min(85, (int)(player->getSkillLevel("frenzy") * 20) + bonus(player->dexterity.getCur()));
 
     if(Random::get(1, 100) > player->getLuck() + (int)(player->getSkillLevel("frenzy") * 2))
         chance = 10;
@@ -506,11 +505,11 @@ int cmdMaul(const std::shared_ptr<Player>& player, cmd* cmnd) {
                                                      - bonus(creature->dexterity.getCur())) * 2;
 
     if(player->isBlind())
-        chance = MIN(20, chance);
+        chance = std::min(20, chance);
 
     if((creature->flagIsSet(M_ENCHANTED_WEAPONS_ONLY) || creature->flagIsSet(M_PLUS_TWO) || creature->flagIsSet(M_PLUS_THREE)) && (not_initial==1)) {
         chance /= 2;
-        chance = MIN(chance, 50);
+        chance = std::min(chance, 50);
     }
 
     if(player->isDm())
@@ -565,7 +564,7 @@ int Player::packBonus() {
         }
     }
 
-    return(MIN(10, bns));
+    return(std::min(10, bns));
 }
 
 
@@ -648,9 +647,9 @@ int cmdHowl(const std::shared_ptr<Creature>& player, cmd* cmnd) {
             continue;
         }
 
-        stunTime = Random::get(5, MAX(6, player->getLevel()/2));
+        stunTime = Random::get(5, std::max(6, player->getLevel()/2));
         monster->stun(stunTime);
-        broadcast(nullptr, room, "^b%M is frozen in terror!", monster.get());
+        broadcast((Socket*)nullptr, room, "^b%M is frozen in terror!", monster.get());
     }
 
     return(0);

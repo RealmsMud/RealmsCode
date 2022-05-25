@@ -68,7 +68,6 @@
 #include "startlocs.hpp"                       // for StartLoc
 #include "swap.hpp"                            // for Swap, SwapRoom, SwapOb...
 #include "tokenizer.hpp"                       // for charTokenizer
-#include "utils.hpp"                           // for MAX
 #include "xml.hpp"                             // for loadPlayer, loadRoom
 #include "toNum.hpp"
 
@@ -197,7 +196,7 @@ void swap(const std::shared_ptr<Player>& player, cmd* cmnd, SwapType type) {
             // *rswap -range misc.100 test.1 20
             loop = toNum<int>(getFullstrText(cmnd->fullstr, 4));
         }
-        loop = MAX(0, loop);
+        loop = std::max(0, loop);
 
         if(!loop) {
             player->printColor("^YRS: ^RError: ^xNo upper bound found: which %ss would you like to loop over?\n", swapType.c_str());

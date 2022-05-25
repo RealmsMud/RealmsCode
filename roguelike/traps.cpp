@@ -43,7 +43,6 @@
 #include "server.hpp"                  // for Server, gServer
 #include "stats.hpp"                   // for Stat
 #include "traps.hpp"                   // for TRAP_ALARM, TRAP_BONEAV, TRAP_...
-#include "utils.hpp"                   // for MAX, MIN
 #include "xml.hpp"                     // for loadRoom
 
 //*********************************************************************
@@ -66,7 +65,7 @@ void Player::teleportTrap() {
     print("Your body is violently pulled in all directions.\n");
 
     doDamage(Containable::downcasted_shared_from_this<Player>(), hp.getMax()/2, NO_CHECK);
-    hp.setCur(MAX<int>(5, hp.getCur()));
+    hp.setCur(std::max<int>(5, hp.getCur()));
     // This is all done so a teleport trap will not be abused for exploring.
     smashInvis();
 
@@ -84,10 +83,11 @@ void Player::rockSlide() {
     std::shared_ptr<Player> target;
     int     dmg=0;
 
-    auto pIt = getRoomParent()->players.begin();
-    auto pEnd = getRoomParent()->players.end();
+    auto room = getRoomParent();
+    auto pIt = room->players.begin();
+    auto pEnd = room->players.end();
     while(pIt != pEnd) {
-        target = (*pIt++);
+        target = (*pIt++).lock();
 
         if(!target)
             continue;
@@ -503,17 +503,19 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         print("Gas rapidly fills the room!\n");
         broadcast(getSock(), getRoomParent(), "Gas rapidly fills the room!");
 
-        for(const auto& fPly : getRoomParent()->players) {
-            if(!fPly->chkSave(DEA,fPly,0)) {
-                if(!fPly->flagIsSet(P_RESIST_STUN)) {
-                    fPly->print("Billowing white clouds surrounds you!\n");
-                    fPly->print("You are stunned!\n");
-                    fPly->stun(Random::get(10, 18));
-                } else {
+        for(const auto& pIt : getRoomParent()->players) {
+            if(auto fPly = pIt.lock()) {
+                if (!fPly->chkSave(DEA, fPly, 0)) {
+                    if (!fPly->flagIsSet(P_RESIST_STUN)) {
+                        fPly->print("Billowing white clouds surrounds you!\n");
+                        fPly->print("You are stunned!\n");
+                        fPly->stun(Random::get(10, 18));
+                    } else {
+                        fPly->print("The billowing cloud of white gas has no effect on you.\n");
+                    }
+                } else
                     fPly->print("The billowing cloud of white gas has no effect on you.\n");
-                }
-            } else
-                fPly->print("The billowing cloud of white gas has no effect on you.\n");
+            }
         }
         break;
 
@@ -552,7 +554,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
 
 
     case TRAP_PIERCER:
-        num = MAX(1,MIN(8,Random::get((room->getTrapStrength()+1)/2, room->getTrapStrength()+1)));
+        num = std::max(1,std::min(8,Random::get((room->getTrapStrength()+1)/2, room->getTrapStrength()+1)));
         for(a=0;a<num;a++) {
             target = getRandomPlayer(room);
             if(!target)
@@ -589,7 +591,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
                         continue;
                     } else {
                         std::shared_ptr<Monster>  mon = target->getAsMonster();
-                        broadcast(nullptr,  room, "%M was killed!", mon.get());
+                        broadcast((Socket*)nullptr,  room, "%M was killed!", mon.get());
                         if(mon->flagIsSet(M_PERMENANT_MONSTER))
                             mon->diePermCrt();
                         mon->deleteFromRoom();
@@ -744,7 +746,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         broadcast(getSock(), getRoomParent(), "An energy bolt strikes %N.", this);
 
         if(chkSave(MEN, pThis,0)) {
-            trapDamage.set(MIN(mp.getCur(),mp.getMax() / 2));
+            trapDamage.set(std::min(mp.getCur(),mp.getMax() / 2));
             print("You lost %d magic points.\n", trapDamage.get());
         } else {
             trapDamage.set(mp.getCur());
@@ -900,7 +902,7 @@ int Player::checkTraps(std::shared_ptr<UniqueRoom> room, bool self, bool isEnter
         auto pIt = room->players.begin();
         auto pEnd = room->players.end();
         while(pIt != pEnd) {
-            target = (*pIt++);
+            target = (*pIt++).lock();
             if(target)
                 target->doCheckTraps(room);
         }
@@ -1066,7 +1068,7 @@ void Player::loseAcid() {
     computeAttackPower();
 
     // 10% chance to attempt dissolving inventory possessions, reduced by higher dexterity bonus.
-    if (Random::get(1,100) <= MAX(1,(10 - bonus(dexterity.getCur()))) )
+    if (Random::get(1,100) <= std::max(1,(10 - bonus(dexterity.getCur()))) )
     {
         ObjectSet::iterator it;
         for( it = objects.begin() ; it != objects.end() ; ) {
@@ -1088,7 +1090,7 @@ void Player::loseAcid() {
                 delObj(object, true, false, true, false);
             }
             // Check if acid loses potency and stops dissolving inv items...20% chance + dexterity bonus
-            if (Random::get(1,100) <= (MAX(1,20+bonus(dexterity.getCur()))))
+            if (Random::get(1,100) <= (std::max(1,20+bonus(dexterity.getCur()))))
                 break;
         }
     }

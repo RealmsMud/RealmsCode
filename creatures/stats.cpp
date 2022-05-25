@@ -37,7 +37,6 @@
 #include "playerClass.hpp"           // for PlayerClass
 #include "statistics.hpp"            // for Statistics, LevelInfo
 #include "stats.hpp"                 // for Stat, StatModifier, ModifierMap
-#include "utils.hpp"                 // for MAX, MIN
 
 
 
@@ -83,7 +82,7 @@ double getConBonusPercentage(unsigned int pCon) {
     const double c = 0.9939294404;
     const unsigned int x = pCon;
     double percentage = ((a*x*x)+(b*x)+c);
-    percentage = MAX<double>(1.0, percentage)-1.0;
+    percentage = std::max<double>(1.0, percentage)-1.0;
     return(percentage);
 
 }
@@ -95,7 +94,7 @@ double getIntBonusPercentage(unsigned int pInt) {
 
     const unsigned int x = pInt;
     double percentage = ((a*x*x)+(b*x)+c);
-    percentage = MAX<double>(1.0, percentage)-1.0;
+    percentage = std::max<double>(1.0, percentage)-1.0;
     return(percentage);
 
 }
@@ -332,7 +331,7 @@ unsigned int Stat::adjust(int amt) {
 
 // Legacy for hp.increase()
 unsigned int Stat::increase(unsigned int amt) {
-    int increaseAmt = MAX<int>(0, MIN(amt, getMax() - getCur()));
+    int increaseAmt = std::max<int>(0, std::min(amt, getMax() - getCur()));
         
     adjustModifier("CurModifier", increaseAmt);
     
@@ -345,7 +344,7 @@ unsigned int Stat::increase(unsigned int amt) {
 
 // Legacy for hp.decrease()
 unsigned int Stat::decrease(unsigned int amt) {
-    int decreaseAmt = MIN(amt, getCur());
+    int decreaseAmt = std::min(amt, getCur());
     
     adjustModifier("CurModifier", -decreaseAmt);
     
@@ -380,7 +379,7 @@ unsigned int Stat::getInitial() const { return(initial); }
 //                      addInitial
 //*********************************************************************
 
-void Stat::addInitial(unsigned int a) { initial = MAX<int>(1, initial + a); setDirty(); }
+void Stat::addInitial(unsigned int a) { initial = std::max<int>(1, initial + a); setDirty(); }
 
 //*********************************************************************
 //                      setMax
@@ -390,7 +389,7 @@ double round(double r) {
 }
 
 void Stat::setMax(unsigned int newMax, bool allowZero) {
-    newMax = MAX<int>(allowZero ? 0 : 1, MIN<int>(newMax, 30000));
+    newMax = std::max<int>(allowZero ? 0 : 1, std::min<int>(newMax, 30000));
 
     int dmSet = getModifierAmt("DmSet");
     int rounding = getModifierAmt("Rounding");
@@ -448,7 +447,7 @@ void Stat::setMax(unsigned int newMax, bool allowZero) {
 //*********************************************************************
 
 void Stat::setCur(unsigned int newCur) {
-    newCur = MIN(newCur, getMax());
+    newCur = std::min(newCur, getMax());
     int modCur = (int)newCur - (int)getCur();
     adjustModifier("CurModifier", modCur);
 }
@@ -614,8 +613,8 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
         statMax = 30000;
         statMin = 1;
     }
-    addAmt = MIN<int>(addAmt, statMax - stat->getCur());
-    addAmt = MAX<int>(addAmt, statMin - stat->getCur());
+    addAmt = std::min<int>(addAmt, statMax - stat->getCur());
+    addAmt = std::max<int>(addAmt, statMin - stat->getCur());
 
     effect->setStrength(addAmt);
     stat->addModifier(effect->getName(), addAmt, modType);

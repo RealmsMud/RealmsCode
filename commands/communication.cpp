@@ -511,13 +511,14 @@ int communicateWith(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     } else {
 
-        for(const auto& ply: player->getRoomParent()->players) {
-            if( ply != player && ply != target && !ply->isEffected("blindness"))
-            {
-                if(ply->getRace() == DARKELF || ply->isStaff())
-                    ply->print("%M signed, \"%s\" to %N.\n", player.get(), text.c_str(), target.get());
-                else
-                    ply->print("%M signed something in dark elven to %N.\n", player.get(), target.get());
+        for(const auto& pIt: player->getRoomParent()->players) {
+            if(auto ply = pIt.lock()) {
+                if (ply != player && ply != target && !ply->isEffected("blindness")) {
+                    if (ply->getRace() == DARKELF || ply->isStaff())
+                        ply->print("%M signed, \"%s\" to %N.\n", player.get(), text.c_str(), target.get());
+                    else
+                        ply->print("%M signed something in dark elven to %N.\n", player.get(), target.get());
+                }
             }
         }
 
@@ -713,18 +714,20 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
         }
 
-        for(const auto& ply: creature->getRoomParent()->players) {
-            if(chan->shout)
-                ply->wake("Loud noises disturb your sleep.", true);
+        for(const auto& pIt: creature->getRoomParent()->players) {
+            if(auto ply = pIt.lock()) {
+                if (chan->shout)
+                    ply->wake("Loud noises disturb your sleep.", true);
 
-            // GT prints to the player!
-            if(ply == creature && chan->type != COM_GT)
-                continue;
+                // GT prints to the player!
+                if (ply == creature && chan->type != COM_GT)
+                    continue;
 
-            if(ply->isGagging(creature->isPet() ? creature->getMaster()->getName() : creature->getName()))
-                continue;
+                if (ply->isGagging(creature->isPet() ? creature->getMaster()->getName() : creature->getName()))
+                    continue;
 
-            commTarget(creature, ply, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+                commTarget(creature, ply, chan->type, chan->ooc, lang, text, speak, ooc_str, false);
+            }
         }
 
         if(chan->shout) {
@@ -758,7 +761,7 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
                     continue;
 
                 while(pIt != pEnd) {
-                    pTarget = (*pIt++);
+                    pTarget = (*pIt++).lock();
 
                     if(!pTarget)
                         continue;
@@ -795,7 +798,7 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
                     if(!exit->getPassLanguage() || lang == exit->getPassLanguage()) {
                         // even needs to be open?
                         if(exit->flagIsSet(X_LOCKED)) {
-                            broadcast(nullptr, creature->getRoomParent(), "The %s opens!", exit->getCName());
+                            broadcast((Socket*)nullptr, creature->getRoomParent(), "The %s opens!", exit->getCName());
                             exit->clearFlag(X_LOCKED);
                             exit->clearFlag(X_CLOSED);
 
@@ -803,7 +806,7 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
                                 if(exit->flagIsSet(X_ONOPEN_PLAYER)) {
                                     creature->print("%s.\n", exit->getOpen().c_str());
                                 } else {
-                                    broadcast(nullptr, creature->getRoomParent(), exit->getOpen().c_str());
+                                    broadcast((Socket*)nullptr, creature->getRoomParent(), exit->getOpen().c_str());
                                 }
                             }
 
@@ -1387,11 +1390,13 @@ void printForeignTongueMsg(const std::shared_ptr<const BaseRoom> &inRoom, const 
     if(!lang)
         return;
 
-    for(const auto& ply: inRoom->players) {
-        if(ply->languageIsKnown(lang) || ply->isEffected("comprehend-languages") || ply->isStaff()) {
-            continue;
+    for(const auto& pIt: inRoom->players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->languageIsKnown(lang) || ply->isEffected("comprehend-languages") || ply->isStaff()) {
+                continue;
+            }
+            ply->print("%M says something in %s.\n", talker.get(), get_language_adj(lang));
         }
-        ply->print("%M says something in %s.\n", talker.get(), get_language_adj(lang));
     }
 }
 

@@ -39,7 +39,6 @@
 #include "proto.hpp"                 // for bonus, get_perm_ac, new_scroll
 #include "random.hpp"                // for Random
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MAX, MIN
 #include "xml.hpp"                   // for loadObject
 
 typedef struct {
@@ -137,7 +136,7 @@ void Monster::adjust(int buffswitch) {
     if(buffswitch == -1)
         buff = Random::get(1,3)-1;
     else
-        buff = MAX(0, MIN(buffswitch, 2));
+        buff = std::max(0, std::min(buffswitch, 2));
 
 
     /*          Web Editor
@@ -175,7 +174,7 @@ void Monster::adjust(int buffswitch) {
             hp.setInitial(level * monType::getHitdice(type));
         else {
             crthp = class_stats[(int) cClass].hpstart + (level*class_stats[(int) cClass].hp);
-            hp.setInitial(MAX(crthp, (level * monType::getHitdice(type))));
+            hp.setInitial(std::max(crthp, (level * monType::getHitdice(type))));
         }
 
         hp.restore();
@@ -218,7 +217,7 @@ void Monster::adjust(int buffswitch) {
         break;
     }
 
-    armor = MAX<int>(MIN(armor, MAX_ARMOR), 0);
+    armor = std::max<int>(std::min(armor, MAX_ARMOR), 0);
 
     if(level >= 7)
         setFlag(M_BLOCK_EXIT);
@@ -248,8 +247,8 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     lasttime[LT_TICK_HARMFUL].ltime = t;
 
     // Make sure armor is set properly
-    if(armor < (unsigned)(balancedStats[MIN<short>(level, MAXALVL)].armor - 150)) {
-        armor = balancedStats[MIN<short>(level, MAXALVL)].armor;
+    if(armor < (unsigned)(balancedStats[std::min<short>(level, MAXALVL)].armor - 150)) {
+        armor = balancedStats[std::min<short>(level, MAXALVL)].armor;
     }
 
     if(dexterity.getCur() < 200)
@@ -411,20 +410,22 @@ std::shared_ptr<Creature>getRandomMonster(const std::shared_ptr<BaseRoom>& inRoo
 
 std::shared_ptr<Creature>getRandomPlayer(const std::shared_ptr<BaseRoom>& inRoom) {
     std::shared_ptr<Creature>foundPly=nullptr;
-    int         count=0, roll=0, num=0;
+    int         count=0, roll, num;
 
     num = inRoom->countVisPly();
     if(!num)
         return(nullptr);
     roll = Random::get(1, num);
-    for(const auto& ply: inRoom->players) {
-        if(ply->flagIsSet(P_DM_INVIS)) {
-            continue;
-        }
-        count++;
-        if(count == roll) {
-            foundPly = ply;
-            break;
+    for(const auto& pIt: inRoom->players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->flagIsSet(P_DM_INVIS)) {
+                continue;
+            }
+            count++;
+            if (count == roll) {
+                foundPly = ply;
+                break;
+            }
         }
     }
 
@@ -492,14 +493,14 @@ int Monster::doHarmfulAuras() {
         auto pIt = inRoom->players.begin();
         auto pEnd = inRoom->players.end();
         while(pIt != pEnd) {
-            player = (*pIt++);
+            player = (*pIt++).lock();
 
-            if(player->isEffected("petrification") || player->isCt())
+            if(!player || player->isEffected("petrification") || player->isCt())
                 continue;
 
             dmg = Random::get(level/2, (level*3)/2);
 
-            dmg = MAX(2,dmg);
+            dmg = std::max(2,dmg);
 
             switch(a+M_FIRE_AURA) {
             case M_FIRE_AURA:

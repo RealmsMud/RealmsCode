@@ -127,14 +127,16 @@ void doBroadcast(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const s
     if(!container)
         return;
 
-    for(const auto& ply: container->players) {
-        if(!hearBroadcast(ply, ignore1, ignore2, showTo))
-            continue;
-        if(ply->flagIsSet(P_UNCONSCIOUS))
-            continue;
+    for(const auto& pIt: container->players) {
+        if(auto ply = pIt.lock()) {
+            if (!hearBroadcast(ply, ignore1, ignore2, showTo))
+                continue;
+            if (ply->flagIsSet(P_UNCONSCIOUS))
+                continue;
 
-        ply->vprint(ply->customColorize(fmt).c_str(), ap);
-        ply->printColor("^x\n");
+            ply->vprint(ply->customColorize(fmt).c_str(), ap);
+            ply->printColor("^x\n");
+        }
 
     }
 }

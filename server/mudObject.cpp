@@ -101,8 +101,9 @@ void MudObject::registerContainedItems() {
 void MudObject::unRegisterContainedItems() {
 }
 
-bool PlayerPtrLess::operator()(const std::shared_ptr<Player>& lhs, const std::shared_ptr<Player>& rhs) const {
-    return *lhs < *rhs;
+bool PlayerPtrLess::operator()(const std::weak_ptr<Player>& lhs, const std::weak_ptr<Player>& rhs) const {
+    auto llhs = lhs.lock(), lrhs = rhs.lock();
+    return *llhs < *lrhs;
 }
 
 bool MonsterPtrLess::operator()(const std::shared_ptr<Monster>&  lhs, const std::shared_ptr<Monster>&  rhs) const {

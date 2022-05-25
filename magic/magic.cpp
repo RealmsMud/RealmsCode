@@ -38,7 +38,6 @@
 #include "proto.hpp"                 // for zero, getSpellMp, get_spell_list...
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for PFNCOMPARE
-#include "utils.hpp"                 // for MAX, MIN
 #include "xml.hpp"                   // for newNumProp, newStringChild, save...
 
 
@@ -370,7 +369,7 @@ void initSpellList() {
 
 const char *get_spell_name(int nIndex) {
     // do bounds checking
-    nIndex = MAX(0, MIN(nIndex, spllist_size));
+    nIndex = std::max(0, std::min(nIndex, spllist_size));
     return( spllist[nIndex].splstr );
 }
 
@@ -381,7 +380,7 @@ const char *get_spell_name(int nIndex) {
 
 int get_spell_num(int nIndex) {
     // do bounds checking
-    nIndex = MAX(0, MIN(nIndex, spllist_size));
+    nIndex = std::max(0, std::min(nIndex, spllist_size));
     return(spllist[nIndex].splno);
 }
 
@@ -465,7 +464,7 @@ int get_spell_lvl(int sflag) {
 
 SpellRet get_spell_function(int nIndex) {
     // do bounds checking
-    nIndex = MAX(0, MIN(nIndex, spllist_size));
+    nIndex = std::max(0, std::min(nIndex, spllist_size));
 
     return( spllist[nIndex].splfn );
 }
@@ -476,7 +475,7 @@ SpellRet get_spell_function(int nIndex) {
 
 SchoolOfMagic get_spell_school(int nIndex) {
     // do bounds checking
-    nIndex = MAX(0, MIN(nIndex, spllist_size));
+    nIndex = std::max(0, std::min(nIndex, spllist_size));
 
     return( spllist[nIndex].school );
 }
@@ -487,7 +486,7 @@ SchoolOfMagic get_spell_school(int nIndex) {
 
 DomainOfMagic get_spell_domain(int nIndex) {
     // do bounds checking
-    nIndex = MAX(0, MIN(nIndex, spllist_size));
+    nIndex = std::max(0, std::min(nIndex, spllist_size));
 
     return( spllist[nIndex].domain );
 }

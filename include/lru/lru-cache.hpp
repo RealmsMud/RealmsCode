@@ -286,7 +286,7 @@ private:
 
 	// Remove an items map iterator and associated items
 	inline void _remove( const map_iter_t &m_iter ) {
-		const auto& data = m_iter->second->second;
+		const auto data = m_iter->second->second;
 		_items_list.erase(m_iter->second);
 		_items_map.erase(m_iter);
 		clean_up_fn()(data);

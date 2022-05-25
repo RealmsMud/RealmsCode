@@ -34,7 +34,6 @@
 #include "random.hpp"                // for Random
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MIN
 
 //*********************************************************************
 //                      cmdBite
@@ -119,7 +118,7 @@ int cmdBite(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     chance = 35 + ((int)((player->getSkillLevel("bite") - target->getLevel()) * 20) + bonus(player->strength.getCur()) * 5);
-    chance = MIN(chance, 85);
+    chance = std::min(chance, 85);
 
     if(target->isEffected("drain-shield"))
         chance /= 2;
@@ -142,7 +141,7 @@ int cmdBite(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     dmgnum = damage.get();
 
-    damage.set(MIN<unsigned int>(damage.get(), target->hp.getCur() + 1));
+    damage.set(std::min<unsigned int>(damage.get(), target->hp.getCur() + 1));
     if(damage.get() < 1)
         damage.set(1);
 
@@ -366,7 +365,7 @@ int cmdHypnotize(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->lasttime[LT_HYPNOTIZE].ltime = t;
     player->lasttime[LT_HYPNOTIZE].interval = 600L;
-    chance = MIN(90, 40 + (int)(player->getSkillLevel("hypnotize") - target->getLevel()) * 20 + 4 *
+    chance = std::min(90, 40 + (int)(player->getSkillLevel("hypnotize") - target->getLevel()) * 20 + 4 *
             bonus(player->intelligence.getCur()));
     if(target->flagIsSet(M_PERMENANT_MONSTER))
         chance-=25;
@@ -471,7 +470,7 @@ int cmdRegenerate(const std::shared_ptr<Player>& player, cmd* cmnd) {
     //  120 = 0
     //  400 = 93.3
     chance = (player->constitution.getCur() - 120) / 3;
-    chance = MIN(85, level * 4 + chance);
+    chance = std::min(85, level * 4 + chance);
     if(player->isCt())
         chance = 101;
 
@@ -481,8 +480,10 @@ int cmdRegenerate(const std::shared_ptr<Player>& player, cmd* cmnd) {
         broadcast(player->getSock(), player->getParent(), "%M regenerates.", player.get());
 
         for(const auto& ply: player->getRoomParent()->players) {
-            if(!ply->isUndead())
-                ply->print("You shiver from a sudden deathly coldness.\n");
+            if(auto lockedPly = ply.lock()) {
+                if (!lockedPly->isUndead())
+                    lockedPly->print("You shiver from a sudden deathly coldness.\n");
+            }
         }
 
         if(inCombat)
@@ -599,7 +600,7 @@ int cmdDrainLife(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int level = (int)player->getSkillLevel("drain");
 
     chance = (level - target->getLevel()) * 20 + bonus(player->constitution.getCur()) * 5 + 25;
-    chance = MIN(chance, 80);
+    chance = std::min(chance, 80);
 
     if(target->isEffected("drain-shield"))
         chance /= 2;
@@ -622,7 +623,7 @@ int cmdDrainLife(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(pTarget && pTarget->isEffected("berserk"))
         damage.set(damage.get() + (damage.get() / 5));
 
-    damage.set(MIN<unsigned int>(damage.get(), target->hp.getCur() + 1));
+    damage.set(std::min<unsigned int>(damage.get(), target->hp.getCur() + 1));
     if(damage.get() < 1)
         damage.set(1);
 

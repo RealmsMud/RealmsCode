@@ -57,7 +57,6 @@
 #include "server.hpp"                  // for Server, gServer, RoomCache
 #include "size.hpp"                    // for Size, NO_SIZE, SIZE_COLOSSAL
 #include "socket.hpp"                  // for Socket
-#include "utils.hpp"                   // for MAX
 #include "wanderInfo.hpp"              // for WanderInfo
 #include "xml.hpp"                     // for loadRoom
 #include "paths.hpp"
@@ -141,16 +140,16 @@ void UniqueRoom::setShortDescription(std::string_view desc) { short_desc = desc;
 void UniqueRoom::setLongDescription(std::string_view desc) { long_desc = desc; }
 void UniqueRoom::appendShortDescription(std::string_view desc) { short_desc += desc; }
 void UniqueRoom::appendLongDescription(std::string_view desc) { long_desc += desc; }
-void UniqueRoom::setLowLevel(short lvl) { lowLevel = MAX<short>(0, lvl); }
-void UniqueRoom::setHighLevel(short lvl) { highLevel = MAX<short>(0, lvl); }
-void UniqueRoom::setMaxMobs(short m) { maxmobs = MAX<short>(0, m); }
+void UniqueRoom::setLowLevel(short lvl) { lowLevel = std::max<short>(0, lvl); }
+void UniqueRoom::setHighLevel(short lvl) { highLevel = std::max<short>(0, lvl); }
+void UniqueRoom::setMaxMobs(short m) { maxmobs = std::max<short>(0, m); }
 void UniqueRoom::setTrap(short t) { trap = t; }
 void UniqueRoom::setTrapExit(const CatRef& t) { trapexit = t; }
-void UniqueRoom::setTrapWeight(short weight) { trapweight = MAX<short>(0, weight); }
-void UniqueRoom::setTrapStrength(short strength) { trapstrength = MAX<short>(0, strength); }
+void UniqueRoom::setTrapWeight(short weight) { trapweight = std::max<short>(0, weight); }
+void UniqueRoom::setTrapStrength(short strength) { trapstrength = std::max<short>(0, strength); }
 void UniqueRoom::setFaction(std::string_view f) { faction = f; }
 void UniqueRoom::incBeenHere() { beenhere++; }
-void UniqueRoom::setRoomExperience(int exp) { roomExp = MAX(0, exp); }
+void UniqueRoom::setRoomExperience(int exp) { roomExp = std::max(0, exp); }
 void UniqueRoom::setSize(Size s) { size = s; }
 
 //*********************************************************************
@@ -476,9 +475,11 @@ bool AreaRoom::isInteresting(const std::shared_ptr<const Player> &viewer) const 
     if(unique.id)
         return(true);
 
-    for(const auto& ply: players) {
-        if(!ply->flagIsSet(P_HIDDEN) && viewer->canSee(ply))
-            return(true);
+    for(const auto& pIt: players) {
+        if(auto ply = pIt.lock()) {
+            if (!ply->flagIsSet(P_HIDDEN) && viewer->canSee(ply))
+                return (true);
+        }
     }
     for(const auto& mons : monsters) {
         if(!mons->flagIsSet(M_HIDDEN) && viewer->canSee(mons))
@@ -535,12 +536,14 @@ bool BaseRoom::isMagicDark() const {
         return(true);
 
     // check for darkness spell
-    for(const auto& ply: players) {
-        // darkness spell on staff does nothing
-        if(ply->isEffected("darkness") && !ply->isStaff())
-            return(true);
-        if(ply->flagIsSet(P_DARKNESS) && !ply->flagIsSet(P_DM_INVIS))
-            return(true);
+    for(const auto& pIt: players) {
+        if(auto ply = pIt.lock()) {
+            // darkness spell on staff does nothing
+            if (ply->isEffected("darkness") && !ply->isStaff())
+                return (true);
+            if (ply->flagIsSet(P_DARKNESS) && !ply->flagIsSet(P_DM_INVIS))
+                return (true);
+        }
     }
     for(const auto& mons : monsters) {
         if(mons->isEffected("darkness"))
@@ -664,9 +667,11 @@ bool BaseRoom::isFull() const {
 int BaseRoom::countVisPly() const {
     int     num = 0;
 
-    for(const auto& ply: players) {
-        if(!ply->flagIsSet(P_DM_INVIS))
-            num++;
+    for(const auto& pIt: players) {
+        if(auto ply = pIt.lock()) {
+            if (!ply->flagIsSet(P_DM_INVIS))
+                num++;
+        }
     }
 
     return(num);
@@ -731,9 +736,11 @@ bool BaseRoom::vampCanSleep(Socket* sock) const {
 
 bool BaseRoom::isCombat() const {
 
-    for(const auto& ply: players) {
-        if(ply->inCombat(true))
-            return(true);
+    for(const auto& pIt: players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->inCombat(true))
+                return (true);
+        }
     }
     for(const auto& mons : monsters) {
         if(mons->inCombat(true))
@@ -953,7 +960,12 @@ void BaseRoom::expelPlayers(bool useTrapExit, bool expulsionMessage, bool expelS
     auto pIt = players.begin();
     auto pEnd = players.end();
     while(pIt != pEnd) {
-        target = (*pIt++);
+        target = pIt->lock();
+        if(!target) {
+            pIt = players.erase(pIt);
+            continue;
+        }
+        pIt++;
 
         if(!expelStaff && target->isStaff())
             continue;
@@ -1066,14 +1078,15 @@ void BaseRoom::print(Socket* ignore1, Socket* ignore2, const char *fmt, ...) {
 //*********************************************************************
 
 void BaseRoom::doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const char *fmt, va_list ap) {
-    for(const auto& ply: players) {
-        if(!hearBroadcast(ply, ignore1, ignore2, showTo))
-            continue;
-        if(ply->flagIsSet(P_UNCONSCIOUS))
-            continue;
+    for(const auto& pIt: players) {
+        if(auto ply = pIt.lock()) {
+            if (!hearBroadcast(ply, ignore1, ignore2, showTo))
+                continue;
+            if (ply->flagIsSet(P_UNCONSCIOUS))
+                continue;
 
-        ply->vprint(ply->customColorize(fmt).c_str(), ap);
-
+            ply->vprint(ply->customColorize(fmt).c_str(), ap);
+        }
     }
 }
 

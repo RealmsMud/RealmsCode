@@ -47,7 +47,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "timer.hpp"                 // for Timer
-#include "utils.hpp"                 // for MAX, MIN
 
 
 const std::string NONE_STR = "none";
@@ -150,7 +149,7 @@ float Creature::getDamageReduction(const std::shared_ptr<Creature> & target) con
     auto targetArmor = (float)target->getArmor();
     float myLevel = level == 1 && isPlayer() ? 2 : (float)level;
     reduction = (float)((targetArmor)/((targetArmor) + 43.24 + 18.38*myLevel));
-    reduction = MIN<float>(.75, reduction); // Max of 75% reduction
+    reduction = std::min<float>(.75, reduction); // Max of 75% reduction
     return(reduction);
 }
 
@@ -443,6 +442,7 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
         pFd = victim->getSock();
     */
     int mySkill=0;
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
 
     if(altSkillLevel != -1) {
         // For when we want to look at an alternative skill, like kick
@@ -472,7 +472,7 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
 
     if(victim->getRoomParent()->isEffected("dense-fog")) {
         effect = victim->getRoomParent()->getEffect("dense-fog");
-        if(!effect->isOwner(Containable::downcasted_shared_from_this<Creature>()))
+        if(!effect->isOwner(cThis))
             missChance += effect->getStrength();
     }
 
@@ -484,25 +484,25 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
     if(resultFlags & NO_DODGE)
         dodgeChance = 0;
     else
-        dodgeChance = victim->getDodgeChance(Containable::downcasted_shared_from_this<Creature>(), difference);
+        dodgeChance = victim->getDodgeChance(cThis, difference);
     int dodgeCutoff = (int)(missCutoff + (dodgeChance * 100));
 
     if(resultFlags & NO_PARRY)
         parryChance = 0;
     else
-        parryChance = victim->getParryChance(Containable::downcasted_shared_from_this<Creature>(), difference);
-    int parryCutoff = (int)(dodgeCutoff + (parryChance * 100));
+        parryChance = victim->getParryChance(cThis, difference);
+    int parryCutoff = dodgeCutoff + (int)(parryChance * 100);
 
     if(resultFlags & NO_GLANCING)
         glancingChance = 0;
     else
-        glancingChance = victim->getGlancingBlowChance(Containable::downcasted_shared_from_this<Creature>(), difference);
+        glancingChance = victim->getGlancingBlowChance(cThis, difference);
     int glancingCutoff = (int)(parryCutoff + (glancingChance * 100));
 
     if(resultFlags & NO_BLOCK)
         blockChance = 0;
     else
-        blockChance = victim->getBlockChance(Containable::downcasted_shared_from_this<Creature>(), difference);
+        blockChance = victim->getBlockChance(cThis, difference);
     int blockCutoff = (int)(glancingCutoff + (blockChance * 100));
 
     if((resultFlags & NO_CRITICAL) || victim->immuneCriticals())
@@ -517,7 +517,7 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
         fumbleChance = getFumbleChance(weapon);
     int fumbleCutoff = (int)(criticalCutoff + (fumbleChance * 100));
 
-    //hitChance = MAX(0, 100.0 - missChance - dodgeChance - parryChance - glancingChance - blockChance - criticalChance - fumbleChance);
+    //hitChance = std::max(0, 100.0 - missChance - dodgeChance - parryChance - glancingChance - blockChance - criticalChance - fumbleChance);
     //int hitCutoff = (int)(fumbleCutoff + (hitChance * 100));
 
     // Auto miss with an always crit weapon vs a no crit monster
@@ -558,7 +558,7 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
         result = (ATTACK_HIT);
 
     if(result == ATTACK_HIT || result == ATTACK_CRITICAL)
-        if(victim->kamiraLuck(Containable::downcasted_shared_from_this<Creature>()))
+        if(victim->kamiraLuck(cThis))
             result = ATTACK_MISS;
 
     return(result);
@@ -610,7 +610,7 @@ double Creature::getFumbleChance(const std::shared_ptr<Object>&  weapon) const {
         // even at 300 skill
         chance -= (weaponSkill / 151.0);
 
-        chance = MAX(0.0, chance);
+        chance = std::max(0.0, chance);
     }
     return(chance);
 }
@@ -623,7 +623,7 @@ double Creature::getCriticalChance(const int& difference) const {
     double chance = 5.0;
 
     chance -= adjustChance(difference);
-    chance = MAX(0.0, chance);
+    chance = std::max(0.0, chance);
     return(chance);
 }
 
@@ -644,9 +644,9 @@ double Creature::getBlockChance(std::shared_ptr<Creature> attacker, const int& d
     chance += adjustChance(difference);
     // Max chance of 5.0% if a monster
     if(isMonster())
-        chance = MIN(5.0, chance);
+        chance = std::min(5.0, chance);
 
-    chance = MAX(0.0, chance);
+    chance = std::max(0.0, chance);
     return(chance);
 }
 
@@ -665,7 +665,7 @@ double Creature::getGlancingBlowChance(const std::shared_ptr<Creature>& attacker
         return(0);
 
     double chance = 10.0 + (difference * 0.5);
-    chance = MAX(0.0, chance);
+    chance = std::max(0.0, chance);
     return(chance);
 }
 
@@ -683,11 +683,8 @@ double Creature::getParryChance(const std::shared_ptr<Creature>& attacker, const
         if(!knowsSkill("parry"))
             return(0);
 
-    } else {
-//      if(level < 7)
-//          return(false);
     }
-    double chance = (dexterity.getCur() - 80) * .03;
+    double chance = (std::max<unsigned int>(dexterity.getCur(), 80) - 80) * .03;
     chance += adjustChance(difference);
 
     // Riposte is harder against some attacker types
@@ -705,7 +702,7 @@ double Creature::getParryChance(const std::shared_ptr<Creature>& attacker, const
             if(numEnm++ > 1)
                 chance -= .02;
     }
-    chance = MAX(0.0, chance);
+    chance = std::max(0.0, chance);
     return(chance);
 }
 
@@ -738,13 +735,13 @@ bool Creature::canParry(const std::shared_ptr<Creature>& attacker) {
 //   try a parry, so parry returns 0 without going off. -TC
 
     // +3% fail for every monster mad at this besides the one he's currently hitting
-    combatPercent = 3*(MAX<unsigned int>(0, numEnemyMonInRoom()-1));
+    combatPercent = 3*(std::max<unsigned int>(0, numEnemyMonInRoom()-1));
     // Group members are assumed to fight together to help one another.
     // -2% fail for every member in the this's group besides themself in the same room
     if(getGroup())
-        combatPercent -= 2*(MAX(0,getGroup()->getNumInSameRoom(Containable::downcasted_shared_from_this<Creature>())));
+        combatPercent -= 2*(std::max(0,getGroup()->getNumInSameRoom(Containable::downcasted_shared_from_this<Creature>())));
 
-    combatPercent = MAX(0,combatPercent);
+    combatPercent = std::max(0,combatPercent);
 
     if(Random::get(1,100) <= combatPercent)
         return(false); // Did not find a parry opening due to excessive combat. No parry.
@@ -894,7 +891,7 @@ double Creature::getDodgeChance(const std::shared_ptr<Creature>& attacker, const
 
 
     chance += adjustChance(difference);
-    chance = MAX(0.0, chance);
+    chance = std::max(0.0, chance);
     return(chance);
 }
 
@@ -968,7 +965,7 @@ double Creature::getMissChance(const int& difference) {
         chance *= 1.0;
     }
 
-    chance = MAX(0.0, chance);
+    chance = std::max(0.0, chance);
     return(chance);
 }
 
@@ -1052,7 +1049,7 @@ bool Creature::canHit(const std::shared_ptr<Creature>& victim, std::shared_ptr<O
                 )
             ) {
                 if(showFail) {
-                    *this << ColorOn << "Your " << (weapon ? weapon->getName() : "attack") << (!weapon || weapon->getType() == ObjectType::WEAPON ? "has" : "have") << " no effect on " << pVictim << "\n" << ColorOff;
+                    *this << ColorOn << "Your " << (weapon ? weapon->getName() : "attack") << " " << (!weapon || weapon->getType() == ObjectType::WEAPON ? "has" : "have") << " no effect on " << pVictim << "\n" << ColorOff;
                     pVictim->print("%M's attack on you was uneffective.\n", this);
                 }
                 return(false);
@@ -1094,7 +1091,7 @@ bool Creature::canHit(const std::shared_ptr<Creature>& victim, std::shared_ptr<O
                         *this << ColorOn << "^WYou ignore the laws of the land and attack " << victim << " anyway.\n" << ColorOff;
                 } else {
                     if(showFail) {
-                        *this << ColorOn << "Your " << (weapon ? weapon->getName() : "attack") << (!weapon || weapon->getType() == ObjectType::WEAPON ? "has" : "have") << " no effect on " << victim << "\n" << ColorOff;
+                        *this << ColorOn << "Your " << (weapon ? weapon->getName() : "attack") << " " << (!weapon || weapon->getType() == ObjectType::WEAPON ? "has" : "have") << " no effect on " << victim << "\n" << ColorOff;
                     }
                     return(false);
                 }
@@ -1138,7 +1135,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
                 attackDamage.set(Random::get(1,2) + level/3 + Random::get((1+level/4),(1+level)/2));
                 if(strength.getCur() < 90) {
                     attackDamage.set(attackDamage.get() - (90-strength.getCur())/10);
-                    attackDamage.set(MAX<int>(1, attackDamage.get()));
+                    attackDamage.set(std::max<int>(1, attackDamage.get()));
                 }
             } else {
                 attackDamage.set(damage.roll());
@@ -1154,7 +1151,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
     if(isEffected("lycanthropy"))
         attackDamage.add(packBonus());
 
-    attackDamage.set(MAX<int>(1, attackDamage.get()));
+    attackDamage.set(std::max<int>(1, attackDamage.get()));
 
     // Damage reduction on every hit
     if(cClass == CreatureClass::PALADIN) {
@@ -1323,7 +1320,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
 
     if(retVal != 1) {
         // If we didn't shatter, minimum of 1 damage
-        attackDamage.set(MAX<unsigned int>(attackDamage.get(), 1));
+        attackDamage.set(std::max<unsigned int>(attackDamage.get(), 1));
     }
 
     return(retVal);
@@ -1347,7 +1344,7 @@ int Monster::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obj
     attackDamage.add(::bonus(strength.getCur()));
 
     if(result == ATTACK_CRITICAL) {
-        broadcast(nullptr, getRoomParent(), "%M made a critical hit.", this);
+        broadcast((Socket*)nullptr, getRoomParent(), "%M made a critical hit.", this);
         int mult = Random::get(2, 5);
         attackDamage.set(attackDamage.get() * mult);
         drain *= mult;
@@ -1364,7 +1361,7 @@ int Monster::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obj
     victim->modifyDamage(Containable::downcasted_shared_from_this<Monster>(), PHYSICAL, bonusDamage);
     attackDamage.setBonus(bonusDamage);
 
-    attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
+    attackDamage.set(std::max<unsigned int>(1, attackDamage.get()));
     return(0);
 }
 
@@ -1557,7 +1554,7 @@ int Creature::parry(const std::shared_ptr<Creature>& target) {
         // So mob riposte isn't soo mean
         if(isMonster()) {
             attackDamage.set(attackDamage.get() / 2);
-            attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
+            attackDamage.set(std::max<unsigned int>(1, attackDamage.get()));
         }
 
         switch(Random::get(1,7)) {
@@ -1708,7 +1705,7 @@ bool Creature::negAuraRepel() const {
 
 unsigned int Creature::doResistMagic(unsigned int dmg, const std::shared_ptr<Creature>& enemy) {
     double resist=0;
-    dmg = MAX<unsigned int>(1, dmg);
+    dmg = std::max<unsigned int>(1, dmg);
 
     if(negAuraRepel() && enemy && this != enemy.get()) {
         resist = (10.0 + Random::get(1,3) + level + bonus(constitution.getCur()))
@@ -1720,13 +1717,13 @@ unsigned int Creature::doResistMagic(unsigned int dmg, const std::shared_ptr<Cre
 
     if(isEffected("resist-magic")) {
         resist = (piety.getCur() / 10.0 + intelligence.getCur() / 10.0) * 2;
-        resist = MAX<float>(50, MIN<float>(resist, 100));
+        resist = std::max<float>(50, std::min<float>(resist, 100));
         resist /= 100; // percentage
         resist *= dmg;
         dmg -= (int)resist;
     }
 
-    return(MAX<unsigned int>(0, dmg));
+    return(std::max<unsigned int>(0, dmg));
 }
 
 int Creature::getPrimaryDelay() {
@@ -1763,7 +1760,7 @@ void Creature::updateAttackTimer(bool setDelay, int delay) {
     } else {
         if(delay == 0) {
             if (ready[HELD-1] && ready[HELD-1]->getWearflag() == WIELD)
-                delay = MAX(getPrimaryDelay(), getSecondaryDelay());
+                delay = std::max(getPrimaryDelay(), getSecondaryDelay());
             else
                 delay = getPrimaryDelay();
         }

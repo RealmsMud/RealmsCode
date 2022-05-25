@@ -103,9 +103,9 @@ void Creature::dismissPet(const std::shared_ptr<Monster>&  pet) {
     broadcast(getSock(), getRoomParent(), "%M dismisses %N.", this, pet.get());
 
     if(pet->isUndead())
-        broadcast(nullptr, getRoomParent(), "%M wanders away.", pet.get());
+        broadcast((Socket*)nullptr, getRoomParent(), "%M wanders away.", pet.get());
     else
-        broadcast(nullptr, getRoomParent(), "%M fades away.", pet.get());
+        broadcast((Socket*)nullptr, getRoomParent(), "%M fades away.", pet.get());
     pet->die(Containable::downcasted_shared_from_this<Creature>());
 
 }

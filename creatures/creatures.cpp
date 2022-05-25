@@ -57,7 +57,6 @@
 #include "size.hpp"                    // for getSizeName, SIZE_COLOSSAL
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for Command, SEX_FEMALE, SEX_MALE
-#include "utils.hpp"                   // for MIN, MAX
 
 
 //********************************************************************
@@ -99,10 +98,12 @@ bool Creature::canSeeRoom(const std::shared_ptr<BaseRoom>& room, bool p) const {
 
         // if they can't see, maybe someone else in the room has light for them
         if(!normal_sight) {
-            for(const auto& ply: room->players) {
-                if(ply->getAsPlayer()->getLight()) {
-                    normal_sight = true;
-                    break;
+            for(const auto& pIt: room->players) {
+                if(auto ply = pIt.lock()) {
+                    if (ply->getAsPlayer()->getLight()) {
+                        normal_sight = true;
+                        break;
+                    }
                 }
             }
         }
@@ -824,8 +825,8 @@ unsigned long Creature::getInventoryValue() const {
                     continue;
                 }
 
-                total += MIN<unsigned long>(MAXPAWN,insideObject->value[GOLD]/2);
-                total = MAX<long>(0,MIN<long>(2000000000,total));
+                total += std::min<unsigned long>(MAXPAWN,insideObject->value[GOLD]/2);
+                total = std::max<long>(0,std::min<long>(2000000000,total));
             }
         }
 
@@ -843,8 +844,8 @@ unsigned long Creature::getInventoryValue() const {
             continue;
         }
 
-        total += MIN<unsigned long>(MAXPAWN,object->value[GOLD]/2);
-        total = MAX<long>(0,MIN<long>(2000000000,total));
+        total += std::min<unsigned long>(MAXPAWN,object->value[GOLD]/2);
+        total = std::max<long>(0,std::min<long>(2000000000,total));
 
     }
 
@@ -867,8 +868,8 @@ unsigned long Creature::getInventoryValue() const {
                     continue;
                 }
 
-                total += MIN<unsigned long>(MAXPAWN,insideObject->value[GOLD]);
-                total = MAX<long>(0,MIN<long>(2000000000,total));
+                total += std::min<unsigned long>(MAXPAWN,insideObject->value[GOLD]);
+                total = std::max<long>(0,std::min<long>(2000000000,total));
             }
         }
 
@@ -882,8 +883,8 @@ unsigned long Creature::getInventoryValue() const {
         if(object3->value[GOLD] < 20)
             continue;
 
-        total+=MIN<unsigned long>(MAXPAWN,object3->value[GOLD]/2);
-        total = MAX<long>(0,MIN<long>(2000000000,total));
+        total+=std::min<unsigned long>(MAXPAWN,object3->value[GOLD]/2);
+        total = std::max<long>(0,std::min<long>(2000000000,total));
     }
 
     return(total);
@@ -985,7 +986,7 @@ bool Creature::inCombat(const std::shared_ptr<Creature> & target, bool countPets
 
     if(mThis) {
         for(const auto& ply: getParent()->players) {
-            if(mThis->isEnemy(ply))
+            if(mThis->isEnemy(ply.lock()))
                 return(true);
         }
         for(const auto& mons : getParent()->monsters) {
@@ -1188,7 +1189,7 @@ long Creature::getLTLeft(int myLT, long t) {
 // Sets a LT
 
 void Creature::setLastTime(int myLT, long t, long interval) {
-    lasttime[myLT].interval = MAX(interval, getLTLeft(myLT, t));
+    lasttime[myLT].interval = std::max(interval, getLTLeft(myLT, t));
     lasttime[myLT].ltime = t;
  }
 

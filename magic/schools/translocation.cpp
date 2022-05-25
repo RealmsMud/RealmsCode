@@ -55,7 +55,6 @@
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for daily
 #include "unique.hpp"                  // for transferOwner
-#include "utils.hpp"                   // for MAX
 #include "xml.hpp"                     // for loadRoom
 
 
@@ -503,10 +502,10 @@ void Move::createPortal(const std::shared_ptr<BaseRoom>& room, const std::shared
     ext->setFlag(X_CAN_LOOK);
     ext->setEnter("You step through the portal and find yourself in another location.");
     ext->setPassPhrase(player->getName());
-    ext->setKey(MAX<short>(1, ((int)player->getLevel() - 28) / 2));
+    ext->setKey(std::max<short>(1, ((int)player->getLevel() - 28) / 2));
     ext->setDescription("You see a shimmering portal of mystical origin.");
 
-    broadcast(nullptr, room, "^YA dimensional portal forms in the room!");
+    broadcast((Socket*)nullptr, room, "^YA dimensional portal forms in the room!");
 
     if(initial)
         createPortal(target, room, player, false);
@@ -570,7 +569,7 @@ bool Move::deletePortal(const std::shared_ptr<BaseRoom>& room, const std::string
                 }
             }
 
-            broadcast(nullptr, room, "The %s^x collapses into nothingness.", ext->getCName());
+            broadcast((Socket*)nullptr, room, "The %s^x collapses into nothingness.", ext->getCName());
 
             if(initial) {
                 std::shared_ptr<BaseRoom> target = ext->target.loadRoom();
@@ -773,7 +772,7 @@ int splTeleport(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
             broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%s vanishes in a puff of swirling smoke.",
                 pPlayer->upHeShe());
             if(!pPlayer->flagIsSet(P_DM_INVIS))
-                broadcast(nullptr, newRoom, "POOF!");
+                broadcast((Socket*)nullptr, newRoom, "POOF!");
 
 
             pPlayer->deleteFromRoom();
@@ -867,12 +866,12 @@ int splTeleport(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
                 pTarget->doPetFollow();
             } else {
                 mTarget->setFlag(M_WAS_PORTED);
-                broadcast(nullptr, player->getRoomParent(), "%M vanishes!", mTarget.get());
+                broadcast((Socket*)nullptr, player->getRoomParent(), "%M vanishes!", mTarget.get());
                 // being ported pisses mobs off! haha
                 mTarget->addEnemy(player);
                 mTarget->deleteFromRoom();
                 mTarget->addToRoom(newRoom);
-                broadcast(nullptr, mTarget->getRoomParent(), "%M was thrown from %N's dimensional rift!", mTarget.get(), player.get());
+                broadcast((Socket*)nullptr, mTarget->getRoomParent(), "%M was thrown from %N's dimensional rift!", mTarget.get(), player.get());
             }
 
             logn("log.teleport", "%s(L%dH%dM%dR:%s) was just teleported to room %s by %s(L%d)\n",
@@ -1642,10 +1641,13 @@ int splBlink(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
         player->print("You cast a blink spell.\n");
         broadcast(pPlayer->getSock(), room, "%M casts a blink spell.", player.get());
 
-        broadcast(nullptr, room, "^YThe %s^Y explodes violently as the dimensional tunnels converge!", exit->getCName());
+        broadcast((Socket*)nullptr, room, "^YThe %s^Y explodes violently as the dimensional tunnels converge!", exit->getCName());
 
         int dmg=0;
-        for(const auto& ply: room->players) {
+        for(const auto& pIt: room->players) {
+            auto ply = pIt.lock();
+            if(!ply) continue;
+
             // more damage for caster
             if(ply->isStaff())
                 dmg = 0;
@@ -1792,13 +1794,13 @@ void BaseRoom::scatterObjects() {
         if(!newRoom)
             continue;
 
-        broadcast(nullptr, this, "%1O flies to the %s^x!", object.get(), exit->getCName());
+        broadcast((Socket*)nullptr, getAsCreature(), "%1O flies to the %s^x!", object.get(), exit->getCName());
 
         // send it to exit
         object->clearFlag(O_HIDDEN);
         object->deleteFromRoom();
 
-        broadcast(nullptr, newRoom, "%1O comes flying into the room!", object.get());
+        broadcast((Socket*)nullptr, newRoom, "%1O comes flying into the room!", object.get());
         newRoom->wake("Loud noises disturb your sleep.", true);
         finishDropObject(object, newRoom, nullptr, false, false, true);
 

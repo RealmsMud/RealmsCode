@@ -64,7 +64,6 @@
 #include "size.hpp"                            // for getSizeName, getSize
 #include "skills.hpp"                          // for SkillInfo
 #include "unique.hpp"                          // for Unique, Lore
-#include "utils.hpp"                           // for MAX, MIN
 #include "xml.hpp"                             // for loadObject
 #include "toNum.hpp"
 
@@ -203,7 +202,7 @@ std::string Object::statObj(unsigned int statFlags) {
     objStr << "\n";
 
     if(type == ObjectType::LIGHTSOURCE)
-        objStr << "^WThis light source will last for approximately " << (MAX<short>(1, shotsCur) * 20 - 10) << " seconds.^x\n";
+        objStr << "^WThis light source will last for approximately " << (std::max<short>(1, shotsCur) * 20 - 10) << " seconds.^x\n";
 
     if(compass)
         objStr << "Compass: ^y" << compass->str() << "^x\n";
@@ -343,7 +342,7 @@ std::string Object::statObj(unsigned int statFlags) {
         objStr << "  Strength: " << effectStrength << ".\n";
         if(flagIsSet(O_ENVENOMED)) {
             objStr << "Time remaining: " <<
-                timestr(MAX(0L,(lasttime[LT_ENVEN].ltime+lasttime[LT_ENVEN].interval-time(nullptr))))
+                timestr(std::max(0L,(lasttime[LT_ENVEN].ltime+lasttime[LT_ENVEN].interval-time(nullptr))))
                 << "\n";
         }
     }
@@ -724,7 +723,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 setType = "Charges (All)";
             } else {
                 // Cur
-                num = MIN<int>(num, object->getChargesMax());
+                num = std::min<int>(num, object->getChargesMax());
                 object->setChargesCur(num);
                 setType = "Charges (Cur)";
             }
@@ -910,7 +909,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
             }
 
-            num = MIN<int>(50, MAX<int>(1, num));
+            num = std::min<int>(50, std::max<int>(1, num));
 
             if(num == 1)
                 gConfig->delLore(object->info);
@@ -1016,7 +1015,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
             object->in_bag[num-1].id = cmnd->val[3];
 
-            object->setShotsMax(MAX((short)num, object->getShotsMax()));
+            object->setShotsMax(std::max((short)num, object->getShotsMax()));
             player->print("Loadable container object %s set to item number %s.\n",
                           object->info.displayStr().c_str(), object->in_bag[num - 1].displayStr().c_str());
             log_immort(2, player, "%s set container %s(%s) to load object %s.\n",
@@ -1105,19 +1104,19 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
             log_immort(2, player, "%s set %s's %s to %s.\n",
                 player->getCName(), objname, "Size", getSizeName(object->getSize()).c_str());
         } else if(flags[1] == 'm') {
-            num = MAX(0, MIN((int)num,5000));
+            num = std::max(0, std::min((int)num,5000));
             
             object->setShotsMax(num);
             result = object->getShotsMax();
             setType = "Max Shots";
         } else if(flags[1] == 'p') {
-            num=MAX(0, MIN((int)num, MAX_SP));
+            num=std::max(0, std::min((int)num, MAX_SP));
 
             object->setSpecial(num);
             result = object->getSpecial();
             setType = "Special";
         } else if(flags[1] == 't') {
-            num=MAX(0, MIN((int)num, 280));
+            num=std::max(0, std::min((int)num, 280));
 
             object->setMinStrength(num);
             result = object->getMinStrength();
@@ -1151,7 +1150,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
             result = object->getRequiredSkill();
             setType = "Required Skill";
         } else if(flags[1] == 'c' || !flags[1]) {
-            num=MAX(0, MIN((int)num, 5000));
+            num=std::max(0, std::min((int)num, 5000));
 
             object->setShotsCur(num);
             result = object->getShotsCur();
@@ -1187,9 +1186,9 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
     case 'v':
         if(flags[1] == 'a' || !flags[1]) {
             if(!player->isDm())
-                num=MAX(0L, MIN(num, 500000L));
+                num=std::max(0L, std::min(num, 500000L));
             else
-                num=MAX(0L, MIN(num, 20000000L));
+                num=std::max(0L, std::min(num, 20000000L));
 
             object->value.set(num, GOLD);
             result = num;
@@ -1200,7 +1199,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
         break;
     case 'w':
         if(flags[1] == 'g' || (flags[1] == 'e' && flags[2] == 'i')) {
-            num=MAX(0, MIN((int)num, 5000));
+            num=std::max(0, std::min((int)num, 5000));
 
             object->setWeight(num);
             result = object->getWeight();
@@ -1593,11 +1592,11 @@ void makeWeapon(const std::shared_ptr<Player>& player, CatRef* cr, const std::sh
         //sprintf(newObj->name, "%s %s %s", newObj->key[0], newObj->key[1], sub.c_str());
     }
 
-    newObj->setWeight(MAX(1, weight));
-    newObj->setBulk(MAX(1, bulk));
+    newObj->setWeight(std::max(1, weight));
+    newObj->setBulk(std::max(1, bulk));
     newObj->setNumAttacks(numAttacks);
     //newObj->setBulk(bulk);
-    value = MAX(1.0, value);
+    value = std::max(1.0, value);
     newObj->value.set((long)value, GOLD);
     newObj->setWearflag(WIELD);
 

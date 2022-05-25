@@ -54,7 +54,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for osp_t
-#include "utils.hpp"                 // for MAX, MIN
 
 
 
@@ -605,7 +604,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
             statistics.swing();
 
             if( result == ATTACK_HIT || result == ATTACK_CRITICAL || result == ATTACK_BLOCK || result == ATTACK_GLANCING ) {
-                // move glow string into hit if so we arent glowing if we miss
+                // move glow string into hit if so we aren't glowing if we miss
                 if(!canHit(victim, weapon, glow))
                     break;
                 // only glow once
@@ -697,7 +696,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 
                 if(!meKilled && drain && victim->hp.getCur() > attackDamage.get()) {
 
-                    drain = MIN<unsigned int>(victim->hp.getCur() - attackDamage.get(), drain);
+                    drain = std::min<unsigned int>(victim->hp.getCur() - attackDamage.get(), drain);
                     printColor("Your aura of evil drains %s%ud^x hit point%s from your opponent.\n",
                         customColorize("*CC:DAMAGE*").c_str(), drain, drain == 1 ? "" : "s");
                     victim->printColor("^r%M drains %s%d^r hit points from you!\n", this, victim->customColorize("*CC:DAMAGE*").c_str(), drain);
@@ -716,12 +715,12 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                     int dur = 0;
                     if(!pVictim) {
                         if(!victim->flagIsSet(M_RESIST_CIRCLE) && !victim->isUndead())
-                            dur = MAX(3, (Random::get(3,5) + (MIN(2,((::bonus(strength.getCur()) -
+                            dur = std::max(3, (Random::get(3,5) + (std::min(2,((::bonus(strength.getCur()) -
                                 ::bonus(victim->strength.getCur()))/2)))));
                         else
                             dur = Random::get(2,4);
                     } else
-                        dur = MAX(3,(Random::get(3,5) + (::bonus(strength.getCur()) - ::bonus(victim->strength.getCur()))));
+                        dur = std::max(3,(Random::get(3,5) + (::bonus(strength.getCur()) - ::bonus(victim->strength.getCur()))));
                     victim->stun(dur);
                     checkImprove("maul", true);
                 } else if(attackType == ATTACK_AMBUSH) {
@@ -889,7 +888,7 @@ unsigned int Creature::castWeapon(const std::shared_ptr<Creature>& target, std::
             }
         }
 
-        attackDamage.set(MAX(1, osp->damage.roll()));
+        attackDamage.set(std::max(1, osp->damage.roll()));
         target->modifyDamage(Containable::downcasted_shared_from_this<Player>(), MAGICAL, attackDamage, osp->realm, weapon, -1);
 
         if(target->negAuraRepel()) {
@@ -939,7 +938,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
     std::shared_ptr<Player> player = getAsPlayer();
     const EffectInfo *effect = nullptr;
     int     vHp = 0;
-    dmgType = MAX(0, dmgType);
+    dmgType = std::max(0, dmgType);
 
 // TODO: Dom: drain hp (dk)
 
@@ -1100,7 +1099,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
             // zerkers: 1/5
             // everyone else: 1/7
             attackDamage.set(attackDamage.get() - (attackDamage.get() / (cClass == CreatureClass::BERSERKER ? 5 : 7)));
-            attackDamage.set(MAX<unsigned int>(1, attackDamage.get()));
+            attackDamage.set(std::max<unsigned int>(1, attackDamage.get()));
         }
 
         // monsters do more damage while berserked
@@ -1126,7 +1125,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         if(resistPet)
             attackDamage.set(attackDamage.get() / 2);
         if(vulnPet)
-            attackDamage.add(Random::get(MAX<unsigned int>(1, attackDamage.get()/6),MAX<unsigned int>(2, attackDamage.get()/2)));
+            attackDamage.add(Random::get(std::max<unsigned int>(1, attackDamage.get()/6),std::max<unsigned int>(2, attackDamage.get()/2)));
         if(immunePet)
             attackDamage.set(1);
     }
@@ -1139,7 +1138,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
       //  if(vHp <= 0 || attackDamage.get() <= 0)
       //    vHp=0; //shouldn't happen, but check anyway.
 
-        vHp = MAX(0,vHp); 
+        vHp = std::max(0,vHp);
 
         vHp -= (int)attackDamage.get();
 
@@ -1177,7 +1176,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         attackDamage.set(attackDamage.get() / 2);
     }
 
-    attackDamage.set(MAX<unsigned int>(0, attackDamage.get()));
+    attackDamage.set(std::max<unsigned int>(0, attackDamage.get()));
 
     // check drain last
     if(dmgType == NEGATIVE_ENERGY || dmgType == MAGICAL_NEGATIVE) {
@@ -1188,7 +1187,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
                 attackDamage.setDrain(Random::get<unsigned int>(0, attackDamage.get() / 4));
 
             // don't drain more than can be drained!
-            attackDamage.setDrain(MIN<unsigned int>(attackDamage.getDrain(), hp.getCur()));
+            attackDamage.setDrain(std::min<unsigned int>(attackDamage.getDrain(), hp.getCur()));
 
             // liches can't use drain damage as their HP is their MP
             // they can do more damage instead
@@ -1336,11 +1335,13 @@ std::shared_ptr<Player> Monster::whoToAggro() const {
         return (nullptr);
     }
 
-    for(const auto& player : myRoom->players) {
-        if(canSee(player) && !player->flagIsSet(P_HIDDEN)) {
-            if(willAggro(player)) {
-                total += MAX<unsigned int>(1, 300 - player->piety.getCur());
-                players.push_back(player);
+    for(const auto& ply : myRoom->players) {
+        if(auto player = ply.lock()) {
+            if (canSee(player) && !player->flagIsSet(P_HIDDEN)) {
+                if (willAggro(player)) {
+                    total += std::max<unsigned int>(1, 300 - player->piety.getCur());
+                    players.push_back(player);
+                }
             }
         }
     }
@@ -1358,7 +1359,7 @@ std::shared_ptr<Player> Monster::whoToAggro() const {
     total = 0;
 
     for(const auto& player : players) {
-        total += MAX<unsigned int>(1, 300 - player->piety.getCur());
+        total += std::max<unsigned int>(1, 300 - player->piety.getCur());
         if(total >= pick)
             return(player);
     }

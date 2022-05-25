@@ -64,7 +64,6 @@
 #include "server.hpp"                  // for Server, GOLD_OUT, GOLD_IN, gSe...
 #include "structs.hpp"                 // for saves
 #include "unique.hpp"                  // for Lore, addOwner, isLimited, Unique
-#include "utils.hpp"                   // for MAX, MIN
 #include "xml.hpp"                     // for loadRoom, loadObject, loadPlayer
 #include "commerce.hpp"
 #include "toNum.hpp"
@@ -78,13 +77,13 @@
 Money buyAmount(const std::shared_ptr<Player>&
 player, const std::shared_ptr<Monster>& monster, const std::shared_ptr<Object>&  object, bool sell) {
     Money cost = Faction::adjustPrice(player, monster->getPrimeFaction(), object->value, true);
-    cost.set(MAX<unsigned long>(10,cost[GOLD]), GOLD);
+    cost.set(std::max<unsigned long>(10,cost[GOLD]), GOLD);
     return(cost);
 }
 
 Money buyAmount(const std::shared_ptr<Player>& player, const std::shared_ptr<const UniqueRoom>& room, const std::shared_ptr<Object>&  object, bool sell) {
     Money cost = Faction::adjustPrice(player, room->getFaction(), object->value, true);
-    cost.set(MAX<unsigned long>(10,cost[GOLD]), GOLD);
+    cost.set(std::max<unsigned long>(10,cost[GOLD]), GOLD);
     return(cost);
 }
 
@@ -94,7 +93,7 @@ Money buyAmount(const std::shared_ptr<Player>& player, const std::shared_ptr<con
 
 Money sellAmount(const std::shared_ptr<Player>& player, const std::shared_ptr<const UniqueRoom>& room, const std::shared_ptr<Object>&  object, bool sell) {
     Money value = Faction::adjustPrice(player, room->getFaction(), object->value, sell);
-    value.set(MIN<unsigned long>(value[GOLD] / 2, MAXPAWN), GOLD);
+    value.set(std::min<unsigned long>(value[GOLD] / 2, MAXPAWN), GOLD);
     return(value);
 }
 
@@ -1565,7 +1564,7 @@ void Creature::doHaggling(const std::shared_ptr<Creature>&vendor, const std::sha
         chance = 50 + lck + 5*((int)vendor->getLevel() - (int)getLevel());
 
     } else
-        chance = MIN(95,(getLevel()*2 + saves[LCK].chance/10));
+        chance = std::min(95,(getLevel()*2 + saves[LCK].chance/10));
 
     // If this item was sold and reclaimed, no further haggling
     if(trans == SELL && object->flagIsSet(O_RECLAIMED)) {
@@ -1588,7 +1587,7 @@ void Creature::doHaggling(const std::shared_ptr<Creature>&vendor, const std::sha
         }
     }
     if(trans == SELL)
-        val = MIN<unsigned long>(MAXPAWN,object->value[GOLD]/2);
+        val = std::min<unsigned long>(MAXPAWN,object->value[GOLD]/2);
     else
         val = object->value[GOLD]/2;
 
@@ -1600,7 +1599,7 @@ void Creature::doHaggling(const std::shared_ptr<Creature>&vendor, const std::sha
     }
     if(roll <= chance) {
 
-        discount = MAX(1,Random::get(getLevel()/2, 1+getLevel()));
+        discount = std::max(1,Random::get(getLevel()/2, 1+getLevel()));
 
         percent = (float)(discount);
         percent /= 100;

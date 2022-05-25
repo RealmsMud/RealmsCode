@@ -53,7 +53,6 @@
 #include "server.hpp"                  // for Server, gServer
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for daily
-#include "utils.hpp"                   // for MAX, MIN
 #include "xml.hpp"                     // for loadMonster, loadObject, loadRoom
 
 
@@ -207,11 +206,11 @@ void Player::addToRoom(const std::shared_ptr<UniqueRoom>& uRoom) {
         checkRangeRestrict(uRoom->info))
     {
         // only log if another builder is not in the room
-        for(const auto& ply: uRoom->players) {
-            if( ply.get() != this &&
-                ply->getClass() == CreatureClass::BUILDER)
-            {
-                builderInRoom = true;
+        for(const auto& pIt: uRoom->players) {
+            if(auto ply = pIt.lock()) {
+                if (ply.get() != this && ply->getClass() == CreatureClass::BUILDER) {
+                    builderInRoom = true;
+                }
             }
         }
         if(!builderInRoom) {
@@ -402,7 +401,7 @@ void Monster::addToRoom(const std::shared_ptr<BaseRoom>& room, int num) {
 
     // Handle random aggressive monsters
     if(!flagIsSet(M_AGGRESSIVE)) {
-        if(loadAggro && (Random::get(1,100) <= MAX<unsigned short>(1, loadAggro)))
+        if(loadAggro && (Random::get(1,100) <= std::max<unsigned short>(1, loadAggro)))
             setFlag(M_WILL_BE_AGGRESSIVE);
     }
 
@@ -757,7 +756,14 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
     oStr << str << "^c";
     str = "";
     n = 0;
-    for(const auto& ply : room->players) {
+    for(auto pIt = room->players.begin() ; pIt != room->players.end() ; ) {
+        auto ply = pIt->lock();
+        if(!ply) {
+            pIt = room->players.erase(pIt);
+            continue;
+        }
+        pIt++;
+
         if(ply != player && player->canSee(ply)) {
 
             // other non-vis rules
@@ -1008,7 +1014,7 @@ void doRoomHarms(const std::shared_ptr<BaseRoom>& inRoom, const std::shared_ptr<
 
         roll = Random::get(1,20);
         toHit = 10 - (int)target->getArmor()/10;
-        toHit = MAX(MIN(toHit,20), 1);
+        toHit = std::max(std::min(toHit,20), 1);
 
 
         if(roll >= toHit) {
@@ -1035,7 +1041,7 @@ void doRoomHarms(const std::shared_ptr<BaseRoom>& inRoom, const std::shared_ptr<
         if(target->flagIsSet(P_DM_INVIS) || target->getClass() == CreatureClass::LICH)
             return;
 
-        dmg = 15 - MIN(bonus((int)target->constitution.getCur()),2) + Random::get(1,3);
+        dmg = 15 - std::min(bonus((int)target->constitution.getCur()),2) + Random::get(1,3);
         target->printColor("Deadly underdark moss spores envelope you for %s%d^x damage!\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
         broadcast(target->getSock(), inRoom, "Spores from deadly underdark moss envelope %s!", target->getCName());
 
@@ -1102,9 +1108,11 @@ int UniqueRoom::getWeight() {
     int     i=0;
 
     // count weight of all players in this
-    for(const auto& ply: players) {
-        if(ply->countForWeightTrap())
-            i += ply->getWeight();
+    for(const auto& pIt: players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->countForWeightTrap())
+                i += ply->getWeight();
+        }
     }
 
     // count weight of all objects in this

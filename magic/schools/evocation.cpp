@@ -40,7 +40,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for osp_t
-#include "utils.hpp"                 // for MAX, MIN
 
 
 //*********************************************************************
@@ -117,7 +116,7 @@ int splMagicMissile(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
         maxMissiles = Random::get(2,4);
     }
 
-    num = MAX(1,maxMissiles);
+    num = std::max(1,maxMissiles);
     mpNeeded = 2*num;
 
     if(cmnd->num > 3 && spellData->how == CastType::CAST) {
@@ -128,7 +127,7 @@ int splMagicMissile(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
 
         num = cmnd->val[3];
         if(num > maxMissiles) {
-            player->print("You can only cast a maximum of %d missiles.\n", MAX(1,maxMissiles));
+            player->print("You can only cast a maximum of %d missiles.\n", std::max(1,maxMissiles));
             return(0);
         }
 
@@ -278,14 +277,14 @@ int doOffensive(std::shared_ptr<Creature>caster, std::shared_ptr<Creature> targe
             bns *= 2;
         else if( (room->flagIsSet(R_ROOM_REALM_BONUS) && room->hasOppositeRealmBonus(osp->realm)) ||
                 (room->flagIsSet(R_OPPOSITE_REALM_BONUS) && room->hasRealmBonus(osp->realm)))
-            bns = MIN(-bns, -5);
+            bns = std::min(-bns, -5);
     }
 
 
 
     // Cast on self
     if(caster == target) {
-        damage.set(MAX(1, osp->damage.roll() + bns));
+        damage.set(std::max(1, osp->damage.roll() + bns));
         caster->modifyDamage(caster, dmgType, damage);
         caster->hp.decrease(damage.get());
 
@@ -397,12 +396,12 @@ int doOffensive(std::shared_ptr<Creature>caster, std::shared_ptr<Creature> targe
 
         damage.set(osp->damage.roll() + bns);
         target->modifyDamage(caster, dmgType, damage, osp->realm);
-        damage.set(MAX<int>(0, damage.get()));
+        damage.set(std::max<int>(0, damage.get()));
 
-        m = MIN<unsigned int>(target->hp.getCur(), damage.get());
+        m = std::min<unsigned int>(target->hp.getCur(), damage.get());
 
-        //addrealm = (m * target->getExperience()) / MAX(1, target->hp.getMax());
-        //addrealm = MIN(addrealm, target->getExperience());
+        //addrealm = (m * target->getExperience()) / std::max(1, target->hp.getMax());
+        //addrealm = std::min(addrealm, target->getExperience());
         //if(mTarget && !mTarget->isPet())
         //  caster->addRealm(addrealm, osp->realm);
 
@@ -649,8 +648,8 @@ int splMultiOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellD
     if(players) {
         auto pIt = player->getRoomParent()->players.begin();
         while(pIt != player->getRoomParent()->players.end()) {
-            target = (*pIt++);
-            if(target == player)
+            target = (*pIt++).lock();
+            if(!target || target == player)
                 continue;
 
             if(!doMultiOffensive(player, target, &found_something, &something_died, spellData, spellname, osp))

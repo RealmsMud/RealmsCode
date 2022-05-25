@@ -45,7 +45,6 @@
 #include "server.hpp"                  // for Server, gServer
 #include "statistics.hpp"              // for Statistics
 #include "unique.hpp"                  // for Lore, Unique
-#include "utils.hpp"                   // for MAX, MIN
 #include "xml.hpp"                     // for loadObject, loadMonster
 
 //**********************************************************************
@@ -170,7 +169,7 @@ bool Player::doFish() {
     comp /= 3;  // the fishing pole accounts for 1/3 of your success
     chance += comp;
 
-    chance = MAX<double>(10, MIN<double>(95, chance));
+    chance = std::max<double>(10, std::min<double>(95, chance));
 
     if(Random::get(1,100) > chance)
         return(failFishing(pThis, "Dice roll.", false));

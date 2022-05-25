@@ -24,7 +24,6 @@
 #include "mudObjects/creatures.hpp"  // for Creature
 #include "mudObjects/players.hpp"    // for Player
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MAX
 
 // Used for new fighters, returns true if they're a pure fighter
 // (and for now a ptester)
@@ -59,8 +58,8 @@ void Player::increaseFocus(FocusAction action, unsigned int amt, std::shared_ptr
     if(target) {
         // Focus earned on damage out is reduced by a scaling factor if the player
         // is higher level than the target
-        levelDiff = MAX(getLevel() - target->getLevel(), 0);
-        lF = 1.0/MAX(levelDiff/5.0,1.0);
+        levelDiff = std::max(getLevel() - target->getLevel(), 0);
+        lF = 1.0/std::max(levelDiff/5.0,1.0);
     }
     switch(action) {
         case FOCUS_DAMAGE_IN:
@@ -94,7 +93,7 @@ void Player::increaseFocus(FocusAction action, unsigned int amt, std::shared_ptr
             break;
     }
 
-    focusIncrease = MAX(0, focusIncrease);
+    focusIncrease = std::max(0, focusIncrease);
     if(focusIncrease) {
         printColor("^rYour battle focus increases. (%d)\n", focusIncrease);
 
@@ -112,7 +111,7 @@ void Player::decreaseFocus() {
         return;
 
     int amt = 2;
-    amt = MAX(amt, 1);
+    amt = std::max(amt, 1);
 
     // Modify amt here
 

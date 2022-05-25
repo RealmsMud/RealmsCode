@@ -56,7 +56,6 @@
 #include "proto.hpp"                             // for broadcast, broadcast...
 #include "server.hpp"                            // for Server, gServer, Pla...
 #include "socket.hpp"                            // for Socket
-#include "utils.hpp"                             // for MAX, MIN
 #include "web.hpp"                               // for callWebserver
 #include "xml.hpp"                               // for loadPlayer, loadRoom
 
@@ -1160,7 +1159,7 @@ int dmRejectGuild(const std::shared_ptr<Player>& player, cmd* cmnd) {
     // Keep going untill we get to the end of the string or a -
     while(i+j < strLen && cmnd->fullstr[i+j] != '\0' && cmnd->fullstr[i+j] != '-')
         j++;
-    j = MIN(j, 40);
+    j = std::min(j, 40);
     memcpy(guildName, &cmnd->fullstr[i], j);
     guildName[j] = '\0';
     // Kill trailling whitespace
@@ -1525,8 +1524,8 @@ int Guild::averageLevel() {
     if(!level)
         recalcLevel();
 
-    cLevel = MAX(1L, level);
-    cMembers = MAX(1, numMembers);
+    cLevel = std::max(1L, level);
+    cMembers = std::max(1, numMembers);
 
     return(cLevel/cMembers);
 }

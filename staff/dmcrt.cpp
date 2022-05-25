@@ -76,7 +76,6 @@
 #include "structs.hpp"                         // for saves, ttag, PFNCOMPARE
 #include "threat.hpp"                          // for operator<<
 #include "unique.hpp"                          // for Lore
-#include "utils.hpp"                           // for MAX, MIN
 #include "wanderInfo.hpp"                      // for WanderInfo
 #include "xml.hpp"                             // for loadMonster
 #include "toNum.hpp"
@@ -125,9 +124,9 @@ int dmCreateMob(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(getFullstrText(cmnd->fullstr, 2).starts_with('n'))
-        total = MIN<int>(toNum<int>(getFullstrText(cmnd->fullstr, 3)), MAX_MOBS_IN_ROOM);
+        total = std::min<int>(toNum<int>(getFullstrText(cmnd->fullstr, 3)), MAX_MOBS_IN_ROOM);
 
-    total = MIN(total, MAX_MOBS_IN_ROOM - room->countCrt());
+    total = std::min(total, MAX_MOBS_IN_ROOM - room->countCrt());
 
     if(total < 1) {
         player->printColor(noMonsters.c_str());
@@ -520,14 +519,14 @@ std::string Creature::statCrt(int statFlags) {
         ) {
             crtStr << "^bIn Jailhouse. ";
             crtStr << "Time remaining: " <<
-                    timestr( MAX(0L,pTarget->lasttime[LT_MOB_JAILED].ltime+pTarget->lasttime[LT_MOB_JAILED].interval-t) );
+                    timestr( std::max(0L,pTarget->lasttime[LT_MOB_JAILED].ltime+pTarget->lasttime[LT_MOB_JAILED].interval-t) );
             crtStr << ".^x\n";
         }
 
         if(pTarget->flagIsSet(P_JAILED)) {
             crtStr << "^RIn Dungeon of Despair. ";
             crtStr << "Time remaining: " <<
-                    timestr( MAX(0L,pTarget->lasttime[LT_JAILED].ltime+pTarget->lasttime[LT_JAILED].interval-t) );
+                    timestr( std::max(0L,pTarget->lasttime[LT_JAILED].ltime+pTarget->lasttime[LT_JAILED].interval-t) );
             crtStr << ".^x\n";
         }
     }
@@ -908,7 +907,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
         if(!strcmp(cmnd->str[3], "con")) {
-            target->constitution.setMax(MAX(1, MIN<int>(cmnd->val[3], MAX_STAT_NUM)));
+            target->constitution.setMax(std::max(1, std::min<int>(cmnd->val[3], MAX_STAT_NUM)));
             target->constitution.restore();
             player->print("Constitution set.\n");
 
@@ -1044,7 +1043,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
         if(!strcmp(cmnd->str[3], "dex")) {
-            target->dexterity.setMax(MAX(1, MIN<int>(cmnd->val[3], MAX_STAT_NUM)));
+            target->dexterity.setMax(std::max(1, std::min<int>(cmnd->val[3], MAX_STAT_NUM)));
             target->dexterity.restore();
             player->print("Dexterity set.\n");
             log_immort(true, player, "%s set %s %s's dexterity to %d.\n",
@@ -1073,7 +1072,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
         } else if(!strcmp(cmnd->str[3], "def") && mTarget) {
             num = (int)cmnd->val[3];
-            num = MAX(0, MIN(num, MAXALVL*10));
+            num = std::max(0, std::min(num, MAXALVL*10));
             mTarget->setDefenseSkill(num);
             player->print("Target defense set to %d.\n", num);
             break;
@@ -1209,7 +1208,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
         case 'c':
             if(pTarget) {
-                pTarget->focus.setCur(MAX(1,MIN(30000,(int)cmnd->val[3])));
+                pTarget->focus.setCur(std::max(1,std::min(30000,(int)cmnd->val[3])));
                 player->print("Current Focus points set.\n");
                 log_immort(true, player, "%s set %s %s's Current Focus Points to %d.\n",
                     player->getCName(), PLYCRT(pTarget), pTarget->getCName(), pTarget->focus.getCur());
@@ -1217,7 +1216,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             }
         case 'm':
             if(pTarget) {
-                pTarget->focus.setMax(MAX(1,MIN(30000,(int)cmnd->val[3])));
+                pTarget->focus.setMax(std::max(1,std::min(30000,(int)cmnd->val[3])));
                 player->print("Max Focus Points set.\n");
                 log_immort(true, player, "%s set %s %s's Max Focus Points to %d.\n",
                     player->getCName(), PLYCRT(pTarget), pTarget->getCName(), pTarget->focus.getMax());
@@ -1327,7 +1326,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
     case 'h':
         if(cmnd->str[3][1] == 'm') {
 
-            target->hp.setMax( MAX(1,MIN(30000,(int)cmnd->val[3])));
+            target->hp.setMax( std::max(1,std::min(30000,(int)cmnd->val[3])));
             player->print("Max Hit Points set.\n");
             log_immort(true, player, "%s set %s %s's Max Hit Points to %d.\n",
                 player->getCName(), PLYCRT(target), target->getCName(), target->hp.getMax());
@@ -1341,7 +1340,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
         break;
     case 'i':
         if(!strcmp(cmnd->str[3], "int")) {
-            target->intelligence.setMax(MAX(1, MIN<int>(cmnd->val[3], MAX_STAT_NUM)));
+            target->intelligence.setMax(std::max(1, std::min<int>(cmnd->val[3], MAX_STAT_NUM)));
             target->intelligence.restore();
             player->print("Intelligence set.\n");
             log_immort(true, player, "%s set %s %s's Intelligence to %d.\n",
@@ -1450,7 +1449,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->getCName(), PLYCRT(mTarget), mTarget->getCName(), mTarget->jail.displayStr().c_str());
         break;
     case 'l':
-        //target->getLevel() = MAX(1, MIN(cmnd->val[3], 30));
+        //target->getLevel() = std::max(1, std::min(cmnd->val[3], 30));
         num = cmnd->val[3];
 
         if(!strcmp(cmnd->str[3], "lc")) {
@@ -1511,7 +1510,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
     case 'm':
         if(cmnd->str[3][1] == 'm') {
 
-            target->mp.setMax(MAX(0,MIN(30000,(int)cmnd->val[3])), true);
+            target->mp.setMax(std::max(0,std::min(30000,(int)cmnd->val[3])), true);
             player->print("Max Magic Points set.\n");
             log_immort(true, player, "%s set %s %s's %s to %d.\n",
                 player->getCName(), PLYCRT(target), target->getCName(),
@@ -1542,7 +1541,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 "magic resistance", mTarget->getMagicResistance());
         } else {
 
-            target->mp.setCur(MAX(0,MIN(30000,(int)cmnd->val[3])));
+            target->mp.setCur(std::max(0,std::min(30000,(int)cmnd->val[3])));
             player->print("Current Magic Points set.\n");
             log_immort(true, player, "%s set %s %s's %s to %d.\n",
                 player->getCName(), PLYCRT(target), target->getCName(),
@@ -1609,7 +1608,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 player->print("Error: Poison duration cannot be set on players.\n");
                 return(0);
             }
-            mTarget->setPoisonDamage(MAX(1, MIN<int>(cmnd->val[3], 1200)));
+            mTarget->setPoisonDamage(std::max(1, std::min<int>(cmnd->val[3], 1200)));
             player->print("Poison duration set to %d seconds.\n", mTarget->getPoisonDuration());
             log_immort(true, player, "%s set %s %s's %s to %d.\n",
                 player->getCName(), PLYCRT(target), target->getCName(),
@@ -1622,7 +1621,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 player->print("Error: Poison damage/tick cannot be set on players.\n");
                 return(0);
             }
-            mTarget->setPoisonDamage(MAX<short>(1, MIN<short>(cmnd->val[3], 500)));
+            mTarget->setPoisonDamage(std::max<short>(1, std::min<short>(cmnd->val[3], 500)));
             player->print("Poison damage set to %d per tick.\n", mTarget->getPoisonDamage());
             log_immort(true, player, "%s set %s %s's %s to %d.\n",
                 player->getCName(), PLYCRT(target), mTarget->getCName(),
@@ -1631,7 +1630,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
         if(!strcmp(cmnd->str[3], "pty")) {
 
-        target->piety.setMax(MAX(1, MIN<int>(cmnd->val[3], MAX_STAT_NUM)));
+        target->piety.setMax(std::max(1, std::min<int>(cmnd->val[3], MAX_STAT_NUM)));
         target->piety.restore();
         player->print("Piety set.\n");
         log_immort(true, player, "%s set %s %s's %s to %d.\n",
@@ -1670,7 +1669,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
 
-        target->proficiency[num] = MAX(0, MIN(cmnd->val[3], 10000000));
+        target->proficiency[num] = std::max(0, std::min(cmnd->val[3], 10000000));
         player->print("%M given %d shots in prof#%d.\n", target.get(),
             target->proficiency[num], num);
         log_immort(true, player, "%s set %s %s's %s%d to %ld.\n",
@@ -1751,7 +1750,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     return(0);
                 }
 
-                rnum = MAX(0, MIN(toNum<int>(&cmnd->str[3][2]), MAX_BUILDER_RANGE));
+                rnum = std::max(0, std::min(toNum<int>(&cmnd->str[3][2]), MAX_BUILDER_RANGE));
                 pTarget->bRange[rnum-1].low.setArea(cmnd->str[4]);
 
                 player->print("%s's range #%d area set to %s.\n", pTarget->getCName(), rnum,
@@ -1779,7 +1778,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
             }
 
-            rnum = MAX(1, MIN(toNum<int>(&cmnd->str[3][strlen(cmnd->str[3])-1]), NUM_RESCUE))-1;
+            rnum = std::max(1, std::min(toNum<int>(&cmnd->str[3][strlen(cmnd->str[3])-1]), NUM_RESCUE))-1;
             getCatRef(getFullstrText(cmnd->fullstr, 4), mTarget->rescue[rnum], mTarget);
 
             player->print("%s's rescue mob #%d set to %s.\n", mTarget->getCName(), rnum+1,
@@ -1797,7 +1796,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     player->print("You must set mflag#%d(regenerates) first.\n", M_REGENERATES+1);
                     return(0);
                 }
-                target->regenRate = MAX(1,MIN(cmnd->val[3], 30));
+                target->regenRate = std::max(1,std::min(cmnd->val[3], 30));
                 player->print("Regeneration rate set.\n");
                 log_immort(true, player, "%s set %s regeneration rate to %d seconds.\n", player->getCName(), target->getCName(), target->regenRate);
             }
@@ -1814,8 +1813,8 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
             }
 
-            rnum = MAX(0, MIN(toNum<int>(&cmnd->str[3][2]), MAX_BUILDER_RANGE));
-            pTarget->bRange[rnum-1].low.id = MAX(-1, MIN(RMAX, (int)cmnd->val[3]));
+            rnum = std::max(0, std::min(toNum<int>(&cmnd->str[3][2]), MAX_BUILDER_RANGE));
+            pTarget->bRange[rnum-1].low.id = std::max(-1, std::min(RMAX, (int)cmnd->val[3]));
 
             player->print("%s's low range #%d set to %d.\n", pTarget->getCName(), rnum,
                 pTarget->bRange[rnum-1].low.id);
@@ -1833,8 +1832,8 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
             }
 
-            rnum = MIN(MAX_BUILDER_RANGE, MAX(toNum<int>(&cmnd->str[3][2]),0));
-            pTarget->bRange[rnum-1].high = MAX(-1, MIN(RMAX, (int)cmnd->val[3]));
+            rnum = std::min(MAX_BUILDER_RANGE, std::max(toNum<int>(&cmnd->str[3][2]),0));
+            pTarget->bRange[rnum-1].high = std::max(-1, std::min(RMAX, (int)cmnd->val[3]));
 
             player->print("%s's high range #%d set to %d.\n", pTarget->getCName(), rnum,
                 pTarget->bRange[rnum-1].high);
@@ -1843,7 +1842,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
         default:
 
-            Realm r = (Realm)MAX((int)MIN_REALM, MIN((int)MAX_REALM-1, toNum<int>(&cmnd->str[3][1])));
+            Realm r = (Realm)std::max((int)MIN_REALM, std::min((int)MAX_REALM-1, toNum<int>(&cmnd->str[3][1])));
             target->setRealm(cmnd->val[3], r);
             player->print("%M given %d shots in realm#%d.\n", target.get(), target->getRealm(r), num);
             log_immort(true, player, "%s set %s %s's %s%d to %ld.\n",
@@ -1973,7 +1972,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
 
         case 't':
-            target->strength.setMax(MAX(1, MIN((int)cmnd->val[3], MAX_STAT_NUM)));
+            target->strength.setMax(std::max(1, std::min((int)cmnd->val[3], MAX_STAT_NUM)));
             target->strength.restore();
             player->print("Strength set.\n");
             log_immort(true, player, "%s set %s %s's %s to %d.\n",
@@ -2003,7 +2002,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     return(0);
                 }
 
-                target->saves[num].chance = MAX(1, MIN((int)cmnd->val[3], 99));
+                target->saves[num].chance = std::max(1, std::min((int)cmnd->val[3], 99));
                 player->print("%M now has %d%% chance for save #%d.\n", target.get(),
                     target->saves[num].chance, num);
                 log_immort(true, player, "%s set %s %s's %s%d to %d.\n",
@@ -2032,7 +2031,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             /*case 't':
                 if(target->isPlayer())
                     return(PROMPT);
-                target->ttype = MAX(0,MIN(MAX_TTYPE,(int)cmnd->val[3]));
+                target->ttype = std::max(0,std::min(MAX_TTYPE,(int)cmnd->val[3]));
                 player->print("Treasure type set.\n");
                 log_immort(true, player, "%s set %s %s's %s to %d.\n",
                     player->getCName(),
@@ -2076,7 +2075,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
     case 'w':
         if(mTarget) {
             num = (int)cmnd->val[3];
-            num = MAX(0, MIN(MAXALVL*10, num));
+            num = std::max(0, std::min(MAXALVL*10, num));
 
             mTarget->setWeaponSkill(num);
             player->print("Weapon Skill set to %d.\n", mTarget->getWeaponSkill());
@@ -2774,7 +2773,7 @@ int dmForceWander(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     strcpy(name, monster->getCName());
-    broadcast(nullptr, player->getRoomParent(), "%1M just %s away.", monster.get(), Move::getString(monster).c_str());
+    broadcast((Socket*)nullptr, player->getRoomParent(), "%1M just %s away.", monster.get(), Move::getString(monster).c_str());
 
     monster->deleteFromRoom();
 

@@ -39,7 +39,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for saves, daily
-#include "utils.hpp"                 // for MAX, MIN
 
 //*********************************************************************
 //                      splLevitate
@@ -259,7 +258,7 @@ int splPassWithoutTrace(const std::shared_ptr<Creature>& player, cmd* cmnd, Spel
 // by foot.
 
 int splFly(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
-    return(splGeneric(player, cmnd, spellData, "a", "fly", "fly", MAX<int>(1,spellData->level/3)));
+    return(splGeneric(player, cmnd, spellData, "a", "fly", "fly", std::max<int>(1,spellData->level/3)));
 }
 
 //*********************************************************************
@@ -529,10 +528,10 @@ int splDisintegrate(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
                     broadcast(player->getSock(), player->getParent(), "%M casts a disintegration spell on the %s^x.", player.get(), exit->getCName());
 
                     if(exit->flagIsSet(X_PORTAL)) {
-                        broadcast(nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->getCName());
+                        broadcast((Socket*)nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->getCName());
                         Move::deletePortal(player->getRoomParent(), exit);
                     } else {
-                        broadcast(nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->getCName());
+                        broadcast((Socket*)nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->getCName());
                         bringDownTheWall(effect, player->getRoomParent(), exit);
                     }
                     return(0);
@@ -556,7 +555,7 @@ int splDisintegrate(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
             bns = 50;
 
         if(target->isPlayer() && target->isEffected("resist-magic"))
-            bns += MIN<short>(30, target->saves[DEA].chance);
+            bns += std::min<short>(30, target->saves[DEA].chance);
 
         if(spellData->how == CastType::CAST && player->isPlayer())
             player->getAsPlayer()->statistics.offensiveCast();

@@ -77,7 +77,6 @@
 #include "stats.hpp"                        // for Stat, MOD_CUR
 #include "structs.hpp"                      // for daily
 #include "unique.hpp"                       // for remove, deleteOwner
-#include "utils.hpp"                        // for MIN, MAX
 #include "xml.hpp"                          // for loadRoom
 #include "toNum.hpp"
 
@@ -146,8 +145,8 @@ void Player::init() {
 
     if(!isStaff()) {
         daily[DL_ENCHA].max = 3;
-        daily[DL_FHEAL].max = MAX(3, 3 + (level) / 3);
-        daily[DL_TRACK].max = MAX(3, 3 + (level) / 3);
+        daily[DL_FHEAL].max = std::max(3, 3 + (level) / 3);
+        daily[DL_TRACK].max = std::max(3, 3 + (level) / 3);
         daily[DL_DEFEC].max = 1;    
         
          if(level < 15)
@@ -157,9 +156,9 @@ void Player::init() {
 
         // Mages and liches get more ports than other classes; dependent on translocation magic skill
         if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
-            daily[DL_TELEP].max = MIN(10, (int)getSkillLevel("translocation")/5);
+            daily[DL_TELEP].max = std::min(10, (int)getSkillLevel("translocation")/5);
 
-        daily[DL_RCHRG].max = MAX(7, level / 2);
+        daily[DL_RCHRG].max = std::max(7, level / 2);
         daily[DL_HANDS].max = 3;
 
         daily[DL_RESURRECT].max = 1;
@@ -474,7 +473,7 @@ void Player::init() {
 
 
     if(actual_level < level)
-        actual_level = MAX(level, actual_level);
+        actual_level = std::max(level, actual_level);
 
     killDarkmetal();
 
@@ -570,7 +569,7 @@ void Player::checkTempEnchant( const std::shared_ptr<Object>&  object) {
             t = time(nullptr);
             i = LT(object, LT_ENCHA);
             if(i < t) {
-                object->setArmor(MAX(0, object->getArmor() - object->getAdjustment()));
+                object->setArmor(std::max(0, object->getArmor() - object->getAdjustment()));
                 object->setAdjustment(0);
                 object->clearFlag(O_TEMP_ENCHANT);
                 object->clearFlag(O_RANDOM_ENCHANT);
@@ -758,7 +757,7 @@ void Player::computeAC() {
     if(isEffected("weakness"))
         ac -= 100;
 
-    armor = MAX(0, ac);
+    armor = std::max(0, ac);
 }
 
 
@@ -814,16 +813,12 @@ std::shared_ptr<Player> lowest_piety(const std::shared_ptr<BaseRoom>& room, bool
     if(room->players.empty())
         return(nullptr);
 
-    for(const auto& ply: room->players) {
-        if( ply->flagIsSet(P_HIDDEN) ||
-            (   ply->isInvisible() &&
-                !invis
-            ) ||
-            ply->flagIsSet(P_DM_INVIS) )
-        {
+    for(const auto& pIt: room->players) {
+        auto ply = pIt.lock();
+        if( !ply || ply->flagIsSet(P_HIDDEN) || (ply->isInvisible() && !invis) || ply->flagIsSet(P_DM_INVIS) ) {
             continue;
         }
-        totalpiety += MAX<int>(1, (25 - ply->piety.getCur()));
+        totalpiety += std::max<int>(1, (25 - ply->piety.getCur()));
     }
 
     if(!totalpiety)
@@ -832,16 +827,12 @@ std::shared_ptr<Player> lowest_piety(const std::shared_ptr<BaseRoom>& room, bool
 
     totalpiety = 0;
 
-    for(const auto& ply: room->players) {
-        if( ply->flagIsSet(P_HIDDEN) ||
-            (   ply->isInvisible() &&
-                !invis
-            ) ||
-            ply->flagIsSet(P_DM_INVIS) )
-        {
+    for(const auto& pIt: room->players) {
+        auto ply = pIt.lock();
+        if( !ply || ply->flagIsSet(P_HIDDEN) || ( ply->isInvisible() && !invis) || ply->flagIsSet(P_DM_INVIS) ) {
             continue;
         }
-        totalpiety += MAX<int>(1, (25 - ply->piety.getCur()));
+        totalpiety += std::max<int>(1, (25 - ply->piety.getCur()));
         if(totalpiety >= pick) {
             player = ply;
             break;
@@ -922,7 +913,7 @@ int Player::computeLuck() {
     if(!isStaff())
         num -= (coins[GOLD] / 20000);
 
-    num = MAX(1, MIN(99, num));
+    num = std::max(1, std::min(99, num));
 
     luck = num;
     return(num);
@@ -1084,7 +1075,7 @@ Dice monk_dice[41] =
 };
 
 void Player::setMonkDice() {
-    int nLevel = MAX<int>(0, MIN<int>(level, MAXALVL));
+    int nLevel = std::max<int>(0, std::min<int>(level, MAXALVL));
 
     // reset monk dice?
     if(cClass == CreatureClass::MONK) {
@@ -1364,7 +1355,7 @@ int Player::getVision() const {
     if(isEffected("farsight"))
         vision *= 2;
 
-    return(MIN(MAX_VISION, vision));
+    return(std::min(MAX_VISION, vision));
 }
 
 
@@ -1380,56 +1371,56 @@ int Player::getSneakChance()  {
         return(101);
 
     // this is the base chance for most classes
-    int chance = MIN(70, 5 + 2 * sLvl + 3 * bonus(dexterity.getCur()));
+    int chance = std::min(70, 5 + 2 * sLvl + 3 * bonus(dexterity.getCur()));
 
     switch(cClass) {
     case CreatureClass::THIEF:
         if(cClass2 == CreatureClass::MAGE)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
+            chance = std::min(90, 5 + 8 * std::max(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
         else
-            chance = MIN(90, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
+            chance = std::min(90, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::ASSASSIN:
-        chance = MIN(90, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
+        chance = std::min(90, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
         break;
     case CreatureClass::CLERIC:
         if(cClass2 == CreatureClass::ASSASSIN)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
+            chance = std::min(90, 5 + 8 * std::max(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
         else if(deity == KAMIRA || deity == ARACHNUS)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(piety.getCur()));
+            chance = std::min(90, 5 + 8 * std::max(1,sLvl-2) + 3 * bonus(piety.getCur()));
 
         break;
     case CreatureClass::FIGHTER:
         if(cClass2 == CreatureClass::THIEF)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
+            chance = std::min(90, 5 + 8 * std::max(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::MAGE:
         if(cClass2 == CreatureClass::THIEF || cClass2 == CreatureClass::ASSASSIN)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus(dexterity.getCur()));
+            chance = std::min(90, 5 + 8 * std::max(1,sLvl-3) + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::DRUID:
         if(getConstRoomParent()->isForest())
-            chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus(dexterity.getCur()));
+            chance = std::min(95 , 5 + 10 * sLvl + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::RANGER:
         if(getConstRoomParent()->isForest())
-            chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus(dexterity.getCur()));
+            chance = std::min(95 , 5 + 10 * sLvl + 3 * bonus(dexterity.getCur()));
         else
-            chance = MIN(83, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
+            chance = std::min(83, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
         break;
     case CreatureClass::ROGUE:
-        chance = MIN(85, 5 + 7 * sLvl + 3 * bonus(dexterity.getCur()));
+        chance = std::min(85, 5 + 7 * sLvl + 3 * bonus(dexterity.getCur()));
         break;
     default:
         break;
     }
 
     if(isBlind())
-        chance = MIN(20, chance);
+        chance = std::min(20, chance);
 
     if(isEffected("camouflage")) {
         if(getConstRoomParent()->isOutdoors())
@@ -1438,7 +1429,7 @@ int Player::getSneakChance()  {
             chance += 5;
     }
 
-    return(MIN(99, chance));
+    return(std::min(99, chance));
 }
 
 
@@ -1627,7 +1618,7 @@ std::string Player::expInLevel() const {
     }
 
     std::ostringstream oStr;
-    oStr << MIN<long>((experience - Config::expNeeded(displayLevel-1)),
+    oStr << std::min<long>((experience - Config::expNeeded(displayLevel-1)),
             (Config::expNeeded(displayLevel) - Config::expNeeded(displayLevel-1)));
     return(oStr.str());
 }
@@ -1945,7 +1936,7 @@ bool Player::checkConfusion() {
                             dmg = Random::get(1,2) + level/3 + Random::get(1,(1+level)/2);
                             if(strength.getCur() < 90) {
                                 dmg -= (90-strength.getCur())/10;
-                                dmg = MAX(1,dmg);
+                                dmg = std::max(1,dmg);
                             }
                         } else
                             dmg = damage.roll();
@@ -2102,16 +2093,16 @@ int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd) {
         return(0);
     }
 
-    diceNum = MAX(1, diceNum);
+    diceNum = std::max(1, diceNum);
 
     if(diceSides<2) {
         player->print("A die has a minimum of 2 sides.\n");
         return(0);
     }
 
-    diceNum = MIN(100, diceNum);
-    diceSides = MIN(100, diceSides);
-    diceAdd = MAX(-100,MIN(100, diceAdd));
+    diceNum = std::min(100, diceNum);
+    diceSides = std::min(100, diceSides);
+    diceAdd = std::max(-100,std::min(100, diceAdd));
 
 
     sprintf(diceOutput, "%dd%d", diceNum, diceSides);

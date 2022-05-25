@@ -460,7 +460,7 @@ void Property::destroy() {
                                 for(xit = outside->exits.begin() ; xit != outside->exits.end() ; ) {
                                     std::shared_ptr<Exit> oExit = (*xit++);
                                     if(oExit->target.room == room->info) {
-                                        broadcast(nullptr, outside.get(), "%s closes its doors.", name.c_str());
+                                        broadcast((Socket*)nullptr, outside, "%s closes its doors.", name.c_str());
                                         outside->delExit(oExit);
                                     }
                                 }
@@ -484,7 +484,7 @@ void Property::destroy() {
                     }
                 }
 
-                broadcast(nullptr, room, "%s closes its doors.", name.c_str());
+                broadcast((Socket*)nullptr, room, "%s closes its doors.", name.c_str());
                 room->destroy();
             }
         }

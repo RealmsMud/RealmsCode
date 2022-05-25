@@ -34,7 +34,6 @@
 #include "random.hpp"                // for Random
 #include "socket.hpp"                // for Socket
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MAX, MIN
 
 
 bool Player::operator <(const Player& t) const {
@@ -100,7 +99,7 @@ void Player::pulseTick(long t) {
     if(mainTick < t && !flagIsSet(P_NO_TICK_HP) && !noTick) {
         int hpTickAmt = 0;
         if(cClass != CreatureClass::LICH) {
-            hpTickAmt = MAX(1, 3 + bonus(constitution.getCur()) + (cClass == CreatureClass::BERSERKER ? 2:0));
+            hpTickAmt = std::max(1, 3 + bonus(constitution.getCur()) + (cClass == CreatureClass::BERSERKER ? 2:0));
             if(!ill && !deathSickness) {
                 if(!isEffected("bloodsac")) {
                     if(flagIsSet(P_SITTING))
@@ -112,7 +111,7 @@ void Player::pulseTick(long t) {
                     hpTickAmt += 3;
             }
         } else if(cClass == CreatureClass::LICH && !flagIsSet(P_NO_TICK_MP)) {
-            hpTickAmt = MAX(1, 4+(constitution.getCur() > 170 ? 1:0));
+            hpTickAmt = std::max(1, 4+(constitution.getCur() > 170 ? 1:0));
             if(!ill && !deathSickness) {
                 if(flagIsSet(P_SITTING))
                     hpTickAmt += 1;
@@ -147,7 +146,7 @@ void Player::pulseTick(long t) {
                 (cClass2 == CreatureClass::MAGE && (cClass == CreatureClass::FIGHTER || cClass == CreatureClass::THIEF)) )
                 mpTickAmt += 2;
 
-            mpTickAmt += MAX(1, 2+(intelligence.getCur() > 170 ? 1:0));
+            mpTickAmt += std::max(1, 2+(intelligence.getCur() > 170 ? 1:0));
 
             if(!ill && !deathSickness) {
                 if(flagIsSet(P_SITTING))
@@ -380,7 +379,7 @@ double Player::winterProtection() const {
         if(ready[i])
             percent += ready[i]->winterProtection();
 
-    return(MAX(0.0, MIN(1.0, percent)));
+    return(std::max(0.0, std::min(1.0, percent)));
 }
 
 //*********************************************************************
@@ -411,7 +410,7 @@ bool Player::doPlayerHarmRooms() {
         wake("You awaken suddenly!");
         print("The room starts to spin around you.\nYou feel confused.\n");
         if(!isStaff()) {
-            updateAttackTimer(true, MAX(dice(2,6,0), 6));
+            updateAttackTimer(true, std::max(dice(2,6,0), 6));
             stun(Random::get(3,9));
         }
     }
@@ -420,10 +419,10 @@ bool Player::doPlayerHarmRooms() {
     if(room->flagIsSet(R_DRAIN_MANA) && !isStaff()) {
         wake("Terrible nightmares disturb your sleep!");
         if(cClass != CreatureClass::LICH)
-            mp.decrease(MIN<int>(mp.getCur(),6));
+            mp.decrease(std::min<int>(mp.getCur(),6));
 
         if(cClass == CreatureClass::LICH) {
-            hp.decrease(MIN<int>(hp.getCur(), 6));
+            hp.decrease(std::min<int>(hp.getCur(), 6));
             if(hp.getCur() < 1)
                 die(DRAINED);
         }
@@ -540,7 +539,7 @@ bool Player::doPlayerHarmRooms() {
 
     // Not protected
     if(!prot) {
-        hp.decrease(MAX(1,dmg));
+        hp.decrease(std::max(1,dmg));
         if(hp.getCur() < 1) {
             die(dt);
             return(true);

@@ -49,7 +49,7 @@
 #include "specials.hpp"        // for SA_MAX_FLAG, SA_NO_FLAG
 #include "structs.hpp"         // for MudFlag
 #include "swap.hpp"            // for Swap
-#include "utils.hpp"           // for MAX
+#include "zone.hpp"
 #include "version.hpp"         // for VERSION
 
 
@@ -263,6 +263,7 @@ bool Config::loadBeforePython() {
     std::clog << "Loading Config..." << (loadConfig() ? "done" : "*** FAILED ***")<< std::endl;
     std::clog << "Loading Discord Config..." << (loadDiscordConfig() ? "done" : "*** FAILED ***")<< std::endl;
 
+    std::clog << "Loading Zones..." << (loadZones() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Socials..." << (loadSocials() ? "done" : "*** FAILED ***") << std::endl;
     
     std::clog << "Loading Recipes..." << (loadRecipes() ? "done" : "*** FAILED ***") << std::endl;
@@ -561,7 +562,7 @@ int Config::getMaxDouble() const {
 }
 
 void Config::setNumGuilds(int guildId) {
-    numGuilds = MAX(numGuilds, guildId);
+    numGuilds = std::max(numGuilds, guildId);
 }
 
 const std::string &Config::getBotToken() const {

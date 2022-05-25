@@ -50,7 +50,6 @@
 #include "range.hpp"                                // for Range
 #include "server.hpp"                               // for Server, gServer
 #include "ships.hpp"                                // for ShipStop, ShipRaid
-#include "utils.hpp"                                // for MAX
 #include "wanderInfo.hpp"                           // for WanderInfo
 #include "xml.hpp"                                  // for copyToString, sav...
 #include "toNum.hpp"
@@ -223,7 +222,7 @@ bool ShipExit::createExit() {
             ext->setFlag(X_MOVING);
 
             if(!arrives.empty())
-                broadcast(nullptr, newRoom, "%s", arrives.c_str());
+                broadcast((Socket*)nullptr, newRoom, "%s", arrives.c_str());
             return(true);
         }
     }
@@ -269,7 +268,7 @@ void ShipExit::removeExit() {
         raider = (*mIt++);
 
         if (raider && raider->flagIsSet(M_RAIDING)) {
-            broadcast(nullptr, newRoom, "%1M just %s away.", raider.get(), Move::getString(raider).c_str());
+            broadcast((Socket*)nullptr, newRoom, "%1M just %s away.", raider.get(), Move::getString(raider).c_str());
             gServer->delActive(raider.get());
             raider->deleteFromRoom();
             raider->clearAsEnemy();
@@ -278,7 +277,7 @@ void ShipExit::removeExit() {
 
 
     if (!departs.empty())
-        broadcast(nullptr, newRoom, "%s", departs.c_str());
+        broadcast((Socket*)nullptr, newRoom, "%s", departs.c_str());
 
     aRoom = newRoom->getAsAreaRoom();
     for (auto xit = newRoom->exits.begin(); xit != newRoom->exits.end();) {
@@ -402,7 +401,7 @@ int shipDeleteExits(Ship &ship, ShipStop *stop) {
                     ply->doPetFollow();
                 }
 
-                broadcast(nullptr, room, "%M was hauled off by %N.", ply.get(), raider.get());
+                broadcast((Socket*)nullptr, room, "%M was hauled off by %N.", ply.get(), raider.get());
             }
         }
     }
@@ -446,7 +445,7 @@ void ShipRaid::load(xmlNodePtr curNode) {
 
         childNode = childNode->next;
     }
-    minSpawnNum = MAX(0, minSpawnNum);
+    minSpawnNum = std::max(0, minSpawnNum);
     if(maxSpawnNum < minSpawnNum)
         maxSpawnNum = minSpawnNum;
 }

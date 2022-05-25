@@ -66,7 +66,6 @@
 #include "stats.hpp"                                // for Stat
 #include "toNum.hpp"                                // for toNum
 #include "track.hpp"                                // for Track
-#include "utils.hpp"                                // for MAX
 #include "weather.hpp"                              // for WEATHER_BEAUTIFUL...
 #include "xml.hpp"                                  // for iToYesNo, loadRoom
 
@@ -1517,7 +1516,7 @@ int dmOutlaw(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    minutes = MAX(minutes, 10);
+    minutes = std::max(minutes, 10);
 
     target->setFlag(P_OUTLAW);
     target->lasttime[LT_OUTLAW].ltime = time(nullptr);
@@ -1950,15 +1949,15 @@ int dmCast(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("Spell name is not unique.\n");
         return(0);
     }
-
+    auto room = player->getRoomParent();
 
     if(rcast) {
 
 
         if(splno == S_WORD_OF_RECALL) {
-            std::shared_ptr<BaseRoom> room = player->getRecallRoom().loadRoom(player);
+            std::shared_ptr<BaseRoom> recallRoom = player->getRecallRoom().loadRoom(player);
 
-            if(!room) {
+            if(!recallRoom) {
                 player->print("Spell failure.\n");
                 return(0);
             }
@@ -1967,15 +1966,21 @@ int dmCast(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 "%M casts %s on everyone in the room.\n", player.get(), get_spell_name(splno));
 
             log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->getCName(), get_spell_name(splno),
-                player->getRoomParent()->fullName().c_str());
+                room->fullName().c_str());
 
-            auto pIt = player->getRoomParent()->players.begin();
-            while(pIt != player->getRoomParent()->players.end()) {
-                target = (*pIt++);
+
+            for(auto pIt = room->players.begin() ; pIt != room->players.end() ; ) {
+                target = pIt->lock();
+                if(!target) {
+                    pIt = room->players.erase(pIt);
+                    continue;
+                }
+                pIt++;
+                target = (*pIt++).lock();
                 target->print("%M casts %s on you.\n", player.get(), get_spell_name(splno));
 
                 target->deleteFromRoom();
-                target->addToRoom(room);
+                target->addToRoom(recallRoom);
             }
             return(0);
         }
@@ -1987,18 +1992,20 @@ int dmCast(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         player->print("You cast %s on everyone in the room.\n", get_spell_name(splno));
 
-        for(const auto& ply: player->getRoomParent()->players) {
-            if(ply->flagIsSet(P_DM_INVIS))
-                continue;
+        for(const auto& pIt: room->players) {
+            if(auto ply = pIt.lock()) {
+                if (ply->flagIsSet(P_DM_INVIS))
+                    continue;
 
-            ply->print("%M casts %s on you.\n", player.get(), get_spell_name(splno));
-            dmGlobalSpells(ply, splno, false);
+                ply->print("%M casts %s on you.\n", player.get(), get_spell_name(splno));
+                dmGlobalSpells(ply, splno, false);
+            }
         }
 
         broadcast(player->getSock(), player->getParent(), "%M casts %s on everyone in the room.\n", player.get(), get_spell_name(splno));
 
         log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->getCName(), get_spell_name(splno),
-            player->getRoomParent()->fullName().c_str());
+            room->fullName().c_str());
 
     } else {
         if(!dmGlobalSpells(player, splno, true)) {
@@ -2017,12 +2024,9 @@ int dmCast(const std::shared_ptr<Player>& player, cmd* cmnd) {
         for(const auto& p : gServer->players) {
             ply = p.second;
 
-            if(!ply->isConnected())
-                continue;
-            if(ply->fd == fd)
-                continue;
-            if(ply->flagIsSet(P_DM_INVIS))
-                continue;
+            if(!ply->isConnected()) continue;
+            if(ply->fd == fd) continue;
+            if(ply->flagIsSet(P_DM_INVIS)) continue;
             if(!silent)
                 ply->print("%M casts %s on you.\n", player.get(), get_spell_name(splno));
             dmGlobalSpells(ply, splno, false);

@@ -70,7 +70,6 @@
 #include "stats.hpp"                             // for Stat
 #include "structs.hpp"                           // for saves, ttag
 #include "threat.hpp"                            // for ThreatTable, operator<<
-#include "utils.hpp"                             // for MAX, MIN
 #include "xml.hpp"                               // for loadMonster
 
 const short Creature::OFFGUARD_REMOVE=0;
@@ -123,7 +122,7 @@ bool Monster::addEnemy(const std::shared_ptr<Creature>& target, bool print) {
 
     if(print) {
       if(aggroString[0])
-          broadcast(nullptr, getRoomParent(), "%M says, \"%s.\"", this, aggroString);
+          broadcast((Socket*)nullptr, getRoomParent(), "%M says, \"%s.\"", this, aggroString);
 
       target->printColor("^r%M attacks you.\n", this);
       broadcast(target->getSock(), getRoomParent(), "%M attacks %N.", this, target.get());
@@ -196,9 +195,11 @@ bool Monster::nearEnemy() const {
 //*********************************************************************
 
 bool Monster::nearEnmPly() const {
-    for(const auto& ply: getConstRoomParent()->players) {
-        if(isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS))
-            return(true);
+    for(const auto& pIt: getConstRoomParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS))
+                return (true);
+        }
     }
 
     return(false);
@@ -212,9 +213,11 @@ bool Monster::nearEnmPly() const {
 bool Monster::nearEnemy(const std::shared_ptr<Creature> & target) const {
     const std::shared_ptr<const BaseRoom> room = getConstRoomParent();
 
-    for(const auto& ply: room->players) {
-        if( isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS) && target->getName() != ply->getName())
-            return(true);
+    for(const auto& pIt: room->players) {
+        if(auto ply = pIt.lock()) {
+            if (isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS) && target->getName() != ply->getName())
+                return (true);
+        }
 
     }
 
@@ -284,7 +287,7 @@ void Monster::diePermCrt() {
             std::ifstream f(file);
             std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 
-            broadcast(nullptr, getRoomParent(), "\n%s", str.c_str());
+            broadcast((Socket*)nullptr, getRoomParent(), "\n%s", str.c_str());
         }
     }
 }
@@ -310,7 +313,7 @@ std::string Player::consider(const std::shared_ptr<Creature>& creature) const {
         diff = 4;
     else {
         diff = level - creature->getLevel();
-        diff = MAX(-4, MIN(4, diff));
+        diff = std::max(-4, std::min(4, diff));
     }
 
     // upHeShe is used most often
@@ -483,7 +486,7 @@ int Monster::mobileCrt() {
                 return(0);
 
             if(exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_LOCKED)) {
-                broadcast(nullptr, getRoomParent(), "%M just opened the %s.", this, exit->getCName());
+                broadcast((Socket*)nullptr, getRoomParent(), "%M just opened the %s.", this, exit->getCName());
                 exit->clearFlag(X_CLOSED);
             }
 
@@ -496,11 +499,11 @@ int Monster::mobileCrt() {
                 std::shared_ptr<Creature> lookingFor = nullptr;
                 if(flagIsSet(M_CHASING_SOMEONE) && hasEnemy() && ((lookingFor = getTarget(false)) != nullptr) ) {
 
-                    broadcast(nullptr, getRoomParent(), "%M %s to the %s^x, looking for %s.",
+                    broadcast((Socket*)nullptr, getRoomParent(), "%M %s to the %s^x, looking for %s.",
                         this, Move::getString(mThis).c_str(), exit->getCName(), lookingFor->getCName());
                 }
                 else
-                    broadcast(nullptr, getRoomParent(), "%M just %s to the %s^x.",
+                    broadcast((Socket*)nullptr, getRoomParent(), "%M just %s to the %s^x.",
                         this, Move::getString(mThis).c_str(), exit->getCName());
 
                 clearFlag(M_SNEAKING);
@@ -538,7 +541,7 @@ int Monster::mobileCrt() {
 // This function should make monsters attack each other
 
 void Monster::monsterCombat(const std::shared_ptr<Monster>& target) {
-    broadcast(nullptr, getRoomParent(), "%M attacks %N.\n", this, target.get());
+    broadcast((Socket*)nullptr, getRoomParent(), "%M attacks %N.\n", this, target.get());
 
     addEnemy(target);
 }
@@ -1083,7 +1086,7 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
 
         if(checkTimer && !isEffected("fear") && !isStaff()) {
             t = time(nullptr);
-            i = MAX(getLTAttack(), MAX(lasttime[LT_SPELL].ltime,lasttime[LT_READ_SCROLL].ltime)) + 3L;
+            i = std::max(getLTAttack(), std::max(lasttime[LT_SPELL].ltime,lasttime[LT_READ_SCROLL].ltime)) + 3L;
             if(t < i) {
                 if(displayFail)
                     pleaseWait(i-t);
@@ -1105,8 +1108,9 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
         }
 
         if(!crtInRoom) {
-            for(const auto& ply: getConstRoomParent()->players) {
-                if(ply.get() == this)
+            for(const auto& pIt: getConstRoomParent()->players) {
+                auto ply = pIt.lock();
+                if(!ply || ply.get() == this)
                     continue;
                 if(!ply->isStaff()) {
                     crtInRoom = true;
@@ -1414,7 +1418,7 @@ bool Creature::doFlee(bool magicTerror) {
 
         if(cClass == CreatureClass::PALADIN && deity != GRADIUS && !magicTerror && level >= 10) {
             n = level * 8;
-            n = MIN<long>(experience, n);
+            n = std::min<long>(experience, n);
             print("You lose %d experience for your cowardly retreat.\n", n);
             experience -= n;
         }

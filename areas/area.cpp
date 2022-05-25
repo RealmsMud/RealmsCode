@@ -56,7 +56,6 @@
 #include "socket.hpp"                // for Socket
 #include "track.hpp"                 // for Track
 #include "toNum.hpp"                 // for toNum
-#include "utils.hpp"                 // for MAX
 
 class BaseRoom;
 class WanderInfo;
@@ -288,7 +287,7 @@ std::string MapMarker::distance(const MapMarker& mapmarker) const {
     if(area != mapmarker.getArea() || *this == mapmarker)
         return("");
 
-    int distance = (MAX(abs(z - mapmarker.getZ()), MAX(abs(x - mapmarker.getX()), abs(y - mapmarker.getY()))));
+    int distance = (std::max(abs(z - mapmarker.getZ()), std::max(abs(x - mapmarker.getX()), abs(y - mapmarker.getY()))));
 
     // The target is...
     if(distance <= 3)
@@ -812,10 +811,12 @@ char Area::getTerrain(const std::shared_ptr<Player>& player, const MapMarker& ma
                 }
 
                 // can they see anybody in the room?
-                for(const auto& ply : room->players) {
-                    if(player == ply || (player->canSee(ply) && (staff || !ply->flagIsSet(P_HIDDEN)))) {
-                        found = true;
-                        break;
+                for(const auto& pIt : room->players) {
+                    if(auto ply = pIt.lock()) {
+                        if (player == ply || (player->canSee(ply) && (staff || !ply->flagIsSet(P_HIDDEN)))) {
+                            found = true;
+                            break;
+                        }
                     }
                 }
                 if(!found) {
@@ -926,7 +927,7 @@ void Area::getGridText(char grid[][80], int pHeight, const MapMarker& mapmarker,
             lines++;
 
     // time to move the description into the array
-    offset = MAX(0, (pHeight - lines) / 2);
+    offset = std::max(0, (pHeight - lines) / 2);
     k = desc.size()-1;
     n=0;
 
@@ -1177,7 +1178,7 @@ void Area::loadTerrain(int pMinDepth) {
     bool    gotOffset=false;
     int     i=0, n=0, k=pMinDepth, len=0, size=0;
     char    filename[256];
-    char    storage[MAX(height, width)+1];
+    char    storage[std::max(height, width)+1];
 
     while(k < depth) {
         sprintf(filename, "%s/%s.%d.ter", Path::AreaData.c_str(), dataFile, k);

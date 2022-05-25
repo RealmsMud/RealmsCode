@@ -65,6 +65,8 @@ struct Path {
     static inline const fs::path BuilderHelp = BaseHelp / "bhelp";
     static inline const fs::path HelpTemplate = BaseHelp / "template";
 
+    static inline const fs::path Zone = BasePath / "zones";
+
     static bool checkDirExists(const fs::path& path);
     static bool checkDirExists(const std::string &area, fs::path (*fn)(const CatRef &cr));
 

@@ -55,7 +55,6 @@
 #include "socket.hpp"                  // for Socket
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for StatsContainer
-#include "utils.hpp"                   // for MAX
 #include "web.hpp"                     // for updateRecentActivity, webUnass...
 
 //*********************************************************************
@@ -838,19 +837,19 @@ void Player::changingStats(std::string str) {
     case CON_CHANGING_STATS_LOWER:
         switch (low(str[0])) {
         case 'a':
-            player->newStats.st = MAX(1, newStats.st-1);
+            player->newStats.st = std::max(1, newStats.st-1);
             break;
         case 'b':
-            player->newStats.de = MAX(1, newStats.de-1);
+            player->newStats.de = std::max(1, newStats.de-1);
             break;
         case 'c':
-            player->newStats.co = MAX(1, newStats.co-1);
+            player->newStats.co = std::max(1, newStats.co-1);
             break;
         case 'd':
-            player->newStats.in = MAX(1, newStats.in-1);
+            player->newStats.in = std::max(1, newStats.in-1);
             break;
         case 'e':
-            player->newStats.pi = MAX(1, newStats.pi-1);
+            player->newStats.pi = std::max(1, newStats.pi-1);
             break;
         default:
             sock->print("\nPlease choose one.");
@@ -881,7 +880,7 @@ char *timestr(long t) {
 }
 
 #define TIMELEFT(name,ltflag) \
-    tmp = MAX<long>(0,(LT(player, (ltflag)) - t)); \
+    tmp = std::max<long>(0,(LT(player, (ltflag)) - t)); \
     player->print("Time left on current %s: %s.\n", name, timestr(tmp));
 #define TIMEUNTIL(name,ltflag,time) \
     u = (time) - t + player->lasttime[(ltflag)].ltime;\
@@ -940,7 +939,7 @@ int cmdTime(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
 
         // for ceris/aramon when they resurrect dead people
-        tmp = MAX<long>(0,(LT(player, LT_NOMPTICK) - t));
+        tmp = std::max<long>(0,(LT(player, LT_NOMPTICK) - t));
         if(tmp > 0)
             *player << "Time until vitality is restored: " << timestr(tmp) << ".\n";
 
@@ -995,7 +994,7 @@ int cmdTime(const std::shared_ptr<Player>& player, cmd* cmnd) {
             else if((i - t > 60) && (i - t < 3600))
                 *player << ((i - t) / 60L) << ":" << ((i - t) % 60L) << " more minutes.\n";
             else
-                *player << (MAX<int>((i - t),0)) << " more seconds.\n";
+                *player << (std::max<int>((i - t),0)) << " more seconds.\n";
         }
 
         if(player->flagIsSet(P_JAILED)) {
@@ -1013,7 +1012,7 @@ int cmdTime(const std::shared_ptr<Player>& player, cmd* cmnd) {
             else if((i - t > 60) && (i - t < 3600))  
                 *player << ((i - t) / 60L) << ":" << ((i - t) % 60L) << " more minutes.\n";
             else
-                *player << (MAX<int>((i - t),0)) << " more seconds.\n";
+                *player << (std::max<int>((i - t),0)) << " more seconds.\n";
         }
 
         i = 0;

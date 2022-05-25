@@ -44,7 +44,6 @@
 #include "server.hpp"                          // for Server, gServer
 #include "statistics.hpp"                      // for Statistics, LevelInfo
 #include "stats.hpp"                           // for Stat
-#include "utils.hpp"                           // for MAX, MIN
 #include "xml.hpp"                             // for loadPlayer
 
 //*********************************************************************
@@ -258,7 +257,7 @@ time_t Statistics::getLevelHistoryStart() {
 char stat_names[][4] = { "STR", "DEX", "CON", "INT", "PTY", "CHA" };
 
 char* getStatName(int stat) {
-    stat = MIN<int>(MAX<int>(stat - 1, 0), MAX_STAT);
+    stat = std::min<int>(std::max<int>(stat - 1, 0), MAX_STAT);
     return(stat_names[stat]);
 }
 
@@ -266,7 +265,7 @@ char* getStatName(int stat) {
 char save_names[][4] = { "LCK", "POI", "DEA", "BRE", "MEN", "SPL" };
 
 char* getSaveName(int save) {
-    save = MIN<int>(MAX<int>(save, 0), MAX_SAVE-1);
+    save = std::min<int>(std::max<int>(save, 0), MAX_SAVE-1);
     return(save_names[save]);
 }
 
@@ -679,7 +678,7 @@ void Statistics::combo() { if(track) numCombosOpened++; }
 //                      group
 //*********************************************************************
 
-void Statistics::group(unsigned long num) { if(track) mostGroup = MAX(num, mostGroup); }
+void Statistics::group(unsigned long num) { if(track) mostGroup = std::max(num, mostGroup); }
 
 //*********************************************************************
 //                      monster

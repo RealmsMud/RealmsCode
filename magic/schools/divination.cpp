@@ -31,7 +31,6 @@
 #include "random.hpp"                // for Random
 #include "server.hpp"                // for Server, gServer
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MAX, MIN
 
 
 //*********************************************************************
@@ -104,7 +103,7 @@ int splFortune(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Fortune spell cast on yourself.\n");
             luk = pPlayer->getLuck() / 10;
-            luk = MAX(luk, 1);
+            luk = std::max(luk, 1);
             switch(luk) {
             case 1:
                 player->print("Your death will be tragic.\n.");
@@ -163,7 +162,7 @@ int splFortune(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         else
             luk = target->getAsPlayer()->getLuck() / 10;
 
-        luk = MAX(luk, 1);
+        luk = std::max(luk, 1);
         player->print("Fortune spell cast on %N.\n", target.get());
 
         switch (luk) {
@@ -247,7 +246,7 @@ int splClairvoyance(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
              (bonus(pPlayer->intelligence.getCur()) - bonus(target->intelligence.getCur())) * 5;
 
     chance += (pPlayer->getClass() == CreatureClass::MAGE) ? 5 : 0;
-    chance = MIN(85, chance);
+    chance = std::min(85, chance);
 
     if(target->isStaff())
         chance = 0;
@@ -264,7 +263,7 @@ int splClairvoyance(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
         chance = 60 + ((int)target->getLevel() - (int)spellData->level) * 5 +
                  (bonus(target->intelligence.getCur()) - bonus(pPlayer->intelligence.getCur())) * 5;
         chance += (target->getClass() == CreatureClass::MAGE) ? 5 : 0;
-        chance = MIN(85, chance);
+        chance = std::min(85, chance);
 
         if(!pPlayer->isStaff()) {
             if(!target->chkSave(MEN, pPlayer, 0)) {

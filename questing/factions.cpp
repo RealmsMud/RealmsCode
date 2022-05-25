@@ -49,7 +49,6 @@
 #include "raceData.hpp"                             // for RaceData
 #include "random.hpp"                               // for Random
 #include "server.hpp"                               // for Server, gServer
-#include "utils.hpp"                                // for MAX, MIN
 #include "xml.hpp"                                  // for copyToNum, bad_le...
 
 //*********************************************************************
@@ -288,35 +287,35 @@ bool Faction::alwaysHates(const std::shared_ptr<Player>& player) const {
 long Faction::getUpperLimit(const std::shared_ptr<Player>& player) const {
     long    limit = MAX_FACTION, x;
     x = max.getClassRegard(player->getClass());
-    if(x) limit = MIN(x, limit);
+    if(x) limit = std::min(x, limit);
 
     // illusioned race affects faction
     x = max.getRaceRegard(player->getDisplayRace());
-    if(x) limit = MIN(x, limit);
+    if(x) limit = std::min(x, limit);
 
     if(player->getDeity()) {
         x = max.getDeityRegard(player->getDeity());
-        if(x) limit = MIN(x, limit);
+        if(x) limit = std::min(x, limit);
     }
     if(player->isNewVampire()) {
         x = max.getVampirismRegard();
-        if(x) limit = MIN(x, limit);
+        if(x) limit = std::min(x, limit);
     }
     if(player->isNewWerewolf()) {
         x = max.getLycanthropyRegard();
-        if(x) limit = MIN(x, limit);
+        if(x) limit = std::min(x, limit);
     }
     if(player->getGuild()) {
         x = max.getGuildRegard(player->getGuild());
-        if(x) limit = MIN(x, limit);
+        if(x) limit = std::min(x, limit);
     }
     if(player->getClan()) {
         x = max.getClanRegard(player->getClan());
-        if(x) limit = MIN(x, limit);
+        if(x) limit = std::min(x, limit);
     }
 
     x = max.getOverallRegard();
-    if(x) limit = MIN(x, limit);
+    if(x) limit = std::min(x, limit);
 
     return(limit - getInitialRegard(player));
 }
@@ -328,35 +327,35 @@ long Faction::getUpperLimit(const std::shared_ptr<Player>& player) const {
 long Faction::getLowerLimit(const std::shared_ptr<Player>& player) const {
     long    limit = MIN_FACTION, x;
     x = min.getClassRegard(player->getClass());
-    if(x) limit = MAX(x, limit);
+    if(x) limit = std::max(x, limit);
 
     // illusioned race affects faction
     x = min.getRaceRegard(player->getDisplayRace());
-    if(x) limit = MAX(x, limit);
+    if(x) limit = std::max(x, limit);
 
     if(player->getDeity()) {
         x = min.getDeityRegard(player->getDeity());
-        if(x) limit = MAX(x, limit);
+        if(x) limit = std::max(x, limit);
     }
     if(player->isNewVampire()) {
         x = min.getVampirismRegard();
-        if(x) limit = MAX(x, limit);
+        if(x) limit = std::max(x, limit);
     }
     if(player->isNewWerewolf()) {
         x = min.getLycanthropyRegard();
-        if(x) limit = MAX(x, limit);
+        if(x) limit = std::max(x, limit);
     }
     if(player->getGuild()) {
         x = min.getGuildRegard(player->getGuild());
-        if(x) limit = MAX(x, limit);
+        if(x) limit = std::max(x, limit);
     }
     if(player->getClan()) {
         x = min.getClanRegard(player->getClan());
-        if(x) limit = MAX(x, limit);
+        if(x) limit = std::max(x, limit);
     }
 
     x = min.getOverallRegard();
-    if(x) limit = MAX(x, limit);
+    if(x) limit = std::max(x, limit);
 
     return(limit - getInitialRegard(player));
 }
@@ -869,7 +868,8 @@ void Faction::worshipSocial(const std::shared_ptr<Monster>& monster) {
     strcpy(cmnd.str[0], social.c_str());
     cmnd.num = 2;
     cmnd.val[1] = 1;
-    for(const auto& player : monster->getRoomParent()->players) {
+    for(const auto& pIt : monster->getRoomParent()->players) {
+        auto player = pIt.lock();
         if( Random::get(1,100)>2 ||
             !player ||
             player->flagIsSet(P_UNCONSCIOUS) ||

@@ -81,6 +81,7 @@ class StartLoc;
 class Swap;
 class Unique;
 class UniqueRoom;
+class Zone;
 class cWeather;
 
 struct comp {
@@ -116,6 +117,7 @@ typedef std::map<unsigned int, Recipe*> RecipeMap;
 typedef std::map<unsigned int, Clan*> ClanMap;
 typedef std::map<unsigned int, Guild*> GuildMap;
 typedef std::map<CatRef, QuestInfo*> QuestInfoMap;
+typedef std::map<std::string, Zone> ZoneMap;
 typedef std::map<long, std::string> DiscordTokenMap; // webhookId --> token
 
 // Case insensitive
@@ -274,6 +276,10 @@ public:
 // New Quests
     bool loadQuests();
     void clearQuests();
+
+// Zones
+    bool loadZones();
+
 
 // Ships
     bool loadShips();
@@ -571,9 +577,13 @@ public:
     stringMap mxpColors;
     QuestInfo* getQuest(const CatRef& questNum);
 
+    // Zones
+public:
+    ZoneMap zones;
+
 public:
     // Misc
-    char        cmdline[256]{};
+    std::string cmdline{};
 
     // MSDP
     MsdpVariableMap msdpVariables;

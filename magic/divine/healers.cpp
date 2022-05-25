@@ -41,7 +41,6 @@
 #include "realm.hpp"                 // for EARTH
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MIN, MAX
 
 
 //*********************************************************************
@@ -107,7 +106,7 @@ int cmdEnthrall(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->lasttime[LT_HYPNOTIZE].ltime = t;
     player->lasttime[LT_HYPNOTIZE].interval = 300L;
 
-    chance = MIN(90, 40 + (int)((player->getSkillLevel("enthrall") - creature->getLevel()) * 10) +
+    chance = std::min(90, 40 + (int)((player->getSkillLevel("enthrall") - creature->getLevel()) * 10) +
             4 * bonus(player->piety.getCur()));
 
     if(creature->flagIsSet(M_PERMENANT_MONSTER))
@@ -154,7 +153,7 @@ int cmdEnthrall(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->addCharm(creature);
 
-    creature->stun(MAX(1,7+Random::get(1,2)+bonus(player->piety.getCur())));
+    creature->stun(std::max(1,7+Random::get(1,2)+bonus(player->piety.getCur())));
 
     creature->lasttime[LT_CHARMED].ltime = time(nullptr);
     creature->lasttime[LT_CHARMED].interval = dur;
@@ -223,7 +222,7 @@ int cmdEarthSmother(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
-    chance = MIN(chance, 80);
+    chance = std::min(chance, 80);
     if(creature->isEffected("resist-earth"))
         chance /= 2;
     if(!pCreature && creature->isEffected("immune-earth"))
@@ -309,7 +308,7 @@ int cmdLayHands(const std::shared_ptr<Player>& player, cmd* cmnd) {
         //TODO: Change heal amount calc to use hands skill level once skill trainers are put in. Until then, use player level
         num = Random::get( (int)(player->getLevel()*4), (int)(player->getLevel()*5) ) + Random::get(1,10);
 
-        *player << "You regain " << MIN<int>(num,(player->hp.getMax() - player->hp.getCur())) << " hit points.\n";
+        *player << "You regain " << std::min<int>(num,(player->hp.getMax() - player->hp.getCur())) << " hit points.\n";
 
         player->doHeal(player, num);
 
@@ -354,10 +353,10 @@ int cmdLayHands(const std::shared_ptr<Player>& player, cmd* cmnd) {
         num = Random::get( (int)(player->getLevel()*4), (int)(player->getLevel()*5) ) + Random::get(1,10);
 
         *player << "You heal " << creature << " with the power of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
-        *player << creature->upHeShe() <<  " gained " << (MIN<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
+        *player << creature->upHeShe() <<  " gained " << (std::min<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
 
         *creature << setf(CAP) << player << " lays " << player->hisHer() << " hand upon your pate.\n";
-        *creature << "You regain " << (MIN<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
+        *creature << "You regain " << (std::min<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
 
 
         player->doHeal(creature, num);
@@ -433,9 +432,9 @@ int cmdPray(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(player->getClass()==CreatureClass::DEATHKNIGHT)
-        chance = MIN<int>(8500, (player->getSkillLevel("pray") * 750) + player->strength.getCur() * 5);
+        chance = std::min<int>(8500, (player->getSkillLevel("pray") * 750) + player->strength.getCur() * 5);
     else
-        chance = MIN<int>(8500, (player->getSkillLevel("pray") * 1500) + player->piety.getCur() );
+        chance = std::min<int>(8500, (player->getSkillLevel("pray") * 1500) + player->piety.getCur() );
 
    if (player->isCt()) {
         *player << "Pray chance (adjusted): " << chance << "\n";
@@ -584,21 +583,21 @@ int Creature::getTurnChance(const std::shared_ptr<Creature>& target) {
         break;
     }
 
-    adjLevel = MAX<double>(1, adjLevel);
+    adjLevel = std::max<double>(1, adjLevel);
 
 
     bns = bonus(piety.getCur());
 
     chance = (int)((adjLevel - target->getLevel()) * 20) +
             bns*5 + (getClass() == CreatureClass::PALADIN ? 15:25);
-    chance = MIN(chance, 80);
+    chance = std::min(chance, 80);
 
     if(target->isPlayer()) {
         if(isDm())
             chance = 101;
     } else {
         if(target->flagIsSet(M_SPECIAL_UNDEAD))
-            chance = MIN(chance, 15);
+            chance = std::min(chance, 15);
     }
 
 
@@ -683,7 +682,7 @@ int cmdTurn(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     // determine damage turn will do
-    dmg = MAX<int>(1, target->hp.getCur() / 2);
+    dmg = std::max<int>(1, target->hp.getCur() / 2);
 
 
     switch(player->getDeity()) {
@@ -737,7 +736,7 @@ int cmdTurn(const std::shared_ptr<Player>& player, cmd* cmnd) {
         target->die(player);
     } else {
 
-        m = MIN<int>(target->hp.getCur(), dmg);
+        m = std::min<int>(target->hp.getCur(), dmg);
         //player->statistics.attackDamage(dmg, "turn undead");
 
         if(target->isMonster())
@@ -820,7 +819,7 @@ int cmdRenounce(const std::shared_ptr<Player>& player, cmd* cmnd) {
         chance = ((int)(level - target->getLevel())*20) + bonus(player->piety.getCur()) * 5 + 25;
         if(target->flagIsSet(M_PERMENANT_MONSTER))
             chance -= 15;
-        chance = MIN(chance, 90);
+        chance = std::min(chance, 90);
         if(player->isDm())
             chance = 101;
 
@@ -851,7 +850,7 @@ int cmdRenounce(const std::shared_ptr<Player>& player, cmd* cmnd) {
             target->die(player);
         }
         else {
-            dmg = MAX<int>(1, target->hp.getCur() / 2);
+            dmg = std::max<int>(1, target->hp.getCur() / 2);
             //player->statistics.attackDamage(dmg, "renounce");
 
             player->printColor("You renounced %N for %s%d^x damage.\n", target.get(), player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -894,7 +893,7 @@ int cmdRenounce(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         chance = ((int)(level - target->getLevel())*20) +
                  bonus(player->piety.getCur()) * 5 + 25;
-        chance = MIN(chance, 90);
+        chance = std::min(chance, 90);
         if(player->isDm())
             chance = 101;
         if(Random::get(1,100) > chance) {
@@ -924,7 +923,7 @@ int cmdRenounce(const std::shared_ptr<Player>& player, cmd* cmnd) {
             target->die(player);
 
         } else {
-            dmg = MAX<int>(1, target->hp.getCur() / 2);
+            dmg = std::max<int>(1, target->hp.getCur() / 2);
             //player->statistics.attackDamage(dmg, "renounce");
             player->printColor("You renounced %N for %s%d^x damage.\n", target.get(), player->customColorize("*CC:DAMAGE*").c_str(), dmg);
             player->checkImprove("renounce", true);
@@ -1011,7 +1010,7 @@ int cmdHolyword(const std::shared_ptr<Player>& player, cmd* cmnd) {
         chance = ((int)(level - target->getLevel())*20) +
                  bonus(player->piety.getCur()) * 5 + 25;
 
-        chance = MIN(chance, 90);
+        chance = std::min(chance, 90);
         if(player->isDm())
             chance = 101;
 
@@ -1092,7 +1091,7 @@ int cmdHolyword(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         chance = ((int)(level - target->getLevel())*20) +
                  bonus(player->piety.getCur()) * 5 + 25;
-        chance = MIN(chance, 90);
+        chance = std::min(chance, 90);
         if(player->isDm())
             chance = 101;
         if(Random::get(1,100) > chance) {

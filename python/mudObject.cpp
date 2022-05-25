@@ -42,8 +42,9 @@ void init_module_mudObject(py::module &m) {
     monsterSet.def("__iter__", [](const MonsterSet &s) { return py::make_iterator(s.begin(), s.end()); },
                  py::keep_alive<0, 1>() /* Essential: keep object alive while iterator exists */);
 
-    py::class_<std::set<std::shared_ptr<Player>, PlayerPtrLess>>  playerSet(m, "PlayerSet");
-    playerSet.def("__iter__", [](const PlayerSet &s) { return py::make_iterator(s.begin(), s.end()); },
+
+    py::class_<std::list<std::shared_ptr<Player>> >  playerList(m, "PlayerList");
+    playerList.def("__iter__", [](const std::list<std::shared_ptr<Player> > &s) { return py::make_iterator(s.begin(), s.end()); },
                  py::keep_alive<0, 1>() /* Essential: keep object alive while iterator exists */);
 
 
@@ -68,7 +69,7 @@ void init_module_mudObject(py::module &m) {
 
     py::class_<Container, MudObject, std::shared_ptr<Container> >( m, "Container")
         .def_readwrite("monsters", &Container::monsters)
-        .def_readwrite("players", &Container::players)
+        .def("getPlayers", &Container::getPlayers)
         .def("wake", &Container::wake)
         ;
 

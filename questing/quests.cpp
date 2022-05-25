@@ -70,7 +70,6 @@
 #include "server.hpp"                               // for GOLD_IN, Server
 #include "structs.hpp"                              // for ttag
 #include "toNum.hpp"                                // for toNum
-#include "utils.hpp"                                // for MIN, MAX
 #include "xml.hpp"                                  // for loadObject, loadM...
 #include <nlohmann/json.hpp>
 
@@ -720,7 +719,7 @@ bool QuestCompletion::hasRequiredItems() const {
     if(auto myPlayer = parentPlayer.lock()) {
         for (const QuestCatRef &obj: parentQuest->itemsToGet) {
             curNum = myPlayer->countItems(obj);
-            curNum = MIN(curNum, obj.reqNum);
+            curNum = std::min(curNum, obj.reqNum);
             if (curNum != obj.reqNum) {
                 return (false);
             }
@@ -818,7 +817,7 @@ std::string QuestCompletion::getStatusDisplay() {
         i = 1;
         for(QuestCatRef & obj : parentQuest->itemsToGet) {
             int curNum = myPlayer->countItems(obj);
-            curNum = MIN(curNum, obj.reqNum);
+            curNum = std::min(curNum, obj.reqNum);
             displayStr << "\t";
             if(curNum == obj.reqNum)
                 displayStr << "^C*";
@@ -1019,7 +1018,7 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
             oStr << " (" << parentQuest->alignmentChange << ")";
         *myPlayer << ColorOn << oStr.str() << ColorOff << "\n";
 
-        myPlayer->setAlignment(MAX<short>(-1000, MIN<short>(1000,(myPlayer->getAlignment()+parentQuest->alignmentChange))));
+        myPlayer->setAlignment(std::max<short>(-1000, std::min<short>(1000,(myPlayer->getAlignment()+parentQuest->alignmentChange))));
         myPlayer->alignAdjustAcThaco();
     }
     if(!parentQuest->factionRewards.empty())
@@ -1193,7 +1192,7 @@ int cmdTalk(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         if(response.empty() && action.empty()) {
-            broadcast(nullptr, player->getRoomParent(), "%M shrugs.", target.get());
+            broadcast((Socket*)nullptr, player->getRoomParent(), "%M shrugs.", target.get());
             return(0);
         }
     }
@@ -1206,7 +1205,7 @@ int cmdTalk(const std::shared_ptr<Player>& player, cmd* cmnd) {
         target->doTalkAction(player, action, quest);
 
     if(response.empty() && action.empty())
-        broadcast(nullptr, player->getRoomParent(), "%M doesn't say anything.", target.get());
+        broadcast((Socket*)nullptr, player->getRoomParent(), "%M doesn't say anything.", target.get());
 
     return(0);
 }

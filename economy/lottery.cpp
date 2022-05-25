@@ -38,7 +38,6 @@
 #include "proto.hpp"                                // for broadcast, logn
 #include "random.hpp"                               // for Random
 #include "server.hpp"                               // for GOLD_IN, Server
-#include "utils.hpp"                                // for MIN
 #include "xml.hpp"                                  // for newStringChild
 
 
@@ -150,7 +149,7 @@ void Config::runLottery() {
         lotteryJackpot = 500000;
     else
         lotteryJackpot = (long)(lotteryJackpot * 1.15);
-    lotteryJackpot = MIN<long>(lotteryJackpot, 3000000);
+    lotteryJackpot = std::min<long>(lotteryJackpot, 3000000);
     lotteryWon = false;
     broadcast(
             "### The Highport Powerbone numbers have been drawn.\n### The jackpot is $%ld!",
@@ -223,7 +222,7 @@ void Config::increaseJackpot(int amnt) {
     if(amnt < 0)
         return;
     lotteryJackpot += amnt;
-    lotteryJackpot = MIN<long>(lotteryJackpot, 10000000);
+    lotteryJackpot = std::min<long>(lotteryJackpot, 10000000);
 }
 void Config::addTicket(LottoTicket* ticket) {
     tickets.push_back(ticket);

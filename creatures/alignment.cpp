@@ -27,7 +27,6 @@
 #include "mudObjects/monsters.hpp"   // for Monster
 #include "mudObjects/players.hpp"    // for Player
 #include "proto.hpp"                 // for broadcast, logn, isStaff, antiGr...
-#include "utils.hpp"                 // for MAX, MIN
 
 
 //***********************************************************************
@@ -264,7 +263,7 @@ void Player::adjustAlignment(std::shared_ptr<Monster> victim) {
     }
 
     alignment -= adjust;
-    alignment = MAX<short>(-1000, MIN<short>(1000, alignment));
+    alignment = std::max<short>(-1000, std::min<short>(1000, alignment));
 }
 
 //*********************************************************************

@@ -43,7 +43,6 @@
 #include "server.hpp"                // for Server, gServer
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for creatureStats
-#include "utils.hpp"                 // for MIN, MAX
 
 
 char conjureTitles[][3][10][30] = {
@@ -332,7 +331,7 @@ int getPetTitle(CastType how, int skLevel, bool weaker, bool undead) {
     } else {
         title = (undead ? 3 : 1);
     }
-    return(MAX(1, title));
+    return(std::max(1, title));
 }
 
 
@@ -486,7 +485,7 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
     }
 
     // Only level 30 titles
-    int titleIdx = MIN(29, title);
+    int titleIdx = std::min(29, title);
     if (realm == CONJUREBARD) {
         target->setName(bardConjureTitles[buff][titleIdx - 1]);
         strncpy(name, bardConjureTitles[buff][titleIdx - 1], 79);
@@ -517,7 +516,7 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
             break;
     }
 
-    level = MAX(1, MIN(MAXALVL, level));
+    level = std::max(1, std::min(MAXALVL, level));
 
     p = strtok(name, delem);
     if (p)
@@ -590,7 +589,7 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
     }
 
 
-    target->setLevel(MIN(level, skLevel + 1));
+    target->setLevel(std::min(level, skLevel + 1));
     level--;
     target->strength.setInitial(conjureStats[buff][level].str * 10);
     target->dexterity.setInitial(conjureStats[buff][level].dex * 10);
@@ -626,7 +625,7 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
     if (!combatPet) {
         mphigh = conjureStats[buff][level].mp;
         mplow = (conjureStats[buff][level].mp * mp_percent) / 10;
-        target->mp.setInitial(MAX(10, Random::get(mplow, mphigh)));
+        target->mp.setInitial(std::max(10, Random::get(mplow, mphigh)));
         target->mp.restore();
     }
 
@@ -706,13 +705,13 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
         if (target->getLevel() < 3)
             spells = 1;
         else if (target->getLevel() < 7)
-            spells = MIN(spells, 2);
+            spells = std::min(spells, 2);
         else if (target->getLevel() < 12)
-            spells = MIN(spells, 3);
+            spells = std::min(spells, 3);
         else if (target->getLevel() < 16)
-            spells = MIN(spells, 4);
+            spells = std::min(spells, 4);
         else
-            spells = MIN(spells, 5);
+            spells = std::min(spells, 5);
 
     }
 

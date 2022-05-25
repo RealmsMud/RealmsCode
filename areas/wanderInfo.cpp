@@ -27,7 +27,6 @@
 #include "mudObjects/monsters.hpp"  // for Monster
 #include "mudObjects/players.hpp"   // for Player
 #include "random.hpp"               // for Random
-#include "utils.hpp"                // for MAX, MIN
 #include "wanderInfo.hpp"           // for WanderInfo
 #include "xml.hpp"                  // for loadMonster
 
@@ -42,7 +41,7 @@ WanderInfo::WanderInfo() {
 }
 
 short WanderInfo::getTraffic() const { return(traffic); }
-void WanderInfo::setTraffic(short t) { traffic = MAX<short>(0, MIN<short>(100, t)); }
+void WanderInfo::setTraffic(short t) { traffic = std::max<short>(0, std::min<short>(100, t)); }
 
 //*********************************************************************
 //                      getRandom

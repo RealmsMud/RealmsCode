@@ -44,7 +44,6 @@
 #include "server.hpp"                // for Server, gServer
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MAX, MIN
 
 
 //*********************************************************************
@@ -233,7 +232,7 @@ int splFreeAction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 
         pTarget->lasttime[LT_FREE_ACTION].ltime = t;
         if(spellData->how == CastType::CAST) {
-            pTarget->lasttime[LT_FREE_ACTION].interval = MAX(300, 900 +
+            pTarget->lasttime[LT_FREE_ACTION].interval = std::max(300, 900 +
                                                                   bonus(player->intelligence.getCur()) * 300);
 
             if(player->getRoomParent()->magicBonus()) {
@@ -401,7 +400,7 @@ int splDispelAlign(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
             player->smashInvis();
 
             damage.set(Random::get(spellData->level * 2, spellData->level * 4));
-            damage.add(MAX(0, bonus(player->piety.getCur())));
+            damage.add(std::max(0, bonus(player->piety.getCur())));
             player->modifyDamage(player, MAGICAL, damage);
 
             player->print("You feel as if your soul is savagely ripped apart!\n");
@@ -461,7 +460,7 @@ int splDispelAlign(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
             } else {
                 damage.set(Random::get(spellData->level * 2, spellData->level * 4));
                 damage.add(abs(player->getAlignment()/100));
-                damage.add(MAX(0, bonus(player->piety.getCur())));
+                damage.add(std::max(0, bonus(player->piety.getCur())));
                 target->modifyDamage(player, MAGICAL, damage);
 
                 if(target->chkSave(SPL, player,0))
@@ -612,7 +611,7 @@ int splArmor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
         if(multi)
             strength = pPlayer->hp.getCur();
         else if (pPlayer->getClass() == CreatureClass::LICH)
-            strength = mpNeeded + (MAX<int>(1,(pPlayer->hp.getCur() + ((pPlayer->hp.getCur()*30)/100))));
+            strength = mpNeeded + (std::max<int>(1,(pPlayer->hp.getCur() + ((pPlayer->hp.getCur()*30)/100))));
         else // we have a mage or staff
             strength = pPlayer->hp.getCur()*2;
     } else { // everybody else, strength is current hp
@@ -694,7 +693,7 @@ int splStoneskin(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
         if(!multi)
             strength = spellData->level;
         else
-            strength = MAX<int>(1, spellData->level-3);
+            strength = std::max<int>(1, spellData->level-3);
     } else {
         duration = 180L;
         strength = spellData->level/2;
@@ -797,7 +796,7 @@ int doDispelMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 
         chance += (spellData->level - target->getLevel())*10;
 
-        chance = MIN(chance, 90);
+        chance = std::min(chance, 90);
 
         if((target->isEffected("resist-magic")) && target->isPlayer())
             chance /=2;

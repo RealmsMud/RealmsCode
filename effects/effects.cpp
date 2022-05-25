@@ -60,7 +60,6 @@
 #include "stats.hpp"                                // for Stat
 #include "structs.hpp"                              // for ALCOHOL_DRUNK
 #include "toNum.hpp"                                // for toNum
-#include "utils.hpp"                                // for MAX, MIN
 #include "xml.hpp"                                  // for loadPlayer
 
 //*********************************************************************
@@ -232,7 +231,7 @@ bool EffectInfo::pulse(time_t t) {
 bool EffectInfo::updateLastMod(time_t t) {
     time_t diff = t - lastMod;
     lastMod = t;
-    diff = MIN<long>(MAX<long>(0, duration), diff);
+    diff = std::min<long>(std::max<long>(0, duration), diff);
     duration -= diff;
 
     if(auto applier = myApplier.lock()) {
@@ -1057,14 +1056,16 @@ std::string Creature::doReplace(std::string fmt, const std::shared_ptr<MudObject
 
 void Container::effectEcho(const std::string &fmt, const std::shared_ptr<MudObject>& actor, const std::shared_ptr<MudObject>& applier, Socket* ignore) {
     Socket* ignore2 = nullptr;
-    if(actor->getAsConstCreature())
+    if(actor && actor->getAsConstCreature())
         ignore2 = actor->getAsConstCreature()->getSock();
-    for(const std::shared_ptr<Player>& ply : players) {
-        if(!ply || (ply->getSock() && (ply->getSock() == ignore || ply->getSock() == ignore2)) || ply->isUnconscious())
-            continue;
+    for(const auto& pIt : players) {
+        if(auto ply = pIt.lock()) {
+            if (!ply || (ply->getSock() && (ply->getSock() == ignore || ply->getSock() == ignore2)) || ply->isUnconscious())
+                continue;
 
-        std::string toSend = ply->doReplace(fmt, actor, applier);
-        (Streamable &) *ply << ColorOn << toSend << ColorOff << "\n";
+            std::string toSend = ply->doReplace(fmt, actor, applier);
+            (Streamable &) *ply << ColorOn << toSend << ColorOff << "\n";
+        }
     }
 }
 

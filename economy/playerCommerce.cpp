@@ -65,7 +65,6 @@
 #include "server.hpp"                  // for Server, GOLD_OUT, GOLD_IN, gSe...
 #include "structs.hpp"                 // for saves
 #include "unique.hpp"                  // for Lore, addOwner, isLimited, Unique
-#include "utils.hpp"                   // for MAX, MIN
 #include "xml.hpp"                     // for loadRoom, loadObject, loadPlayer
 #include "toNum.hpp"
 
@@ -646,7 +645,7 @@ int cmdShop(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         if(cmnd->num > 3 && cmnd->str[3][0] == '$') {
             value = toNum<int>(cmnd->str[3]+1);
-            value = MAX(0, value);
+            value = std::max(0, value);
         }
         if(!value)
             value = obj->value[GOLD];
@@ -673,7 +672,7 @@ int cmdShop(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         if(cmnd->str[3][0] == '$') {
             value = toNum<int>(cmnd->str[3]+1);
-            value = MAX(0, value);
+            value = std::max(0, value);
         }
         if(cmnd->str[3][0] != '$' || !value) {
             player->printColor(shopSyntax);

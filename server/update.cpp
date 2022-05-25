@@ -662,23 +662,27 @@ void Server::updateAction(long t) {
                         break;
                     case 'C': // test for a player with class
                     case 'R': // test for a player with race
-                        for(const auto& ply: room->players) {
-                            if(act->test_for == 'C')
-                                if(static_cast<int>(ply->getClass()) == act->arg1) {
-                                    delete[] monster->first_tlk->target;
-                                    monster->first_tlk->target = new char[ply->getName().length()+1];
-                                    strcpy(monster->first_tlk->target, ply->getCName());
-                                    act->success = 1;
-                                    break;
+                        for(const auto& pIt: room->players) {
+                            if(auto ply = pIt.lock()) {
+                                if (act->test_for == 'C') {
+                                    if (static_cast<int>(ply->getClass()) == act->arg1) {
+                                        delete[] monster->first_tlk->target;
+                                        monster->first_tlk->target = new char[ply->getName().length() + 1];
+                                        strcpy(monster->first_tlk->target, ply->getCName());
+                                        act->success = 1;
+                                        break;
+                                    }
                                 }
-                            if(act->test_for == 'R')
-                                if(ply->getRace() == act->arg1) {
-                                    delete monster->first_tlk->target;
-                                    monster->first_tlk->target = new char[ply->getName().length()+1];
-                                    strcpy(monster->first_tlk->target, ply->getCName());
-                                    act->success = 1;
-                                    break;
+                                if (act->test_for == 'R') {
+                                    if (ply->getRace() == act->arg1) {
+                                        delete monster->first_tlk->target;
+                                        monster->first_tlk->target = new char[ply->getName().length() + 1];
+                                        strcpy(monster->first_tlk->target, ply->getCName());
+                                        act->success = 1;
+                                        break;
+                                    }
                                 }
+                            }
                         }
                         if(!act->success) {
                             delete monster->first_tlk->target;
@@ -760,12 +764,12 @@ void Server::updateAction(long t) {
                     switch(act->do_act) {
                     case 'E': // broadcast response to room
                         if(thresh <= num)
-                            broadcast(nullptr, monster->getRoomParent(), "%s", resp);
+                            broadcast((Socket*)nullptr, monster->getRoomParent(), "%s", resp);
 
                         break;
                     case 'S': // say to room
                         if(thresh <= num)
-                            broadcast(nullptr, monster->getRoomParent(), "%M says, \"%s\"", monster.get(), resp);
+                            broadcast((Socket*)nullptr, monster->getRoomParent(), "%M says, \"%s\"", monster.get(), resp);
                         break;
                     case 'T':   // Mob Trash-talk
                         if(Random::get(1,100) <= 10) {
@@ -1015,9 +1019,11 @@ void Server::clearAsEnemy(const std::shared_ptr<Player>& player) {
 // This function will return 1 if anyone is in the room while dmInvis
 
 int BaseRoom::dmInRoom() const {
-    for(const auto& ply: players) {
-        if(ply->flagIsSet(P_DM_INVIS))
-            return(1);
+    for(const auto& pIt: players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->flagIsSet(P_DM_INVIS))
+                return (1);
+        }
     }
     return(0);
 }

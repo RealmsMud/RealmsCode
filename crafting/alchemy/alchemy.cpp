@@ -37,7 +37,6 @@
 #include "mudObjects/objects.hpp"    // for Object, AlchemyEffectMap, Object...
 #include "mudObjects/players.hpp"    // for Player, Player::KnownAlchemyEffe...
 #include "server.hpp"                // for Server, gServer
-#include "utils.hpp"                 // for MAX, MIN
 
 //########################################################################
 //# AlchemyInfo
@@ -200,7 +199,7 @@ short AlchemyEffect::getQuality() const {
 //*********************************************************************
 
 void AlchemyEffect::setDuration(const long newDuration) {
-    duration = MIN<long>(MAX<long>(newDuration,0), Alchemy::getMaximumDuration());
+    duration = std::min<long>(std::max<long>(newDuration,0), Alchemy::getMaximumDuration());
 }
 
 //*********************************************************************

@@ -44,7 +44,6 @@
 #include "stats.hpp"                   // for Stat
 #include "track.hpp"                   // for Track
 #include "unique.hpp"                  // for Unique
-#include "utils.hpp"                   // for MIN, MAX
 #include "wanderInfo.hpp"              // for WanderInfo
 
 
@@ -174,7 +173,7 @@ int cmdDisarm(const std::shared_ptr<Player>& player, cmd* cmnd) {
             + bonus(player->dexterity.getCur()) * 5;
     if(player->getClass() == CreatureClass::ROGUE)
         chance += 10;
-    chance = MIN(chance, 85);
+    chance = std::min(chance, 85);
 
 
     if(creature->ready[WIELD-1]->flagIsSet(O_CURSED))
@@ -282,7 +281,7 @@ int cmdMistbane(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->pleaseWait(600L-t+i);
         return(0);
     }
-    chance = MIN(80, (int)(player->getSkillLevel("mistbane") * 20) + bonus(player->piety.getCur()));
+    chance = std::min(80, (int)(player->getSkillLevel("mistbane") * 20) + bonus(player->piety.getCur()));
 
 
     if(Random::get(1, 100) > player->getLuck() + player->getSkillLevel("mistbane") * 2)
@@ -443,7 +442,7 @@ int cmdBerserk(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    chance = MIN<int>(8500, (player->getSkillLevel("berserk") * 1000) + (player->strength.getCur()) * 5);
+    chance = std::min<int>(8500, (player->getSkillLevel("berserk") * 1000) + (player->strength.getCur()) * 5);
 
     // At level 7+, the higher skill level at berserk, the less time it takes between berserks
     if (player->getLevel() >=7) {
@@ -560,9 +559,9 @@ int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if( player->getClass() == CreatureClass::FIGHTER &&
         (player->getSecondClass() == CreatureClass::THIEF || player->getSecondClass() == CreatureClass::MAGE)
     )
-        level = MAX(1, (int)level-2);
+        level = std::max(1, (int)level-2);
     if(player->getClass() == CreatureClass::CLERIC && player->getSecondClass() == CreatureClass::FIGHTER)
-        level = MAX(1, (int)level-2);
+        level = std::max(1, (int)level-2);
 
     chance = 50 + (int)((level-target->getLevel())*20) +
              (bonus(player->dexterity.getCur()) - bonus(target->dexterity.getCur())) * 2;
@@ -577,7 +576,7 @@ int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(mTarget) {
         if(mTarget->isUndead() || mTarget->flagIsSet(M_RESIST_CIRCLE))
             chance -= (5 + target->getLevel()*2);
-        chance = MIN(80, chance);
+        chance = std::min(80, chance);
 
         mTarget->addEnemy(player);
     }
@@ -593,7 +592,7 @@ int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(Random::get(1,100) <= chance && (Random::get(1,100) > ((target->dexterity.getCur()/10)/2))) {
         if(mTarget) {
             if(!mTarget->flagIsSet(M_RESIST_CIRCLE) && !mTarget->isUndead())
-                delay = MAX(6, (Random::get(6,10) + (MIN(3,((bonus(player->dexterity.getCur()) -
+                delay = std::max(6, (Random::get(6,10) + (std::min(3,((bonus(player->dexterity.getCur()) -
                                                              bonus(target->dexterity.getCur())) / 2)))));
             else
                 delay = Random::get(6,9);
@@ -609,7 +608,7 @@ int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd) {
         log_immort(false, player, "%s circled %s.\n", player->getCName(), target->getCName());
 
         if(mTarget && player->isPlayer()) {
-            if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (Random::get(1,100) <= (MAX(15, (mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 15)/2)))) {
+            if(mTarget->flagIsSet(M_YELLED_FOR_HELP) && (Random::get(1,100) <= (std::max(15, (mTarget->inUniqueRoom() ? mTarget->getUniqueRoomParent()->wander.getTraffic() : 15)/2)))) {
                 mTarget->summonMobs(player);
                 mTarget->clearFlag(M_YELLED_FOR_HELP);
                 mTarget->setFlag(M_WILL_YELL_FOR_HELP);
@@ -626,7 +625,7 @@ int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         if(mTarget) {
             // A successful circle gives 5% of the target's max health as threat
-            mTarget->adjustThreat(player, MAX<long>((long)(mTarget->hp.getMax()*0.05), 2));
+            mTarget->adjustThreat(player, std::max<long>((long)(mTarget->hp.getMax()*0.05), 2));
         }
 
 
@@ -638,7 +637,7 @@ int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
         if(mTarget) {
             // An un-successful circle gives 2.5% of the target's max health as threat
-            mTarget->adjustThreat(player, MAX<long>((long)(mTarget->hp.getMax()*0.025),1) );
+            mTarget->adjustThreat(player, std::max<long>((long)(mTarget->hp.getMax()*0.025),1) );
         }
     }
 
@@ -723,9 +722,9 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
     level = player->getSkillLevel("bash");
 
     if(player->getClass() == CreatureClass::CLERIC && player->getSecondClass() == CreatureClass::FIGHTER)
-        level = MAX(1, (int)level-2);
+        level = std::max(1, (int)level-2);
     else if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARES)
-        level = MAX(1, (int)level-3);
+        level = std::max(1, (int)level-3);
 
 
     chance = 50 + (int)((level-creature->getLevel())*10) +
@@ -733,10 +732,10 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
              (bonus(player->dexterity.getCur()) - bonus(creature->dexterity.getCur())) * 2;
     chance += player->getClass() == CreatureClass::BERSERKER ? 10:0;
 
-    chance = player->getClass() == CreatureClass::BERSERKER ? MIN(90, chance) : MIN(85, chance);
+    chance = player->getClass() == CreatureClass::BERSERKER ? std::min(90, chance) : std::min(85, chance);
 
     if(player->isBlind())
-        chance = MIN(20, chance);
+        chance = std::min(20, chance);
 
     if(creature->isMonster() && (player->ready[WIELD-1] &&
             player->ready[WIELD-1]->flagIsSet(O_ALWAYS_CRITICAL)) && creature->flagIsSet(M_NO_AUTO_CRIT))
@@ -829,10 +828,10 @@ int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
         chance -= (15 - (bonus(player->dexterity.getCur()) - bonus(creature->dexterity.getCur())));
 
 
-    chance = MAX(0, MIN(95, chance));
+    chance = std::max(0, std::min(95, chance));
 
     if(player->isBlind())
-        chance = MIN(10, chance);
+        chance = std::min(10, chance);
 
     if(creature->flagIsSet(M_NO_KICK))
         chance = 0;
@@ -1061,7 +1060,7 @@ int cmdHarmTouch(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     chance += modifier;
 
-    chance = MIN(9500,chance);
+    chance = std::min(9500,chance);
 
     if(player->isCt()) {
         *player << "Chance: " << chance << "\n";
@@ -1086,7 +1085,7 @@ int cmdHarmTouch(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         if(creature->getClass() == CreatureClass::LICH) {
             if (creature->hp.getCur() < creature->hp.getMax()) {
-                player->doHeal(creature, MIN<int>(num,(creature->hp.getMax() - creature->hp.getCur())));
+                player->doHeal(creature, std::min<int>(num,(creature->hp.getMax() - creature->hp.getCur())));
                 *player << "Your harmful touch healed " << creature << "!\n";
                 *creature << "You are healed by " << setf(CAP) << player << "'s evil touch.\n";
             }
@@ -1152,7 +1151,7 @@ int cmdBloodsacrifice(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     int level = (int)player->getSkillLevel("bloodsac");
-    chance = MIN(85, level * 20 + bonus(player->piety.getCur()));
+    chance = std::min(85, level * 20 + bonus(player->piety.getCur()));
     player->interruptDelayedActions();
     player->hp.decrease(10);
 

@@ -37,7 +37,6 @@
 #include "proto.hpp"               // for broadcast, isCt, log_immort, logn
 #include "server.hpp"              // for Server, gServer, SocketList
 #include "socket.hpp"              // for Socket
-#include "utils.hpp"               // for MAX, MIN
 #include "toNum.hpp"
 
 
@@ -228,7 +227,7 @@ int dmBan(const std::shared_ptr<Player>& player, cmd* cmnd) {
             dur = toNum<int>(str);
             // Anything less than 0 becomes 0 (indefinite) anything greater than
             // 1825 (5 years) becomes 1825
-            dur = MAX(MIN(dur, 1825), 0);
+            dur = std::max(std::min(dur, 1825), 0);
             i=i+j;
             // Kill all whitespace before the comment
             while(i < strLen && isspace(cmnd->fullstr[i]))

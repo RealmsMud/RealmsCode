@@ -96,10 +96,12 @@ bool Creature::pulseSong(long t) {
             }
         }
         if(boost::iequals(targetType, "room")) {
-            for(const auto& ply: getRoomParent()->players) {
-                if(getAsPlayer() && ply->getAsPlayer() && getAsPlayer()->isDueling(ply->getName()))
-                    continue;
-                ply->addEffect(playing->getEffect(), -2, -2, Containable::downcasted_shared_from_this<Creature>())->setDuration(playing->getDuration());
+            for(const auto& pIt: getRoomParent()->players) {
+                if(auto ply = pIt.lock()) {
+                    if (getAsPlayer() && ply->getAsPlayer() && getAsPlayer()->isDueling(ply->getName()))
+                        continue;
+                    ply->addEffect(playing->getEffect(), -2, -2, Containable::downcasted_shared_from_this<Creature>())->setDuration(playing->getDuration());
+                }
             }
         }
     } else if(playing->getType() == "script") {
