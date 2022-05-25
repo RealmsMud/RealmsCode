@@ -82,7 +82,7 @@ bool Server::initDiscordBot() {
     }
 
     std::cout << "Initializing Discord bot" << std::endl;
-    discordBot = new dpp::cluster(gConfig->getBotToken());
+    discordBot = new dpp::cluster(gConfig->getBotToken(), dpp::i_message_content | dpp::i_default_intents | dpp::i_guild_members | dpp::i_guild_messages);
 
     /* Create command handler, and specify prefixes */
     commandHandler = new dpp::commandhandler (discordBot);

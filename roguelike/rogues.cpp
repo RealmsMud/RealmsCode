@@ -226,6 +226,11 @@ bool canSearch(const std::shared_ptr<Player> player) {
 
 void doSearch(std::shared_ptr<Player> player, bool immediate) {
     std::shared_ptr<BaseRoom> room = player->getRoomParent();
+    // TODO: Why is the player sticking around after they've logged off, but not in a room
+    if(!room) {
+        std::clog << "DoSearch for " << player->getName() << " without a parent room.";
+        return;
+    }
     int     chance=0;
     bool    found=false, detectMagic = player->isEffected("detect-magic");
 

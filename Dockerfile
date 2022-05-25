@@ -72,7 +72,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsodium23 \
     libopus0 \
     aspell \
-    zlib1g  \
+    zlib1g \
+    locales \
+    locales-all \
     gdb && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -93,9 +95,17 @@ ENV HOME /home/realms/
 COPY --from=BUILD /build/RealmsCode .
 COPY --from=BUILD /build/List .
 COPY --from=BUILD /build/Updater .
-COPY --from=BUILD /build/leak.supp .
 
-ENV ASAN_OPTIONS="detect_leaks=1"
-ENV LSAN_OPTIONS="suppressions=leak.supp"
+# Temporary Workaround
+COPY --from=BUILD /build/libRealmsLib.so .
+COPY --from=build /build/_deps/dpp-build/libdpp.so.2.9.2 .
+
+ENV LC_ALL en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
+
+# Temporary Workaround
+ENV LD_LIBRARY_PATH=./
+
 CMD ["/mud/RealmsCode"]
 
