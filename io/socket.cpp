@@ -1746,7 +1746,8 @@ bool Socket::isConnected() const {
     return (connState < LOGIN_START && connState != CON_DISCONNECTING);
 }
 bool Player::isConnected() const {
-    return (getSock()->isConnected());
+    auto sock = getSock();
+    return (sock && sock->isConnected());
 }
 
 int Socket::getFd() const {
