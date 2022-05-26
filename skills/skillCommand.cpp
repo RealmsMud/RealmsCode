@@ -195,8 +195,8 @@ bool SkillCommand::runScript(std::shared_ptr<Creature> actor, std::shared_ptr<Mu
         locals["skill"] = skill;
         locals["skillCmd"] = this;
 
-        PythonHandler::addMudObjectToDictionary(locals, "actor", actor.get());
-        PythonHandler::addMudObjectToDictionary(locals, "target", target.get());
+        PythonHandler::addMudObjectToDictionary(locals, "actor", actor);
+        PythonHandler::addMudObjectToDictionary(locals, "target", target);
 
         return (gServer->runPythonWithReturn(pyScript, locals));
     }

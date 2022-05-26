@@ -47,7 +47,7 @@ public:
     bool runPythonWithReturn(const std::string& pyScript, const std::string &args = "", std::shared_ptr<MudObject>actor = nullptr, std::shared_ptr<MudObject>target = nullptr);
     static void handlePythonError(py::error_already_set &e);
 
-    static bool addMudObjectToDictionary(py::object& dictionary, const std::string& key, MudObject* myObject);
+    static bool addMudObjectToDictionary(py::object& dictionary, const std::string& key, std::shared_ptr<MudObject> myObject);
 
 
 };

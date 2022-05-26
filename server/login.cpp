@@ -99,13 +99,11 @@ int cmdReconnect(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Socket> sock = player->getSock();
 
     player->print("\n\nReconnecting.\n\n\n");
-    std::clog << "Player In Use " << player.use_count() << std::endl;
     player->save(true);
 
     player->uninit();
     gServer->clearPlayer(player);
     sock->clearPlayer();
-    std::clog << "Player In Use " << player.use_count() << std::endl;
     sock->reconnect();
     return(0);
 }
@@ -265,11 +263,11 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         } else {
             player->fd = -1;
             sock->setPlayer(player);
-
             sock->print("%s", echo_off);
             //sock->print("%c%c%c", 255, 251, 1);
             sock->askFor("Please enter password: ");//, 255, 251, 1);
             sock->setState(LOGIN_GET_PASSWORD);
+            player = nullptr;
             return;
         }
         // End LOGIN_GET_NAME
@@ -297,6 +295,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             sock->disconnect();
             return;
         } else {
+            player = nullptr;
             sock->finishLogin();
             return;
         }
@@ -321,14 +320,16 @@ void Socket::finishLogin() {
     char    charName[25];
 
     print("%s", echo_on);
-    strcpy(charName, getPlayer()->getCName());
+    auto player = getPlayer();
+
+    strcpy(charName, player->getCName());
     auto sThis = shared_from_this();
     gServer->checkDuplicateName(sThis, true);
     if(gServer->checkDouble(sThis)) {
         return;
     }
 
-    auto player = getPlayer();
+
     std::string proxyName = player->getProxyName();
     std::string proxyId = player->getProxyId();
     player = nullptr;
@@ -339,6 +340,7 @@ void Socket::finishLogin() {
         setState(LOGIN_GET_NAME);
         return;
     }
+    std::clog << "finishLogin:afterLoad " << player.use_count() << std::endl;
     player->setProxy(proxyName, proxyId);
     if(player->flagIsSet(P_HARDCORE)) {
         const StartLoc *location = gConfig->getStartLoc("highport");
@@ -377,7 +379,6 @@ void Socket::finishLogin() {
         player->print("continue your adventures in this world...\n");
         player->print("\n\n\n");
     }
-
 }
 
 // Blah I know it's a big hack...fix it later if you don't like it

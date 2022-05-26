@@ -1092,8 +1092,8 @@ bool EffectInfo::runScript(const std::string& pyScript, std::shared_ptr<MudObjec
         locals["effectLib"] = effectModule;
         locals["effect"] = this;
 
-        PythonHandler::addMudObjectToDictionary(locals, "actor", myParent);
-        PythonHandler::addMudObjectToDictionary(locals, "applier", applier.get());
+        PythonHandler::addMudObjectToDictionary(locals, "actor", myParent->getAsMudObject());
+        PythonHandler::addMudObjectToDictionary(locals, "applier", applier);
 
         return (gServer->runPythonWithReturn(pyScript, locals));
     }

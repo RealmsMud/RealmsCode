@@ -134,7 +134,7 @@ private:
     StringStatistic mostAttackDamage;
     StringStatistic mostMagicDamage;
     // so we can reference
-    std::shared_ptr<Player> parent{};
+    std::weak_ptr<Player> parent{};
 public:
     bool track{};
     // combat

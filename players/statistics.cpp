@@ -306,12 +306,15 @@ void Statistics::display(const std::shared_ptr<Player> viewer, bool death) {
     oStr.setf(std::ios::left, std::ios::adjustfield);
     oStr.imbue(std::locale(""));
 
+    auto statParent = parent.lock();
+    if(!statParent) return;
+
     if(death) {
         // if death = true, player will always be the owner
         oStr << "^WGeneral player statistics:^x\n"
-             << "  Level:            ^C" << parent->getLevel() << "^x\n"
-             << "  Total Experience: ^C" << parent->getExperience() << "^x\n"
-             << "  Time Played:      ^C" << parent->getTimePlayed() << "^x\n"
+             << "  Level:            ^C" << statParent->getLevel() << "^x\n"
+             << "  Total Experience: ^C" << statParent->getExperience() << "^x\n"
+             << "  Time Played:      ^C" << statParent->getTimePlayed() << "^x\n"
              << "\n";
     }
 
@@ -399,8 +402,8 @@ void Statistics::display(const std::shared_ptr<Player> viewer, bool death) {
         oStr << "  Experience Lost:             ^C" << expLost << "^x\n";
 
 
-    int rooms = parent->numDiscoveredRooms();
-    int numRecipes = parent->recipes.size();
+    int rooms = statParent->numDiscoveredRooms();
+    int numRecipes = statParent->recipes.size();
     if( (numThefts && numAttemptedThefts) ||
         (numSaves && numAttemptedSaves) ||
         numRecalls ||

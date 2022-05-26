@@ -115,7 +115,7 @@ void PythonHandler::cleanUpPython() {
     py::finalize_interpreter();
 }
 
-bool PythonHandler::addMudObjectToDictionary(py::object& dictionary, const std::string& key, MudObject* myObject) {
+bool PythonHandler::addMudObjectToDictionary(py::object& dictionary, const std::string& key, std::shared_ptr<MudObject> myObject) {
     // If null, we still want it!
     if (!myObject) {
         dictionary[key.c_str()] = myObject;
@@ -169,8 +169,8 @@ bool PythonHandler::runPython(const std::string& pyScript, py::object& locals) {
 bool PythonHandler::runPython(const std::string& pyScript, const std::string &args, std::shared_ptr<MudObject>actor, std::shared_ptr<MudObject>target) {
     auto locals = py::dict("args"_a=args);
 
-    addMudObjectToDictionary(locals, "actor", actor.get());
-    addMudObjectToDictionary(locals, "target", target.get());
+    addMudObjectToDictionary(locals, "actor", actor);
+    addMudObjectToDictionary(locals, "target", target);
 
     return (runPython(pyScript, locals));
 }
@@ -197,8 +197,8 @@ bool PythonHandler::runPythonWithReturn(const std::string& pyScript, const std::
     try {
         auto locals = py::dict("args"_a=args);
 
-        addMudObjectToDictionary(locals, "actor", actor.get());
-        addMudObjectToDictionary(locals, "target", target.get());
+        addMudObjectToDictionary(locals, "actor", actor);
+        addMudObjectToDictionary(locals, "target", target);
 
         return runPythonWithReturn(pyScript, locals);
     }

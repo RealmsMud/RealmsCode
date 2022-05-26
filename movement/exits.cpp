@@ -66,9 +66,7 @@ Exit::Exit() {
 
 Exit::~Exit() {
     if(!effects.effectList.empty()) {
-        //std::shared_ptr<BaseRoom> parent = effects.list.front()->getParentRoom();
         effects.removeAll();
-        //parent->removeEffectsIndex();
     }
 }
 

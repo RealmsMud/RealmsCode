@@ -137,8 +137,8 @@ bool Song::runScript(std::shared_ptr<MudObject> singer, std::shared_ptr<MudObjec
         locals["songLib"] = songModule;
         locals["song"] = this;
 
-        PythonHandler::addMudObjectToDictionary(locals, "actor", singer.get());
-        PythonHandler::addMudObjectToDictionary(locals, "target", target.get());
+        PythonHandler::addMudObjectToDictionary(locals, "actor", singer);
+        PythonHandler::addMudObjectToDictionary(locals, "target", target);
 
         return (gServer->runPythonWithReturn(script, locals));
     }
