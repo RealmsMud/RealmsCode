@@ -607,7 +607,7 @@ void Monster::berserk() {
     clearFlag(M_WILL_BERSERK);
     strength.addModifier("Berserk", 50, MOD_CUR_MAX);
 
-    broadcast((Socket*)nullptr, getRoomParent(), "^R%M goes berserk!", this);
+    broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "^R%M goes berserk!", this);
 }
 
 //*********************************************************************

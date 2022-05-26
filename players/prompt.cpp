@@ -32,6 +32,9 @@
 // This function returns the prompt that the player should be seeing
 
 void Player::sendPrompt() {
+    auto sock = mySock.lock();
+    if(!sock) return;
+
     std::string toPrint;
 
     if(fd < 0)
@@ -79,6 +82,5 @@ void Player::sendPrompt() {
         char ga_str[] = {(char)IAC, (char)GA, '\0' };
         toPrint.append(ga_str);
     }
-
-    mySock->write(toPrint);
+    sock->write(toPrint);
 }

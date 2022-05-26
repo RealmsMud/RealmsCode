@@ -733,8 +733,8 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         if(chan->shout) {
             // Because of multiple exits leading to the same room, we will keep
             // track of who has heard us shout
-            std::list<Socket*> listeners;
-            std::list<Socket*>::iterator it;
+            std::list<std::shared_ptr<Socket>> listeners;
+            std::list<std::shared_ptr<Socket>>::iterator it;
             bool    heard = false;
 
             // This allows a player to yell something that will be heard
@@ -798,7 +798,7 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
                     if(!exit->getPassLanguage() || lang == exit->getPassLanguage()) {
                         // even needs to be open?
                         if(exit->flagIsSet(X_LOCKED)) {
-                            broadcast((Socket*)nullptr, creature->getRoomParent(), "The %s opens!", exit->getCName());
+                            broadcast((std::shared_ptr<Socket> )nullptr, creature->getRoomParent(), "The %s opens!", exit->getCName());
                             exit->clearFlag(X_LOCKED);
                             exit->clearFlag(X_CLOSED);
 
@@ -806,7 +806,7 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
                                 if(exit->flagIsSet(X_ONOPEN_PLAYER)) {
                                     creature->print("%s.\n", exit->getOpen().c_str());
                                 } else {
-                                    broadcast((Socket*)nullptr, creature->getRoomParent(), exit->getOpen().c_str());
+                                    broadcast((std::shared_ptr<Socket> )nullptr, creature->getRoomParent(), exit->getOpen().c_str());
                                 }
                             }
 
@@ -1046,7 +1046,7 @@ channelPtr getChannelByDiscordChannel(const unsigned long discordChannelID) {
 void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &text, const std::string &extra, unsigned int check,
                     const channelInfo *chan, const std::string &etxt, const std::string &oocName, const std::string &icName) {
     // more complicated checks go here
-    Socket* sock=nullptr;
+    std::shared_ptr<Socket> sock=nullptr;
     for(const auto& [pId, ply] : gServer->players) {
         sock = ply->getSock();
         if(!sock->isConnected())

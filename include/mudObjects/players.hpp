@@ -94,7 +94,7 @@ protected:
     std::string password;
     std::string title;
     std::string tempTitle;  // this field is purposely not saved
-    Socket* mySock{};
+    std::weak_ptr<Socket> mySock;
     std::string surname;
     std::string oldCreated;
     long created{};
@@ -163,7 +163,7 @@ public:
     void dieToMonster(const std::shared_ptr<Monster>& killer);
     void dieToPlayer(const std::shared_ptr<Player>&killer);
     void loseExperience(const std::shared_ptr<Monster>& killer);
-    void dropEquipment(bool dropAll=false, Socket* killSock = nullptr);
+    void dropEquipment(bool dropAll=false, std::shared_ptr<Creature> killer = nullptr);
     void dropBodyPart(const std::shared_ptr<Player>&killer);
     bool isGuildKill(std::shared_ptr<Player>killer) const;
     bool isClanKill(const std::shared_ptr<Player>&killer) const;
@@ -467,10 +467,10 @@ public:
     bool canChooseCustomTitle() const;
     bool alignInOrder() const;
 
-    Socket* getSock() const override;
+    std::shared_ptr<Socket> getSock() const override;
     bool hasSock() const override;
     bool isConnected() const;
-    void setSock(Socket* pSock);
+    void setSock(std::shared_ptr<Socket> pSock);
 
     bool songIsKnown(int song) const;
     void learnSong(int song);

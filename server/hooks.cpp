@@ -106,7 +106,7 @@ std::string Hooks::display() const {
 //                      seeHooks
 //*********************************************************************
 
-bool seeHooks(Socket* sock) {
+bool seeHooks(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         return(sock->getPlayer()->isDm() && (
             sock->getPlayer()->flagIsSet(P_SEE_HOOKS) ||
@@ -119,7 +119,7 @@ bool seeHooks(Socket* sock) {
 //                      seeAllHooks
 //*********************************************************************
 
-bool seeAllHooks(Socket* sock) {
+bool seeAllHooks(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         return(sock->getPlayer()->isDm() && sock->getPlayer()->flagIsSet(P_SEE_ALL_HOOKS));
     return(false);

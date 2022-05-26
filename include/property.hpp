@@ -132,7 +132,7 @@ public:
     static bool goodExit(const std::shared_ptr<Player>& player, const std::shared_ptr<BaseRoom>& room, const char *type, std::string_view xname);
     static bool isInside(const std::shared_ptr<Player>& player, const std::shared_ptr<const UniqueRoom>& room, Property** p);
     static bool requireInside(const std::shared_ptr<Player>& player, const std::shared_ptr<const UniqueRoom>& room, Property** p, PropType propType = PROP_NONE);
-    static void descEdit(Socket* sock, const std::string& str);
+    static void descEdit(std::shared_ptr<Socket> sock, const std::string& str);
     static void guildRoomSetup(std::shared_ptr<UniqueRoom> &room, const Guild* guild, bool outside);
     static void houseRoomSetup(std::shared_ptr<UniqueRoom> &room, const std::shared_ptr<Player>& player, bool outside);
     static void roomSetup(std::shared_ptr<UniqueRoom> &room, PropType propType, const std::shared_ptr<Player> &player, const Guild* guild, bool outside=false);

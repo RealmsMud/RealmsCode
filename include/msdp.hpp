@@ -70,13 +70,13 @@ class ReportedMsdpVariable : public MsdpVariable {
 protected:
     std::string value;
     bool dirty;
-    Socket *parentSock; // Parent Socket
+    std::weak_ptr<Socket> parentSock; // Parent Socket
 
     Timer timer;
 
 public:
     ReportedMsdpVariable(const ReportedMsdpVariable&) = default;
-    ReportedMsdpVariable(const MsdpVariable *mv, Socket *sock);
+    ReportedMsdpVariable(const MsdpVariable *mv, std::shared_ptr<Socket> sock);
 
     [[nodiscard]] std::string getValue() const;
     void setValue(std::string_view newValue);

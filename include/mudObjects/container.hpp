@@ -84,7 +84,7 @@ public:
 
     void doSocialEcho(std::string str, const std::shared_ptr<Creature> & actor, const std::shared_ptr<Creature> & target = nullptr);
 
-    void effectEcho(const std::string &fmt, const std::shared_ptr<MudObject>& actor = nullptr, const std::shared_ptr<MudObject>& applier = nullptr, Socket* ignore = nullptr);
+    void effectEcho(const std::string &fmt, const std::shared_ptr<MudObject>& actor = nullptr, const std::shared_ptr<MudObject>& applier = nullptr, std::shared_ptr<Socket> ignore = nullptr);
 
     void wake(const std::string &str, bool noise) const;
 

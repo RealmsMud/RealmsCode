@@ -584,7 +584,7 @@ void Player::deletePlayer() {
     }
 
     // this deletes the player object
-    Socket* sock = getSock();
+    std::shared_ptr<Socket> sock = getSock();
     uninit();
     gServer->clearPlayer(name);
     sock->clearPlayer();
@@ -675,7 +675,7 @@ void Player::changeStats() {
 //********************************************************************
 // This function allows a player to change their stats
 
-void changingStats(Socket* sock, const std::string& str) {
+void changingStats(std::shared_ptr<Socket> sock, const std::string& str) {
     sock->getPlayer()->changingStats(str);
 }
 
@@ -683,7 +683,7 @@ void Player::changingStats(std::string str) {
     int sum;
     std::vector<std::string> inputArgs;
     std::vector<int> statInput;
-    Socket *sock = getSock();
+    std::shared_ptr<Socket> sock = getSock();
     std::shared_ptr<Player> player = sock->getPlayer();
 
     switch(sock->getState()) {

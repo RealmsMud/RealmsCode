@@ -460,7 +460,7 @@ void Property::destroy() {
                                 for(xit = outside->exits.begin() ; xit != outside->exits.end() ; ) {
                                     std::shared_ptr<Exit> oExit = (*xit++);
                                     if(oExit->target.room == room->info) {
-                                        broadcast((Socket*)nullptr, outside, "%s closes its doors.", name.c_str());
+                                        broadcast((std::shared_ptr<Socket> )nullptr, outside, "%s closes its doors.", name.c_str());
                                         outside->delExit(oExit);
                                     }
                                 }
@@ -484,7 +484,7 @@ void Property::destroy() {
                     }
                 }
 
-                broadcast((Socket*)nullptr, room, "%s closes its doors.", name.c_str());
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%s closes its doors.", name.c_str());
                 room->destroy();
             }
         }
@@ -1777,7 +1777,7 @@ bool Property::requireInside(const std::shared_ptr<Player>& player, const std::s
 
 std::string postText(const std::string &str);
 
-void Property::descEdit(Socket* sock, const std::string& str) {
+void Property::descEdit(std::shared_ptr<Socket> sock, const std::string& str) {
     std::string outstr = "";
     char    outcstr[160];
     int     ff=0;

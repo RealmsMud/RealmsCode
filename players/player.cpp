@@ -397,7 +397,7 @@ void Player::init() {
     computeLuck();
     update();
 
-    Socket* sock = getSock();
+    std::shared_ptr<Socket> sock = getSock();
 
     if(!gServer->isRebooting()) {
         sock->viewFile(Path::Help / "news.txt");

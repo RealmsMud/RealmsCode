@@ -353,14 +353,16 @@ int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // creation.  Character flags override these settings after creation
 
 void Player::defineColors() {
-    if(mySock->getColorOpt() == ANSI_COLOR) {
-        setFlag(P_ANSI_COLOR);
-        clearFlag(P_MXP_ENABLED);
-        clearFlag(P_NEWLINE_AFTER_PROMPT);
-    } else if(mySock->getColorOpt() == NO_COLOR) {
-        clearFlag(P_ANSI_COLOR);
-        clearFlag(P_MXP_ENABLED);
-        clearFlag(P_NEWLINE_AFTER_PROMPT);
+    if(auto sock = mySock.lock()) {
+        if (sock->getColorOpt() == ANSI_COLOR) {
+            setFlag(P_ANSI_COLOR);
+            clearFlag(P_MXP_ENABLED);
+            clearFlag(P_NEWLINE_AFTER_PROMPT);
+        } else if (sock->getColorOpt() == NO_COLOR) {
+            clearFlag(P_ANSI_COLOR);
+            clearFlag(P_MXP_ENABLED);
+            clearFlag(P_NEWLINE_AFTER_PROMPT);
+        }
     }
 }
 //***********************************************************************
@@ -369,10 +371,12 @@ void Player::defineColors() {
 // Set color options on the socket according to player flags (which can
 // overide what we've negotiated)
 void Player::setSockColors() {
-    if(flagIsSet(P_ANSI_COLOR)) {
-        mySock->setColorOpt(ANSI_COLOR);
-    } else {
-        mySock->setColorOpt(NO_COLOR);
+    if(auto sock = mySock.lock()) {
+        if (flagIsSet(P_ANSI_COLOR)) {
+            sock->setColorOpt(ANSI_COLOR);
+        } else {
+            sock->setColorOpt(NO_COLOR);
+        }
     }
 }
 

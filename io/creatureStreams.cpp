@@ -126,7 +126,7 @@ void Streamable::setPagerOn() {
 }
 void Streamable::setPagerOff() {
     pager = false;
-    Socket* sock = getMySock();
+    std::shared_ptr<Socket> sock = getMySock();
     if(sock) sock->donePaging();
 }
 
@@ -157,7 +157,7 @@ int Streamable::getManipNum() {
 void Streamable::doPrint(std::string_view toPrint) {
     const Monster* monster = dynamic_cast<Monster*>(this);
     std::shared_ptr<const Player> master = nullptr;
-    Socket* sock = getMySock();
+    std::shared_ptr<Socket> sock = getMySock();
 
     if(monster) {
         master = monster->getConstPlayerMaster();
@@ -189,11 +189,11 @@ void Streamable::doPrint(std::string_view toPrint) {
 
 }
 
-Socket *Streamable::getMySock() {
+std::shared_ptr<Socket> Streamable::getMySock() {
     Player* player = dynamic_cast<Player*>(this);
     Monster* monster = dynamic_cast<Monster*>(this);
     std::shared_ptr<const Player> master;
-    Socket* sock = nullptr;
+    std::shared_ptr<Socket> sock = nullptr;
 
     if(player)
         sock = player->getSock();

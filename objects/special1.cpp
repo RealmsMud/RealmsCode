@@ -43,7 +43,7 @@
 
 int Object::doSpecial(std::shared_ptr<Player> player) {
     std::shared_ptr<BaseRoom> room = player->getRoomParent();
-    Socket* sock = player->getSock();
+    std::shared_ptr<Socket> sock = player->getSock();
     char    str[80], str2[160];
     unsigned int i=0;
 

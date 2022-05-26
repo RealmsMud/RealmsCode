@@ -58,7 +58,7 @@ void Creature::print(const char *fmt,...) const {
     if(!this)
         return;
 
-    Socket* printTo = getSock();
+    std::shared_ptr<Socket> printTo = getSock();
 
     if(isPet())
         printTo = getConstMaster()->getSock();
@@ -77,7 +77,7 @@ void Creature::print(const char *fmt,...) const {
 }
 
 void Creature::printColor(const char *fmt,...) const {
-    Socket* printTo = getSock();
+    std::shared_ptr<Socket> printTo = getSock();
 
     if(isPet())
         printTo = getConstMaster()->getSock();
@@ -95,8 +95,11 @@ void Creature::printColor(const char *fmt,...) const {
     va_end(ap);
 }
 void Player::vprint(const char *fmt, va_list ap) const {
-    if(this && mySock)
-        mySock->vprint(fmt, ap);
+    if(this) {
+        if (auto sock = mySock.lock()) {
+            sock->vprint(fmt, ap);
+        }
+    }
 }
 
 

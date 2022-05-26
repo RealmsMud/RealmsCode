@@ -235,7 +235,7 @@ void Socket::reset() {
 
     zero(tempstr, sizeof(tempstr));
     inBuf.clear();
-    spyingOn = nullptr;
+    spyingOn.reset();
 }
 
 //********************************************************************
@@ -248,7 +248,7 @@ Socket::Socket(int pFd) {
     numSockets++;
 }
 
-Socket::Socket(int pFd, sockaddr_in pAddr, bool dnsDone) {
+Socket::Socket(int pFd, sockaddr_in pAddr) {
     reset();
 
     struct linger ling{};
@@ -277,8 +277,6 @@ Socket::Socket(int pFd, sockaddr_in pAddr, bool dnsDone) {
     }
 
     startTelnetNeg();
-
-    showLoginScreen(dnsDone);
 }
 
 //********************************************************************
@@ -327,9 +325,9 @@ Socket::~Socket() {
 //********************************************************************
 
 void Socket::clearSpying() {
-    if (spyingOn) {
-        spyingOn->removeSpy(this);
-        spyingOn = nullptr;
+    if (auto spied = spyingOn.lock()) {
+        spied->removeSpy(this);
+        spyingOn.reset();
     }
 }
 
@@ -338,9 +336,8 @@ void Socket::clearSpying() {
 //********************************************************************
 
 void Socket::clearSpiedOn() {
-    std::list<Socket*>::iterator it;
-    for (it = spying.begin(); it != spying.end(); it++) {
-        Socket *sock = *it;
+    for (auto & it : spying) {
+        auto sock = it.lock();
         if (sock)
             sock->setSpying(nullptr);
     }
@@ -351,13 +348,13 @@ void Socket::clearSpiedOn() {
 //                      setSpying
 //********************************************************************
 
-void Socket::setSpying(Socket *sock) {
+void Socket::setSpying(const std::shared_ptr<Socket>& sock) {
     if (sock)
         clearSpying();
     spyingOn = sock;
 
     if (sock)
-        sock->addSpy(this);
+        sock->addSpy(shared_from_this());
     if (!sock) {
         if (myPlayer)
             myPlayer->clearFlag(P_SPYING);
@@ -369,7 +366,10 @@ void Socket::setSpying(Socket *sock) {
 //********************************************************************
 
 void Socket::removeSpy(Socket *sock) {
-    spying.remove(sock);
+    spying.remove_if([&sock](const std::weak_ptr<Socket>& ptr) {
+        return ptr.lock().get() == sock;
+    });
+
     if (myPlayer->getClass() >= sock->myPlayer->getClass())
         sock->printColor("^r%s is no longer observing you.\n",
                 sock->myPlayer->getCName());
@@ -379,7 +379,7 @@ void Socket::removeSpy(Socket *sock) {
 //                      addSpy
 //********************************************************************
 
-void Socket::addSpy(Socket *sock) {
+void Socket::addSpy(const std::shared_ptr<Socket>& sock) {
     spying.push_back(sock);
 }
 
@@ -521,7 +521,7 @@ std::string Socket::stripTelnet(std::string_view inStr) {
 //********************************************************************
 
 void Socket::checkLockOut() {
-    int lockStatus = gConfig->isLockedOut(this);
+    int lockStatus = gConfig->isLockedOut(shared_from_this());
     if (lockStatus == 0) {
         askFor("\n\nPlease enter name: ");
         setState(LOGIN_GET_NAME);
@@ -1100,13 +1100,12 @@ int Socket::processOneCommand() {
 
     // Send the command to the people we're spying on
     if (!spying.empty()) {
-        std::list<Socket*>::iterator it;
-        for (const auto sock : spying) {
-            if (sock) sock->write(fmt::format("[{}]\n", cmd), false);
+        for (const auto& sIt : spying) {
+            if (auto sock = sIt.lock()) sock->write(fmt::format("[{}]\n", cmd), false);
         }
     }
 
-    ((void(*)(Socket*, std::string)) (fn))(this, cmd);
+    ((void(*)(std::shared_ptr<Socket> , std::string)) (fn))(shared_from_this(), cmd);
 
     return (1);
 }
@@ -1118,14 +1117,14 @@ int Socket::processOneCommand() {
 
 void Socket::restoreState() {
     setState(lastState);
-    createPlayer(this, "");
+    createPlayer(shared_from_this(), "");
 }
 
 //*********************************************************************
 //                      pauseScreen
 //*********************************************************************
 
-void pauseScreen(Socket* sock, const std::string &str) {
+void pauseScreen(std::shared_ptr<Socket> sock, const std::string &str) {
     if(str == "quit")
         sock->disconnect();
     else
@@ -1149,21 +1148,21 @@ void Socket::reconnect(bool pauseScreen) {
 
     if (pauseScreen) {
         setState(LOGIN_PAUSE_SCREEN);
-        printColor(
-                "\nPress ^W[RETURN]^x to reconnect or type ^Wquit^x to disconnect.\n: ");
+        printColor("\nPress ^W[RETURN]^x to reconnect or type ^Wquit^x to disconnect.\n: ");
     } else {
         setState(LOGIN_GET_NAME);
         showLoginScreen();
+        askFor("\n\nPlease enter name: ");
     }
 }
 
 
-void viewFileReverse(Socket *sock, const std::string& file) {
+void viewFileReverse(std::shared_ptr<Socket> sock, const std::string& file) {
     sock->viewFileReverse(file);
 }
 
 
-void handlePaging(Socket* sock, const std::string& inStr) {
+void handlePaging(const std::shared_ptr<Socket>& sock, const std::string& inStr) {
     sock->handlePaging(inStr);
 }
 
@@ -1537,9 +1536,8 @@ ssize_t Socket::write(std::string_view toWrite, bool pSpy, bool process) {
 
         boost::replace_all(forSpy, "\n", "\n<Spy> ");
         if(!forSpy.empty()) {
-            std::list<Socket*>::iterator it;
-            for(const auto sock : spying) {
-                if (sock)
+            for(const auto &sIt : spying) {
+                if (auto sock = sIt.lock())
                     sock->write("<Spy> " + forSpy, false);
             }
         }
@@ -1734,7 +1732,7 @@ bool Socket::hasCommand() const {
 // True if the socket is playing (ie: fn is command and fnparam is 1)
 
 bool Socket::canForce() const {
-    return (fn == (void(*)(Socket*, const std::string&)) ::command && fnparam == 1);
+    return (fn == (void(*)(std::shared_ptr<Socket>, const std::string&)) ::command && fnparam == 1);
 }
 
 //********************************************************************
@@ -1861,7 +1859,7 @@ int nonBlock(int pFd) {
 //*********************************************************************
 const auto LOGIN_FILE = Path::Config / "login_screen.txt";
 
-void Socket::showLoginScreen(bool dnsDone) {
+void Socket::showLoginScreen() {
     //*********************************************************************
     // As a part of the copyright agreement this section must be left intact
     //*********************************************************************
@@ -1869,11 +1867,7 @@ void Socket::showLoginScreen(bool dnsDone) {
     print("Programmed by: Jason Mitchell, Randi Mitchell and Tim Callahan.\n");
     print("Contributions by: Jordan Carr, Jonathan Hseu.");
 
-
     viewFile(LOGIN_FILE);
-
-    if (dnsDone)
-        checkLockOut();
     flush();
 }
 

@@ -367,7 +367,7 @@ int cmdSongs(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //                      songs_known
 //*********************************************************************
 
-int songsKnown(Socket* sock, const std::shared_ptr<Player>& player, int test) {
+int songsKnown(const std::shared_ptr<Socket> &sock, const std::shared_ptr<Player>& player, int test) {
     char            str[2048];
     char            sol[128][20];
     int             i=0, j=0;

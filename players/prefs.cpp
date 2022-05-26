@@ -137,7 +137,7 @@ prefInfo prefList[] =
 //*********************************************************************
 
 int cmdTelOpts(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    Socket* sock = player->getSock();
+    std::shared_ptr<Socket> sock = player->getSock();
     std::shared_ptr<Player> target = player;
 
 

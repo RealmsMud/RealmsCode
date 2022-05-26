@@ -122,7 +122,7 @@ bool Monster::addEnemy(const std::shared_ptr<Creature>& target, bool print) {
 
     if(print) {
       if(aggroString[0])
-          broadcast((Socket*)nullptr, getRoomParent(), "%M says, \"%s.\"", this, aggroString);
+          broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "%M says, \"%s.\"", this, aggroString);
 
       target->printColor("^r%M attacks you.\n", this);
       broadcast(target->getSock(), getRoomParent(), "%M attacks %N.", this, target.get());
@@ -287,7 +287,7 @@ void Monster::diePermCrt() {
             std::ifstream f(file);
             std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 
-            broadcast((Socket*)nullptr, getRoomParent(), "\n%s", str.c_str());
+            broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "\n%s", str.c_str());
         }
     }
 }
@@ -486,7 +486,7 @@ int Monster::mobileCrt() {
                 return(0);
 
             if(exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_LOCKED)) {
-                broadcast((Socket*)nullptr, getRoomParent(), "%M just opened the %s.", this, exit->getCName());
+                broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "%M just opened the %s.", this, exit->getCName());
                 exit->clearFlag(X_CLOSED);
             }
 
@@ -499,11 +499,11 @@ int Monster::mobileCrt() {
                 std::shared_ptr<Creature> lookingFor = nullptr;
                 if(flagIsSet(M_CHASING_SOMEONE) && hasEnemy() && ((lookingFor = getTarget(false)) != nullptr) ) {
 
-                    broadcast((Socket*)nullptr, getRoomParent(), "%M %s to the %s^x, looking for %s.",
+                    broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "%M %s to the %s^x, looking for %s.",
                         this, Move::getString(mThis).c_str(), exit->getCName(), lookingFor->getCName());
                 }
                 else
-                    broadcast((Socket*)nullptr, getRoomParent(), "%M just %s to the %s^x.",
+                    broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "%M just %s to the %s^x.",
                         this, Move::getString(mThis).c_str(), exit->getCName());
 
                 clearFlag(M_SNEAKING);
@@ -541,7 +541,7 @@ int Monster::mobileCrt() {
 // This function should make monsters attack each other
 
 void Monster::monsterCombat(const std::shared_ptr<Monster>& target) {
-    broadcast((Socket*)nullptr, getRoomParent(), "%M attacks %N.\n", this, target.get());
+    broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "%M attacks %N.\n", this, target.get());
 
     addEnemy(target);
 }

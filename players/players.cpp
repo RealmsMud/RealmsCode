@@ -570,7 +570,10 @@ bool Player::doPlayerHarmRooms() {
 //*********************************************************************
 
 time_t Player::getIdle() {
-    return(time(nullptr) - mySock->ltime);
+    auto sock = mySock.lock();
+    if(!sock)
+        return MAXINT;
+    return(time(nullptr) - sock->ltime);
 }
 
 

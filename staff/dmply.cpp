@@ -2763,7 +2763,7 @@ int dmJailPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         } else {
             player->print("%s is now jailed.\n", target->getCName());
-            broadcast((Socket*)nullptr, target->getRoomParent(),
+            broadcast((std::shared_ptr<Socket> )nullptr, target->getRoomParent(),
                 "^RA demonic jailer just arrived.\nThe demonic jailer opens a portal to Hell.\nThe demonic jailer drags %s screaming to the Dungeon of Despair.", target->getCName());
 
             target->printColor("^RThe demonic jailer grips your soul and drags you to the Dungeon of Despair.\n");

@@ -156,7 +156,7 @@ int cmdTitle(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //                      doTitle
 //*********************************************************************
 
-void doTitle(Socket* sock, const std::string& str) {
+void doTitle(std::shared_ptr<Socket> sock, const std::string& str) {
     std::shared_ptr<Player> player = sock->getPlayer();
 
     if(low(str[0]) == 'y') {
@@ -285,7 +285,7 @@ int cmdSurname(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //                      doSurname
 //*********************************************************************
 
-void doSurname(Socket* sock, const std::string& str) {
+void doSurname(std::shared_ptr<Socket> sock, const std::string& str) {
     if(low(str[0]) == 'y') {
         sock->print("You are now known as %s %s.\n", sock->getPlayer()->getCName(), sock->getPlayer()->getSurname().c_str());
 

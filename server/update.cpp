@@ -764,12 +764,12 @@ void Server::updateAction(long t) {
                     switch(act->do_act) {
                     case 'E': // broadcast response to room
                         if(thresh <= num)
-                            broadcast((Socket*)nullptr, monster->getRoomParent(), "%s", resp);
+                            broadcast((std::shared_ptr<Socket> )nullptr, monster->getRoomParent(), "%s", resp);
 
                         break;
                     case 'S': // say to room
                         if(thresh <= num)
-                            broadcast((Socket*)nullptr, monster->getRoomParent(), "%M says, \"%s\"", monster.get(), resp);
+                            broadcast((std::shared_ptr<Socket> )nullptr, monster->getRoomParent(), "%M says, \"%s\"", monster.get(), resp);
                         break;
                     case 'T':   // Mob Trash-talk
                         if(Random::get(1,100) <= 10) {

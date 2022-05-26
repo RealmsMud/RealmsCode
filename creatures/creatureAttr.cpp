@@ -1022,7 +1022,6 @@ Monster& Monster::operator=(const Monster& cr) {
 Player::Player() {
     std::clog << "Player ctor" << std::endl;
     reset();
-    mySock = nullptr;
 }
 
 Player::Player(Player& cr) : Creature(cr) {
@@ -1602,7 +1601,7 @@ bool Creature::hasSock() const {
     return false;
 }
 
-Socket* Creature::getSock() const {
+std::shared_ptr<Socket> Creature::getSock() const {
     return(nullptr);
 }
 
@@ -1611,18 +1610,18 @@ Socket* Creature::getSock() const {
 //*********************************************************************
 
 bool Player::hasSock() const {
-    return(mySock != nullptr);
+    return(!mySock.expired());
 }
 
-Socket* Player::getSock() const {
-    return(mySock);
+std::shared_ptr<Socket> Player::getSock() const {
+    return(mySock.lock());
 }
 
 //*********************************************************************
 //                      setSock
 //*********************************************************************
 
-void Player::setSock(Socket* pSock) {
+void Player::setSock(std::shared_ptr<Socket> pSock) {
     mySock = pSock;
 }
 

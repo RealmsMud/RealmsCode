@@ -1689,7 +1689,7 @@ bool delete_drop_obj(const std::shared_ptr<BaseRoom>& room, const std::shared_pt
         return(true);
 
     if(object->flagIsSet(O_BREAK_ON_DROP)) {
-        broadcast((Socket*)nullptr, room, "%O shattered and turned to dust!", object.get());
+        broadcast((std::shared_ptr<Socket> )nullptr, room, "%O shattered and turned to dust!", object.get());
         return(true);
     }
 
@@ -1936,7 +1936,7 @@ void dropAllObj(const std::shared_ptr<Creature>& creature, const std::shared_ptr
         p->appendLog(player->getName(), "%s stores %s.", player->getCName(), txt.c_str());
 
     if(container->flagIsSet(O_DEVOURS_ITEMS))
-        broadcast((Socket*)nullptr, room, "%O devours everything!", container.get());
+        broadcast((std::shared_ptr<Socket> )nullptr, room, "%O devours everything!", container.get());
 
     player->save(true);
 }
@@ -1946,7 +1946,7 @@ void dropAllObj(const std::shared_ptr<Creature>& creature, const std::shared_ptr
 //*********************************************************************
 
 void finishDropObject(const std::shared_ptr<Object>&  object, const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Creature>& player, bool cash, bool printPlayer, bool printRoom) {
-    Socket* sock = nullptr;
+    std::shared_ptr<Socket> sock = nullptr;
     if(player)
         sock = player->getSock();
 
@@ -1961,7 +1961,7 @@ void finishDropObject(const std::shared_ptr<Object>&  object, const std::shared_
                     player->print("Your gold was swallowed by the earth!!\n", object.get());
             }
             if(printRoom)
-                broadcast((Socket*)nullptr, room, "The earth swallowed it!");
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "The earth swallowed it!");
         } else if(room->flagIsSet(R_AIR_BONUS)) {
             if(printPlayer) {
                 if(!cash)
@@ -1970,7 +1970,7 @@ void finishDropObject(const std::shared_ptr<Object>&  object, const std::shared_
                     player->print("Your gold frozen solid and destroyed!!\n", object.get());
             }
             if(printRoom)
-                broadcast((Socket*)nullptr, room, "It froze completely and was destroyed!");
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "It froze completely and was destroyed!");
         } else if(room->flagIsSet(R_FIRE_BONUS)) {
             if(printPlayer) {
                 if(!cash)
@@ -1979,7 +1979,7 @@ void finishDropObject(const std::shared_ptr<Object>&  object, const std::shared_
                     player->print("Your gold was engulfed in flames and melted away!!\n", object.get());
             }
             if(printRoom)
-                broadcast((Socket*)nullptr, room, "It was incinerated by flames!");
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "It was incinerated by flames!");
         } else if(room->flagIsSet(R_WATER_BONUS) || (aRoom && aRoom->isWater())) {
             if(printPlayer) {
                 if(!cash)
@@ -1988,7 +1988,7 @@ void finishDropObject(const std::shared_ptr<Object>&  object, const std::shared_
                     player->print("Your gold is swept away by the strong current!!\n", object.get());
             }
             if(printRoom)
-                broadcast((Socket*)nullptr, room, "The current swept it away!");
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "The current swept it away!");
         } else if(room->flagIsSet(R_ELEC_BONUS)) {
             if(printPlayer) {
                 if(!cash)
@@ -1997,7 +1997,7 @@ void finishDropObject(const std::shared_ptr<Object>&  object, const std::shared_
                     player->print("Your gold is melted by electricity!!\n", object.get());
             }
             if(printRoom)
-                broadcast((Socket*)nullptr, room, "It was destroyed by electricity!");
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "It was destroyed by electricity!");
         } else if(room->flagIsSet(R_COLD_BONUS) || room->isWinter()) {
             if(printPlayer) {
                 if(!cash)
@@ -2006,7 +2006,7 @@ void finishDropObject(const std::shared_ptr<Object>&  object, const std::shared_
                     player->print("Your gold freezes solid and shatters!!\n", object.get());
             }
             if(printRoom)
-                broadcast((Socket*)nullptr, room, "It froze solid and shattered!");
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "It froze solid and shattered!");
         } else {
             if(printPlayer) {
                 if(!cash)
@@ -2015,7 +2015,7 @@ void finishDropObject(const std::shared_ptr<Object>&  object, const std::shared_
                     player->print("Your gold shatters and turns to dust!\n", object.get());
             }
             if(printRoom)
-                broadcast((Socket*)nullptr, room, "It shattered and turned to dust!");
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "It shattered and turned to dust!");
         }
 
         if(player)
@@ -2356,7 +2356,7 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             broadcast(player->getSock(), room, "%M put %1P in %1P.", creature.get(), object.get(), container.get());
 
             if(container->info.id == 2636 && container->info.isArea("misc"))
-                broadcast((Socket*)nullptr, room, "Flush!");
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "Flush!");
 
 
             if( object->flagIsSet(O_NO_DROP) &&

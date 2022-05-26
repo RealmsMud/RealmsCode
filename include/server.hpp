@@ -344,7 +344,7 @@ public:
 // *******************************
 // Public methods for server class
 public:
-    void showMemory(Socket* sock, bool extended=false);
+    void showMemory(std::shared_ptr<Socket> sock, bool extended=false);
 
     // Child processes
     void addChild(int pid, ChildType pType, int pFd = -1, std::string_view pExtra = "");
@@ -375,7 +375,7 @@ public:
     // DNS
     std::string getDnsCacheString();
     bool getDnsCache(std::string &ip, std::string &hostName);
-    int startDnsLookup(Socket* sock, sockaddr_in pAddr); // Start dns lookup on a socket
+    int startDnsLookup(Socket *sock, sockaddr_in addr); // Start dns lookup on a socket
 
     // Players
     bool addPlayer(const std::shared_ptr<Player>& player);
@@ -399,7 +399,7 @@ public:
     bool isActive(Monster* monster);
 
     // Child Processes
-    int runList(Socket* sock, cmd* cmnd);
+    int runList(std::shared_ptr<Socket> sock, cmd* cmnd);
     std::string simpleChildRead(childProcess &child);
 
     // Swap functions - use children
@@ -410,8 +410,8 @@ public:
     void swapInfo(const std::shared_ptr<Player>& player);
 
     // Queries
-    bool checkDuplicateName(Socket *sock, bool dis);
-    bool checkDouble(Socket *sock);
+    bool checkDuplicateName(std::shared_ptr<Socket> sock, bool dis);
+    bool checkDouble(std::shared_ptr<Socket> sock);
 
     // Bans
     void checkBans();

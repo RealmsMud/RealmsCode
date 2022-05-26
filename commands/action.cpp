@@ -190,7 +190,7 @@ int cmdAction(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     // some actions are creature-only; we will need this variable to use them
     player = creature->getAsPlayer();
 
-    Socket* sock = nullptr;
+    std::shared_ptr<Socket> sock = nullptr;
     if(player)
         sock = player->getSock();
 

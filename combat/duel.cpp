@@ -45,7 +45,7 @@ bool induel(const std::shared_ptr<const Player>& player, const std::shared_ptr<c
 //                      wantsDuelMessages
 //*********************************************************************
 
-bool wantsDuelMessages(Socket* sock) {
+bool wantsDuelMessages(std::shared_ptr<Socket> sock) {
     return(sock->getPlayer() && sock->getPlayer()->fd >= 0 && !sock->getPlayer()->flagIsSet(P_NO_DUEL_MESSAGES));
 }
 

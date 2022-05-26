@@ -71,7 +71,7 @@ class StartLoc;
 /*
  * Generic get function, copy for future use
  *
-bool Create::get(Socket* sock, std::string str, int mode) {
+bool Create::get(std::shared_ptr<Socket> sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
     } else if(mode == Create::doWork) {
@@ -96,16 +96,16 @@ char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16] =
 //*********************************************************************
 
 int cmdReconnect(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    Socket* sock = player->getSock();
+    std::shared_ptr<Socket> sock = player->getSock();
 
     player->print("\n\nReconnecting.\n\n\n");
-
+    std::clog << "Player In Use " << player.use_count() << std::endl;
     player->save(true);
 
     player->uninit();
     gServer->clearPlayer(player);
     sock->clearPlayer();
-
+    std::clog << "Player In Use " << player.use_count() << std::endl;
     sock->reconnect();
     return(0);
 }
@@ -150,7 +150,7 @@ bool Player::checkProxyAccess(const std::shared_ptr<Player>& proxy) {
 unsigned const char echo_off[] = {255, 251, 1, 0};
 unsigned const char echo_on[] = {255, 252, 1, 0};
 
-void login(Socket* sock, const std::string& inStr) {
+void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
     std::shared_ptr<Player> player=nullptr;
     std::string::size_type proxyCheck = 0;
     if(!sock) {
@@ -322,9 +322,9 @@ void Socket::finishLogin() {
 
     print("%s", echo_on);
     strcpy(charName, getPlayer()->getCName());
-
-    gServer->checkDuplicateName(this, true);
-    if(gServer->checkDouble(this)) {
+    auto sThis = shared_from_this();
+    gServer->checkDuplicateName(sThis, true);
+    if(gServer->checkDouble(sThis)) {
         return;
     }
 
@@ -354,7 +354,7 @@ void Socket::finishLogin() {
 
     setPlayer(player);
     player->fd = getFd();
-    player->setSock(this);
+    player->setSock(sThis);
     player->init();
 
     registerPlayer();
@@ -382,7 +382,7 @@ void Socket::finishLogin() {
 
 // Blah I know it's a big hack...fix it later if you don't like it
 
-int setPlyClass(Socket* sock, int cClass) {
+int setPlyClass(const std::shared_ptr<Socket>& sock, int cClass) {
     // Make sure they both start off at 0
     sock->getPlayer()->setClass(CreatureClass::NONE);
     sock->getPlayer()->setSecondClass(CreatureClass::NONE);
@@ -447,7 +447,7 @@ int setPlyClass(Socket* sock, int cClass) {
 //                      setPlyDeity
 //*********************************************************************
 
-void setPlyDeity(Socket* sock, int deity) {
+void setPlyDeity(const std::shared_ptr<Socket>& sock, int deity) {
 
     switch(deity) {
         case ARAMON:
@@ -473,7 +473,7 @@ void setPlyDeity(Socket* sock, int deity) {
 //*********************************************************************
 // This function allows a new player to create their character.
 
-void doCreateHelp(Socket* sock, std::string_view str) {
+void doCreateHelp(const std::shared_ptr<Socket>& sock, std::string_view str) {
     cmd cmnd;
     parse(str, &cmnd);
 
@@ -493,7 +493,7 @@ void doCreateHelp(Socket* sock, std::string_view str) {
 
 }
 
-void createPlayer(Socket* sock, const std::string& str) {
+void createPlayer(std::shared_ptr<Socket> sock, const std::string& str) {
 
     switch(sock->getState()) {
     case CREATE_NEW:
@@ -810,7 +810,7 @@ void Create::addStartingWeapon(const std::shared_ptr<Player>& player, const std:
 //                      getSex
 //*********************************************************************
 
-bool Create::getSex(Socket* sock, std::string str, int mode) {
+bool Create::getSex(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     const RaceData* rdata = gConfig->getRace(sock->getPlayer()->getRace());
     if(!rdata->isGendered()) {
         sock->getPlayer()->setSex(SEX_NONE);
@@ -846,7 +846,7 @@ bool Create::getSex(Socket* sock, std::string str, int mode) {
 
 #define FBUF    800
 
-bool Create::getRace(Socket* sock, std::string str, int mode) {
+bool Create::getRace(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     RaceDataMap choices;
     RaceDataMap::iterator it;
     int k=0;
@@ -947,7 +947,7 @@ bool Create::getRace(Socket* sock, std::string str, int mode) {
 //                      getSubRace
 //*********************************************************************
 
-bool Create::getSubRace(Socket* sock, std::string str, int mode) {
+bool Create::getSubRace(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     RaceDataMap choices;
     RaceDataMap::iterator it;
     int k=0;
@@ -1015,7 +1015,7 @@ bool Create::getSubRace(Socket* sock, std::string str, int mode) {
 //                      finishRace
 //*********************************************************************
 
-void Create::finishRace(Socket* sock) {
+void Create::finishRace(const std::shared_ptr<Socket>& sock) {
     const RaceData* race = gConfig->getRace(sock->getPlayer()->getRace());
 
     sock->printColor("\nYour chosen race: ^W%s^x\n\n", race->getName().c_str());
@@ -1032,7 +1032,7 @@ void Create::finishRace(Socket* sock) {
 //                      getClass
 //*********************************************************************
 
-bool Create::getClass(Socket* sock, std::string str, int mode) {
+bool Create::getClass(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     int     l=0, k=0;
     if(mode == Create::doPrint) {
 
@@ -1105,7 +1105,7 @@ bool Create::getClass(Socket* sock, std::string str, int mode) {
 //                      getDeity
 //*********************************************************************
 
-bool Create::getDeity(Socket* sock, std::string str, int mode) {
+bool Create::getDeity(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     int     l=0, k=0;
     const RaceData* race = gConfig->getRace(sock->getPlayer()->getRace());
     if(mode == Create::doPrint) {
@@ -1162,7 +1162,7 @@ bool Create::getDeity(Socket* sock, std::string str, int mode) {
 // from startlocs.cpp
 bool startingChoices(std::shared_ptr<Player> player, std::string str, char* location, bool choose);
 
-bool Create::getLocation(Socket* sock, const std::string &str, int mode) {
+bool Create::getLocation(const std::shared_ptr<Socket>& sock, const std::string &str, int mode) {
     char location[256];
     if(mode == Create::doPrint) {
 
@@ -1201,7 +1201,7 @@ bool Create::getLocation(Socket* sock, const std::string &str, int mode) {
 //                      startCustom
 //*********************************************************************
 
-bool Create::startCustom(Socket* sock, std::string str, int mode) {
+bool Create::startCustom(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     // still in progress! bypass for now
     return(getProf(sock, str, mode));
 
@@ -1228,7 +1228,7 @@ bool Create::startCustom(Socket* sock, std::string str, int mode) {
 //                      getStatsChoice
 //*********************************************************************
 
-bool Create::getStatsChoice(Socket* sock, std::string str, int mode) {
+bool Create::getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
         PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
         if(!pClass || !pClass->hasDefaultStats()) {
@@ -1279,7 +1279,7 @@ bool Create::getStatsChoice(Socket* sock, std::string str, int mode) {
 //                      getStats
 //*********************************************************************
 
-bool Create::getStats(Socket* sock, std::string str, int mode) {
+bool Create::getStats(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYou have 56 points to distribute among your 5 stats. Please enter your 5");
@@ -1343,7 +1343,7 @@ bool Create::getStats(Socket* sock, std::string str, int mode) {
 //                      finishStats
 //*********************************************************************
 
-void Create::finishStats(Socket* sock) {
+void Create::finishStats(const std::shared_ptr<Socket>& sock) {
     std::shared_ptr<Player> ply = sock->getPlayer();
     ply->strength.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(STR));
     ply->dexterity.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(DEX));
@@ -1369,7 +1369,7 @@ void Create::finishStats(Socket* sock) {
 //                      getBonusStat
 //*********************************************************************
 
-bool Create::getBonusStat(Socket* sock, std::string str, int mode) {
+bool Create::getBonusStat(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nRaise which stat?\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n : ");
@@ -1407,7 +1407,7 @@ bool Create::getBonusStat(Socket* sock, std::string str, int mode) {
 //                      getPenaltyStat
 //*********************************************************************
 
-bool Create::getPenaltyStat(Socket* sock, std::string str, int mode) {
+bool Create::getPenaltyStat(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->printColor("\nChoose your stat to lower:\n[^WA^x] Strength, [^WB^x] Dexterity, [^WC^x] Constitution, [^WD^x] Intelligence, or [^WE^x] Piety.\n : ");
@@ -1444,7 +1444,7 @@ bool Create::getPenaltyStat(Socket* sock, std::string str, int mode) {
 //                      handleWeapon
 //*********************************************************************
 
-bool Create::handleWeapon(Socket* sock, int mode, char ch) {
+bool Create::handleWeapon(const std::shared_ptr<Socket>& sock, int mode, char ch) {
     int     i=0;
 
     if(!isalpha(ch))
@@ -1576,7 +1576,7 @@ int cmdWeapons(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //                      convertNewWeaponSkills
 //*********************************************************************
 
-void convertNewWeaponSkills(Socket* sock, const std::string& str) {
+void convertNewWeaponSkills(std::shared_ptr<Socket> sock, const std::string& str) {
     if(!isalpha(str[0])) {
         sock->setState(CON_PLAYING);
         return;
@@ -1606,7 +1606,7 @@ void convertNewWeaponSkills(Socket* sock, const std::string& str) {
 //                      getProf
 //*********************************************************************
 
-bool Create::getProf(Socket* sock, std::string str, int mode) {
+bool Create::getProf(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
 
     if(mode == Create::doPrint) {
         if(gConfig->classes[get_class_string(sock->getPlayer()->getClassInt())]->numProfs() > 1) {
@@ -1637,7 +1637,7 @@ bool Create::getProf(Socket* sock, std::string str, int mode) {
 //                      getSecondProf
 //*********************************************************************
 
-bool Create::getSecondProf(Socket* sock, std::string str, int mode) {
+bool Create::getSecondProf(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         Create::handleWeapon(sock, mode, str[0]);
@@ -1665,7 +1665,7 @@ bool Create::getSecondProf(Socket* sock, std::string str, int mode) {
 //                      getPassword
 //*********************************************************************
 
-bool Create::getPassword(Socket* sock, const std::string &str, int mode) {
+bool Create::getPassword(const std::shared_ptr<Socket>& sock, const std::string &str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYou must now choose a password. Remember that it\n");
@@ -1700,7 +1700,7 @@ bool Create::getPassword(Socket* sock, const std::string &str, int mode) {
 //                      done
 //*********************************************************************
 
-void Create::done(Socket* sock, const std::string &str, int mode) {
+void Create::done(const std::shared_ptr<Socket>& sock, const std::string &str, int mode) {
 
     if(mode == Create::doPrint) {
 
@@ -1923,7 +1923,7 @@ CustomCrt::CustomCrt() {
 //                      getCommunity
 //*********************************************************************
 
-bool Create::getCommunity(Socket* sock, std::string str, int mode) {
+bool Create::getCommunity(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYour Community\n\n");
@@ -2008,7 +2008,7 @@ void Create::doFamily(const std::shared_ptr<Player>& player, int mode) {
 //                      getFamily
 //*********************************************************************
 
-bool Create::getFamily(Socket* sock, std::string str, int mode) {
+bool Create::getFamily(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYour Family\n\n");
@@ -2046,7 +2046,7 @@ bool Create::getFamily(Socket* sock, std::string str, int mode) {
 //                      getSocial
 //*********************************************************************
 
-bool Create::getSocial(Socket* sock, std::string str, int mode) {
+bool Create::getSocial(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     CustomCrt *custom = &sock->getPlayer()->custom;
 
     if(mode == Create::doPrint) {
@@ -2114,7 +2114,7 @@ bool Create::getSocial(Socket* sock, std::string str, int mode) {
 //                      getEducation
 //*********************************************************************
 
-bool Create::getEducation(Socket* sock, std::string str, int mode) {
+bool Create::getEducation(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     CustomCrt *custom = &sock->getPlayer()->custom;
 
     if(mode == Create::doPrint) {
@@ -2183,7 +2183,7 @@ int Create::calcHeight(int race, int mode) {
 //                      getHeight
 //*********************************************************************
 
-bool Create::getHeight(Socket* sock, std::string str, int mode) {
+bool Create::getHeight(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYour Height\n\n");
@@ -2234,7 +2234,7 @@ int Create::calcWeight(int race, int mode) {
 //                      getWeight
 //*********************************************************************
 
-bool Create::getWeight(Socket* sock, std::string str, int mode) {
+bool Create::getWeight(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
         sock->print("\nYour Weight\n\n");
@@ -2274,7 +2274,7 @@ bool Create::getWeight(Socket* sock, std::string str, int mode) {
 //  str:  The name we're testing
 //  sock: The socket to print error messages to
 
-bool nameIsAllowed(std::string str, Socket* sock) {
+bool nameIsAllowed(std::string str, const std::shared_ptr<Socket>& sock) {
     int i=0, nonalpha=0, len = str.length();
 
     if(!isalpha(str[0]))

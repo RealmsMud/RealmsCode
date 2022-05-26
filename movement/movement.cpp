@@ -1372,7 +1372,7 @@ int cmdOpen(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(exit->flagIsSet(X_ONOPEN_PLAYER)) {
             player->print("%s.\n", exit->getOpen().c_str());
         } else {
-            broadcast((Socket*)nullptr, player->getRoomParent(), exit->getOpen().c_str());
+            broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), exit->getOpen().c_str());
         }
     }
 

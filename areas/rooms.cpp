@@ -709,7 +709,7 @@ int BaseRoom::getMaxMobs() const {
 //                      vampCanSleep
 //*********************************************************************
 
-bool BaseRoom::vampCanSleep(Socket* sock) const {
+bool BaseRoom::vampCanSleep(std::shared_ptr<Socket> sock) const {
     // not at night
     if(!isDay()) {
         sock->print("Your thirst for blood keeps you from sleeping.\n");
@@ -1058,15 +1058,15 @@ Location Creature::getRecallRoom() const {
 //                      print
 //*********************************************************************
 
-bool hearBroadcast(std::shared_ptr<Creature> target, Socket* ignore1, Socket* ignore2, bool showTo(Socket*));
+bool hearBroadcast(std::shared_ptr<Creature> target, std::shared_ptr<Socket> ignore1, std::shared_ptr<Socket> ignore2, bool showTo(std::shared_ptr<Socket>));
 
-void BaseRoom::print(Socket* ignore, const char *fmt, ...) {
+void BaseRoom::print(std::shared_ptr<Socket> ignore, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     doPrint(nullptr, ignore, nullptr, fmt, ap);
     va_end(ap);
 }
-void BaseRoom::print(Socket* ignore1, Socket* ignore2, const char *fmt, ...) {
+void BaseRoom::print(std::shared_ptr<Socket> ignore1, std::shared_ptr<Socket> ignore2, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     doPrint(nullptr, ignore1, ignore2, fmt, ap);
@@ -1077,7 +1077,7 @@ void BaseRoom::print(Socket* ignore1, Socket* ignore2, const char *fmt, ...) {
 //                      doPrint
 //*********************************************************************
 
-void BaseRoom::doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const char *fmt, va_list ap) {
+void BaseRoom::doPrint(bool showTo(std::shared_ptr<Socket>), std::shared_ptr<Socket> ignore1, std::shared_ptr<Socket> ignore2, const char *fmt, va_list ap) {
     for(const auto& pIt: players) {
         if(auto ply = pIt.lock()) {
             if (!hearBroadcast(ply, ignore1, ignore2, showTo))

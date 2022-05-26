@@ -649,7 +649,7 @@ int cmdHowl(const std::shared_ptr<Creature>& player, cmd* cmnd) {
 
         stunTime = Random::get(5, std::max(6, player->getLevel()/2));
         monster->stun(stunTime);
-        broadcast((Socket*)nullptr, room, "^b%M is frozen in terror!", monster.get());
+        broadcast((std::shared_ptr<Socket>)nullptr, room, "^b%M is frozen in terror!", monster.get());
     }
 
     return(0);

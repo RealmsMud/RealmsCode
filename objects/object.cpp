@@ -655,10 +655,10 @@ void BaseRoom::killMortalObjectsOnFloor() {
             continue;
 
         if(sunlight && object->flagIsSet(O_DARKMETAL)) {
-            broadcast((Socket*)nullptr, getAsRoom(), "^yThe %s^y was destroyed by the sunlight!", object->getCName());
+            broadcast((std::shared_ptr<Socket> )nullptr, getAsRoom(), "^yThe %s^y was destroyed by the sunlight!", object->getCName());
             object->deleteFromRoom();
         } else if(!Unique::canLoad(object)) {
-            broadcast((Socket*)nullptr, getAsRoom(), "^yThe %s^y vanishes!", object->getCName());
+            broadcast((std::shared_ptr<Socket> )nullptr, getAsRoom(), "^yThe %s^y vanishes!", object->getCName());
             object->deleteFromRoom();
         } else
             object->killUniques();

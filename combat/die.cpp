@@ -432,7 +432,7 @@ void Monster::dieToPet(const std::shared_ptr<Monster>& killer, bool &freeTarget)
     }
 
 
-    broadcast((Socket*)nullptr, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller.get(), petKiller->getCName(), this);
+    broadcast((std::shared_ptr<Socket> )nullptr, pKiller->getRoomParent(), "%M's %s killed %N.", pKiller.get(), petKiller->getCName(), this);
 
     mobDeath(pKiller, freeTarget);
 }
@@ -447,7 +447,7 @@ void Monster::dieToPet(const std::shared_ptr<Monster>& killer, bool &freeTarget)
 // Handles monsters killing monsters
 void Monster::dieToMonster(const std::shared_ptr<Monster>& killer, bool &freeTarget) {
     if(this != killer.get())
-        broadcast((Socket*)nullptr, killer->getRoomParent(), "%M killed %N.", killer.get(), this);
+        broadcast((std::shared_ptr<Socket> )nullptr, killer->getRoomParent(), "%M killed %N.", killer.get(), this);
     mobDeath(killer, freeTarget);
 }
 
@@ -564,7 +564,7 @@ void Player::getPkilled(const std::shared_ptr<Player>&killer, bool pDueling, boo
         dropBodyPart(killer);
 
         if(!killer->isStaff())
-            dropEquipment(true, killer->getSock());
+            dropEquipment(true, killer);
 
         logDeath(killer);
 
@@ -920,7 +920,7 @@ void Player::updatePkill(const std::shared_ptr<Player>& killer) {
 // Function to make players drop the equipment they are currently wearing
 // via a pkill
 
-void Player::dropEquipment(bool dropAll, Socket* killerSock) {
+void Player::dropEquipment(bool dropAll, std::shared_ptr<Creature> killer) {
     std::string dropString;
     int     i=0;
 
@@ -974,8 +974,8 @@ void Player::dropEquipment(bool dropAll, Socket* killerSock) {
             ready[HELD-1] = rHeld;
 
             if(!dropString.empty()) {
-                if(killerSock)
-                    killerSock->printColor("%s dropped: %s.\n", getCName(), dropString.c_str());
+                if(killer)
+                    killer->printColor("%s dropped: %s.\n", getCName(), dropString.c_str());
 
                 print("You dropped your inventory where you died!\n");
             }
@@ -1218,7 +1218,7 @@ void Player::resetPlayer(const std::shared_ptr<Creature>& killer) {
 //                      hearMobDeath
 //********************************************************************
 
-bool hearMobDeath(Socket* sock) {
+bool hearMobDeath(std::shared_ptr<Socket> sock) {
     if(!sock->getPlayer() || !isCt(sock))
         return(false);
     return(!sock->getPlayer()->flagIsSet(P_NO_DEATH_MSG));
@@ -2080,7 +2080,7 @@ void Player::die(DeathType dt) {
         curePoison();
 
     // only drop all if killed by player
-    dropEquipment(killedByPlayer && (!killer || !killer->isStaff()), killer ? killer->getSock() : nullptr);
+    dropEquipment(killedByPlayer && (!killer || !killer->isStaff()), killer);
 
     checkDarkness();
     computeAC();

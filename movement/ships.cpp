@@ -222,7 +222,7 @@ bool ShipExit::createExit() {
             ext->setFlag(X_MOVING);
 
             if(!arrives.empty())
-                broadcast((Socket*)nullptr, newRoom, "%s", arrives.c_str());
+                broadcast((std::shared_ptr<Socket> )nullptr, newRoom, "%s", arrives.c_str());
             return(true);
         }
     }
@@ -268,7 +268,7 @@ void ShipExit::removeExit() {
         raider = (*mIt++);
 
         if (raider && raider->flagIsSet(M_RAIDING)) {
-            broadcast((Socket*)nullptr, newRoom, "%1M just %s away.", raider.get(), Move::getString(raider).c_str());
+            broadcast((std::shared_ptr<Socket> )nullptr, newRoom, "%1M just %s away.", raider.get(), Move::getString(raider).c_str());
             gServer->delActive(raider.get());
             raider->deleteFromRoom();
             raider->clearAsEnemy();
@@ -277,7 +277,7 @@ void ShipExit::removeExit() {
 
 
     if (!departs.empty())
-        broadcast((Socket*)nullptr, newRoom, "%s", departs.c_str());
+        broadcast((std::shared_ptr<Socket> )nullptr, newRoom, "%s", departs.c_str());
 
     aRoom = newRoom->getAsAreaRoom();
     for (auto xit = newRoom->exits.begin(); xit != newRoom->exits.end();) {
@@ -401,7 +401,7 @@ int shipDeleteExits(Ship &ship, ShipStop *stop) {
                     ply->doPetFollow();
                 }
 
-                broadcast((Socket*)nullptr, room, "%M was hauled off by %N.", ply.get(), raider.get());
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%M was hauled off by %N.", ply.get(), raider.get());
             }
         }
     }

@@ -1344,7 +1344,7 @@ int Monster::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obj
     attackDamage.add(::bonus(strength.getCur()));
 
     if(result == ATTACK_CRITICAL) {
-        broadcast((Socket*)nullptr, getRoomParent(), "%M made a critical hit.", this);
+        broadcast((std::shared_ptr<Socket>)nullptr, getRoomParent(), "%M made a critical hit.", this);
         int mult = Random::get(2, 5);
         attackDamage.set(attackDamage.get() * mult);
         drain *= mult;

@@ -591,7 +591,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
                         continue;
                     } else {
                         std::shared_ptr<Monster>  mon = target->getAsMonster();
-                        broadcast((Socket*)nullptr,  room, "%M was killed!", mon.get());
+                        broadcast((std::shared_ptr<Socket> )nullptr,  room, "%M was killed!", mon.get());
                         if(mon->flagIsSet(M_PERMENANT_MONSTER))
                             mon->diePermCrt();
                         mon->deleteFromRoom();

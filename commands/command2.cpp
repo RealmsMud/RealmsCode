@@ -255,14 +255,14 @@ int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         // closed, or off map, or being guarded
         if(!loadExit || (!newRoom)) {
             if(guard)
-                broadcast((Socket*)nullptr, room, "%M knocks %P to the ground.", guard.get(), object.get());
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%M knocks %P to the ground.", guard.get(), object.get());
             else
-                broadcast((Socket*)nullptr, room, "%O hits the %s^x and falls to the ground.", object.get(), exit->getCName());
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%O hits the %s^x and falls to the ground.", object.get(), exit->getCName());
             finishDropObject(object, room, creature);
         } else {
             room = newRoom;
 
-            broadcast((Socket*)nullptr, room, "%1O comes flying into the room.", object.get());
+            broadcast((std::shared_ptr<Socket> )nullptr, room, "%1O comes flying into the room.", object.get());
             room->wake("Loud noises disturb your sleep.", true);
             finishDropObject(object, room, creature, false, false, true);
 
@@ -403,9 +403,9 @@ int cmdKnock(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     targetRoom->wake("You awaken suddenly!", true);
 
     if(exit)
-        broadcast((Socket*)nullptr, targetRoom, "You hear someone knocking on the %s.", exit.get());
+        broadcast((std::shared_ptr<Socket> )nullptr, targetRoom, "You hear someone knocking on the %s.", exit.get());
     else
-        broadcast((Socket*)nullptr, targetRoom, "You hear the sound of someone knocking.");
+        broadcast((std::shared_ptr<Socket> )nullptr, targetRoom, "You hear the sound of someone knocking.");
     return(0);
 }
 

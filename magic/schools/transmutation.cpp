@@ -528,10 +528,10 @@ int splDisintegrate(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
                     broadcast(player->getSock(), player->getParent(), "%M casts a disintegration spell on the %s^x.", player.get(), exit->getCName());
 
                     if(exit->flagIsSet(X_PORTAL)) {
-                        broadcast((Socket*)nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->getCName());
+                        broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->getCName());
                         Move::deletePortal(player->getRoomParent(), exit);
                     } else {
-                        broadcast((Socket*)nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->getCName());
+                        broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->getCName());
                         bringDownTheWall(effect, player->getRoomParent(), exit);
                     }
                     return(0);

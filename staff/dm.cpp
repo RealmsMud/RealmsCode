@@ -601,7 +601,7 @@ int dmUsers(const std::shared_ptr<Player>& player, cmd* cmnd) {
     bool    full=false;
     std::string tmp="", host="";
     std::shared_ptr<Player> user=nullptr;
-    //Socket* sock=0;
+    //std::shared_ptr<Socket> sock=0;
 
     std::ostringstream oStr;
     char    str[100];

@@ -49,7 +49,7 @@
 #define MSDP_DEBUG
 
 void Server::processMsdp() {
-    for(auto sock : sockets) {
+    for(const auto& sock : sockets) {
         if(sock->getState() == CON_DISCONNECTING)
             continue;
 
@@ -221,7 +221,7 @@ ReportedMsdpVariable* Socket::msdpReport(const std::string &value) {
         return reported;
     }
 
-    msdpReporting.emplace(msdpVar->getName(), ReportedMsdpVariable(msdpVar, this));
+    msdpReporting.emplace(msdpVar->getName(), ReportedMsdpVariable(msdpVar, shared_from_this()));
 #ifdef MSDP_DEBUG
     std::clog << "MsdpHandleReport: Now Reporting '" << msdpVar->getName() << "'" << std::endl;
 #endif
@@ -369,7 +369,7 @@ MsdpVariable* Config::getMsdpVariable(const std::string &name) {
         return &(it->second);
 }
 
-ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, Socket* sock) {
+ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, std::shared_ptr<Socket> sock) {
     name = mv->getName();
     parentSock = sock;
     configurable = mv->isConfigurable();
@@ -472,10 +472,11 @@ bool ReportedMsdpVariable::isDirty() const {
 
 void ReportedMsdpVariable::update() {
     if(!isUpdatable()) return;
-    if(!parentSock) return;
+    auto sock = parentSock.lock();
+    if(!sock) return;
 
     std::string oldValue = value;
-    setValue(MsdpVariable::valueFn(*parentSock, parentSock->getPlayer()));
+    setValue(MsdpVariable::valueFn(*sock, sock->getPlayer()));
 }
 
 void ReportedMsdpVariable::setDirty(bool pDirty) {

@@ -223,7 +223,7 @@ public:
 
 
     virtual void upgradeStats() {};
-    virtual Socket* getSock() const;
+    virtual std::shared_ptr<Socket> getSock() const;
     Location getLocation();
     void delayedAction(const std::string& action, int delay, const std::shared_ptr<MudObject>& target=nullptr);
     void delayedScript(const std::string& script, int delay);

@@ -130,7 +130,7 @@ namespace telnet {
     void zlib_free(void *opaque, void *address);
 }
 
-class Socket {
+class Socket : public std::enable_shared_from_this<Socket> {
     friend class Server;
     struct Host {
         std::string hostName;
@@ -175,7 +175,7 @@ public:
     void registerPlayer();
 public:
     explicit Socket(int pFd);
-    Socket(int pFd, sockaddr_in pAddr, bool dnsDone);
+    Socket(int pFd, sockaddr_in pAddr);
     ~Socket();
 
     void cleanUp();
@@ -221,7 +221,7 @@ public:
 
     void reconnect(bool pauseScreen=false);
     void disconnect();
-    void showLoginScreen(bool dnsDone=true);
+    void showLoginScreen();
 
     void flush(); // Flush any pending output
 
@@ -278,9 +278,9 @@ public:
 
     void clearSpying();
     void clearSpiedOn();
-    void setSpying(Socket *sock);
+    void setSpying(const std::shared_ptr<Socket>& sock);
     void removeSpy(Socket *sock);
-    void addSpy(Socket *sock);
+    void addSpy(const std::shared_ptr<Socket>& sock);
 
     // MXP Support
     void clearMxpClientSecure();
@@ -322,6 +322,7 @@ public:
 protected:
     int         fd;                 // File Descriptor of this socket
     Host        host;
+    bool        dnsDone{};
     Term        term;
     SockOptions opts{};
 
@@ -351,11 +352,11 @@ protected:
     z_stream    *outCompress{};
 
 // Old items from IOBUF that we might keep
-    void        (*fn)(Socket*, const std::string&){};
+    void        (*fn)(std::shared_ptr<Socket>, const std::string&){};
     char        fnparam{};
     char        commands{};
-    Socket      *spyingOn{};      // Socket we are spying on
-    std::list<Socket*> spying;    // Sockets spying on us
+    std::weak_ptr<Socket> spyingOn{};      // Socket we are spying on
+    std::list<std::weak_ptr<Socket>> spying;    // Sockets spying on us
     std::map<std::string, ReportedMsdpVariable> msdpReporting;
 // TEMP
 public:

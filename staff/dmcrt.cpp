@@ -189,7 +189,7 @@ std::string Creature::statCrt(int statFlags) {
     crtStr.imbue(std::locale(""));
 
     if(pTarget && pTarget->getSock()) {
-        Socket* sock = pTarget->getSock();
+        std::shared_ptr<Socket> sock = pTarget->getSock();
         crtStr << "\n" << pTarget->fullName() << " the " << pTarget->getTitle() << ": ";
         //crtStr.setfill('0');
         crtStr.setf(std::ios::right, std::ios::adjustfield);
@@ -2773,7 +2773,7 @@ int dmForceWander(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     strcpy(name, monster->getCName());
-    broadcast((Socket*)nullptr, player->getRoomParent(), "%1M just %s away.", monster.get(), Move::getString(monster).c_str());
+    broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), "%1M just %s away.", monster.get(), Move::getString(monster).c_str());
 
     monster->deleteFromRoom();
 

@@ -1192,7 +1192,7 @@ int cmdTalk(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         if(response.empty() && action.empty()) {
-            broadcast((Socket*)nullptr, player->getRoomParent(), "%M shrugs.", target.get());
+            broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), "%M shrugs.", target.get());
             return(0);
         }
     }
@@ -1205,7 +1205,7 @@ int cmdTalk(const std::shared_ptr<Player>& player, cmd* cmnd) {
         target->doTalkAction(player, action, quest);
 
     if(response.empty() && action.empty())
-        broadcast((Socket*)nullptr, player->getRoomParent(), "%M doesn't say anything.", target.get());
+        broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), "%M doesn't say anything.", target.get());
 
     return(0);
 }

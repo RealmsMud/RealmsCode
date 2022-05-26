@@ -63,7 +63,7 @@ protected:
     bool petPrinted{};
 
     void doPrint(std::string_view toPrint);
-    Socket* getMySock();
+    std::shared_ptr<Socket> getMySock();
 
 };
 

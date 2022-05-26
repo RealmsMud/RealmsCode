@@ -1054,8 +1054,8 @@ std::string Creature::doReplace(std::string fmt, const std::shared_ptr<MudObject
 //                      effectEcho
 //*********************************************************************
 
-void Container::effectEcho(const std::string &fmt, const std::shared_ptr<MudObject>& actor, const std::shared_ptr<MudObject>& applier, Socket* ignore) {
-    Socket* ignore2 = nullptr;
+void Container::effectEcho(const std::string &fmt, const std::shared_ptr<MudObject>& actor, const std::shared_ptr<MudObject>& applier, std::shared_ptr<Socket> ignore) {
+    std::shared_ptr<Socket> ignore2 = nullptr;
     if(actor && actor->getAsConstCreature())
         ignore2 = actor->getAsConstCreature()->getSock();
     for(const auto& pIt : players) {

@@ -53,7 +53,7 @@ void init_module_mud(py::module &m) {
         .def("findPlayer", &Server::findPlayer, py::return_value_policy::reference)
         ;
 
-    py::class_<Socket>(m, "Socket")
+    py::class_<Socket, std::shared_ptr<Socket>>(m, "Socket")
         .def("getPlayer", &Socket::getPlayer, py::return_value_policy::reference)
         .def("bprint", &Socket::bprintPython)
             ;

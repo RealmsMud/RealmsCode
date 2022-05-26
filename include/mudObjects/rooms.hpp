@@ -92,7 +92,7 @@ public:
     [[nodiscard]] bool isDropDestroy() const;
     [[nodiscard]] bool magicBonus() const;
     [[nodiscard]] bool isForest() const;
-    [[nodiscard]] bool vampCanSleep(Socket* sock) const;
+    [[nodiscard]] bool vampCanSleep(std::shared_ptr<Socket> sock) const;
     [[nodiscard]] virtual int getMaxMobs() const;
     [[nodiscard]] int dmInRoom() const;
     void arrangeExits(const std::shared_ptr<Player>& player= nullptr);
@@ -125,12 +125,12 @@ public:
     [[nodiscard]] bool needsEffectsIndex() const;
 
 
-    void print(Socket* ignore, const char *fmt, ...);
-    void print(Socket* ignore1, Socket* ignore2, const char *fmt, ...);
+    void print(std::shared_ptr<Socket> ignore, const char *fmt, ...);
+    void print(std::shared_ptr<Socket> ignore1, std::shared_ptr<Socket> ignore2, const char *fmt, ...);
 
     virtual std::string getMsdp(bool showExits = true) const { return ""; };
     [[nodiscard]] std::string getExitsMsdp() const;
 private:
-    void doPrint(bool showTo(Socket*), Socket* ignore1, Socket* ignore2, const char *fmt, va_list ap);
+    void doPrint(bool showTo(std::shared_ptr<Socket>), std::shared_ptr<Socket> ignore1, std::shared_ptr<Socket> ignore2, const char *fmt, va_list ap);
 };
 

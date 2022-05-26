@@ -85,7 +85,7 @@ typedef struct channelInfo {
     bool    (*canUse)(const std::shared_ptr<Player>& );    // Can this person use this channel?
     // these are used to determine canHear:
     // every field must be satisfied (or empty) for them to hear the channel
-    bool    (*canHear)(Socket*);    // a function that MUST return
+    bool    (*canHear)(std::shared_ptr<Socket>);    // a function that MUST return
     int     flag;                   // a flag that MUST be set
     int     not_flag;               // a flag that MUST NOT be set
     int     type;                   // for more complicated checks

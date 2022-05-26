@@ -230,7 +230,7 @@ public:
     bool addBan(Ban* toAdd);
     bool deleteBan(int toDel);
     bool isBanned(std::string_view site);
-    int isLockedOut(Socket* sock);
+    int isLockedOut(const std::shared_ptr<Socket>& sock);
 
 
 // Guilds

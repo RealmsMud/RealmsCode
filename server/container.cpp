@@ -217,7 +217,7 @@ bool Container::checkAntiMagic(const std::shared_ptr<Monster>&  ignore) {
         if(mons == ignore)
             continue;
         if(mons->flagIsSet(M_ANTI_MAGIC_AURA)) {
-            broadcast((Socket*)nullptr,  getAsRoom(), "^B%M glows bright blue.", mons.get());
+            broadcast((std::shared_ptr<Socket> )nullptr,  getAsRoom(), "^B%M glows bright blue.", mons.get());
             return(true);
         }
     }

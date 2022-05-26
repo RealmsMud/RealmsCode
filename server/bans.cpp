@@ -419,7 +419,7 @@ bool Config::deleteBan(int toDel) {
 // a site that is being locked out.  If the site is password locked,
 // then 2 is returned.  If it's completely locked, 1 is returned.  If
 // it's not locked out at all, 0 is returned.
-int Config::isLockedOut( Socket* sock ) {
+int Config::isLockedOut( const std::shared_ptr<Socket>& sock ) {
     bool match = false;
     int count=0;
 

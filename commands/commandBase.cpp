@@ -101,7 +101,7 @@ int getFailFd(const std::shared_ptr<Creature>&user) {
 // appropriate function, depending on what service is requested by the
 // player.
 
-void command(Socket* sock, const std::string& inStr) {
+void command(std::shared_ptr<Socket> sock, const std::string& inStr) {
     if(sock->hasPagerOutput()) {
         return sock->handlePaging(inStr);
     }

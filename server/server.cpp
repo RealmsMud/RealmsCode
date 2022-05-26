@@ -539,7 +539,10 @@ int Server::handleNewConnection(controlSock& cs) {
         close(fd);
         return -1;
     }
-    sockets.emplace_back(std::make_shared<Socket>(fd, addr, false));
+    auto sock = std::make_shared<Socket>(fd, addr);
+    sock->showLoginScreen();
+    sockets.emplace_back(sock);
+    if(sock->dnsDone) sock->checkLockOut();
     return(0);
 }
 
@@ -943,7 +946,7 @@ void Server::updateActive(long t) {
             }
             if(!immort) {
                 timetowander=1;
-                broadcast((Socket*)nullptr, monster->getRoomParent(), "%M wanders slowly away.", monster.get());
+                broadcast((std::shared_ptr<Socket> )nullptr, monster->getRoomParent(), "%M wanders slowly away.", monster.get());
                 monster->deleteFromRoom();
                 it = activeList.erase(it);
                 continue;
@@ -1006,7 +1009,7 @@ void Server::updateActive(long t) {
                 monster->mp.getCur() >=6 &&
                 (Random::get(1,100) < (30+monster->intelligence.getCur()/10)))
             {
-                broadcast((Socket*)nullptr, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster.get(), monster->himHer());
+                broadcast((std::shared_ptr<Socket> )nullptr, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster.get(), monster->himHer());
                 monster->mp.decrease(6);
                 monster->curePoison();
                 it++;
@@ -1046,9 +1049,9 @@ void Server::updateActive(long t) {
         // summoned monsters expire here
         if( monster->isPet() && (t > LT(monster, LT_INVOKE) || t > LT(monster, LT_ANIMATE))) {
             if(monster->isUndead())
-                broadcast((Socket*)nullptr, room, "%1M wanders away.", monster.get());
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%1M wanders away.", monster.get());
             else
-                broadcast((Socket*)nullptr, room, "%1M fades away.", monster.get());
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%1M fades away.", monster.get());
 
             it = activeList.erase(it);
             monster->die(monster->getMaster());
@@ -1281,6 +1284,7 @@ int Server::reapChildren() {
                 for(const auto &sock : sockets) {
                     if(sock->getState() == LOGIN_DNS_LOOKUP && sock->getIp() == cp->extra) {
                         // Be sure to set the hostname first, then check for lockout
+                        sock->dnsDone = true;
                         sock->setHostname(tmpBuf);
                         sock->checkLockOut();
                     }
@@ -1399,7 +1403,7 @@ int Server::processChildren() {
 //                      startDnsLookup
 //********************************************************************
 
-int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
+int Server::startDnsLookup(Socket *sock, struct sockaddr_in addr) {
     int fds[2];
     int pid;
 
@@ -1764,7 +1768,7 @@ int Server::finishReboot() {
                     player->fd = fd;
 
                     sock->setPlayer(player);
-                    player->setSock(sock.get());
+                    player->setSock(sock);
                     addPlayer(player);
                 }
                 else if(NODE_NAME(childNode, "Ip")) {
@@ -1891,9 +1895,9 @@ bool Server::addPlayer(const std::shared_ptr<Player>& player) {
 //                      checkDuplicateName
 //*********************************************************************
 
-bool Server::checkDuplicateName(Socket *sock, bool dis) {
+bool Server::checkDuplicateName(std::shared_ptr<Socket> sock, bool dis) {
     for(const auto &s : sockets) {
-        if(sock != s.get() && s->hasPlayer() && s->getPlayer()->getName() ==  sock->getPlayer()->getName()) {
+        if(sock != s && s->hasPlayer() && s->getPlayer()->getName() ==  sock->getPlayer()->getName()) {
             if(!dis) {
                 sock->printColor("\n\n^ySorry, that character is already logged in.^x\n\n\n");
                 sock->reconnect();
@@ -1911,7 +1915,7 @@ bool Server::checkDuplicateName(Socket *sock, bool dis) {
 //*********************************************************************
 // returning true will disconnect the connecting socket (sock)
 
-bool Server::checkDouble(Socket *sock) {
+bool Server::checkDouble(std::shared_ptr<Socket> sock) {
     if(!gConfig->getCheckDouble())
         return(false);
 
@@ -1925,7 +1929,7 @@ bool Server::checkDouble(Socket *sock) {
     int cnt = 0;
     for(const auto &s : sockets) {
         player = s->getPlayer();
-        if(!player || s.get() == sock)
+        if(!player || s == sock)
             continue;
 
         if(player->isCt())

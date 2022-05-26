@@ -304,7 +304,7 @@ int dmEcho(const std::shared_ptr<Player>& player, cmd* cmnd) {
         broadcast(isStaff, "^G*** %s (%s) echoed: %s",
             player->getCName(), player->getRoomParent()->fullName().c_str(), text.c_str());
 
-    broadcast((Socket*)nullptr, player->getRoomParent(), "%s", text.c_str());
+    broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), "%s", text.c_str());
     return(0);
 }
 
