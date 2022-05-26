@@ -286,6 +286,7 @@ std::shared_ptr<Creature> Group::getMember(const std::string& pName, int num, co
     auto it = members.begin();
     while (it != members.end()) {
         if(auto crt = it->lock()) {
+            it++;
             if(!crt->isPlayer() && !includePets) continue;
             if(crt->getGroupStatus() < GROUP_MEMBER) continue;
             if(!searcher || !searcher->canSee(crt)) continue;
@@ -294,7 +295,6 @@ std::shared_ptr<Creature> Group::getMember(const std::string& pName, int num, co
                     return(crt);
                 }
             }
-            it++;
         } else {
             it = members.erase(it);
         }
