@@ -773,8 +773,8 @@ int Monster::cleanMobForSaving() {
 //                      displayFlags
 //*********************************************************************
 
-unsigned int Creature::displayFlags() const {
-    unsigned int retFlags = 0;
+int Creature::displayFlags() const {
+    int retFlags = 0;
     if(isEffected("detect-invisible"))
         retFlags |= INV;
     if(isEffected("detect-magic"))
@@ -800,7 +800,7 @@ unsigned int Creature::displayFlags() const {
 
 int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
     int     percent=0, align=0, rank=0, chance=0;
-    unsigned int flags = displayFlags();
+    int flags = displayFlags();
     std::shared_ptr<Player> pTarget = target->getAsPlayer();
     std::shared_ptr<Monster> mTarget = target->getAsMonster();
     std::ostringstream oStr;
@@ -1323,7 +1323,7 @@ bool Creature::doFlee(bool magicTerror) {
     std::shared_ptr<UniqueRoom> uRoom=nullptr;
 
     std::shared_ptr<Exit>   exit=nullptr;
-    unsigned int n=0;
+    int n=0;
 
     if(isEffected("fear"))
         magicTerror = true;

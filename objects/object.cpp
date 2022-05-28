@@ -158,7 +158,7 @@ bool listObjectSee(const std::shared_ptr<const Player> player, std::shared_ptr<O
 std::string Container::listObjects(const std::shared_ptr<const Player> &player, bool showAll, char endColor) const {
     std::shared_ptr<Object> object=nullptr;
     int     num=1, n=0;
-    unsigned int flags = player->displayFlags();
+    int flags = player->displayFlags();
     std::string str = "";
 
     ObjectSet::iterator it;
@@ -402,7 +402,7 @@ bool cantDropInBag(std::shared_ptr<Object>  object) {
 //                      findObj
 //*********************************************************************
 
-std::shared_ptr<MudObject> Creature::findObjTarget(ObjectSet &set, unsigned int findFlags, const std::string& str, int val, int* match) {
+std::shared_ptr<MudObject> Creature::findObjTarget(ObjectSet &set, int findFlags, const std::string& str, int val, int* match) {
     if(set.empty())
         return(nullptr);
 
@@ -422,13 +422,13 @@ std::shared_ptr<MudObject> Creature::findObjTarget(ObjectSet &set, unsigned int 
 //*********************************************************************
 
 int displayObject(const std::shared_ptr<const Player> &player, const std::shared_ptr<const Object> &target) {
-    unsigned int i=0;
+    int i=0;
     char str[2048];
     char filename[256];
     std::string inv;
     std::string requiredSkillString;
 
-    unsigned int flags = player->displayFlags();
+    int flags = player->displayFlags();
 
     // special 2 is a combo lock, should have normal descriptions
     if(target->getSpecial() == 1) {

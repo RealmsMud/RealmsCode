@@ -125,7 +125,7 @@ Realm getOppositeRealm(Realm realm) {
 //                      checkRealmResist
 //*********************************************************************
 
-unsigned int Creature::checkRealmResist(unsigned int dmg, Realm pRealm) const {
+int Creature::checkRealmResist(int dmg, Realm pRealm) const {
     std::string resistEffect = "resist-" + getRealmSpellName(pRealm);
     if(isEffected(resistEffect))
         dmg /= 2;

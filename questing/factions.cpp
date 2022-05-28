@@ -168,7 +168,7 @@ std::string FactionRegard::clanDisplay() const {
     for(it = clanRegard.begin() ; it != clanRegard.end() ; it++) {
         clan = gConfig->getClan((*it).first);
 
-        oStr << "Clan(" << (*it).first << "-" << (clan && clan->getId() == (unsigned int)(*it).first ? clan->getName() : "invalid clan") << "):"
+        oStr << "Clan(" << (*it).first << "-" << (clan && clan->getId() == (int)(*it).first ? clan->getName() : "invalid clan") << "):"
             << Faction::getColor((*it).second)
             << (*it).second << "^X ";
     }

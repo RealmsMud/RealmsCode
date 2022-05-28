@@ -90,8 +90,8 @@ Recipe::Recipe() {
 
 
 
-unsigned int Recipe::getId() const { return(id); }
-void Recipe::setId(unsigned int i) { id = i; }
+int Recipe::getId() const { return(id); }
+void Recipe::setId(int i) { id = i; }
 int Recipe::getExperience() const { return(experience); }
 void Recipe::setExperience(int exp) { experience = exp; }
 bool Recipe::isSizable() const { return(sizable); }
@@ -419,7 +419,7 @@ bool Recipe::canBeEdittedBy(const std::shared_ptr<const Player> player) const {
 
 void Config::addRecipe(Recipe* recipe) {
     RecipeMap::iterator rIt;
-    unsigned int id = 0;
+    int id = 0;
 
     for(rIt = recipes.begin(); rIt != recipes.end() ; rIt++) {
         id = std::max(id, (*rIt).first);
@@ -450,8 +450,8 @@ Recipe* Config::searchRecipes(const std::shared_ptr<const Player> &player, std::
     RecipeMap::iterator rIt;
     std::shared_ptr<Object>  hot=nullptr;
     Recipe* recipe=nullptr;
-    unsigned int     flags = player->displayFlags();
-    unsigned int num=0;
+    int     flags = player->displayFlags();
+    int num=0;
     std::string str;
     // passing in object means we don't want to print failures
     bool print = !object;
@@ -981,7 +981,7 @@ int dmRecipes(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //                      learnRecipe
 //**********************************************************************
 
-void Player::learnRecipe(unsigned int id) {
+void Player::learnRecipe(int id) {
     if(knowsRecipe(id))
         return;
     recipes.push_back(id);
@@ -995,7 +995,7 @@ void Player::learnRecipe(Recipe* recipe) {
 //                      knowsRecipe
 //**********************************************************************
 
-bool Player::knowsRecipe(unsigned int id) const {
+bool Player::knowsRecipe(int id) const {
     std::list<int>::const_iterator it;
     for(it = recipes.begin(); it != recipes.end() ; it++) {
         if((*it) == id)

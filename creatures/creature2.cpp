@@ -440,7 +440,7 @@ std::shared_ptr<Creature>getRandomPlayer(const std::shared_ptr<BaseRoom>& inRoom
 //***********************************************************************
 
 void Monster::validateAc() {
-    unsigned int ac=0;
+    int ac=0;
 
     ac = get_perm_ac(level);
     if(armor > ac)

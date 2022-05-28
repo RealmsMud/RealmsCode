@@ -44,19 +44,19 @@ public:
     // This is to allow simple function based manipulators (like ColorOn, ColorOff)
     Streamable& operator <<( Streamable& (*op)(Streamable&));
 
-    void setManipFlags(unsigned int flags);
+    void setManipFlags(int flags);
     void setManipNum(int num);
     void setColorOn();
     void setColorOff();
     void setPagerOn();
     void setPagerOff();
 
-    unsigned int getManipFlags();
+    int getManipFlags();
     int getManipNum();
     //Creature& operator<< (creatureManip& manip)
 
 protected:
-    unsigned int manipFlags{};
+    int manipFlags{};
     int manipNum{};
     bool streamColor{};
     bool pager{};

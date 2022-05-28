@@ -248,7 +248,7 @@ int songOffensive(const std::shared_ptr<Player>& player, cmd* cmnd, char *songna
     std::shared_ptr<Creature> creature=nullptr;
     std::shared_ptr<BaseRoom> room = player->getRoomParent();
     int     m=0, bns=0;
-    unsigned int dmg = 0;
+    int dmg = 0;
 
     if(!player->ableToDoCommand())
         return(0);

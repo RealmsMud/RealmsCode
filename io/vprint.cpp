@@ -103,7 +103,7 @@ void Player::vprint(const char *fmt, va_list ap) const {
 }
 
 
-static unsigned int VPRINT_flags = 0;
+static int VPRINT_flags = 0;
 
 void Socket::vprint(const char *fmt, va_list ap) {
     char    *msg;

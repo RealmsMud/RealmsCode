@@ -394,8 +394,8 @@ bool Creature::doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>&
         // Put here to avoid other damage reducers
         if(!saved && attack.flagIsSet(SA_CAN_DISINTEGRATE) && Random::get(1,100) < 2) {
             victim->printColor("^Y%M seriously damages you!\n", this);
-            attackDamage.set(std::max<unsigned int>(victim->hp.getCur(), 5) - 5);
-            attackDamage.set(std::max<unsigned int>(attackDamage.get(), 1));
+            attackDamage.set(std::max<int>(victim->hp.getCur(), 5) - 5);
+            attackDamage.set(std::max<int>(attackDamage.get(), 1));
         }
     }
 

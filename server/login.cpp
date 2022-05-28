@@ -116,12 +116,12 @@ std::string::size_type checkProxyLogin(const std::string &str) {
     return(n);
 }
 // Character used for access
-std::string getProxyChar(const std::string &str, unsigned int n) {
+std::string getProxyChar(const std::string &str, int n) {
     return(str.substr(0,n));
 }
 // Character being logged in
-std::string getProxiedChar(const std::string &str, unsigned int n) {
-    unsigned int m = str.find_first_of(' ', n+1);
+std::string getProxiedChar(const std::string &str, int n) {
+    int m = str.find_first_of(' ', n+1);
     return(str.substr(m+1, str.length() - m - 1));
 }
 

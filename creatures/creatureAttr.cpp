@@ -92,7 +92,7 @@ unsigned short Creature::getLevel() const { return(level); }
 
 short Creature::getAlignment() const { return(alignment); }
 
-unsigned int Creature::getArmor() const { return(armor); }
+int Creature::getArmor() const { return(armor); }
 
 unsigned long Creature::getExperience() const { return(experience); }
 
@@ -108,7 +108,7 @@ unsigned short Creature::getDeity() const { return(deity); }
 
 Size Creature::getSize() const { return(size); }
 
-unsigned int Creature::getAttackPower() const { return(attackPower); }
+int Creature::getAttackPower() const { return(attackPower); }
 
 std::string Creature::getDescription() const { return(description); }
 std::string Creature::getVersion() const { return(version); }
@@ -207,10 +207,10 @@ void Creature::setAlignment(short a) { alignment = std::max<short>(-1000, std::m
 void Creature::subAlignment(unsigned short a) { setAlignment(alignment - a); }
 
 
-void Creature::setArmor(unsigned int a) { armor = std::max<int>(std::min(a, MAX_ARMOR), 0); }
+void Creature::setArmor(int a) { armor = std::max<int>(std::min(a, MAX_ARMOR), 0); }
 
 
-void Creature::setAttackPower(unsigned int a) { attackPower = std::min<int>(1500, a); }
+void Creature::setAttackPower(int a) { attackPower = std::min<int>(1500, a); }
 
 
 void Creature::setDeity(unsigned short d) { deity = std::min<unsigned short>(d, DEITY_COUNT-1); }
@@ -296,7 +296,7 @@ unsigned short Monster::getMobTrade() const { return(mobTrade); }
 
 int Monster::getSkillLevel() const { return(skillLevel); }
 
-unsigned int Monster::getMaxLevel() const { return(maxLevel); }
+int Monster::getMaxLevel() const { return(maxLevel); }
 
 unsigned short Monster::getNumWander() const { return(numwander); }
 unsigned short Monster::getLoadAggro() const { return(loadAggro); }
@@ -1694,13 +1694,13 @@ Location Creature::getLocation() {
 //*********************************************************************
 // returns a status string that describes the hp condition of the creature
 
-const char* Creature::getStatusStr(unsigned int dmg) {
-    unsigned int health = hp.getCur() - dmg;
+const char* Creature::getStatusStr(int dmg) {
+    int health = hp.getCur() - dmg;
 
     if(health < 1)
         return "'s dead!";
 
-    switch(std::min<unsigned int>(health * 10 / (hp.getMax() ? hp.getMax() : 1), 10)) {
+    switch(std::min<int>(health * 10 / (hp.getMax() ? hp.getMax() : 1), 10)) {
         case 10:
             return("'s unharmed.");
         case 9:

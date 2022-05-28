@@ -129,7 +129,7 @@ int splDrainShield(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
 //*********************************************************************
 // The strength of the spell is the chance to reflect
 
-int addReflectMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, int strength, unsigned int level) {
+int addReflectMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, int strength, int level) {
     if(spellData->how == CastType::CAST) {
         if(!player->isMageLich())
             return(0);

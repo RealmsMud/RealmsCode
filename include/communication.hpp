@@ -96,7 +96,7 @@ typedef struct channelInfo {
 extern channelInfo channelList[];
 
 
-void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &text, const std::string &extra, unsigned int check,
+void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &text, const std::string &extra, int check,
                     const channelInfo *chan, const std::string &etxt, const std::string &oocName, const std::string &icName);
 
 

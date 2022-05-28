@@ -200,7 +200,7 @@ int doOffensive(std::shared_ptr<Creature>caster, std::shared_ptr<Creature> targe
     std::shared_ptr<Monster> mTarget = target->getAsMonster();
     std::shared_ptr<Monster> mCaster = caster->getAsMonster();
     std::shared_ptr<BaseRoom> room = caster->getRoomParent();
-    unsigned int m;
+    int m;
     int bns=0;
     Damage damage;
     int     slvl, skillPercent;
@@ -398,7 +398,7 @@ int doOffensive(std::shared_ptr<Creature>caster, std::shared_ptr<Creature> targe
         target->modifyDamage(caster, dmgType, damage, osp->realm);
         damage.set(std::max<int>(0, damage.get()));
 
-        m = std::min<unsigned int>(target->hp.getCur(), damage.get());
+        m = std::min<int>(target->hp.getCur(), damage.get());
 
         //addrealm = (m * target->getExperience()) / std::max(1, target->hp.getMax());
         //addrealm = std::min(addrealm, target->getExperience());

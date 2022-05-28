@@ -1187,7 +1187,7 @@ void Player::resetPlayer(const std::shared_ptr<Creature>& killer) {
     unhide();
 
     if(killer->isPlayer() || duel) {
-        hp.setCur( std::max<unsigned int>(1, std::max(hp.getMax()/2, hp.getCur())));
+        hp.setCur( std::max<int>(1, std::max(hp.getMax()/2, hp.getCur())));
         mp.setCur(std::max(mp.getCur(),(mp.getMax())/10));
     } else {
         hp.restore();
@@ -1462,14 +1462,14 @@ void Monster::distributeExperience(const std::shared_ptr<Creature>&killer) {
                     it = group->members.erase(it);
                 }
             }
-            float xpPercent = (float)std::min<unsigned int>(totalGroupDamage, hp.getMax())/(float)hp.getMax();
+            float xpPercent = (float)std::min<int>(totalGroupDamage, hp.getMax())/(float)hp.getMax();
             long adjustedExp = (long)((xpPercent*experience) * (1.0 + (.25*numGroupMembers)));
 
             // Exp is split amoungst the group based on their level,
             // since we split it evenly, in this case pets do NOT give their master
             // any extra experience.
 
-            int averageEffort = totalGroupDamage / std::max<unsigned int>(expList.size(), 1);
+            int averageEffort = totalGroupDamage / std::max<int>(expList.size(), 1);
             std::clog << "GROUP EXP: TGD:" << totalGroupDamage << " Num:" << expList.size() << " AVG EFF:" << averageEffort << std::endl;
             for(std::pair<std::shared_ptr<Player>, int> p : expList) {
                 std::shared_ptr<Player> ply = p.first;

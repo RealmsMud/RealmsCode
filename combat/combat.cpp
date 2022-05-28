@@ -273,7 +273,7 @@ bool Monster::updateCombat() {
 
     if(result == ATTACK_HIT || result == ATTACK_CRITICAL || result == ATTACK_BLOCK) {
         Damage attackDamage;
-        unsigned int drain = 0;
+        int drain = 0;
         bool wasKilled = false, freeTarget = false, meKilled;
 
         computeDamage(target, ready[WIELD - 1], ATTACK_NORMAL, result, attackDamage, true, drain);
@@ -302,7 +302,7 @@ bool Monster::updateCombat() {
         }
 
         target->printColor("^r%M %s you%s for ^R%d^r damage.\n", this, atk,
-            target->isBrittle() ? "r brittle body" : "", std::max<unsigned int>(1, attackDamage.get()));
+            target->isBrittle() ? "r brittle body" : "", std::max<int>(1, attackDamage.get()));
 
         if(!isPet())
             target->checkImprove("defense", false);
@@ -1163,18 +1163,18 @@ std::shared_ptr<Creature>Creature::findFirstEnemyCrt(const std::shared_ptr<Creat
 // and will increase battle focus for fighters
 //  1 = died, 0 = didn't die
 
-unsigned int Creature::doDamage(std::shared_ptr<Creature> target, unsigned int dmg, DeathCheck shouldCheckDie, DamageType dmgType) {
+int Creature::doDamage(std::shared_ptr<Creature> target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType) {
     bool freeTarget=true;
     return(doDamage(target, dmg, shouldCheckDie, dmgType, freeTarget));
 }
 
-int Creature::doDamage(const std::shared_ptr<Creature>& target, unsigned int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget) {
+int Creature::doDamage(const std::shared_ptr<Creature>& target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget) {
     std::shared_ptr<Player> pTarget = target->getAsPlayer();
     std::shared_ptr<Monster>  mTarget = target->getAsMonster();
     std::shared_ptr<Player> pThis = getAsPlayer();
     std::shared_ptr<Monster>  mThis = getAsMonster();
 
-    unsigned int m = std::min(target->hp.getCur(), dmg);
+    int m = std::min(target->hp.getCur(), dmg);
 
     target->hp.decrease(dmg);
     //checkTarget(target);

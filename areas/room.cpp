@@ -601,7 +601,7 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
     std::shared_ptr<UniqueRoom> target=nullptr;
     char    name[256];
     int     n, m,  staff=0;
-    unsigned int flags = (player->displayFlags() | QUEST);
+    int flags = (player->displayFlags() | QUEST);
     std::ostringstream oStr;
     std::string str;
     bool    wallOfFire=false, wallOfThorns=false, canSee=false;

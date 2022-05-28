@@ -183,7 +183,7 @@ void doTitle(std::shared_ptr<Socket> sock, const std::string& str) {
 
 int cmdSurname(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     nonalpha=0;
-    unsigned int i=0;
+    int i=0;
     bool    illegalNonAlpha=false;
 
     if(!player->ableToDoCommand())

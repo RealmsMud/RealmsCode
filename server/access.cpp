@@ -54,7 +54,7 @@ char shortClassAbbrev[][8] = { "A", "Be", "Cl", "F", "M", "P", "R", "T", "Va", "
 char mob_skill_str[][16] = { "Horrible", "Poor", "Fair", "Decent", "Average", "Talented", "Very Good", "Exceptional",
         "Master", "Grand Master", "Godlike" };
 
-unsigned int permAC[30] = {
+int permAC[30] = {
         25, 70, 110, 155, 200, 245, 290, 335, 380, 425, 470, 510, 535, 560, 580, 600, 620, 645,
         670, 690, 710, 730, 760, 780, 820, 870, 890, 910, 960, 1000 };
 

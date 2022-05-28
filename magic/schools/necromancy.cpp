@@ -454,7 +454,7 @@ int animate_dead(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
     target->setLevel(level);
 
     // This will be adjusted in 2.50, for now just str*1.75
-    target->setAttackPower((unsigned int)(target->strength.getCur()*1.75));
+    target->setAttackPower((int)(target->strength.getCur()*1.75));
 
     target->setDefenseSkill(((target->getLevel()-1) * 10) + (buff*5));
     target->setWeaponSkill(((target->getLevel()-1) * 10) + (buff*5));

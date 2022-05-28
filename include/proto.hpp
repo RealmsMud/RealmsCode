@@ -46,8 +46,8 @@ class TileInfo;
 
 
 // Stats
-double getConBonusPercentage(unsigned int pCon);
-double getIntBonusPercentage(unsigned int pInt);
+double getConBonusPercentage(int pCon);
+double getIntBonusPercentage(int pInt);
 
 // Container
 bool isMatch(const std::shared_ptr<const Creature>& searcher, const std::shared_ptr<MudObject>& target, const std::string& name, bool exactMatch, bool checkVisibility = false);
@@ -59,7 +59,7 @@ void socialHooks(const std::shared_ptr<Creature>&target, const std::string &acti
 bool actionShow(const std::shared_ptr<Player>& pTarget, const std::shared_ptr<Creature>& creature);
 
 // afflictions.cpp
-unsigned int standardPoisonDuration(short level, short con);
+int standardPoisonDuration(short level, short con);
 
 // calendar.cpp
 int reloadCalendar(std::shared_ptr<Player> player);
@@ -298,7 +298,7 @@ std::vector<std::string> splitString(std::string s, std::string delimiter = "");
 std::string joinVector(std::vector<std::string> v, std::string delimiter = "");
 
 bool nameIsAllowed(std::string str, const std::shared_ptr<Socket>& sock);
-int bonus(unsigned int num);
+int bonus(int num);
 int crtWisdom(std::shared_ptr<Creature> creature);
 int crtAwareness(std::shared_ptr<Creature> creature);
 void lowercize(std::string& str, int flag);

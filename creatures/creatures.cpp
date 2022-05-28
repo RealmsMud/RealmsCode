@@ -1016,7 +1016,7 @@ bool Creature::convertFlag(int flag) {
 //                      getCrtStr
 //*********************************************************************
 
-std::string Creature::getCrtStr(const std::shared_ptr<const Creature> & viewer, unsigned int ioFlags, int num) const {
+std::string Creature::getCrtStr(const std::shared_ptr<const Creature> & viewer, int ioFlags, int num) const {
     std::ostringstream crtStr;
     std::string toReturn = "";
     char ch;

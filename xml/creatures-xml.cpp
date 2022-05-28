@@ -100,7 +100,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
 
         else if(NODE_NAME(curNode, "Race")) setRace(xml::toNum<unsigned short>(curNode));
         else if(NODE_NAME(curNode, "Class")) c = static_cast<CreatureClass>(xml::toNum<short>(curNode));
-        else if(NODE_NAME(curNode, "AttackPower")) setAttackPower(xml::toNum<unsigned int>(curNode));
+        else if(NODE_NAME(curNode, "AttackPower")) setAttackPower(xml::toNum<int>(curNode));
         else if(NODE_NAME(curNode, "DefenseSkill")) {
             if(mThis) {
                 mThis->setDefenseSkill(xml::toNum<int>(curNode));
@@ -120,7 +120,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             }
         }
         else if(NODE_NAME(curNode, "Alignment")) setAlignment(xml::toNum<short>(curNode));
-        else if(NODE_NAME(curNode, "Armor")) setArmor(xml::toNum<unsigned int>(curNode));
+        else if(NODE_NAME(curNode, "Armor")) setArmor(xml::toNum<int>(curNode));
         else if(NODE_NAME(curNode, "Experience")) setExperience(xml::toNum<unsigned long>(curNode));
 
         else if(NODE_NAME(curNode, "Deity")) setDeity(xml::toNum<unsigned short>(curNode));

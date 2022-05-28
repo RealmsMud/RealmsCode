@@ -69,7 +69,7 @@ Streamable& Streamable::operator<< ( const MudObject& mo) {
     if (!thisCreature)
         throw std::runtime_error("WTF");
 
-    unsigned int mFlags = thisCreature->displayFlags();
+    int mFlags = thisCreature->displayFlags();
 
     if(thisPlayer && thisPlayer->getSock()) {
         mFlags |= thisPlayer->getManipFlags();
@@ -130,13 +130,13 @@ void Streamable::setPagerOff() {
     if(sock) sock->donePaging();
 }
 
-void Streamable::setManipFlags(unsigned int flags) {
+void Streamable::setManipFlags(int flags) {
     manipFlags |= flags;
 }
 
 // Returns the manipFlags and resets them
-unsigned int Streamable::getManipFlags() {
-    unsigned int toReturn = manipFlags;
+int Streamable::getManipFlags() {
+    int toReturn = manipFlags;
     manipFlags = 0;
 
     return (toReturn);

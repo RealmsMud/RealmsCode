@@ -1370,7 +1370,7 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
         // Return of 1 means the weapon was shattered or otherwise rendered unsuable
-        unsigned int drain = 0;
+        int drain = 0;
         bool wasKilled = false, meKilled = false;
         if(player->computeDamage(target, weapon, ATTACK_BACKSTAB, result, damage, true, drain, stabMod) == 1) {
             player->unequip(WIELD, UNEQUIP_DELETE);
@@ -1599,7 +1599,7 @@ int Player::checkPoison(std::shared_ptr<Creature> target, std::shared_ptr<Object
         target->printColor( "^g^#%M poisoned you!!\n", this);
         broadcast(getSock(), target->getSock(), target->getRoomParent(), "%M poisoned %N!", this, target.get());
 
-        unsigned int dur = standardPoisonDuration(weapon->getEffectDuration(), target->constitution.getCur());
+        int dur = standardPoisonDuration(weapon->getEffectDuration(), target->constitution.getCur());
 
         if(weapon->getEffectStrength()) {
             dmg = (Random::get(1,3) + (weapon->getEffectStrength()/10));

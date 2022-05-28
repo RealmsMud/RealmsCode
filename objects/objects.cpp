@@ -993,7 +993,7 @@ std::string Object::getCompass(const std::shared_ptr<const Creature> & creature,
 //                      getObjStr
 //*********************************************************************
 
-std::string Object::getObjStr(const std::shared_ptr<const Creature> & viewer, unsigned int ioFlags, int num) const {
+std::string Object::getObjStr(const std::shared_ptr<const Creature> & viewer, int ioFlags, int num) const {
     std::ostringstream objStr;
     std::string toReturn;
     char ch;

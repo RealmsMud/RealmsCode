@@ -73,23 +73,23 @@ public:
     bool loadModifiers(xmlNodePtr curNode);
     void save(xmlNodePtr parentNode, const char* statName) const;
     
-    unsigned int increase(unsigned int amt);
-    unsigned int decrease(unsigned int amt);
-    unsigned int adjust(int amt);
+    int increase(int amt);
+    int decrease(int amt);
+    int adjust(int amt);
 
-    [[nodiscard]] unsigned int getCur(bool recalc = true);
-    [[nodiscard]] unsigned int getMax();
-    [[nodiscard]] unsigned int getInitial() const;
+    [[nodiscard]] int getCur(bool recalc = true);
+    [[nodiscard]] int getMax();
+    [[nodiscard]] int getInitial() const;
 
-    void addInitial(unsigned int a);
-    void setMax(unsigned int newMax, bool allowZero=false);
-    void setCur(unsigned int newCur);
-    void setInitial(unsigned int i);
+    void addInitial(int a);
+    void setMax(int newMax, bool allowZero=false);
+    void setCur(int newCur);
+    void setInitial(int i);
     void setDirty();
 
     void setInfluences(Stat* pInfluences);
     void setInfluencedBy(Stat* pInfluencedBy);
-    unsigned int restore(); // Set a stat to it's maximum value
+    int restore(); // Set a stat to it's maximum value
 
     void reCalc();
 
@@ -106,7 +106,7 @@ public:
     bool hasModifier(const std::string &pName);
     int getModifierAmt(const std::string &pName);
 
-    void upgradeSetCur(unsigned int newCur);  // Used only in upgrading to new stats
+    void upgradeSetCur(int newCur);  // Used only in upgrading to new stats
 protected:
 
     std::string name;
@@ -114,9 +114,9 @@ protected:
     bool dirty;
 
 
-    unsigned int cur;
-    unsigned int max;
-    unsigned int initial;
+    int cur;
+    int max;
+    int initial;
 
     Stat* influences;
     Stat* influencedBy;
