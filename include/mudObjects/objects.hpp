@@ -174,7 +174,7 @@ protected:
     std::string questOwner;
 
 protected:
-    void doCopy(const Object& o);
+    void objCopy(const Object& o);
     void selectRandom();  // become a random object
 
 // Public member variables

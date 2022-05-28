@@ -442,7 +442,7 @@ int cmdPrefs(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print(".\n");
 
     if(pref->flag == P_NO_TRACK_STATS)
-        player->print("Note that player kill statistics are always tracked and cannot be reset.\n");
+        player->print("Note that player kill statistics are always tracked and cannot be plyReset.\n");
 
     return(0);
 }

@@ -475,8 +475,6 @@ void Creature::crtReset() {
     // Reset Stream related
     initStreamable();
 
-    // Reset other related
-    moReset();
     playing = nullptr;
     myTarget.reset();
 
@@ -551,6 +549,7 @@ void Creature::crtReset() {
 
     memset(spellTimer, 0, sizeof(spellTimer));
     armor = 0;
+    specials.clear();
 
     for(i=0; i<21; i++)
         misc[i] = 0;
@@ -560,9 +559,7 @@ void Creature::crtReset() {
 //                      reset
 //*********************************************************************
 
-void Monster::reset() {
-    // Call Creature::reset first
-    crtReset();
+void Monster::monReset() {
     int i;
 
     info.clear();
@@ -607,10 +604,7 @@ void Monster::reset() {
 //                      reset
 //*********************************************************************
 
-void Player::reset() {
-    // Call Creature::reset first
-    crtReset();
-    //playing = NULL;
+void Player::plyReset() {
     wrap = -1;
     cClass2 = CreatureClass::NONE;
     wimpy = 0;
@@ -664,14 +658,24 @@ void Player::reset() {
 //                      Creature
 //*********************************************************************
 
-Creature::Creature(): ready(MAXWEAR) {
-
+Creature::Creature(): MudObject(), ready(MAXWEAR) {
+    crtReset();
 }
-void Creature::doCopy(const Creature &cr) {
-    int     i=0;
 
-    moCopy(cr);
+Creature::Creature(Creature &cr): MudObject(cr), ready(MAXWEAR) {
+    crtCopy(cr);
+}
+Creature::Creature(const Creature &cr): MudObject(cr), ready(MAXWEAR) {
+    crtCopy(cr);
+}
 
+void Creature::crtCopy(const Creature &cr, bool assign) {
+    crtReset();
+    if(assign) {
+        moCopy(cr);
+    }
+
+    int     i;
     description = cr.description;
     for(i=0; i<3; i++) {
         strcpy(key[i], cr.key[i]);
@@ -791,10 +795,11 @@ void Creature::doCopy(const Creature &cr) {
 //                      doCopy
 //*********************************************************************
 
-void Player::doCopy(const Player& cr) {
-    // We want a copy of what we're getting, so clear out anything that was here before
-    reset();
-    Creature::doCopy(cr);
+void Player::plyCopy(const Player& cr, bool assign) {
+    plyReset();
+    if (assign) {
+        crtCopy(cr, assign);
+    }
 
     // Players have a unique ID, so copy that
     id = cr.id;
@@ -917,10 +922,11 @@ void Player::doCopy(const Player& cr) {
 //                      doCopy
 //*********************************************************************
 
-void Monster::doCopy(const Monster& cr) {
-    // We want a copy of what we're getting, so clear out anything that was here before
-    reset();
-    Creature::doCopy(cr);
+void Monster::monCopy(const Monster& cr, bool assign) {
+    monReset();
+    if (assign) {
+        crtCopy(cr, assign);
+    }
 
     // Now do monster specific copies
     int i;
@@ -993,16 +999,16 @@ void Monster::doCopy(const Monster& cr) {
 //                      getLocation
 //*********************************************************************
 
-Monster::Monster() : threatTable(this) {
-    reset();
+Monster::Monster() : MudObject(), Creature(), threatTable(this) {
+    monReset();
 }
 
-Monster::Monster(Monster& cr) : Creature(cr), threatTable(this)  {
-    doCopy(cr);
+Monster::Monster(Monster& cr) : MudObject(cr), Creature(cr), threatTable(this)  {
+    monCopy(cr);
 }
 
-Monster::Monster(const Monster& cr) : Creature(cr), threatTable(this) {
-    doCopy(cr);
+Monster::Monster(const Monster& cr) : MudObject(cr), Creature(cr), threatTable(this) {
+    monCopy(cr);
 }
 
 //*********************************************************************
@@ -1011,7 +1017,7 @@ Monster::Monster(const Monster& cr) : Creature(cr), threatTable(this) {
 
 Monster& Monster::operator=(const Monster& cr) {
     if(&cr != this)
-        doCopy(cr);
+        monCopy(cr, true);
     return(*this);
 }
 
@@ -1019,17 +1025,18 @@ Monster& Monster::operator=(const Monster& cr) {
 //                      Player
 //*********************************************************************
 
-Player::Player() {
-    std::clog << "Player ctor" << std::endl;
-    reset();
+Player::Player() : MudObject(), Creature() {
+    plyReset();
 }
 
-Player::Player(Player& cr) : Creature(cr) {
-    doCopy(cr);
+Player::Player(Player& cr) : MudObject(cr), Creature(cr) {
+    // We want a copy of what we're getting, so clear out anything that was here before
+    plyCopy(cr);
 }
 
-Player::Player(const Player& cr) : Creature(cr)  {
-    doCopy(cr);
+Player::Player(const Player& cr) : MudObject(cr), Creature(cr)  {
+    // We want a copy of what we're getting, so clear out anything that was here before
+    plyCopy(cr);
 }
 
 //*********************************************************************
@@ -1037,8 +1044,9 @@ Player::Player(const Player& cr) : Creature(cr)  {
 //*********************************************************************
 
 Player& Player::operator=(const Player& cr) {
+    std::clog << "Player=" << cr.getName() << std::endl;
     if(&cr != this)
-        doCopy(cr);
+        plyCopy(cr, true);
     return(*this);
 }
 
@@ -1064,7 +1072,6 @@ Monster::~Monster() {
 //*********************************************************************
 
 Player::~Player() {
-    std::clog << "~Player: " << getName() << std::endl;
     int i = 0;
 
     if(birthday) {

@@ -215,8 +215,8 @@ const char* colorSection(bool staff, const char* color, char colorChar = 0) {
 int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
     bool staff = player->isStaff();
 
-    if(!strcmp(cmnd->str[1], "reset")) {
-        player->print("Custom colors have been reset to defaults.\n");
+    if(!strcmp(cmnd->str[1], "plyReset")) {
+        player->print("Custom colors have been plyReset to defaults.\n");
         player->resetCustomColors();
         return(0);
     } else if(cmnd->num > 2) {
@@ -303,7 +303,7 @@ int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("\n");
     player->printColor("Custom Colors:  type [color ^W<type> <color>^x]\n");
     player->printColor("                Choose ^Wtype^x from below, ^Wcolor^x from above.\n");
-    player->printColor("                Type ^Wcolor reset^x to return to default colors.\n\n");
+    player->printColor("                Type ^Wcolor plyReset^x to return to default colors.\n\n");
 
     std::map<std::string,std::string> options;
     std::map<std::string,std::string>::iterator it;

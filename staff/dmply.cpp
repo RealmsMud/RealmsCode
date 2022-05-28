@@ -1279,8 +1279,9 @@ int dmRename(const std::shared_ptr<Player>& player, cmd* cmnd) {
         fclose(fp);
         return(0);
     }
-
+    gServer->clearPlayer(target);
     target->setName( newName);
+    gServer->addPlayer(target);
 
     if(target->getGuild()) {
         Guild* guild = gConfig->getGuild(target->getGuild());
@@ -2839,7 +2840,7 @@ int dmLtClear(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //      target->lasttime[i].interval = 0;
 //  }
 //
-    player->print("Last times reset!\n");
+    player->print("Last times plyReset!\n");
     return(0);
 
 }

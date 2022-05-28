@@ -33,8 +33,8 @@ public:
 
 
 protected:
-    void doCopy(const Monster& cr);
-    void reset();
+    void monCopy(const Monster& cr, bool assign=false);
+    void monReset();
     int doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal);
 
 public:

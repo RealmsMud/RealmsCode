@@ -1221,13 +1221,6 @@ void Creature::unApplyTongues() {
     }
 }
 
-Creature::Creature(Creature &cr): ready(MAXWEAR) {
-    doCopy(cr);
-}
-Creature::Creature(const Creature &cr): ready(MAXWEAR) {
-    doCopy(cr);
-}
-
 std::ostream& operator<<(std::ostream& out, const crlasttime& crl) {
     out << crl.cr.str() << "(" << crl.interval << ")";
     return out;

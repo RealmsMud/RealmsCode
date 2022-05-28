@@ -180,6 +180,15 @@ Object::Object() {
     extra = 0;
 }
 
+
+Object::Object(Object& o): MudObject(o) {
+    objCopy(o);
+}
+Object::Object(const Object& o): MudObject(o) {
+    objCopy(o);
+}
+
+
 Object::~Object() {
     delete compass;
     delete increase;
@@ -229,10 +238,8 @@ std::shared_ptr<Object> Object::getNewPotion() {
 //                          doCopy
 //*********************************************************************
 
-void Object::doCopy(const Object& o) {
+void Object::objCopy(const Object& o) {
     int     i=0;
-
-    moCopy(o);
 
     description = o.description;
 
@@ -343,13 +350,6 @@ DroppedBy& DroppedBy::operator=(const DroppedBy& o) {
     id = o.id;
     type = o.type;
     return(*this);
-}
-
-Object::Object(Object& o) {
-    doCopy(o);
-}
-Object::Object(const Object& o) {
-    doCopy(o);
 }
 
 bool Object::operator==(const Object& o) const {

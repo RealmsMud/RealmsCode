@@ -29,8 +29,8 @@ public:
     static std::string hashPassword(const std::string &pass);
 
 protected:
-    void doCopy(const Player& cr);
-    void reset();
+    void plyCopy(const Player& cr, bool assign=false);
+    void plyReset();
 
     bool inList(const std::list<std::string> &list, const std::string &name) const;
     std::string showList(const std::list<std::string> &list) const;

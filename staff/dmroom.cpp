@@ -363,7 +363,7 @@ int dmResetPerms(const std::shared_ptr<Player>& player, cmd* cmnd) {
         crtm->interval = 0;
     }
 
-    player->print("Permanent object and creature timeouts reset.\n");
+    player->print("Permanent object and creature timeouts plyReset.\n");
     room->addPermCrt();
 
     for(it = room->permMonsters.begin(); it != room->permMonsters.end() ; it++) {
@@ -377,7 +377,7 @@ int dmResetPerms(const std::shared_ptr<Player>& player, cmd* cmnd) {
         crtm->ltime = time(nullptr);
     }
 
-    log_immort(true, player, "%s reset perm timeouts in room %s\n", player->getCName(), player->getRoomParent()->fullName().c_str());
+    log_immort(true, player, "%s plyReset perm timeouts in room %s\n", player->getCName(), player->getRoomParent()->fullName().c_str());
 
     if(gServer->resaveRoom(room->info) < 0)
         player->print("Room fail saved.\n");

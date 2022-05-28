@@ -340,7 +340,6 @@ void Socket::finishLogin() {
         setState(LOGIN_GET_NAME);
         return;
     }
-    std::clog << "finishLogin:afterLoad " << player.use_count() << std::endl;
     player->setProxy(proxyName, proxyId);
     if(player->flagIsSet(P_HARDCORE)) {
         const StartLoc *location = gConfig->getStartLoc("highport");

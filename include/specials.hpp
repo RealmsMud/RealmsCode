@@ -179,7 +179,6 @@ private:
 
 private:
     void reset();
-    int computeDamage(bool saved = false);
     std::string modifyAttackString(std::string_view input, std::shared_ptr<Creature> viewer, std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target, int dmg = -1);
     void printToRoom(std::shared_ptr<BaseRoom> room, std::string_view str, std::shared_ptr<Creature> attacker, std::shared_ptr<Creature> target, int dmg = -1);
     void setFlag(int flag);
@@ -191,7 +190,10 @@ private:
 public:
     SpecialAttack();
     SpecialAttack(xmlNodePtr rootNode);
+    SpecialAttack(SpecialAttack& sa);
+    SpecialAttack(const SpecialAttack& sa);
 
+    void copySpecial(const SpecialAttack& sa);
 
     friend std::ostream& operator<<(std::ostream& out, const SpecialAttack& attack);
 

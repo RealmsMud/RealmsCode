@@ -118,7 +118,17 @@ bool ObjectPtrLess::operator()(const std::shared_ptr<Object>&  lhs, const std::s
 
 MudObject::MudObject(): hooks(this) {
     moReset();
-    registered = false;
+}
+
+MudObject::MudObject(MudObject &mo): hooks(mo.hooks) {
+    moReset();
+    moCopy(mo);
+}
+
+
+MudObject::MudObject(const MudObject &mo): hooks(mo.hooks) {
+    moReset();
+    moCopy(mo);
 }
 
 MudObject::~MudObject() {
@@ -132,6 +142,7 @@ MudObject::~MudObject() {
 void MudObject::moReset() {
     id = "-1";
     name = "";
+    registered = false;
 }
 
 //*********************************************************************
@@ -140,7 +151,6 @@ void MudObject::moReset() {
 
 void MudObject::moCopy(const MudObject& mo) {
     name = mo.getName();
-
     hooks = mo.hooks;
     hooks.setParent(this);
 }

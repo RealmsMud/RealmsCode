@@ -273,10 +273,10 @@ void Monster::diePermCrt() {
             continue;
         if(temp_mob->getName() == getName()) {
             crtm->ltime = t;
-            temp_mob->reset();
+            temp_mob->monReset();
             break;
         }
-        temp_mob->reset();
+        temp_mob->monReset();
     }
 
     if(flagIsSet(M_DEATH_SCENE) && !flagIsSet(M_FOLLOW_ATTACKER)) {

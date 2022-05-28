@@ -810,10 +810,10 @@ int cmdLevelHistory(const std::shared_ptr<Player>& player, cmd* cmnd) {
 int cmdStatistics(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Player> target = player;
 
-    if(!strcmp(cmnd->str[1], "reset")) {
+    if(!strcmp(cmnd->str[1], "plyReset")) {
         player->statistics.reset();
-        player->print("Your statistics have been reset.\n");
-        player->print("Note that player kill statistics are always tracked and cannot be reset.\n");
+        player->print("Your statistics have been plyReset.\n");
+        player->print("Note that player kill statistics are always tracked and cannot be plyReset.\n");
         return(0);
     }
 
@@ -837,7 +837,7 @@ int cmdStatistics(const std::shared_ptr<Player>& player, cmd* cmnd) {
     target->statistics.display(player);
 
     if(target == player) {
-        *player << ColorOn << "You may type ^Wstats reset^x to reset your statistic counts to zero.\n" << ColorOff;
+        *player << ColorOn << "You may type ^Wstats monReset^x to plyReset your statistic counts to zero.\n" << ColorOff;
         *player << "You may use the set, clear, and toggle commands to control tracking of statistics.\n";
     }
 

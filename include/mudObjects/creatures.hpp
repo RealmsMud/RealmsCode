@@ -217,7 +217,7 @@ public:
     Creature();
     Creature(Creature& cr);
     Creature(const Creature& cr);
-    void doCopy(const Creature& cr);
+    void crtCopy(const Creature& cr, bool assign=false);
     virtual ~Creature();
 
 
@@ -500,7 +500,6 @@ public:
 // Special Attacks
     std::string getSpecialsFullList() const;
     bool useSpecial(SpecialAttack &attack, const std::shared_ptr<Creature> &victim);
-    bool runOpeners(std::shared_ptr<Creature> victim); // Run any opening attacks
     bool runSpecialAttacks(const std::shared_ptr<Creature>& victim); // Pick a special attack and do it on the target
     std::string getSpecialsList() const;
     SpecialAttack* addSpecial(std::string_view specialName);
