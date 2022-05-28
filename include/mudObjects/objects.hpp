@@ -413,7 +413,7 @@ public:
     [[nodiscard]] bool needsTwoHands() const;
     [[nodiscard]] bool isQuestValid() const; // Is this object valid for a quest?
     [[nodiscard]] bool isLabeledBy(const std::shared_ptr<Creature> & creature) const; // checks if item label was created by player
-    [[nodiscard]] bool isLabelMatch(std::string str) const; // checks if keyword matches label
+    [[nodiscard]] bool isLabelMatch(const std::string & str) const; // checks if keyword matches label
     [[nodiscard]] std::string showAlchemyEffects(const std::shared_ptr<const Player>& player = nullptr) const;
     [[nodiscard]] std::string statObj(unsigned int statFlags);
     [[nodiscard]] double winterProtection() const;
