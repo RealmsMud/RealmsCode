@@ -111,6 +111,11 @@ public:
     void load(xmlNodePtr rootNode);
 };
 
+struct CustomItemLabel {
+    std::string playerId;
+    std::string label;
+};
+
 typedef std::map<int, AlchemyEffect> AlchemyEffectMap;
 
 class Object: public Container, public Containable {
@@ -224,6 +229,9 @@ public:
 
     // Map of effects that are on this item for alchemy purposes, used for herbs and potions objects
     AlchemyEffectMap alchemyEffects;
+
+    // Allows players to define a custom label on items they carry
+    CustomItemLabel label;
 
 // Functions
 public:
@@ -370,6 +378,7 @@ public:
     void setMaterial(Material m);
     void setQuestOwner(const std::shared_ptr<Player> player);
     void setUniqueId(int id);
+    void setLabel(const Player* player, std::string text);
 
     void clearEffect();
 
@@ -403,7 +412,8 @@ public:
     [[nodiscard]] bool isLightArmor() const;
     [[nodiscard]] bool needsTwoHands() const;
     [[nodiscard]] bool isQuestValid() const; // Is this object valid for a quest?
-
+    [[nodiscard]] bool isLabeledBy(const std::shared_ptr<Creature> & creature) const; // checks if item label was created by player
+    [[nodiscard]] bool isLabelMatch(const std::string & str) const; // checks if keyword matches label
     [[nodiscard]] std::string showAlchemyEffects(const std::shared_ptr<const Player>& player = nullptr) const;
     [[nodiscard]] std::string statObj(int statFlags);
     [[nodiscard]] double winterProtection() const;

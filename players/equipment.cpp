@@ -457,7 +457,7 @@ bool doRemoveObj(const std::shared_ptr<Player>& player, cmd* cmnd ) {
                 continue;
             }
             if(cmnd) {
-                if(keyTxtEqual(object, cmnd->str[1])) {
+                if(keyTxtEqual(object, cmnd->str[1]) || (object->isLabeledBy(player) && object->isLabelMatch(cmnd->str[1]))) {
                     match++;
                     if(match == cmnd->val[1]) {
                         found = 1;

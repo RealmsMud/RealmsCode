@@ -321,7 +321,13 @@ bool isMatch(const std::shared_ptr<const Creature>& searcher, const std::shared_
     } else {
         if(target->isCreature() && keyTxtEqual(target->getAsCreature(), name.c_str())) {
             return(true);
-        } else if(target->isObject() && keyTxtEqual(target->getAsObject(), name.c_str())) {
+        } else if(
+            target->isObject() &&
+            (
+                keyTxtEqual(target->getAsObject(), name.c_str()) ||
+                (target->getAsObject()->isLabeledBy(searcher) && target->getAsObject()->isLabelMatch(name))
+            )
+        ) {
             return(true);
         }
     }

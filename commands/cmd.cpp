@@ -726,6 +726,7 @@ bool Config::initCommands() {
     playerCommands.emplace("changestats", 100, cmdChangeStats, nullptr, "");
     playerCommands.emplace("keep", 100, cmdKeep, nullptr, "Prevent accidentially throwing away an item.");
     playerCommands.emplace("unkeep", 100, cmdUnkeep, nullptr, "Unkeep an item.");
+    playerCommands.emplace("label", 100, cmdLabel, nullptr, "Set a custom label on an item.");
     playerCommands.emplace("alignment", 100, cmdChooseAlignment, nullptr, "Choose your alignment.");
     playerCommands.emplace("push", 100, cmdPush, nullptr, "");
     playerCommands.emplace("pull", 100, cmdPull, nullptr, "");

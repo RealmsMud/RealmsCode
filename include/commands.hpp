@@ -404,6 +404,7 @@ int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd);
 int cmdChooseAlignment(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdKeep(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdUnkeep(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdLabel(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdGo(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdSing(const std::shared_ptr<Creature>& creature, cmd* cmnd);
 
