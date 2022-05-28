@@ -32,8 +32,8 @@
 #include "proto.hpp"            // for loge, is_num, handle_args, startup_mo...
 #include "server.hpp"           // for Server, gServer
 #include "version.hpp"          // for VERSION
-
-
+#include "toNum.hpp"
+#include "xml.hpp"
 
 
 unsigned short  Port;
@@ -64,7 +64,7 @@ void startup_mordor() {
     std::clog << "--- Game Up: " << Port << " --- [" << VERSION << "]\n";
     loge("--- Game Up: %d --- [%s]\n", Port, VERSION);
     // record the process ID
-    sprintf(buf, "%s/mordor%d.pid", Path::Log, Port);
+    sprintf(buf, "%s/mordor%d.pid", Path::Log.c_str(), Port);
     out = fopen(buf, "w");
     if(out != nullptr) {
         fprintf(out, "%d", getpid());
@@ -73,7 +73,6 @@ void startup_mordor() {
         loge("couldn't create pid file %s: %s\n", buf, strerror(errno));
     }
 
-    std::clog << "Starting Sock Loop\n";
     gServer->run();
 
 }
@@ -85,8 +84,7 @@ void usage(char *szName) {
 void handle_args(int argc, char *argv[]) {
     int i=0;
 
-    strncpy(gConfig->cmdline, argv[0], 255);
-    gConfig->cmdline[255] = 0;
+    gConfig->cmdline = argv[0];
 
     for(i = 1; i < argc; i++) {
         switch (argv[i][0]) {
@@ -113,7 +111,7 @@ void handle_args(int argc, char *argv[]) {
             break;
         default:
             if(is_num(argv[i])) {
-                gConfig->setPortNum((unsigned short)atoi(argv[i]));
+                gConfig->setPortNum(toNum<unsigned short>(argv[i]));
             } else {
                 std::clog << "Unknown option\n";
                 usage(argv[0]);

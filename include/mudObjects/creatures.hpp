@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <boost/dynamic_bitset.hpp>
 #include <map>
 #include <string>
 #include <fmt/format.h>
@@ -39,6 +40,7 @@
 #include "range.hpp"
 #include "realm.hpp"
 #include "skills.hpp"
+#include "specials.hpp"                        // for SpecialAttack
 #include "statistics.hpp"
 #include "structs.hpp"
 #include "threat.hpp"
@@ -93,7 +95,6 @@ class SpellData;
 #define CRT_ATTACK_LENGTH       30
 #define CRT_KEY_LENGTH          20
 #define CRT_MOVETYPE_LENGTH     52
-#define CRT_FLAG_ARRAY_SIZE     32
 
 #define NUM_ASSIST_MOB          8
 #define NUM_ENEMY_MOB           4
@@ -103,7 +104,7 @@ class SpellData;
 #define NUM_RESCUE              2
 
 class SkillGain;
-class SpecialAttack;
+
 
 enum DamageType {
     DMG_NONE = 0,
@@ -169,7 +170,7 @@ public:
     static const int EDUCATION_UNIVERSITY = 5;
 };
 
-typedef std::list<Monster*> PetList;
+typedef std::list<std::shared_ptr<Monster> > PetList;
 typedef std::map<std::string, Skill*> SkillMap;
 //*********************************************************************
 //                      Creature
@@ -178,8 +179,6 @@ typedef std::map<std::string, Skill*> SkillMap;
 class Creature: public virtual MudObject, public Streamable, public Container, public Containable {
 
 protected:
-    void CopyCommon(const Creature& cr);
-    void crtDestroy();
     void crtReset();
 
 protected:
@@ -200,10 +199,10 @@ protected:
     unsigned short poison_dmg{};
     std::string description;
     std::string version; // Version of the mud this creature was saved under
-    char flags[CRT_FLAG_ARRAY_SIZE]{}; // Max flags - 256
+    boost::dynamic_bitset<> flags{256};
     unsigned long realm[MAX_REALM-1]{}; // Magic Spell realms
-    char spells[32]{}; // more spells
-    char old_quests[32]{}; // more quests
+    boost::dynamic_bitset<> spells{256};
+    boost::dynamic_bitset<> old_quests{256};
     static const short OFFGUARD_REMOVE;
     static const short OFFGUARD_NOREMOVE;
     static const short OFFGUARD_NOPRINT;
@@ -213,71 +212,72 @@ protected:
     Group* group{};
     GroupStatus groupStatus;
 
-
 public:
 // Constructors, Deconstructors, etc
     Creature();
     Creature(Creature& cr);
     Creature(const Creature& cr);
-    Creature& operator=(const Creature& cr);
-    virtual ~Creature() = default;;
+    void doCopy(const Creature& cr);
+    virtual ~Creature();
+
 
 
     virtual void upgradeStats() {};
-    virtual Socket* getSock() const;
+    virtual std::shared_ptr<Socket> getSock() const;
     Location getLocation();
-    void delayedAction(const std::string& action, int delay, MudObject* target=nullptr);
+    void delayedAction(const std::string& action, int delay, const std::shared_ptr<MudObject>& target=nullptr);
     void delayedScript(const std::string& script, int delay);
 
-    Creature* getMaster();
-    const Creature* getConstMaster() const;
+    std::shared_ptr<Creature> getMaster();
+    std::shared_ptr<const Creature> getConstMaster() const;
 
-    Player* getPlayerMaster();
-    const Player* getConstPlayerMaster() const;
+    std::shared_ptr<Player> getPlayerMaster();
+    std::shared_ptr<const Player> getConstPlayerMaster() const;
 
 
-    bool isPlayer() const;
-    bool isMonster() const;
-    bool hasSock() const;
+    bool isPlayer() const override;
+    bool isMonster() const override;
+    virtual bool hasSock() const;
     bool checkMp(int reqMp);
     bool checkResource(ResourceType resType, int resCost);
     void subResource(ResourceType resType, int resCost);
     void subMp(int reqMp);
 
-    Creature* myTarget{};
+    std::weak_ptr<Creature> myTarget{};
+    bool hasTarget{};
     PetList pets;
-    std::list<Creature*> targetingThis;
+    std::list<std::weak_ptr<Creature>> targetingThis;
 
     MagicType getCastingType() const;
-    int doHeal(Creature* target, int amt, double threatFactor = 0.5);
+    unsigned int doHeal(const std::shared_ptr<Creature>& target, int amt, double threatFactor = 0.5);
 
-    std::string doReplace(std::string fmt, const MudObject* actor=nullptr, const MudObject* applier=nullptr) const;
+    std::string doReplace(std::string fmt, const std::shared_ptr<MudObject>& actor=nullptr, const std::shared_ptr<MudObject>& applier=nullptr) const;
 
     void unApplyTongues();
     void unSilence();
     void unBlind();
     void stand();
 
-    bool inSameRoom(Creature* target);
+    bool inSameRoom(const std::shared_ptr<Creature>& target);
 
 
-    Creature* findVictim(cmd* cmnd, int cmndNo, bool aggressive=true, bool selfOk=false, const std::string &noVictim="", const std::string &notFound="");
-    Creature* findVictim(const std::string &toFind, int num, bool aggressive=true, bool selfOk=false, const std::string &noVictim="", const std::string &notFound="");
-    Creature* findMagicVictim(const std::string &toFind, int num, SpellData* spellData, bool aggressive=true, bool selfOk=false, const std::string &noVictim="", const std::string &notFound="");
+    std::shared_ptr<Creature> findVictim(cmd* cmnd, int cmndNo, bool aggressive=true, bool selfOk=false, const std::string &noVictim="", const std::string &notFound="");
+    std::shared_ptr<Creature> findVictim(const std::string &toFind, int num, bool aggressive=true, bool selfOk=false, const std::string &noVictim="", const std::string &notFound="");
+    std::shared_ptr<Creature> findMagicVictim(const std::string &toFind, int num, SpellData* spellData, bool aggressive=true, bool selfOk=false, const std::string &noVictim="", const std::string &notFound="");
 
     bool hasAttackableTarget();
     bool isAttackingTarget();
-    Creature* getTarget();
-    Creature* addTarget(Creature* toTarget);
-    void checkTarget(Creature* toTarget);
-    void addTargetingThis(Creature* targeter);
+    std::shared_ptr<Creature> getTarget();
+    std::shared_ptr<Creature> addTarget(const std::shared_ptr<Creature>& toTarget);
+    void checkTarget(const std::shared_ptr<Creature>& toTarget);
+    void addTargetingThis(const std::shared_ptr<Creature>& targeter);
     void clearTarget(bool clearTargetsList = true);
-    void clearTargetingThis(Creature* targeter);
+    void clearTargetingThis(Creature *targeter);
 
     long getLTLeft(int myLT, long t = -1); // gets the time left on a LT
     void setLastTime(int myLT, long t, long interval); // Sets a LT
 
-    std::string getClassString() const;
+    virtual std::string getClassString() const;
 
 public:
 // Data
@@ -285,21 +285,20 @@ public:
     std::map<std::string, long> factions;
     SkillMap skills;
     char key[3][CRT_KEY_LENGTH]{};
-    short fd{}; // Socket number
+    int fd{}; // Socket number
     short current_language{};
     long proficiency[6]{}; // Weapon proficiencies: 6 now..added cleaving weapons
     int afterProf{};
     Dice damage;
     Money coins;
     //CatRef room;
-#define                 NUMHITS old_quests[0]
     short questnum{}; // Quest fulfillment number (M)
-    Object *ready[MAXWEAR]{};// Worn/readied items
+    std::vector<std::shared_ptr<Object>> ready;// Worn/readied items
     //etag *first_enm; // List of enemies
     ttag *first_tlk{}; // List of talk responses
 
     struct saves saves[6]; // Saving throws struct. POI, DEA, BRE, MEN, SPL, x, x
-    char languages[16]{};
+    boost::dynamic_bitset<> languages{128};
     char movetype[3][CRT_MOVETYPE_LENGTH]{}; // Movement types..."flew..oozed...etc.."
     Stat strength;
     Stat dexterity;
@@ -324,7 +323,7 @@ public:
 
     //EffectList effects; // List of all effects on this creature
     Timer attackTimer;
-    std::list<SpecialAttack*> specials; // List of all special attack this creature has
+    std::list<SpecialAttack> specials; // List of all special attack this creature has
     std::list<std::string> minions; // vampire minions
 
 
@@ -338,23 +337,23 @@ public:
 
     Group* getGroup(bool inGroup = true);
     GroupStatus getGroupStatus();
-    Creature* getGroupLeader();
+    std::shared_ptr<Creature> getGroupLeader();
 
     void addToGroup(Group* toJoin, bool announce = true);
-    void createGroup(Creature* crt);
+    void createGroup(const std::shared_ptr<Creature>& crt);
     bool removeFromGroup(bool announce = true);
 
-    bool inSameGroup(Creature* target);
+    bool inSameGroup(const std::shared_ptr<Creature>& target);
 
-    void dismissPet(Monster* toDismiss);
+    void dismissPet(const std::shared_ptr<Monster>&  toDismiss);
     void dismissAll();
     void displayPets();
-    void addPet(Monster* newPet, bool setPetFlag = true);
-    void delPet(Monster* toDel);
+    void addPet(std::shared_ptr<Monster>  newPet, bool setPetFlag = true);
+    void delPet(const std::shared_ptr<Monster>&  toDel);
     bool hasPet() const;
 
-    Monster* findPet(Monster* toFind);
-    Monster* findPet(const std::string& pName, int pNum);
+    std::shared_ptr<Monster>  findPet(const std::shared_ptr<Monster>&  toFind);
+    std::shared_ptr<Monster>  findPet(const std::string& pName, int pNum);
 
 // XML: loading and saving
     int saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bool saveID = true) const;
@@ -369,7 +368,7 @@ public:
     void loadSkills(xmlNodePtr rootNode);
     void loadStats(xmlNodePtr curNode);
 
-    bool pulseEffects(time_t t);
+    bool pulseEffects(time_t t) override;
 
     bool convertFlag(int flag);
     void removeStatEffects();
@@ -389,9 +388,12 @@ public:
     void checkImprove(const std::string& skillName, bool success, int attribute = INT, int bns = 0); // *
     bool setSkill(const std::string& skill, int gained); // *
 
+    // Movement
+
+
 // Formatting
     virtual void escapeText() {};
-    std::string getCrtStr(const Creature* viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
+    std::string getCrtStr(const std::shared_ptr<const Creature> & viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
     std::string statCrt(int statFlags);
     unsigned int displayFlags() const;
     std::string alignColor() const;
@@ -404,10 +406,10 @@ public:
     void pleaseWait(long duration) const;
     void pleaseWait(int duration) const;
     void pleaseWait(double duration) const;
-    const char* getStatusStr(int dmg=0);
+    const char* getStatusStr(unsigned int dmg=0);
     virtual std::string customColorize(const std::string& text, bool caret=true) const = 0;
 
-    void printPaged(std::string_view toPrint);
+    void printPaged(std::string_view toPrint) const;
     void bPrint(std::string_view toPrint) const;
     void bPrintPython(const std::string& toPrint) const;
 
@@ -417,30 +419,30 @@ public:
     virtual void vprint(const char *fmt, va_list ap) const {};
 
 // Combat & Death
-    Creature *findFirstEnemyCrt(Creature *pet);
-    bool checkDie(Creature *killer); // *
-    bool checkDie(Creature *killer, bool &freeTarget); // *
-    int checkDieRobJail(Monster *killer); // *
-    int checkDieRobJail(Monster *killer, bool &freeTarget); // *
-    void checkDoctorKill(Creature *victim);
-    void die(Creature *killer); // *
-    void die(Creature *killer, bool &freeTarget); // *
+    std::shared_ptr<Creature>findFirstEnemyCrt(const std::shared_ptr<Creature>&pet);
+    bool checkDie(const std::shared_ptr<Creature> &killer); // *
+    bool checkDie(const std::shared_ptr<Creature> &killer, bool &freeTarget); // *
+    int checkDieRobJail(const std::shared_ptr<Monster>& killer); // *
+    int checkDieRobJail(const std::shared_ptr<Monster>& killer, bool &freeTarget); // *
+    void checkDoctorKill(const std::shared_ptr<Creature>&victim);
+    void die(std::shared_ptr<Creature>killer); // *
+    void die(const std::shared_ptr<Creature>&killer, bool &freeTarget); // *
     void clearAsPetEnemy();
-    virtual void gainExperience(Monster* victim, Creature* killer, int expAmount, bool groupExp = false) {} ;
-    void adjustExperience(Monster* victim, int& expAmount, int& holidayExp);
+    virtual void gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount, bool groupExp = false) {} ;
+    void adjustExperience(const std::shared_ptr<Monster>&  victim, int& expAmount, int& holidayExp);
     unsigned int doWeaponResist(unsigned int dmg, const std::string &weaponCategory) const;
-    unsigned int doDamage(Creature* target, unsigned int dmg, DeathCheck shouldCheckDie = CHECK_DIE, DamageType dmgType = PHYSICAL_DMG);
-    int doDamage(Creature* target, unsigned int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget);
-    bool chkSave(short savetype, Creature* target, short bns);
-    int castWeapon(Creature* target, Object* weapon, bool &meKilled);
+    unsigned int doDamage(std::shared_ptr<Creature> target, unsigned int dmg, DeathCheck shouldCheckDie = CHECK_DIE, DamageType dmgType = PHYSICAL_DMG);
+    int doDamage(const std::shared_ptr<Creature>& target, unsigned int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget);
+    bool chkSave(short savetype, const std::shared_ptr<Creature>& target, short bns);
+    unsigned int castWeapon(const std::shared_ptr<Creature>& target, std::shared_ptr<Object>  weapon, bool &meKilled);
     void castDelay(long delay);
     void attackDelay(long delay);
     void stun(int delay);
     bool doLagProtect();
     bool hasCharm(const std::string &charmed);
     bool inCombat(bool countPets) const;
-    bool inCombat(const Creature* target=0, bool countPets=0) const;
-    bool canAttack(Creature* target, bool stealing=false);
+    bool inCombat(const std::shared_ptr<Creature> & target=nullptr, bool countPets=false) const;
+    bool canAttack(const std::shared_ptr<Creature>& target, bool stealing=false);
     unsigned int checkRealmResist(unsigned int dmg, Realm pRealm) const;
     void knockUnconscious(long duration);
     void clearAsEnemy();
@@ -460,54 +462,52 @@ public:
     void setAttackDelay(int newDelay);
     int getAttackDelay() const;
     unsigned int getBaseDamage() const;
-    float getDamageReduction(const Creature* target) const; // How much is our damage reduced attacking the target
-    AttackResult getAttackResult(Creature* victim, const Object* weapon = nullptr, unsigned int resultFlags = 0, int altSkillLevel = -1);
-    bool kamiraLuck(Creature *attacker);
-    virtual int computeDamage(Creature* victim, Object* weapon,
-            AttackType attackType, AttackResult& result, Damage& attackDamage,
-            bool computeBonus, int& drain, float multiplier = 1.0) = 0;
+    float getDamageReduction(const std::shared_ptr<Creature> & target) const; // How much is our damage reduced attacking the target
+    AttackResult getAttackResult(const std::shared_ptr<Creature>& victim, const std::shared_ptr<Object>&  weapon = nullptr, unsigned int resultFlags = 0, int altSkillLevel = -1);
+    bool kamiraLuck(const std::shared_ptr<Creature>&attacker);
+    virtual int computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon,
+                              AttackType attackType, AttackResult& result, Damage& attackDamage,
+                              bool computeBonus, unsigned int &drain, float multiplier = 1.0) = 0;
     bool canRiposte() const;
-    bool canParry(Creature* attacker);
-    bool canDodge(Creature* attacker);
-    int dodge(Creature* target);
-    int parry(Creature* target);
-    double getFumbleChance(const Object* weapon) const;
+    bool canParry(const std::shared_ptr<Creature>& attacker);
+    bool canDodge(const std::shared_ptr<Creature>& attacker);
+    int dodge(const std::shared_ptr<Creature>& target);
+    int parry(const std::shared_ptr<Creature>& target);
+    double getFumbleChance(const std::shared_ptr<Object>&  weapon) const;
     double getCriticalChance(const int& difference) const;
-    double getBlockChance(Creature* attacker, const int& difference);
-    double getGlancingBlowChance(Creature* attacker, const int& difference) const;
-    double getParryChance(Creature* attacker, const int& difference);
-    double getDodgeChance(Creature* attacker, const int& difference);
+    double getBlockChance(std::shared_ptr<Creature> attacker, const int& difference);
+    double getGlancingBlowChance(const std::shared_ptr<Creature>& attacker, const int& difference) const;
+    double getParryChance(const std::shared_ptr<Creature>& attacker, const int& difference);
+    double getDodgeChance(const std::shared_ptr<Creature>& attacker, const int& difference);
     double getMissChance(const int& difference);
-    virtual int getWeaponSkill(const Object* weapon = nullptr) const = 0;
+    virtual int getWeaponSkill(std::shared_ptr<Object>  weapon = nullptr) const = 0;
     virtual int getDefenseSkill() const = 0;
     int adjustChance(const int &difference) const;
     static unsigned int computeBlock(unsigned int dmg);
-    bool getsGroupExperience(Monster* target);
-    bool canHit(Creature* target, Object* weapon = nullptr, bool glow = true, bool showFail = true);
-    bool doReflectionDamage(Damage damage, Creature* target, ReflectedDamageType printZero=REFLECTED_NONE);
-    static void simultaneousDeath(Creature* attacker, Creature* target, bool freeAttacker, bool freeTarget);
+    bool getsGroupExperience(const std::shared_ptr<Monster>&  target);
+    bool canHit(const std::shared_ptr<Creature>& target, std::shared_ptr<Object>  weapon = nullptr, bool glow = true, bool showFail = true);
+    bool doReflectionDamage(Damage pDamage, const std::shared_ptr<Creature>& target, ReflectedDamageType printZero=REFLECTED_NONE);
+    static void simultaneousDeath(const std::shared_ptr<Creature>& attacker, std::shared_ptr<Creature> target, bool freeAttacker, bool freeTarget);
     bool canBeDrained() const;
 
 
     int spellFail(CastType how);
     bool isMageLich();
-    bool noPotion(SpellData* spellData);
+    bool noPotion(SpellData* spellData) const;
     int doMpCheck(int splno);
-    int getTurnChance(Creature* target);
+    int getTurnChance(const std::shared_ptr<Creature>& target);
 
 // Special Attacks
     std::string getSpecialsFullList() const;
-    bool useSpecial(std::string_view special, Creature* victim);
-    bool useSpecial(SpecialAttack* attack, Creature* victim);
-    bool runOpeners(Creature* victim); // Run any opening attacks
-    bool runSpecialAttacks(Creature* victim); // Pick a special attack and do it on the target
+    bool useSpecial(SpecialAttack &attack, const std::shared_ptr<Creature> &victim);
+    bool runOpeners(std::shared_ptr<Creature> victim); // Run any opening attacks
+    bool runSpecialAttacks(const std::shared_ptr<Creature>& victim); // Pick a special attack and do it on the target
     std::string getSpecialsList() const;
     SpecialAttack* addSpecial(std::string_view specialName);
     bool delSpecials();
-    SpecialAttack* getSpecial(std::string_view special);
 
     // Do Special should only be run from useSpecial, should not be called from elsewhere
-    bool doSpecial(SpecialAttack* attack, Creature* victim); // Do the selected attack on the given victim
+    bool doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>& victim); // Do the selected attack on the given victim
 
 // Traits
     bool doesntBreathe() const;
@@ -540,9 +540,9 @@ public:
     bool isHybridCaster() const;
 
 // Equipment / Inventory
-    void addObj(Object* object);
-    void delObj(Object* object, bool breakUnique=false, bool removeUnique=false, bool darkmetal=true, bool darkness=true, bool keep=false);
-    void finishDelObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep);
+    void addObj(const std::shared_ptr<Object>&  object);
+    void delObj(std::shared_ptr<Object>  object, bool breakUnique=false, bool removeUnique=false, bool darkmetal=true, bool darkness=true, bool keep=false);
+    void finishDelObj(const std::shared_ptr<Object>&  object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep);
     int getWeight() const;
     int maxWeight();
     bool tooBulky(int n) const;
@@ -550,19 +550,19 @@ public:
     int getMaxBulk() const;
     unsigned long getInventoryValue() const;
     void killDarkmetal();
-    bool equip(Object* object, bool showMessage=true);
-    Object* unequip(int wearloc, UnequipAction action = UNEQUIP_ADD_TO_INVENTORY, bool darkness=true, bool showEffect=true);
-    void printEquipList(const Player* viewer);
+    bool equip(const std::shared_ptr<Object>&  object, bool showMessage=true);
+    std::shared_ptr<Object>  unequip(int wearloc, UnequipAction action = UNEQUIP_ADD_TO_INVENTORY, bool darkness=true, bool showEffect=true);
+    void printEquipList(const std::shared_ptr<Player>& viewer);
     void checkDarkness();
     int countBagInv();
     int countInv(bool permOnly = false);
 
 // Afflictions
-    void poison(Creature* enemy, unsigned int damagePerPulse, unsigned int duration);
+    void poison(const std::shared_ptr<Creature>& enemy, unsigned int damagePerPulse, unsigned int duration);
     bool immuneToPoison() const; // *
     bool isPoisoned() const;
     bool curePoison();
-    void disease(Creature* enemy, unsigned int damagePerPulse);
+    void disease(const std::shared_ptr<Creature>& enemy, unsigned int damagePerPulse);
     bool poisonedByMonster() const;
     bool poisonedByPlayer() const;
     bool immuneToDisease() const; // *
@@ -574,13 +574,13 @@ public:
     bool isNewWerewolf() const; // *
     void makeVampire();
     bool willBecomeVampire() const;
-    bool vampireCharmed(Player* master);
+    bool vampireCharmed(const std::shared_ptr<Player>& master);
     void clearMinions();
-    bool addPorphyria(Creature *killer, int chance);
+    bool addPorphyria(const std::shared_ptr<Creature>&killer, int chance);
     bool sunlightDamage();
     void makeWerewolf();
     bool willBecomeWerewolf() const;
-    bool addLycanthropy(Creature *killer, int chance);
+    bool addLycanthropy(const std::shared_ptr<Creature>&killer, int chance);
 
 
 // Get
@@ -664,7 +664,7 @@ public:
     void learnLanguage(int lang); // *
     void forgetLanguage(int lang); // *
 
-    bool inSameRoom(const Creature *b) const;
+    bool inSameRoom(const std::shared_ptr<const Creature> &b) const;
     virtual int getAdjustedAlignment() const=0;
     bool checkDimensionalAnchor() const;
     bool checkStaff(const char *failStr, ...) const;
@@ -682,44 +682,44 @@ public:
     Stat* getStat(std::string_view statName);
 
     // these handle total invisibility, no concealment (ie, being hidden)
-    bool canSee(const MudObject* target, bool skip=false) const;
+    bool canSee(const std::shared_ptr<const MudObject> target, bool skip=false) const;
 
-    bool canSeeRoom(const BaseRoom* room, bool p=false) const;
-    bool canEnter(const Exit *ext, bool p=false, bool blinking=false) const;
-    bool canEnter(const UniqueRoom* room, bool p=false) const;
-    bool willFit(const Object* object) const;
-    bool canWield(const Object* object, int n) const;
+    bool canSeeRoom(const std::shared_ptr<BaseRoom>& room, bool p=false) const;
+    bool canEnter(const std::shared_ptr<Exit>& ext, bool p=false, bool blinking=false) const;
+    bool canEnter(const std::shared_ptr<UniqueRoom>& room, bool p=false) const;
+    bool willFit(const std::shared_ptr<Object>&  object) const;
+    bool canWield(const std::shared_ptr<Object>&  object, int n) const;
     bool canFlee(bool displayFail = false, bool checkTimer = true);
-    bool canFleeToExit(const Exit *exit, bool skipScary=false, bool blinking=false);
-    Exit* getFleeableExit();
-    BaseRoom* getFleeableRoom(Exit* exit);
+    bool canFleeToExit(const std::shared_ptr<Exit>& exit, bool skipScary=false, bool blinking=false);
+    std::shared_ptr<Exit> getFleeableExit();
+    std::shared_ptr<BaseRoom> getFleeableRoom(const std::shared_ptr<Exit>& exit);
     int flee(bool magicTerror=false, bool wimpyFlee = false);
     bool doFlee(bool magicTerror=false);
 
-    bool isSitting();
+    bool isSitting() const;
 
     bool ableToDoCommand( cmd* cmnd=nullptr) const;
     void wake(const std::string& str = "", bool noise=false);
-    void modifyDamage(Creature* enemy, int dmgType, Damage& attackDamage, Realm pRealm=NO_REALM, Object* weapon=0, short saveBonus=0, short offguard=OFFGUARD_REMOVE, bool computingBonus=false);
-    bool checkResistPet(Creature *pet, bool& resistPet, bool& immunePet, bool& vulnPet);
+    void modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType, Damage& attackDamage, Realm pRealm=NO_REALM, const std::shared_ptr<Object>&  weapon=nullptr, short saveBonus=0, short offguard=OFFGUARD_REMOVE, bool computingBonus=false);
+    bool checkResistPet(const std::shared_ptr<Creature>&pet, bool& resistPet, bool& immunePet, bool& vulnPet);
 
-    void doHaggling(Creature *vendor, Object* object, int trans);
+    void doHaggling(const std::shared_ptr<Creature>&vendor, const std::shared_ptr<Object>&  object, int trans);
 
-    BaseRoom* recallWhere();
-    BaseRoom* teleportWhere();
+    std::shared_ptr<BaseRoom> recallWhere();
+    std::shared_ptr<BaseRoom> teleportWhere();
     Location getLimboRoom() const;
     Location getRecallRoom() const;
     int deleteFromRoom(bool delPortal=true);
 protected:
-    virtual int doDeleteFromRoom(BaseRoom* room, bool delPortal) = 0;
+    virtual int doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) = 0;
 public:
 
-    unsigned int doResistMagic(unsigned int dmg, Creature* enemy=0);
+    unsigned int doResistMagic(unsigned int dmg, const std::shared_ptr<Creature>& enemy=nullptr);
     virtual void pulseTick(long t) = 0;
 
-    MudObject* findTarget(unsigned int findWhere, unsigned int findFlags, const std::string& str, int val);
-    MudObject* findObjTarget(ObjectSet &set, unsigned int findFlags, const std::string& str, int val, int* match);
-    //MudObject* findTarget(cmd* cmnd, TargetType targetType, bool offensive);
+    std::shared_ptr<MudObject> findTarget(unsigned int findWhere, unsigned int findFlags, const std::string& str, int val);
+    std::shared_ptr<MudObject> findObjTarget(ObjectSet &set, unsigned int findFlags, const std::string& str, int val, int* match);
+    //std::shared_ptr<MudObject> findTarget(cmd* cmnd, TargetType targetType, bool offensive);
 
     // New songs
     bool isPlaying() const;
@@ -729,9 +729,10 @@ public:
     bool pulseSong(long t);
     const Song* playing{};
 
-    void donePaging();
+    void donePaging() const;
     bool addStatModEffect(EffectInfo *effect);
     bool remStatModEffect(EffectInfo *effect);
+    unsigned int numEnemyMonInRoom();
 };
 
 

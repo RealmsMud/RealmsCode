@@ -81,11 +81,11 @@ typedef struct channelInfo {
     int     minLevel;               // Minimum level to use this channel
     int     maxLevel;               // Maximum level to use this channel
     bool    eaves;                  // does this channel show up on eaves?
-    bool    (*canSee)(const Creature *);    // Can this person use this channel?
-    bool    (*canUse)(Player *);    // Can this person use this channel?
+    bool    (*canSee)(const std::shared_ptr<Creature>& );    // Can this person use this channel?
+    bool    (*canUse)(const std::shared_ptr<Player>& );    // Can this person use this channel?
     // these are used to determine canHear:
     // every field must be satisfied (or empty) for them to hear the channel
-    bool    (*canHear)(Socket*);    // a function that MUST return
+    bool    (*canHear)(std::shared_ptr<Socket>);    // a function that MUST return
     int     flag;                   // a flag that MUST be set
     int     not_flag;               // a flag that MUST NOT be set
     int     type;                   // for more complicated checks
@@ -96,11 +96,11 @@ typedef struct channelInfo {
 extern channelInfo channelList[];
 
 
-void sendGlobalComm(const Player *player, const std::string &text, const std::string &extra, unsigned int check,
+void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &text, const std::string &extra, unsigned int check,
                     const channelInfo *chan, const std::string &etxt, const std::string &oocName, const std::string &icName);
 
 
-channelPtr getChannelByName(const Player *player, const std::string &chanStr);
+channelPtr getChannelByName(const std::shared_ptr<Player>& player, const std::string &chanStr);
 channelPtr getChannelByDiscordChannel(unsigned long discordChannelID);
 
 

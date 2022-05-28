@@ -64,8 +64,8 @@ void Streamable::initStreamable() {
 
 
 Streamable& Streamable::operator<< ( const MudObject& mo) {
-    auto* thisPlayer = dynamic_cast<Player*>(this);
-    auto* thisCreature = dynamic_cast<Creature*>(this);
+    auto thisPlayer = dynamic_cast<Player*>(this);
+    auto thisCreature = dynamic_cast<Creature*>(this);
     if (!thisCreature)
         throw std::runtime_error("WTF");
 
@@ -75,19 +75,24 @@ Streamable& Streamable::operator<< ( const MudObject& mo) {
         mFlags |= thisPlayer->getManipFlags();
     }
     int mNum = this->getManipNum();
-    const Creature* creature = mo.getAsConstCreature();
+    const std::shared_ptr<const Creature> & creature = mo.getAsConstCreature();
     if(creature) {
-        doPrint(creature->getCrtStr(thisPlayer, mFlags, mNum));
+
+        doPrint(creature->getCrtStr((thisPlayer ? thisPlayer->getAsPlayer() : nullptr), mFlags, mNum));
         return(*this);
     }
 
-    const Object* object = mo.getAsConstObject();
+    const std::shared_ptr<const Object>  object = mo.getAsConstObject();
     if(object) {
-        doPrint(object->getObjStr(thisPlayer, mFlags, mNum));
+        doPrint(object->getObjStr((thisPlayer ? thisPlayer->getAsPlayer() : nullptr), mFlags, mNum));
         return(*this);
     }
 
     return(*this);
+}
+
+Streamable& Streamable::operator<< (const std::shared_ptr<MudObject> mo) {
+    return (*this << *mo);
 }
 
 Streamable& Streamable::operator<< ( const MudObject* mo) {
@@ -106,6 +111,10 @@ Streamable& Streamable::operator<< (Stat& stat) {
     doPrint(stat.toString());
     return(*this);
 }
+Streamable& Streamable::operator<< (const CatRef& cr) {
+    doPrint(cr.str());
+    return(*this);
+}
 void Streamable::setColorOn() {
     streamColor = true;
 }
@@ -117,7 +126,7 @@ void Streamable::setPagerOn() {
 }
 void Streamable::setPagerOff() {
     pager = false;
-    Socket* sock = getMySock();
+    std::shared_ptr<Socket> sock = getMySock();
     if(sock) sock->donePaging();
 }
 
@@ -147,8 +156,8 @@ int Streamable::getManipNum() {
 
 void Streamable::doPrint(std::string_view toPrint) {
     const Monster* monster = dynamic_cast<Monster*>(this);
-    const Player* master = nullptr;
-    Socket* sock = getMySock();
+    std::shared_ptr<const Player> master = nullptr;
+    std::shared_ptr<Socket> sock = getMySock();
 
     if(monster) {
         master = monster->getConstPlayerMaster();
@@ -180,11 +189,11 @@ void Streamable::doPrint(std::string_view toPrint) {
 
 }
 
-Socket *Streamable::getMySock() {
-    const Player* player = dynamic_cast<Player*>(this);
-    const Monster* monster = dynamic_cast<Monster*>(this);
-    const Player* master = nullptr;
-    Socket* sock = nullptr;
+std::shared_ptr<Socket> Streamable::getMySock() {
+    Player* player = dynamic_cast<Player*>(this);
+    Monster* monster = dynamic_cast<Monster*>(this);
+    std::shared_ptr<const Player> master;
+    std::shared_ptr<Socket> sock = nullptr;
 
     if(player)
         sock = player->getSock();

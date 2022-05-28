@@ -18,6 +18,8 @@
 #ifndef AREA_H
 #define AREA_H
 
+#include <boost/dynamic_bitset.hpp>
+#include <libxml/parser.h>  // for xmlNodePtr
 #include <list>
 #include <map>
 #include <vector>
@@ -51,54 +53,34 @@ class Player;
 class MapMarker {
 public:
     MapMarker();
-
     MapMarker &operator=(const MapMarker &m);
-
     bool operator==(const MapMarker &m) const;
-
     bool operator!=(const MapMarker &m) const;
-
     void save(xmlNodePtr curNode) const;
-
     void load(xmlNodePtr curNode);
-
     void load(std::string str);
-
     void reset();
 
     [[nodiscard]] std::string str(bool color = false) const;
-
-    std::string direction(const MapMarker *mapmarker) const;
-
-    std::string distance(const MapMarker *mapmarker) const;
-
+    [[nodiscard]] std::string direction(const MapMarker &mapmarker) const;
+    [[nodiscard]] std::string distance(const MapMarker &mapmarker) const;
     [[nodiscard]] std::string filename() const;
-
     [[nodiscard]] short getArea() const;
-
     [[nodiscard]] short getX() const;
-
     [[nodiscard]] short getY() const;
-
     [[nodiscard]] short getZ() const;
-
+    [[nodiscard]] bool isValid() const;
     void setArea(short n);
-
     void setX(short n);
-
     void setY(short n);
-
     void setZ(short n);
-
     void set(short _area, short _x, short _y, short _z);
-
     void add(short _x, short _y, short _z);
-
 protected:
-    short area;
-    short x;
-    short y;
-    short z;
+    short area{};
+    short x{};
+    short y{};
+    short z{};
 };
 
 
@@ -121,22 +103,16 @@ protected:
 class AreaZone {
 public:
     AreaZone();
-
     ~AreaZone();
 
-    std::string getFishing() const;
-
-    bool inside(const Area *area, const MapMarker *mapmarker) const;
-
-    bool inRestrict(char tile, const char *list) const;
+    [[nodiscard]] std::string getFishing() const;
+    [[nodiscard]] bool inside(const std::shared_ptr<const Area> &area, const MapMarker &mapmarker) const;
+    [[nodiscard]] bool inRestrict(char tile, const char *list) const;
 
     void load(xmlNodePtr curNode);
-
     void save(xmlNodePtr curNode) const;
-
-    bool swap(const Swap &s);
-
-    bool flagIsSet(int flag) const;
+    [[nodiscard]] bool swap(const Swap &s);
+    [[nodiscard]] bool flagIsSet(int flag) const;
 
 
     std::string name;           // for staff identification
@@ -148,11 +124,11 @@ public:
     WanderInfo wander;      // Random monster info
     CatRef unique;         // does this zone lead to a unique room
 
-    char flags[16]{};
+    boost::dynamic_bitset<> flags{128};
 
     MapMarker min;
     MapMarker max;
-    std::map<int, MapMarker *> coords;
+    std::map<int, MapMarker> coords;
 
 protected:
     std::string fishing;
@@ -165,7 +141,7 @@ public:
     void load(xmlNodePtr curNode);
     void save(xmlNodePtr curNode) const;
 
-    [[nodiscard]] char getStyle(const Player *player = nullptr) const;
+    [[nodiscard]] char getStyle(const std::shared_ptr<Player> &player = nullptr) const;
     [[nodiscard]] char getId() const;
     [[nodiscard]] std::string getName() const;
     [[nodiscard]] std::string getDescription() const;
@@ -177,7 +153,7 @@ public:
     [[nodiscard]] bool isWater() const;
     [[nodiscard]] bool isRoad() const;
     [[nodiscard]] short getFly() const;
-    bool spawnHerbs(BaseRoom *room) const;
+    [[nodiscard]] bool spawnHerbs(std::shared_ptr<BaseRoom> room) const;
 
     [[nodiscard]] std::string getFishing() const;
 
@@ -193,7 +169,7 @@ protected:
     char style;
     char display;
     short trackDur;       // duration of tracks in game minutes
-    char flags[16]{};
+    boost::dynamic_bitset<> flags{128};
 
     bool water;
     bool road;
@@ -210,16 +186,16 @@ public:
 
     char get(short x, short y, short z) const;
     std::vector<std::vector<std::vector<char>>> data;
-    void setArea(Area *a);
+    void setArea(const std::weak_ptr<Area> &a);
     void setTerrain(bool t);
 
 protected:
-    Area *area;
+    std::weak_ptr<Area> area;
     bool isTerrain;
 };
 
 
-class Area {
+class Area : public std::enable_shared_from_this<Area> {
 protected:
 
 public:
@@ -227,44 +203,47 @@ public:
     ~Area();
 
 
-    CatRef getUnique(const MapMarker *mapmarker) const;
-    bool move(Player *player, MapMarker *mapmarker);
-    void remove(AreaRoom *room);
-    AreaRoom *getRoom(const MapMarker *mapmarker);
-    AreaRoom *loadRoom(Creature *creature, const MapMarker *mapmarker, bool recycle, bool p = false);
-    void checkCycle(MapMarker *mapmarker) const;
+    CatRef getUnique(const MapMarker &mapmarker) const;
+    bool move(const std::shared_ptr<Player> &player, const MapMarker &mapmarker);
+    bool moveMapMarker(std::shared_ptr<AreaRoom> room, const MapMarker &mapmarker);
+    void setMapMarker(std::shared_ptr<AreaRoom> room, const MapMarker &mapmarker);
+    void remove(const std::shared_ptr<AreaRoom> &room);
+    std::shared_ptr<AreaRoom> getRoom(const MapMarker &mapmarker);
+    std::shared_ptr<AreaRoom> loadRoom(const std::shared_ptr<Creature> &creature, const MapMarker &mapmarker, bool recycle, bool p = false);
+    void checkCycle(MapMarker mapmarker) const;
     short checkCycle(short vector, short critical) const;
-    bool canPass(const Creature *creature, const MapMarker *mapmarker, bool adjust = false) const;
+    bool canPass(const std::shared_ptr<const Creature> &creature, const MapMarker &mapmarker, bool adjust = false) const;
     bool isRoad(short x, short y, short z, bool adjust = false) const;
     bool isWater(short x, short y, short z, bool adjust = false) const;
-    TileInfo *getTile(char grid, char seasonFlags, Season season = NO_SEASON, bool checkSeason = true) const;
-    char getTerrain(const Player *player, const MapMarker *mapmarker, short y, short x, short z, bool terOnly) const;
-    char getSeasonFlags(const MapMarker *mapmarker, short y = 0, short x = 0, short z = 0) const;
-    float getLosPower(const Player *player, int xVision, int yVision) const;
-    void getGridText(char grid[][80], int height, const MapMarker *mapmarker, int maxWidth) const;
-    std::string showGrid(const Player *player, const MapMarker *mapmarker, bool compass) const;
+    std::shared_ptr<TileInfo> getTile(char grid, char seasonFlags, Season season = NO_SEASON, bool checkSeason = true) const;
+    char getTerrain(const std::shared_ptr<Player> &player, const MapMarker &mapmarker, short y, short x, short z, bool terOnly) const;
+    char getSeasonFlags(const MapMarker &mapmarker, short y = 0, short x = 0, short z = 0) const;
+    float getLosPower(const std::shared_ptr<Player> &player, int xVision, int yVision) const;
+    void getGridText(char grid[][80], int pHeight, const MapMarker &mapmarker, int maxWidth) const;
+    std::string showGrid(const std::shared_ptr<Player> &player, const MapMarker &mapmarker, bool compass) const;
     bool outOfBounds(short x, short y, short z) const;
     void adjustCoords(short *x, short *y, short *z) const;
     void cleanUpRooms();
-    Track *getTrack(MapMarker *mapmarker) const;
-    void addTrack(AreaTrack *aTrack);
-    int getTrackDuration(const MapMarker *mapmarker) const;
+    Track *getTrack(const MapMarker &mapmarker) const;
+    void addTrack(const std::shared_ptr<AreaTrack> &aTrack);
+    int getTrackDuration(const MapMarker &mapmarker) const;
     void updateTrack(int t);
     bool swap(const Swap &s);
     void load(xmlNodePtr curNode);
     void loadZones(xmlNodePtr curNode);
-    void loadTerrain(int minDepth);
+    void loadTerrain(int pMinDepth);
     void loadRooms();
     void loadTiles(xmlNodePtr curNode, bool ter);
     void save(xmlNodePtr curNode, bool saveRooms) const;
     void checkFileSize(int &size, const char *filename) const;
-    bool isSunlight(const MapMarker *mapmarker) const;
-    bool flagIsSet(int flag, const MapMarker *mapmarker) const;
+    bool isSunlight(const MapMarker &mapmarker) const;
+    bool flagIsSet(int flag, const MapMarker &mapmarker) const;
 
     // line of sight functions
     void losCloser(int *x, int *y, int me_x, int me_y, int i) const;
-    float lineOfSight(float *grid, const Player *player, int width, int *y, int *x, int me_y, int me_x, int *i, const MapMarker *mapmarker) const;
-    void makeLosGrid(float *grid, const Player *player, int height, int width, const MapMarker *mapmarker) const;
+    float
+    lineOfSight(float *grid, const std::shared_ptr<Player> &player, int pWidth, int *y, int *x, int me_y, int me_x, int *i, const MapMarker &mapmarker) const;
+    void makeLosGrid(float *grid, const std::shared_ptr<Player> &player, int pHeight, int pWidth, const MapMarker &mapmarker) const;
 
 public:
     short id;
@@ -277,38 +256,38 @@ public:
 
     // if the point goes over this coord, it is cycled to the other
     // side of the world. set to 0 if no auto-cycling
-    short critical_x;
-    short critical_y;
-    short critical_z;
+    short critical_x{};
+    short critical_y{};
+    short critical_z{};
 
     // the point 0,0,0 will change if we ever modify the dimensions of the
     // map. thus, a special map marker '*' marks 0,0,0 for us. we are free to edit
     // map dimensions and keep the same coordinates for all rooms
-    short zero_offset_x;
-    short zero_offset_y;
-    short zero_offset_z;
+    short zero_offset_x{};
+    short zero_offset_y{};
+    short zero_offset_z{};
 
-    short width;
-    short height;
-    short depth;
+    short width{};
+    short height{};
+    short depth{};
 
     char dataFile[20]{};
 
-    char defaultTerrain;
-    char errorTerrain;
-    AreaData aTerrain;
-    AreaData aMap;
-    AreaData aSeason;
+    char defaultTerrain{};
+    char errorTerrain{};
+    AreaData aTerrain{};
+    AreaData aMap{};
+    AreaData aSeason{};
 
     // how much flying helps vision
-    short flightPower;
+    short flightPower{};
 
-    std::map<std::string, AreaRoom *> rooms;
-    std::list<AreaZone *> zones;
-    std::list<AreaTrack *> tracks;
+    std::map<std::string, std::shared_ptr<AreaRoom> > rooms{};
+    std::list<std::shared_ptr<AreaZone> > areaZones{};
+    std::list<std::shared_ptr<AreaTrack> > tracks{};
 
-    std::map<char, TileInfo *> ter_tiles;
-    std::map<char, TileInfo *> map_tiles;
+    std::map<char, std::shared_ptr<TileInfo> > ter_tiles{};
+    std::map<char, std::shared_ptr<TileInfo> > map_tiles{};
 protected:
     int minDepth;
 };

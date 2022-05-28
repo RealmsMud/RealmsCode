@@ -36,7 +36,6 @@ namespace odbc {
 
 #include "catRef.hpp"
 #include "delayedAction.hpp"
-#include "free_crt.hpp"
 #include "money.hpp"
 #include "proc.hpp"
 #include "swap.hpp"
@@ -63,6 +62,7 @@ class PythonHandler;
 class ReportedMsdpVariable;
 class Socket;
 class WebInterface;
+class HttpServer;
 
 namespace dpp {
     class cluster;
@@ -70,15 +70,11 @@ namespace dpp {
 }
 
 struct CanCleanupRoomFn {
-	bool operator()( UniqueRoom* r );
+    bool operator()(const std::shared_ptr<UniqueRoom>& r );
 };
 
 struct CleanupRoomFn {
-		void operator()( UniqueRoom* r );
-};
-
-struct FreeCrt {
-		void operator()( Monster* mon ) { free_crt((Creature*)mon); }
+    void operator()(const std::shared_ptr<UniqueRoom>& r );
 };
 
 enum GoldLog {
@@ -94,16 +90,17 @@ struct idComp : public std::binary_function<const std::string&, const std::strin
 
 #include "async.hpp"
 
-typedef std::map<std::string, MudObject*,idComp> IdMap;
-using MonsterList = std::list<Monster*>;
+typedef std::map<std::string, std::weak_ptr<MudObject>,idComp> IdMap;
+using WeakMonsterList = std::list<std::weak_ptr<Monster> >;
+using MonsterList = std::list<std::shared_ptr<Monster> >;
 using GroupList = std::list<Group*>;
-using SocketList = std::list<Socket>;
-using SocketVector= std::vector<Socket*>;
-using PlayerMap = std::map<std::string, Player*>;
+using SocketList = std::list<std::shared_ptr<Socket>>;
+using SocketVector= std::vector<std::weak_ptr<Socket>>;
+using PlayerMap = std::map<std::string, std::shared_ptr<Player>>;
 
-using RoomCache = LRU::lru_cache<CatRef, UniqueRoom, CleanupRoomFn, CanCleanupRoomFn>;
-using MonsterCache = LRU::lru_cache<CatRef, Monster, FreeCrt>;
-using ObjectCache = LRU::lru_cache<CatRef, Object>;
+using RoomCache = LRU::lru_cache<CatRef, std::shared_ptr<UniqueRoom>, CleanupRoomFn, CanCleanupRoomFn>;
+using MonsterCache = LRU::lru_cache<CatRef, Monster >;
+using ObjectCache = LRU::lru_cache<CatRef, Object >;
 
 class Server {
     friend class PythonHandler;
@@ -164,8 +161,9 @@ private:
     std::list<DelayedAction> delayedActionQueue;
 
     PythonHandler* pythonHandler;
+    HttpServer* httpServer;
 
-    std::list<BaseRoom*> effectsIndex;
+    std::list<std::weak_ptr<BaseRoom>> effectsIndex;
 
     fd_set inSet{};
     fd_set outSet{};
@@ -197,7 +195,7 @@ private:
     dpp::commandhandler *commandHandler{};
 
     // Game Updates
-    MonsterList activeList; // The new active list
+    WeakMonsterList activeList; // The new active list
 
     long lastDnsPrune;
     long lastUserUpdate;
@@ -206,13 +204,16 @@ private:
     long lastActiveUpdate;
 
 public:
-    std::list<Area*> areas;
+    std::list<std::shared_ptr<Area> > areas;
 
 // ****************
 // Internal Methods
 private:
     bool initDiscordBot();
+    bool initHttpServer();
+
     void cleanupDiscordBot();
+    void cleanupHttpServer();
 
     size_t getNumSockets() const; // Get number of sockets in the sockets list
 
@@ -280,21 +281,21 @@ public:
 
 public:
 
-    void clearAsEnemy(Player* player);
+    void clearAsEnemy(const std::shared_ptr<Player>& player);
     std::string showActiveList();
 
-    static void logGold(GoldLog dir, Player* player, Money amt, MudObject* target, std::string_view logType);
+    static void logGold(GoldLog dir, const std::shared_ptr<Player>& player, Money amt, std::shared_ptr<MudObject> target, std::string_view logType);
 
     bool registerGroup(Group* toRegister);
     bool unRegisterGroup(Group* toUnRegister);
     std::string getGroupList();
 
-    bool registerMudObject(MudObject* toRegister, bool reassignId = false);
+    bool registerMudObject(const std::shared_ptr<MudObject>& toRegister, bool reassignId = false);
     bool unRegisterMudObject(MudObject* toUnRegister);
     std::string getRegisteredList();
-    Creature* lookupCrtId(const std::string &toLookup);
-    Object* lookupObjId(const std::string &toLookup);
-    Player* lookupPlyId(const std::string &toLookup);
+    std::shared_ptr<Creature> lookupCrtId(const std::string &toLookup);
+    std::shared_ptr<Object>  lookupObjId(const std::string &toLookup);
+    std::shared_ptr<Player> lookupPlyId(const std::string &toLookup);
 
     void loadIds();
     void saveIds();
@@ -307,11 +308,12 @@ public:
     long getMaxPlayerId();
     long getMaxObjectId();
 
+    bool removeDelayedActions(const std::shared_ptr<MudObject>& target, bool interruptOnly=false);
     bool removeDelayedActions(MudObject* target, bool interruptOnly=false);
-    void addDelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long howLong, bool canInterrupt=true);
-    void addDelayedScript(void (*callback)(DelayedActionFn), MudObject* target, std::string_view script, long howLong, bool canInterrupt=true);
-    bool hasAction(const MudObject* target, DelayedActionType type);
-    std::string delayedActionStrings(const MudObject* target);
+    void addDelayedAction(void (*callback)(DelayedActionFn), const std::shared_ptr<MudObject>& target, cmd* cmnd, DelayedActionType type, long howLong, bool canInterrupt=true);
+    void addDelayedScript(void (*callback)(DelayedActionFn), const std::shared_ptr<MudObject>& target, std::string_view script, long howLong, bool canInterrupt=true);
+    bool hasAction(const std::shared_ptr<MudObject>& target, DelayedActionType type);
+    std::string delayedActionStrings(const std::shared_ptr<MudObject>& target);
 
     void weather(WeatherString w);
     void updateWeather(long t);
@@ -321,19 +323,18 @@ public:
     void flushMonster();
     void flushObject();
 
-    bool reloadRoom(BaseRoom* room);
-    UniqueRoom* reloadRoom(const CatRef& cr);
+    bool reloadRoom(const std::shared_ptr<BaseRoom>& room);
+    std::shared_ptr<UniqueRoom> reloadRoom(const CatRef& cr);
     int resaveRoom(const CatRef& cr);
-    int saveStorage(UniqueRoom* uRoom);
+    int saveStorage(const std::shared_ptr<UniqueRoom>& uRoom);
     int saveStorage(const CatRef& cr);
     void resaveAllRooms(char permonly);
 
     // Areas
-    Area *getArea(int id);
+    std::shared_ptr<Area> getArea(int id);
     bool loadAreas();
-    void clearAreas();
-    void areaInit(Creature* player, xmlNodePtr curNode);
-    void areaInit(Creature* player, MapMarker mapmarker);
+    void areaInit(const std::shared_ptr<Creature>& player, xmlNodePtr curNode);
+    void areaInit(const std::shared_ptr<Creature>& player, MapMarker mapmarker);
     void saveAreas(bool saveRooms) const;
     void cleanUpAreas();
 
@@ -343,7 +344,7 @@ public:
 // *******************************
 // Public methods for server class
 public:
-    void showMemory(Socket* sock, bool extended=false);
+    void showMemory(std::shared_ptr<Socket> sock, bool extended=false);
 
     // Child processes
     void addChild(int pid, ChildType pType, int pFd = -1, std::string_view pExtra = "");
@@ -356,7 +357,8 @@ public:
     void setRebooting();
     void setValgrind();
 
-    int run(); // Run the server
+    void run(); // Run the server
+    void stop(); // Run the server
     int addListenPort(int); // Add a new port to listen to
 
     // Status
@@ -373,12 +375,12 @@ public:
     // DNS
     std::string getDnsCacheString();
     bool getDnsCache(std::string &ip, std::string &hostName);
-    int startDnsLookup(Socket* sock, sockaddr_in pAddr); // Start dns lookup on a socket
+    int startDnsLookup(Socket *sock, sockaddr_in addr); // Start dns lookup on a socket
 
     // Players
-    bool addPlayer(Player* player);
-    bool clearPlayer(Player* player);
-    Player* findPlayer(const std::string &name);
+    bool addPlayer(const std::shared_ptr<Player>& player);
+    bool clearPlayer(const std::shared_ptr<Player>& player);
+    std::shared_ptr<Player> findPlayer(const std::string &name);
     bool clearPlayer(const std::string &name);
     void saveAllPly();
     int getNumPlayers();
@@ -392,24 +394,24 @@ public:
     void recreateFifos();
 
     // Active list functions
-    void addActive(Monster* monster);
+    void addActive(const std::shared_ptr<Monster>&  monster);
     void delActive(Monster* monster);
     bool isActive(Monster* monster);
 
     // Child Processes
-    int runList(Socket* sock, cmd* cmnd);
+    int runList(std::shared_ptr<Socket> sock, cmd* cmnd);
     std::string simpleChildRead(childProcess &child);
 
     // Swap functions - use children
     std::string swapName();
-    void finishSwap(Player* player, bool online, const CatRef& origin, const CatRef& target);
+    void finishSwap(const std::shared_ptr<Player>& player, bool online, const CatRef& origin, const CatRef& target);
     bool swap(const Swap& s);
     void endSwap();
-    void swapInfo(const Player* player);
+    void swapInfo(const std::shared_ptr<Player>& player);
 
     // Queries
-    bool checkDuplicateName(Socket &sock, bool dis);
-    bool checkDouble(Socket &sock);
+    bool checkDuplicateName(std::shared_ptr<Socket> sock, bool dis);
+    bool checkDouble(std::shared_ptr<Socket> sock);
 
     // Bans
     void checkBans();
@@ -419,16 +421,16 @@ public:
     static std::string getServerTime();
 
     // Effects
-    void addEffectsIndex(BaseRoom* room);
-    void removeEffectsIndex(BaseRoom* room);
-    void removeEffectsOwner(const Creature* owner);
-    void showEffectsIndex(const Player* player);
+    void addEffectsIndex(const std::shared_ptr<BaseRoom>& room);
+    void removeEffectsIndex(const BaseRoom* room);
+    void removeEffectsOwner(const std::shared_ptr<Creature> & owner);
+    void showEffectsIndex(const std::shared_ptr<Player> &player);
 
     // Python
     bool runPython(const std::string& pyScript, py::object& dictionary);
     bool runPythonWithReturn(const std::string& pyScript, py::object& dictionary);
-    bool runPython(const std::string& pyScript, const std::string &args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
-    bool runPythonWithReturn(const std::string& pyScript, const std::string &args = "", MudObject *actor = nullptr, MudObject *target = nullptr);
+    bool runPython(const std::string& pyScript, const std::string &args = "", std::shared_ptr<MudObject>actor = nullptr, std::shared_ptr<MudObject>target = nullptr);
+    bool runPythonWithReturn(const std::string& pyScript, const std::string &args = "", std::shared_ptr<MudObject>actor = nullptr, std::shared_ptr<MudObject>target = nullptr);
 
 protected:
     int cleanUp(); // Kick out any disconnectors and other general cleanup

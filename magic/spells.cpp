@@ -36,7 +36,6 @@
 #include "creatureStreams.hpp"                   // for Streamable, ColorOn
 #include "effects.hpp"                           // for Effect, EffectInfo
 #include "flags.hpp"                             // for P_AFK, P_FREE_ACTION
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for CreatureClass, Creat...
 #include "magic.hpp"                             // for SpellData, Divine
 #include "mudObjects/creatures.hpp"              // for Creature
@@ -59,12 +58,10 @@ void Config::clearSpells() {
 //                      Spell
 //*********************************************************************
 
-int dmSpellList(Player* player, cmd* cmnd) {
-    const Spell* spell=nullptr;
-
+int dmSpellList(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->printColor("^YSpells\n");
-    for(const auto& sp : gConfig->spells) {
-        *player << ColorOn << fmt::format("  {}   {} - {}\n    Script: ^y{}^x\n", spell->name, spell->priority, spell->description, spell->script);
+    for(const auto& spell : gConfig->spells) {
+        *player << ColorOn << fmt::format("  {}   {} - {}\n    Script: ^y{}^x\n", spell.name, spell.priority, spell.description, spell.script);
     }
 
     return(0);
@@ -218,16 +215,18 @@ SpellData::SpellData() {
 //                      set
 //*********************************************************************
 
-void SpellData::set(CastType h, SchoolOfMagic s, DomainOfMagic d, Object* obj, const Creature* caster) {
+void SpellData::set(CastType h, SchoolOfMagic s, DomainOfMagic d, std::shared_ptr<Object>  obj, const std::shared_ptr<const Creature> & caster) {
     how = h;
     school = s;
     domain = d;
     object = obj;
-    if(caster->getCastingType() == Divine)
+    if(caster) {
+        level = caster->getLevel();
+    }
+    if(caster && caster->getCastingType() == Divine) {
         skill = spellSkill(domain);
-    else
+    } else
         skill = spellSkill(school);
-    level = caster->getLevel();
     /*
      * Start small: don't do skill-based levels yet
     if(skill == "") {
@@ -244,7 +243,7 @@ void SpellData::set(CastType h, SchoolOfMagic s, DomainOfMagic d, Object* obj, c
 //                      check
 //*********************************************************************
 
-bool SpellData::check(const Creature* player, bool skipKnowCheck) const {
+bool SpellData::check(const std::shared_ptr<Creature> & player, bool skipKnowCheck) const {
     if(player->isMonster())
         return(true);
     if( !skipKnowCheck &&
@@ -272,8 +271,8 @@ bool SpellData::check(const Creature* player, bool skipKnowCheck) const {
 //*********************************************************************
 // This function is the second half of info which outputs spells
 
-void infoSpells(const Player* viewer, Creature* target, bool notSelf) {
-    Player *player = target->getAsPlayer();
+void infoSpells(const std::shared_ptr<Player> viewer, const std::shared_ptr<Creature>& target, bool notSelf) {
+    std::shared_ptr<Player> player = target->getAsPlayer();
     const Anchor* anchor=nullptr;
     MagicType castingType = target->getCastingType();
     int     min = (castingType == Divine ? (int)MIN_DOMAIN : (int)MIN_SCHOOL) + 1, max = (castingType == Divine ? (int)MAX_DOMAIN : (int)MAX_SCHOOL);
@@ -284,7 +283,7 @@ void infoSpells(const Player* viewer, Creature* target, bool notSelf) {
     std::string skillName="";
 
     if(notSelf)
-        viewer->printColor("\n^Y%M's Spells Known: ", target);
+        viewer->printColor("\n^Y%M's Spells Known: ", target.get());
     else
         viewer->printColor("\n^YSpells known: ");
 
@@ -367,7 +366,7 @@ void infoSpells(const Player* viewer, Creature* target, bool notSelf) {
                     anchor->getRoomName().c_str());
 
                 if(viewer->isStaff())
-                    viewer->print("  %s", (anchor->getMapMarker() ? anchor->getMapMarker()->str() : anchor->getRoom().str()).c_str());
+                    viewer->print("  %s", (anchor->hasMarker() ? anchor->getMapMarker().str() : anchor->getRoom().displayStr()).c_str());
 
                 viewer->print("\n");
             }
@@ -379,9 +378,9 @@ void infoSpells(const Player* viewer, Creature* target, bool notSelf) {
 //                      cmdSpells
 //*********************************************************************
 
-int cmdSpells(Creature* player, cmd* cmnd) {
-    Creature* target = player;
-    Player  *pTarget=nullptr, *viewer=nullptr;
+int cmdSpells(const std::shared_ptr<Creature>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target = player;
+    std::shared_ptr<Player> pTarget=nullptr, viewer=nullptr;
     bool    notSelf=false;
 
     if(player->isPet()) {
@@ -405,12 +404,11 @@ int cmdSpells(Creature* player, cmd* cmnd) {
             notSelf = true;
 
             if(!target) {
-                if(!loadPlayer(cmnd->str[1], &pTarget)) {
+                if(!loadPlayer(cmnd->str[1], pTarget)) {
                     player->print("Player does not exist.\n");
                     return(0);
                 }
                 infoSpells(viewer, pTarget, notSelf);
-                free_crt(pTarget);
                 return(0);
             } else {
                 if(!player->canSee(target)) {
@@ -444,9 +442,9 @@ std::string effectSpellName(std::string effect) {
 //                      spellsUnder
 //*********************************************************************
 
-void spellsUnder(const Player *viewer, const Creature* target, bool notSelf) {
+void spellsUnder(const std::shared_ptr<Player>& viewer, const std::shared_ptr<Creature> & target, bool notSelf) {
     std::string str;
-    const Player* player = target->getAsConstPlayer();
+    const std::shared_ptr<const Player> player = target->getAsConstPlayer();
     std::list<std::string> spells;
     const Effect* effect=nullptr;
 

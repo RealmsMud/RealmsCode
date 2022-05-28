@@ -49,7 +49,6 @@
 #include "raceData.hpp"                             // for RaceData
 #include "random.hpp"                               // for Random
 #include "server.hpp"                               // for Server, gServer
-#include "utils.hpp"                                // for MAX, MIN
 #include "xml.hpp"                                  // for copyToNum, bad_le...
 
 //*********************************************************************
@@ -73,10 +72,15 @@ void FactionRegard::load(xmlNodePtr rootNode) {
     while(curNode) {
         if(NODE_NAME(curNode, "Class")) {
             xml::copyPropToString(temp, curNode, "Name");
-            xml::copyToNum(classRegard[gConfig->classtoNum(temp)], curNode);
+            xml::copyToNum(classRegard[Config::classtoNum(temp)], curNode);
         }
         else if(NODE_NAME(curNode, "Race")) {
             xml::copyPropToString(temp, curNode, "Name");
+            int raceNum = gConfig->racetoNum(temp);
+            if(raceNum == -1) {
+                std::clog << "Invalid Race found " << temp << std::endl;
+                continue;
+            }
             xml::copyToNum(raceRegard[gConfig->racetoNum(temp)], curNode);
         }
         else if(NODE_NAME(curNode, "Deity")) {
@@ -235,7 +239,7 @@ const FactionRegard* Faction::getMin() {
 //                      getInitialRegard
 //*********************************************************************
 
-long Faction::getInitialRegard(const Player* player) const {
+long Faction::getInitialRegard(const std::shared_ptr<const Player> &player) const {
     long regard = baseRegard;
     regard += initial.getClassRegard(player->getClass());
     // illusioned race affects faction
@@ -257,7 +261,7 @@ long Faction::getInitialRegard(const Player* player) const {
 //                      alwaysHates
 //*********************************************************************
 
-bool Faction::alwaysHates(const Player* player) const {
+bool Faction::alwaysHates(const std::shared_ptr<Player>& player) const {
     if(initial.getClassRegard(player->getClass()) == ALWAYS_HATE)
         return(true);
     // illusioned race affects faction
@@ -280,38 +284,38 @@ bool Faction::alwaysHates(const Player* player) const {
 //                      getUpperLimit
 //*********************************************************************
 
-long Faction::getUpperLimit(const Player* player) const {
+long Faction::getUpperLimit(const std::shared_ptr<Player>& player) const {
     long    limit = MAX_FACTION, x;
     x = max.getClassRegard(player->getClass());
-    if(x) limit = MIN(x, limit);
+    if(x) limit = std::min(x, limit);
 
     // illusioned race affects faction
     x = max.getRaceRegard(player->getDisplayRace());
-    if(x) limit = MIN(x, limit);
+    if(x) limit = std::min(x, limit);
 
     if(player->getDeity()) {
         x = max.getDeityRegard(player->getDeity());
-        if(x) limit = MIN(x, limit);
+        if(x) limit = std::min(x, limit);
     }
     if(player->isNewVampire()) {
         x = max.getVampirismRegard();
-        if(x) limit = MIN(x, limit);
+        if(x) limit = std::min(x, limit);
     }
     if(player->isNewWerewolf()) {
         x = max.getLycanthropyRegard();
-        if(x) limit = MIN(x, limit);
+        if(x) limit = std::min(x, limit);
     }
     if(player->getGuild()) {
         x = max.getGuildRegard(player->getGuild());
-        if(x) limit = MIN(x, limit);
+        if(x) limit = std::min(x, limit);
     }
     if(player->getClan()) {
         x = max.getClanRegard(player->getClan());
-        if(x) limit = MIN(x, limit);
+        if(x) limit = std::min(x, limit);
     }
 
     x = max.getOverallRegard();
-    if(x) limit = MIN(x, limit);
+    if(x) limit = std::min(x, limit);
 
     return(limit - getInitialRegard(player));
 }
@@ -320,38 +324,38 @@ long Faction::getUpperLimit(const Player* player) const {
 //                      getLowerLimit
 //*********************************************************************
 
-long Faction::getLowerLimit(const Player* player) const {
+long Faction::getLowerLimit(const std::shared_ptr<Player>& player) const {
     long    limit = MIN_FACTION, x;
     x = min.getClassRegard(player->getClass());
-    if(x) limit = MAX(x, limit);
+    if(x) limit = std::max(x, limit);
 
     // illusioned race affects faction
     x = min.getRaceRegard(player->getDisplayRace());
-    if(x) limit = MAX(x, limit);
+    if(x) limit = std::max(x, limit);
 
     if(player->getDeity()) {
         x = min.getDeityRegard(player->getDeity());
-        if(x) limit = MAX(x, limit);
+        if(x) limit = std::max(x, limit);
     }
     if(player->isNewVampire()) {
         x = min.getVampirismRegard();
-        if(x) limit = MAX(x, limit);
+        if(x) limit = std::max(x, limit);
     }
     if(player->isNewWerewolf()) {
         x = min.getLycanthropyRegard();
-        if(x) limit = MAX(x, limit);
+        if(x) limit = std::max(x, limit);
     }
     if(player->getGuild()) {
         x = min.getGuildRegard(player->getGuild());
-        if(x) limit = MAX(x, limit);
+        if(x) limit = std::max(x, limit);
     }
     if(player->getClan()) {
         x = min.getClanRegard(player->getClan());
-        if(x) limit = MAX(x, limit);
+        if(x) limit = std::max(x, limit);
     }
 
     x = min.getOverallRegard();
-    if(x) limit = MAX(x, limit);
+    if(x) limit = std::max(x, limit);
 
     return(limit - getInitialRegard(player));
 }
@@ -374,7 +378,7 @@ const Faction *Config::getFaction(const std::string &factionStr) const {
 //                      findAggro
 //*********************************************************************
 
-Player* Faction::findAggro(BaseRoom *room) {
+std::shared_ptr<Player> Faction::findAggro(const std::shared_ptr<BaseRoom>& room) {
     return(nullptr);
 }
 
@@ -406,7 +410,7 @@ void Faction::setIsParent(bool value) {
 //                      showRegard
 //*********************************************************************
 
-void showRegard(const Player* viewer, std::string_view type, const FactionRegard* regard) {
+void showRegard(const std::shared_ptr<Player>& viewer, std::string_view type, const FactionRegard* regard) {
     int a;
     std::ostringstream oStr;
 
@@ -449,7 +453,7 @@ void showRegard(const Player* viewer, std::string_view type, const FactionRegard
 //                      listFactions
 //*********************************************************************
 
-int listFactions(const Player* viewer, bool all) {
+int listFactions(const std::shared_ptr<Player>& viewer, bool all) {
     if(!all)
         viewer->printColor("Type ^y*faction all^x to view all details.\n");
     viewer->printColor("^xFactions\n%-20s - %40s\n^b---------------------------------------------------------------\n", "Name", "DisplayName");
@@ -481,12 +485,12 @@ int listFactions(const Player* viewer, bool all) {
 //                      listFactions
 //*********************************************************************
 
-int listFactions(const Player* viewer, const Creature* target) {
+int listFactions(const std::shared_ptr<Player>& viewer, const std::shared_ptr<Creature> & target) {
     std::map<std::string, std::string> str;
     std::map<std::string, std::string>::const_iterator it;
     std::map<std::string, long>::const_iterator fIt;
     const Faction* faction=nullptr;
-    const Player* player = target->getAsConstPlayer();
+    const std::shared_ptr<const Player> player = target->getAsConstPlayer();
     long    regard=0;
     long    i=0;
 
@@ -494,7 +498,7 @@ int listFactions(const Player* viewer, const Creature* target) {
         viewer->print("Faction Standing");
     else {
         viewer->print("%s's Faction", target->getCName());
-        const Monster* monster = target->getAsConstMonster();
+        const std::shared_ptr<const Monster>  monster = target->getAsConstMonster();
         if(monster)
             viewer->printColor(", primeFaction: ^y%s", monster->getPrimeFaction().c_str());
     }
@@ -551,7 +555,7 @@ int listFactions(const Player* viewer, const Creature* target) {
 //                      dmShowFactions
 //*********************************************************************
 
-int dmShowFactions(Player *player, cmd* cmnd) {
+int dmShowFactions(const std::shared_ptr<Player>& player, cmd* cmnd) {
     bool all = !strcmp(cmnd->str[1], "all");
     if(cmnd->num < 2 || all)
         listFactions(player, all);
@@ -564,8 +568,8 @@ int dmShowFactions(Player *player, cmd* cmnd) {
                 return(0);
             }
         }
-        Creature* target=nullptr;
-        Monster *mTarget=nullptr;
+        std::shared_ptr<Creature> target=nullptr;
+        std::shared_ptr<Monster> mTarget=nullptr;
 
         target = player->getParent()->findCreature(player, cmnd);
         if(player->isCt()) {
@@ -595,7 +599,7 @@ int dmShowFactions(Player *player, cmd* cmnd) {
 //                      cmdFactions
 //*********************************************************************
 
-int cmdFactions(Player* player, cmd* cmnd) {
+int cmdFactions(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num >= 2 && player->isStaff())
         return(dmShowFactions(player, cmnd));
     return(listFactions(player, player));
@@ -780,7 +784,7 @@ int Player::getFactionStanding(const std::string &factionStr) const {
 
     const Faction* faction = gConfig->getFaction(factionStr);
     if(faction) {
-        regard += faction->getInitialRegard(this);
+        regard += faction->getInitialRegard(Containable::downcasted_shared_from_this<Player>());
         if(!faction->getParent().empty())
             regard += getFactionStanding(faction->getParent());
     }
@@ -798,7 +802,7 @@ void Player::adjustFactionStanding(const std::map<std::string, long>& factionLis
     std::ostringstream oStr;
     const Faction *faction=nullptr;
     long    regard=0, current=0, limit=0;
-
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
     for(fIt = factionList.begin() ; fIt != factionList.end() ; fIt++) {
         faction = gConfig->getFaction((*fIt).first);
         regard = (*fIt).second;
@@ -810,17 +814,17 @@ void Player::adjustFactionStanding(const std::map<std::string, long>& factionLis
 
         // this is where adjusted faction comes into play;
         // prevent them from going out-of-bounds
-        limit = faction->getUpperLimit(this);
+        limit = faction->getUpperLimit(pThis);
         if(current - regard > limit)
             regard = current - limit;
-        limit = faction->getLowerLimit(this);
+        limit = faction->getLowerLimit(pThis);
         if(current - regard < limit)
             regard = current - limit;
 
         // it was adjusted to 0, meaning we can't move any more
         if(!regard)
             continue;
-        if(faction->alwaysHates(this) && regard <= 0)
+        if(faction->alwaysHates(pThis) && regard <= 0)
             continue;
 
         oStr << (regard > 0 ? "^R" : "^c")
@@ -842,7 +846,7 @@ void Player::adjustFactionStanding(const std::map<std::string, long>& factionLis
 //                      worshipSocial
 //*********************************************************************
 
-void Faction::worshipSocial(Monster *monster) {
+void Faction::worshipSocial(const std::shared_ptr<Monster>& monster) {
     if(monster->getPrimeFaction().empty())
         return;
     // only certain monster types perform this action
@@ -864,7 +868,8 @@ void Faction::worshipSocial(Monster *monster) {
     strcpy(cmnd.str[0], social.c_str());
     cmnd.num = 2;
     cmnd.val[1] = 1;
-    for(Player* player : monster->getRoomParent()->players) {
+    for(const auto& pIt : monster->getRoomParent()->players) {
+        auto player = pIt.lock();
         if( Random::get(1,100)>2 ||
             !player ||
             player->flagIsSet(P_UNCONSCIOUS) ||
@@ -888,7 +893,7 @@ void Faction::worshipSocial(Monster *monster) {
 //                      willAggro
 //*********************************************************************
 
-bool Faction::willAggro(const Player* player, const std::string &faction) {
+bool Faction::willAggro(const std::shared_ptr<const Player>& player, const std::string &faction) {
     if(faction.empty())
         return(false);
     int attitude = getAttitude(player->getFactionStanding(faction));
@@ -903,7 +908,7 @@ bool Faction::willAggro(const Player* player, const std::string &faction) {
 //                      willSpeakWith
 //*********************************************************************
 
-bool Faction::willSpeakWith(const Player* player, const std::string &faction) {
+bool Faction::willSpeakWith(const std::shared_ptr<const Player>& player, const std::string &faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) > CONTEMPT);
@@ -913,7 +918,7 @@ bool Faction::willSpeakWith(const Player* player, const std::string &faction) {
 //                      willDoBusinessWith
 //*********************************************************************
 
-bool Faction::willDoBusinessWith(const Player* player, const std::string &faction) {
+bool Faction::willDoBusinessWith(const std::shared_ptr<const Player>& player, const std::string &faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) > DISFAVOR);
@@ -923,7 +928,7 @@ bool Faction::willDoBusinessWith(const Player* player, const std::string &factio
 //                      willBeneCast
 //*********************************************************************
 
-bool Faction::willBeneCast(const Player* player, const std::string &faction) {
+bool Faction::willBeneCast(const std::shared_ptr<const Player>& player, const std::string &faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) >= INDIFFERENT);
@@ -933,7 +938,7 @@ bool Faction::willBeneCast(const Player* player, const std::string &faction) {
 //                      willLetThrough
 //*********************************************************************
 
-bool Faction::willLetThrough(const Player* player, const std::string &faction) {
+bool Faction::willLetThrough(const std::shared_ptr<const Player>& player, const std::string &faction) {
     if(faction.empty())
         return(false);
     return(getAttitude(player->getFactionStanding(faction)) >= FAVORABLE);
@@ -943,7 +948,7 @@ bool Faction::willLetThrough(const Player* player, const std::string &faction) {
 //                      adjustPrice
 //*********************************************************************
 
-Money Faction::adjustPrice(const Player* player, const std::string &faction, Money money, bool sell) {
+Money Faction::adjustPrice(const std::shared_ptr<const Player>& player, const std::string &faction, Money money, bool sell) {
     if(faction.empty())
         return(money);
     int attitude = getAttitude(player->getFactionStanding(faction));
@@ -973,7 +978,7 @@ Money Faction::adjustPrice(const Player* player, const std::string &faction, Mon
 //                      canPledgeTo
 //*********************************************************************
 
-bool Faction::canPledgeTo(const Player* player, const std::string &faction) {
+bool Faction::canPledgeTo(const std::shared_ptr<const Player>& player, const std::string &faction) {
     if(faction.empty())
         return(true);
     return(getAttitude(player->getFactionStanding(faction)) >= INDIFFERENT);

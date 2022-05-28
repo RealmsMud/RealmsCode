@@ -39,7 +39,6 @@
 #include "proto.hpp"                 // for bonus, get_perm_ac, new_scroll
 #include "random.hpp"                // for Random
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MAX, MIN
 #include "xml.hpp"                   // for loadObject
 
 typedef struct {
@@ -137,7 +136,7 @@ void Monster::adjust(int buffswitch) {
     if(buffswitch == -1)
         buff = Random::get(1,3)-1;
     else
-        buff = MAX(0, MIN(buffswitch, 2));
+        buff = std::max(0, std::min(buffswitch, 2));
 
 
     /*          Web Editor
@@ -175,7 +174,7 @@ void Monster::adjust(int buffswitch) {
             hp.setInitial(level * monType::getHitdice(type));
         else {
             crthp = class_stats[(int) cClass].hpstart + (level*class_stats[(int) cClass].hp);
-            hp.setInitial(MAX(crthp, (level * monType::getHitdice(type))));
+            hp.setInitial(std::max(crthp, (level * monType::getHitdice(type))));
         }
 
         hp.restore();
@@ -218,7 +217,7 @@ void Monster::adjust(int buffswitch) {
         break;
     }
 
-    armor = MAX<int>(MIN(armor, MAX_ARMOR), 0);
+    armor = std::max<int>(std::min(armor, MAX_ARMOR), 0);
 
     if(level >= 7)
         setFlag(M_BLOCK_EXIT);
@@ -234,22 +233,22 @@ void Monster::adjust(int buffswitch) {
 
 // Initializes last times, inventory, scrolls, etc
 int Monster::initMonster(bool loadOriginal, bool prototype) {
-    int n=0, alnum=0, x=0;
-    long t=0;
-    Object* object=nullptr;
+    int n, alnum, x;
+    long t;
+    std::shared_ptr<Object>  object=nullptr;
 
     t = time(nullptr);
     // init the timers
-    lasttime[LT_MON_SCAVANGE].ltime =
-    lasttime[LT_MON_WANDER].ltime =
-    lasttime[LT_MOB_THIEF].ltime =
+    lasttime[LT_MON_SCAVANGE].ltime = t;
+    lasttime[LT_MON_WANDER].ltime = t;
+    lasttime[LT_MOB_THIEF].ltime = t;
     lasttime[LT_TICK].ltime = t;
     lasttime[LT_TICK_SECONDARY].ltime = t;
     lasttime[LT_TICK_HARMFUL].ltime = t;
 
     // Make sure armor is set properly
-    if(armor < (unsigned)(balancedStats[MIN<short>(level, MAXALVL)].armor - 150)) {
-        armor = balancedStats[MIN<short>(level, MAXALVL)].armor;
+    if(armor < (unsigned)(balancedStats[std::min<short>(level, MAXALVL)].armor - 150)) {
+        armor = balancedStats[std::min<short>(level, MAXALVL)].armor;
     }
 
     if(dexterity.getCur() < 200)
@@ -257,9 +256,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     else
         setAttackDelay(20);
 
-    if(flagIsSet(M_FAST_TICK))
-        lasttime[LT_TICK].interval = lasttime[LT_TICK_SECONDARY].interval = 15L;
-    else if(flagIsSet(M_REGENERATES))
+    if(flagIsSet(M_FAST_TICK) || flagIsSet(M_REGENERATES))
         lasttime[LT_TICK].interval = lasttime[LT_TICK_SECONDARY].interval = 15L;
     else
         lasttime[LT_TICK].interval = lasttime[LT_TICK_SECONDARY].interval = 60L - (2*bonus(constitution.getCur()));
@@ -272,9 +269,9 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
             if(alnum == 1)
                 alignment = 0;
             else if(alnum < 51)
-                alignment = Random::get((short)1, (short)std::abs(alignment)) * -1;
+                alignment = Random::get<short>((short)1, (short)std::abs(alignment)) * (short)-1;
             else
-                alignment = Random::get((short)1, (short)std::abs(alignment));
+                alignment = Random::get<short>((short)1, (short)std::abs(alignment));
         }
 
         if(!flagIsSet(M_NO_RANDOM_GOLD) && coins[GOLD])
@@ -282,7 +279,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     }
     // Check for loading of random scrolls
     if(checkScrollDrop()) {
-        n = new_scroll(level, &object);
+        n = new_scroll(level, object);
         if(n > 0) {
             object->value.zero();
             addObj(object);
@@ -293,51 +290,50 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     // Now load up any always drop objects (Trading perms don't drop inventory items)
     if(!flagIsSet(M_TRADES)) {
         for(x=0;x<10;x++) {
-            if(!loadObject(carry[x].info, &object))
+            const auto &dropInfo = carry[x].info;
+            const auto cacheObj = getCachedObject(dropInfo);
+            if(!cacheObj || !cacheObj->flagIsSet(O_ALWAYS_DROPPED) || cacheObj->getName().empty()) continue;
+
+            if(!loadObject(dropInfo, object))
                 continue;
             object->init(!prototype);
-            if( object->flagIsSet(O_ALWAYS_DROPPED) &&
-                !object->getName().empty() &&
-                object->getName()[0] != ' ' )
-            {
+            if( object->flagIsSet(O_ALWAYS_DROPPED) && !object->getName().empty()) {
                 addObj(object);
                 object->setFlag(O_JUST_LOADED);
             } else {
-                delete object;
-                continue;
+                throw std::runtime_error("Cached object (" + cacheObj->getName() + ") was always drop & valid, but loaded object wasn't (" + object->getName() +")");
             }
         }
 
         object = nullptr;
 
-        int numDrops = Random::get(1,100), whichDrop=0;
+        int whichDrop, numDrops = Random::get(1,100);
 
-             if(numDrops<90)    numDrops=1;
-        else if(numDrops<96)    numDrops=2;
-        else                    numDrops=3;
+        if(prototype) numDrops = 10;
+        else if (numDrops < 90) numDrops = 1;
+        else if (numDrops < 96) numDrops = 2;
+        else numDrops = 3;
 
-        if(prototype)
-            numDrops = 10;
+
         for(x=0; x<numDrops; x++) {
-            if(prototype)
-                whichDrop=x;
-            else
-                whichDrop = Random::get(0,9);
-            if(carry[whichDrop].info.id && !flagIsSet(M_TRADES)) {
-                if(!loadObject(carry[whichDrop].info, &object))
+            whichDrop= prototype ? x : Random::get(0,9);
+            const auto &dropInfo = carry[whichDrop].info;
+            if(dropInfo.id && !flagIsSet(M_TRADES)) {
+                const auto cacheObj = getCachedObject(dropInfo);
+                if(!cacheObj || cacheObj->flagIsSet(O_ALWAYS_DROPPED) || cacheObj->getName().empty()) continue;
+
+                if(!loadObject(dropInfo, object))
                     continue;
-                if( object->getName().empty() || object->getName()[0] == ' ')
-                {
-                    delete object;
-                    continue;
+
+                if( object->getName().empty()) {
+                    throw std::runtime_error("Cached object (" + cacheObj->getName() + ") was always drop & valid, but loaded object wasn't");
                 }
 
                 object->init(!prototype);
 
                 // so we don't get more than one always drop item.
                 if(object->flagIsSet(O_ALWAYS_DROPPED)) {
-                    delete object;
-                    continue;
+                    throw std::runtime_error("Cached object (" + cacheObj->getName() + ") was not always drop & was valid, but loaded object wasn't (" + object->getName() +")");
                 }
 
                 object->value.set(Random::get((object->value[GOLD]*9)/10,(object->value[GOLD]*11)/10), GOLD);
@@ -368,13 +364,13 @@ int Monster::getNumMobs() const {
         return(0);
     if(!this->inRoom())
         return(0);
-    const BaseRoom* room = getConstRoomParent();
+    const std::shared_ptr<const BaseRoom> room = getConstRoomParent();
     if(!room)
         return(0);
-    for(Monster* mons : room->monsters) {
+    for(const auto& mons : room->monsters) {
         if(mons->getName() == getName()) {
             i++;
-            if(mons == this)
+            if(mons.get() == this)
                 return(i);
         }
     }
@@ -385,16 +381,16 @@ int Monster::getNumMobs() const {
 //                      getRandomMonster
 //***********************************************************************
 
-Creature *getRandomMonster(BaseRoom *inRoom) {
-    Creature *foundCrt=nullptr;
-    int         count=0, roll=0, num=0;
+std::shared_ptr<Creature>getRandomMonster(const std::shared_ptr<BaseRoom>& inRoom) {
+    std::shared_ptr<Creature>foundCrt=nullptr;
+    int         count=0, roll, num;
 
     num = inRoom->countCrt();
     if(!num)
         return(nullptr);
 
     roll = Random::get(1, num);
-    for(Monster* mons : inRoom->monsters) {
+    for(const auto& mons : inRoom->monsters) {
         if(mons->isPet())
             continue;
         if(++count == roll) {
@@ -412,22 +408,24 @@ Creature *getRandomMonster(BaseRoom *inRoom) {
 //                      getRandomPlayer
 //***********************************************************************
 
-Creature *getRandomPlayer(BaseRoom *inRoom) {
-    Creature *foundPly=nullptr;
-    int         count=0, roll=0, num=0;
+std::shared_ptr<Creature>getRandomPlayer(const std::shared_ptr<BaseRoom>& inRoom) {
+    std::shared_ptr<Creature>foundPly=nullptr;
+    int         count=0, roll, num;
 
     num = inRoom->countVisPly();
     if(!num)
         return(nullptr);
     roll = Random::get(1, num);
-    for(Player* ply : inRoom->players) {
-        if(ply->flagIsSet(P_DM_INVIS)) {
-            continue;
-        }
-        count++;
-        if(count == roll) {
-            foundPly = ply;
-            break;
+    for(const auto& pIt: inRoom->players) {
+        if(auto ply = pIt.lock()) {
+            if (ply->flagIsSet(P_DM_INVIS)) {
+                continue;
+            }
+            count++;
+            if (count == roll) {
+                foundPly = ply;
+                break;
+            }
         }
     }
 
@@ -456,8 +454,8 @@ void Monster::validateAc() {
 int Monster::doHarmfulAuras() {
     int         a=0,dmg=0,aura=0, saved=0;
     long        i=0,t=0;
-    BaseRoom    *inRoom=nullptr;
-    Creature* player=nullptr;
+    std::shared_ptr<BaseRoom> inRoom=nullptr;
+    std::shared_ptr<Creature> player=nullptr;
 
     if(isPet())
         return(0);
@@ -487,7 +485,7 @@ int Monster::doHarmfulAuras() {
     inRoom = getRoomParent();
     if(!inRoom)
         return(0);
-
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
     for(a=0;a<MAX_AURAS;a++) {
 
         if(!flagIsSet(M_FIRE_AURA + a))
@@ -495,21 +493,21 @@ int Monster::doHarmfulAuras() {
         auto pIt = inRoom->players.begin();
         auto pEnd = inRoom->players.end();
         while(pIt != pEnd) {
-            player = (*pIt++);
+            player = (*pIt++).lock();
 
-            if(player->isEffected("petrification") || player->isCt())
+            if(!player || player->isEffected("petrification") || player->isCt())
                 continue;
 
             dmg = Random::get(level/2, (level*3)/2);
 
-            dmg = MAX(2,dmg);
+            dmg = std::max(2,dmg);
 
             switch(a+M_FIRE_AURA) {
             case M_FIRE_AURA:
                 if(player->isEffected("heat-protection") || player->isEffected("alwayswarm"))
                     continue;
 
-                saved = player->chkSave(BRE, this, 0);
+                saved = player->chkSave(BRE, cThis, 0);
                 if(saved)
                     dmg /=2;
                 player->printColor("^R%M's firey aura singes you for %s%d^R damage!\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -518,7 +516,7 @@ int Monster::doHarmfulAuras() {
                 if(player->isEffected("warmth") || player->isEffected("alwayscold"))
                     continue;
 
-                saved = player->chkSave(BRE, this, 0);
+                saved = player->chkSave(BRE, cThis, 0);
                 if(saved)
                     dmg /=2;
                 player->printColor("^C%M's freezing aura chills you for %s%d^C damage!\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -527,7 +525,7 @@ int Monster::doHarmfulAuras() {
                 if(player->immuneToPoison())
                     continue;
 
-                saved = player->chkSave(POI, this, 0);
+                saved = player->chkSave(POI, cThis, 0);
                 if(saved)
                     dmg /=2;
                 player->printColor("^g%M's foul stench chokes and nauseates you for %s%d^g damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -536,7 +534,7 @@ int Monster::doHarmfulAuras() {
                 if(player->isUndead() || player->isEffected("drain-shield"))
                     continue;
 
-                saved = player->chkSave(DEA, this, 0);
+                saved = player->chkSave(DEA, cThis, 0);
                 if(saved)
                     dmg /=2;
                 player->printColor("^m%M's negative aura taps your life for %s%d^m damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -545,7 +543,7 @@ int Monster::doHarmfulAuras() {
                 if(player->isEffected("wind-protection"))
                     continue;
 
-                saved = player->chkSave(BRE, this, 0);
+                saved = player->chkSave(BRE, cThis, 0);
                 if(saved)
                     dmg /=2;
                 player->printColor("^W%M's turbulent winds buff you about for %s%d^W damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
@@ -553,7 +551,7 @@ int Monster::doHarmfulAuras() {
             }
 
             player->hp.decrease(dmg);
-            if(player->checkDie(this))
+            if(player->checkDie(cThis))
                 return(1);
 
         }// End while
@@ -567,9 +565,9 @@ int Monster::doHarmfulAuras() {
 //                      isGuardLoot
 //***********************************************************************
 
-bool isGuardLoot(BaseRoom *inRoom, Creature* player, const char *fmt) {
-    for(Monster* mons : inRoom->monsters) {
-        if(mons->flagIsSet(M_GUARD_TREATURE) && !player->checkStaff(fmt, mons))
+bool isGuardLoot(const std::shared_ptr<BaseRoom>& inRoom, const std::shared_ptr<Creature>& player, const char *fmt) {
+    for(const auto& mons : inRoom->monsters) {
+        if(mons->flagIsSet(M_GUARD_TREATURE) && !player->checkStaff(fmt, mons.get()))
             return(true);
     }
     return(false);
@@ -581,19 +579,16 @@ bool isGuardLoot(BaseRoom *inRoom, Creature* player, const char *fmt) {
 //*********************************************************************
 
 bool Monster::isRaceAggro(int x, bool checkInvert) const {
-    x--;
-    bool set = (raceAggro[x/8] & 1<<(x%8));
+    bool set = raceAggro.test(x-1);
     if(!checkInvert)
         return(set);
     return(set ? !flagIsSet(M_RACE_AGGRO_INVERT) : flagIsSet(M_RACE_AGGRO_INVERT));
 }
 void Monster::setRaceAggro(int x) {
-    x--;
-    raceAggro[x/8] |= 1<<(x%8);
+    raceAggro.set(x-1);
 }
 void Monster::clearRaceAggro(int x) {
-    x--;
-    raceAggro[x/8] &= ~(1<<(x%8));
+    raceAggro.reset(x-1);
 }
 
 
@@ -602,19 +597,16 @@ void Monster::clearRaceAggro(int x) {
 //*********************************************************************
 
 bool Monster::isClassAggro(int x, bool checkInvert) const {
-    x--;
-    bool set = (cClassAggro[x/8] & 1<<(x%8));
+    bool set = cClassAggro.test(x-1);
     if(!checkInvert)
         return(set);
     return(set ? !flagIsSet(M_CLASS_AGGRO_INVERT) : flagIsSet(M_CLASS_AGGRO_INVERT));
 }
 void Monster::setClassAggro(int x) {
-    x--;
-    cClassAggro[x/8] |= 1<<(x%8);
+    cClassAggro.set(x-1);
 }
 void Monster::clearClassAggro(int x) {
-    x--;
-    cClassAggro[x/8] &= ~(1<<(x%8));
+    cClassAggro.reset(x-1);
 }
 
 
@@ -623,17 +615,14 @@ void Monster::clearClassAggro(int x) {
 //*********************************************************************
 
 bool Monster::isDeityAggro(int x, bool checkInvert) const {
-    x--;
-    bool set = (deityAggro[x/8] & 1<<(x%8));
+    bool set = deityAggro.test(x-1);
     if(!checkInvert)
         return(set);
     return(set ? !flagIsSet(M_DEITY_AGGRO_INVERT) : flagIsSet(M_DEITY_AGGRO_INVERT));
 }
 void Monster::setDeityAggro(int x) {
-    x--;
-    deityAggro[x/8] |= 1<<(x%8);
+    deityAggro.set(x-1);
 }
 void Monster::clearDeityAggro(int x) {
-    x--;
-    deityAggro[x/8] &= ~(1<<(x%8));
+    deityAggro.reset(x-1);
 }

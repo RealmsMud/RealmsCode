@@ -31,7 +31,6 @@
 #include "deityData.hpp"           // for DeityData
 #include "effects.hpp"             // for EffectInfo
 #include "flags.hpp"               // for P_AFK, P_PTESTER, P_CHAOTIC, P_CHA...
-#include "free_crt.hpp"            // for free_crt
 #include "global.hpp"              // for CreatureClass, CreatureClass::CLERIC
 #include "location.hpp"            // for Location
 #include "magic.hpp"               // for S_HEAL, S_TELEPORT, S_TRACK
@@ -47,7 +46,6 @@
 #include "statistics.hpp"          // for Statistics
 #include "stats.hpp"               // for Stat
 #include "structs.hpp"             // for daily, saves
-#include "utils.hpp"               // for MIN
 #include "xml.hpp"                 // for loadPlayer
 
 class Object;
@@ -59,10 +57,8 @@ class Object;
 // This function shows a player their current hit points, magic points,
 // experience, gold and level.
 
-int cmdScore(Player* player, cmd* cmnd) {
-    Player  *target = player;
-    bool online=true;
-
+int cmdScore(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target = player;
     player->clearFlag(P_AFK);
 
     if(player->isBraindead()) {
@@ -77,8 +73,7 @@ int cmdScore(Player* player, cmd* cmnd) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         if(!target) {
-            loadPlayer(cmnd->str[1], &target);
-            online = false;
+            loadPlayer(cmnd->str[1], target);
         }
         if(!target) {
             player->print("That player does not exist.\n");
@@ -88,8 +83,6 @@ int cmdScore(Player* player, cmd* cmnd) {
 
     target->score(player);
 
-    if(!online)
-        free_crt(target);
     return(0);
 }
 
@@ -99,7 +92,7 @@ int cmdScore(Player* player, cmd* cmnd) {
 // This function shows a player their current hit points, magic points,
 // experience, gold and level.
 
-void Player::score(const Player* viewer) {
+void Player::score(const std::shared_ptr<Player> viewer) {
     const EffectInfo* eff=nullptr;
     int     i=0;
 
@@ -108,7 +101,7 @@ void Player::score(const Player* viewer) {
 
     viewer->print("%s the %s (level %d)", getCName(), getTitle().c_str(), getLevel());
 
-    oStr << gServer->delayedActionStrings(this);
+    oStr << gServer->delayedActionStrings(Containable::downcasted_shared_from_this<Player>());
 
     if(isFleeing())
         oStr << " ^r*Fleeing*";
@@ -197,7 +190,7 @@ void Player::score(const Player* viewer) {
         viewer->printColor("  ^g%3d/%3d Magic Points", mp.getCur(), mp.getMax());
 
     viewer->printColor("     ^rArmor: %d (%.0f%%)\n", getArmor(),
-        (getDamageReduction(this)*100.0));
+        (getDamageReduction(Containable::downcasted_shared_from_this<Player>())*100.0));
     viewer->printColor(" ^y%7ld Experience    %s    XP Needed: %7s\n",
         getExperience(), coins.str().c_str(),
         expToLevel(false).c_str());
@@ -214,7 +207,7 @@ void Player::score(const Player* viewer) {
     viewer->printColor("Your size is: ^y%s^x.\n", getSizeName(getSize()).c_str());
 
     // show spells under also
-    spellsUnder(viewer, this, viewer != this);
+    spellsUnder(viewer, Containable::downcasted_shared_from_this<Player>(), viewer.get() != this);
 
     if(getWarnings()) {
         viewer->printColor("\n^BWarnings: ");
@@ -251,9 +244,8 @@ void Player::score(const Player* viewer) {
 //                      cmdDaily
 //*********************************************************************
 
-int cmdDaily(Player* player, cmd* cmnd) {
-    Player* target = player;
-    bool online = true;
+int cmdDaily(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target = player;
     int     loop=0;
 
     player->clearFlag(P_AFK);
@@ -267,8 +259,7 @@ int cmdDaily(Player* player, cmd* cmnd) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         if(!target) {
-            loadPlayer(cmnd->str[1], &target);
-            online = false;
+            loadPlayer(cmnd->str[1], target);
         }
         if(!target) {
             player->print("That player does not exist.\n");
@@ -316,9 +307,6 @@ int cmdDaily(Player* player, cmd* cmnd) {
     player->print("Can defecate?   %s\n", target->canDefecate() ? "Yes" : "No");
     player->print("Can be resurrected?   %s\n", (target->daily[DL_RESURRECT].cur > 0) ? "Yes" : "No");
 
-
-    if(!online)
-        free_crt(target);
     return(0);
 }
 
@@ -328,7 +316,7 @@ int cmdDaily(Player* player, cmd* cmnd) {
 //*********************************************************************
 // formatted saving throws
 
-std::string showSavingThrow(const Player* viewer, const Player* player, std::string text, int st) {
+std::string showSavingThrow(const std::shared_ptr<Player> viewer, const std::shared_ptr<Player> player, std::string text, int st) {
     char str[100];
 
     if( (viewer && viewer->isCt()) ||
@@ -343,7 +331,7 @@ std::string showSavingThrow(const Player* viewer, const Player* player, std::str
     ) {
         text += "^WN/A^x";
     } else {
-        int save = MIN((1+player->saves[st].chance)/10, MAX_SAVE_COLOR-1);
+        int save = std::min((1+player->saves[st].chance)/10, MAX_SAVE_COLOR-1);
         sprintf(str, "^%c%s^x", get_save_color(save), get_save_string(save));
         text += str;
     }
@@ -357,7 +345,7 @@ std::string showSavingThrow(const Player* viewer, const Player* player, std::str
 // This function displays a player's entire list of information, including
 // player stats, proficiencies, level and class.
 
-void Player::information(const Player* viewer, bool online) {
+void Player::information(const std::shared_ptr<Player> viewer, bool online) {
     int     numItems=0;
     long    i=0;
     bool    auth = viewer && viewer->isCt();
@@ -366,6 +354,8 @@ void Player::information(const Player* viewer, bool online) {
 
     if(!auth)
         update();
+
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
 
     oStr.setf(std::ios::left, std::ios::adjustfield);
     // no commas when displaying staff screens
@@ -413,7 +403,7 @@ void Player::information(const Player* viewer, bool online) {
         << "+^W\\_|^x Level: " << std::setw(2) << level << "    Race: " << std::setw(13)
             << gConfig->getRace(race)->getName(12) << "^W|  _________________________________^x   +\n";
 
-    txt = !hasSecondClass() ? get_class_string(static_cast<int>(cClass)) : getClassName(this);
+    txt = !hasSecondClass() ? get_class_string(static_cast<int>(cClass)) : getClassName(pThis);
     if(deity) {
         txt += ", ";
         txt += gConfig->getDeity(deity)->getName();
@@ -478,11 +468,11 @@ void Player::information(const Player* viewer, bool online) {
 
     oStr << "|                                                                           |\n"
         << "+^W     /\\       ^x             _         ^WSaving Throws^x                         +\n"
-        << "|^W____/_ \\____  ^x Str: " << (strength.getCur() < 100 ? " " : "") << strength.getCur() << "^W |\\_\\\\-\\^x       " << std::setw(41) << showSavingThrow(viewer, this, "Poison/Disease:    ", POI) << "|\n"
-        << "+^W\\  ___\\ \\  /^x   Dex: " << (dexterity.getCur() < 100 ? " " : "") << dexterity.getCur() << "^W |   \\\\-|^x      " << std::setw(41) << showSavingThrow(viewer, this, "Death/Traps:       ", DEA) << "+\n"
-        << "|^W \\/ /  \\/ /  ^x  Con: " << (constitution.getCur() < 100 ? " " : "") << constitution.getCur() << "^W  \\ /~\\\\^x       " << std::setw(41) << showSavingThrow(viewer, this, "Breath/Explosions: ", BRE) << "|\n"
-        << "+^W / /\\__/_/\\  ^x  Int: " << (intelligence.getCur() < 100 ? " " : "") << intelligence.getCur() << "^W   `   \\\\^x      " << std::setw(41) << showSavingThrow(viewer, this, "Mental Attacks:    ", MEN) << "+\n"
-        << "|^W/__\\ \\_____\\^x   Pie: " << (piety.getCur() < 100 ? " " : "") << piety.getCur() << "^W        \\\\^x     " << std::setw(41) << showSavingThrow(viewer, this, "Spells:            ", SPL) << "|\n"
+        << "|^W____/_ \\____  ^x Str: " << (strength.getCur() < 100 ? " " : "") << strength.getCur() << "^W |\\_\\\\-\\^x       " << std::setw(41) << showSavingThrow(viewer, pThis, "Poison/Disease:    ", POI) << "|\n"
+        << "+^W\\  ___\\ \\  /^x   Dex: " << (dexterity.getCur() < 100 ? " " : "") << dexterity.getCur() << "^W |   \\\\-|^x      " << std::setw(41) << showSavingThrow(viewer, pThis, "Death/Traps:       ", DEA) << "+\n"
+        << "|^W \\/ /  \\/ /  ^x  Con: " << (constitution.getCur() < 100 ? " " : "") << constitution.getCur() << "^W  \\ /~\\\\^x       " << std::setw(41) << showSavingThrow(viewer, pThis, "Breath/Explosions: ", BRE) << "|\n"
+        << "+^W / /\\__/_/\\  ^x  Int: " << (intelligence.getCur() < 100 ? " " : "") << intelligence.getCur() << "^W   `   \\\\^x      " << std::setw(41) << showSavingThrow(viewer, pThis, "Mental Attacks:    ", MEN) << "+\n"
+        << "|^W/__\\ \\_____\\^x   Pie: " << (piety.getCur() < 100 ? " " : "") << piety.getCur() << "^W        \\\\^x     " << std::setw(41) << showSavingThrow(viewer, pThis, "Spells:            ", SPL) << "|\n"
         << "+^W    \\  /                        \\^x                                          +\n"
         << "|^W     \\/                          `^x                                         |\n"
         << "+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+-=-+\n";
@@ -511,7 +501,7 @@ void Player::information(const Player* viewer, bool online) {
         if(getRoomParent())
             viewer->print("Room: %s  \n", getRoomParent()->fullName().c_str());
         else
-            viewer->print("Room: %s  \n", currentLocation.room.str().c_str());
+            viewer->print("Room: %s  \n", currentLocation.room.displayStr().c_str());
         if(!online)
             viewer->print("Last login:  \n%s", ctime(&lastLogin));
         else
@@ -524,8 +514,8 @@ void Player::information(const Player* viewer, bool online) {
 //                      cmdChecksaves
 //*********************************************************************
 
-int cmdChecksaves(Player* player, cmd* cmnd) {
-    Player* target = player;
+int cmdChecksaves(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target = player;
     bool online = true;
    
    std::ostringstream oStr;
@@ -541,7 +531,7 @@ int cmdChecksaves(Player* player, cmd* cmnd) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         if(!target) {
-            loadPlayer(cmnd->str[1], &target);
+            loadPlayer(cmnd->str[1], target);
             online = false;
         }
         if(!target) {
@@ -564,9 +554,6 @@ int cmdChecksaves(Player* player, cmd* cmnd) {
 
 
     *player << ColorOn << oStr.str() << "\n" << ColorOff;
-    
 
-    if(!online)
-        free_crt(target);
     return(0);
 }

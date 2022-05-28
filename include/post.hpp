@@ -6,7 +6,7 @@
 #define REALMSCODE_POST_HPP
 class Socket;
 
-void postedit(Socket* sock, const std::string& str);
-void histedit(Socket* sock, const std::string& str);
+void postedit(std::shared_ptr<Socket> sock, const std::string& str);
+void histedit(std::shared_ptr<Socket> sock, const std::string& str);
 
 #endif //REALMSCODE_POST_HPP

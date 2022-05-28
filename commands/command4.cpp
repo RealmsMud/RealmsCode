@@ -44,7 +44,7 @@
 // specific command. If help is typed by itself, a list of commands
 // is produced. Otherwise, help is supplied for the command specified
 
-int cmdHelp(Player* player, cmd* cmnd) {
+int cmdHelp(const std::shared_ptr<Player>& player, cmd* cmnd) {
     char    file[80];
     player->clearFlag(P_AFK);
 
@@ -54,7 +54,7 @@ int cmdHelp(Player* player, cmd* cmnd) {
     }
 
     if(cmnd->num < 2) {
-        sprintf(file, "%s/helpfile.txt", Path::Help);
+        sprintf(file, "%s/helpfile.txt", Path::Help.c_str());
         player->getSock()->viewFile(file, true);
         return(DOPROMPT);
     }
@@ -62,7 +62,7 @@ int cmdHelp(Player* player, cmd* cmnd) {
         player->print("You may not use backslashes.\n");
         return(0);
     }
-    sprintf(file, "%s/%s.txt", Path::Help, cmnd->str[1]);
+    sprintf(file, "%s/%s.txt", Path::Help.c_str(), cmnd->str[1]);
     player->getSock()->viewFile(file, true);
     return(DOPROMPT);
 }
@@ -73,7 +73,7 @@ int cmdHelp(Player* player, cmd* cmnd) {
 // Outputs welcome file to user, giving them info on how to play
 // the game
 
-int cmdWelcome(Player* player, cmd* cmnd) {
+int cmdWelcome(const std::shared_ptr<Player>& player, cmd* cmnd) {
     char    file[80];
     player->clearFlag(P_AFK);
 
@@ -82,7 +82,7 @@ int cmdWelcome(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(file, "%s/welcomerealms.txt", Path::Help);
+    sprintf(file, "%s/welcomerealms.txt", Path::Help.c_str());
 
     player->getSock()->viewFile(file, true);
     return(0);
@@ -109,7 +109,7 @@ std::string Player::getTimePlayed() const {
 //                      showAge
 //*********************************************************************
 
-void Player::showAge(const Player* viewer) const {
+void Player::showAge(const std::shared_ptr<Player> viewer) const {
     if(birthday) {
         viewer->printColor("^gAge:^x  %d\n^gBorn:^x the %s of %s, the %s month of the year,\n      ",
             getAge(), getOrdinal(birthday->getDay()).c_str(),
@@ -123,8 +123,8 @@ void Player::showAge(const Player* viewer) const {
                 birthday->getYear() > 0 ? "after" : "before");
 
 
-        if(gConfig->getCalendar()->isBirthday(this)) {
-            if(viewer == this)
+        if(gConfig->getCalendar()->isBirthday(Containable::downcasted_shared_from_this<Player>())) {
+            if(viewer.get() == this)
                 viewer->printColor("^yToday is your birthday!\n");
             else
                 viewer->printColor("^yToday is %s's birthday!\n", getCName());
@@ -146,8 +146,8 @@ void Player::showAge(const Player* viewer) const {
 //                      cmdAge
 //*********************************************************************
 
-int cmdAge(Player* player, cmd* cmnd) {
-    Player  *target = player;
+int cmdAge(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target = player;
 
     player->clearFlag(P_AFK);
 
@@ -179,7 +179,7 @@ int cmdAge(Player* player, cmd* cmnd) {
 //*********************************************************************
 // Shows the players the version of the mud and last compile time
 
-int cmdVersion(Player* player, cmd* cmnd) {
+int cmdVersion(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("Mud Version: " VERSION "\nLast compiled " __TIME__ " on " __DATE__ ".\n");
     return(0);
 }
@@ -188,8 +188,8 @@ int cmdVersion(Player* player, cmd* cmnd) {
 //                      cmdInfo
 //*********************************************************************
 
-int cmdInfo(Player* player, cmd* cmnd) {
-    Player  *target = player;
+int cmdInfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target = player;
 
     player->clearFlag(P_AFK);
 

@@ -38,7 +38,7 @@ bool Config::loadFishing() {
     xmlNodePtr curNode;
 
     char filename[80];
-    snprintf(filename, 80, "%s/fishing.xml", Path::Game);
+    snprintf(filename, 80, "%s/fishing.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "Fishing");
     if(xmlDoc == nullptr)
         return(false);

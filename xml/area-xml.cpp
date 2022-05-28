@@ -32,13 +32,12 @@
 #include "global.hpp"                               // for FATAL
 #include <libxml/xmlstring.h>                       // for BAD_CAST
 #include "mudObjects/areaRooms.hpp"                 // for AreaRoom
-#include "os.hpp"                                   // for merror
 #include "paths.hpp"                                // for AreaRoom, AreaData
-#include "proto.hpp"                                // for file_exists
 #include "season.hpp"                               // for Season
 #include "server.hpp"                               // for Server
 #include "wanderInfo.hpp"                           // for WanderInfo
 #include "xml.hpp"                                  // for saveNonZeroNum
+#include "proto.hpp"                                // for merror
 
 class Creature;
 
@@ -82,14 +81,14 @@ void AreaZone::save(xmlNodePtr curNode) const {
     xml::saveNonNullString(curNode, "TerRestrict", terRestrict);
     xml::saveNonNullString(curNode, "MapRestrict", mapRestrict);
     unique.save(curNode, "Unique", false);
-    saveBits(curNode, "Flags", MAX_ROOM_FLAGS, flags);
+    saveBitset(curNode, "Flags", MAX_ROOM_FLAGS, flags);
     wander.save(curNode);
 
     childNode = xml::newStringChild(curNode, "Coords");
     std::map<int, MapMarker*>::const_iterator it;
-    for(it = coords.begin() ; it != coords.end() ; it++) {
+    for(const auto& [mId, marker] : coords) {
         subNode = xml::newStringChild(childNode, "MapMarker");
-        (*it).second->save(subNode);
+        marker.save(subNode);
     }
 }
 
@@ -100,7 +99,6 @@ void AreaZone::save(xmlNodePtr curNode) const {
 
 void AreaZone::load(xmlNodePtr curNode) {
     xmlNodePtr mNode, childNode = curNode->children;
-    MapMarker *mapmarker=nullptr;
     int     i=0;
 
     while(childNode) {
@@ -110,32 +108,31 @@ void AreaZone::load(xmlNodePtr curNode) {
         else if(NODE_NAME(childNode, "TerRestrict")) xml::copyToCString(terRestrict, childNode);
         else if(NODE_NAME(childNode, "MapRestrict")) xml::copyToCString(mapRestrict, childNode);
         else if(NODE_NAME(childNode, "Unique")) unique.load(childNode);
-        else if(NODE_NAME(childNode, "Flags")) loadBits(childNode, flags);
+        else if(NODE_NAME(childNode, "Flags")) loadBitset(childNode, flags);
         else if(NODE_NAME(childNode, "Wander")) wander.load(childNode);
         else if(NODE_NAME(childNode, "Coords")) {
             mNode = childNode->children;
             while(mNode) {
                 if(NODE_NAME(mNode, "MapMarker")) {
-                    mapmarker = new MapMarker;
-                    mapmarker->load(mNode);
+                    auto& mapmarker = coords[i++];
+                    mapmarker.load(mNode);
 
                     // load min/max while running through the coords
-                    if(mapmarker->getX() > max.getX())
-                        max.setX(mapmarker->getX());
-                    if(mapmarker->getX() < min.getX())
-                        min.setX(mapmarker->getX());
+                    if(mapmarker.getX() > max.getX())
+                        max.setX(mapmarker.getX());
+                    if(mapmarker.getX() < min.getX())
+                        min.setX(mapmarker.getX());
 
-                    if(mapmarker->getY() > max.getY())
-                        max.setY(mapmarker->getY());
-                    if(mapmarker->getY() < min.getY())
-                        min.setY(mapmarker->getY());
+                    if(mapmarker.getY() > max.getY())
+                        max.setY(mapmarker.getY());
+                    if(mapmarker.getY() < min.getY())
+                        min.setY(mapmarker.getY());
 
-                    if(mapmarker->getZ() > max.getZ())
-                        max.setZ(mapmarker->getZ());
-                    if(mapmarker->getZ() < min.getZ())
-                        min.setZ(mapmarker->getZ());
+                    if(mapmarker.getZ() > max.getZ())
+                        max.setZ(mapmarker.getZ());
+                    if(mapmarker.getZ() < min.getZ())
+                        min.setZ(mapmarker.getZ());
 
-                    coords[i++] = mapmarker;
                 }
                 mNode = mNode->next;
             }
@@ -175,7 +172,7 @@ void TileInfo::load(xmlNodePtr curNode) {
             xml::copyToCString(temp, childNode);
             display = temp[0];
         }
-        else if(NODE_NAME(childNode, "Flags")) loadBits(childNode, flags);
+        else if(NODE_NAME(childNode, "Flags")) loadBitset(childNode, flags);
         else if(NODE_NAME(childNode, "Fly")) xml::copyToNum(fly, childNode);
         else if(NODE_NAME(childNode, "Water")) water = true;
         else if(NODE_NAME(childNode, "Road")) road = true;
@@ -222,7 +219,7 @@ void TileInfo::save(xmlNodePtr curNode) const {
     xml::saveNonNullString(curNode, "Style", std::to_string(style));
     xml::saveNonNullString(curNode, "Display", std::to_string(display));
 
-    saveBits(curNode, "Flags", MAX_ROOM_FLAGS, flags);
+    saveBitset(curNode, "Flags", MAX_ROOM_FLAGS, flags);
 
     xml::saveNonZeroNum(curNode, "Fly", fly);
     xml::saveNonZeroNum(curNode, "Road", road);
@@ -251,31 +248,30 @@ void TileInfo::save(xmlNodePtr curNode) const {
 //*********************************************************************
 // only checks to see if the room is in memory or on disk
 
-AreaRoom *Area::getRoom(const MapMarker *mapmarker) {
-    AreaRoom* room=nullptr;
-    MapMarker m = *mapmarker;
+std::shared_ptr<AreaRoom> Area::getRoom(const MapMarker& mapmarker) {
+    std::shared_ptr<AreaRoom> room=nullptr;
+    MapMarker m = mapmarker;
 
-    // this will modify the mapmarker, but if it's pointing to invalid rooms,
-    // this is desired behavior
-    checkCycle(&m);
+    // this will modify the mapmarker, but if it's pointing to invalid rooms, this is desired behavior
+    checkCycle(m);
 
     if(rooms.find(m.str()) != rooms.end())
         return(rooms[m.str()]);
 
-    char            filename[256];
-    sprintf(filename, "%s/%d/%s", Path::AreaRoom, id, m.filename().c_str());
+    auto filename = Path::AreaRoom / std::to_string(id) / m.filename();
 
-    if(file_exists(filename)) {
+    if(fs::exists(filename)) {
         xmlDocPtr   xmlDoc;
         xmlNodePtr  rootNode;
 
-        if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == nullptr)
-            merror("Unable to read arearoom file", FATAL);
+        if((xmlDoc = xml::loadFile(filename.c_str(), "AreaRoom")) == nullptr)
+            throw std::runtime_error("Unable to read arearoom file");
 
         rootNode = xmlDocGetRootElement(xmlDoc);
 
-        room = new AreaRoom(this);
+        room = std::make_shared<AreaRoom>(shared_from_this());
         room->load(rootNode);
+        setMapMarker(room, room->mapmarker);
 
         xmlFreeDoc(xmlDoc);
         xmlCleanupParser();
@@ -307,15 +303,15 @@ void Area::save(xmlNodePtr curNode, bool saveRooms) const {
     xml::saveNonNullString(curNode, "DefaultTerrain", &defaultTerrain);
     xml::saveNonNullString(curNode, "ErrorTerrain", &errorTerrain);
 
-    std::list<AreaZone*>::const_iterator zIt;
+    std::list<std::shared_ptr<AreaZone> >::const_iterator zIt;
     childNode = xml::newStringChild(curNode, "Zones");
-    for(zIt = zones.begin() ; zIt != zones.end() ; zIt++) {
+    for(zIt = areaZones.begin() ; zIt != areaZones.end() ; zIt++) {
         subNode = xml::newStringChild(childNode, "Zone");
         (*zIt)->save(subNode);
     }
 
 
-    std::map<char, TileInfo*>::const_iterator tIt;
+    std::map<char, std::shared_ptr<TileInfo> >::const_iterator tIt;
     childNode = xml::newStringChild(curNode, "TerrainInfo");
     for(tIt = ter_tiles.begin() ; tIt != ter_tiles.end() ; tIt++) {
         subNode = xml::newStringChild(childNode, "Terrain");
@@ -329,7 +325,7 @@ void Area::save(xmlNodePtr curNode, bool saveRooms) const {
     }
 
     if(saveRooms) {
-        std::map<std::string, AreaRoom*>::const_iterator rIt;
+        std::map<std::string, std::shared_ptr<AreaRoom>>::const_iterator rIt;
         for(rIt = rooms.begin() ; rIt != rooms.end() ; rIt++) {
             (*rIt).second->save();
         }
@@ -344,7 +340,7 @@ void Area::load(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
     char    temp[2];
 
-    id = xml::getIntProp(curNode, "id");
+    id = (short)xml::getIntProp(curNode, "id");
 
     while(childNode) {
         if(NODE_NAME(childNode, "Name")) xml::copyToString(name, childNode);
@@ -387,13 +383,13 @@ void Area::load(xmlNodePtr curNode) {
 
 void Area::loadZones(xmlNodePtr curNode) {
     xmlNodePtr  childNode = curNode->children;
-    AreaZone    *zone=nullptr;
+    std::shared_ptr<AreaZone>  zone=nullptr;
 
     while(childNode) {
         if(NODE_NAME(childNode, "Zone")) {
-            zone = new AreaZone();
+            zone = std::make_shared<AreaZone>();
             zone->load(childNode);
-            zones.push_back(zone);
+            areaZones.push_back(zone);
         }
         childNode = childNode->next;
     }
@@ -404,14 +400,14 @@ void Area::loadZones(xmlNodePtr curNode) {
 //*********************************************************************
 
 void Area::loadRooms() {
-    struct dirent *dirp=nullptr;
-    DIR         *dir=nullptr;
-    AreaRoom    *room=nullptr;
+    struct dirent *dirp;
+    DIR         *dir;
+    std::shared_ptr<AreaRoom>    room;
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     char        filename[256];
 
-    sprintf(filename, "%s/%d", Path::AreaRoom, id);
+    sprintf(filename, "%s/%d", Path::AreaRoom.c_str(), id);
 
     if((dir = opendir(filename)) == nullptr)
         return;
@@ -421,16 +417,17 @@ void Area::loadRooms() {
         if(dirp->d_name[0] == '.')
             continue;
 
-        sprintf(filename, "%s/%d/%s", Path::AreaRoom, id, dirp->d_name);
+        sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), id, dirp->d_name);
 
         if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == nullptr)
             continue;
 
         rootNode = xmlDocGetRootElement(xmlDoc);
 
-        room = new AreaRoom(this);
+        room = std::make_shared<AreaRoom>(shared_from_this());
         room->setVersion(xml::getProp(rootNode, "Version"));
         room->load(rootNode);
+        rooms[room->mapmarker.str()] = room;
 
         xmlFreeDoc(xmlDoc);
     }
@@ -446,16 +443,14 @@ void Area::loadRooms() {
 
 void Area::loadTiles(xmlNodePtr curNode, bool ter) {
     xmlNodePtr  childNode = curNode->children;
-    TileInfo    *tile=nullptr;
+    std::shared_ptr<TileInfo>    tile=nullptr;
 
     while(childNode) {
-        tile = new TileInfo();
+        tile = std::make_shared<TileInfo>();
         tile->load(childNode);
 
         // TODO: Dom: why does this happen?
-        if(tile->getName().empty())
-            delete tile;
-        else {
+        if(!tile->getName().empty()) {
             if(ter)
                 ter_tiles[tile->getId()] = tile;
             else
@@ -470,7 +465,7 @@ void Area::loadTiles(xmlNodePtr curNode, bool ter) {
 //                      areaInit
 //*********************************************************************
 
-void Server::areaInit(Creature* player, xmlNodePtr curNode) {
+void Server::areaInit(const std::shared_ptr<Creature>& player, xmlNodePtr curNode) {
     MapMarker mapmarker;
     mapmarker.load(curNode);
     areaInit(player, mapmarker);
@@ -487,11 +482,11 @@ bool Server::loadAreas() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
-    Area    *area=nullptr;
+    std::shared_ptr<Area> area;
 
-    sprintf(filename, "%s/areas.xml", Path::AreaData);
+    sprintf(filename, "%s/areas.xml", Path::AreaData.c_str());
 
-    if(!file_exists(filename))
+    if(!fs::exists(filename))
         return(false);
 
     if((xmlDoc = xml::loadFile(filename, "Areas")) == nullptr)
@@ -500,10 +495,9 @@ bool Server::loadAreas() {
     rootNode = xmlDocGetRootElement(xmlDoc);
     curNode = rootNode->children;
 
-    clearAreas();
     while(curNode) {
         if(NODE_NAME(curNode, "Area")) {
-            area = new Area;
+            area = std::make_shared<Area>();
             area->load(curNode);
             areas.push_back(area);
         }
@@ -521,7 +515,7 @@ bool Server::loadAreas() {
 //*********************************************************************
 
 void Server::saveAreas(bool saveRooms) const {
-    std::list<Area*>::const_iterator it;
+    std::list<std::shared_ptr<Area> >::const_iterator it;
     xmlDocPtr   xmlDoc;
     xmlNodePtr      rootNode, curNode;
     char            filename[80];
@@ -535,7 +529,7 @@ void Server::saveAreas(bool saveRooms) const {
         (*it)->save(curNode, saveRooms);
     }
 
-    sprintf(filename, "%s/areas2.xml", Path::Config);
+    sprintf(filename, "%s/areas2.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }

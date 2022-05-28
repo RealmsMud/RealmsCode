@@ -52,7 +52,7 @@ Async::Async() {
 //                      branch
 //*********************************************************************
 
-AsyncResult Async::branch(const Player* player, ChildType type) {
+AsyncResult Async::branch(const std::shared_ptr<const Player>& player, ChildType type) {
     std::string user = (player ? player->getName() : "Someone");
     if(pipe(fds) == -1) {
         std::clog << "Error with pipe!\n";
@@ -92,7 +92,7 @@ AsyncResult Async::branch(const Player* player, ChildType type) {
 //                      runList
 //********************************************************************
 
-int Server::runList(Socket* sock, cmd* cmnd) {
+int Server::runList(std::shared_ptr<Socket> sock, cmd* cmnd) {
     Async async;
     if(async.branch(sock->getPlayer(), ChildType::LISTER) == AsyncExternal) {
         std::string lister = "/mud/List";

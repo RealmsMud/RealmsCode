@@ -20,6 +20,7 @@
 #include <fcntl.h>                                  // for open, O_CREAT
 #include <libxml/parser.h>                          // for xmlCleanupParser
 #include <unistd.h>                                 // for write, close, unlink
+#include <boost/dynamic_bitset.hpp>
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cctype>                                   // for isupper
 #include <cstdio>                                   // for sprintf
@@ -27,7 +28,10 @@
 #include <cstring>                                  // for strlen, strcat
 #include <ctime>                                    // for ctime, time
 #include <ostream>                                  // for operator<<, ostream
+#include <fstream>                                  // for fstream
+#include <iostream>                                 // for ofstream
 #include <string>                                   // for allocator, string
+#include <boost/algorithm/string/trim.hpp>
 
 #include "calendar.hpp"                             // for cDay, Calendar
 #include "config.hpp"                               // for Config, gConfig
@@ -45,117 +49,45 @@
 
 #define MINIMUM_LEVEL   3
 
-/* The array gets broken into sections
- * [0] - class
- * [1] - multi
- * [2] - race
- * [3] - deity
- * [4] - misc titles
- */
+std::string getFullClassName(CreatureClass cClass, CreatureClass secondClass);
 
-#define CLASS_START     0
-#define CLASS_END   (CLASS_START+static_cast<int>(STAFF)-1)
-
-#define MULTI_START         CLASS_END
-#define M_FM                MULTI_START
-#define M_FT                (MULTI_START+1)
-#define M_CLA               (MULTI_START+2)
-#define M_MT                (MULTI_START+3)
-#define M_TM                (MULTI_START+4)
-#define M_MA                (MULTI_START+5)
-#define MULTI_END           (M_MA+1)
-
-#define RACE_START      MULTI_END
-#define RACE_END        (RACE_START+MAX_PLAYABLE_RACE-1)
-
-#define DEITY_START     RACE_END
-#define DEITY_END       (DEITY_START+DEITY_COUNT-1)
-
-
-#define HIGHEST_START   DEITY_END
-
-#define HIGHEST_PLY     HIGHEST_START
-// highnum will be empty because RICHEST_PLY uses a long
-#define RICHEST_PLY     (HIGHEST_START + 1)
-#define OLDEST_PLY      (HIGHEST_START + 2)
-#define LONGEST_PLY     (HIGHEST_START + 3)
-// highnum will be empty because BEST_PK uses a float
-#define BEST_PK         (HIGHEST_START + 4)
-#define MOST_SPELLS     (HIGHEST_START + 5)
-#define MOST_ROOMS      (HIGHEST_START + 6)
-
-#define HIGHEST_END     (MOST_ROOMS+1)
-
-
-int get_multi_id(int cClass, int cClass2) {
-    if(static_cast<CreatureClass>(cClass) ==CreatureClass::FIGHTER && static_cast<CreatureClass>(cClass2)==CreatureClass::MAGE)
-        return(M_FM);
-    else if(static_cast<CreatureClass>(cClass)==CreatureClass::FIGHTER && static_cast<CreatureClass>(cClass2)==CreatureClass::THIEF)
-        return(M_FT);
-    else if(static_cast<CreatureClass>(cClass)==CreatureClass::CLERIC && static_cast<CreatureClass>(cClass2)==CreatureClass::ASSASSIN)
-        return(M_CLA);
-    else if(static_cast<CreatureClass>(cClass)==CreatureClass::MAGE && static_cast<CreatureClass>(cClass2)==CreatureClass::THIEF)
-        return(M_MT);
-    else if(static_cast<CreatureClass>(cClass)==CreatureClass::THIEF && static_cast<CreatureClass>(cClass2)==CreatureClass::MAGE)
-        return(M_TM);
-    else if(static_cast<CreatureClass>(cClass)==CreatureClass::MAGE && static_cast<CreatureClass>(cClass2)==CreatureClass::ASSASSIN)
-        return(M_MA);
-    return(0);
+void printEnding(std::ofstream& out) {
+    out << "    |                                      |\n";
+    out << "    |    __________________________________|_\n";
+    out << "    \\   /                                   /\n";
+    out << "     \\_/___________________________________/\n\n";
 }
 
-const char *get_multi_string(int id) {
-    switch(id) {
-    case M_FM:
-        return("Fighter/Mage");
-    case M_FT:
-        return("Fighter/Thief");
-    case M_CLA:
-        return("Cleric/Assassin");
-    case M_MT:
-        return("Mage/Thief");
-    case M_TM:
-        return("Thief/Mage");
-    case M_MA:
-        return("Mage/Assassin");
-    default:
-        return("");
-    }
-}
-
-void printEnding(int ff) {
-    char    outstr[120];
-    sprintf(outstr, "    |                                      |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |    __________________________________|_\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    \\   /                                   /\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "     \\_/___________________________________/\n\n");
-    write(ff, outstr, strlen(outstr));
-    close(ff);
-}
-
+class Highest {
+public:
+    std::string playerName;
+    long amount{};
+    long count{};
+};
 
 void doDemographics() {
 
 #ifndef NODEMOGRAPHICS
-
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode, curNode, childNode;
-    struct      dirent *dirp=nullptr;
-    struct      lasttime lasttime[128];
-    DIR         *dir=nullptr;
-    char        highest[HIGHEST_END][80], name[80], outstr[120], *str, spells[32];
-    char        percent1[10], percent2[10];
-    long        exp;
-    int         highnum[HIGHEST_END], breakdown[DEITY_END], level=0, numRooms=0;
-    int         cClass=0, cClass2=0, race=0, deity=0, total=0;
-    int         ff=0, i=0, n=0, age=0;
-    cDay        *birthday;
-    long        money[5], cgold=0, t=0, richest=0;
-    float       best_pk=0, percent=0;
-    const Calendar* calendar = gConfig->getCalendar();
+    DIR *dir;
     Statistics statistics;
+    boost::dynamic_bitset<> spells{256};
+    std::shared_ptr<cDay> birthday;
+    const Calendar *calendar = gConfig->getCalendar();
+    int cClass = 0, cClass2 = 0, race = 0, deity = 0, totalCount = 0, deityCount = 0;
+    int i, age;
+    int level = 0, numRooms=0;
+    long exp, numSpells;
+    long money[5], cgold, t = 0;
+    std::map<std::string, Highest> highest;
+    struct dirent *dirp;
+    struct lasttime lasttime[128];
+    xmlDocPtr xmlDoc;
+    xmlNodePtr rootNode, curNode, childNode;
+
+    std::set<std::string> classList;
+    std::set<std::string> multiClassList;
+    std::set<std::string> raceList;
+    std::set<std::string> deityList;
 
     t = time(nullptr);
     std::clog << "Begining demographics routine.\n";
@@ -163,38 +95,11 @@ void doDemographics() {
 
     // load the directory all the players are stored in
     std::clog << "Opening " << Path::Player << "...";
-    if((dir = opendir(Path::Player)) == nullptr) {
+    if((dir = opendir(Path::Player.c_str())) == nullptr) {
         std::clog << "Directory could not be opened.\n";
         return;
     }
     std::clog << "done.\n";
-
-    zero(highest, sizeof(highest));
-    zero(highnum, sizeof(highnum));
-    zero(breakdown, sizeof(breakdown));
-    /*
-    for(i=CLASS_START; i<CLASS_END; i++) {
-        strcpy(highest[i], "class");
-        //write(ff, outstr, strlen(outstr));
-    }
-    for(i=MULTI_START; i<MULTI_END; i++) {
-        strcpy(highest[i], "multi");
-        //write(ff, outstr, strlen(outstr));
-    }
-    for(i=RACE_START; i<RACE_END; i++) {
-        strcpy(highest[i], "race");
-        //write(ff, outstr, strlen(outstr));
-    }
-    for(i=DEITY_START; i<DEITY_END; i++) {
-        strcpy(highest[i], "deity");
-        //write(ff, outstr, strlen(outstr));
-    }
-    for(i=0; i<HIGHEST_END; i++) {
-        sprintf(outstr, "%d: %s:%d\n", i, highest[i], highnum[i]);
-        //write(ff, outstr, strlen(outstr));
-    }
-    */
-
 
     std::clog << "Reading player directory...";
     while((dirp = readdir(dir)) != nullptr) {
@@ -205,8 +110,8 @@ void doDemographics() {
             continue;
 
         // is this a readable player file?
-        sprintf(name, "%s/%s", Path::Player, dirp->d_name);
-        if((xmlDoc = xml::loadFile(name, "Player")) == nullptr)
+        auto filename = Path::Player / dirp->d_name;
+        if((xmlDoc = xml::loadFile(filename.c_str(), "Player")) == nullptr)
             continue;
 
         // get the information we need
@@ -215,17 +120,21 @@ void doDemographics() {
 
 
         // reset some variables
-        zero(spells, sizeof(spells));
-        exp = level = cClass = cClass2 = race = deity = age = cgold = numRooms = 0;
-        birthday = new cDay;
+        spells.reset();
+        cgold = 0;
+        deity = 0;
+        birthday = std::make_shared<cDay>();
         statistics.reset();
+        cClass = cClass2 = static_cast<int>(CreatureClass::NONE);
 
-
-        xml::copyPropToCString(name, rootNode, "Name");
-
+        auto name = xml::getProp(rootNode, "Name");
+        
         // not for these characters
-        if(!strcmp(name, "Johny") || !strcmp(name, "Min") || !strcmp(name, "Bob"))
+        if(name == "Johny" || name == "Min" || name == "Bob") {
+            xmlFreeDoc(xmlDoc);
+            xmlCleanupParser();
             continue;
+        }
 
         // load the information we need
         while(curNode) {
@@ -240,25 +149,20 @@ void doDemographics() {
             else if(NODE_NAME(curNode, "Race")) xml::copyToNum(race, curNode);
 
             // ok, deity is spelled wrong in the xml files, so try both
-            else if(!deity && NODE_NAME(curNode, "Deity")) xml::copyToNum(deity, curNode);
+            else if(NODE_NAME(curNode, "Deity")) xml::copyToNum(deity, curNode);
 
             else if(NODE_NAME(curNode, "LastTimes")) {
                 loadLastTimes(curNode, lasttime);
             } else if(NODE_NAME(curNode, "Birthday")) {
                 birthday->load(curNode);
-            } else if(NODE_NAME(curNode, "Bank")) {
+            } else if(NODE_NAME(curNode, "Bank") || NODE_NAME(curNode, "Coins")) {
                 xml::loadNumArray<long>(curNode, money, "Coin", 5);
                 cgold += money[2];
                 for(i=0; i<5; i++)
                     money[i] = 0;
-            } else if(NODE_NAME(curNode, "Coins")) {
-                xml::loadNumArray<long>(curNode, money, "Coin", 5);
-                cgold += money[2];
-                for(i=0; i<5; i++)
-                    money[i] = 0;
-            }
+            } 
             else if(NODE_NAME(curNode, "Statistics")) statistics.load(curNode);
-            else if(NODE_NAME(curNode, "Spells")) loadBits(curNode, spells);
+            else if(NODE_NAME(curNode, "Spells")) loadBitset(curNode, spells);
             else if(NODE_NAME(curNode, "RoomExp")) {
                 childNode = curNode->children;
                 while(childNode) {
@@ -271,73 +175,66 @@ void doDemographics() {
         }
 
         // don't do staff!
-        if(cClass >= static_cast<int>(STAFF))
+        if(cClass >= static_cast<int>(STAFF) || level < MINIMUM_LEVEL) {
+            xmlFreeDoc(xmlDoc);
+            xmlCleanupParser();
             continue;
-        if(level < MINIMUM_LEVEL)
-            continue;
+        }
 
-        // highest player, or highest in their class?
-        if(cClass && cClass2)
-            cClass = get_multi_id(cClass, cClass2);
-        else
-            cClass = cClass - 1 + CLASS_START;
-
-        if(exp > highnum[cClass]) {
-            highnum[cClass] = exp;
-            //sprintf(highest[cClass], "%s, %d", name, level);
-            sprintf(highest[cClass], "%s", name);
-            if(exp > highnum[HIGHEST_PLY]) {
-                highnum[HIGHEST_PLY] = exp;
-                //sprintf(highest[HIGHEST_PLY], "%s, %d", name, level);
-                sprintf(highest[HIGHEST_PLY], "%s", name);
-            }
+        auto classStr = getFullClassName(static_cast<CreatureClass>(cClass), static_cast<CreatureClass>(cClass2));
+        if (static_cast<CreatureClass>(cClass2) == CreatureClass::NONE) {
+            classList.insert(classStr);
+        } else {
+            multiClassList.insert(classStr);
+        }
+        highest[classStr].count++;
+        if(exp > highest[classStr].amount) {
+            highest[classStr].amount = exp;
+            highest[classStr].playerName = name;
+        }
+        if(exp > highest["player"].amount) {
+            highest["player"].amount = exp;
+            highest["player"].playerName = name;
         }
         // highest in their race?
-        race = race - 1 + RACE_START;
-        if(exp > highnum[race]) {
-            highnum[race] = exp;
-            //sprintf(highest[race], "%s, %d", name, level);
-            sprintf(highest[race], "%s", name);
+        auto raceStr = gConfig->getRace(race)->getName();
+        raceList.insert(raceStr);
+        highest[raceStr].count++;
+        if(exp > highest[raceStr].amount) {
+            highest[raceStr].amount = exp;
+            highest[raceStr].playerName = name;
         }
         // highest in their deity?
         if(deity) {
-            deity = deity - 1 + DEITY_START;
-            if(exp > highnum[deity]) {
-                highnum[deity] = exp;
-                //sprintf(highest[deity], "%s, %d", name, level);
-                sprintf(highest[deity], "%s", name);
+            auto deityStr = gConfig->getDeity(deity)->getName();
+            deityList.insert(deityStr);
+            if(exp > highest[deityStr].amount) {
+                highest[deityStr].amount = exp;
+                highest[deityStr].playerName = name;
             }
+            highest[deityStr].count++;
+            deityCount++;
         }
 
-        n=0;
-        for(i=0; i < get_spell_list_size() ; i++)
-            if(spells[i/8] & 1<<(i%8))
-                n++;
-        if(n > highnum[MOST_SPELLS]) {
-            highnum[MOST_SPELLS] = n;
-            //sprintf(highest[MOST_SPELLS], "%s, %d", name, level);
-            sprintf(highest[MOST_SPELLS], "%s", name);
-        }
-
-
-        if(numRooms > highnum[MOST_ROOMS]) {
-            highnum[MOST_ROOMS] = numRooms;
-            //sprintf(highest[MOST_ROOMS], "%s, %d", name, level);
-            sprintf(highest[MOST_ROOMS], "%s", name);
+        numSpells = static_cast<long>(spells.count());
+        if(numSpells > highest["spells"].amount) {
+            highest["spells"].amount = numSpells;
+            highest["spells"].playerName = name;
         }
 
 
-        breakdown[cClass]++;
-        breakdown[race]++;
-        total++;
-        if(deity)
-            breakdown[deity]++;
+        if(numRooms > highest["rooms"].amount) {
+            highest["rooms"].amount = numRooms;
+            highest["rooms"].playerName = name;
+        }
+
+        totalCount++;
+
 
         // longest played?
-        if(lasttime[LT_AGE].interval > highnum[LONGEST_PLY]) {
-            highnum[LONGEST_PLY] = lasttime[LT_AGE].interval;
-            //sprintf(highest[LONGEST_PLY], "%s, %d", name, level);
-            sprintf(highest[LONGEST_PLY], "%s", name);
+        if(lasttime[LT_AGE].interval > highest["longest"].amount) {
+            highest["longest"].amount = lasttime[LT_AGE].interval;
+            highest["longest"].playerName = name;
         }
 
         // character age?
@@ -347,29 +244,26 @@ void doDemographics() {
                 age--;
             if(calendar->getCurMonth() == birthday->getMonth() && calendar->getCurDay() < birthday->getDay())
                 age--;
-            if(age > highnum[OLDEST_PLY]) {
-                highnum[OLDEST_PLY] = age;
-                //sprintf(highest[OLDEST_PLY], "%s, %d", name, level);
-                sprintf(highest[OLDEST_PLY], "%s", name);
+            if(age > highest["age"].amount) {
+                highest["age"].amount = age;
+                highest["age"].playerName = name;
             }
         }
 
         // richest character?
-        if(cgold > richest) {
-            richest = cgold;
-            //sprintf(highest[RICHEST_PLY], "%s, %d", name, level);
-            sprintf(highest[RICHEST_PLY], "%s", name);
+        if(cgold > highest["richest"].amount) {
+            highest["richest"].amount = cgold;
+            highest["richest"].playerName = name;
         }
 
         // best non-100% pk
-        if(statistics.pkDemographics() > best_pk) {
-            best_pk = statistics.pkDemographics();
-            //sprintf(highest[BEST_PK], "%s, %d", name, level);
-            sprintf(highest[BEST_PK], "%s", name);
+        if(statistics.pkDemographics() > highest["pkill"].amount) {
+            highest["pkill"].amount = static_cast<long>(statistics.pkDemographics());
+            highest["pkill"].playerName = name;
         }
-        delete birthday;
-        birthday=nullptr;
+        birthday.reset();
         xmlFreeDoc(xmlDoc);
+        xmlCleanupParser();
     }
     std::clog << "done.\n";
     closedir(dir);
@@ -379,265 +273,153 @@ void doDemographics() {
     std::clog << "Formatting stone scrolls...";
 
     // load the file we will be printing to
-    sprintf(name, "%s/stone_scroll.txt", Path::Sign);
-    unlink(name);
-    ff = open(name, O_CREAT | O_RDWR, ACC);
-    if(ff < 0) {
-        std::clog << "Couldn't open stone scroll: " << name;
-        close(ff);
-        return;
-    }
+    fs::path scroll = Path::Sign / "stone_scroll.txt";
+    fs::remove(scroll);
+    std::ofstream scrollOut(scroll.string());
 
-    sprintf(outstr, "   _______________________________________\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "  /\\                                      \\\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, " /  | Only characters who have reached     |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, " \\  | atleast level 3 are counted for the  |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "  \\_| stone scroll.                        |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |                                      |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |   Highest Player : %-17s |\n", highest[HIGHEST_PLY]);
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |   Richest Player : %-17s |\n", highest[RICHEST_PLY]);
-    //write(ff, outstr, strlen(outstr));
-    //sprintf(outstr, "    |   Oldest Player  : %-17s |\n", highest[OLDEST_PLY]);
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |   Longest Played : %-17s |\n", highest[LONGEST_PLY]);
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |   Best Pkiller   : %-17s |\n", highest[BEST_PK]);
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |   Most Spells    : %-17s |\n", highest[MOST_SPELLS]);
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |   Explorer       : %-17s |\n", highest[MOST_ROOMS]);
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |                                      |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    | To view a specific category, type    |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    | \"look stone <category>\". The         |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    | categories are:                      |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |         class                        |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |         race                         |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |         deity                        |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |         breakdown                    |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |                                      |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    | Last Updated:                        |\n");
-    write(ff, outstr, strlen(outstr));
+
+    scrollOut << "   _______________________________________\n";
+    scrollOut << "  /\\                                      \\\n";
+    scrollOut << " /  | Only characters who have reached     |\n";
+    scrollOut << " \\  | at least level 3 are counted for the |\n";
+    scrollOut << "  \\_| stone scroll.                        |\n";
+    scrollOut << "    |                                      |\n";
+    scrollOut << fmt::format("    |   Highest Player : {:<17s} |\n", highest["player"].playerName);
+    scrollOut << fmt::format("    |   Richest Player : {:<17s} |\n", highest["richest"].playerName);
+    //out << fmt::format("    |   Oldest Player  : {:-17s} |\n", highest["age].playerName);
+    scrollOut << fmt::format("    |   Longest Played : {:<17s} |\n", highest["longest"].playerName);
+    scrollOut << fmt::format("    |   Best Pkiller   : {:<17s} |\n", highest["pkill"].playerName);
+    scrollOut << fmt::format("    |   Most Spells    : {:<17s} |\n", highest["spells"].playerName);
+    scrollOut << fmt::format("    |   Explorer       : {:<17s} |\n", highest["rooms"].playerName);
+    scrollOut << "    |                                      |\n";
+    scrollOut << "    | To view a specific category, type    |\n";
+    scrollOut << "    | \"look stone <category>\". The         |\n";
+    scrollOut << "    | categories are:                      |\n";
+    scrollOut << "    |         class                        |\n";
+    scrollOut << "    |         race                         |\n";
+    scrollOut << "    |         deity                        |\n";
+    scrollOut << "    |         breakdown                    |\n";
+    scrollOut << "    |                                      |\n";
+    scrollOut << "    | Last Updated:                        |\n";
 
     // let them know when we ran this program
-    str = ctime(&t);
-    str[strlen(str) - 1] = 0;
-    strcat(str, " (");
-    strcat(str, Server::getTimeZone().c_str());
-    strcat(str, ").");
+    std::string txt;
+    txt += ctime(&t);
+    boost::trim(txt);
+    txt += " (" + Server::getTimeZone() + ").";
+    scrollOut << fmt::format("    | {:36s} |\n", txt);
 
-    sprintf(outstr, "    | %36s |\n", str);
-    write(ff, outstr, strlen(outstr));
-    /*
-    for(i=0; i<HIGHEST_END; i++) {
-        sprintf(outstr, "%d: %s\n", i, highest[i]);
-        write(ff, outstr, strlen(outstr));
+
+    printEnding(scrollOut);
+
+
+    fs::path classScroll = Path::Sign / "stone_scroll_class.txt";
+    fs::remove(classScroll);
+    std::ofstream classScrollOut(classScroll.string());
+
+    classScrollOut << "   _______________________________________\n";
+    classScrollOut << "  /\\                                      \\\n";
+    classScrollOut << " /  | Highest Player Based on Class        |\n";
+    classScrollOut << " \\  |                                      |\n";
+    classScrollOut << "  \\_|                                      |\n";
+
+    for(const auto& cStr : classList)
+        classScrollOut << fmt::format("    | {:15s} : {:<18s} |\n", cStr, highest[cStr].playerName);
+
+    classScrollOut << "    |                                      |\n";
+
+    for(const auto& cStr : multiClassList)
+        classScrollOut << fmt::format("    | {:15s} : {:<18s} |\n", cStr, highest[cStr].playerName);
+
+    printEnding(classScrollOut);
+
+
+    fs::path raceScroll = Path::Sign / "stone_scroll_race.txt";
+    fs::remove(raceScroll);
+    std::ofstream raceScrollOut(raceScroll.string());
+
+    raceScrollOut << "   _______________________________________\n";
+    raceScrollOut << "  /\\                                      \\\n";
+    raceScrollOut << " /  | Highest Player Based on Race         |\n";
+    raceScrollOut << " \\  |                                      |\n";
+    raceScrollOut << "  \\_|                                      |\n";
+
+    for(const auto& rStr : raceList)
+        raceScrollOut << fmt::format("    | {:13s} : {:<20s} |\n", rStr, highest[rStr].playerName);
+
+    printEnding(raceScrollOut);
+
+    fs::path deityScroll = Path::Sign / "stone_scroll_deity.txt";
+    fs::remove(deityScroll);
+    std::ofstream deityScrollOut(deityScroll.string());
+
+
+    deityScrollOut << "   _______________________________________\n";
+    deityScrollOut << "  /\\                                      \\\n";
+    deityScrollOut << " /  | Highest Player Based on Deity        |\n";
+    deityScrollOut << " \\  |                                      |\n";
+    deityScrollOut << "  \\_|                                      |\n";
+
+    for(const auto& dStr : deityList)
+        deityScrollOut << fmt::format("    | {:13s} : {:<20s} |\n", dStr, highest[dStr].playerName);
+
+    printEnding(deityScrollOut);
+
+    fs::path breakdownScroll = Path::Sign / "stone_scroll_breakdown.txt";
+    fs::remove(breakdownScroll);
+    std::ofstream breakdownScrollOut(breakdownScroll.string());
+
+
+    breakdownScrollOut << "   ________________________________________________\n";
+    breakdownScrollOut << "  /\\                                               \\\n";
+    breakdownScrollOut << " /  | Player Breakdown                              |\n";
+    breakdownScrollOut << " \\  |                                               |\n";
+    breakdownScrollOut << "  \\_|                                               |\n";
+
+    std::vector<std::string> leftCol;
+    std::vector<std::string> rightCol;
+
+    for(const auto& cStr : classList) {
+        leftCol.emplace_back(
+            fmt::format("{:15s} : {:>4.1f}%", cStr, ((highest[cStr].count * 100.0) / totalCount))
+        );
     }
-    */
-    printEnding(ff);
+    leftCol.emplace_back("");
 
-
-
-    // load the file we will be printing to
-    sprintf(name, "%s/stone_scroll_class.txt", Path::Sign);
-    unlink(name);
-    ff = open(name, O_CREAT | O_RDWR, ACC);
-    if(ff < 0) {
-        std::clog << "Couldn't open stone scroll: " << name;
-        close(ff);
-        return;
+    for(const auto& cStr : multiClassList) {
+        leftCol.emplace_back(
+            fmt::format("{:15s} : {:>4.1f}%", cStr, ((highest[cStr].count * 100.0 )/ totalCount))
+        );
     }
+    leftCol.emplace_back("");
 
-    sprintf(outstr, "   _______________________________________\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "  /\\                                      \\\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, " /  | Highest Player Based on Class        |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, " \\  |                                      |\n");
-    write(ff, outstr, strlen(outstr));
-    for(i=CLASS_START; i<CLASS_END; i++) {
-        sprintf(outstr, "%s %15s : %-18s |\n", i==CLASS_START ? "  \\_|" : "    |", get_class_string(i-CLASS_START+1), highest[i]);
-        write(ff, outstr, strlen(outstr));
+    for(const auto& dStr : deityList) {
+        leftCol.emplace_back(
+            fmt::format("{:15s} : {:>4.1f}%", dStr, ((highest[dStr].count * 100.0) / deityCount))
+        );
     }
-    sprintf(outstr, "    |                                      |\n");
-    write(ff, outstr, strlen(outstr));
-    for(i=MULTI_START; i<MULTI_END; i++) {
-        sprintf(outstr, "    | %15s : %-18s |\n", get_multi_string(i), highest[i]);
-        write(ff, outstr, strlen(outstr));
-    }
-
-    printEnding(ff);
-
-
-    // load the file we will be printing to
-    sprintf(name, "%s/stone_scroll_race.txt", Path::Sign);
-    unlink(name);
-    ff = open(name, O_CREAT | O_RDWR, ACC);
-    if(ff < 0) {
-        std::clog << "Couldn't open stone scroll: " << name << std::endl;
-        close(ff);
-        return;
-    }
-
-    sprintf(outstr, "   _______________________________________\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "  /\\                                      \\\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, " /  | Highest Player Based on Race         |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, " \\  |                                      |\n");
-    write(ff, outstr, strlen(outstr));
-    for(i=RACE_START; i<RACE_END; i++) {
-        sprintf(outstr, "%s %13s : %-20s |\n", i==RACE_START ? "  \\_|" : "    |",
-            gConfig->getRace(i-RACE_START+1)->getName().c_str(), highest[i]);
-        write(ff, outstr, strlen(outstr));
-    }
-
-    printEnding(ff);
-
-    // load the file we will be printing to
-    sprintf(name, "%s/stone_scroll_deity.txt", Path::Sign);
-    unlink(name);
-    ff = open(name, O_CREAT | O_RDWR, ACC);
-    if(ff < 0) {
-        std::clog << "Couldn't open stone scroll: " << name << std::endl;
-        close(ff);
-        return;
-    }
-
-    sprintf(outstr, "   _______________________________________\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "  /\\                                      \\\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, " /  | Highest Player Based on Deity        |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, " \\  |                                      |\n");
-    write(ff, outstr, strlen(outstr));
-    for(i=DEITY_START; i<DEITY_END; i++) {
-        sprintf(outstr, "%s %13s : %-20s |\n", i==DEITY_START ? "  \\_|" : "    |", gConfig->getDeity(i-DEITY_START+1)->getName().c_str(), highest[i]);
-        write(ff, outstr, strlen(outstr));
-    }
-
-    printEnding(ff);
-
-    // load the file we will be printing to
-    sprintf(name, "%s/stone_scroll_breakdown.txt", Path::Sign);
-    unlink(name);
-    ff = open(name, O_CREAT | O_RDWR, ACC);
-    if(ff < 0) {
-        std::clog << "Couldn't open stone scroll: " << name << std::endl;
-        close(ff);
-        return;
-    }
-
-    sprintf(outstr, "   ________________________________________________\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "  /\\                                               \\\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, " /  | Player Breakdown                              |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, " \\  |                                               |\n");
-    write(ff, outstr, strlen(outstr));
-
-    // go through all classes
-    for(i=CLASS_START; i<CLASS_END; i++) {
-        // this will get us to races
-        n = i-CLASS_START+RACE_START;
-
-        percent = (float) breakdown[i] / (float) total * 100;
-        sprintf(percent1, "%s%.1f%%", percent >= 10 ? "" : " ", percent);
-        percent = (float) breakdown[n] / (float) total * 100;
-        sprintf(percent2, "%s%.1f%%", percent >= 10 ? "" : " ", percent);
-
-        sprintf(outstr, "%s %15s : %-5s %12s : %-5s  |\n", i==CLASS_START ? "  \\_|" : "    |",
-            get_class_string(i-CLASS_START+1), percent1,
-            gConfig->getRace(n-RACE_START+1)->getName().c_str(), percent2);
-        write(ff, outstr, strlen(outstr));
-    }
-
     // make a space for multiclass to come
-    i = RACE_START + CLASS_END;
-    percent = (float) breakdown[i] / (float) total * 100;
-    sprintf(percent1, "%s%.1f%%", percent >= 10 ? "" : " ", percent);
-    sprintf(outstr, "    | %36s : %-5s  |\n", gConfig->getRace(i-RACE_START+1)->getName().c_str(), percent1);
-    write(ff, outstr, strlen(outstr));
 
-    // finish off races
-    for(i=MULTI_START; i<MULTI_END-(RACE_END-RACE_START-CLASS_END-1); i++) {
-        // this will get us to where we left off
-        n = RACE_START + CLASS_END + i - MULTI_START + 1;
-
-        percent = (float) breakdown[i] / (float) total * 100;
-        sprintf(percent1, "%s%.1f%%", percent >= 10 ? "" : " ", percent);
-        percent = (float) breakdown[n] / (float) total * 100;
-        sprintf(percent2, "%s%.1f%%", percent >= 10 ? "" : " ", percent);
-
-        sprintf(outstr, "    | %15s : %-5s %12s : %-5s  |\n",
-            get_multi_string(i), percent1,
-            gConfig->getRace(n-RACE_START+1)->getName().c_str(), percent2);
-        write(ff, outstr, strlen(outstr));
+    for(const auto& rStr : raceList) {
+        rightCol.emplace_back(
+            fmt::format("{:>14s} : {:>4.1f}%", rStr, ((highest[rStr].count * 100.0) / totalCount))
+        );
     }
 
-    // finish off multiclass
-    for(i=MULTI_END-(RACE_END-RACE_START-CLASS_END-1); i<MULTI_END; i++) {
-        percent = (float) breakdown[i] / (float) total * 100;
-        sprintf(percent1, "%s%.1f%%", percent >= 10 ? "" : " ", percent);
-
-        sprintf(outstr, "    | %15s : %-5s%21s  |\n",
-            get_multi_string(i), percent1, " ");
-        write(ff, outstr, strlen(outstr));
+    auto numRows = std::max(leftCol.size(), rightCol.size());
+    for(auto row = 0 ; row < numRows ; row++) {
+        breakdownScrollOut << fmt::format("    | {:23s}{:22s} |", (row < leftCol.size() ? leftCol[row] : ""), (row < rightCol.size() ? rightCol[row] : "")) << std::endl;
     }
 
-    sprintf(outstr, "    |                                               |\n");
-    write(ff, outstr, strlen(outstr));
+    breakdownScrollOut << "    |                                               |\n";
+    breakdownScrollOut << "    | deity breakdown is limited to classes         |\n";
+    breakdownScrollOut << "    | pledged to a god.                             |\n";
+    breakdownScrollOut << "    |                                               |\n";
+    breakdownScrollOut << "    |    ___________________________________________|_\n";
+    breakdownScrollOut << "    \\   /                                            /\n";
+    breakdownScrollOut << "     \\_/____________________________________________/\n\n";
 
-    // deity isnt used, so make this the total number of deity chars
-    deity = 0;
-    for(i=DEITY_START; i<DEITY_END; i++)
-        deity += breakdown[i];
-
-    // finish off dieties
-    for(i=DEITY_START; i<DEITY_END; i++) {
-        percent = (float) breakdown[i] / (float) deity * 100;
-        sprintf(percent1, "%s%.1f%%", percent >= 10 ? "" : " ", percent);
-
-        sprintf(outstr, "    | %15s : %-5s%21s  |\n",
-                gConfig->getDeity(i-DEITY_START+1)->getName().c_str(), percent1, " ");
-        write(ff, outstr, strlen(outstr));
-    }
-
-    sprintf(outstr, "    |                                               |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    | deity breakdown is limited to classes         |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    | pledged to a god.                             |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |                                               |\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    |    ___________________________________________|_\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "    \\   /                                            /\n");
-    write(ff, outstr, strlen(outstr));
-    sprintf(outstr, "     \\_/____________________________________________/\n\n");
-    write(ff, outstr, strlen(outstr));
-    close(ff);
+    breakdownScrollOut.close();
 
     std::clog << "done.\nDone.\n";
 #endif
@@ -652,7 +434,7 @@ void runDemographics() {
 #endif
 }
 
-int cmdDemographics(Player* player, cmd* cmnd) {
+int cmdDemographics(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("Beginning demographics routine.\nCheck for results in a few seconds.\n");
     runDemographics();
     return(0);

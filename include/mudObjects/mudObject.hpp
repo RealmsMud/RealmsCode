@@ -16,11 +16,11 @@
  *
  */
 
-#ifndef MUDOBJECTS_H
-#define MUDOBJECTS_H
+#pragma once
 
 #include <list>
 #include <map>
+#include <memory>
 #include <set>
 
 #include "delayedAction.hpp"
@@ -39,8 +39,7 @@ class Player;
 class UniqueRoom;
 
 
-
-class MudObject {
+class MudObject: public std::enable_shared_from_this<MudObject> {
 private:
     std::string name;
 
@@ -58,7 +57,7 @@ public:
     void setRegistered();
     void setUnRegistered();
 
-    bool registerMo();
+    bool registerMo(const std::shared_ptr<MudObject>& mo);
     bool unRegisterMo();
 
     virtual void registerContainedItems();
@@ -79,37 +78,36 @@ public:
     MudObject();
     virtual ~MudObject();
     void moReset();
-    void moDestroy();
 
     void setId(std::string_view newId, bool handleParentSet = true);
 
-    MudObject* getAsMudObject();
-    Monster* getAsMonster();
-    Player* getAsPlayer();
-    Creature* getAsCreature();
-    Object* getAsObject();
-    UniqueRoom *getAsUniqueRoom();
-    AreaRoom *getAsAreaRoom();
-    BaseRoom* getAsRoom();
-    Exit* getAsExit();
+    std::shared_ptr<MudObject> getAsMudObject();
+    std::shared_ptr<Monster>  getAsMonster();
+    std::shared_ptr<Player> getAsPlayer();
+    std::shared_ptr<Creature> getAsCreature();
+    std::shared_ptr<Object>  getAsObject();
+    std::shared_ptr<UniqueRoom> getAsUniqueRoom();
+    std::shared_ptr<AreaRoom> getAsAreaRoom();
+    std::shared_ptr<BaseRoom> getAsRoom();
+    std::shared_ptr<Exit> getAsExit();
 
-    [[nodiscard]] const Monster* getAsConstMonster() const;
-    [[nodiscard]] const Player* getAsConstPlayer() const;
-    [[nodiscard]] const Creature* getAsConstCreature() const;
-    [[nodiscard]] const Object* getAsConstObject() const;
-    [[nodiscard]] const UniqueRoom *getAsConstUniqueRoom() const;
-    [[nodiscard]] const AreaRoom *getAsConstAreaRoom() const;
-    [[nodiscard]] const BaseRoom* getAsConstRoom() const;
-    [[nodiscard]] const Exit* getAsConstExit() const;
+    [[nodiscard]] std::shared_ptr<const Monster>  getAsConstMonster() const;
+    [[nodiscard]] std::shared_ptr<const Player> getAsConstPlayer() const;
+    [[nodiscard]] std::shared_ptr<const Creature> getAsConstCreature() const;
+    [[nodiscard]] std::shared_ptr<const Object>  getAsConstObject() const;
+    [[nodiscard]] std::shared_ptr<const UniqueRoom> getAsConstUniqueRoom() const;
+    [[nodiscard]] std::shared_ptr<const AreaRoom> getAsConstAreaRoom() const;
+    [[nodiscard]] std::shared_ptr<const BaseRoom> getAsConstRoom() const;
+    [[nodiscard]] std::shared_ptr<const Exit> getAsConstExit() const;
 
-    [[nodiscard]] bool isRoom() const;
-    [[nodiscard]] bool isUniqueRoom() const;
-    [[nodiscard]] bool isAreaRoom() const;
-    [[nodiscard]] bool isObject() const;
-    [[nodiscard]] bool isPlayer() const;
-    [[nodiscard]] bool isMonster() const;
-    [[nodiscard]] bool isCreature() const;
-    [[nodiscard]] bool isExit() const;
+    [[nodiscard]] virtual bool isRoom() const;
+    [[nodiscard]] virtual bool isUniqueRoom() const;
+    [[nodiscard]] virtual bool isAreaRoom() const;
+    [[nodiscard]] virtual bool isObject() const;
+    [[nodiscard]] virtual bool isPlayer() const;
+    [[nodiscard]] virtual bool isMonster() const;
+    [[nodiscard]] virtual bool isCreature() const;
+    [[nodiscard]] virtual bool isExit() const;
 
     [[nodiscard]] const std::string & getId() const;
 
@@ -127,14 +125,14 @@ public:
     [[nodiscard]] EffectInfo* getEffect(std::string_view effect) const;
     [[nodiscard]] EffectInfo* getExactEffect(std::string_view effect) const;
     EffectInfo* addEffect(EffectInfo* newEffect, bool show = true, bool keepApplier=false);
-    EffectInfo* addEffect(const std::string&effect, long duration = -2, int strength = -2, MudObject* applier = nullptr, bool show = true, const Creature* owner=nullptr, bool keepApplier=false);
+    EffectInfo* addEffect(const std::string&effect, long duration = -2, int strength = -2, const std::shared_ptr<MudObject>& applier = nullptr, bool show = true, const std::shared_ptr<Creature> & owner=nullptr, bool keepApplier=false);
     EffectInfo* addPermEffect(const std::string& effect, int strength = 1, bool show = true);
-    bool removeEffect(const std::string& effect, bool show = true, bool remPerm = true, MudObject* fromApplier=nullptr);
+    bool removeEffect(const std::string& effect, bool show = true, bool remPerm = true, const std::shared_ptr<MudObject>& fromApplier=nullptr);
     bool removeEffect(EffectInfo* toDel, bool show = true);
     bool removeOppositeEffect(const EffectInfo *effect);
     virtual bool pulseEffects(time_t t) = 0;
 
-    bool equals(MudObject* other);
+    bool equals(const std::shared_ptr<MudObject>& other);
 
     void readCreatures(xmlNodePtr curNode, bool offline=false);
     void readObjects(xmlNodePtr curNode, bool offline=false);
@@ -150,4 +148,27 @@ public:
 };
 
 
-#endif
+template <class T>
+class inheritable_enable_shared_from_this : virtual public MudObject {
+public:
+    std::shared_ptr<T> shared_from_this() {
+        return std::dynamic_pointer_cast<T>(MudObject::shared_from_this());
+    }
+
+    std::shared_ptr<const T> shared_from_this() const {
+        return std::dynamic_pointer_cast<const T>(MudObject::shared_from_this());
+    }
+
+    /* Utility method to easily downcast.
+     * Useful when a child doesn't inherit directly from enable_shared_from_this
+     * but wants to use the feature.
+     */
+    template <class Down>
+    std::shared_ptr<Down> downcasted_shared_from_this() {
+        return std::dynamic_pointer_cast<Down>(MudObject::shared_from_this());
+    }
+    template <class Down>
+    std::shared_ptr<const Down> downcasted_shared_from_this() const {
+        return std::dynamic_pointer_cast<const Down>(MudObject::shared_from_this());
+    }
+};

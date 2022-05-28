@@ -47,8 +47,8 @@ bool Config::loadGuilds() {
     xmlNodePtr  cur;
     char        filename[80];
 
-    // build an XML tree from a the file
-    sprintf(filename, "%s/guilds.xml", Path::PlayerData);
+    // build an XML tree from the file
+    sprintf(filename, "%s/guilds.xml", Path::PlayerData.c_str());
 
     xmlDoc = xml::loadFile(filename, "Guilds");
     if(xmlDoc == nullptr)
@@ -194,7 +194,7 @@ bool Config::saveGuilds() const {
         gcp->saveToXml(rootNode);
     }
 
-    sprintf(filename, "%s/guilds.xml", Path::PlayerData);
+    sprintf(filename, "%s/guilds.xml", Path::PlayerData.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);

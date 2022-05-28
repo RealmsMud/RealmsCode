@@ -6,6 +6,6 @@
 #define REALMSCODE_SECURITY_HPP
 class Socket;
 
-void changePassword(Socket* sock, const std::string& str);
+void changePassword(std::shared_ptr<Socket> sock, const std::string& str);
 
 #endif //REALMSCODE_SECURITY_HPP

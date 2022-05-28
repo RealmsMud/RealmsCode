@@ -23,7 +23,6 @@
 
 #include "size.hpp"                                 // for whatSize, Size
 #include "track.hpp"                                // for Track
-#include "utils.hpp"                                // for MAX
 #include "xml.hpp"                                  // for saveNonZeroNum
 
 //*********************************************************************
@@ -40,7 +39,7 @@ short Track::getNum() const { return(num); }
 Size Track::getSize() const { return(size); }
 std::string Track::getDirection() const { return(direction); }
 
-void Track::setNum(short n) { num = MAX<short>(0, n); }
+void Track::setNum(short n) { num = std::max<short>(0, n); }
 void Track::setSize(Size s) { size = s; }
 void Track::setDirection(std::string_view dir) { direction = dir; }
 

@@ -18,7 +18,6 @@
 
 #include "mud.hpp"                     // for LT, LT_PLAYER_SEND, LT_AGE
 #include "mudObjects/creatures.hpp"    // for Creature, PetList
-#include "utils.hpp"                   // for MIN, MAX
 
 //********************************************************************
 //              fixLts
@@ -39,6 +38,6 @@ void Creature::fixLts() {
         if(lasttime[i].ltime == 0 && lasttime[i].interval == 0)
             continue;
         lasttime[i].ltime += tdiff;
-        lasttime[i].ltime = MIN(t, lasttime[i].ltime);
+        lasttime[i].ltime = std::min(t, lasttime[i].ltime);
     }
 }

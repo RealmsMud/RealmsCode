@@ -48,14 +48,14 @@ void Location::load(xmlNodePtr curNode) {
     }
 }
 
-BaseRoom* Location::loadRoom(Player* player) const {
-    UniqueRoom* uRoom=nullptr;
-    if(room.id && ::loadRoom(room, &uRoom))
+std::shared_ptr<BaseRoom> Location::loadRoom(const std::shared_ptr<Player>& player) const {
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
+    if(room.id && ::loadRoom(room, uRoom))
         return(uRoom);
 
-    Area* area = gServer->getArea(mapmarker.getArea());
+    std::shared_ptr<Area>  area = gServer->getArea(mapmarker.getArea());
     if(area) {
-        AreaRoom* aRoom = area->loadRoom(player, &mapmarker, false);
+        std::shared_ptr<AreaRoom> aRoom = area->loadRoom(player, mapmarker, false);
         return(aRoom);
     }
 

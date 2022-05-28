@@ -46,7 +46,6 @@
 #include "mudObjects/objects.hpp"                   // for Object, DroppedBy
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "objIncrease.hpp"                          // for ObjIncrease
-#include "os.hpp"                                   // for ASSERTLOG, merror
 #include "paths.hpp"                                // for checkDirExists
 #include "proto.hpp"                                // for objectPath, valid...
 #include "range.hpp"                                // for Range
@@ -81,52 +80,68 @@ int objRefSaveFlags[] =
 //                      loadObject
 //*********************************************************************
 
-bool loadObject(int index, Object** pObject, bool offline) {
+bool loadObject(int index, std::shared_ptr<Object>&  pObject, bool offline) {
     CatRef cr;
     cr.id = index;
     return(loadObject(cr, pObject, offline));
 }
 
-bool loadObject(const CatRef& cr, Object** pObject, bool offline) {
+bool loadObject(const CatRef& cr, std::shared_ptr<Object>&  pObject, bool offline) {
     if(!validObjId(cr))
         return(false);
 
     // Check if object is already loaded, and if so return pointer
     if(gServer->objectCache.contains(cr)) {
-        *pObject = new Object;
-        gServer->objectCache.fetch(cr, pObject, false);
+        pObject = std::make_shared<Object>(*gServer->objectCache.fetch_ptr(cr, false));
     } else {
         // Otherwise load the object and return a pointer to the newly loaded object
         // Load the object from it's file
         if(!loadObjectFromFile(cr, pObject, offline))
             return(false);
-        gServer->objectCache.insert(cr, pObject);
+        gServer->objectCache.insert(cr, *pObject);
     }
 
     if(pObject) {
         // Quest items are now auto NO-DROP
-        if((*pObject)->getQuestnum()) {
-            (*pObject)->setFlag(O_NO_DROP);
+        if(pObject->getQuestnum()) {
+            pObject->setFlag(O_NO_DROP);
         }
         // cannot steal scrolls
-        if((*pObject)->getType() == ObjectType::SCROLL) {
-            (*pObject)->setFlag(O_NO_STEAL);
+        if(pObject->getType() == ObjectType::SCROLL) {
+            pObject->setFlag(O_NO_STEAL);
         }
     }
     return(true);
+}
+
+const Object* getCachedObject(const CatRef& cr) {
+    /*
+     * Get a const pointer directly to the cached object.  Useful for checking O_ALWAYS_DROP and other conditions
+     * before making a more expensive copy.
+     */
+    if(!validObjId(cr))
+        return(nullptr);
+
+    // Check if object is already loaded, and if so return pointer
+    if(!gServer->objectCache.contains(cr)) {
+        std::shared_ptr<Object> pObject;
+        if(!loadObjectFromFile(cr, pObject))
+            return(nullptr);
+        gServer->objectCache.insert(cr, *pObject);
+    }
+    return gServer->objectCache.fetch_ptr(cr, false);
 }
 
 //*********************************************************************
 //                      loadObjectFromFile
 //*********************************************************************
 
-bool loadObjectFromFile(const CatRef& cr, Object** pObject, bool offline) {
+bool loadObjectFromFile(const CatRef& cr, std::shared_ptr<Object>&  pObject, bool offline) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int         num;
-    char        filename[256];
 
-    sprintf(filename, "%s", objectPath(cr));
+    auto filename = Path::objectPath(cr);
 
     if((xmlDoc = xml::loadFile(filename, "Object")) == nullptr)
         return(false);
@@ -140,13 +155,11 @@ bool loadObjectFromFile(const CatRef& cr, Object** pObject, bool offline) {
 
     if(num == cr.id) {
         // BINGO: This is the object we want, read it in
-        *pObject = new Object;
-        if(!*pObject)
-            merror("loadObjectFile", FATAL);
-        xml::copyPropToString((*pObject)->version, rootNode, "Version");
+        pObject = std::make_shared<Object>();
+        xml::copyPropToString(pObject->version, rootNode, "Version");
 
-        (*pObject)->readFromXml(rootNode, nullptr, offline);
-        (*pObject)->setId("-1");
+        pObject->readFromXml(rootNode, nullptr, offline);
+        pObject->setId("-1");
     }
 
     xmlFreeDoc(xmlDoc);
@@ -234,7 +247,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
         }
         else if(NODE_NAME(curNode, "Dice")) damage.load(curNode);
         else if(NODE_NAME(curNode, "Flags")) {
-            loadBits(curNode, flags);
+            loadBitset(curNode, flags);
         }
         else if(NODE_NAME(curNode, "LastTimes")) {
             loadLastTimes(curNode, lasttime);
@@ -313,7 +326,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
     }
     // make sure uniqueness stays intact
     setFlag(O_UNIQUE);
-    if(!gConfig->getUnique(this))
+    if(!gConfig->getUnique(getAsObject()))
         clearFlag(O_UNIQUE);
 
     escapeText();
@@ -328,20 +341,19 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
 
 void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode = curNode->children;
-    Object* object=nullptr, *object2=nullptr;
+    std::shared_ptr<Object>  object=nullptr, object2;
     CatRef  cr;
-    int     i=0,quantity=0;
+    int     i,quantity;
 
-    Creature* cParent = getAsCreature();
-//  Monster* mParent = parent->getMonster();
-//  Player* pParent = parent->getPlayer();
-    UniqueRoom* rParent = getAsUniqueRoom();
-    Object* oParent = getAsObject();
-    std::list<std::string> *idList = nullptr;
+    std::shared_ptr<Creature> cParent = getAsCreature();
+//  std::shared_ptr<Monster>  mParent = parent->getMonster();
+//  std::shared_ptr<Player> pParent = parent->getPlayer();
+    std::shared_ptr<UniqueRoom> rParent = getAsUniqueRoom();
+    std::shared_ptr<Object>  oParent = getAsObject();
+    std::list<std::string> *idList;
 
     while(childNode) {
         object = nullptr;
-        object2 = nullptr;
         quantity = xml::getIntProp(childNode, "Quantity");
         if(quantity < 1)
             quantity = 1;
@@ -352,19 +364,19 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
         try {
             if(NODE_NAME(childNode, "Object")) {
                 // If it's a full object, read it in
-                object = new Object;
-                if(!object)
-                    merror("loadObjectsXml", FATAL);
+                object = std::make_shared<Object>();
                 object->readFromXml(childNode, idList);
             } else if(NODE_NAME(childNode, "ObjRef")) {
+                if(object)
+                    std::clog << "HMMM" << std::endl;
                 // If it's an object reference, we want to first load the parent object
                 // and then use readObjectXml to update any fields that may have changed
                 cr.load(childNode);
                 cr.id = xml::getIntProp(childNode, "Num");
                 if(!validObjId(cr)) {
-                    std::clog <<  "Invalid object " << cr.str() << std::endl;
+                    std::clog << "Invalid object " << cr.displayStr() << std::endl;
                 } else {
-                    if(loadObject(cr, &object)) {
+                    if(loadObject(cr, object)) {
                         // These two flags might be cleared on the reference object, so let that object set them if it wants to
                         object->clearFlag(O_HIDDEN);
                         object->clearFlag(O_CURSED);
@@ -374,18 +386,17 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
             }
             if(object) {
                 std::list<std::string>::iterator idIt;
-                if(quantity > 1)
+                if(quantity > 1 && idList)
                     idIt = idList->begin();
 
                 for(i=0; i<quantity; i++) {
                     if(!i) {
                         object2 = object;  // just a reference
                     } else {
-                        object2 = new Object;
-                        *object2 = *object;
+                        object2 = std::make_shared<Object>(*object);
                     }
                     try {
-                        if(quantity > 1 && idIt != idList->end())
+                        if(quantity > 1 && idList && idIt != idList->end())
                             object2->setId(*idIt++);
                         // Add it to the appropriate parent
                         if(oParent) {
@@ -398,8 +409,6 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
                     } catch(std::runtime_error &e) {
                         std::clog << "Error setting ID: " << e.what() << std::endl;
                         if(object2) {
-                            delete object2;
-                            object2 = nullptr;
                         }
                     }
                 }
@@ -407,14 +416,11 @@ void MudObject::readObjects(xmlNodePtr curNode, bool offline) {
         } catch(std::runtime_error &e) {
             std::clog << "Error loading object: " << e.what() << std::endl;
             if(object != nullptr) {
-                delete object;
                 object = nullptr;
             }
         }
-        if(idList) {
-            delete idList;
-            idList = nullptr;
-        }
+        delete idList;
+
         childNode = childNode->next;
     }
 }
@@ -432,7 +438,7 @@ void DroppedBy::load(xmlNodePtr rootNode) {
     }
 }
 
-xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits);
+xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const boost::dynamic_bitset<>& bits);
 
 //*********************************************************************
 //                      saveObject
@@ -446,14 +452,11 @@ xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, 
 int Object::saveToFile() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    char        filename[256];
-
-    ASSERTLOG( this );
 
     // Invalid Number
     if(info.id < 0)
         return(-1);
-    Path::checkDirExists(info.area, objectPath);
+    Path::checkDirExists(info.area, Path::objectPath);
 
     gServer->saveIds();
 
@@ -463,7 +466,7 @@ int Object::saveToFile() {
 
     // make sure uniqueness stays intact
     setFlag(O_UNIQUE);
-    if(!gConfig->getUnique(this))
+    if(!gConfig->getUnique(getAsObject()))
         clearFlag(O_UNIQUE);
 
     escapeText();
@@ -472,7 +475,7 @@ int Object::saveToFile() {
     saveToXml(rootNode, ALLITEMS, LoadType::LS_PROTOTYPE, false);
     id = idTemp;
 
-    strcpy(filename, objectPath(info));
+    auto filename = Path::objectPath(info);
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(0);
@@ -487,18 +490,14 @@ int Object::saveToFile() {
 // in which case it will only save fields that are changed in the
 // ordinary course of the game
 
-int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int quantity, bool saveId, std::list<std::string> *idList) const {
-//  xmlNodePtr  rootNode;
+int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int quantity, bool saveId, const std::list<std::string> *idList) const {
     xmlNodePtr      curNode;
     xmlNodePtr      childNode;
 
-    int i=0;
+    int i;
 
     if(rootNode == nullptr)
         return(-1);
-
-    ASSERTLOG( info.id >= 0 );
-    ASSERTLOG( info.id < OMAX );
 
     // If the object's index is 0, then we have to do a full save
     if(!info.id && saveType != LoadType::LS_FULL && saveType != LoadType::LS_PROTOTYPE) {
@@ -508,8 +507,8 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     }
 
     // record objects saved during swap
-    if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((std::string)"o" + info.rstr(), false);
+    if(gConfig->swapIsInteresting(getAsConstObject()))
+        gConfig->swapLog((std::string)"o" + info.str(), false);
 
     xml::newNumProp(rootNode, "Num", info.id);
     xml::newProp(rootNode, "Area", info.area);
@@ -599,7 +598,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
     }
 
     if(saveType == LoadType::LS_FULL || saveType == LoadType::LS_PROTOTYPE) {
-        saveBits(rootNode, "Flags", MAX_OBJECT_FLAGS, flags);
+        saveBitset(rootNode, "Flags", MAX_OBJECT_FLAGS, flags);
         // These are only saved for full objects
         if(type != ObjectType::LOTTERYTICKET)
             xml::saveNonNullString(rootNode, "Description", description);
@@ -684,13 +683,12 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 
 int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet &set, int permOnly) {
     xmlNodePtr curNode;
-    int quantity = 0;
+    int quantity;
     LoadType lt;
     ObjectSet::const_iterator it;
-    const Object *obj;
-    std::list<std::string> *idList = nullptr;
+
     for (it = set.begin(); it != set.end();) {
-        obj = (*it++);
+        const std::shared_ptr<Object>&obj = (*it++);
         if (obj &&
             (permOnly == ALLITEMS ||
              (permOnly == PERMONLY && obj->flagIsSet(O_PERM_ITEM))
@@ -705,20 +703,18 @@ int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet &set, int permOnly) {
                 lt = LoadType::LS_REF;
             }
 
-            // TODO: Modify this to work with object ids
             // quantity code reduces filesize for player shops, storage rooms, and
             // inventories (which tend of have a lot of identical items in them)
             quantity = 1;
-            idList = new std::list<std::string>;
-            idList->push_back(obj->getId());
+            std::list<std::string> idList;
+            idList.push_back(obj->getId());
             while (it != set.end() && *(*it) == *obj) {
-                idList->push_back((*it)->getId());
+                idList.push_back((*it)->getId());
                 quantity++;
                 it++;
             }
 
-            obj->saveToXml(curNode, permOnly, lt, quantity, true, idList);
-            delete idList;
+            obj->saveToXml(curNode, permOnly, lt, quantity, true, &idList);
         }
     }
     return (0);
@@ -737,14 +733,14 @@ void DroppedBy::save(xmlNodePtr rootNode) const {
 //                      saveObjRefFlags
 //*********************************************************************
 
-xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits) {
+xmlNodePtr saveObjRefFlags(xmlNodePtr parentNode, const char* name, int maxBit, const boost::dynamic_bitset<>& bits) {
     xmlNodePtr curNode=nullptr;
     // this nested loop means we won't create an xml node if we don't have to
     for(int i=0; objRefSaveFlags[i] != -1; i++) {
-        if(BIT_ISSET(bits, objRefSaveFlags[i])) {
+        if(bits.test(objRefSaveFlags[i])) {
             curNode = xml::newStringChild(parentNode, name);
             for(; objRefSaveFlags[i] != -1; i++) {
-                if(BIT_ISSET(bits, objRefSaveFlags[i]))
+                if(bits.test(objRefSaveFlags[i]))
                     saveBit(curNode, objRefSaveFlags[i]);
             }
             return(curNode);

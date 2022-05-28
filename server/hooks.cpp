@@ -32,6 +32,7 @@
 #include "mudObjects/players.hpp"    // for Player
 #include "server.hpp"                // for Server, gServer
 #include "socket.hpp"                // for Socket
+#include "mud.hpp"
 
 
 //*********************************************************************
@@ -39,8 +40,10 @@
 //*********************************************************************
 // View the "hooks" dm help file to view available hooks.
 
-Hooks::Hooks() {
-    parent = nullptr;
+//Hooks::Hooks() = default;
+
+Hooks::Hooks(MudObject* target) {
+    setParent(target);
 }
 
 //*********************************************************************
@@ -103,7 +106,7 @@ std::string Hooks::display() const {
 //                      seeHooks
 //*********************************************************************
 
-bool seeHooks(Socket* sock) {
+bool seeHooks(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         return(sock->getPlayer()->isDm() && (
             sock->getPlayer()->flagIsSet(P_SEE_HOOKS) ||
@@ -116,7 +119,7 @@ bool seeHooks(Socket* sock) {
 //                      seeAllHooks
 //*********************************************************************
 
-bool seeAllHooks(Socket* sock) {
+bool seeAllHooks(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         return(sock->getPlayer()->isDm() && sock->getPlayer()->flagIsSet(P_SEE_ALL_HOOKS));
     return(false);
@@ -129,17 +132,24 @@ bool seeAllHooks(Socket* sock) {
 std::string hookMudObjName(const MudObject* target) {
     if(!target)
         return("^W-none-^o");
-    const AreaRoom* aRoom = target->getAsConstAreaRoom();
+    const std::shared_ptr<const AreaRoom> aRoom = target->getAsConstAreaRoom();
     if(!aRoom)
         return((std::string)target->getName() + "^o");
     return(aRoom->mapmarker.str() + "^o");
+}
+
+std::string hookMudObjName(const std::shared_ptr<MudObject>& target) {
+    return hookMudObjName(target.get());
 }
 
 //*********************************************************************
 //                      execute
 //*********************************************************************
 
-bool Hooks::execute(const std::string &event, MudObject* target, const std::string &param1, const std::string &param2, const std::string &param3) const {
+bool Hooks::execute(const std::string &event, const std::shared_ptr<MudObject>& target, const std::string &param1, const std::string &param2, const std::string &param3) const {
+    // No hooks while crashing
+    if(Crash) return false;
+
     bool ran = false;
 
     std::string params;
@@ -162,12 +172,15 @@ bool Hooks::execute(const std::string &event, MudObject* target, const std::stri
 
         broadcast(seeHooks, fmt::format("^orunning hook {}: {}^o on {}^o{}: ^x{}", event,
             hookMudObjName(parent), hookMudObjName(target), params, it->second).c_str());
-        gServer->runPython(it->second, param1 + "," + param2 + "," + param3, parent, target);
+        gServer->runPython(it->second, param1 + "," + param2 + "," + param3, parent->shared_from_this(), target);
     }
     return(ran);
 }
 
-bool Hooks::executeWithReturn(const std::string &event, MudObject* target, const std::string &param1, const std::string &param2, const std::string &param3) const {
+bool Hooks::executeWithReturn(const std::string &event, const std::shared_ptr<MudObject>& target, const std::string &param1, const std::string &param2, const std::string &param3) const {
+    // No hooks while crashing
+    if(Crash) return false;
+
     bool returnValue = true;
 
     std::string params;
@@ -188,7 +201,7 @@ bool Hooks::executeWithReturn(const std::string &event, MudObject* target, const
         broadcast(seeHooks, fmt::format("^orunning hook {}: {}^o on {}^o{}: ^x", event,
             hookMudObjName(parent), hookMudObjName(target), params).c_str());
 
-        returnValue = gServer->runPythonWithReturn(it->second, param1 + "," + param2 + "," + param3, parent, target);
+        returnValue = gServer->runPythonWithReturn(it->second, param1 + "," + param2 + "," + param3, parent->shared_from_this(), target);
     }
     return(returnValue);
 }
@@ -198,7 +211,10 @@ bool Hooks::executeWithReturn(const std::string &event, MudObject* target, const
 // For hooks that must be run in pairs, run this
 
 // A trigger1 or trigger2 null value is valid, so handle appropriate
-bool Hooks::run(MudObject* trigger1, const std::string &event1, MudObject* trigger2, const std::string &event2, const std::string &param1, const std::string &param2, const std::string &param3) {
+bool Hooks::run(const std::shared_ptr<MudObject>& trigger1, const std::string &event1, const std::shared_ptr<MudObject>& trigger2, const std::string &event2, const std::string &param1, const std::string &param2, const std::string &param3) {
+    // No hooks while crashing
+    if(Crash) return false;
+
     bool ran=false;
     if(trigger1 && trigger1->hooks.execute(event1, trigger2, param1, param2, param3))
         ran = true;

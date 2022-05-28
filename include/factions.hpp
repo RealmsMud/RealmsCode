@@ -78,7 +78,7 @@ public:
     [[nodiscard]] long getDeityRegard(int i) const;
     [[nodiscard]] long getVampirismRegard() const;
     [[nodiscard]] long getLycanthropyRegard() const;
-    [[nodiscard]] long getInitialRegard(const Player* player) const;
+    [[nodiscard]] long getInitialRegard(const std::shared_ptr<const Player> &player) const;
     [[nodiscard]] long getGuildRegard(int i) const;
     [[nodiscard]] long getClanRegard(int i) const;
 
@@ -86,10 +86,10 @@ public:
     const FactionRegard* getMax();
     const FactionRegard* getMin();
 
-    bool alwaysHates(const Player* player) const;
-    long getUpperLimit(const Player* player) const;
-    long getLowerLimit(const Player* player) const;
-    Player* findAggro(BaseRoom* room);
+    bool alwaysHates(const std::shared_ptr<Player>& player) const;
+    long getUpperLimit(const std::shared_ptr<Player>& player) const;
+    long getLowerLimit(const std::shared_ptr<Player>& player) const;
+    std::shared_ptr<Player> findAggro(const std::shared_ptr<BaseRoom>& room);
     [[nodiscard]] bool isParent() const;
     void setParent(std::string_view value);
     void setIsParent(bool value);
@@ -99,16 +99,16 @@ public:
     static std::string getNoun(int regard);
     static std::string getColor(int regard);
     static std::string getBar(int regard, bool alwaysPad);
-    static void worshipSocial(Monster *monster);
+    static void worshipSocial(const std::shared_ptr<Monster>& monster);
 
-    static bool willAggro(const Player* player, const std::string &faction);
-    static bool willSpeakWith(const Player* player, const std::string &faction);
-    static bool willDoBusinessWith(const Player* player, const std::string &faction);
-    static bool willBeneCast(const Player* player, const std::string &faction);
-    static bool willLetThrough(const Player* player, const std::string &faction);
+    static bool willAggro(const std::shared_ptr<const Player>& player, const std::string &faction);
+    static bool willSpeakWith(const std::shared_ptr<const Player>& player, const std::string &faction);
+    static bool willDoBusinessWith(const std::shared_ptr<const Player>& player, const std::string &faction);
+    static bool willBeneCast(const std::shared_ptr<const Player>& player, const std::string &faction);
+    static bool willLetThrough(const std::shared_ptr<const Player>& player, const std::string &faction);
 
-    static Money adjustPrice(const Player* player, const std::string &faction, Money money, bool sell);
-    static bool canPledgeTo(const Player* player, const std::string &faction);
+    static Money adjustPrice(const std::shared_ptr<const Player>& player, const std::string &faction, Money money, bool sell);
+    static bool canPledgeTo(const std::shared_ptr<const Player>& player, const std::string &faction);
 
     static const int WORSHIP        = 4;
     static const int REGARD         = 3;

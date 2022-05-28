@@ -25,7 +25,6 @@
 #include <cstring>                                  // for strncmp, strcmp
 #include <ctime>                                    // for time, ctime
 #include <list>                                     // for list, operator==
-#include <ostream>                                  // for basic_ostream::op...
 #include <set>                                      // for operator==, _Rb_t...
 #include <string>                                   // for string, allocator
 
@@ -35,7 +34,6 @@
 #include "config.hpp"                               // for Config, gConfig
 #include "dm.hpp"                                   // for dmHelp, dmResaveO...
 #include "flags.hpp"                                // for O_UNIQUE, O_LORE
-#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for PROP_SHOP, PROP_S...
 #include <libxml/xmlstring.h>                       // for BAD_CAST
 #include "mudObjects/container.hpp"                 // for ObjectSet
@@ -52,6 +50,7 @@
 #include "server.hpp"                               // for Server, gServer
 #include "unique.hpp"                               // for Unique, UniqueOwner
 #include "xml.hpp"                                  // for copyToNum, saveNo...
+#include "toNum.hpp"
 
 //*********************************************************************
 //                          UniqueObject
@@ -99,23 +98,23 @@ long UniqueOwner::getTime() const {
     return(time);
 }
 
-bool UniqueOwner::is(const Player* player, const CatRef& cr) const {
+bool UniqueOwner::is(const std::shared_ptr<Player>& player, const CatRef& cr) const {
     return((!player || owner == player->getName()) && item == cr);
 }
 
-bool UniqueOwner::is(const Player* player, const Object* object) const {
+bool UniqueOwner::is(const std::shared_ptr<Player>& player, const std::shared_ptr<const Object> & object) const {
     if(!object)
         return(owner == player->getName());
     return(is(player, object->info));
 }
 
-void UniqueOwner::set(const Player* player, const Object* object) {
+void UniqueOwner::set(const std::shared_ptr<Player>& player, const std::shared_ptr<const Object> & object) {
     time = object->getMade() ? object->getMade() : ::time(nullptr);
     owner = player->getName();
     item = object->info;
 }
 
-void UniqueOwner::set(const Player* player) {
+void UniqueOwner::set(const std::shared_ptr<Player>& player) {
     owner = player->getName();
 }
 
@@ -151,18 +150,18 @@ void UniqueOwner::save(xmlNodePtr curNode) const {
 //                      show
 //*********************************************************************
 
-void UniqueOwner::show(const Player* player) {
+void UniqueOwner::show(const std::shared_ptr<Player>& player) {
     std::string t = ctime(&time);
     boost::trim(t);
     player->printColor("      Time: ^c%s^x   Owner: ^c%s^x   Object: ^c%s\n",
-        t.c_str(), owner.c_str(), item.str().c_str());
+        t.c_str(), owner.c_str(), item.displayStr().c_str());
 }
 
 //*********************************************************************
 //                      doRemove
 //*********************************************************************
 
-void UniqueOwner::doRemove(Player* player, Object* parent, Object* object, bool online, bool destroy) {
+void UniqueOwner::doRemove(std::shared_ptr<Player> player, const std::shared_ptr<Object>&  parent, std::shared_ptr<Object>  object, bool online, bool destroy) {
     if(!destroy)
         object->clearFlag(O_UNIQUE);
     else {
@@ -174,20 +173,18 @@ void UniqueOwner::doRemove(Player* player, Object* parent, Object* object, bool 
         else if(parent)
             parent->delObj(object);
 
-        UniqueRoom* uRoom=nullptr;
+        std::shared_ptr<UniqueRoom> uRoom=nullptr;
         if(object->inUniqueRoom())
             uRoom = object->getUniqueRoomParent();
         object->deleteFromRoom();
         if(uRoom)
             uRoom->saveToFile(0);
-        delete object;
+        object.reset();
     }
 
 
     if(player) {
         player->save(online);
-        if(!online)
-            free_crt(player);
     }
 }
 
@@ -196,19 +193,19 @@ void UniqueOwner::doRemove(Player* player, Object* parent, Object* object, bool 
 //*********************************************************************
 
 void UniqueOwner::removeUnique(bool destroy) {
-    Player* player = gServer->findPlayer(owner.c_str());
+    std::shared_ptr<Player> player = gServer->findPlayer(owner);
     bool online=true;
 
-    if(!player && loadPlayer(owner.c_str(), &player))
+    if(!player && loadPlayer(owner.c_str(), player))
         online = false;
 
     if(player) {
-        for(Object* obj : player->objects) {
+        for(const auto& obj : player->objects) {
             if(Unique::isUnique(obj) && obj->info == item) {
                 doRemove(player, nullptr, obj, online, destroy);
                 return;
             }
-            for(Object *subObj : obj->objects) {
+            for(const auto& subObj : obj->objects) {
                 if(Unique::isUnique(subObj) && subObj->info == item) {
                     doRemove(player, obj, subObj, online, destroy);
                     return;
@@ -224,7 +221,7 @@ void UniqueOwner::removeUnique(bool destroy) {
                     doRemove(player, nullptr, i, online, destroy);
                     return;
                 }
-                for(Object* obj : i->objects) {
+                for(const auto& obj : i->objects) {
                     if(Unique::isUnique(obj) && obj->info == item) {
                         doRemove(player, i, obj, online, destroy);
                         return;
@@ -232,16 +229,13 @@ void UniqueOwner::removeUnique(bool destroy) {
                 }
             }
         }
-
-        if(!online)
-            free_crt(player);
     }
 
     // for properties, we only have to worry about primary owners
     Property* p=nullptr;
     std::list<Property*>::iterator it;
     std::list<Range>::iterator rt;
-    UniqueRoom* uRoom=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
     CatRef  cr;
 
     for(it = gConfig->properties.begin() ; it != gConfig->properties.end() ; it++) {
@@ -255,14 +249,14 @@ void UniqueOwner::removeUnique(bool destroy) {
             cr = (*rt).low;
             for(; cr.id <= (*rt).high; cr.id++) {
 
-                if(!loadRoom(cr, &uRoom))
+                if(!loadRoom(cr, uRoom))
                     continue;
-                for(Object* obj : uRoom->objects) {
+                for(const auto& obj : uRoom->objects) {
                     if(Unique::isUnique(obj) && obj->info == item) {
                         doRemove(nullptr, nullptr, obj, online, destroy);
                         return;
                     }
-                    for(Object* subObj : obj->objects) {
+                    for(const auto& subObj : obj->objects) {
                         if(Unique::isUnique(subObj) && subObj->info == item) {
                             doRemove(nullptr, obj, subObj, online, destroy);
                             return;
@@ -364,7 +358,7 @@ int Unique::numInOwners(const CatRef& cr) const {
 //                          numObjects
 //*********************************************************************
 
-int Unique::numObjects(const Player* player) const {
+int Unique::numObjects(const std::shared_ptr<Player>& player) const {
     std::list<UniqueOwner>::const_iterator it;
     int i=0;
 
@@ -379,7 +373,7 @@ int Unique::numObjects(const Player* player) const {
 //                          getUnique
 //*********************************************************************
 
-Unique* Config::getUnique(const Object* object) const {
+Unique* Config::getUnique(const std::shared_ptr<const Object>&  object) const {
     if(!Unique::isUnique(object) || !validObjId(object->info))
         return(nullptr);
     std::list<Unique*>::const_iterator it;
@@ -441,7 +435,7 @@ void Config::clearLimited() {
 //                          canLoad
 //*********************************************************************
 
-bool Unique::canLoad(const Object* object) {
+bool Unique::canLoad(const std::shared_ptr<Object>&  object) {
     Unique* unique = gConfig->getUnique(object);
     if(!unique)
         return(true);
@@ -487,7 +481,7 @@ bool Unique::checkItemLimit(const CatRef& item) const {
 //                          canGet
 //*********************************************************************
 
-bool Unique::canGet(const Player* player, const CatRef& item, bool transfer) const {
+bool Unique::canGet(const std::shared_ptr<Player>& player, const CatRef& item, bool transfer) const {
     if(player->isStaff())
         return(true);
     // if we're trying to transfer the item to this player,
@@ -504,12 +498,13 @@ bool Unique::canGet(const Player* player, const CatRef& item, bool transfer) con
     return(true);
 }
 
-bool Unique::canGet(const Player* player, const Object* object, bool transfer) {
+bool Unique::canGet(const std::shared_ptr<Player>&
+        player, const std::shared_ptr<Object>  object, bool transfer) {
     Unique* unique = gConfig->getUnique(object);
     if(!player || (unique && !unique->canGet(player, object->info, transfer)))
         return(false);
 
-    for(Object* obj : object->objects) {
+    for(const auto& obj : object->objects) {
         if(!canGet(player, obj, transfer))
             return(false);
     }
@@ -520,7 +515,7 @@ bool Unique::canGet(const Player* player, const Object* object, bool transfer) {
 //                          is
 //*********************************************************************
 
-bool Unique::is(const Object* object) {
+bool Unique::is(const std::shared_ptr<const Object> &object) {
     return(isUnique(object) || hasUnique(object));
 }
 
@@ -528,7 +523,7 @@ bool Unique::is(const Object* object) {
 //                          isUnique
 //*********************************************************************
 
-bool Unique::isUnique(const Object* object) {
+bool Unique::isUnique(const std::shared_ptr<const Object>& object) {
     return(object->getType() != ObjectType::MONEY && object->flagIsSet(O_UNIQUE));
 }
 
@@ -536,8 +531,8 @@ bool Unique::isUnique(const Object* object) {
 //                          hasUnique
 //*********************************************************************
 
-bool Unique::hasUnique(const Object* object) {
-    for(Object* obj : object->objects) {
+bool Unique::hasUnique(const std::shared_ptr<const Object>& object) {
+    for(const auto& obj : object->objects) {
         if(isUnique(obj))
             return(true);
     }
@@ -548,7 +543,7 @@ bool Unique::hasUnique(const Object* object) {
 //                          remove
 //*********************************************************************
 
-bool Limited::remove(Player* player, const Object* object, bool save) {
+bool Limited::remove(const std::shared_ptr<Player>& player, const std::shared_ptr<const Object> & object, bool save) {
     if(!player)
         return(false);
 
@@ -570,7 +565,7 @@ bool Limited::remove(Player* player, const Object* object, bool save) {
 //                          is
 //*********************************************************************
 
-bool Limited::is(const Object* object) {
+bool Limited::is(const std::shared_ptr<const Object>&  object) {
     return(isLimited(object) || hasLimited(object));
 }
 
@@ -578,7 +573,7 @@ bool Limited::is(const Object* object) {
 //                          isLimited
 //*********************************************************************
 
-bool Limited::isLimited(const Object* object) {
+bool Limited::isLimited(const std::shared_ptr<const Object>&  object) {
     return(Unique::isUnique(object) || Lore::isLore(object));
 }
 
@@ -586,8 +581,8 @@ bool Limited::isLimited(const Object* object) {
 //                          hasLimited
 //*********************************************************************
 
-bool Limited::hasLimited(const Object* object) {
-    for(Object* obj : object->objects) {
+bool Limited::hasLimited(const std::shared_ptr<const Object>&  object) {
+    for(const auto& obj : object->objects) {
         if(Limited::isLimited(obj))
             return(true);
     }
@@ -598,8 +593,8 @@ bool Limited::hasLimited(const Object* object) {
 //                      deleteUniques
 //*********************************************************************
 
-void Config::deleteUniques(Player* player) {
-    Object* object=nullptr;
+void Config::deleteUniques(const std::shared_ptr<Player>& player) {
+    std::shared_ptr<Object>  object=nullptr;
 
     ObjectSet::iterator it;
     for( it = player->objects.begin() ; it != player->objects.end() ; ) {
@@ -607,7 +602,7 @@ void Config::deleteUniques(Player* player) {
 
         if(Limited::remove(player, object, false)) {
             player->delObj(object, false, false, true, false);
-            delete object;
+            object.reset();
         }
     }
     player->checkDarkness();
@@ -630,11 +625,11 @@ void Config::deleteUniques(Player* player) {
 //      2 = added and killMortalObjects is run
 // adding lore items won't return anything
 
-int Limited::addOwner(Player* player, const Object* object) {
+int Limited::addOwner(const std::shared_ptr<Player>& player, const std::shared_ptr<const Object> & object) {
     int     added=0;
     Unique* unique=nullptr;
 
-    for(Object* obj : object->objects) {
+    for(const auto& obj : object->objects) {
         unique = gConfig->getUnique(obj);
         if(unique) {
             if(!added)
@@ -667,7 +662,7 @@ int Limited::addOwner(Player* player, const Object* object) {
 //*********************************************************************
 // true if killMortalObjects is run
 
-bool Unique::addOwner(const Player* player, const Object* object) {
+bool Unique::addOwner(const std::shared_ptr<Player>& player, const std::shared_ptr<const Object> & object) {
     if(!player || player->isStaff())
         return(false);
     UniqueOwner uo;
@@ -688,14 +683,14 @@ bool Unique::addOwner(const Player* player, const Object* object) {
 //                      deleteOwner
 //*********************************************************************
 
-bool Limited::deleteOwner(Player* player, const Object* object, bool save, bool lore) {
+bool Limited::deleteOwner(const std::shared_ptr<Player>& player, const std::shared_ptr<const  Object> & object, bool save, bool lore) {
     if(!player)
         return(false);
 
     bool    del=false;
     Unique* unique=nullptr;
 
-    Object* obj;
+    std::shared_ptr<Object>  obj;
     ObjectSet::iterator it;
     for(it = object->objects.begin() ; it != object->objects.end() ; ) {
         obj = (*it++);
@@ -722,7 +717,7 @@ bool Limited::deleteOwner(Player* player, const Object* object, bool save, bool 
 //                      deleteOwner
 //*********************************************************************
 
-bool Unique::deleteOwner(const Player* player, const Object* object) {
+bool Unique::deleteOwner(const std::shared_ptr<Player>& player, const std::shared_ptr<const Object> & object) {
     std::list<UniqueOwner>::iterator it;
 
     for(it = owners.begin() ; it != owners.end() ; it++) {
@@ -740,7 +735,7 @@ bool Unique::deleteOwner(const Player* player, const Object* object) {
 //                          remove
 //*********************************************************************
 
-void Unique::remove(const Player* player) {
+void Unique::remove(const std::shared_ptr<Player>& player) {
     std::list<UniqueOwner>::iterator it;
 
     for(it = owners.begin() ; it != owners.end() ;) {
@@ -835,7 +830,7 @@ bool Config::loadLimited() {
     char        filename[80];
 
     // build an XML tree from a the file
-    sprintf(filename, "%s/limited.xml", Path::PlayerData);
+    sprintf(filename, "%s/limited.xml", Path::PlayerData.c_str());
     clearLimited();
 
     xmlDoc = xml::loadFile(filename, "Limited");
@@ -899,7 +894,7 @@ void Config::saveLimited() const {
         (*lt)->save(curNode);
     }
 
-    sprintf(filename, "%s/limited.xml", Path::PlayerData);
+    sprintf(filename, "%s/limited.xml", Path::PlayerData.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }
@@ -920,10 +915,10 @@ CatRef Unique::firstObject() {
 //                      listLimited
 //*********************************************************************
 
-void Config::listLimited(const Player* player) {
+void Config::listLimited(const std::shared_ptr<Player>& player) {
     std::list<Unique*>::iterator it;
     std::list<Lore*>::iterator lt;
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
     CatRef cr;
     int id = 1;
 
@@ -938,11 +933,11 @@ void Config::listLimited(const Player* player) {
         if(!cr.id)
             player->printColor("^cnone\n");
         else {
-            if(loadObject(cr, &object)) {
+            if(loadObject(cr, object)) {
                 player->printColor("^c%s\n", object->getCName());
-                delete object;
+                object.reset();
             } else
-                player->printColor("^c%s\n", cr.str().c_str());
+                player->printColor("^c%s\n", cr.displayStr().c_str());
         }
         id++;
     }
@@ -950,7 +945,7 @@ void Config::listLimited(const Player* player) {
     player->printColor("\n\n^yLore:\n");
     for(lt = lore.begin() ; lt != lore.end() ; lt++) {
         player->printColor("   Limit: ^c%-2d^x   Object: ^c%s\n",
-            (*lt)->getLimit(), (*lt)->getInfo().str().c_str());
+            (*lt)->getLimit(), (*lt)->getInfo().displayStr().c_str());
     }
 
     player->print("\n");
@@ -960,8 +955,8 @@ void Config::listLimited(const Player* player) {
 //                      show
 //*********************************************************************
 
-void Unique::show(const Player* player) {
-    Object* object=nullptr;
+void Unique::show(const std::shared_ptr<Player>& player) {
+    std::shared_ptr<Object>  object=nullptr;
     CatRef cr;
 
     player->printColor("^yUnique Item Group:\n");
@@ -981,11 +976,11 @@ void Unique::show(const Player* player) {
     std::list<UniqueObject>::const_iterator ct;
 
     for(ct = objects.begin() ; ct != objects.end() ; ct++) {
-        player->printColor("      ^c%s", (*ct).item.str().c_str());
+        player->printColor("      ^c%s", (*ct).item.displayStr().c_str());
 
-        if(loadObject((*ct).item, &object)) {
+        if(loadObject((*ct).item, object)) {
             player->printColor(", ^c%s", object->getCName());
-            delete object;
+            object.reset();
         }
 
         if((*ct).itemLimit)
@@ -1058,7 +1053,7 @@ void Unique::deUnique(const CatRef& cr) {
 //*********************************************************************
 // for uniques only, not lore
 
-void Unique::transferOwner(const Player* owner, const Player* target, const Object* object) {
+void Unique::transferOwner(const std::shared_ptr<Player>& owner, const std::shared_ptr<Player> target, const std::shared_ptr<const Object> & object) {
     std::list<UniqueOwner>::iterator it;
 
     for(it = owners.begin() ; it != owners.end() ; it++) {
@@ -1074,7 +1069,7 @@ void Unique::transferOwner(const Player* owner, const Player* target, const Obje
 //                      transferOwner
 //*********************************************************************
 
-void Limited::transferOwner(Player* owner, Player* target, const Object* object) {
+void Limited::transferOwner(std::shared_ptr<Player> owner, const std::shared_ptr<Player>& target, const std::shared_ptr<const  Object> & object) {
     if(target && target->isStaff()) {
 
         deleteOwner(owner, object);
@@ -1100,8 +1095,8 @@ void Limited::transferOwner(Player* owner, Player* target, const Object* object)
 //                      dmUnique
 //*********************************************************************
 
-int dmUnique(Player* player, cmd* cmnd) {
-    Object* object=nullptr;
+int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object>  object=nullptr;
     Unique* unique=nullptr;
     int     id=0, len=0;
 
@@ -1114,7 +1109,7 @@ int dmUnique(Player* player, cmd* cmnd) {
 
     // they want to look at information
     if(!strcmp(cmnd->str[1], "list")) {
-        id = atoi(getFullstrText(cmnd->fullstr, 2).c_str());
+        id = toNum<int>(getFullstrText(cmnd->fullstr, 2));
         if(!id) {
 
             gConfig->listLimited(player);
@@ -1133,7 +1128,7 @@ int dmUnique(Player* player, cmd* cmnd) {
 
     // setting some info on a unique group
     if(!strcmp(cmnd->str[1], "set")) {
-        id = atoi(getFullstrText(cmnd->fullstr, 2).c_str());
+        id = toNum<int>(getFullstrText(cmnd->fullstr, 2));
         if(id)
             unique = gConfig->getUnique(id);
         if(!unique) {
@@ -1151,24 +1146,24 @@ int dmUnique(Player* player, cmd* cmnd) {
         std::string command = getFullstrText(cmnd->fullstr, 4);
         if(!strncmp(command.c_str(), "limit", 5)) {
 
-            id = atoi(getFullstrText(cmnd->fullstr, 5).c_str());
+            id = toNum<int>(getFullstrText(cmnd->fullstr, 5));
             if(id < 0) {
                 player->print("That is not a valid number.\n");
                 return(0);
             }
 
             CatRef  cr;
-            getCatRef(getFullstrText(cmnd->fullstr, 3), &cr, nullptr);
+            getCatRef(getFullstrText(cmnd->fullstr, 3), cr, nullptr);
 
             if(!unique->setObjectLimit(cr, id)) {
-                player->printColor("^c%s^x is not in that unique group.\n", cr.str().c_str());
+                player->printColor("^c%s^x is not in that unique group.\n", cr.displayStr().c_str());
                 return(0);
             }
 
             player->printColor("ItemLimit set to ^c%d^x.\n", id);
 
         } else {
-            id = atoi(command.c_str());
+            id = toNum<int>(command);
             if(id < 0) {
                 player->print("That is not a valid number.\n");
                 return(0);
@@ -1232,7 +1227,7 @@ int dmUnique(Player* player, cmd* cmnd) {
             player->print("That object is already part of a unique group.\n");
             return(0);
         }
-        id = atoi(getFullstrText(cmnd->fullstr, 3).c_str());
+        id = toNum<int>(getFullstrText(cmnd->fullstr, 3));
         unique = nullptr;
         if(id)
             unique = gConfig->getUnique(id);
@@ -1337,7 +1332,7 @@ void Lore::save(xmlNodePtr curNode) const {
 //                      isLore
 //*********************************************************************
 
-bool Lore::isLore(const Object* object) {
+bool Lore::isLore(const std::shared_ptr<const Object>&  object) {
     return(object->info.id && object->getType() != ObjectType::MONEY && object->flagIsSet(O_LORE));
 }
 
@@ -1345,8 +1340,8 @@ bool Lore::isLore(const Object* object) {
 //                          hasUnique
 //*********************************************************************
 
-bool Lore::hasLore(const Object* object) {
-    for(Object* obj : object->objects ) {
+bool Lore::hasLore(const std::shared_ptr<const Object>&  object) {
+    for(const auto& obj : object->objects ) {
         if(isLore(obj))
             return(true);
     }
@@ -1356,7 +1351,7 @@ bool Lore::hasLore(const Object* object) {
 //                      canHave
 //*********************************************************************
 
-bool Lore::canHave(const Player* player, const CatRef& cr) {
+bool Lore::canHave(const std::shared_ptr<const Player>& player, const CatRef& cr) {
     if(!validObjId(cr))
         return(true);
     int i=0, limit=1;
@@ -1379,7 +1374,7 @@ bool Lore::canHave(const Player* player, const CatRef& cr) {
     return(true);
 }
 
-bool Lore::canHave(const Player* player, const Object* object, bool checkBagOnly) {
+bool Lore::canHave(const std::shared_ptr<const Player>& player, const std::shared_ptr<const Object>  object, bool checkBagOnly) {
     if(player->isStaff())
         return(true);
 
@@ -1389,7 +1384,7 @@ bool Lore::canHave(const Player* player, const Object* object, bool checkBagOnly
             return(false);
 
     } else {
-        for(Object* obj : object->objects) {
+        for(const auto& obj : object->objects) {
             if(isLore(obj) && !canHave(player, obj->info))
                 return(false);
         }
@@ -1398,7 +1393,7 @@ bool Lore::canHave(const Player* player, const Object* object, bool checkBagOnly
     return(true);
 }
 
-bool Lore::canHave(const Player* player, const Object* object) {
+bool Lore::canHave(const std::shared_ptr<const Player>& player, const std::shared_ptr<const Object>  object) {
     return(canHave(player, object, true) && canHave(player, object, false));
 }
 
@@ -1406,11 +1401,11 @@ bool Lore::canHave(const Player* player, const Object* object) {
 //                      add
 //*********************************************************************
 
-void Lore::add(Player* player, const Object* object, bool subObjects) {
+void Lore::add(const std::shared_ptr<Player>& player, const std::shared_ptr<const Object>  object, bool subObjects) {
     if(!player)
         return;
     if(subObjects) {
-        for(Object* obj : object->objects) {
+        for(const auto& obj : object->objects) {
             add(player, obj, true);
         }
     }
@@ -1424,13 +1419,13 @@ void Lore::add(Player* player, const Object* object, bool subObjects) {
 //                      remove
 //*********************************************************************
 
-bool Lore::remove(Player* player, const Object* object, bool subObjects) {
+bool Lore::remove(const std::shared_ptr<Player>& player, const std::shared_ptr<const Object>  object, bool subObjects) {
     if(!player)
         return(false);
     bool del=false;
 
     if(subObjects) {
-        for(Object* obj : object->objects) {
+        for(const auto& obj : object->objects) {
             del = remove(player, obj, true) || del;
         }
     }
@@ -1454,13 +1449,13 @@ bool Lore::remove(Player* player, const Object* object, bool subObjects) {
 //                      reset
 //*********************************************************************
 
-void Lore::reset(Player* player, Creature* creature) {
+void Lore::reset(const std::shared_ptr<Player>& player, std::shared_ptr<Creature> creature) {
 
     if(!creature) {
         player->lore.clear();
         creature = player;
     }
-    for(Object* obj : creature->objects) {
+    for(const auto& obj : creature->objects) {
         Lore::add(player, obj, true);
     }
 
@@ -1476,7 +1471,7 @@ void Lore::reset(Player* player, Creature* creature) {
     Property* p=nullptr;
     std::list<Property*>::iterator it;
     std::list<Range>::iterator rt;
-    UniqueRoom* uRoom=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
     CatRef  cr;
 
     for(it = gConfig->properties.begin() ; it != gConfig->properties.end() ; it++) {
@@ -1491,13 +1486,13 @@ void Lore::reset(Player* player, Creature* creature) {
 
             for(; cr.id <= (*rt).high; cr.id++) {
 
-                if(!loadRoom(cr, &uRoom))
+                if(!loadRoom(cr, uRoom))
                     continue;
 
                 // don't include objects in main shop room
                 if(p->getType() == PROP_SHOP && uRoom->flagIsSet(R_SHOP))
                     continue;
-                for(Object* obj : uRoom->objects) {
+                for(const auto& obj : uRoom->objects) {
                     // don't include objects on floor of storage room (chests only)
                     if(p->getType() != PROP_STORAGE || obj->info.isArea("stor"))
                         Lore::add(player, obj, true);
@@ -1507,7 +1502,7 @@ void Lore::reset(Player* player, Creature* creature) {
         }
 
     }
-    for(Monster* pet : player->pets) {
+    for(const auto& pet : player->pets) {
         if(pet->isPet())
             reset(player, pet);
     }
@@ -1561,7 +1556,7 @@ void Config::addLore(const CatRef& cr, int i) {
 //                      uniqueDecay
 //*********************************************************************
 
-void Config::uniqueDecay(Player* player) {
+void Config::uniqueDecay(const std::shared_ptr<Player>& player) {
     std::list<Unique*>::iterator it;
     long t = time(nullptr);
 
@@ -1576,7 +1571,7 @@ void Config::uniqueDecay(Player* player) {
 //                      runDecay
 //*********************************************************************
 
-void Unique::runDecay(long t, Player* player) {
+void Unique::runDecay(long t, const std::shared_ptr<Player>& player) {
     std::list<UniqueOwner>::iterator it;
     bool ran = false;
 
@@ -1622,7 +1617,7 @@ bool UniqueOwner::runDecay(long t, int decay, int max) {
     if(Random::get(1,100) > chance)
         return(false);
 
-    Player* player = gServer->findPlayer(owner.c_str());
+    std::shared_ptr<Player> player = gServer->findPlayer(owner);
 
     if(player && player->inCombat()) {
         // we don't want to be removed just yet
@@ -1636,8 +1631,8 @@ bool UniqueOwner::runDecay(long t, int decay, int max) {
     return(true);
 }
 
-void Unique::broadcastDestruction(const std::string &owner, const Object* object) {
-    Player* player = gServer->findPlayer(owner);
+void Unique::broadcastDestruction(const std::string &owner, const std::shared_ptr<const Object>&  object) {
+    std::shared_ptr<Player> player = gServer->findPlayer(owner);
     if(player)
         player->printColor("^yThe %s^y vanishes!\n", object->getCName());
     broadcast(fmt::format("^y### Tragically, {}'s unique item {}^y just broke!", owner, object->getName()).c_str());

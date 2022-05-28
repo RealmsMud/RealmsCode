@@ -293,7 +293,7 @@ def pulseDeathSickness(actor: MudObject, effect: EffectInfo) -> bool:
 
 
 		if actor.getRoom():
-			mudLib.broadcastRoom(actor.getRoom(), "^G*ACTOR* vomits all over the ground.", actor=actor, ignore = actor)
+			mudLib.broadcastRoom(actor.getRoom(), "^G*ACTOR* vomits all over the ground.", actor=actor, ignore=actor)
 
 	newStrength = 0
 	if strength != 0:
@@ -302,15 +302,15 @@ def pulseDeathSickness(actor: MudObject, effect: EffectInfo) -> bool:
 	if strength > 75 and newStrength <= 75:
 		actor.send("^cYou feel a little better.\n")
 		if actor.getRoom():
-			mudLib.broadcastRoom(actor.getRoom(), "^c*ACTOR* looks a little better.", actor=actor, ignore = actor)
+			mudLib.broadcastRoom(actor.getRoom(), "^c*ACTOR* looks a little better.", actor=actor, ignore=actor)
 	elif strength > 50 and newStrength <= 50:
 		actor.send("^cYou feel better.\n")
 		if actor.getRoom():
-			mudLib.broadcastRoom(actor.getRoom(), "^c*ACTOR* looks better.", actor=actor, ignore = actor)
+			mudLib.broadcastRoom(actor.getRoom(), "^c*ACTOR* looks better.", actor=actor, ignore=actor)
 	elif strength > 25 and newStrength <= 25:
 		actor.send("^cYou are nearly recovered.\n")
 		if actor.getRoom():
-			mudLib.broadcastRoom(actor.getRoom(), "^c*ACTOR* looks nearly recovered.", actor=actor, ignore = actor)
+			mudLib.broadcastRoom(actor.getRoom(), "^c*ACTOR* looks nearly recovered.", actor=actor, ignore=actor)
 
 	strength = min(max(newStrength,0), 100)
 	#actor.send("DEATH SICKNESS: New Strength " + str(strength) + ", Duration " + str(duration) + "\n")
@@ -325,7 +325,7 @@ def pulsePoison(actor: MudObject, effect: EffectInfo) -> bool:
 	if effect.getName() == "poison":
 		actor.wake("Terrible nightmares disturb your sleep!")
 		actor.send("^r^#Poison courses through your veins.\n")
-		mudLib.broadcastRoom(actor.getRoom(), "^cPoison courses through *LOW-ACTOR*'s veins.", actor=actor, ignore = actor)
+		mudLib.broadcastRoom(actor.getRoom(), "^cPoison courses through *LOW-ACTOR*'s veins.", actor=actor, ignore=actor)
 
 		dmg = effect.getStrength() + mud.rand(1,3)
 		if actor.constitution.getCur() > 120:
@@ -344,7 +344,7 @@ def pulsePoison(actor: MudObject, effect: EffectInfo) -> bool:
 				actor.getMonster().addEnmDmg(player, exp)
 
 		if actor.hp.getCur() < 1:
-			mudLib.broadcastRoom(actor.getRoom(), "*ACTOR* drops dead from poison.", actor=actor, ignore = actor)
+			mudLib.broadcastRoom(actor.getRoom(), "*ACTOR* drops dead from poison.", actor=actor, ignore=actor)
 			actor.setDeathType(mud.DeathType.POISON_GENERAL)
 			if actor.isPlayer():
 				if actor.poisonedByPlayer():
@@ -359,7 +359,7 @@ def pulseDisease(actor: MudObject, effect: EffectInfo) -> bool:
 	if effect.getName() == "disease":
 		actor.wake("Terrible nightmares disturb your sleep!")
 		actor.send("^bYou feel nauseous.\n^r^#Fever grips your mind.\n")
-		mudLib.broadcastRoom(actor.getRoom(), "^cFever grips *LOW-ACTOR*.", actor=actor, ignore = actor)
+		mudLib.broadcastRoom(actor.getRoom(), "^cFever grips *LOW-ACTOR*.", actor=actor, ignore=actor)
 
 		dmg = effect.getStrength() + mud.rand(1,3)
 		if actor.constitution.getCur() > 120:
@@ -371,7 +371,7 @@ def pulseDisease(actor: MudObject, effect: EffectInfo) -> bool:
 		actor.hp.decrease(dmg);
 
 		if actor.hp.getCur() < 1:
-			mudLib.broadcastRoom(actor.getRoom(), "*ACTOR* dies from disease.", actor=actor, ignore = actor)
+			mudLib.broadcastRoom(actor.getRoom(), "*ACTOR* dies from disease.", actor=actor, ignore=actor)
 			actor.setDeathType(mud.DeathType.DISEASE)
 			return False
 	return True

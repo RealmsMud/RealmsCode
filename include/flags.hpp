@@ -210,7 +210,7 @@
 #define P_FOCUSED                   76       // player is focused
 #define P_STUNNED                   77       // player currently stunned
 // free                             78       // unused
-#define P_NO_AUTO_WEAR              79       // Player won't wear all when they log on
+// free                             79       // unused
 // free                             80
 // free                             81
 // free                             82

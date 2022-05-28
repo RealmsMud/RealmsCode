@@ -28,6 +28,16 @@
 #include <unordered_map>
 #include <list>
 #include <vector>
+#include <functional>
+
+//#ifdef _REENTRANT
+//#include <boost/thread/mutex.hpp>
+///// If we are reentrant then use a BOOST scoped mutex where neccessary.
+//#define SCOPED_MUTEX  boost::mutex::scoped_lock lock(this->_mutex);
+//#else
+///// If we aren't reentrant then don't do anything.
+#define SCOPED_MUTEX
+//#endif
 
 #include "lru/statistics.hpp"
 
@@ -37,17 +47,17 @@ namespace LRU {
 
 template < class T >
 struct CanCleanupFn {
-	bool operator()( const T *x ) { return true; }
+	bool operator()( const T &x ) { return true; }
 };
 
 template < class T >
 struct CleanUpFn {
-		void operator()( const T *x ) { delete x; }
+		void operator()( const T &x ) { /* do nothing */ }
 };
 
 template< class key_t, class data_t, class clean_up_fn = CleanUpFn< data_t >, class can_clean_up_fn = CanCleanupFn< data_t > > class lru_cache {
 public:
-	using list_t = std::list< std::pair< key_t, data_t* > >;       // Main cache storage typedef
+	using list_t = std::list< std::pair< key_t, data_t > >;       // Main cache storage typedef
 	using list_iter_t = typename list_t::iterator;                // Main cache iterator
 	using list_citer_t = typename list_t::const_iterator;         // Main cache iterator (const)
 	using key_list_t = std::vector< key_t >;                      // List of keys
@@ -62,21 +72,22 @@ private:
 	list_t _items_list;               	// Main cache storage
 	map_t  _items_map;                	// Cache storage index
 	size_t _max_size;  				  	// Maximum abstract size of the cache
-	bool   _is_reference;				// Are we storing a reference, or a copy, of the data
+	bool   _is_shared;				// Are we storing a reference, or a copy, of the data
 	LRU::Statistics<key_t> _stats;		// Cache hit/miss & keys
+//#ifdef _REENTRANT
+//    boost::mutex _mutex;
+//#endif
 
 public:
 
 	// Constructor/Deconstructor
-	lru_cache(size_t max_size, bool is_reference): _max_size(max_size), _is_reference(is_reference), _stats(MONITOR_STATS) {}
+	lru_cache(size_t max_size, bool is_reference): _max_size(max_size), _is_shared(is_reference), _stats(MONITOR_STATS) {}
 	~lru_cache() { clear(); }
 
 
 	// Clear the list and index
-	void clear(void) {
-		for(auto m_iter : _items_map) {
-			clean_up_fn()(m_iter.second->second);
-		}
+	void clear() {
+        SCOPED_MUTEX;
 		_items_list.clear();
 		_items_map.clear();
 	};
@@ -84,30 +95,29 @@ public:
 	// Does the cache contain this key?
 	//  - Records cache hit/miss
 	inline bool contains(const key_t &key) {
+        SCOPED_MUTEX;
 		return find(key, true) != end();
 	}
 
 	// Remove this key from the cache
 	// - Does not record cache hit/miss
 	inline void remove(const key_t &key) {
+        SCOPED_MUTEX;
 		map_iter_t m_iter = _items_map.find(key);
-
-		if(m_iter == _items_map.end())
-			return;
-
+		if(m_iter == _items_map.end()) return;
 		_remove(m_iter);
 	}
 
 	// How big is the cache?
-	size_t size() const noexcept {
+	[[nodiscard]] size_t size() const noexcept {
 		return _items_map.size();
 	}
 
-	size_t capacity() const noexcept {
+	[[nodiscard]] size_t capacity() const noexcept {
 		return _max_size;
 	}
 
-	double utilization() const noexcept {
+	[[nodiscard]] double utilization() const noexcept {
 		return static_cast<double>(size()) / capacity();
 	}
 
@@ -160,55 +170,64 @@ public:
 	}
 
 	inline void touch( const key_t &key ) {
+        SCOPED_MUTEX;
 		_touch(key);
 	}
 
 	// Fetch a copy of the data
-	inline data_t *fetch(const key_t &key, bool touch = true ) {
+	inline data_t fetch(const key_t &key, bool touch = true ) {
+        SCOPED_MUTEX;
 		map_iter_t m_iter = find(key, touch);
 		if(m_iter == end())
-			return nullptr;
-		return m_iter->second->second;
+			return data_t();
+        return m_iter->second->second;
 	}
 
+    inline data_t* fetch_ptr(const key_t &key, bool touch = true ) {
+        SCOPED_MUTEX;
+        map_iter_t m_iter = find(key, touch);
+        if(m_iter == end())
+            return nullptr;
+        return &(m_iter->second->second);
+    }
+
 	// Fetch data and return whether it was found
-	inline bool fetch(const key_t &key, data_t **data, bool touch=true ) {
+	inline bool fetch(const key_t &key, data_t &data, bool touch=true ) {
+        SCOPED_MUTEX;
 		map_iter_t m_iter = find(key, touch);
 		if(m_iter == end()) {
 			return false;
 		}
-		if (_is_reference) {
-			*data = m_iter->second->second;
+		if (_is_shared) {
+			data = m_iter->second->second;
 		} else {
-			**data = *m_iter->second->second;
+			data = data_t(m_iter->second->second);
 		}
 		return true;
 	}
 
 	// Insert a new (key, data) pair
-	inline void insert(const key_t &key, data_t **data) {
+	inline void insert(const key_t &key, const data_t &data) {
+        SCOPED_MUTEX;
 		// Touch the key, if it exists, then replace the content.
 		map_iter_t m_iter = _touch(key);
 		if(m_iter != _items_map.end())
 			_remove(m_iter);
-		data_t *to_insert;
 
-		if (_is_reference) {
-			to_insert = *data;
+		if (_is_shared) {
+            _items_list.emplace_front(key, std::ref(data));
 		} else {
-			to_insert = new data_t;
-			*to_insert = **data;
+            _items_list.emplace_front(key, data);
 		}
 
 		// Ok, do the actual insert at the head of the list
-		_items_list.push_front(std::make_pair(key, to_insert));
 		list_iter_t l_iter = _items_list.begin();
 
 		// Store the index
 		_items_map.insert(std::make_pair(key, l_iter));
 
 		// Check to see if we need to remove an element due to exceeding max_size
-		int sanity_check = 0;
+		size_t sanity_check = 0;
 		while(_items_map.size() > _max_size) {
 			// Remove the last element.
 			l_iter = _items_list.end();
@@ -226,7 +245,7 @@ public:
 	}
 
 	// Get a list of all keys - Mainly for debugging
-	inline const key_list_t get_all_keys( void ) {
+	inline const key_list_t get_all_keys( ) {
 		key_list_t ret;
 		for( list_citer_t l_iter : _items_list)
 			ret.push_back(l_iter->first);
@@ -267,7 +286,7 @@ private:
 
 	// Remove an items map iterator and associated items
 	inline void _remove( const map_iter_t &m_iter ) {
-		data_t* data = m_iter->second->second;
+		const auto data = m_iter->second->second;
 		_items_list.erase(m_iter->second);
 		_items_map.erase(m_iter);
 		clean_up_fn()(data);

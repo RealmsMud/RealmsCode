@@ -44,29 +44,28 @@
 #include "server.hpp"                // for Server, gServer
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MAX, MIN
 
 
 //*********************************************************************
 //                      protection from room damage spells
 //*********************************************************************
 
-int splHeatProtection(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splHeatProtection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "heat-protection", "heat-protection"));
 }
-int splEarthShield(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splEarthShield(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "an", "earth-shield", "earth-shield"));
 }
-int splBreatheWater(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splBreatheWater(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "breathe-water", "breathe-water"));
 }
-int splWarmth(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splWarmth(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "warmth", "warmth", true));
 }
-int splWindProtection(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splWindProtection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "wind-protection", "wind-protection"));
 }
-int splStaticField(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splStaticField(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "static-field", "static-field"));
 }
 
@@ -78,7 +77,7 @@ int splStaticField(Creature* player, cmd* cmnd, SpellData* spellData) {
 // on themself or on another player, improving the armor class by a
 // score of 10.
 
-int splProtection(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splProtection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "protection", "protection"));
 }
 
@@ -87,7 +86,7 @@ int splProtection(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splUndeadWard
 //*********************************************************************
 
-int splUndeadWard(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splUndeadWard(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     if(!player->isCt() && spellData->how == CastType::CAST) {
         if(player->getClass() !=  CreatureClass::CLERIC && player->getClass() !=  CreatureClass::PALADIN ) {
             player->print("Only clerics and paladins may cast that spell.\n");
@@ -113,7 +112,7 @@ int splUndeadWard(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function allows a player to cast a bless spell on themself or
 // on another player, reducing the target's thaco by 1.
 
-int splBless(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splBless(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "bless", "bless"));
 }
 
@@ -121,7 +120,7 @@ int splBless(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splDrainShield
 //*********************************************************************
 
-int splDrainShield(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splDrainShield(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "drain-shield", "drain-shield"));
 }
 
@@ -130,7 +129,7 @@ int splDrainShield(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 // The strength of the spell is the chance to reflect
 
-int addReflectMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, int strength, unsigned int level) {
+int addReflectMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, int strength, unsigned int level) {
     if(spellData->how == CastType::CAST) {
         if(!player->isMageLich())
             return(0);
@@ -142,13 +141,13 @@ int addReflectMagic(Creature* player, cmd* cmnd, SpellData* spellData, const cha
     return(splGeneric(player, cmnd, spellData, article, spell, "reflect-magic", strength));
 }
 
-int splBounceMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splBounceMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(addReflectMagic(player, cmnd, spellData, "a", "bounce magic", 33, 9));
 }
-int splReboundMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splReboundMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(addReflectMagic(player, cmnd, spellData, "a", "rebound magic", 66, 16));
 }
-int splReflectMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splReflectMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(addReflectMagic(player, cmnd, spellData, "a", "reflect-magic", 100, 21));
 }
 
@@ -158,7 +157,7 @@ int splReflectMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function allows players to cast the resist-magic spell. It
 // will allow the player to resist magical attacks from monsters
 
-int splResistMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splResistMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     int strength=0;
 
     if(spellData->how == CastType::CAST && !player->isStaff()) {
@@ -185,9 +184,9 @@ int splResistMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splFreeAction
 //*********************************************************************
 
-int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
-    Player  *pTarget=nullptr;
+int splFreeAction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Player> pTarget=nullptr;
     long    t = time(nullptr);
 
     if(spellData->how != CastType::POTION && !player->isCt() && player->getClass() !=  CreatureClass::DRUID && player->getClass() !=  CreatureClass::CLERIC) {
@@ -201,7 +200,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Free-action spell cast.\nYou can now move freely.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts a free-action spell on %sself.", player, player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts a free-action spell on %sself.", player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION)
             player->print("You can now move freely.\n");
 
@@ -222,8 +221,8 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
 
         player->print("Free-action cast on %s.\n", target->getCName());
-        target->print("%M casts a free-action spell on you.\n%s", player, "You can now move freely.\n");
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a free-action spell on %N.",player, target);
+        target->print("%M casts a free-action spell on you.\n%s", player.get(), "You can now move freely.\n");
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a free-action spell on %N.",player.get(), target.get());
     }
 
     pTarget = target->getAsPlayer();
@@ -233,7 +232,7 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         pTarget->lasttime[LT_FREE_ACTION].ltime = t;
         if(spellData->how == CastType::CAST) {
-            pTarget->lasttime[LT_FREE_ACTION].interval = MAX(300, 900 +
+            pTarget->lasttime[LT_FREE_ACTION].interval = std::max(300, 900 +
                                                                   bonus(player->intelligence.getCur()) * 300);
 
             if(player->getRoomParent()->magicBonus()) {
@@ -257,8 +256,8 @@ int splFreeAction(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splRemoveFear
 //*********************************************************************
 
-int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splRemoveFear(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
 
     if(cmnd->num == 2) {
         target = player;
@@ -270,7 +269,7 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
                 player->print("You feel brave again.\n");
             else
                 player->print("Nothing happens.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts remove-fear on %sself.", player, player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts remove-fear on %sself.", player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION && player->isEffected("fear"))
             player->print("You feel brave again.\n");
         else if(spellData->how == CastType::POTION)
@@ -293,10 +292,10 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("You cast remove-fear on %N.\n", target);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts remove-fear on %N.", player, target);
+            player->print("You cast remove-fear on %N.\n", target.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts remove-fear on %N.", player.get(), target.get());
             if(target->isPlayer()) {
-                target->print("%M casts remove-fear on you.\n", player);
+                target->print("%M casts remove-fear on you.\n", player.get());
                 if(target->isEffected("fear"))
                     target->print("You feel brave again.\n");
                 else
@@ -315,8 +314,8 @@ int splRemoveFear(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splRemoveSilence
 //*********************************************************************
 
-int splRemoveSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splRemoveSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
 
     if(cmnd->num == 2) {
         target = player;
@@ -343,13 +342,12 @@ int splRemoveSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("You cast remove-silence on %N.\n", target);
-            broadcast(player->getSock(), target->getSock(), player->getParent(),
-                "%M casts remove-silence on %N.", player, target);
+            player->print("You cast remove-silence on %N.\n", target.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts remove-silence on %N.", player.get(), target.get());
 
             logCast(player, target, "remove-silence");
             if(target->isPlayer()) {
-                target->print("%M casts remove-silence on you.\n", player);
+                target->print("%M casts remove-silence on you.\n", player.get());
                 if( (target->flagIsSet(P_DM_SILENCED) && player->isCt()) ||
                      !target->flagIsSet(P_DM_SILENCED)
                 )
@@ -374,8 +372,8 @@ int splRemoveSilence(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splDispelAlign
 //*********************************************************************
 
-int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char* spell, int align) {
-    Creature* target=nullptr;
+int splDispelAlign(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* spell, int align) {
+    std::shared_ptr<Creature> target=nullptr;
     Damage damage;
 
 
@@ -402,17 +400,16 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
             player->smashInvis();
 
             damage.set(Random::get(spellData->level * 2, spellData->level * 4));
-            damage.add(MAX(0, bonus(player->piety.getCur())));
+            damage.add(std::max(0, bonus(player->piety.getCur())));
             player->modifyDamage(player, MAGICAL, damage);
 
             player->print("You feel as if your soul is savagely ripped apart!\n");
             player->printColor("You take %s%d^x points of damage!\n", player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-            broadcast(player->getSock(), player->getParent(), "%M screams and doubles over in pain!", player);
+            broadcast(player->getSock(), player->getParent(), "%M screams and doubles over in pain!", player.get());
             player->hp.decrease(damage.get());
             if(player->hp.getCur() < 1) {
                 player->print("Your body explodes. You're dead!\n");
-                broadcast(player->getSock(), player->getParent(), "%M's body explodes! %s's dead!", player,
-                        player->upHeShe());
+                broadcast(player->getSock(), player->getParent(), "%M's body explodes! %s's dead!", player.get(), player->upHeShe());
                 player->getAsPlayer()->die(EXPLODED);
             }
         }
@@ -435,7 +432,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
         if( (target->getLevel() > spellData->level + 7) ||
             (!player->isStaff() && target->isStaff())
         ) {
-            player->print("Your magic would be too weak to harm %N.\n", target);
+            player->print("Your magic would be too weak to harm %N.\n", target.get());
             return(0);
         }
 
@@ -450,12 +447,12 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("You cast %s on %N.\n", spell, target);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.", player, spell, target);
+            player->print("You cast %s on %N.\n", spell, target.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.", player.get(), spell, target.get());
 
             if(target->getAsPlayer()) {
                 target->wake("Terrible nightmares disturb your sleep!");
-                target->print("%M casts a %s spell on you.\n", player, spell);
+                target->print("%M casts a %s spell on you.\n", player.get(), spell);
             }
 
             if(!align) {
@@ -463,20 +460,18 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
             } else {
                 damage.set(Random::get(spellData->level * 2, spellData->level * 4));
                 damage.add(abs(player->getAlignment()/100));
-                damage.add(MAX(0, bonus(player->piety.getCur())));
+                damage.add(std::max(0, bonus(player->piety.getCur())));
                 target->modifyDamage(player, MAGICAL, damage);
 
                 if(target->chkSave(SPL, player,0))
                     damage.set(damage.get() / 2);
 
                 player->printColor("The spell did %s%d^x damage.\n", player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-                player->print("%M screams in agony as %s soul is ripped apart!\n",
-                    target, target->hisHer());
+                player->print("%M screams in agony as %s soul is ripped apart!\n", target.get(), target->hisHer());
                 target->printColor("You take %s%d^x points of damage as your soul is ripped apart!\n", target->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-                broadcastGroup(false, target, "%M cast a %s spell on ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n",
-                    player, spell, target, damage.get(), target->heShe(), target->getStatusStr(damage.get()));
+                broadcastGroup(false, target, "%M cast a %s spell on ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", player.get(), spell, target.get(), damage.get(), target->heShe(), target->getStatusStr(damage.get()));
 
-                broadcast(player->getSock(), target->getSock(), player->getParent(), "%M screams and doubles over in pain!", target);
+                broadcast(player->getSock(), target->getSock(), player->getParent(), "%M screams and doubles over in pain!", target.get());
 
                 // if the target is reflecting magic, force printing a message (it will say 0 damage)
                 player->doReflectionDamage(damage, target, target->isEffected("reflect-magic") ? REFLECTED_MAGIC : REFLECTED_NONE);
@@ -487,9 +482,8 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
                 player->doDamage(target, damage.get(), NO_CHECK);
                 if(target->hp.getCur() < 1) {
                     target->print("Your body explodes! You die!\n");
-                    broadcast(player->getSock(), target->getSock(), player->getParent(),
-                        "%M's body explodes! %s's dead!", target, target->upHeShe());
-                    player->print("%M's body explodes! %s's dead!\n", target, target->upHeShe());
+                    broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's body explodes! %s's dead!", target.get(), target->upHeShe());
+                    player->print("%M's body explodes! %s's dead!\n", target.get(), target->upHeShe());
                     target->die(player);
                     return(2);
                 }
@@ -505,7 +499,7 @@ int splDispelAlign(Creature* player, cmd* cmnd, SpellData* spellData, const char
 //                      splDispelEvil
 //*********************************************************************
 
-int splDispelEvil(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splDispelEvil(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
 
     if(spellData->how != CastType::POTION && !player->isStaff()) {
         if(player->getClass() !=  CreatureClass::CLERIC && player->getClass() !=  CreatureClass::PALADIN && player->isPlayer()) {
@@ -529,7 +523,7 @@ int splDispelEvil(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splDispelGood
 //*********************************************************************
 
-int splDispelGood(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splDispelGood(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
 
     if(spellData->how != CastType::POTION && !player->isStaff()) {
         if(player->getClass() !=  CreatureClass::CLERIC && player->getClass() !=  CreatureClass::DEATHKNIGHT && player->isPlayer()) {
@@ -557,8 +551,8 @@ int splDispelGood(Creature* player, cmd* cmnd, SpellData* spellData) {
 // max HP. The armor can take that much damage before dispelling, or its time can run out.
 // This spell does NOT absorb damage, it only protects by giving better AC. -TC
 
-int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *pPlayer = player->getAsPlayer();
+int splArmor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer();
     int mpNeeded=0;
 
     if(!pPlayer)
@@ -617,7 +611,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(multi)
             strength = pPlayer->hp.getCur();
         else if (pPlayer->getClass() == CreatureClass::LICH)
-            strength = mpNeeded + (MAX<int>(1,(pPlayer->hp.getCur() + ((pPlayer->hp.getCur()*30)/100))));
+            strength = mpNeeded + (std::max<int>(1,(pPlayer->hp.getCur() + ((pPlayer->hp.getCur()*30)/100))));
         else // we have a mage or staff
             strength = pPlayer->hp.getCur()*2;
     } else { // everybody else, strength is current hp
@@ -631,7 +625,7 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
         player->print("Armor spell cast.\n");
-        broadcast(pPlayer->getSock(), pPlayer->getRoomParent(),"%M casts an armor spell on %sself.", pPlayer, pPlayer->himHer());
+        broadcast(pPlayer->getSock(), pPlayer->getRoomParent(),"%M casts an armor spell on %sself.", pPlayer.get(), pPlayer->himHer());
     }
 
     return(1);
@@ -643,8 +637,8 @@ int splArmor(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This spell allows a mage or lich to use magic to make their skin
 // stone-hard to ward off physical attacks.
 
-int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *pPlayer = player->getAsPlayer();
+int splStoneskin(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer();
     int     mpNeeded=0, multi=0;
 
     if(player->getClass() !=  CreatureClass::LICH)
@@ -699,7 +693,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(!multi)
             strength = spellData->level;
         else
-            strength = MAX<int>(1, spellData->level-3);
+            strength = std::max<int>(1, spellData->level-3);
     } else {
         duration = 180L;
         strength = spellData->level/2;
@@ -709,8 +703,7 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
         player->print("Stoneskin spell cast.\nYou feel impervious.\n");
-        broadcast(player->getSock(), player->getParent(),"%M casts a stoneskin spell on %sself.", player,
-            player->himHer());
+        broadcast(player->getSock(), player->getParent(),"%M casts a stoneskin spell on %sself.", player.get(), player->himHer());
     } else if(spellData->how == CastType::POTION)
         player->print("You feel impervious.\n");
 
@@ -721,8 +714,8 @@ int splStoneskin(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      doDispelMagic
 //*********************************************************************
 
-int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char* spell, int numDispel) {
-    Creature* target=nullptr;
+int doDispelMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* spell, int numDispel) {
+    std::shared_ptr<Creature> target=nullptr;
     int     chance=0;
 
     if(spellData->how == CastType::CAST &&
@@ -738,7 +731,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
     if(cmnd->num == 2) {
         target = player;
-        broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on %sself.", player, spell, player->himHer());
+        broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on %sself.", player.get(), spell, player->himHer());
 
 
         player->print("You cast a %s spell on yourself.\n", spell);
@@ -755,11 +748,11 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
         if(!target) {
             // dispel-magic on an exit
             cmnd->str[2][0] = low(cmnd->str[2][0]);
-            Exit* exit = findExit(player, cmnd, 2);
+            std::shared_ptr<Exit> exit = findExit(player, cmnd, 2);
 
             if(exit) {
                 player->printColor("You cast a %s spell on the %s^x.\n", spell, exit->getCName());
-                broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on the %s^x.", player, spell, exit->getCName());
+                broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on the %s^x.", player.get(), spell, exit->getCName());
 
                 if(exit->flagIsSet(X_PORTAL))
                     Move::deletePortal(player->getRoomParent(), exit);
@@ -781,19 +774,16 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
             if(!player->canAttack(target))
                 return(0);
         } else {
-            player->print("You cast a %s spell on %N.\n%s body returns to flesh.\n",
-                spell, target, target->upHisHer());
+            player->print("You cast a %s spell on %N.\n%s body returns to flesh.\n", spell, target.get(), target->upHisHer());
             if(Random::get(1,100) < 50) {
 
-                target->print("%M casts a %s spell on you.\nYour body returns to flesh.\n", player, spell);
-                broadcast(player->getSock(), target->getSock(), player->getParent(),
-                    "%M casts a %s spell on %N.\n%s body returns to flesh.\n",
-                    player, spell, target, target->upHisHer());
+                target->print("%M casts a %s spell on you.\nYour body returns to flesh.\n", player.get(), spell);
+                broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.\n%s body returns to flesh.\n", player.get(), spell, target.get(), target->upHisHer());
                 target->removeEffect("petrification");
                 return(1);
             } else {
-                target->print("%M casts a dispel-magic spell on you.\n", player);
-                broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a dispel-magic spell on %N.\n",player, target);
+                target->print("%M casts a dispel-magic spell on you.\n", player.get());
+                broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a dispel-magic spell on %N.\n",player.get(), target.get());
                 return(0);
             }
 
@@ -806,7 +796,7 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 
         chance += (spellData->level - target->getLevel())*10;
 
-        chance = MIN(chance, 90);
+        chance = std::min(chance, 90);
 
         if((target->isEffected("resist-magic")) && target->isPlayer())
             chance /=2;
@@ -817,31 +807,31 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
         if( player->isCt() ||
             (Random::get(1,100) <= chance && !target->chkSave(SPL, player, 0)))
         {
-            player->print("You cast a %s spell on %N.\n", spell, target);
+            player->print("You cast a %s spell on %N.\n", spell, target.get());
 
             logCast(player, target, spell);
 
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.", player, spell, target);
-            target->print("%M casts a %s spell on you.\n", player, spell);
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.", player.get(), spell, target.get());
+            target->print("%M casts a %s spell on you.\n", player.get(), spell);
             target->print("Your spells begin to dissolve away.\n");
 
 
             target->doDispelMagic(numDispel);
 
-            for(Monster* pet : target->pets) {
+            for(const auto& pet : target->pets) {
                 if(pet) {
                     if(player->isCt() || !pet->chkSave(SPL, player, 0)) {
-                        player->print("Your spell bansished %N's %s!\n", target, pet->getCName());
-                        target->print("%M's spell banished your %s!\n%M fades away.\n", player, pet->getCName(), pet);
-                        gServer->delActive(pet);
+                        player->print("Your spell bansished %N's %s!\n", target.get(), pet->getCName());
+                        target->print("%M's spell banished your %s!\n%M fades away.\n", player.get(), pet->getCName(), pet.get());
+                        gServer->delActive(pet.get());
                         pet->die(pet->getMaster());
                     }
                 }
             }
         } else {
-            player->printColor("^yYour spell fails against %N.\n", target);
-            target->print("%M tried to cast a dispel-magic spell on you.\n", player);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a dispel-magic spell on %N.", player, target);
+            player->printColor("^yYour spell fails against %N.\n", target.get());
+            target->print("%M tried to cast a dispel-magic spell on you.\n", player.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a dispel-magic spell on %N.", player.get(), target.get());
             return(0);
         }
     }
@@ -852,15 +842,15 @@ int doDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData, const char*
 //                      dispel-magic spells
 //*********************************************************************
 
-int splCancelMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splCancelMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(doDispelMagic(player, cmnd, spellData, "cancel-magic", Random::get(1,2)));
 }
 
-int splDispelMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splDispelMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(doDispelMagic(player, cmnd, spellData, "dispel-magic", Random::get(3,5)));
 }
 
-int splAnnulMagic(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splAnnulMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(doDispelMagic(player, cmnd, spellData, "annul-magic", -1));
 }
 
@@ -979,9 +969,9 @@ void Creature::doDispelMagic(int num) {
 //                      doDispelMagic
 //*********************************************************************
 
-void Exit::doDispelMagic(BaseRoom* parent) {
-    bringDownTheWall(getEffect("wall-of-fire"), parent, this);
-    bringDownTheWall(getEffect("wall-of-thorns"), parent, this);
+void Exit::doDispelMagic(const std::shared_ptr<BaseRoom>& parent) {
+    bringDownTheWall(getEffect("wall-of-fire"), parent, shared_from_this());
+    bringDownTheWall(getEffect("wall-of-thorns"), parent, shared_from_this());
 
     // true we'll show, false don't remove perm effects
     removeEffect("concealed", true, false);
@@ -994,7 +984,7 @@ void Exit::doDispelMagic(BaseRoom* parent) {
 // strength of the spell. Strength and level restrict follow this chart:
 //  1=1, 2=4, 3=9, 4=16
 
-int addFireShield(Creature* player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, int strength) {
+int addFireShield(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, int strength) {
     if(spellData->how == CastType::CAST) {
         if(!player->isMageLich())
             return(0);
@@ -1007,16 +997,16 @@ int addFireShield(Creature* player, cmd* cmnd, SpellData* spellData, const char*
     return(splGeneric(player, cmnd, spellData, article, spell, "fire-shield", (int)pow(strength, 2)));
 }
 
-int splRadiation(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splRadiation(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(addFireShield(player, cmnd, spellData, "a", "radiation", 1));
 }
-int splFieryRetribution(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splFieryRetribution(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(addFireShield(player, cmnd, spellData, "a", "fiery retribution", 2));
 }
-int splAuraOfFlame(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splAuraOfFlame(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(addFireShield(player, cmnd, spellData, "an", "aura of flame", 3));
 }
-int splBarrierOfCombustion(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splBarrierOfCombustion(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(addFireShield(player, cmnd, spellData, "a", "barrier of combustion", 4));
 }
 
@@ -1026,34 +1016,32 @@ int splBarrierOfCombustion(Creature* player, cmd* cmnd, SpellData* spellData) {
 // return true if we were killed by the reflection
 // passing printZero as REFLECTED_MAGIC or REFLECTED_PHYSICAL will print, even if damage is 0
 
-bool Creature::doReflectionDamage(Damage damage, Creature* target, ReflectedDamageType printZero) {
-    int dmg = damage.getReflected() ? damage.getReflected() : damage.getPhysicalReflected();
+bool Creature::doReflectionDamage(Damage pDamage, const std::shared_ptr<Creature>& target, ReflectedDamageType printZero) {
+    int dmg = pDamage.getReflected() ? pDamage.getReflected() : pDamage.getPhysicalReflected();
 
     // don't quit if we want to print 0
     if(!dmg && printZero == REFLECTED_NONE)
         return(false);
 
-    if(damage.getReflected() || printZero == REFLECTED_MAGIC) {
+    if(pDamage.getReflected() || printZero == REFLECTED_MAGIC) {
         target->printColor("Your shield of magic reflects %s%d^x damage.\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-        printColor("%M's shield of magic flares up and hits you for %s%d^x damage.\n", target, customColorize("*CC:DAMAGE*").c_str(), dmg);
-        broadcastGroup(false, this, "%M's shield of magic flares up and hits %N for *CC:DAMAGE*%d^x damage.\n",
-            target, this, dmg);
+        printColor("%M's shield of magic flares up and hits you for %s%d^x damage.\n", target.get(), customColorize("*CC:DAMAGE*").c_str(), dmg);
+        broadcastGroup(false, Containable::downcasted_shared_from_this<Creature>(), "%M's shield of magic flares up and hits %N for *CC:DAMAGE*%d^x damage.\n", target.get(), this, dmg);
     } else {
-        switch(damage.getPhysicalReflectedType()) {
+        switch(pDamage.getPhysicalReflectedType()) {
         case REFLECTED_FIRE_SHIELD:
         default:
             target->printColor("Your shield of fire reflects %s%d^x damage.\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-            printColor("%M's shield of fire flares up and hits you for %s%d^x damage.\n", target, customColorize("*CC:DAMAGE*").c_str(), dmg);
-            broadcastGroup(false, this, "%M's shield of fire flares up and hits %N for *CC:DAMAGE*%d^x damage.\n",
-                target, this, dmg);
+            printColor("%M's shield of fire flares up and hits you for %s%d^x damage.\n", target.get(), customColorize("*CC:DAMAGE*").c_str(), dmg);
+            broadcastGroup(false, Containable::downcasted_shared_from_this<Creature>(), "%M's shield of fire flares up and hits %N for *CC:DAMAGE*%d^x damage.\n", target.get(), this, dmg);
             break;
         }
     }
 
-    if(damage.getDoubleReflected()) {
+    if(pDamage.getDoubleReflected()) {
         Damage reflectedDamage;
-        reflectedDamage.setReflected(damage.getDoubleReflected());
-        target->doReflectionDamage(reflectedDamage, this);
+        reflectedDamage.setReflected(pDamage.getDoubleReflected());
+        target->doReflectionDamage(reflectedDamage, Containable::downcasted_shared_from_this<Creature>());
     }
 
     // we may have gotten this far for printing reasons (even on zero), but really, go no further

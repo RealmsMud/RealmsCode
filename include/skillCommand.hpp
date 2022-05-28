@@ -40,7 +40,7 @@ public:
     SkillCommand(std::string_view pCmdStr) {
         name = pCmdStr;
     }
-    int execute(Creature* player, cmd* cmnd) const;
+    int execute(const std::shared_ptr<Creature>& player, cmd* cmnd) const;
 
 protected:
     TargetType targetType;            // What sort of target?
@@ -55,15 +55,15 @@ protected:
     std::list<std::string> aliases;
 
 private:
-    std::function<int(Creature* creature, cmd* cmnd)> fn{nullptr};
+    std::function<int(const std::shared_ptr<Creature>& creature, cmd* cmnd)> fn{nullptr};
 
 public:
-    bool checkResources(Creature* creature) const;
-    void subResources(Creature* creature);
+    bool checkResources(std::shared_ptr<Creature> creature) const;
+    void subResources(std::shared_ptr<Creature> creature);
 
     TargetType getTargetType() const;
     bool isOffensive() const;
-    bool runScript(Creature* actor, MudObject* target, Skill* skill) const;
+    bool runScript(std::shared_ptr<Creature> actor, std::shared_ptr<MudObject> target, Skill* skill) const;
 
     bool getUsesAttackTimer() const;
     bool hasCooldown() const;

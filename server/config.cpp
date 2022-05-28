@@ -42,13 +42,14 @@
 #include "mxp.hpp"             // for MxpElement
 #include "paths.hpp"           // for checkDirExists, checkPaths
 #include "proxy.hpp"           // for ProxyManager
+#include "ships.hpp"           // for Ship
 #include "skills.hpp"          // for SkillInfo
 #include "skillCommand.hpp"    // for SkillCommand
 #include "socials.hpp"         // for SocialCommand
 #include "specials.hpp"        // for SA_MAX_FLAG, SA_NO_FLAG
 #include "structs.hpp"         // for MudFlag
 #include "swap.hpp"            // for Swap
-#include "utils.hpp"           // for MAX
+#include "zone.hpp"
 #include "version.hpp"         // for VERSION
 
 
@@ -125,7 +126,7 @@ void Config::cleanUp() {
     clearFactionList();
     clearSkills();
     calendar->clear();
-    clearShips();
+    ships.clear();
     clearClasses();
     clearRaces();
     clearRecipes();
@@ -262,6 +263,7 @@ bool Config::loadBeforePython() {
     std::clog << "Loading Config..." << (loadConfig() ? "done" : "*** FAILED ***")<< std::endl;
     std::clog << "Loading Discord Config..." << (loadDiscordConfig() ? "done" : "*** FAILED ***")<< std::endl;
 
+    std::clog << "Loading Zones..." << (loadZones() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Socials..." << (loadSocials() ? "done" : "*** FAILED ***") << std::endl;
     
     std::clog << "Loading Recipes..." << (loadRecipes() ? "done" : "*** FAILED ***") << std::endl;
@@ -406,81 +408,33 @@ bool Config::writeHelpFiles() const {
     return(success);
 }
 
-namespace Path {
-    const char* Bin = "/home/realms/realms/bin/";
-    const char* Log = "/home/realms/realms/log/";
-    const char* BugLog = "/home/realms/realms/log/bug/";
-    const char* StaffLog = "/home/realms/realms/log/staff/";
-    const char* BankLog = "/home/realms/realms/log/bank/";
-    const char* GuildBankLog = "/home/realms/realms/log/guildbank/";
-
-    const char* UniqueRoom = "/home/realms/realms/rooms/";
-    const char* AreaRoom = "/home/realms/realms/rooms/area/";
-    const char* Monster = "/home/realms/realms/monsters/";
-    const char* Object = "/home/realms/realms/objects/";
-    const char* Player = "/home/realms/realms/player/";
-    const char* PlayerBackup = "/home/realms/realms/player/backup/";
-
-    const char* Config = "/home/realms/realms/config/";
-
-    const char* Code = "/home/realms/realms/config/code/";
-    // First check the docker install path; then the code directory, and finally fall back to the old place
-    const char* Python = "/build/pythonLib/:/home/realms/realms/RealmsCode/pythonLib:/home/realms/realms/config/code/python/";
-    const char* Game = "/home/realms/realms/config/game/";
-    const char* AreaData = "/home/realms/realms/config/game/area/";
-    const char* Talk = "/home/realms/realms/config/game/talk/";
-    const char* Desc = "/home/realms/realms/config/game/ddesc/";
-    const char* Sign = "/home/realms/realms/config/game/signs/";
-
-    const char* PlayerData = "/home/realms/realms/config/player/";
-    const char* Bank = "/home/realms/realms/config/player/bank/";
-    const char* GuildBank = "/home/realms/realms/config/player/guildbank/";
-    const char* History = "/home/realms/realms/config/player/history/";
-    const char* Post = "/home/realms/realms/config/player/post/";
-
-    const char* BaseHelp = "/home/realms/realms/help/";
-    const char* Help = "/home/realms/realms/help/help/";
-    const char* CreateHelp = "/home/realms/realms/help/create/";
-    const char* Wiki = "/home/realms/realms/help/wiki/";
-    const char* DMHelp = "/home/realms/realms/help/dmhelp/";
-    const char* BuilderHelp = "/home/realms/realms/help/bhelp/";
-    const char* HelpTemplate = "/home/realms/realms/help/template/";
-}
 //*********************************************************************
 //                      path functions
 //*********************************************************************
 
-char* objectPath(const CatRef& cr) {
-    static char filename[256];
+fs::path Path::objectPath(const CatRef& cr) {
+    auto path = Path::Object / cr.area;
     if(cr.id < 0)
-        sprintf(filename, "%s/%s/", Path::Object, cr.area.c_str());
-    else
-        sprintf(filename, "%s/%s/o%05d.xml", Path::Object, cr.area.c_str(), cr.id);
-    return(filename);
+        return path;
+    return (path / fmt::format("o{:05d}", cr.id)).replace_extension("xml");
 }
-char* monsterPath(const CatRef& cr) {
-    static char filename[256];
+fs::path Path::monsterPath(const CatRef& cr) {
+    auto path = Path::Monster / cr.area;
     if(cr.id < 0)
-        sprintf(filename, "%s/%s/", Path::Monster, cr.area.c_str());
-    else
-        sprintf(filename, "%s/%s/m%05d.xml", Path::Monster, cr.area.c_str(), cr.id);
-    return(filename);
+        return path;
+    return (path / fmt::format("m{:05d}", cr.id)).replace_extension("xml");
 }
-char* roomPath(const CatRef& cr) {
-    static char filename[256];
+fs::path Path::roomPath(const CatRef& cr) {
+    auto path = Path::UniqueRoom / cr.area;
     if(cr.id < 0)
-        sprintf(filename, "%s/%s/", Path::UniqueRoom, cr.area.c_str());
-    else
-        sprintf(filename, "%s/%s/r%05d.xml", Path::UniqueRoom, cr.area.c_str(), cr.id);
-    return(filename);
+        return path;
+    return (path / fmt::format("r{:05d}", cr.id)).replace_extension("xml");
 }
-char* roomBackupPath(const CatRef& cr) {
-    static char filename[256];
+fs::path Path::roomBackupPath(const CatRef& cr) {
+    auto path = Path::UniqueRoom / cr.area / "backup";
     if(cr.id < 0)
-        sprintf(filename, "%s/%s/backup/", Path::UniqueRoom, cr.area.c_str());
-    else
-        sprintf(filename, "%s/%s/backup/r%05d.xml", Path::UniqueRoom, cr.area.c_str(), cr.id);
-    return(filename);
+        return path;
+    return (path / fmt::format("r{:05d}", cr.id)).replace_extension("xml");
 }
 
 //*********************************************************************
@@ -488,70 +442,65 @@ char* roomBackupPath(const CatRef& cr) {
 //*********************************************************************
 
 bool Path::checkPaths() {
-    bool ok = true;
+    fs::create_directory(Path::Bin);
+    fs::create_directory(Path::Log);
+    fs::create_directory(Path::BugLog);
+    fs::create_directory(Path::StaffLog);
+    fs::create_directory(Path::BankLog);
+    fs::create_directory(Path::GuildBankLog);
 
-    ok = Path::checkDirExists(Path::Bin) && ok;
-    ok = Path::checkDirExists(Path::Log) && ok;
-    ok = Path::checkDirExists(Path::BugLog) && ok;
-    ok = Path::checkDirExists(Path::StaffLog) && ok;
-    ok = Path::checkDirExists(Path::BankLog) && ok;
-    ok = Path::checkDirExists(Path::GuildBankLog) && ok;
+    fs::create_directory(Path::UniqueRoom);
+    fs::create_directory(Path::AreaRoom);
+    fs::create_directory(Path::Monster);
+    fs::create_directory(Path::Object);
+    fs::create_directory(Path::Player);
+    fs::create_directory(Path::PlayerBackup);
 
-    ok = Path::checkDirExists(Path::UniqueRoom) && ok;
-    ok = Path::checkDirExists(Path::AreaRoom) && ok;
-    ok = Path::checkDirExists(Path::Monster) && ok;
-    ok = Path::checkDirExists(Path::Object) && ok;
-    ok = Path::checkDirExists(Path::Player) && ok;
-    ok = Path::checkDirExists(Path::PlayerBackup) && ok;
+    fs::create_directory(Path::Config);
 
-    ok = Path::checkDirExists(Path::Config) && ok;
+    fs::create_directory(Path::Code);
+//    fs::create_directory(Path::Python);
+    fs::create_directory(Path::Game);
+    fs::create_directory(Path::AreaData);
+    fs::create_directory(Path::Talk);
+    fs::create_directory(Path::Desc);
+    fs::create_directory(Path::Sign);
 
-    ok = Path::checkDirExists(Path::Code) && ok;
-//    ok = Path::checkDirExists(Path::Python) && ok;
-    ok = Path::checkDirExists(Path::Game) && ok;
-    ok = Path::checkDirExists(Path::AreaData) && ok;
-    ok = Path::checkDirExists(Path::Talk) && ok;
-    ok = Path::checkDirExists(Path::Desc) && ok;
-    ok = Path::checkDirExists(Path::Sign) && ok;
+    fs::create_directory(Path::PlayerData);
+    fs::create_directory(Path::Bank);
+    fs::create_directory(Path::GuildBank);
+    fs::create_directory(Path::History);
+    fs::create_directory(Path::Post);
 
-    ok = Path::checkDirExists(Path::PlayerData) && ok;
-    ok = Path::checkDirExists(Path::Bank) && ok;
-    ok = Path::checkDirExists(Path::GuildBank) && ok;
-    ok = Path::checkDirExists(Path::History) && ok;
-    ok = Path::checkDirExists(Path::Post) && ok;
+    fs::create_directory(Path::BaseHelp);
+    fs::create_directory(Path::Help);
+    fs::create_directory(Path::Wiki);
+    fs::create_directory(Path::DMHelp);
+    fs::create_directory(Path::BuilderHelp);
+    fs::create_directory(Path::HelpTemplate);
 
-    ok = Path::checkDirExists(Path::BaseHelp) && ok;
-    ok = Path::checkDirExists(Path::Help) && ok;
-    ok = Path::checkDirExists(Path::Wiki) && ok;
-    ok = Path::checkDirExists(Path::DMHelp) && ok;
-    ok = Path::checkDirExists(Path::BuilderHelp) && ok;
-    ok = Path::checkDirExists(Path::HelpTemplate) && ok;
-
-    return(ok);
+    return(true);
 }
 
 //*********************************************************************
 //                      checkDirExists
 //*********************************************************************
 
-bool Path::checkDirExists(const char* filename) {
-    struct stat     f_stat{};
-    if(stat(filename, &f_stat)) {
-        return(!mkdir(filename, 0755));
+bool Path::checkDirExists(const fs::path& path) {
+    if(!fs::exists(path)) {
+        return(fs::create_directory(path));
     }
     return(true);
 }
 
-bool Path::checkDirExists(const std::string &area, char* (*fn)(const CatRef&)) {
-    char    filename[256];
+bool Path::checkDirExists(const std::string &area, fs::path (*fn)(const CatRef&)) {
     CatRef  cr;
 
     // this will trigger the dir-only mode
     cr.setArea(area);
     cr.id = -1;
-    strcpy(filename, (*fn)(cr));
 
-    return(checkDirExists(filename));
+    return(checkDirExists((*fn)(cr)));
 }
 
 
@@ -570,12 +519,10 @@ bool Config::isListing() {
 
 void Config::resetShipsFile() {
     // copying ships.midnight.xml to ships.xml
-    char sfile1[80], sfile2[80], command[255];
-    sprintf(sfile1, "%s/ships.midnight.xml", Path::Game);
-    sprintf(sfile2, "%s/ships.xml", Path::Game);
+    auto sfile1 = Path::Game / "%s/ships.midnight.xml";
+    auto sfile2 = Path::Game / "%s/ships.xml";
 
-    sprintf(command, "cp %s %s", sfile1, sfile2);
-    system(command);
+    fs::copy(sfile1, sfile2, fs::copy_options::overwrite_existing);
 }
 
 std::string Config::getFlag(unsigned int flagNum, MudFlagMap& flagMap) {
@@ -615,7 +562,7 @@ int Config::getMaxDouble() const {
 }
 
 void Config::setNumGuilds(int guildId) {
-    numGuilds = MAX(numGuilds, guildId);
+    numGuilds = std::max(numGuilds, guildId);
 }
 
 const std::string &Config::getBotToken() const {

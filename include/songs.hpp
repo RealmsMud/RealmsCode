@@ -44,7 +44,7 @@ public:
     }
     ~Song() = default;
 
-    bool runScript(MudObject* singer, MudObject* target = nullptr) const;
+    bool runScript(std::shared_ptr<MudObject> singer, std::shared_ptr<MudObject> target = nullptr) const;
 
     [[nodiscard]] const std::string& getEffect() const;
     [[nodiscard]] const std::string& getType() const;

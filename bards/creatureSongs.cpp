@@ -80,25 +80,33 @@ bool Creature::pulseSong(long t) {
     if(boost::iequals(playing->getType(), "effect")) {
         // Group effects affect the singer as well
         if(boost::iequals(targetType, "self") || boost::iequals(targetType, "group")) {
-            addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
+            addEffect(playing->getEffect(), -2, -2, Containable::downcasted_shared_from_this<Creature>())->setDuration(playing->getDuration());
         }
         if(boost::iequals(targetType, "group") && (getGroup() != nullptr)) {
             Group* myGroup = getGroup();
-            for(Creature* crt : myGroup->members) {
-                if(inSameRoom(crt))
-                    crt->addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
+            auto it = myGroup->members.begin();
+            while(it != myGroup->members.end()) {
+                if(auto crt = (*it).lock()) {
+                    it++;
+                    if (inSameRoom(crt))
+                        crt->addEffect(playing->getEffect(), -2, -2, Containable::downcasted_shared_from_this<Creature>())->setDuration(playing->getDuration());
+                } else {
+                    it = myGroup->members.erase(it);
+                }
             }
         }
         if(boost::iequals(targetType, "room")) {
-            for(Player* ply : getRoomParent()->players) {
-                if(getAsPlayer() && ply->getAsPlayer() && getAsPlayer()->isDueling(ply->getName()))
-                    continue;
-                ply->addEffect(playing->getEffect(), -2, -2, this)->setDuration(playing->getDuration());
+            for(const auto& pIt: getRoomParent()->players) {
+                if(auto ply = pIt.lock()) {
+                    if (getAsPlayer() && ply->getAsPlayer() && getAsPlayer()->isDueling(ply->getName()))
+                        continue;
+                    ply->addEffect(playing->getEffect(), -2, -2, Containable::downcasted_shared_from_this<Creature>())->setDuration(playing->getDuration());
+                }
             }
         }
     } else if(playing->getType() == "script") {
         print("Running script for song \"%s\"\n", playing->getName().c_str());
-        MudObject *target = nullptr;
+        std::shared_ptr<MudObject>target = nullptr;
 
         // Find the target here, if any
         if(boost::iequals(targetType, "target")) {
@@ -106,7 +114,7 @@ bool Creature::pulseSong(long t) {
                 target = getTarget();
         }
 
-        playing->runScript(this, target);
+        playing->runScript(Containable::downcasted_shared_from_this<Creature>(), target);
     }
 
 

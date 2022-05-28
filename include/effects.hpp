@@ -16,15 +16,14 @@
  *
  */
 
-
-#ifndef EFFECTS_H_
-#define EFFECTS_H_
+#pragma  once
 
 #define EFFECT_MAX_DURATION 10800
 #define EFFECT_MAX_STRENGTH 5000
 
 #include <iostream>
 #include <list>
+#include <memory>
 
 
 typedef struct _xmlNode xmlNode;
@@ -127,7 +126,7 @@ class EffectInfo {
     friend class Effects;
 
 public:
-    EffectInfo(const std::string &pName, time_t pLastMod, long pDuration, int pStrength, MudObject *pParent = 0, const Creature *owner = 0);
+    EffectInfo(const std::string &pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent = nullptr, const std::shared_ptr<Creature> &owner = nullptr);
     EffectInfo(xmlNodePtr rootNode);
 
     virtual ~EffectInfo();
@@ -135,7 +134,7 @@ public:
     friend std::ostream &operator<<(std::ostream &out, const EffectInfo &effectinfo);
     friend std::ostream &operator<<(std::ostream &out, EffectInfo *effectinfo);
 
-    bool compute(MudObject *applier);
+    bool compute(const std::shared_ptr<MudObject>&applier);
     bool add();
     bool apply();
     bool preApply();
@@ -155,24 +154,24 @@ public:
     [[nodiscard]] MudObject *getParent() const;
     [[nodiscard]] const Effect *getEffect() const;
     [[nodiscard]] bool hasBaseEffect(std::string_view effect) const;
-    bool runScript(const std::string& pyScript, MudObject *applier = nullptr);
+    bool runScript(const std::string& pyScript, std::shared_ptr<MudObject>applier = nullptr);
     bool updateLastMod(time_t t);    // True if it's time to wear off
     bool timeForPulse(time_t t);     // True if it's time to pulse
     bool pulse(time_t t);
 
-    void setOwner(const Creature *owner);
+    void setOwner(const std::shared_ptr<Creature> &owner);
     void setStrength(int pStrength);
     void setExtra(int pExtra);
     void setDuration(long pDuration);
     void setParent(MudObject *parent);
 
-    bool isOwner(const Creature *owner) const;
+    bool isOwner(const std::shared_ptr<Creature> &owner) const;
     [[nodiscard]] bool isCurse() const;
     [[nodiscard]] bool isDisease() const;
     [[nodiscard]] bool isPoison() const;
     [[nodiscard]] bool isPermanent() const;
 
-    [[nodiscard]] MudObject *getApplier() const;
+    [[nodiscard]] std::shared_ptr<MudObject>getApplier() const;
 
 protected:
     EffectInfo();
@@ -194,7 +193,7 @@ private:
     // specified. And if you DO specify otherwise, be sure you know what you're doing!
     // The effect will keep a pointer to the applier, and if the applier is removed
     // from memory, you'll get an invalid pointer that might crash the game.
-    MudObject *myApplier = nullptr;
+    std::weak_ptr<MudObject>myApplier;
 
 };
 
@@ -204,7 +203,7 @@ typedef std::list<EffectInfo *> EffectList;
 // across multiple objects
 class Effects {
 public:
-    void load(xmlNodePtr rootNode, MudObject *pParent = nullptr);
+    void load(xmlNodePtr rootNode, const std::shared_ptr<MudObject>&pParent = nullptr);
     void save(xmlNodePtr rootNode, const char *name) const;
 
     [[nodiscard]] EffectInfo *getEffect(std::string_view effect) const;
@@ -213,16 +212,16 @@ public:
     [[nodiscard]] bool isEffected(const std::string &effect, bool exactMatch = false) const;
     [[nodiscard]] bool isEffected(EffectInfo *effect) const;
 
-    //EffectInfo* addEffect(std::string_view effect, MudObject* applier, bool show, MudObject* pParent=0, const Creature* onwer=0, bool keepApplier=false);
+    //EffectInfo* addEffect(std::string_view effect, std::shared_ptr<MudObject> applier, bool show, std::shared_ptr<MudObject> pParent=0, const std::shared_ptr<Creature> & onwer=0, bool keepApplier=false);
     EffectInfo *addEffect(EffectInfo *newEffect, bool show, MudObject *parent = nullptr, bool keepApplier = false);
-    EffectInfo *addEffect(const std::string& effect, long duration, int strength, MudObject *applier = nullptr, bool show = true, MudObject *pParent = nullptr,
-                          const Creature *onwer = nullptr, bool keepApplier = false);
+    EffectInfo *addEffect(const std::string& effect, long duration, int strength, const std::shared_ptr<MudObject>&applier = nullptr, bool show = true, MudObject *parent = nullptr,
+                          const std::shared_ptr<Creature> &onwer = nullptr, bool keepApplier = false);
     void copy(const Effects *source, MudObject *pParent = nullptr);
 
-    bool removeEffect(const std::string& effect, bool show, bool remPerm, MudObject *fromApplier = nullptr);
+    bool removeEffect(const std::string& effect, bool show, bool remPerm, const std::shared_ptr<MudObject>&fromApplier = nullptr);
     bool removeEffect(EffectInfo *toDel, bool show);
     bool removeOppositeEffect(const EffectInfo *effect);
-    void removeOwner(const Creature *owner);
+    void removeOwner(const std::shared_ptr<Creature> &owner);
     void removeAll();
     bool removePoison();
     bool removeDisease();
@@ -230,12 +229,10 @@ public:
 
     [[nodiscard]] bool hasPoison() const;
     [[nodiscard]] bool hasDisease() const;
-    [[nodiscard]] std::string getEffectsString(const Creature *viewer);
+    [[nodiscard]] std::string getEffectsString(const std::shared_ptr<Creature> &viewer);
     [[nodiscard]] std::string getEffectsList() const;
 
-    void pulse(time_t t, MudObject *pParent = nullptr);
+    void pulse(time_t t, const std::shared_ptr<MudObject>&pParent = nullptr);
 
     EffectList effectList;
 };
-
-#endif /*EFFECTS_H_*/

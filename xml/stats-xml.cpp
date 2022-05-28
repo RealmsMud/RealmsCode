@@ -48,10 +48,8 @@ bool Stat::loadModifiers(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
     while(childNode) {
         if(NODE_NAME(childNode, "StatModifier")) {
-            auto* mod = new StatModifier(childNode);
-            if(mod->getName().empty()) {
-                delete mod;
-            } else {
+            auto mod = std::make_shared<StatModifier>(childNode);
+            if(!mod->getName().empty()) {
                 modifiers.insert(ModifierMap::value_type(mod->getName(), mod));
             }
             childNode = childNode->next;

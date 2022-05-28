@@ -53,7 +53,6 @@
 #include "effects.hpp"                           // for Effect
 #include "enums/loadType.hpp"                    // for LoadType, LoadType::...
 #include "flags.hpp"                             // for P_CHAOTIC, P_DM_INVIS
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for ALLITEMS, CreatureClass
 #include "guilds.hpp"                            // for Guild
 #include "mud.hpp"                               // for GUILD_PEON
@@ -110,8 +109,8 @@ void latestPost(std::string_view view, std::string_view subject, std::string_vie
     if(view.empty() || boardname.empty() || username.empty() || post.empty())
         return;
 
-    for(Socket &sock : gServer->sockets) {
-        const Player* player = sock.getPlayer();
+    for(auto sock : gServer->sockets) {
+        const std::shared_ptr<Player> player = sock->getPlayer();
 
         if(!player || player->fd < 0)
             continue;
@@ -159,7 +158,7 @@ void WebInterface::openFifos() {
     checkFifo(fifoOut);
 
     char filename[80];
-    snprintf(filename, 80, "%s/%s", Path::Game, fifoIn);
+    snprintf(filename, 80, "%s/%s", Path::Game.c_str(), fifoIn);
     inFd = open(filename, O_RDONLY|O_NONBLOCK);
     if(inFd == -1)
         throw(std::runtime_error("WebInterface: Unable to open " + std::string(filename) + ":" +strerror(errno)));
@@ -212,10 +211,10 @@ void WebInterface::recreateFifos() {
     char filename[80];
     closeFifos();
 
-    snprintf(filename, 80, "%s/%s.xml", Path::Game, fifoIn);
+    snprintf(filename, 80, "%s/%s.xml", Path::Game.c_str(), fifoIn);
     unlink(filename);
 
-    snprintf(filename, 80, "%s/%s.xml", Path::Game, fifoOut);
+    snprintf(filename, 80, "%s/%s.xml", Path::Game.c_str(), fifoOut);
     unlink(filename);
 
     openFifos();
@@ -233,7 +232,7 @@ bool WebInterface::checkFifo(const char* fifoFile) {
     bool needToCreate = false;
 
     char filename[80];
-    snprintf(filename, 80, "%s/%s", Path::Game, fifoFile);
+    snprintf(filename, 80, "%s/%s", Path::Game.c_str(), fifoFile);
     retVal = stat(filename, &statInfo);
     if(retVal == 0) {
         if((statInfo.st_mode & S_IFMT) != S_IFIFO) {
@@ -293,7 +292,7 @@ bool WebInterface::checkInput() {
         return(false);
 
     char tmpBuf[1024];
-    int n = 0, total = 0;
+    int n, total = 0;
     do {
         // Attempt to read from the socket
         n = read(inFd, tmpBuf, 1023);
@@ -321,7 +320,7 @@ bool WebInterface::checkInput() {
 bool WebInterface::messagePlayer(std::string command, std::string tempBuf) {
     // MSG / SYSMSG = system sending
     // TXT = user sending
-    std::string::size_type pos=0;
+    std::string::size_type pos;
 
     // we don't know the command yet
     if(command.empty()) {
@@ -346,7 +345,7 @@ bool WebInterface::messagePlayer(std::string command, std::string tempBuf) {
     boost::trim(tempBuf);
 
     std::clog << "WebInterface: Messaging user " << user << std::endl;
-    const Player* player = gServer->findPlayer(user);
+    const std::shared_ptr<Player> player = gServer->findPlayer(user);
     if(!player) {
         outBuf += "That player is not logged on.";
     } else {
@@ -380,9 +379,9 @@ bool WebInterface::messagePlayer(std::string command, std::string tempBuf) {
 //                      getInventory
 //*********************************************************************
 
-std::string doGetInventory(const Player* player, const ObjectSet &set);
+std::string doGetInventory(const std::shared_ptr<const Player>& player, const ObjectSet &set);
 
-std::string doGetInventory(const Player* player, Object* object, int loc=-1) {
+std::string doGetInventory(const std::shared_ptr<const Player>& player, const std::shared_ptr<Object>&  object, int loc=-1) {
     std::ostringstream oStr;
     oStr << itemDelim
          << object->getName()
@@ -404,16 +403,16 @@ std::string doGetInventory(const Player* player, Object* object, int loc=-1) {
     return(oStr.str());
 }
 
-std::string doGetInventory(const Player* player, const ObjectSet &set) {
-    std::string inv = "";
-    for(Object* obj : set ) {
+std::string doGetInventory(const std::shared_ptr<const Player>& player, const ObjectSet &set) {
+    std::string inv;
+    for(const auto& obj : set ) {
         if(player->canSee(obj))
             inv += doGetInventory(player, obj);
     }
     return(inv);
 }
 
-std::string getInventory(const Player* player) {
+std::string getInventory(const std::shared_ptr<const Player>& player) {
     std::ostringstream oStr;
 
     oStr << player->getUniqueObjId()
@@ -432,10 +431,10 @@ std::string getInventory(const Player* player) {
 //                      handleInput
 //*********************************************************************
 
-bool webWield(Player* player);
-bool webWear(Player* player);
+bool webWield(std::shared_ptr<Player> player);
+bool webWear(std::shared_ptr<Player> player);
 
-bool webUse(Player* player, int id, int type) {
+bool webUse(const std::shared_ptr<Player>& player, int id, int type) {
 
     // Disabled
     return(false);
@@ -450,7 +449,7 @@ bool WebInterface::handleInput() {
     if(inBuf.empty())
         return(false);
 
-    std::string::size_type start=0, idx=0, pos=0;
+    std::string::size_type start=0, idx, pos;
     bool needData=false;
 
     // First, see if we have a clear command (ETX), if so erase up to there
@@ -464,7 +463,7 @@ bool WebInterface::handleInput() {
     inBuf.erase(0, start);
 
     // Now lets look for a command
-    idx = inBuf.find("\n", 0);
+    idx = inBuf.find('\n', 0);
     if(idx == std::string::npos)
         return(false);
 
@@ -552,7 +551,7 @@ bool WebInterface::handleInput() {
 //              tempBuf = "";
 //          }
 //
-//          Player* player = 0;
+//          std::shared_ptr<Player> player = 0;
 //          if(user != "")
 //              player = gServer->findPlayer(user);
 //          if(!player) {
@@ -584,7 +583,7 @@ bool WebInterface::handleInput() {
             return(true);
         }
         else if(command == "EFFECTLIST") {
-            const Effect* effect=nullptr;
+            const Effect* effect;
             std::ostringstream oStr;
             for(const auto& sp : gConfig->effects) {
                 effect = &(sp.second);
@@ -600,7 +599,7 @@ bool WebInterface::handleInput() {
             std::clog << "WebInterface: Whois for user " << tempBuf << std::endl;
             boost::to_lower(tempBuf);
             tempBuf.at(0) = up(tempBuf.at(0));
-            const Player* player = gServer->findPlayer(tempBuf);
+            const std::shared_ptr<Player> player = gServer->findPlayer(tempBuf);
             if( !player ||
                 player->flagIsSet(P_DM_INVIS) ||
                 player->isEffected("incognito") ||
@@ -634,7 +633,7 @@ bool WebInterface::handleInput() {
             tempBuf.erase(0, pos+1); // Clear out the user
             std::clog << "WebInterface: Forum association for user " << user << std::endl;
 
-            Player* player = gServer->findPlayer(user);
+            std::shared_ptr<Player> player = gServer->findPlayer(user);
             if(player) {
                 player->setForum(tempBuf);
                 player->save(true);
@@ -642,7 +641,7 @@ bool WebInterface::handleInput() {
             }
 
             // they logged off?
-            if(!loadPlayer(user.c_str(), &player)) {
+            if(!loadPlayer(user.c_str(), player)) {
                 // they were deleted? undo!
                 webUnassociate(user);
                 return(false);
@@ -650,7 +649,6 @@ bool WebInterface::handleInput() {
 
             player->setForum(tempBuf);
             player->save();
-            free_crt(player);
             outBuf += EOT;
             return(true);
         } else if(command == "UNFORUM") {
@@ -664,7 +662,7 @@ bool WebInterface::handleInput() {
             boost::to_lower(tempBuf);
             tempBuf.at(0) = up(tempBuf.at(0));
 
-            Player* player = gServer->findPlayer(tempBuf);
+            std::shared_ptr<Player> player = gServer->findPlayer(tempBuf);
             if(player) {
                 if(!player->getForum().empty()) {
                     messagePlayer("MSG", tempBuf + " Your character has been unassociated from forum account " + player->getForum() + ".");
@@ -674,12 +672,11 @@ bool WebInterface::handleInput() {
             } else {
 
                 // they logged off?
-                if(!loadPlayer(tempBuf.c_str(), &player)) {
+                if(!loadPlayer(tempBuf.c_str(), player)) {
                     // they were deleted? no problem!
                 } else {
                     player->setForum("");
                     player->save();
-                    free_crt(player);
                 }
 
             }
@@ -700,24 +697,19 @@ bool WebInterface::handleInput() {
             }
 
             std::list<std::string>::const_iterator it;
-            Player* player=nullptr;
-            bool online=true;
+            std::shared_ptr<Player> player=nullptr;
             for(it = guild->members.begin() ; it != guild->members.end() ; it++ ) {
-                online = true;
                 player = gServer->findPlayer(*it);
 
                 if(!player) {
-                    if(!loadPlayer((*it).c_str(), &player))
+                    if(!loadPlayer((*it).c_str(), player))
                         continue;
 
-                    online = false;
                 }
 
                 if(!player->getForum().empty())
                     callWebserver((std::string)"mud.php?type=autoguild&guild=" + guild->getName() + "&user=" + player->getForum() + "&char=" + player->getName());
 
-                if(!online)
-                    free_crt(player);
             }
 
             outBuf += EOT;
@@ -762,7 +754,7 @@ bool WebInterface::handleInput() {
         tempBuf.erase(0, 4);
 
         // Now we need to find what area/index we're working on.  If no area is found we assume misc
-        getCatRef(tempBuf, &cr, nullptr);
+        getCatRef(tempBuf, cr, nullptr);
 
         std::clog << "WebInterface: Found command: " << command << " " << type << " " << cr.area << "." << cr.id << std::endl;
 
@@ -776,30 +768,28 @@ bool WebInterface::handleInput() {
                 rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Creature", nullptr);
                 xmlDocSetRootElement(xmlDoc, rootNode);
 
-                Monster *monster;
-                if(loadMonster(cr, &monster)) {
+                std::shared_ptr<Monster> monster;
+                if(loadMonster(cr, monster)) {
                     monster->saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
                     std::clog << "Generated xml for " << monster->getName() << "\n";
-                    free_crt(monster);
                 }
             }
             else if(type == "OBJ") {
                 rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Object", nullptr);
                 xmlDocSetRootElement(xmlDoc, rootNode);
 
-                Object* object;
-                if(loadObject(cr, &object)) {
+                std::shared_ptr<Object>  object;
+                if(loadObject(cr, object)) {
                     object->saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
                     std::clog << "Generated xml for " << object->getName() << "\n";
-                    delete object;
                 }
             }
             else if(type == "ROM") {
                 rootNode = xmlNewDocNode(xmlDoc, nullptr, BAD_CAST "Room", nullptr);
                 xmlDocSetRootElement(xmlDoc, rootNode);
 
-                UniqueRoom* room;
-                if(loadRoom(cr, &room)) {
+                std::shared_ptr<UniqueRoom> room;
+                if(loadRoom(cr, room)) {
                     room->saveToXml(rootNode, ALLITEMS);
                     std::clog << "Generated xml for " << room->getName() << "\n";
                 }
@@ -830,32 +820,32 @@ bool WebInterface::handleInput() {
             std::string newArea = xml::getProp(rootNode, "Area");
             // Make sure they're sending us the proper index!
             if(num != cr.id || newArea != cr.area) {
-                std::clog << "WebInterface: MisMatched save - Got " << num << " - " << newArea << " Expected " << cr.str() << "\n";
+                std::clog << "WebInterface: MisMatched save - Got " << num << " - " << newArea << " Expected " << cr.displayStr() << "\n";
                 return(false);
             }
             if(type == "CRT") {
-                auto* monster = new Monster();
+                auto monster = std::make_shared<Monster>();
                 monster->readFromXml(rootNode);
                 monster->saveToFile();
-                broadcast(isDm, "^y*** Monster %s - %s^y updated by %s.", monster->info.str().c_str(), monster->getCName(), monster->last_mod);
-                gServer->monsterCache.insert(monster->info, &monster);
+                broadcast(isDm, "^y*** Monster %s - %s^y updated by %s.", monster->info.displayStr().c_str(), monster->getCName(), monster->last_mod);
+                gServer->monsterCache.insert(monster->info, *monster);
             }
             else if(type == "OBJ") {
-                auto* object = new Object();
+                auto object = std::make_shared<Object>();
                 object->readFromXml(rootNode);
                 object->saveToFile();
-                broadcast(isDm, "^y*** Object %s - %s^y updated by %s.", object->info.str().c_str(), object->getCName(), object->lastMod.c_str());
-                gServer->objectCache.insert(object->info, &object);
+                broadcast(isDm, "^y*** Object %s - %s^y updated by %s.", object->info.displayStr().c_str(), object->getCName(), object->lastMod.c_str());
+                gServer->objectCache.insert(object->info, *object);
             }
             else if(type == "ROM") {
-                auto* room = new UniqueRoom();
+                auto room = std::make_shared<UniqueRoom>();
                 room->readFromXml(rootNode);
                 room->saveToFile(0);
 
                 gServer->reloadRoom(room);
-                broadcast(isDm, "^y*** Room %s - %s^y updated by %s.", room->info.str().c_str(), room->getCName(), room->last_mod);
+                broadcast(isDm, "^y*** Room %s - %s^y updated by %s.", room->info.displayStr().c_str(), room->getCName(), room->last_mod);
             }
-            std::clog << "WebInterface: Saved " << type << " " << cr.str() << "\n";
+            std::clog << "WebInterface: Saved " << type << " " << cr.displayStr() << "\n";
         }
     }
 
@@ -871,10 +861,10 @@ bool WebInterface::sendOutput() {
         return(false);
 
     int written=0;
-    int n=0;
+    int n;
 
     char filename[80];
-    snprintf(filename, 80, "%s/%s", Path::Game, fifoOut);
+    snprintf(filename, 80, "%s/%s", Path::Game.c_str(), fifoOut);
 
     int total = outBuf.length();
     if(outFd == -1)
@@ -906,11 +896,8 @@ bool WebInterface::sendOutput() {
 
 std::string webwho() {
     std::ostringstream oStr;
-    const Player *player=nullptr;
 
-    for(const auto& p : gServer->players) {
-        player = p.second;
-
+    for(const auto& [pId, player] : gServer->players) {
         if(!player->isConnected())
             continue;
         if(player->getClass() == CreatureClass::BUILDER)
@@ -1006,7 +993,7 @@ void callWebserver(std::string url, bool questionMark, bool silent) {
 //*********************************************************************
 // delete and recreate the fifos
 
-int dmFifo(Player* player, cmd* cmnd) {
+int dmFifo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     gServer->recreateFifos();
     player->print("Interface fifos have been recreated.\n");
     return(0);
@@ -1017,14 +1004,14 @@ int dmFifo(Player* player, cmd* cmnd) {
 //                      cmdForum
 //*********************************************************************
 
-int cmdForum(Player* player, cmd* cmnd) {
+int cmdForum(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->getProxyName().empty()) {
         *player << "You are unable to modify forum accounts of proxied characters.\n";
         return(0);
     }
 
-    std::string::size_type pos=0;
+    std::string::size_type pos;
     std::ostringstream url;
     url << "mud.php?type=forum&char=" << player->getName();
 
@@ -1095,7 +1082,7 @@ void webCrash(const std::string &msg) {
 //*********************************************************************
 // This function allows a player to loop up a wiki entry
 
-int cmdWiki(Player* player, cmd* cmnd) {
+int cmdWiki(const std::shared_ptr<Player>& player, cmd* cmnd) {
     struct stat f_stat{};
     std::ostringstream url;
     std::string entry = getFullstrText(cmnd->fullstr, 1);
@@ -1114,7 +1101,7 @@ int cmdWiki(Player* player, cmd* cmnd) {
 
     boost::to_lower(entry);
     boost::replace_all(entry, ":", "_colon_");
-    auto file = fmt::format("{}/{}.txt", Path::Wiki, entry);
+    auto file = (Path::Wiki / entry).replace_extension("txt");
 
     // If the file exists and was modified within the last hour, use the local cache
     if(!stat(file.c_str(), &f_stat) && (time(nullptr) - f_stat.st_mtim.tv_sec) < 3600) {
@@ -1135,7 +1122,7 @@ int cmdWiki(Player* player, cmd* cmnd) {
 // This function allows a player to loop up a wiki entry
 
 bool WebInterface::wiki(std::string command, std::string tempBuf) {
-    std::string::size_type pos=0;
+    std::string::size_type pos;
 
     // we don't know the command yet
     if(command.empty()) {
@@ -1166,11 +1153,11 @@ bool WebInterface::wiki(std::string command, std::string tempBuf) {
     }
 
     std::clog << "WebInterface: Wiki help for user " << user << std::endl;
-    const Player* player = gServer->findPlayer(user);
+    const std::shared_ptr<Player> player = gServer->findPlayer(user);
     if(!player) {
         outBuf += "That player is not logged on.";
     } else {
-        player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::Wiki, tempBuf), true);
+        player->getSock()->viewFile((Path::Wiki / tempBuf).replace_extension("txt"), true);
     }
     outBuf += EOT;
     return(true);

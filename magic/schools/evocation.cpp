@@ -40,7 +40,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for osp_t
-#include "utils.hpp"                 // for MAX, MIN
 
 
 //*********************************************************************
@@ -72,13 +71,13 @@ char getRandColor() {
 //                      splMagicMissile
 //*********************************************************************
 
-int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player  *pPlayer = player->getAsPlayer();
+int splMagicMissile(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer();
     int     maxMissiles, mpNeeded, canCast=0, num;
     int     missileDmg, a=0;
     char    colorCh;
-    Creature *target;
-    Monster *mTarget;
+    std::shared_ptr<Creature>target;
+    std::shared_ptr<Monster> mTarget;
 
     if(!player->spellIsKnown(S_MAGIC_MISSILE) && spellData->how == CastType::CAST) {
         player->print("You do not know that spell.\n");
@@ -117,7 +116,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
         maxMissiles = Random::get(2,4);
     }
 
-    num = MAX(1,maxMissiles);
+    num = std::max(1,maxMissiles);
     mpNeeded = 2*num;
 
     if(cmnd->num > 3 && spellData->how == CastType::CAST) {
@@ -128,7 +127,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         num = cmnd->val[3];
         if(num > maxMissiles) {
-            player->print("You can only cast a maximum of %d missiles.\n", MAX(1,maxMissiles));
+            player->print("You can only cast a maximum of %d missiles.\n", std::max(1,maxMissiles));
             return(0);
         }
 
@@ -155,8 +154,8 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     player->smashInvis();
 
-    target->print("%M casts a magic missile spell.\n", player);
-    broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a magic-missile spell.", player);
+    target->print("%M casts a magic missile spell.\n", player.get());
+    broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a magic-missile spell.", player.get());
     if(mTarget)
         mTarget->addEnemy(player);
 
@@ -164,7 +163,7 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->getAsPlayer()->statistics.offensiveCast();
 
     if(mTarget && Random::get(1,100) <= mTarget->getMagicResistance()) {
-        player->print("Your missiles have no effect on %N.\n", mTarget);
+        player->print("Your missiles have no effect on %N.\n", mTarget.get());
         return(0);
     }
 
@@ -172,17 +171,17 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
         a++;
         missileDmg = Random::get(2,5) + bonus(player->intelligence.getCur())/2;
         if(Random::get(1,100) <= 25 && target->isEffected("resist-magic")) {
-            player->print("Your magic-missile deflects off of %N.\n", target);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's magic-missile deflects off of %N.", player, target);
-            target->print("%M's magic-missile deflects off of you.\n", player);
+            player->print("Your magic-missile deflects off of %N.\n", target.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's magic-missile deflects off of %N.", player.get(), target.get());
+            target->print("%M's magic-missile deflects off of you.\n", player.get());
             continue;
         }
         colorCh = getRandColor();
 
-        player->printColor("^@^%cYour magic-missile strikes %N for %d damage.\n", colorCh, target, missileDmg);
-        target->printColor("^@^%c%M's magic-missile strikes you for %d damage!\n", colorCh, player, missileDmg);
+        player->printColor("^@^%cYour magic-missile strikes %N for %d damage.\n", colorCh, target.get(), missileDmg);
+        target->printColor("^@^%c%M's magic-missile strikes you for %d damage!\n", colorCh, player.get(), missileDmg);
         broadcast(player->getSock(), target->getSock(), player->getParent(),
-            "^@^%c%M's magic-missile strikes %N!", colorCh, player, target);
+            "^@^%c%M's magic-missile strikes %N!", colorCh, player.get(), target.get());
         if(player->doDamage(target, missileDmg, CHECK_DIE))
             return(1);
     }
@@ -196,11 +195,11 @@ int splMagicMissile(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 // The actual routine for damage.
 
-int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const char *spellname, osp_t *osp, bool multi) {
-    Player  *pTarget = target->getAsPlayer(), *pCaster = caster->getAsPlayer();
-    Monster *mTarget = target->getAsMonster();
-    Monster *mCaster = caster->getAsMonster();
-    BaseRoom* room = caster->getRoomParent();
+int doOffensive(std::shared_ptr<Creature>caster, std::shared_ptr<Creature> target, SpellData* spellData, const char *spellname, osp_t *osp, bool multi) {
+    std::shared_ptr<Player> pTarget = target->getAsPlayer(), pCaster = caster->getAsPlayer();
+    std::shared_ptr<Monster> mTarget = target->getAsMonster();
+    std::shared_ptr<Monster> mCaster = caster->getAsMonster();
+    std::shared_ptr<BaseRoom> room = caster->getRoomParent();
     unsigned int m;
     int bns=0;
     Damage damage;
@@ -278,14 +277,14 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             bns *= 2;
         else if( (room->flagIsSet(R_ROOM_REALM_BONUS) && room->hasOppositeRealmBonus(osp->realm)) ||
                 (room->flagIsSet(R_OPPOSITE_REALM_BONUS) && room->hasRealmBonus(osp->realm)))
-            bns = MIN(-bns, -5);
+            bns = std::min(-bns, -5);
     }
 
 
 
     // Cast on self
     if(caster == target) {
-        damage.set(MAX(1, osp->damage.roll() + bns));
+        damage.set(std::max(1, osp->damage.roll() + bns));
         caster->modifyDamage(caster, dmgType, damage);
         caster->hp.decrease(damage.get());
 
@@ -305,10 +304,8 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             if(caster->isPlayer())
                 caster->getAsPlayer()->statistics.magicDamage(damage.get(), (std::string)"a " + spellname + " spell");
             caster->printColor("The spell did %s%d^x damage.\n", caster->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-            broadcast(caster->getSock(), room, "%M casts a %s spell on %sself.",
-                caster, spellname, caster->himHer());
-            broadcastGroup(false, caster, "%M cast a %s spell on %sself for *CC:DAMAGE*%d^x damage, %s%s\n",
-                caster, spellname, caster->himHer(), damage.get(), caster->heShe(), caster->getStatusStr());
+            broadcast(caster->getSock(), room, "%M casts a %s spell on %sself.", caster.get(), spellname, caster->himHer());
+            broadcastGroup(false, caster, "%M cast a %s spell on %sself for *CC:DAMAGE*%d^x damage, %s%s\n", caster.get(), spellname, caster->himHer(), damage.get(), caster->heShe(), caster->getStatusStr());
         } else if(spellData->how == CastType::POTION) {
             caster->print("Yuck! That's terrible!\n");
             caster->print("%d hit points removed.\n", damage.get());
@@ -358,9 +355,9 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 
         if(mTarget) {
             if(Random::get(1,100) < mTarget->getMagicResistance()) {
-                caster->printColor("^MYour spell has no effect on %N.\n", mTarget);
+                caster->printColor("^MYour spell has no effect on %N.\n", mTarget.get());
                 if(pCaster)
-                    broadcast(pCaster->getSock(), room, "%M's spell has no effect on %N.", caster, mTarget);
+                    broadcast(pCaster->getSock(), room, "%M's spell has no effect on %N.", caster.get(), mTarget.get());
                 return(0);
             }
         }
@@ -374,9 +371,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
                 (target->flagIsSet(M_NO_LEVEL_TWO) && slvl <= 2) ||
                 (target->flagIsSet(M_NO_LEVEL_ONE) && slvl <= 1)
             ) {
-                broadcast(isCt, caster->getSock(), room,
-                    "*DM* %M tried to cast a %s spell on %N.",
-                    caster, get_spell_name(osp->splno), target);
+                broadcast(isCt, caster->getSock(), room, "*DM* %M tried to cast a %s spell on %N.", caster.get(), get_spell_name(osp->splno), target.get());
                 if(caster->getClass() !=  CreatureClass::LICH) {
                     caster->mp.increase(osp->mp);
                 } else {
@@ -393,7 +388,7 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
                     (target->flagIsSet(M_NO_LEVEL_THREE) && slvl <= 3) ||
                     (target->flagIsSet(M_NO_LEVEL_TWO) && slvl <= 2) ||
                     (target->flagIsSet(M_NO_LEVEL_ONE) && slvl <= 1) ) {
-                caster->print("Your %s was not powerful enough to harm %N!!\n", get_spell_name(osp->splno), target);
+                caster->print("Your %s was not powerful enough to harm %N!!\n", get_spell_name(osp->splno), target.get());
                 caster->smashInvis();
                 return(1);
             }
@@ -401,12 +396,12 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 
         damage.set(osp->damage.roll() + bns);
         target->modifyDamage(caster, dmgType, damage, osp->realm);
-        damage.set(MAX<int>(0, damage.get()));
+        damage.set(std::max<int>(0, damage.get()));
 
-        m = MIN<unsigned int>(target->hp.getCur(), damage.get());
+        m = std::min<unsigned int>(target->hp.getCur(), damage.get());
 
-        //addrealm = (m * target->getExperience()) / MAX(1, target->hp.getMax());
-        //addrealm = MIN(addrealm, target->getExperience());
+        //addrealm = (m * target->getExperience()) / std::max(1, target->hp.getMax());
+        //addrealm = std::min(addrealm, target->getExperience());
         //if(mTarget && !mTarget->isPet())
         //  caster->addRealm(addrealm, osp->realm);
 
@@ -415,9 +410,9 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
-            caster->print("You cast a %s spell on %N.\n", spellname, target);
+            caster->print("You cast a %s spell on %N.\n", spellname, target.get());
             if(target->negAuraRepel()) {
-                caster->printColor("^c%M's negative aura repels some of the damage.\n", target);
+                caster->printColor("^c%M's negative aura repels some of the damage.\n", target.get());
                 target->printColor("^cYour negative aura repelled some of the damage.\n");
             }
 
@@ -427,13 +422,12 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
                 caster->getAsPlayer()->statistics.magicDamage(damage.get(), (std::string)"a " + spellname + " spell");
 
             caster->printColor("The spell did %s%d^x damage.\n", caster->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-            broadcast(caster->getSock(), target->getSock(), room, "%M casts a %s spell on %N.",
-                caster, spellname, target);
+            broadcast(caster->getSock(), target->getSock(), room, "%M casts a %s spell on %N.", caster.get(), spellname, target.get());
 
             if(mCaster) {
-                target->printColor("^r%M casts a %s spell on you for ^R%d^r damage.\n", caster, spellname, damage.get());
+                target->printColor("^r%M casts a %s spell on you for ^R%d^r damage.\n", caster.get(), spellname, damage.get());
             } else  {
-                target->printColor("%M casts a %s spell on you for %s%d^x damage.\n", caster, spellname, target->customColorize("*CC:DAMAGE*").c_str(), damage.get());
+                target->printColor("%M casts a %s spell on you for %s%d^x damage.\n", caster.get(), spellname, target->customColorize("*CC:DAMAGE*").c_str(), damage.get());
             }
 
             if(!pTarget) {
@@ -452,11 +446,10 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             //caster->checkTarget(target);
             target->hp.decrease(damage.get());
 
-            broadcastGroup(false, target, "%M cast a %s spell on ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n",
-                caster, spellname, target, damage.get(), target->heShe(), target->getStatusStr());
+            broadcastGroup(false, target, "%M cast a %s spell on ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", caster.get(), spellname, target.get(), damage.get(), target->heShe(), target->getStatusStr());
 
             if(caster->getClass() !=  CreatureClass::LICH && caster->hp.getCur() < caster->hp.getMax() && damage.getDrain()) {
-                caster->print("%M's life force revitalizes your strength.\n", target);
+                caster->print("%M's life force revitalizes your strength.\n", target.get());
                 caster->hp.increase(damage.getDrain());
             }
         }
@@ -477,9 +470,9 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             (mCaster->flagIsSet(M_GREEDY) || mCaster->flagIsSet(M_POLICE)) &&
             (pTarget->hp.getCur() < pTarget->hp.getMax()/10))
         {
-            pTarget->printColor("^r%M knocks you unconscious.\n", mCaster);
+            pTarget->printColor("^r%M knocks you unconscious.\n", mCaster.get());
             pTarget->knockUnconscious(39);
-            broadcast(pTarget->getSock(), room, "%M knocks %N unconscious.", mCaster, pTarget);
+            broadcast(pTarget->getSock(), room, "%M knocks %N unconscious.", mCaster.get(), pTarget.get());
             pTarget->hp.setCur(pTarget->hp.getMax()/20);
 
             pTarget->clearAsEnemy();
@@ -490,17 +483,17 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
             mCaster->clearEnemy(pTarget);
             if(mCaster->flagIsSet(M_POLICE)) {
                 if(!mCaster->jail.id && !pTarget->isStaff()) {
-                    broadcast(pTarget->getSock(), room, "%M picks %N up and hauls %s off to jail.", mCaster, pTarget, pTarget->himHer());
-                    broadcast("### %M was hauled off to jail by %N", pTarget, mCaster);
+                    broadcast(pTarget->getSock(), room, "%M picks %N up and hauls %s off to jail.", mCaster.get(), pTarget.get(), pTarget->himHer());
+                    broadcast("### %M was hauled off to jail by %N", pTarget.get(), mCaster.get());
                 } else {
-                    broadcast(pTarget->getSock(), room, "%M picks %N up and hauls %s off.", mCaster, pTarget, pTarget->himHer());
+                    broadcast(pTarget->getSock(), room, "%M picks %N up and hauls %s off.", mCaster.get(), pTarget.get(), pTarget->himHer());
                 }
                 mCaster->toJail(pTarget);
                 return(2);
             }
             if(mCaster->flagIsSet(M_GREEDY)) {
-                broadcast(pTarget->getSock(), room, "%M rummages through %N's inventory.", mCaster, pTarget);
-                broadcast("### %M was mugged by %N.", pTarget, mCaster);
+                broadcast(pTarget->getSock(), room, "%M rummages through %N's inventory.", mCaster.get(), pTarget.get());
+                broadcast("### %M was mugged by %N.", pTarget.get(), mCaster.get());
                 mCaster->grabCoins(pTarget);
                 return(2);
             }
@@ -519,9 +512,10 @@ int doOffensive(Creature *caster, Creature* target, SpellData* spellData, const 
 //*********************************************************************
 // This function is called by all spells whose sole purpose is to do
 // damage to a creature.
-Creature* Creature::findMagicVictim(const std::string &toFind, int num, SpellData* spellData, bool aggressive, bool selfOk, const std::string &noVictim, const std::string &notFound) {
-    Creature *victim = nullptr;
-    Player *pVictim = nullptr;
+std::shared_ptr<Creature> Creature::findMagicVictim(const std::string &toFind, int num, SpellData* spellData, bool aggressive, bool selfOk, const std::string &noVictim, const std::string &notFound) {
+    std::shared_ptr<Creature>victim = nullptr;
+    std::shared_ptr<Player>pVictim = nullptr;
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
     if (toFind.empty()) {
         if (spellData->how != CastType::POTION) {
             if (hasAttackableTarget()) {
@@ -531,7 +525,7 @@ Creature* Creature::findMagicVictim(const std::string &toFind, int num, SpellDat
                 *this << ColorOn << noVictim << ColorOff;
             return (nullptr);
         } else {
-            return (this);
+            return (cThis);
         }
     } else {
         if (spellData->how == CastType::POTION) {
@@ -540,23 +534,23 @@ Creature* Creature::findMagicVictim(const std::string &toFind, int num, SpellDat
         }
         if (toFind == ".") {
             // Cast offensive spell on self
-            return (this);
+            return (cThis);
         } else {
-            victim = getRoomParent()->findCreature(this, toFind, num, true, true);
+            victim = getRoomParent()->findCreature(cThis, toFind, num, true, true);
             if (victim)
                 pVictim = victim->getAsPlayer();
 
-            if (!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3) || (!selfOk && victim == this)) {
+            if (!victim || (aggressive && (pVictim || victim->isPet()) && toFind.length() < 3) || (!selfOk && victim.get() == this)) {
                 if (!notFound.empty())
                     *this << ColorOn << notFound << ColorOff;
                 return (nullptr);
             }
             if (isMonster()) {
-                if (victim == this) {
+                if (victim.get() == this) {
                     // for monster casting we need to make sure its not on itself
-                    victim = getRoomParent()->findCreature(this, toFind, 2, true, true);
+                    victim = getRoomParent()->findCreature(cThis, toFind, 2, true, true);
                     // look for second creature with same name
-                    if (!victim || victim == this)
+                    if (!victim || victim.get() == this)
                         return (nullptr);
                 }
             }
@@ -564,8 +558,8 @@ Creature* Creature::findMagicVictim(const std::string &toFind, int num, SpellDat
         }
     }
 }
-int splOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp) {
-    Creature* target=nullptr;
+int splOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char *spellname, osp_t *osp) {
+    std::shared_ptr<Creature> target;
 
     if((target = player->findMagicVictim(cmnd->str[2], cmnd->val[2], spellData, true, false, "Cast on what?\n", "You don't see that here.\n")) == nullptr)
         return(0);
@@ -578,8 +572,8 @@ int splOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *spelln
 //*********************************************************************
 // the actual routine to do the AOE damage
 
-int doMultiOffensive(Creature* player, Creature* target, int *found_something, int *something_died, SpellData* spellData, char *spellname, osp_t *osp) {
-    int     ret=0;
+int doMultiOffensive(std::shared_ptr<Creature> player, std::shared_ptr<Creature> target, int *found_something, int *something_died, SpellData* spellData, const char *spellname, osp_t *osp) {
+    int     ret;
 
     if(!*found_something)
         player->getParent()->wake("Loud noises disturb your sleep.", true);
@@ -605,10 +599,10 @@ int doMultiOffensive(Creature* player, Creature* target, int *found_something, i
 //*********************************************************************
 // this type of spell causes damage to everyone in a given room
 
-int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *spellname, osp_t *osp) {
-    Creature* target=nullptr;
+int splMultiOffensive(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char *spellname, osp_t *osp) {
+    std::shared_ptr<Creature> target;
     int     monsters=0, players=0;
-    size_t  len=0;
+    size_t  len;
     int     something_died=0, found_something=0;
 
 
@@ -654,8 +648,8 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
     if(players) {
         auto pIt = player->getRoomParent()->players.begin();
         while(pIt != player->getRoomParent()->players.end()) {
-            target = (*pIt++);
-            if(target == player)
+            target = (*pIt++).lock();
+            if(!target || target == player)
                 continue;
 
             if(!doMultiOffensive(player, target, &found_something, &something_died, spellData, spellname, osp))
@@ -695,10 +689,10 @@ int splMultiOffensive(Creature* player, cmd* cmnd, SpellData* spellData, char *s
 //*********************************************************************
 // This spell allows a player to cast darkness spell.
 
-int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Player* pPlayer = player->getAsPlayer();
-    Creature* target=nullptr;
-    Object* object=nullptr;
+int splDarkness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer();
+    std::shared_ptr<Creature> target;
+    std::shared_ptr<Object>  object=nullptr;
 
     player->smashInvis();
 
@@ -711,7 +705,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
 
         player->print("You cast a darkness spell.\n");
-        broadcast(player->getSock(), player->getParent(), "%M casts a darkness spell.", player);
+        broadcast(player->getSock(), player->getParent(), "%M casts a darkness spell.", player.get());
 
         if(spellData->how == CastType::CAST)
             player->subMp(15);
@@ -752,27 +746,27 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
                 target->getAsMonster()->addEnemy(player);
             } else {
                 if( target->getLevel() < 4 &&
-                    !player->checkStaff("You cannot cast that spell on %N, yet.\n", target)
+                    !player->checkStaff("You cannot cast that spell on %N, yet.\n", target.get())
                 )
                     return(0);
                 // this purposely does not check the refuse list
                 if(target->flagIsSet(P_LINKDEAD)) {
-                    player->print("%M doesn't want that cast on them right now.\n", target);
+                    player->print("%M doesn't want that cast on them right now.\n", target.get());
                     return(0);
                 }
             }
 
-            player->print("You cast a darkness spell on %N.\n", target);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a darkness spell on %N.", player, target);
-            target->print("%M casts a darkness spell on you.\n", player);
+            player->print("You cast a darkness spell on %N.\n", target.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a darkness spell on %N.", player.get(), target.get());
+            target->print("%M casts a darkness spell on you.\n", player.get());
 
             if(spellData->how == CastType::CAST)
                 player->subMp(20);
 
             if(!player->isStaff() || target->isStaff()) {
                 if(target->isStaff() || target->chkSave(SPL, player, -25)) {
-                    player->printColor("^y%M resisted your darkness spell!\n", target);
-                    target->printColor("^yYou resist %N's darkness spell!\n", player);
+                    player->printColor("^y%M resisted your darkness spell!\n", target.get());
+                    target->printColor("^yYou resist %N's darkness spell!\n", player.get());
                     return(1);
                 }
             }
@@ -796,7 +790,7 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
                 }
 
                 if(object->flagIsSet(O_DARKNESS)) {
-                    pPlayer->printColor("%O is already enchanted with darkness.\n", object);
+                    pPlayer->printColor("%O is already enchanted with darkness.\n", object.get());
                     return(0);
                 }
 
@@ -808,8 +802,8 @@ int splDarkness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
                 object->setFlag(O_DARKNESS);
 
-                pPlayer->printColor("%O begins to emanate darkness.\n", object);
-                broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M enchants %1P with darkness.", pPlayer, object);
+                pPlayer->printColor("%O begins to emanate darkness.\n", object.get());
+                broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M enchants %1P with darkness.", pPlayer.get(), object.get());
 
                 if(!pPlayer->isDm())
                     log_immort(true, pPlayer, "%s enchants a %s in room %s.\n", pPlayer->getCName(), object->getCName(),

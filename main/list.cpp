@@ -19,7 +19,6 @@
 #include <libxml/parser.h>                     // for xmlDocGetRootElement
 #include <algorithm>                           // for copy, sort
 #include <boost/algorithm/string/replace.hpp>  // for replace_all, replace_a...
-#include <boost/filesystem.hpp>                // for directory_iterator, path
 #include <boost/iterator/iterator_facade.hpp>  // for operator!=
 #include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
 #include <deque>                               // for _Deque_iterator
@@ -41,6 +40,7 @@
 #include "mudObjects/objects.hpp"              // for Object
 #include "mudObjects/uniqueRooms.hpp"          // for UniqueRoom
 #include "objIncrease.hpp"                     // for ObjIncrease
+#include "paths.hpp"
 #include "server.hpp"                          // for Server, gServer
 #include "statistics.hpp"                      // for Statistics
 #include "stats.hpp"                           // for Stat
@@ -49,16 +49,12 @@
 
 
 
-namespace fs = boost::filesystem;
-
-
 int list_rooms() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
 
-    const char* room_path = "/home/realms/realms/rooms/";
     std::vector<fs::path> areas;
-    fs::directory_iterator areas_end, areas_start(room_path);
+    fs::directory_iterator areas_end, areas_start(Path::UniqueRoom);
     std::copy(areas_start, areas_end, std::back_inserter(areas));
     std::sort(areas.begin(), areas.end());
 
@@ -81,15 +77,15 @@ int list_rooms() {
             for (const fs::path& room : rooms) {
                 if (fs::is_regular_file(room)) {
                     auto *lRoom = new UniqueRoom();
-                    const char *filename = room.string().c_str();
-                    if((xmlDoc = xml::loadFile(filename, "Room")) == nullptr) {
-                        std::cout << "Error loading: " << filename << "\n";
+                    if((xmlDoc = xml::loadFile(room.c_str(), "Room")) == nullptr) {
+                        std::cout << "Error loading: " << room.string() << "\n";
                         continue;
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
                     lRoom->readFromXml(rootNode, true);
+                    xmlFreeDoc(xmlDoc);
 
-                    std::cout << lRoom->info.rstr() << ","
+                    std::cout << lRoom->info.str() << ","
                               << "\"" << lRoom->getName() << "\"" << ","
                               << lRoom->permMonsters.size() << ","
                               << mjoin(lRoom->permMonsters, "|") << ","
@@ -110,9 +106,8 @@ int list_objects() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
 
-    const char* objects_path = "/home/realms/realms/objects/";
     std::vector<fs::path> areas;
-    fs::directory_iterator areas_end, areas_start(objects_path);
+    fs::directory_iterator areas_end, areas_start(Path::Object);
     std::copy(areas_start, areas_end, std::back_inserter(areas));
     std::sort(areas.begin(), areas.end());
 
@@ -167,19 +162,20 @@ int list_objects() {
             for (const fs::path& object : objects) {
                 if (fs::is_regular_file(object)) {
                     auto *lObject = new Object();
-                    const char *filename = object.string().c_str();
-                    if((xmlDoc = xml::loadFile(filename, "Object")) == nullptr) {
-                        std::cout << "Error loading: " << filename << "\n";
+                    if((xmlDoc = xml::loadFile(object.c_str(), "Object")) == nullptr) {
+                        std::cout << "Error loading: " << object.string() << "\n";
                         continue;
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
                     lObject->readFromXml(rootNode, nullptr, true);
+                    xmlFreeDoc(xmlDoc);
+
                     std::string description = lObject->description;
                     boost::replace_all(description, "\n", "\\n");
                     boost::replace_all(description, "\"", "\"\"");
 
 
-                    std::cout << lObject->info.rstr() << ","
+                    std::cout << lObject->info.str() << ","
                               << lObject->lastMod << ","
                               << "\"" << boost::replace_all_copy(lObject->getName(), "\n", "\\n") << "\"" << ","
                               << "\"" << description << "\"" << ","
@@ -232,9 +228,8 @@ int list_monsters() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
 
-    const char* monster_path = "/home/realms/realms/monsters/";
     std::vector<fs::path> areas;
-    fs::directory_iterator areas_end, areas_start(monster_path);
+    fs::directory_iterator areas_end, areas_start(Path::Monster);
     std::copy(areas_start, areas_end, std::back_inserter(areas));
     std::sort(areas.begin(), areas.end());
 
@@ -277,16 +272,16 @@ int list_monsters() {
             std::sort(monsters.begin(), monsters.end());
             for (const fs::path& monster : monsters) {
                 if (fs::is_regular_file(monster)) {
-                    auto *lMonster = new Monster();
-                    const char *filename = monster.string().c_str();
-                    if((xmlDoc = xml::loadFile(filename, "Creature")) == nullptr) {
-                        std::cout << "Error loading: " << filename << "\n";
+                    auto lMonster = std::make_shared<Monster>();
+                    if((xmlDoc = xml::loadFile(monster.c_str(), "Creature")) == nullptr) {
+                        std::cout << "Error loading: " << monster.string() << "\n";
                         continue;
                     }
                     rootNode = xmlDocGetRootElement(xmlDoc);
                     lMonster->readFromXml(rootNode, true);
+                    xmlFreeDoc(xmlDoc);
 
-                    std::cout << lMonster->info.rstr() << ","
+                    std::cout << lMonster->info.str() << ","
                               << "\"" << lMonster->getName() << "\"" << ","
                               << lMonster->getLevel() << ","
                               << lMonster->getClassString() << ","

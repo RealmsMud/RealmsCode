@@ -35,7 +35,6 @@
 #include "color.hpp"                           // for stripColor
 #include "commands.hpp"                        // for cmdLevelHistory, cmdSt...
 #include "creatureStreams.hpp"                 // for Streamable, ColorOff
-#include "free_crt.hpp"                        // for free_crt
 #include "global.hpp"                          // for INV, MAG, MAX_SAVE
 #include "mudObjects/creatures.hpp"            // for Creature
 #include "mudObjects/monsters.hpp"             // for Monster
@@ -45,7 +44,6 @@
 #include "server.hpp"                          // for Server, gServer
 #include "statistics.hpp"                      // for Statistics, LevelInfo
 #include "stats.hpp"                           // for Stat
-#include "utils.hpp"                           // for MAX, MIN
 #include "xml.hpp"                             // for loadPlayer
 
 //*********************************************************************
@@ -259,7 +257,7 @@ time_t Statistics::getLevelHistoryStart() {
 char stat_names[][4] = { "STR", "DEX", "CON", "INT", "PTY", "CHA" };
 
 char* getStatName(int stat) {
-    stat = MIN<int>(MAX<int>(stat - 1, 0), MAX_STAT);
+    stat = std::min<int>(std::max<int>(stat - 1, 0), MAX_STAT);
     return(stat_names[stat]);
 }
 
@@ -267,11 +265,11 @@ char* getStatName(int stat) {
 char save_names[][4] = { "LCK", "POI", "DEA", "BRE", "MEN", "SPL" };
 
 char* getSaveName(int save) {
-    save = MIN<int>(MAX<int>(save, 0), MAX_SAVE-1);
+    save = std::min<int>(std::max<int>(save, 0), MAX_SAVE-1);
     return(save_names[save]);
 }
 
-void Statistics::displayLevelHistory(const Player* viewer) {
+void Statistics::displayLevelHistory(const std::shared_ptr<Player> viewer) {
     std::string padding;
     std::ostringstream oStr;
     // set left aligned
@@ -301,19 +299,22 @@ void Statistics::displayLevelHistory(const Player* viewer) {
 //                      display
 //*********************************************************************
 
-void Statistics::display(const Player* viewer, bool death) {
+void Statistics::display(const std::shared_ptr<Player> viewer, bool death) {
     std::string padding;
     std::ostringstream oStr;
     // set left aligned
     oStr.setf(std::ios::left, std::ios::adjustfield);
     oStr.imbue(std::locale(""));
 
+    auto statParent = parent.lock();
+    if(!statParent) return;
+
     if(death) {
         // if death = true, player will always be the owner
         oStr << "^WGeneral player statistics:^x\n"
-             << "  Level:            ^C" << parent->getLevel() << "^x\n"
-             << "  Total Experience: ^C" << parent->getExperience() << "^x\n"
-             << "  Time Played:      ^C" << parent->getTimePlayed() << "^x\n"
+             << "  Level:            ^C" << statParent->getLevel() << "^x\n"
+             << "  Total Experience: ^C" << statParent->getExperience() << "^x\n"
+             << "  Time Played:      ^C" << statParent->getTimePlayed() << "^x\n"
              << "\n";
     }
 
@@ -401,8 +402,8 @@ void Statistics::display(const Player* viewer, bool death) {
         oStr << "  Experience Lost:             ^C" << expLost << "^x\n";
 
 
-    int rooms = parent->numDiscoveredRooms();
-    int numRecipes = parent->recipes.size();
+    int rooms = statParent->numDiscoveredRooms();
+    int numRecipes = statParent->recipes.size();
     if( (numThefts && numAttemptedThefts) ||
         (numSaves && numAttemptedSaves) ||
         numRecalls ||
@@ -440,12 +441,12 @@ void Statistics::display(const Player* viewer, bool death) {
 //                      calcToughness
 //*********************************************************************
 
-unsigned long Statistics::calcToughness(Creature* target) {
+unsigned long Statistics::calcToughness(std::shared_ptr<Creature> target) {
     unsigned long t = 0;
 
     if(target->isMonster()) {
 
-        const Monster* monster = target->getAsConstMonster();
+        const std::shared_ptr<const Monster>  monster = target->getAsConstMonster();
         t += target->hp.getMax();
         t += target->getAttackPower();
         t += target->getWeaponSkill();
@@ -468,7 +469,7 @@ unsigned long Statistics::calcToughness(Creature* target) {
 //                      damageWith
 //*********************************************************************
 
-std::string Statistics::damageWith(const Player* player, const Object* weapon) {
+std::string Statistics::damageWith(const std::shared_ptr<Player> player, const std::shared_ptr<Object>  weapon) {
     if(weapon)
         return(weapon->getObjStr(nullptr, INV | MAG, 1));
     return((std::string)"your " + player->getUnarmedWeaponSkill() + "s");
@@ -680,13 +681,13 @@ void Statistics::combo() { if(track) numCombosOpened++; }
 //                      group
 //*********************************************************************
 
-void Statistics::group(unsigned long num) { if(track) mostGroup = MAX(num, mostGroup); }
+void Statistics::group(unsigned long num) { if(track) mostGroup = std::max(num, mostGroup); }
 
 //*********************************************************************
 //                      monster
 //*********************************************************************
 
-void Statistics::monster(Monster* monster) {
+void Statistics::monster(std::shared_ptr<Monster>  monster) {
     if(!track || monster->isPet())
         return;
     mostMonster.update(calcToughness(monster), monster->getCName());
@@ -720,13 +721,13 @@ void Statistics::magicDamage(unsigned long num, std::string_view with) {
 //                      setParent
 //*********************************************************************
 
-void Statistics::setParent(Player* player) { parent = player; }
+void Statistics::setParent(std::shared_ptr<Player> player) { parent = player; }
 
 //*********************************************************************
 //                      pkRank
 //*********************************************************************
 // This function returns the rank of the player based on how many
-// pkills they has been in, and how many they have won
+// pkills they have been in, and how many they have won
 
 unsigned long Statistics::pkRank() const {
     if(!numPkWon || !numPkIn)
@@ -777,16 +778,14 @@ void Statistics::setPkwon(unsigned long p) { numPkWon = p; }
 //                      cmdLevelHistory
 //*********************************************************************
 
-int cmdLevelHistory(Player* player, cmd* cmnd) {
-    Player* target = player;
-    bool online=true;
+int cmdLevelHistory(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target = player;
 
     if(player->isDm() && cmnd->num > 1) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         if(!target) {
-            loadPlayer(cmnd->str[1], &target);
-            online = false;
+            loadPlayer(cmnd->str[1], target);
             // If the player is offline, init() won't be run and the statistics object won't
             // get its parent set. Do so now.
             if(target)
@@ -801,8 +800,6 @@ int cmdLevelHistory(Player* player, cmd* cmnd) {
 
     target->statistics.displayLevelHistory(player);
 
-    if(!online)
-        free_crt(target);
     return(0);
 }
 
@@ -810,9 +807,8 @@ int cmdLevelHistory(Player* player, cmd* cmnd) {
 //                      cmdStatistics
 //*********************************************************************
 
-int cmdStatistics(Player* player, cmd* cmnd) {
-    Player* target = player;
-    bool online=true;
+int cmdStatistics(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target = player;
 
     if(!strcmp(cmnd->str[1], "reset")) {
         player->statistics.reset();
@@ -825,8 +821,7 @@ int cmdStatistics(Player* player, cmd* cmnd) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         if(!target) {
-            loadPlayer(cmnd->str[1], &target);
-            online = false;
+            loadPlayer(cmnd->str[1], target);
             // If the player is offline, init() won't be run and the statistics object won't
             // get its parent set. Do so now.
             if(target)
@@ -846,7 +841,5 @@ int cmdStatistics(Player* player, cmd* cmnd) {
         *player << "You may use the set, clear, and toggle commands to control tracking of statistics.\n";
     }
 
-    if(!online)
-        free_crt(target);
     return(0);
 }

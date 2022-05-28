@@ -1,18 +1,24 @@
 cmake_minimum_required(VERSION 3.15...3.19)
 
 project(RealmsCode)
+include(FetchContent)
 
-add_subdirectory(lib/pybind11)
-
-set(CMAKE_C_COMPILER "/usr/bin/clang")
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
-#find_program(iwyu_path NAMES include-what-you-use iwyu REQUIRED)
+#set(CMAKE_C_COMPILER "/usr/bin/gcc")
+#set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(DPP_LIB_NAME "dpp")
+
+set(JSON_LIB_NAME "nlohmann_json::nlohmann_json")
+set(JSON_MultipleHeaders ON)
+
+set(HTTP_LIB_NAME "Crow::Crow")
+set(CROW_FEATURES ssl compression)
+
+set(JWT_LIB_NAME "jwt-cpp")
 
 set(Python_ADDITIONAL_VERSIONS 3.8)
 
@@ -23,25 +29,38 @@ find_package(PythonLibs 3.8 REQUIRED)
 find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
-find_package(Boost COMPONENTS system filesystem REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(Boost COMPONENTS system REQUIRED)
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
 message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 
-include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} lib/pybind11/include)
-
 include_directories("include")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++ -fmodules")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 if($ENV{LEAK})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O1 -fsanitize=address -fno-omit-frame-pointer -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/blacklist.txt")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -fsanitize=address,signed-integer-overflow,null,alignment,undefined -fno-omit-frame-pointer -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/blacklist.txt")
+    message("-- Enabling address sanitizer")
 ELSE()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og")
 ENDIF()
 
 message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
+
+FetchContent_Declare(json        URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz       )
+FetchContent_Declare(pybind11    GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v2.9.2         )
+FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.0+1         )
+FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.0.9        )
+FetchContent_Declare(jwt-cpp     GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git  GIT_TAG v0.6.0         )
+FetchContent_Declare(googletest  GIT_REPOSITORY https://github.com/google/googletest.git   GIT_TAG release-1.11.0 )
+
+
+FetchContent_MakeAvailable(pybind11 json crow dpp jwt-cpp googletest)
+
+include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR} "include")
 
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -g" )
 
@@ -51,6 +70,10 @@ SET(REALMS_SOURCE_FILES
 
 set(LIST_SOURCE_FILES
     main/list.cpp
+    )
+
+set(UPDATER_SOURCE_FILES
+    main/updater.cpp
     )
 
 set(COMMON_HEADER_FILES
@@ -105,13 +128,13 @@ set(COMMON_HEADER_FILES
     include/fighters.hpp
     include/fishing.hpp
     include/flags.hpp
-    include/free_crt.hpp
     include/global.hpp
     include/group.hpp
     include/guilds.hpp
     include/help.hpp
     include/hooks.hpp
     include/import.hpp
+    include/json.hpp
     include/lasttime.hpp
     include/levelGain.hpp
     include/location.hpp
@@ -127,7 +150,6 @@ set(COMMON_HEADER_FILES
     include/namable.hpp
     include/objIncrease.hpp
     include/oldquest.hpp
-    include/os.hpp
     include/paths.hpp
     include/playerClass.hpp
     include/playerTitle.hpp
@@ -175,6 +197,9 @@ set(COMMON_HEADER_FILES
     include/weather.hpp
     include/web.hpp
     include/xml.hpp
+    include/zone.hpp
+    include/httpServer.hpp
+    include/commerce.hpp
     )
 
 set(COMMON_SOURCE_FILES
@@ -190,6 +215,7 @@ set(COMMON_SOURCE_FILES
     areas/rooms.cpp
     areas/startlocs.cpp
     areas/wanderInfo.cpp
+    areas/zone.cpp
 
     bards/creatureSongs.cpp
     bards/identify.cpp
@@ -242,6 +268,7 @@ set(COMMON_SOURCE_FILES
 
     economy/bank.cpp
     economy/commerce.cpp
+    economy/playerCommerce.cpp
     economy/lottery.cpp
     economy/money.cpp
     economy/unique.cpp
@@ -328,6 +355,7 @@ set(COMMON_SOURCE_FILES
     server/discordBot.cpp
     server/flags.cpp
     server/global.cpp
+    server/httpServer.cpp
     server/hooks.cpp
     server/log.cpp
     server/login.cpp
@@ -366,11 +394,15 @@ set(COMMON_SOURCE_FILES
 
     util/alphanum.cpp
     util/dice.cpp
-    util/errors.cpp
     util/help.cpp
     util/md5.cpp
     util/misc.cpp
     util/timer.cpp
+
+    json/catref-json.cpp
+    json/money-json.cpp
+    json/quests-json.cpp
+    json/zones-json.cpp
 
     xml/alchemy-xml.cpp
     xml/area-xml.cpp
@@ -416,13 +448,23 @@ set(COMMON_SOURCE_FILES
     python/mudStat.cpp
 
     wip/fighters.cpp
-
-
-    server/mxpLoader.cpp)
+    server/httpServer.cpp)
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
-#set_property(TARGET RealmsLib PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
-target_link_libraries(RealmsLib ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${LIBXML2_LIBRARIES} ${ZLIB_LIBRARIES} ${ASPELL_LIBRARIES} ${DPP_LIB_NAME})
+
+target_link_libraries(
+    RealmsLib
+    ${Boost_LIBRARIES}
+    ${PYTHON_LIBRARIES}
+    ${LIBXML2_LIBRARIES}
+    ${OPENSSL_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${ASPELL_LIBRARIES}
+    ${DPP_LIB_NAME}
+    ${JSON_LIB_NAME}
+    ${HTTP_LIB_NAME}
+    ${JWT_LIB_NAME}
+)
 
 add_executable(RealmsCode ${REALMS_SOURCE_FILES})
 
@@ -430,3 +472,6 @@ target_link_libraries(RealmsCode RealmsLib pybind11::embed)
 
 add_executable(List ${LIST_SOURCE_FILES})
 target_link_libraries(List RealmsLib)
+
+add_executable(Updater ${UPDATER_SOURCE_FILES})
+target_link_libraries(Updater RealmsLib)

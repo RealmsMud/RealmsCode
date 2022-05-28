@@ -47,7 +47,6 @@
 #include "mudObjects/players.hpp"      // for Player
 #include "mudObjects/rooms.hpp"        // for BaseRoom
 #include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
-#include "os.hpp"                      // for ASSERTLOG, merror
 #include "property.hpp"                // for Property
 #include "proto.hpp"                   // for isDay, int_to_text, getOrdinal
 #include "quests.hpp"                  // for QuestEligibility, QuestTurninS...
@@ -58,17 +57,16 @@
 #include "size.hpp"                    // for getSizeName, SIZE_COLOSSAL
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for Command, SEX_FEMALE, SEX_MALE
-#include "utils.hpp"                   // for MIN, MAX
 
 
 //********************************************************************
 //                      canSee
 //********************************************************************
 
-bool Creature::canSeeRoom(const BaseRoom* room, bool p) const {
+bool Creature::canSeeRoom(const std::shared_ptr<BaseRoom>& room, bool p) const {
     if(isStaff())
         return(true);
-    const Player* player = getAsConstPlayer();
+    const std::shared_ptr<const Player> player = getAsConstPlayer();
 
     // blind people can't see anything
     if(isBlind()) {
@@ -100,10 +98,12 @@ bool Creature::canSeeRoom(const BaseRoom* room, bool p) const {
 
         // if they can't see, maybe someone else in the room has light for them
         if(!normal_sight) {
-            for(Player* ply : room->players) {
-                if(ply->getAsPlayer()->getLight()) {
-                    normal_sight = true;
-                    break;
+            for(const auto& pIt: room->players) {
+                if(auto ply = pIt.lock()) {
+                    if (ply->getAsPlayer()->getLight()) {
+                        normal_sight = true;
+                        break;
+                    }
                 }
             }
         }
@@ -119,12 +119,12 @@ bool Creature::canSeeRoom(const BaseRoom* room, bool p) const {
     return(true);
 }
 
-bool Creature::canSee(const MudObject* target, bool skip) const {
+bool Creature::canSee(const std::shared_ptr<const MudObject> target, bool skip) const {
     if(!target)
         return(false);
 
     if(target->isCreature()) {
-        const Creature* cTarget = target->getAsConstCreature();
+        const std::shared_ptr<const Creature> & cTarget = target->getAsConstCreature();
         if(cTarget->isPlayer()) {
             if(cTarget->flagIsSet(P_DM_INVIS) && getClass() < cTarget->getClass()) return(false);
             if(target->isEffected("incognito") && (getClass() < cTarget->getClass()) && getParent() != cTarget->getParent()) return(false);
@@ -144,7 +144,7 @@ bool Creature::canSee(const MudObject* target, bool skip) const {
 
     } // End Creature
     if(target->isExit()) {
-        const Exit* exit = target->getAsConstExit();
+        const std::shared_ptr<const Exit> &exit = target->getAsConstExit();
         if(isStaff()) return(true);
 
         // handle NoSee right away
@@ -152,7 +152,7 @@ bool Creature::canSee(const MudObject* target, bool skip) const {
         if(exit->isEffected("invisibility") && !isEffected("detect-invisible")) return(false);
     }
     if(target->isObject()) {
-        const Object* object = target->getAsConstObject();
+        const std::shared_ptr<const Object> &object = target->getAsConstObject();
 
         if(isStaff()) return(true);
         if(object->isEffected("invisibility") && !isEffected("detect-invisible")) return(false);
@@ -173,7 +173,7 @@ bool Creature::canSee(const MudObject* target, bool skip) const {
 // Pets are handled differently. They obey special rules for rooms because
 // returning false here would prevent the player from entering the room.
 
-bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
+bool Creature::canEnter(const std::shared_ptr<Exit>& exit, bool p, bool blinking) const {
     const Calendar* calendar=nullptr;
     int staff = isStaff();
 
@@ -184,12 +184,12 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
         p = false;
 
     if(exit->target.mapmarker.getArea()) {
-        Area *area = gServer->getArea(exit->target.mapmarker.getArea());
+        std::shared_ptr<Area> area = gServer->getArea(exit->target.mapmarker.getArea());
         if(!area)
             return(false);
         // y coords are stored upside down in the array
         // impassable terrain
-        if(!area->canPass(this, &exit->target.mapmarker, true)) {
+        if(!area->canPass(Containable::downcasted_shared_from_this<Creature>(), exit->target.mapmarker, true)) {
             if(p) checkStaff("You can't go there!\n");
             if(!staff) return(false);
         }
@@ -251,20 +251,20 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
         if(!staff) return(false);
     }
 
-
-    if(exit->clanRestrict(this)) {
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
+    if(exit->clanRestrict(cThis)) {
         if(p) checkStaff("Your allegiance prevents you from going that way.\n");
         if(!staff) return(false);
     }
-    if(exit->classRestrict(this)) {
+    if(exit->classRestrict(cThis)) {
         if(p) checkStaff("Your class prevents you from going that way.\n");
         if(!staff) return(false);
     }
-    if(exit->raceRestrict(this)) {
+    if(exit->raceRestrict(cThis)) {
         if(p) checkStaff("Your race prevents you from going that way.\n");
         if(!staff) return(false);
     }
-    if(exit->alignRestrict(this)) {
+    if(exit->alignRestrict(cThis)) {
         if(p) checkStaff("Your alignment prevents you from going that way.\n");
         if(!staff) return(false);
     }
@@ -318,9 +318,9 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
         }
 
 
-        const Monster* guard = getConstRoomParent()->getGuardingExit(exit, getAsConstPlayer());
+        const std::shared_ptr<const Monster>  guard = getConstRoomParent()->getGuardingExit(exit, getAsConstPlayer());
         if(guard) {
-            if(p) checkStaff("%M %s.\n", guard, guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you go there" : "blocks your exit");
+            if(p) checkStaff("%M %s.\n", guard.get(), guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you go there" : "blocks your exit");
             if(!staff) return(false);
         }
 
@@ -347,7 +347,7 @@ bool Creature::canEnter(const Exit *exit, bool p, bool blinking) const {
 //                      canEnter
 //********************************************************************
 
-bool Creature::canEnter(const UniqueRoom* room, bool p) const {
+bool Creature::canEnter(const std::shared_ptr<UniqueRoom>& room, bool p) const {
 
     // staff may always go anywhere
     bool staff = isStaff();
@@ -360,7 +360,7 @@ bool Creature::canEnter(const UniqueRoom* room, bool p) const {
 
     // special rules for pets
     if(isPet()) {
-        const Monster* mThis = getAsConstMonster();
+        const std::shared_ptr<const Monster>  mThis = getAsConstMonster();
         return !(room->isUnderwater() &&
                  mThis->getBaseRealm() != WATER &&
                  !isEffected("breathe-water") &&
@@ -391,7 +391,7 @@ bool Creature::canEnter(const UniqueRoom* room, bool p) const {
             if(p) checkStaff("Only players under level %d may go there.\n", room->getHighLevel()+1);
             if(!staff) return(false);
         }
-        if(room->deityRestrict(this)) {
+        if(room->deityRestrict(Containable::downcasted_shared_from_this<Creature>())) {
             if(p) checkStaff("Only members of the proper faith may go there.\n");
             if(!staff) return(false);
         }
@@ -434,7 +434,7 @@ bool Creature::canEnter(const UniqueRoom* room, bool p) const {
 
 int Creature::getWeight() const {
     int     i=0, n=0;
-    for(Object *obj : objects) {
+    for(const auto& obj : objects) {
         if(!obj->flagIsSet(O_WEIGHTLESS_CONTAINER))
             n += obj->getActualWeight();
     }
@@ -466,22 +466,10 @@ int Creature::maxWeight() {
 //********************************************************************
 
 bool Creature::tooBulky(int n) const {
-    int     total=0, i=0, max=0;
-
     if(isCt())
         return(false);
 
-    for(Object *obj : objects) {
-        total += obj->getActualBulk();
-    }
-
-    for(i=0; i<MAXWEAR; i++)
-        if(ready[i])
-            total += (ready[i]->getActualBulk()/2);
-
-    max = getMaxBulk();
-
-    return(n + getTotalBulk() > max);
+    return(n + getTotalBulk() > getMaxBulk());
 }
 
 //********************************************************************
@@ -491,7 +479,7 @@ bool Creature::tooBulky(int n) const {
 int Creature::getTotalBulk() const {
     int     n=0, i=0;
 
-    for(Object *obj : objects) {
+    for(const auto& obj : objects) {
         n += obj->getActualBulk();
     }
 
@@ -534,7 +522,7 @@ int Creature::getMaxBulk() const {
 //                      willFit
 //********************************************************************
 
-bool Creature::willFit(const Object* object) const {
+bool Creature::willFit(const std::shared_ptr<Object>&  object) const {
     if(isStaff())
         return(true);
 
@@ -567,9 +555,7 @@ bool Creature::willFit(const Object* object) const {
 //                      canWear
 //********************************************************************
 
-bool Player::canWear(const Object* object, bool all) const {
-    ASSERTLOG(object);
-
+bool Player::canWear(const std::shared_ptr<Object>&  object, bool all) const {
     if(!object->getWearflag() || object->getWearflag() == WIELD || object->getWearflag() == HELD) {
         if(!all)
             print("You can't wear that.\n");
@@ -588,8 +574,8 @@ bool Player::canWear(const Object* object, bool all) const {
             ready[HELD-1]->getType() == ObjectType ::WEAPON
         )
     ) {
-        printColor("You can't wear %P and also use a second weapon.\n", object);
-        printColor("%O would hinder your movement too much.\n", object);
+        printColor("You can't wear %P and also use a second weapon.\n", object.get());
+        printColor("%O would hinder your movement too much.\n", object.get());
         return(false);
     }
 
@@ -600,7 +586,7 @@ bool Player::canWear(const Object* object, bool all) const {
         !knowsSkill(armorType)
     ) {
         if(!all)
-            printColor("You can't use %P; you lack the ability to wear %s armor.\n", object, armorType.c_str());
+            printColor("You can't use %P; you lack the ability to wear %s armor.\n", object.get(), armorType.c_str());
         return(false);
     }
 
@@ -622,7 +608,7 @@ bool Player::canWear(const Object* object, bool all) const {
     if(object->getWearflag() != FINGER && ready[object->getWearflag()-1]) {
         if(!all) {
             printColor("You cannot wear %1P.\nYou're already wearing %1P.\n",
-                object, ready[object->getWearflag()-1]);
+                object.get(), ready[object->getWearflag()-1].get());
         }
         return(false);
     }
@@ -640,13 +626,11 @@ bool Player::canWear(const Object* object, bool all) const {
 //                      canUse
 //********************************************************************
 
-bool Player::canUse(Object* object, bool all) {
-    ASSERTLOG(object);
-
+bool Player::canUse(const std::shared_ptr<Object>&  object, bool all) {
     if(object->getType() == ObjectType::WEAPON) {
         if(object->getWeaponType() == "none") {
             if(!all)
-                printColor("You lack the skills to wield %P.\n", object);
+                printColor("You lack the skills to wield %P.\n", object.get());
             return(false);
         }
         if(isStaff())
@@ -661,7 +645,7 @@ bool Player::canUse(Object* object, bool all) {
 
     if(!willFit(object)) {
         if(!all)
-            printColor("%O isn't the right size for you.\n", object);
+            printColor("%O isn't the right size for you.\n", object.get());
         return(false);
     }
 
@@ -671,7 +655,7 @@ bool Player::canUse(Object* object, bool all) {
         object->getWearflag() != HELD-1
     ) {
         if(!all)
-            printColor("Using %P is awkward due to its size.\n", object);
+            printColor("Using %P is awkward due to its size.\n", object.get());
     }
 
     if(object->getShotsCur() < 1 && object->getType() != ObjectType::WAND) {
@@ -680,7 +664,7 @@ bool Player::canUse(Object* object, bool all) {
         return(false);
     }
 
-    if(object->doRestrict(this, !all))
+    if(object->doRestrict(Containable::downcasted_shared_from_this<Creature>(), !all))
         return(false);
 
     return(true);
@@ -690,7 +674,7 @@ bool Player::canUse(Object* object, bool all) {
 //                      canWield
 //********************************************************************
 
-bool Creature::canWield(const Object* object, int n) const {
+bool Creature::canWield(const std::shared_ptr<Object>&  object, int n) const {
     int     wielding=0, holding=0, shield=0, second=0;
 
     if(ready[WIELD-1])
@@ -717,23 +701,23 @@ bool Creature::canWield(const Object* object, int n) const {
             return(false);
         }
         if(wielding && ready[WIELD-1]->needsTwoHands()) {
-            printColor("You're using both hands to wield %P!\n", ready[WIELD-1]);
+            printColor("You're using both hands to wield %P!\n", ready[WIELD-1].get());
             return(false);
 
         }
         break;
     case WIELDOBJ:
         if(holding && object->needsTwoHands()) {
-            printColor("You need both hands to wield %P.\nYou have %P in your off hand.\n", object, ready[HELD-1]);
+            printColor("You need both hands to wield %P.\nYou have %P in your off hand.\n", object.get(), ready[HELD-1].get());
             return(false);
         }
         if(shield && !ready[SHIELD-1]->flagIsSet(O_SMALL_SHIELD) && object->needsTwoHands()) {
-            printColor("You need both hands to wield %P.\n%O uses your off hand.\n", object, ready[SHIELD-1]);
+            printColor("You need both hands to wield %P.\n%O uses your off hand.\n", object.get(), ready[SHIELD-1].get());
             return(false);
         }
 
         if(wielding) {
-            printColor("You're already wielding %P.\n", ready[WIELD-1]);
+            printColor("You're already wielding %P.\n", ready[WIELD-1].get());
             return(false);
         }
 
@@ -760,36 +744,36 @@ bool Creature::canWield(const Object* object, int n) const {
         break;
     case SECONDOBJ:
         if(second) {
-            printColor("You're already wielding %P in your off hand.\n", ready[HELD-1]);
+            printColor("You're already wielding %P in your off hand.\n", ready[HELD-1].get());
             return(false);
         }
         if(holding) {
-            printColor("You're already holding %P in your off hand.\n", ready[HELD-1]);
+            printColor("You're already holding %P in your off hand.\n", ready[HELD-1].get());
             return(false);
         }
         if(shield && !ready[SHIELD-1]->flagIsSet(O_SMALL_SHIELD)) {
-            printColor("Your shield is being held by your off hand. You can't second %P.\n", object);
+            printColor("Your shield is being held by your off hand. You can't second %P.\n", object.get());
             return(false);
         }
         if(object->needsTwoHands()) {
-            printColor("%O requires two hands and cannot be used as a second weapon.\n", object);
+            printColor("%O requires two hands and cannot be used as a second weapon.\n", object.get());
             return(false);
         }
         if(wielding && ready[WIELD-1]->needsTwoHands()) {
-            printColor("You're using both hands to wield %P!\n", ready[WIELD-1]);
+            printColor("You're using both hands to wield %P!\n", ready[WIELD-1].get());
             return(false);
         }
         if(cClass == CreatureClass::RANGER) {
             if(ready[BODY-1] && !ready[BODY-1]->isLightArmor()) {
-                printColor("You must remove %P to wield a second weapon.\nIt is too heavy.\n", ready[BODY-1]);
+                printColor("You must remove %P to wield a second weapon.\nIt is too heavy.\n", ready[BODY-1].get());
                 return(false);
             }
             if(ready[ARMS-1] && !ready[ARMS-1]->isLightArmor()) {
-                printColor("You must remove %P to wield a second weapon.\nIt is too heavy.\n", ready[ARMS-1]);
+                printColor("You must remove %P to wield a second weapon.\nIt is too heavy.\n", ready[ARMS-1].get());
                 return(false);
             }
             if(ready[HANDS-1] && !ready[HANDS-1]->isLightArmor()) {
-                printColor("You must remove %P to wield a second weapon.\nIt is too heavy.\n", ready[HANDS-1]);
+                printColor("You must remove %P to wield a second weapon.\nIt is too heavy.\n", ready[HANDS-1].get());
                 return(false);
             }
         }
@@ -800,11 +784,11 @@ bool Creature::canWield(const Object* object, int n) const {
             return(false);
         }
         if(holding && !object->flagIsSet(O_SMALL_SHIELD)) {
-            printColor("You are using your shield arm to hold %P.\n", ready[HELD-1]);
+            printColor("You are using your shield arm to hold %P.\n", ready[HELD-1].get());
             return(false);
         }
         if(wielding && !object->flagIsSet(O_SMALL_SHIELD) && ready[WIELD-1]->needsTwoHands()) {
-            printColor("You're using both arms to wield %P!\n", ready[WIELD-1]);
+            printColor("You're using both arms to wield %P!\n", ready[WIELD-1].get());
             return(false);
         }
         break;
@@ -820,15 +804,15 @@ bool Creature::canWield(const Object* object, int n) const {
 unsigned long Creature::getInventoryValue() const {
     int     a=0;
     long    total=0;
-    Object  *object3=nullptr;
+    std::shared_ptr<Object> object3=nullptr;
 
     if(isMonster())
         return(0);
 
-    for(Object *object : objects) {
+    for(const auto& object : objects) {
 
         if(object->getType() == ObjectType::CONTAINER) {
-            for(Object *insideObject : object->objects) {
+            for(const auto& insideObject : object->objects) {
                 if(insideObject->getType() == ObjectType::SCROLL || insideObject->getType() == ObjectType::POTION || insideObject->getType() == ObjectType::SONGSCROLL) {
                     continue;
                 }
@@ -841,8 +825,8 @@ unsigned long Creature::getInventoryValue() const {
                     continue;
                 }
 
-                total += MIN<unsigned long>(MAXPAWN,insideObject->value[GOLD]/2);
-                total = MAX<long>(0,MIN<long>(2000000000,total));
+                total += std::min<unsigned long>(MAXPAWN,insideObject->value[GOLD]/2);
+                total = std::max<long>(0,std::min<long>(2000000000,total));
             }
         }
 
@@ -860,8 +844,8 @@ unsigned long Creature::getInventoryValue() const {
             continue;
         }
 
-        total += MIN<unsigned long>(MAXPAWN,object->value[GOLD]/2);
-        total = MAX<long>(0,MIN<long>(2000000000,total));
+        total += std::min<unsigned long>(MAXPAWN,object->value[GOLD]/2);
+        total = std::max<long>(0,std::min<long>(2000000000,total));
 
     }
 
@@ -872,7 +856,7 @@ unsigned long Creature::getInventoryValue() const {
 
 
         if(object3->getType() == ObjectType::CONTAINER) {
-            for(Object *insideObject : object3->objects) {
+            for(const auto& insideObject : object3->objects) {
                 if(insideObject->getType() == ObjectType::SCROLL || insideObject->getType() == ObjectType::POTION || insideObject->getType() == ObjectType::SONGSCROLL) {
                     continue;
                 }
@@ -884,8 +868,8 @@ unsigned long Creature::getInventoryValue() const {
                     continue;
                 }
 
-                total += MIN<unsigned long>(MAXPAWN,insideObject->value[GOLD]);
-                total = MAX<long>(0,MIN<long>(2000000000,total));
+                total += std::min<unsigned long>(MAXPAWN,insideObject->value[GOLD]);
+                total = std::max<long>(0,std::min<long>(2000000000,total));
             }
         }
 
@@ -899,8 +883,8 @@ unsigned long Creature::getInventoryValue() const {
         if(object3->value[GOLD] < 20)
             continue;
 
-        total+=MIN<unsigned long>(MAXPAWN,object3->value[GOLD]/2);
-        total = MAX<long>(0,MIN<long>(2000000000,total));
+        total+=std::min<unsigned long>(MAXPAWN,object3->value[GOLD]/2);
+        total = std::max<long>(0,std::min<long>(2000000000,total));
     }
 
     return(total);
@@ -920,10 +904,6 @@ unsigned long Creature::getInventoryValue() const {
 // memory.
 
 int Player::save(bool updateTime, LoadType saveType) {
-    Player* copy=nullptr;
-    Object  *obj[MAXWEAR];
-    int     i=0, n=0;
-
     // having an update time option, which should be false for offline
     // operations, prevents aging of chars and keeps last login accurate
     if(updateTime) {
@@ -931,34 +911,21 @@ int Player::save(bool updateTime, LoadType saveType) {
         lasttime[LT_AGE].interval += (lastLogin - lasttime[LT_AGE].ltime);
         lasttime[LT_AGE].ltime = lastLogin;
     }
+    // TODO: Save worn equipment
+//    for(i=0; i<MAXWEAR; i++) {
+//        if(copy->ready[i]) {
+//            obj[n] = copy->unequip(i+1, UNEQUIP_ADD_TO_INVENTORY, false, false);
+//            obj[n]->setFlag(O_WORN);
+//            n++;
+//            copy->ready[i] = nullptr;
+//        }
+//    }
 
-    copy = new Player;
-    if(!copy)
-        merror("save", FATAL);
-
-    *copy = *this;
-
-    for(i=0; i<MAXWEAR; i++) {
-        if(copy->ready[i]) {
-            obj[n] = copy->unequip(i+1, UNEQUIP_ADD_TO_INVENTORY, false, false);
-            obj[n]->setFlag(O_WORN);
-            n++;
-            copy->ready[i] = nullptr;
-        }
-    }
-
-    if(copy->getName().empty())
+    if(getName().empty())
         return(1);
-    copy->checkDarkness();
-
-    if(copy->saveToFile(saveType) < 0)
+    if(saveToFile(saveType) < 0)
         std::clog << "*** ERROR: saveXml!\n";
 
-    for(i=0; i<n; i++)
-        copy->delObj(obj[i], false, false, true, false);
-
-    copy->setId("-1");
-    delete copy;
     return(0);
 }
 
@@ -1011,24 +978,24 @@ bool Creature::inCombat(bool countPets) const {
 
 // target is used when you want to check for a player being in combat
 // with a mob BESIDES the one pointed to by creature.
-bool Creature::inCombat(const Creature* target, bool countPets) const {
+bool Creature::inCombat(const std::shared_ptr<Creature> & target, bool countPets) const {
     // people just logging in
     if(!getParent())
         return(false);
-    const Monster* mThis = getAsConstMonster();
+    const std::shared_ptr<const Monster>  mThis = getAsConstMonster();
 
     if(mThis) {
-        for(Player* ply : getParent()->players) {
-            if(mThis->isEnemy(ply))
+        for(const auto& ply: getParent()->players) {
+            if(mThis->isEnemy(ply.lock()))
                 return(true);
         }
-        for(Monster* mons : getParent()->monsters) {
+        for(const auto& mons : getParent()->monsters) {
             if(mThis->isEnemy(mons))
                 return(true);
         }
     } else {
-        for(Monster* mons : getParent()->monsters) {
-            if(mons->isEnemy(this) && (!target || mons != target) && (countPets || !mons->isPet()))
+        for(const auto& mons : getParent()->monsters) {
+            if(mons->isEnemy(Containable::downcasted_shared_from_this<Creature>()) && (!target || mons != target) && (countPets || !mons->isPet()))
                 return(true);
         }
     }
@@ -1049,7 +1016,7 @@ bool Creature::convertFlag(int flag) {
 //                      getCrtStr
 //*********************************************************************
 
-std::string Creature::getCrtStr(const Creature* viewer, unsigned int ioFlags, int num) const {
+std::string Creature::getCrtStr(const std::shared_ptr<const Creature> & viewer, unsigned int ioFlags, int num) const {
     std::ostringstream crtStr;
     std::string toReturn = "";
     char ch;
@@ -1059,7 +1026,7 @@ std::string Creature::getCrtStr(const Creature* viewer, unsigned int ioFlags, in
     if(viewer)
         ioFlags |= viewer->displayFlags();
 
-    const Player* pThis = getAsConstPlayer();
+    const std::shared_ptr<const Player> pThis = getAsConstPlayer();
     // Player
     if(isPlayer()) {
         // Target is possessing a monster -- Show the monsters name if invis
@@ -1107,12 +1074,12 @@ std::string Creature::getCrtStr(const Creature* viewer, unsigned int ioFlags, in
     if(isMonster() && isInvisible() && !(ioFlags & INV) && !(ioFlags & ISDM) && !(ioFlags & ISCT) && !(ioFlags & ISBD)) {
         crtStr << "Something";
     } else {
-        const Monster* mThis = getAsConstMonster();
+        const std::shared_ptr<const Monster>  mThis = getAsConstMonster();
         if(num == 0) {
             if(!flagIsSet(M_NO_PREFIX)) {
                 crtStr << "the ";
                 if(!(ioFlags & NONUM)) {
-                    mobNum = ((Monster*)this)->getNumMobs();
+                    mobNum = this->getAsConstMonster()->getNumMobs();
                     if(mobNum>1) {
                         crtStr << getOrdinal(mobNum).c_str();
                         crtStr << " ";
@@ -1138,20 +1105,14 @@ std::string Creature::getCrtStr(const Creature* viewer, unsigned int ioFlags, in
             crtStr << " " ;
             crtStr << plural;
         } else {
-            char tempStr[2056];
-            strcpy(tempStr, int_to_text(num));
-            strcat(tempStr, " ");
-            strcat(tempStr, getCName());
-
-            tempStr[strlen(tempStr)+1] = 0;
-            tempStr[strlen(tempStr)+2] = 0;
-            if(tempStr[strlen(tempStr)-1] == 's' || tempStr[strlen(tempStr)-1] == 'x') {
-                tempStr[strlen(tempStr)] = 'e';
-                tempStr[strlen(tempStr)] = 's';
+            auto nameStr = int_to_text(num) + " " + getName();
+            auto last = nameStr.at(nameStr.length() - 1);
+            if(last == 's' || last == 'x') {
+                nameStr += "es";
             } else {
-                tempStr[strlen(tempStr)] = 's';
+                nameStr += 's';
             }
-            crtStr << tempStr;
+            crtStr << nameStr;
         }
 
         if((ioFlags & QUEST)) {
@@ -1201,7 +1162,7 @@ std::string Creature::getCrtStr(const Creature* viewer, unsigned int ioFlags, in
 //                      inSameRoom
 //*********************************************************************
 
-bool Creature::inSameRoom(Creature* target) {
+bool Creature::inSameRoom(const std::shared_ptr<Creature>& target) {
     return(target && target->getRoomParent() == getRoomParent());
 }
 
@@ -1228,7 +1189,7 @@ long Creature::getLTLeft(int myLT, long t) {
 // Sets a LT
 
 void Creature::setLastTime(int myLT, long t, long interval) {
-    lasttime[myLT].interval = MAX(interval, getLTLeft(myLT, t));
+    lasttime[myLT].interval = std::max(interval, getLTLeft(myLT, t));
     lasttime[myLT].ltime = t;
  }
 
@@ -1237,10 +1198,10 @@ void Creature::setLastTime(int myLT, long t, long interval) {
 //*********************************************************************
 
 void Creature::unApplyTongues() {
-    Player* pTarget = getAsPlayer();
+    std::shared_ptr<Player> pTarget = getAsPlayer();
     if(pTarget) {
         if(!pTarget->languageIsKnown(LUNKNOWN + pTarget->current_language)) {
-            std::string selfStr = "";
+            std::string selfStr;
             int i;
             selfStr.append("You can no longer speak");
             selfStr.append(get_language_adj(pTarget->current_language));
@@ -1260,7 +1221,14 @@ void Creature::unApplyTongues() {
     }
 }
 
+Creature::Creature(Creature &cr): ready(MAXWEAR) {
+    doCopy(cr);
+}
+Creature::Creature(const Creature &cr): ready(MAXWEAR) {
+    doCopy(cr);
+}
+
 std::ostream& operator<<(std::ostream& out, const crlasttime& crl) {
-    out << crl.cr.rstr() << "(" << crl.interval << ")";
+    out << crl.cr.str() << "(" << crl.interval << ")";
     return out;
 }

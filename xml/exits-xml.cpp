@@ -38,7 +38,7 @@
 //*********************************************************************
 // Reads an exit from the given xml document and root node
 
-int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
+int Exit::readFromXml(xmlNodePtr rootNode, bool offline, const std::string &version) {
     xmlNodePtr curNode, childNode;
 
     setName(xml::getProp(rootNode, "Name"));
@@ -65,15 +65,15 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
         else if(NODE_NAME(curNode, "Enter")) { xml::copyToString(enter, curNode); }
         else if(NODE_NAME(curNode, "Flags")) {
             // No need to clear flags, no exit refs
-            loadBits(curNode, flags);
+            loadBitset(curNode, flags);
         }
         else if(NODE_NAME(curNode, "Target")) target.load(curNode);
-        else if(NODE_NAME(curNode, "Effects")) effects.load(curNode, this);
+        else if(NODE_NAME(curNode, "Effects")) effects.load(curNode, getAsExit());
         else if(NODE_NAME(curNode, "Hooks")) hooks.load(curNode);
 
-            // depreciated, but there's no version function
-            // TODO: Use room->getVersion()
-        else if(NODE_NAME(curNode, "Room")) target.room.load(curNode);
+        // deprecated: use `Target`
+        else if(NODE_NAME(curNode, "Room") && version < "v2.54h") target.room.load(curNode);
+
         else if(NODE_NAME(curNode, "AreaRoom")) target.mapmarker.load(curNode);
         else if(NODE_NAME(curNode, "UsedBy")) {
             childNode = curNode->children;
@@ -89,14 +89,11 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
 
         curNode = curNode->next;
     }
-    if(room) {
-        room->addExit(this);
 
 #define X_OLD_INVISIBLE             1         // Invisible
-        if(room->getVersion() < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
-            addEffect("invisibility", -1);
-            clearFlag(X_OLD_INVISIBLE);
-        }
+    if(!version.empty() && version < "2.47b" && flagIsSet(X_OLD_INVISIBLE)) {
+        addEffect("invisibility", -1);
+        clearFlag(X_OLD_INVISIBLE);
     }
     escapeText();
     return(0);
@@ -109,16 +106,17 @@ int Exit::readFromXml(xmlNodePtr rootNode, BaseRoom* room, bool offline) {
 
 void BaseRoom::readExitsXml(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode = curNode->children;
-    AreaRoom* aRoom = getAsAreaRoom();
+    std::shared_ptr<AreaRoom> aRoom = getAsAreaRoom();
 
-    while(childNode) {
-        if(NODE_NAME(childNode , "Exit")) {
-            auto ext = new Exit;
-            ext->readFromXml(childNode, this, offline);
+    while (childNode) {
+        if (NODE_NAME(childNode, "Exit")) {
+            auto ext = std::make_shared<Exit>();
+            ext->readFromXml(childNode, offline, getVersion());
+            addExit(ext);
 
-            if(!ext->flagIsSet(X_PORTAL)) {
+            if (!ext->flagIsSet(X_PORTAL)) {
                 // moving cardinal exit on the overland?
-                if(ext->flagIsSet(X_MOVING) && aRoom && aRoom->updateExit(ext->getName()))
+                if (ext->flagIsSet(X_MOVING) && aRoom && aRoom->updateExit(ext->getName()))
                     delExit(ext);
             } else
                 delExit(ext);
@@ -176,7 +174,7 @@ int Exit::saveToXml(xmlNodePtr parentNode) const {
     }
 
     effects.save(rootNode, "Effects");
-    saveBits(rootNode, "Flags", MAX_EXIT_FLAGS, flags);
+    saveBitset(rootNode, "Flags", MAX_EXIT_FLAGS, flags);
     saveLastTime(curNode, 0, ltime);
     hooks.save(rootNode, "Hooks");
 
@@ -191,7 +189,7 @@ int Exit::saveToXml(xmlNodePtr parentNode) const {
 //*********************************************************************
 
 int BaseRoom::saveExitsXml(xmlNodePtr curNode) const {
-    for(Exit* exit : exits) {
+    for(const auto& exit : exits) {
         exit->saveToXml(curNode);
     }
     return(0);

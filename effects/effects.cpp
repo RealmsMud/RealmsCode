@@ -40,7 +40,6 @@
 #include "damage.hpp"                               // for Damage
 #include "effects.hpp"                              // for EffectInfo, Effect
 #include "flags.hpp"                                // for O_WORN
-#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for CAP, DT_NONE, BURNED
 #include "join.hpp"                                 // for join
 #include "mudObjects/container.hpp"                 // for Container, PlayerSet
@@ -51,19 +50,17 @@
 #include "mudObjects/objects.hpp"                   // for Object
 #include "mudObjects/players.hpp"                   // for Player
 #include "mudObjects/rooms.hpp"                     // for BaseRoom, ExitList
-#include "os.hpp"                                   // for ASSERTLOG
 #include "proto.hpp"                                // for broadcast, timeStr
 #include "pythonHandler.hpp"                        // for PythonHandler
 #include "raceData.hpp"                             // for RaceData
 #include "random.hpp"                               // for Random
 #include "realm.hpp"                                // for EARTH, FIRE, Realm
 #include "server.hpp"                               // for Server, gServer
-#include "socket.hpp"                               // for Socket, xmlNode
+#include "socket.hpp"                               // for Socket,
 #include "stats.hpp"                                // for Stat
 #include "structs.hpp"                              // for ALCOHOL_DRUNK
 #include "toNum.hpp"                                // for toNum
-#include "utils.hpp"                                // for MAX, MIN
-#include "xml.hpp"                                  // for copyToNum, bad_le...
+#include "xml.hpp"                                  // for loadPlayer
 
 //*********************************************************************
 //                      getDisplayName
@@ -127,7 +124,7 @@ bool Config::effectExists(const std::string &eName) {
 //                      dmEffectList
 //*********************************************************************
 
-int dmEffectList(Player* player, cmd* cmnd) {
+int dmEffectList(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string command = getFullstrText(cmnd->fullstr, 1);
 
     bool all = (command == "all");
@@ -214,7 +211,6 @@ bool EffectInfo::willOverWrite(EffectInfo* existingEffect) const {
 // False if it's time to wear off
 
 bool EffectInfo::pulse(time_t t) {
-    ASSERTLOG(myParent);
 
     bool wearOff = updateLastMod(t);
     if(wearOff)
@@ -235,12 +231,12 @@ bool EffectInfo::pulse(time_t t) {
 bool EffectInfo::updateLastMod(time_t t) {
     time_t diff = t - lastMod;
     lastMod = t;
-    diff = MIN<long>(MAX<long>(0, duration), diff);
+    diff = std::min<long>(std::max<long>(0, duration), diff);
     duration -= diff;
 
-    if(myApplier) {
+    if(auto applier = myApplier.lock()) {
         // for object appliers, keep the duration on the object in-sync with the effect duration
-        Object* object = myApplier->getAsObject();
+        std::shared_ptr<Object>  object = applier->getAsObject();
         if(object)
             object->setEffectDuration(duration);
     }
@@ -266,19 +262,18 @@ bool EffectInfo::timeForPulse(time_t t) {
 
 bool EffectInfo::remove(bool show) {
     bool success = false;
-    ASSERTLOG(myParent);
 
     if(myEffect) {
         success = true;
         if(show) {
-            Creature* cParent = myParent->getAsCreature();
+            std::shared_ptr<Creature> cParent = myParent->getAsCreature();
             if(cParent) {
                 if(!myEffect->getSelfDelStr().empty())
                     cParent->printColor("%s\n", myEffect->getSelfDelStr().c_str());
                 if(!myEffect->getRoomDelStr().empty() && cParent->getRoomParent())
                     cParent->getRoomParent()->effectEcho(myEffect->getRoomDelStr(), cParent);
             }
-            Exit* xParent = myParent->getAsExit();
+            std::shared_ptr<Exit> xParent = myParent->getAsExit();
             if(xParent) {
                 if(!myEffect->getRoomDelStr().empty()) {
                     if(xParent->getRoom())
@@ -287,7 +282,7 @@ bool EffectInfo::remove(bool show) {
                         std::clog << "Exit with no parent room!!!\n";
                 }
             }
-            BaseRoom* rParent = myParent->getAsRoom();
+            std::shared_ptr<BaseRoom> rParent = myParent->getAsRoom();
             if(rParent) {
                 if(!myEffect->getRoomDelStr().empty())
                     rParent->effectEcho(myEffect->getRoomDelStr());
@@ -297,10 +292,10 @@ bool EffectInfo::remove(bool show) {
     }
 
 
-    if(myApplier) {
+    if(auto applier = myApplier.lock()) {
         // If object appliers are being worn when we remove the effect,
         // the object will be broken and unequipped
-        Object* object = myApplier->getAsObject();
+        std::shared_ptr<Object>  object = applier->getAsObject();
         if(object && object->flagIsSet(O_WORN)) {
             object->setShotsCur(0);
             myParent->getAsPlayer()->breakObject(object, object->getWearflag());
@@ -314,8 +309,7 @@ bool EffectInfo::remove(bool show) {
 //                      compute
 //*********************************************************************
 
-bool EffectInfo::compute(MudObject* applier) {
-    ASSERTLOG(myParent);
+bool EffectInfo::compute(const std::shared_ptr<MudObject>& applier) {
     if(!myEffect)
         return(false);
     myApplier = applier;
@@ -332,21 +326,21 @@ bool EffectInfo::compute(MudObject* applier) {
 //*********************************************************************
 
 bool EffectInfo::add() {
-    ASSERTLOG(myParent);
     if(!myEffect)
         return(false);
 
-    Creature* cParent = myParent->getAsCreature();
-    if(cParent) {
+    std::shared_ptr<Creature> cParent = myParent->getAsCreature();
+    auto applier = myApplier.lock();
+    if(applier && cParent) {
 
         if(!myEffect->getSelfAddStr().empty())
-            cParent->printColor("%s\n", cParent->doReplace(myEffect->getSelfAddStr().c_str(), cParent, myApplier).c_str());
+            cParent->printColor("%s\n", cParent->doReplace(myEffect->getSelfAddStr(), cParent, applier).c_str());
 
         // TODO: replace *ACTOR* etc
         if(!myEffect->getRoomAddStr().empty() && cParent->getRoomParent())
-            cParent->getRoomParent()->effectEcho(myEffect->getRoomAddStr(), cParent, myApplier);
+            cParent->getRoomParent()->effectEcho(myEffect->getRoomAddStr(), cParent, applier);
     }
-    Exit* xParent = myParent->getAsExit();
+    std::shared_ptr<Exit> xParent = myParent->getAsExit();
     if(xParent) {
         if(!myEffect->getRoomAddStr().empty()) {
             if(xParent->getRoom())
@@ -355,7 +349,7 @@ bool EffectInfo::add() {
                 std::clog << "Exit with no parent room!!!\n";
         }
     }
-    BaseRoom* rParent = myParent->getAsRoom();
+    std::shared_ptr<BaseRoom> rParent = myParent->getAsRoom();
     if(rParent) {
         if(!myEffect->getRoomAddStr().empty())
             rParent->effectEcho(myEffect->getRoomAddStr());
@@ -369,7 +363,6 @@ bool EffectInfo::add() {
 //*********************************************************************
 
 bool EffectInfo::apply() {
-    ASSERTLOG(myParent);
     if(!myEffect)
         return(false);
     return(runScript(myEffect->getApplyScript()));
@@ -380,7 +373,6 @@ bool EffectInfo::apply() {
 //*********************************************************************
 
 bool EffectInfo::preApply() {
-    ASSERTLOG(myParent);
     if(!myEffect)
         return(false);
     return(runScript(myEffect->getPreApplyScript()));
@@ -392,7 +384,6 @@ bool EffectInfo::preApply() {
 
 bool EffectInfo::postApply(bool keepApplier) {
     bool success = false;
-    ASSERTLOG(myParent);
     if(myEffect)
         success = runScript(myEffect->getPostApplyScript());
 
@@ -402,7 +393,7 @@ bool EffectInfo::postApply(bool keepApplier) {
     // invalid pointer that might crash the game. Currently only equipped object
     // appliers are supported for passing in keepApplier = true.
     if(!keepApplier)
-        myApplier = nullptr;
+        myApplier.reset();
 
     return(success);
 }
@@ -415,11 +406,11 @@ bool EffectInfo::postApply(bool keepApplier) {
 //*********************************************************************
 
 
-EffectInfo* MudObject::addEffect(const std::string& effect, long duration, int strength, MudObject* applier, bool show, const Creature* owner, bool keepApplier) {
+EffectInfo* MudObject::addEffect(const std::string& effect, long duration, int strength, const std::shared_ptr<MudObject>& applier, bool show, const std::shared_ptr<Creature> & owner, bool keepApplier) {
     return(effects.addEffect(effect, duration, strength, applier, show, this, owner, keepApplier));
 }
 
-EffectInfo* Effects::addEffect(const std::string& effect, long duration, int strength, MudObject* applier, bool show, MudObject* pParent, const Creature* owner, bool keepApplier) {
+EffectInfo* Effects::addEffect(const std::string& effect, long duration, int strength, const std::shared_ptr<MudObject>& applier, bool show, MudObject* pParent, const std::shared_ptr<Creature> & owner, bool keepApplier) {
     if(!gConfig->getEffect(effect))
         return(nullptr);
     auto* newEffect = new EffectInfo(effect, time(nullptr), duration, strength, pParent, owner);
@@ -450,7 +441,7 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
 
     if(oldEffect && !newEffect->willOverWrite(oldEffect)) {
         // The new effect won't overwrite, so don't add it
-        if(pParent->getAsPlayer() && show)
+        if(pParent && pParent->getAsPlayer() && show)
             pParent->getAsPlayer()->print("The effect didn't take hold.\n");
         delete newEffect;
         return(nullptr);
@@ -493,11 +484,11 @@ EffectInfo* MudObject::addPermEffect(const std::string& effect, int strength, bo
 //*********************************************************************
 // Remove the effect (Won't remove permanent effects if remPerm is false)
 
-bool MudObject::removeEffect(const std::string& effect, bool show, bool remPerm, MudObject* fromApplier) {
+bool MudObject::removeEffect(const std::string& effect, bool show, bool remPerm, const std::shared_ptr<MudObject>& fromApplier) {
     return(effects.removeEffect(effect, show, remPerm, fromApplier));
 }
 
-bool Effects::removeEffect(const std::string& effect, bool show, bool remPerm, MudObject* fromApplier) {
+bool Effects::removeEffect(const std::string& effect, bool show, bool remPerm, const std::shared_ptr<MudObject>& fromApplier) {
     EffectInfo* toDel = getExactEffect(effect);
     if( toDel &&
         (toDel->getDuration() != -1 || (toDel->getDuration() == -1 && remPerm)) &&
@@ -526,7 +517,7 @@ bool Effects::removeEffect(EffectInfo* toDel, bool show) {
 //*********************************************************************
 // on suicide, we remove the owner of the effect
 
-void Effects::removeOwner(const Creature* owner) {
+void Effects::removeOwner(const std::shared_ptr<Creature> & owner) {
     EffectList::iterator it;
 
     for(it = effectList.begin() ; it != effectList.end() ; it++) {
@@ -661,7 +652,6 @@ bool Creature::pulseEffects(time_t t) {
         effect = (*eIt);
         // Pulse!
 
-        ASSERTLOG(effect->getParent() == this);
         pulsed = effect->pulse(t);
 
         // If pulse returns false, purge this effect
@@ -696,9 +686,9 @@ bool Creature::pulseEffects(time_t t) {
 //*********************************************************************
 
 bool BaseRoom::pulseEffects(time_t t) {
-    effects.pulse(t, this);
+    effects.pulse(t, shared_from_this());
 
-    for(Exit* exit : exits) {
+    for(const auto& exit : exits) {
         exit->pulseEffects(t);
     }
     return(true);
@@ -709,7 +699,7 @@ bool BaseRoom::pulseEffects(time_t t) {
 //*********************************************************************
 
 bool Exit::pulseEffects(time_t t) {
-    effects.pulse(t, this);
+    effects.pulse(t, shared_from_this());
     return(true);
 }
 
@@ -719,7 +709,7 @@ bool Exit::pulseEffects(time_t t) {
 // generic pulse function that can be used on rooms and exits (because
 // they can't die like players can)
 
-void Effects::pulse(time_t t, MudObject* pParent) {
+void Effects::pulse(time_t t, const std::shared_ptr<MudObject>& pParent) {
     EffectList::iterator it;
     EffectInfo* effect=nullptr;
     bool pulsed=false;
@@ -728,7 +718,6 @@ void Effects::pulse(time_t t, MudObject* pParent) {
         effect = (*it);
         // Pulse!
 
-        ASSERTLOG(effect->getParent() == pParent);
         pulsed = effect->pulse(t);
 
         // If pulse returns false, purge this effect
@@ -775,8 +764,8 @@ void Effects::copy(const Effects* source, MudObject* pParent) {
 //                      cmdEffects
 //*********************************************************************
 
-int cmdEffects(Creature* creature, cmd* cmnd) {
-    Creature* target = creature;
+int cmdEffects(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
+    std::shared_ptr<Creature> target = creature;
     int num=0;
 
     if(creature->isCt()) {
@@ -847,8 +836,8 @@ std::string Effects::getEffectsList() const {
 //*********************************************************************
 // Used to print out what effects a creature is under
 
-std::string Effects::getEffectsString(const Creature* viewer) {
-    const Object* object=nullptr;
+std::string Effects::getEffectsString(const std::shared_ptr<Creature> & viewer) {
+    std::shared_ptr<const Object>  object=nullptr;
     std::ostringstream effStr;
     long t = time(nullptr);
 
@@ -933,19 +922,19 @@ bool Effects::removeOppositeEffect(const EffectInfo *effect) {
 // Wrapper to actually do the damage to the target
 // Return: true if they were killed
 
-bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owner, Realm realm, DeathType dt, const char* crtStr, const char* deathStr, const char* roomStr, const char* killerStr) {
+bool exitEffectDamage(const EffectInfo *effect, const std::shared_ptr<Creature>& target, const std::shared_ptr<Creature>& owner, Realm realm, DeathType dt, const char* crtStr, const char* deathStr, const char* roomStr, const char* killerStr) {
     Damage damage;
 
     if(!effect || effect->getExtra() || effect->isOwner(owner))
         return(false);
 
-    Player* killer=nullptr;
+    std::shared_ptr<Player> killer=nullptr;
     bool online = true;
 
     if(!effect->getOwner().empty()) {
         killer = gServer->findPlayer(effect->getOwner());
         if(!killer) {
-            if(loadPlayer(effect->getOwner().c_str(), &killer))
+            if(loadPlayer(effect->getOwner().c_str(), killer))
                 online = false;
             else
                 killer = nullptr;
@@ -966,15 +955,14 @@ bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owne
     target->hp.decrease(damage.get());
     if(target->hp.getCur() < 1) {
         target->print(deathStr);
-        broadcast(target->getSock(), target->getRoomParent(), roomStr, target, target);
+        broadcast(target->getSock(), target->getRoomParent(), roomStr, target.get(), target.get());
 
         if(killer) {
             if(online)
-                killer->print(killerStr, target);
+                killer->print(killerStr, target.get());
             target->die(killer);
             killer->save(online);
-            if(!online)
-                free_crt(killer);
+            if(!online) killer.reset();
         } else {
             if(target->isPlayer())
                 target->getAsPlayer()->die(dt);
@@ -983,8 +971,7 @@ bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owne
         }
         return(true);
     }
-    if(killer && !online)
-        free_crt(killer);
+    if(killer && !online) killer.reset();
     return(false);
 }
 
@@ -993,15 +980,15 @@ bool exitEffectDamage(const EffectInfo *effect, Creature* target, Creature* owne
 //*********************************************************************
 // Return: true if they were killed
 
-bool Exit::doEffectDamage(Creature* target) {
-    Creature *owner = target;
+bool Exit::doEffectDamage(const std::shared_ptr<Creature>& pTarget) {
+    std::shared_ptr<Creature>owner = pTarget;
 
-    if(target->isPet())
-        owner = target->getMaster();
+    if(pTarget->isPet())
+        owner = pTarget->getMaster();
 
     if( exitEffectDamage(
             getEffect("wall-of-fire"),
-            target, owner, FIRE, BURNED,
+            pTarget, owner, FIRE, BURNED,
             "The wall of fire burns you for %s%d^x damage.\n",
             "You are burned to death!\n",
             "%1M is engulfed by the wall of fire.\n%M burns to death!",
@@ -1011,7 +998,7 @@ bool Exit::doEffectDamage(Creature* target) {
 
     if( exitEffectDamage(
             getEffect("wall-of-thorns"),
-            target, owner, EARTH, THORNS,
+            pTarget, owner, EARTH, THORNS,
             "The wall of thorns stabs you for %s%d^x damage.\n",
             "You are stabbed to death!\n",
             "%1M is engulfed by a wall of thorns.\n%M is stabbed to death!",
@@ -1026,14 +1013,14 @@ bool Exit::doEffectDamage(Creature* target) {
 //                      doReplace
 //*********************************************************************
 
-std::string Creature::doReplace(std::string fmt, const MudObject* actor, const MudObject* applier) const {
-    const Creature* cActor = actor->getAsConstCreature();
-    const Exit* xActor = actor->getAsConstExit();
-    const Creature* cApplier = applier->getAsConstCreature();
-
+std::string Creature::doReplace(std::string fmt, const std::shared_ptr<MudObject>& actor, const std::shared_ptr<MudObject>& applier) const {
+    const std::shared_ptr<const Creature> cActor = actor ? actor->getAsConstCreature() : nullptr;
+    const std::shared_ptr<const Exit> xActor = actor ? actor->getAsConstExit() : nullptr;
+    const std::shared_ptr<const Creature> cApplier = applier ? applier->getAsConstCreature() : nullptr;
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
     if(cActor) {
-        boost::replace_all(fmt, "*ACTOR*", cActor->getCrtStr(this, CAP).c_str());
-        boost::replace_all(fmt, "*LOW-ACTOR*", cActor->getCrtStr(this).c_str());
+        boost::replace_all(fmt, "*ACTOR*", cActor->getCrtStr(cThis, CAP).c_str());
+        boost::replace_all(fmt, "*LOW-ACTOR*", cActor->getCrtStr(cThis).c_str());
         boost::replace_all(fmt, "*A-HISHER*", cActor->hisHer());
         boost::replace_all(fmt, "*A-UPHISHER*", cActor->upHisHer());
     } else if(xActor) {
@@ -1049,14 +1036,14 @@ std::string Creature::doReplace(std::string fmt, const MudObject* actor, const M
             boost::replace_all(fmt, "*APPLIER-SELF-POS*", "Your");
             boost::replace_all(fmt, "*LOW-APPLIER-SELF-POS*", "your");
         } else {
-            boost::replace_all(fmt, "*APPLIER-POS*", std::string(cApplier->getCrtStr(this, CAP) + "'s").c_str());
-            boost::replace_all(fmt, "*LOW-APPLIER-POS*", std::string(cApplier->getCrtStr(this) + "'s").c_str());
-            boost::replace_all(fmt, "*APPLIER-SELF-POS*", std::string(cApplier->getCrtStr(this, CAP) + "'s").c_str());
-            boost::replace_all(fmt, "*LOW-APPLIER-SELF-POS*", std::string(cApplier->getCrtStr(this) + "'s").c_str());
+            boost::replace_all(fmt, "*APPLIER-POS*", std::string(cApplier->getCrtStr(cThis, CAP) + "'s").c_str());
+            boost::replace_all(fmt, "*LOW-APPLIER-POS*", std::string(cApplier->getCrtStr(cThis) + "'s").c_str());
+            boost::replace_all(fmt, "*APPLIER-SELF-POS*", std::string(cApplier->getCrtStr(cThis, CAP) + "'s").c_str());
+            boost::replace_all(fmt, "*LOW-APPLIER-SELF-POS*", std::string(cApplier->getCrtStr(cThis) + "'s").c_str());
         }
 
-        boost::replace_all(fmt, "*APPLIER*", cApplier->getCrtStr(this, CAP).c_str());
-        boost::replace_all(fmt, "*LOW-APPLIER*", cApplier->getCrtStr(this).c_str());
+        boost::replace_all(fmt, "*APPLIER*", cApplier->getCrtStr(cThis, CAP).c_str());
+        boost::replace_all(fmt, "*LOW-APPLIER*", cApplier->getCrtStr(cThis).c_str());
         boost::replace_all(fmt, "*AP-HISHER*", cApplier->hisHer());
         boost::replace_all(fmt, "*AP-UPHISHER*", cApplier->upHisHer());
     }
@@ -1067,16 +1054,18 @@ std::string Creature::doReplace(std::string fmt, const MudObject* actor, const M
 //                      effectEcho
 //*********************************************************************
 
-void Container::effectEcho(const std::string &fmt, const MudObject* actor, const MudObject* applier, Socket* ignore) {
-    Socket* ignore2 = nullptr;
-    if(actor->getAsConstCreature())
+void Container::effectEcho(const std::string &fmt, const std::shared_ptr<MudObject>& actor, const std::shared_ptr<MudObject>& applier, std::shared_ptr<Socket> ignore) {
+    std::shared_ptr<Socket> ignore2 = nullptr;
+    if(actor && actor->getAsConstCreature())
         ignore2 = actor->getAsConstCreature()->getSock();
-    for(const Player* ply : players) {
-        if(!ply || (ply->getSock() && (ply->getSock() == ignore || ply->getSock() == ignore2)) || ply->isUnconscious())
-            continue;
+    for(const auto& pIt : players) {
+        if(auto ply = pIt.lock()) {
+            if (!ply || (ply->getSock() && (ply->getSock() == ignore || ply->getSock() == ignore2)) || ply->isUnconscious())
+                continue;
 
-        std::string toSend = ply->doReplace(fmt, actor, applier);
-        (Streamable &) *ply << ColorOn << toSend << ColorOff << "\n";
+            std::string toSend = ply->doReplace(fmt, actor, applier);
+            (Streamable &) *ply << ColorOn << toSend << ColorOff << "\n";
+        }
     }
 }
 
@@ -1092,8 +1081,7 @@ int Effect::getPulseDelay() const {
 //                      runScript
 //*********************************************************************
 
-bool EffectInfo::runScript(const std::string& pyScript, MudObject* applier) {
-
+bool EffectInfo::runScript(const std::string& pyScript, std::shared_ptr<MudObject> applier) {
     // Legacy: Default action is return true, so play along with that
     if(pyScript.empty())
         return(true);
@@ -1104,7 +1092,7 @@ bool EffectInfo::runScript(const std::string& pyScript, MudObject* applier) {
         locals["effectLib"] = effectModule;
         locals["effect"] = this;
 
-        PythonHandler::addMudObjectToDictionary(locals, "actor", myParent);
+        PythonHandler::addMudObjectToDictionary(locals, "actor", myParent->getAsMudObject());
         PythonHandler::addMudObjectToDictionary(locals, "applier", applier);
 
         return (gServer->runPythonWithReturn(pyScript, locals));
@@ -1123,20 +1111,24 @@ bool EffectInfo::runScript(const std::string& pyScript, MudObject* applier) {
 // lastUserUpdate is set in updateUsers
 
 void Server::pulseCreatureEffects(long t) {
-    Monster *monster=nullptr;
-
+    // TODO: Why not do this instead of sockets?
+//    for (const auto& [pName, ply]: players) {
+//        ply->pulseEffects(t);
+//    }
     for (const auto& sock : sockets) {
-        if(!sock.isConnected())
-            continue;
-        if(sock.hasPlayer())
-            sock.getPlayer()->pulseEffects(t);
+        if(!sock->isConnected()) continue;
+        if(sock->hasPlayer())
+            sock->getPlayer()->pulseEffects(t);
     }
 
     auto mIt = activeList.begin();
     while(mIt != activeList.end()) {
-        // Increment the iterator in case this monster dies during the update and is removed from the active list
-        monster = (*mIt++);
-        monster->pulseEffects(t);
+        if(auto monster = (*mIt).lock()) {
+            monster->pulseEffects(t);
+            mIt++;
+        } else {
+            mIt = activeList.erase(mIt);
+        }
     }
 }
 
@@ -1145,15 +1137,16 @@ void Server::pulseCreatureEffects(long t) {
 //*********************************************************************
 
 void Server::pulseRoomEffects(long t) {
-    std::list<BaseRoom*>::iterator it;
+    for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ; ) {
+        auto eff = it->lock();
+        bool remove = (!eff);
+        if(!remove) {
+            eff->pulseEffects(t);
+            remove = !eff->needsEffectsIndex();
+        }
 
-    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; ) {
-        (*it)->pulseEffects(t);
-
-        if(!(*it)->needsEffectsIndex())
-            it = effectsIndex.erase(it);
-        else
-            it++;
+        if(remove) it = effectsIndex.erase(it);
+        else       it++;
     }
 
     lastRoomPulseUpdate = t;
@@ -1163,15 +1156,18 @@ void Server::pulseRoomEffects(long t) {
 //                      showEffectsIndex
 //*********************************************************************
 
-void Server::showEffectsIndex(const Player* player) {
-    std::list<BaseRoom*>::const_iterator it;
+void Server::showEffectsIndex(const std::shared_ptr<Player> &player) {
     int i=0;
 
     player->printColor("^YRoom Effects Index\n");
 
-    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-        player->print("%s\n", (*it)->fullName().c_str());
-        i++;
+    for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ; ) {
+        if(auto eff = it->lock()) {
+            player->print("%s\n", eff->fullName().c_str());
+            i++;
+            it++;
+        } else {}
+        it = effectsIndex.erase(it);
     }
 
     player->print("%d room%s in effects index.\n", i, i==1 ? "" : "s");
@@ -1181,7 +1177,7 @@ void Server::showEffectsIndex(const Player* player) {
 //                      dmShowEffectsIndex
 //*********************************************************************
 
-int dmShowEffectsIndex(Player* player, cmd* cmnd) {
+int dmShowEffectsIndex(const std::shared_ptr<Player>& player, cmd* cmnd) {
     gServer->showEffectsIndex(player);
     return(0);
 }
@@ -1192,14 +1188,13 @@ int dmShowEffectsIndex(Player* player, cmd* cmnd) {
 void BaseRoom::addEffectsIndex() {
     if(!needsEffectsIndex())
         return;
-    gServer->addEffectsIndex(this);
+    gServer->addEffectsIndex(Container::downcasted_shared_from_this<BaseRoom>());
 }
 
-void Server::addEffectsIndex(BaseRoom* room) {
+void Server::addEffectsIndex(const std::shared_ptr<BaseRoom>& room) {
     // you can only be in the list once!
-    std::list<BaseRoom*>::const_iterator it;
-    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-        if((*it) == room)
+    for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
+        if(it->lock() == room)
             return;
     }
 
@@ -1216,7 +1211,7 @@ bool BaseRoom::needsEffectsIndex() const {
         return(true);
 
     // any exit effects?
-    for(Exit* exit : exits) {
+    for(const auto& exit : exits) {
         if(!exit->effects.effectList.empty())
             return(true);
     }
@@ -1228,19 +1223,19 @@ bool BaseRoom::needsEffectsIndex() const {
 //                      removeEffectsIndex
 //*********************************************************************
 
-bool BaseRoom::removeEffectsIndex() {
+bool BaseRoom::removeEffectsIndex() const {
     if(needsEffectsIndex())
         return(false);
     gServer->removeEffectsIndex(this);
     return(true);
 }
-
-void Server::removeEffectsIndex(BaseRoom* room) {
-    std::list<BaseRoom*>::iterator it;
-    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-        if((*it) == room) {
-            effectsIndex.erase(it);
-            return;
+void Server::removeEffectsIndex(const BaseRoom* room) {
+    for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
+        if(auto locked = it->lock()) {
+            if(locked.get() == room) {
+                effectsIndex.erase(it);
+                return;
+            }
         }
     }
 }
@@ -1250,13 +1245,16 @@ void Server::removeEffectsIndex(BaseRoom* room) {
 //*********************************************************************
 // on suicide, we remove the owner of the effect
 
-void Server::removeEffectsOwner(const Creature* owner) {
-    std::list<BaseRoom*>::iterator it;
-
-    for(it = effectsIndex.begin() ; it != effectsIndex.end() ; it++) {
-        (*it)->effects.removeOwner(owner);
-        for(Exit* exit : (*it)->exits) {
-            exit->effects.removeOwner(owner);
+void Server::removeEffectsOwner(const std::shared_ptr<Creature> & owner) {
+    for(auto it = effectsIndex.begin() ; it != effectsIndex.end() ;) {
+        if(auto eff = it->lock()) {
+            eff->effects.removeOwner(owner);
+            for (const auto &exit: eff->exits) {
+                exit->effects.removeOwner(owner);
+            }
+            it++;
+        } else {
+            it = effectsIndex.erase(it);
         }
     }
 }
@@ -1422,7 +1420,7 @@ const std::string & Effect::getName() const {
 //*********************************************************************
 // TODO: Add applier here
 
-EffectInfo::EffectInfo(const std::string &pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent, const Creature* owner):
+EffectInfo::EffectInfo(const std::string &pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent, const std::shared_ptr<Creature> & owner):
         name(pName), lastMod(pLastMod), lastPulse(pLastMod), duration(pDuration), strength(pStrength), myParent(pParent)
 {
     myEffect = gConfig->getEffect(pName);
@@ -1436,31 +1434,6 @@ EffectInfo::EffectInfo(const std::string &pName, time_t pLastMod, long pDuration
 //*********************************************************************
 
 EffectInfo::EffectInfo() = default;
-
-//*********************************************************************
-//                      EffectInfo
-//*********************************************************************
-
-EffectInfo::EffectInfo(xmlNodePtr rootNode) {
-    xmlNodePtr curNode = rootNode->children;
-
-    while(curNode) {
-            if(NODE_NAME(curNode, "Name")) xml::copyToString(name, curNode);
-        else if(NODE_NAME(curNode, "Duration")) xml::copyToNum(duration, curNode);
-        else if(NODE_NAME(curNode, "Strength")) xml::copyToNum(strength, curNode);
-        else if(NODE_NAME(curNode, "Extra")) xml::copyToNum(extra, curNode);
-        else if(NODE_NAME(curNode, "PulseModifier")) xml::copyToNum(pulseModifier, curNode);
-
-        curNode = curNode->next;
-    }
-
-    lastPulse = lastMod = time(nullptr);
-    myEffect = gConfig->getEffect(name);
-
-    if(!myEffect) {
-        throw std::runtime_error("Can't find effect listing " + name);
-    }
-}
 
 //*********************************************************************
 //                      EffectInfo
@@ -1504,7 +1477,7 @@ const std::string & EffectInfo::getOwner() const {
 //                      isOwner
 //*********************************************************************
 
-bool EffectInfo::isOwner(const Creature* owner) const {
+bool EffectInfo::isOwner(const std::shared_ptr<Creature> & owner) const {
     // currently, only players can own effects
     return(owner && owner->isPlayer() && pOwner == owner->getName());
 }
@@ -1561,15 +1534,15 @@ MudObject* EffectInfo::getParent() const {
 //                      getApplier
 //*********************************************************************
 
-MudObject* EffectInfo::getApplier() const {
-    return(myApplier);
+std::shared_ptr<MudObject> EffectInfo::getApplier() const {
+    return(myApplier.lock());
 }
 
 //*********************************************************************
 //                      setOwner
 //*********************************************************************
 
-void EffectInfo::setOwner(const Creature* owner) {
+void EffectInfo::setOwner(const std::shared_ptr<Creature> & owner) {
     if(owner)
         pOwner = owner->getName();
     else

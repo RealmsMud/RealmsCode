@@ -39,7 +39,7 @@ public:
 
     INT_BUILDER(updateInterval);
 
-    MsdpBuilder& valueFn(std::function<std::string(Socket&, Player*)> valueFn) {
+    MsdpBuilder& valueFn(std::function<std::string(Socket&, std::shared_ptr<Player>)> valueFn) {
         msdpVar.valueFn = std::move(valueFn);
         return *this;
     }

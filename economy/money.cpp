@@ -25,7 +25,6 @@
 
 #include "money.hpp"                                // for Money, Coin, MAX_...
 #include "proto.hpp"                                // for zero
-#include "utils.hpp"                                // for MIN
 #include "xml.hpp"                                  // for loadNumArray, sav...
 
 //*********************************************************************
@@ -124,7 +123,7 @@ void Money::sub(Money mn) {
 //                      set
 //*********************************************************************
 
-void Money::set(unsigned long n, Coin c) { m[c] = MIN(2000000000UL, n); }
+void Money::set(unsigned long n, Coin c) { m[c] = std::min(2000000000UL, n); }
 
 void Money::set(Money mn) {
     for(Coin i = MIN_COINS; i < MAX_COINS; i = (Coin)((int)i + 1))

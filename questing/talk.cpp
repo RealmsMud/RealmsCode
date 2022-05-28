@@ -23,7 +23,6 @@
 #include "mudObjects/creatures.hpp"  // for Creature
 #include "flags.hpp"                 // for M_TALKS
 #include "global.hpp"                // for FATAL
-#include "os.hpp"                    // for merror
 #include "paths.hpp"                 // for Talk
 #include "proto.hpp"                 // for loadCreature_tlk, talk_crt_act
 #include "structs.hpp"               // for ttag
@@ -34,7 +33,7 @@
 // TODO: Redo this into XML
 // This function loads a creature's talk responses if they exist.
 
-int loadCreature_tlk( Creature* creature ) {
+int loadCreature_tlk( std::shared_ptr<Creature> creature ) {
     char    crt_name[80], path[256];
     char    keystr[80], responsestr[1024];
     int i, len1, len2;
@@ -49,7 +48,7 @@ int loadCreature_tlk( Creature* creature ) {
         if(crt_name[i] == ' ')
             crt_name[i] = '_';
 
-    sprintf(path, "%s/%s-%d.txt", Path::Talk, crt_name, creature->getLevel());
+    sprintf(path, "%s/%s-%d.txt", Path::Talk.c_str(), crt_name, creature->getLevel());
     fp = fopen(path, "r");
     if(!fp)
         return(0);
@@ -71,15 +70,8 @@ int loadCreature_tlk( Creature* creature ) {
         i++;
 
         tp = new ttag;
-        if(!tp)
-            merror("loadCreature_tlk", FATAL);
-        // LEAK: Next line reported to be leaky: 21 count
         tp->key = new char[len1];
-        if(!tp->key)
-            merror("loadCreature_tlk", FATAL);
         tp->response = new char[len2];
-        if(!tp->response)
-            merror("loadCreature_tlk", FATAL);
         tp->next_tag = nullptr;
 
         strcpy(tp->key, keystr);
@@ -132,8 +124,6 @@ int talk_crt_act(char *str, ttag *tlk ) {
             i++;
         // LEAK: Next line reported to be leaky: 4 count
         word[n] = new char[sizeof(char)*i + 1];
-        if(!word[n])
-            merror("talk_crt_act", FATAL);
 
         memcpy(word[n],&str[index],i);
         word[n][i] = 0;

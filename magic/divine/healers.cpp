@@ -41,7 +41,6 @@
 #include "realm.hpp"                 // for EARTH
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MIN, MAX
 
 
 //*********************************************************************
@@ -50,8 +49,8 @@
 // This ability allows a cleric of Aramon to charm undead creatures
 // and players. -- TC
 
-int cmdEnthrall(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
+int cmdEnthrall(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
     int     dur=0, chance=0;
     long    i=0, t=0;
 
@@ -107,7 +106,7 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
     player->lasttime[LT_HYPNOTIZE].ltime = t;
     player->lasttime[LT_HYPNOTIZE].interval = 300L;
 
-    chance = MIN(90, 40 + (int)((player->getSkillLevel("enthrall") - creature->getLevel()) * 10) +
+    chance = std::min(90, 40 + (int)((player->getSkillLevel("enthrall") - creature->getLevel()) * 10) +
             4 * bonus(player->piety.getCur()));
 
     if(creature->flagIsSet(M_PERMENANT_MONSTER))
@@ -117,14 +116,14 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
         chance = 101;
 
     if((chance < Random::get(1, 100)) && (chance != 101)) {
-        player->print("You were unable to enthrall %N.\n", creature);
+        player->print("You were unable to enthrall %N.\n", creature.get());
         player->checkImprove("enthrall",false);
-        broadcast(player->getSock(), player->getParent(), "%M tried to enthrall %N.",player, creature);
+        broadcast(player->getSock(), player->getParent(), "%M tried to enthrall %N.",player.get(), creature.get());
         if(creature->isMonster()) {
             creature->getAsMonster()->addEnemy(player);
             return(0);
         }
-        creature->printColor("^r%M tried to enthrall you with the power of %s.\n", player, gConfig->getDeity(player->getDeity())->getName().c_str());
+        creature->printColor("^r%M tried to enthrall you with the power of %s.\n", player.get(), gConfig->getDeity(player->getDeity())->getName().c_str());
 
         return(0);
     }
@@ -134,7 +133,7 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
         creature->chkSave(MEN, player, 0))
     {
         player->printColor("^yYour enthrall failed!\n");
-        creature->print("Your mind tingles as you brush off %N's enthrall.\n", player);
+        creature->print("Your mind tingles as you brush off %N's enthrall.\n", player.get());
         player->checkImprove("enthrall",false);
         return(0);
     }
@@ -144,17 +143,17 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
     )
         dur /= 2;
 
-    player->print("You enthrall %N with the power of %s.\n", creature, gConfig->getDeity(player->getDeity())->getName().c_str());
+    player->print("You enthrall %N with the power of %s.\n", creature.get(), gConfig->getDeity(player->getDeity())->getName().c_str());
     player->checkImprove("enthrall",true);
 
     broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M flashes %s symbol of %s to %N, enthralling %s.",
-        player, player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str(), creature,
+        player.get(), player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str(), creature.get(),
         player->himHer());
-    creature->print("%M's chant of %s's word enthralls you.\n", player, gConfig->getDeity(player->getDeity())->getName().c_str());
+    creature->print("%M's chant of %s's word enthralls you.\n", player.get(), gConfig->getDeity(player->getDeity())->getName().c_str());
 
     player->addCharm(creature);
 
-    creature->stun(MAX(1,7+Random::get(1,2)+bonus(player->piety.getCur())));
+    creature->stun(std::max(1,7+Random::get(1,2)+bonus(player->piety.getCur())));
 
     creature->lasttime[LT_CHARMED].ltime = time(nullptr);
     creature->lasttime[LT_CHARMED].interval = dur;
@@ -170,10 +169,10 @@ int cmdEnthrall(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This command allows a dwarven cleric/paladin of Gradius to smother enemies
 
-int cmdEarthSmother(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
-    Player  *pCreature=nullptr;
-    Monster *mCreature=nullptr;
+int cmdEarthSmother(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Player> pCreature=nullptr;
+    std::shared_ptr<Monster> mCreature=nullptr;
     long    i=0, t=0;
     int     chance=0, dmg=0;
 
@@ -223,7 +222,7 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
 
 
     chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
-    chance = MIN(chance, 80);
+    chance = std::min(chance, 80);
     if(creature->isEffected("resist-earth"))
         chance /= 2;
     if(!pCreature && creature->isEffected("immune-earth"))
@@ -240,28 +239,28 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
 
     if(!player->isCt()) {
         if(Random::get(1, 100) > chance) {
-            player->print("You failed to earth smother %N.\n", creature);
-            broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to earth smother %N.", player, creature);
-            creature->print("%M tried to earth smother you!\n", player);
+            player->print("You failed to earth smother %N.\n", creature.get());
+            broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to earth smother %N.", player.get(), creature.get());
+            creature->print("%M tried to earth smother you!\n", player.get());
             player->checkImprove("smother", false);
             return(0);
         }
         if(creature->chkSave(BRE, player, 0)) {
             player->printColor("^yYour earth-smother was interrupted!\n");
-            creature->print("You manage to partially avoid %N's smothering earth.\n", player);
+            creature->print("You manage to partially avoid %N's smothering earth.\n", player.get());
             dmg /= 2;
         }
     }
 
-    player->printColor("You smothered %N for %s%d^x damage.\n", creature, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
+    player->printColor("You smothered %N for %s%d^x damage.\n", creature.get(), player->customColorize("*CC:DAMAGE*").c_str(), dmg);
     player->checkImprove("smother", true);
     player->statistics.attackDamage(dmg, "earth smother");
 
     if(creature->isEffected("resist-earth"))
-        player->print("%M resisted your smother!\n", creature);
+        player->print("%M resisted your smother!\n", creature.get());
 
-    creature->printColor("%M earth-smothered you for %s%d^x damage!\n", player, creature->customColorize("*CC:DAMAGE*").c_str(), dmg);
-    broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M earth-smothered %N!", player, creature);
+    creature->printColor("%M earth-smothered you for %s%d^x damage!\n", player.get(), creature->customColorize("*CC:DAMAGE*").c_str(), dmg);
+    broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M earth-smothered %N!", player.get(), creature.get());
 
     player->doDamage(creature, dmg, CHECK_DIE);
     return(0);
@@ -272,8 +271,8 @@ int cmdEarthSmother(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This will allow paladins to lay on hands
 
-int cmdLayHands(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
+int cmdLayHands(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
     int     num=0;
     long    t=time(nullptr), i=0;
 
@@ -309,12 +308,12 @@ int cmdLayHands(Player* player, cmd* cmnd) {
         //TODO: Change heal amount calc to use hands skill level once skill trainers are put in. Until then, use player level
         num = Random::get( (int)(player->getLevel()*4), (int)(player->getLevel()*5) ) + Random::get(1,10);
 
-        *player << "You regain " << MIN<int>(num,(player->hp.getMax() - player->hp.getCur())) << " hit points.\n";
+        *player << "You regain " << std::min<int>(num,(player->hp.getMax() - player->hp.getCur())) << " hit points.\n";
 
         player->doHeal(player, num);
 
         broadcast(player->getSock(), player->getParent(), "%M heals %sself with the power of %s.",
-            player, player->himHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+            player.get(), player->himHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
 
         *player << "You feel much better now.\n";
         player->checkImprove("hands", true);
@@ -354,16 +353,16 @@ int cmdLayHands(Player* player, cmd* cmnd) {
         num = Random::get( (int)(player->getLevel()*4), (int)(player->getLevel()*5) ) + Random::get(1,10);
 
         *player << "You heal " << creature << " with the power of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
-        *player << creature->upHeShe() <<  " gained " << (MIN<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
+        *player << creature->upHeShe() <<  " gained " << (std::min<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
 
         *creature << setf(CAP) << player << " lays " << player->hisHer() << " hand upon your pate.\n";
-        *creature << "You regain " << (MIN<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
+        *creature << "You regain " << (std::min<int>(num,(creature->hp.getMax() - creature->hp.getCur()))) << " hit points.\n";
 
 
         player->doHeal(creature, num);
 
         broadcast(player->getSock(), creature->getSock(), creature->getRoomParent(), "%M heals %N with the power of %s.",
-            player, creature, gConfig->getDeity(player->getDeity())->getName().c_str());
+            player.get(), creature.get(), gConfig->getDeity(player->getDeity())->getName().c_str());
 
         *creature << "You feel much better now.\n";
 
@@ -382,7 +381,7 @@ int cmdLayHands(Player* player, cmd* cmnd) {
 // This function allows clerics, paladins, and druids to pray every 10
 // minutes to increase their piety for a duration of 5 minutes.
 
-int cmdPray(Player* player, cmd* cmnd) {
+int cmdPray(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i=0, t=0;
     int     chance=0;
 
@@ -433,9 +432,9 @@ int cmdPray(Player* player, cmd* cmnd) {
     }
 
     if(player->getClass()==CreatureClass::DEATHKNIGHT)
-        chance = MIN<int>(8500, (player->getSkillLevel("pray") * 750) + player->strength.getCur() * 5);
+        chance = std::min<int>(8500, (player->getSkillLevel("pray") * 750) + player->strength.getCur() * 5);
     else
-        chance = MIN<int>(8500, (player->getSkillLevel("pray") * 1500) + player->piety.getCur() );
+        chance = std::min<int>(8500, (player->getSkillLevel("pray") * 1500) + player->piety.getCur() );
 
    if (player->isCt()) {
         *player << "Pray chance (adjusted): " << chance << "\n";
@@ -447,67 +446,67 @@ int cmdPray(Player* player, cmd* cmnd) {
     switch(player->getDeity()) {
             case ARAMON:
                 *player << "You pray for the " << (player->getClass() == CreatureClass::CLERIC ? "wrath":"dark power") << " of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
-                broadcast(player->getSock(),player->getParent(), "%M prays for the %s of %s.", player, player->getClass() == CreatureClass::CLERIC ? "wrath":"dark power", gConfig->getDeity(player->getDeity())->getName().c_str());
+                broadcast(player->getSock(),player->getParent(), "%M prays for the %s of %s.", player.get(), player->getClass() == CreatureClass::CLERIC ? "wrath":"dark power", gConfig->getDeity(player->getDeity())->getName().c_str());
                 failStr << gConfig->getDeity(player->getDeity())->getName() << " scoffed at your prayer.\n";
                 succStr << gConfig->getDeity(player->getDeity())->getName() << " has reluctantly granted his " << (player->getClass() == CreatureClass::CLERIC ? "wrath":"dark power") << ". It'd be unwise of you to fail him.\n";
             break;
             case CERIS:
                 *player << "You expose yourself and dance, doing a fertility ritual for " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
-                broadcast(player->getSock(),player->getParent(), "%M exposes %sself and dances, doing a fertility ritual for %s.", player, player->himHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                broadcast(player->getSock(),player->getParent(), "%M exposes %sself and dances, doing a fertility ritual for %s.", player.get(), player->himHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
                 failStr << gConfig->getDeity(player->getDeity())->getName() << " found your exposition dance inadequate.\n";
                 succStr << gConfig->getDeity(player->getDeity())->getName() << " found your exposition dance worthy and granted your prayer.\n";
             break;
             case ENOCH:
                 *player << "You pray for the rightenousness of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
-                broadcast(player->getSock(),player->getParent(), "%M prays for the righteousness of %s.", player, gConfig->getDeity(player->getDeity())->getName().c_str());
+                broadcast(player->getSock(),player->getParent(), "%M prays for the righteousness of %s.", player.get(), gConfig->getDeity(player->getDeity())->getName().c_str());
                 failStr << gConfig->getDeity(player->getDeity())->getName() << " found your worthiness lacking.\n";
                 succStr << gConfig->getDeity(player->getDeity())->getName() << " has granted your prayer. Go forth and smite injustice in his name!\n";
             break;
             case GRADIUS:
                 *player << "You rub some dirt between your hands, praying for wisdom from " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
-                broadcast(player->getSock(),player->getParent(), "%M rubs dirt between %s hands, praying for wisdom from %s.", player, player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                broadcast(player->getSock(),player->getParent(), "%M rubs dirt between %s hands, praying for wisdom from %s.", player.get(), player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
                 failStr << gConfig->getDeity(player->getDeity())->getName() << " is subbornly silent to your prayer.\n";
                 succStr << gConfig->getDeity(player->getDeity())->getName() << " has proudly granted your prayer.\n";
             break;
             case ARES:
                 *player << "You smear blood across your face, praying to " << gConfig->getDeity(player->getDeity())->getName() << " for good fortune in battle.\n";
-                 broadcast(player->getSock(),player->getParent(), "%M smears blood across %s face, praying to %s for good fortune in battle.", player, player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                 broadcast(player->getSock(),player->getParent(), "%M smears blood across %s face, praying to %s for good fortune in battle.", player.get(), player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
                 failStr << gConfig->getDeity(player->getDeity())->getName() << " found your blood ritual lacking.\n";
                 succStr << "Rage and violence flow through you as " << gConfig->getDeity(player->getDeity())->getName() << " grants your prayer.\n";
             break;
             case KAMIRA:
                 *player << "You slam a shot of whiskey and toss your holy dice, praying for the luck of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
-                broadcast(player->getSock(),player->getParent(), "%M prays to %s, slamming a shot of whiskey and throwing %s holy dice.", player, gConfig->getDeity(player->getDeity())->getName().c_str(), player->hisHer());
+                broadcast(player->getSock(),player->getParent(), "%M prays to %s, slamming a shot of whiskey and throwing %s holy dice.", player.get(), gConfig->getDeity(player->getDeity())->getName().c_str(), player->hisHer());
                 failStr << "Unfortunately, " << gConfig->getDeity(player->getDeity())->getName() << " didn't like your roll and whimsically refused your prayer.\n";
                 succStr << gConfig->getDeity(player->getDeity())->getName() << " decided your roll was adequate and happily granted your prayer.\n";
             break;
             case LINOTHAN:
                 *player << "You begin an intricate sword dancing ritual, praying to " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
-                broadcast(player->getSock(),player->getParent(), "%M does an intricate sword dancing ritual, praying to %s.", player, gConfig->getDeity(player->getDeity())->getName().c_str());
+                broadcast(player->getSock(),player->getParent(), "%M does an intricate sword dancing ritual, praying to %s.", player.get(), gConfig->getDeity(player->getDeity())->getName().c_str());
                 failStr << gConfig->getDeity(player->getDeity())->getName() << " found your sword dancing ritual lacking.\n";
                 succStr << gConfig->getDeity(player->getDeity())->getName() << " was impressed by your sword dancing ritual and has granted your prayer.\n";
             break;
             case ARACHNUS:
                 *player << "You prostrate yourself and beg to " << gConfig->getDeity(player->getDeity())->getName() << " for favor.\n";
-                broadcast(player->getSock(),player->getParent(), "%M prostrates %sself and begs for the favor of %s.", player, player->himHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                broadcast(player->getSock(),player->getParent(), "%M prostrates %sself and begs for the favor of %s.", player.get(), player->himHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
                 failStr << gConfig->getDeity(player->getDeity())->getName() << " blatantly ignored your pathetic prostration.\n";
                 succStr << gConfig->getDeity(player->getDeity())->getName() << " has whimsically granted you favor.\n";
             break;
             case MARA:
                 *player << "You fall to your knees and pray for the guidance of " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
-                broadcast(player->getSock(),player->getParent(),"%M falls to %s knees and prays for guidance from %s.", player, player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                broadcast(player->getSock(),player->getParent(),"%M falls to %s knees and prays for guidance from %s.", player.get(), player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
                 failStr << gConfig->getDeity(player->getDeity())->getName() << " refused to answer your prayer.\n";
                 succStr << gConfig->getDeity(player->getDeity())->getName() << " has responded and warmly granted your prayer.\n";
             break;
             case JAKAR:
                 *player << "You ritually count your coins, praying for wisdom from " << gConfig->getDeity(player->getDeity())->getName() << ".\n";
-                broadcast(player->getSock(),player->getParent(),"%M ritually counts %s coins, praying for wisdom from %s.", player, player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
+                broadcast(player->getSock(),player->getParent(),"%M ritually counts %s coins, praying for wisdom from %s.", player.get(), player->hisHer(), gConfig->getDeity(player->getDeity())->getName().c_str());
                 failStr << gConfig->getDeity(player->getDeity())->getName() << " ignored your counting ritual and didn't answer your prayer.\n";
                 succStr << gConfig->getDeity(player->getDeity())->getName() << " has answered your prayer. Go forth in the name of profits!\n";
             break;
             default:
                 *player << "You rant and rave over the fallacy of the worlds' religions, mockingly pretending to pray.\n";
-                broadcast(player->getSock(), player->getParent(), "%M rants and raves over the fallacy of all the worlds' religions, mockingly pretending to pray.", player);
+                broadcast(player->getSock(), player->getParent(), "%M rants and raves over the fallacy of all the worlds' religions, mockingly pretending to pray.", player.get());
                 failStr << "Fortunately, the universe refused to listen to you, just as it should be!\n";
                 succStr << "WTF! The universe...or something...answered your prayer!\n";
             break;
@@ -542,7 +541,7 @@ int cmdPray(Player* player, cmd* cmnd) {
 }
 
 
-bool Creature::kamiraLuck(Creature *attacker) {
+bool Creature::kamiraLuck(const std::shared_ptr<Creature>&attacker) {
     int chance=0;
 
     if(!(cClass == CreatureClass::CLERIC && deity == KAMIRA) && !isCt())
@@ -552,7 +551,7 @@ bool Creature::kamiraLuck(Creature *attacker) {
     if(Random::get(1,100) <= chance) {
         broadcast(getSock(), getRoomParent(), "^YA feeling of deja vous comes over you.");
         printColor("^YThe luck of %s was with you!\n", gConfig->getDeity(KAMIRA)->getName().c_str());
-        printColor("^C%M missed you.\n", attacker);
+        printColor("^C%M missed you.\n", attacker.get());
         attacker->print("You thought you hit, but you missed!\n");
         return(true);
     }
@@ -561,44 +560,44 @@ bool Creature::kamiraLuck(Creature *attacker) {
 
 
 
-int Creature::getTurnChance(Creature* target) {
-    double  level = 0.0;
+int Creature::getTurnChance(const std::shared_ptr<Creature>& target) {
+    double  adjLevel = 0.0;
     int     chance=0, bns=0;
 
 
-    level = getSkillLevel("turn");
+    adjLevel = getSkillLevel("turn");
 
     switch (getDeity()) {
     case CERIS:
         if(getAdjustedAlignment() == NEUTRAL)
-            level+=2;
+            adjLevel+=2;
         if(getAdjustedAlignment() == ROYALBLUE || getAdjustedAlignment() == BLOODRED)
-            level-=2;
+            adjLevel-=2;
         break;
     case LINOTHAN:
     case ENOCH:
         if(getAdjustedAlignment() < NEUTRAL)
-            level -=4;
+            adjLevel -=4;
         break;
     default:
         break;
     }
 
-    level = MAX<double>(1,level);
+    adjLevel = std::max<double>(1, adjLevel);
 
 
     bns = bonus(piety.getCur());
 
-    chance = (int)((level - target->getLevel())*20) +
+    chance = (int)((adjLevel - target->getLevel()) * 20) +
             bns*5 + (getClass() == CreatureClass::PALADIN ? 15:25);
-    chance = MIN(chance, 80);
+    chance = std::min(chance, 80);
 
     if(target->isPlayer()) {
         if(isDm())
             chance = 101;
     } else {
         if(target->flagIsSet(M_SPECIAL_UNDEAD))
-            chance = MIN(chance, 15);
+            chance = std::min(chance, 15);
     }
 
 
@@ -610,8 +609,8 @@ int Creature::getTurnChance(Creature* target) {
 //                      cmdTurn
 //*********************************************************************
 
-int cmdTurn(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
+int cmdTurn(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
     long    i=0, t=0;
     int     m=0, dmg=0, dis=5, chance=0;
     int     roll=0, disroll=0, bns=0;
@@ -647,7 +646,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
     } else {
 
         if( !target->isUndead() &&
-            !player->checkStaff("%M is not undead.\n", target))
+            !player->checkStaff("%M is not undead.\n", target.get()))
             return(0);
 
     }
@@ -683,7 +682,7 @@ int cmdTurn(Player* player, cmd* cmnd) {
 
 
     // determine damage turn will do
-    dmg = MAX<int>(1, target->hp.getCur() / 2);
+    dmg = std::max<int>(1, target->hp.getCur() / 2);
 
 
     switch(player->getDeity()) {
@@ -714,21 +713,20 @@ int cmdTurn(Player* player, cmd* cmnd) {
     roll = Random::get(1,100);
 
     if(roll > chance && !player->isStaff()) {
-        player->print("You failed to turn %N.\n", target);
+        player->print("You failed to turn %N.\n", target.get());
         player->checkImprove("turn", false);
         if(target->mFlagIsSet(M_SPECIAL_UNDEAD))
-            player->print("%M greatly resisted your efforts to turn %s!\n",
-                  target, target->himHer());
-        broadcast(player->getSock(), player->getParent(), "%M failed to turn %N.", player, target);
+            player->print("%M greatly resisted your efforts to turn %s!\n", target.get(), target->himHer());
+        broadcast(player->getSock(), player->getParent(), "%M failed to turn %N.", player.get(), target.get());
         return(0);
     }
 
     disroll = Random::get(1,100);
 
     if((disroll < (dis + bns) && !target->flagIsSet(M_SPECIAL_UNDEAD)) || player->isDm()) {
-        player->printColor("^BYou disintegrated %N.\n", target);
+        player->printColor("^BYou disintegrated %N.\n", target.get());
 
-        broadcast(player->getSock(), player->getParent(), "^B%M disintegrated %N.", player, target);
+        broadcast(player->getSock(), player->getParent(), "^B%M disintegrated %N.", player.get(), target.get());
         // TODO: SKILLS: add a bonus to this
         player->checkImprove("turn", true);
         if(target->isMonster())
@@ -738,16 +736,16 @@ int cmdTurn(Player* player, cmd* cmnd) {
         target->die(player);
     } else {
 
-        m = MIN<int>(target->hp.getCur(), dmg);
+        m = std::min<int>(target->hp.getCur(), dmg);
         //player->statistics.attackDamage(dmg, "turn undead");
 
         if(target->isMonster())
             target->getAsMonster()->adjustThreat(player, m);
 
-        player->printColor("^YYou turned %N for %d damage.\n", target, dmg);
+        player->printColor("^YYou turned %N for %d damage.\n", target.get(), dmg);
         player->checkImprove("turn", true);
 
-        broadcast(player->getSock(), player->getParent(), "^Y%M turned %N.", player, target);
+        broadcast(player->getSock(), player->getParent(), "^Y%M turned %N.", player.get(), target.get());
         player->doDamage(target, dmg, CHECK_DIE);
 
     }
@@ -763,8 +761,8 @@ int cmdTurn(Player* player, cmd* cmnd) {
 // another with the power of their respective gods, doing damage or
 // destroying one another utterly.  --- TC
 
-int cmdRenounce(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
+int cmdRenounce(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
     long    i=0, t=0;
     int     chance=0, dmg=0;
 
@@ -781,7 +779,7 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 
     double level = player->getSkillLevel("renounce");
     if(target->isMonster()) {
-        Monster* mTarget = target->getAsMonster();
+        std::shared_ptr<Monster>  mTarget = target->getAsMonster();
         if( (!player->isCt()) &&
             (((player->getClass() == CreatureClass::PALADIN) && (target->getClass() !=  CreatureClass::DEATHKNIGHT)) ||
             ((player->getClass() == CreatureClass::DEATHKNIGHT) && (target->getClass() !=  CreatureClass::PALADIN)))
@@ -821,14 +819,14 @@ int cmdRenounce(Player* player, cmd* cmnd) {
         chance = ((int)(level - target->getLevel())*20) + bonus(player->piety.getCur()) * 5 + 25;
         if(target->flagIsSet(M_PERMENANT_MONSTER))
             chance -= 15;
-        chance = MIN(chance, 90);
+        chance = std::min(chance, 90);
         if(player->isDm())
             chance = 101;
 
         if(Random::get(1,100) > chance) {
-            player->print("Your god refuses to renounce %N.\n", target);
+            player->print("Your god refuses to renounce %N.\n", target.get());
             player->checkImprove("renounce", false);
-            broadcast(player->getSock(), player->getParent(), "%M tried to renounce %N.", player, target);
+            broadcast(player->getSock(), player->getParent(), "%M tried to renounce %N.", player.get(), target.get());
             return(0);
         }
 
@@ -837,29 +835,28 @@ int cmdRenounce(Player* player, cmd* cmnd) {
             if(target->chkSave(DEA, player, 0)) {
                 player->printColor("^yYour renounce failed!\n");
                 player->checkImprove("renounce", false);
-                target->print("%M failed renounce you.\n", player);
+                target->print("%M failed renounce you.\n", player.get());
                 return(0);
             }
         }
 
         if(Random::get(1,100) > 90 - bonus(player->piety.getCur()) || player->isDm()) {
-            player->print("You destroy %N with your faith.\n", target);
+            player->print("You destroy %N with your faith.\n", target.get());
             player->checkImprove("renounce", true);
-            broadcast(player->getSock(), player->getParent(), "The power of %N's faith destroys %N.",
-                player, target);
+            broadcast(player->getSock(), player->getParent(), "The power of %N's faith destroys %N.", player.get(), target.get());
             mTarget->adjustThreat(player, target->hp.getCur());
 
             //player->statistics.attackDamage(target->hp.getCur(), "renounce");
             target->die(player);
         }
         else {
-            dmg = MAX<int>(1, target->hp.getCur() / 2);
+            dmg = std::max<int>(1, target->hp.getCur() / 2);
             //player->statistics.attackDamage(dmg, "renounce");
 
-            player->printColor("You renounced %N for %s%d^x damage.\n", target, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
+            player->printColor("You renounced %N for %s%d^x damage.\n", target.get(), player->customColorize("*CC:DAMAGE*").c_str(), dmg);
             player->checkImprove("renounce", true);
-            //target->print("%M renounced you for %d damage!\n", player, dmg);
-            broadcast(player->getSock(), player->getParent(), "%M renounced %N.", player, target);
+            //target->print("%M renounced you for %d damage!\n", player.get(), dmg);
+            broadcast(player->getSock(), player->getParent(), "%M renounced %N.", player.get(), target.get());
             player->doDamage(target, dmg, CHECK_DIE);
         }
 
@@ -896,15 +893,14 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 
         chance = ((int)(level - target->getLevel())*20) +
                  bonus(player->piety.getCur()) * 5 + 25;
-        chance = MIN(chance, 90);
+        chance = std::min(chance, 90);
         if(player->isDm())
             chance = 101;
         if(Random::get(1,100) > chance) {
-            player->print("Your god refuses to renounce %N.\n", target);
+            player->print("Your god refuses to renounce %N.\n", target.get());
             player->checkImprove("renounce", false);
-            broadcast(player->getSock(), target->getSock(), player->getParent(),
-                "%M tried to renounce %N.", player, target);
-            target->print("%M tried to renounce you!\n", player);
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to renounce %N.", player.get(), target.get());
+            target->print("%M tried to renounce you!\n", player.get());
             return(0);
         }
 
@@ -913,27 +909,26 @@ int cmdRenounce(Player* player, cmd* cmnd) {
             if(target->chkSave(DEA, player, 0)) {
                 player->printColor("^yYour renounce failed!\n");
                 player->checkImprove("renounce", false);
-                target->print("%M failed renounce you.\n", player);
+                target->print("%M failed renounce you.\n", player.get());
                 return(0);
             }
         }
 
         if(Random::get(1,100) > 90 - bonus(player->piety.getCur()) || player->isDm()) {
-            player->print("You destroyed %N with your faith.\n", target);
+            player->print("You destroyed %N with your faith.\n", target.get());
             player->checkImprove("renounce", true);
-            target->print("The power of %N's faith destroys you!\n", player);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M destroys %N with %s faith!",
-                player, target, target->hisHer());
+            target->print("The power of %N's faith destroys you!\n", player.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M destroys %N with %s faith!", player.get(), target.get(), target->hisHer());
             //player->statistics.attackDamage(target->hp.getCur(), "renounce");
             target->die(player);
 
         } else {
-            dmg = MAX<int>(1, target->hp.getCur() / 2);
+            dmg = std::max<int>(1, target->hp.getCur() / 2);
             //player->statistics.attackDamage(dmg, "renounce");
-            player->printColor("You renounced %N for %s%d^x damage.\n", target, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
+            player->printColor("You renounced %N for %s%d^x damage.\n", target.get(), player->customColorize("*CC:DAMAGE*").c_str(), dmg);
             player->checkImprove("renounce", true);
-            target->printColor("%M renounced you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M renounced %N!", player, target);
+            target->printColor("%M renounced you for %s%d^x damage.\n", player.get(), target->customColorize("*CC:DAMAGE*").c_str(), dmg);
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M renounced %N!", player.get(), target.get());
             player->doDamage(target, dmg, CHECK_DIE);
         }
 
@@ -948,8 +943,8 @@ int cmdRenounce(Player* player, cmd* cmnd) {
 // This function will allow a cleric of Enoch to use a holyword power
 // upon reaching level 13 or higher. ---TC
 
-int cmdHolyword(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
+int cmdHolyword(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
     long    i=0, t=0;
     int     chance=0, dmg=0, alnum=0;
 
@@ -974,7 +969,7 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 
     double level = player->getSkillLevel("holyword");
     if(target->isMonster()) {
-        Monster* mTarget = target->getAsMonster();
+        std::shared_ptr<Monster>  mTarget = target->getAsMonster();
         if(target->getAdjustedAlignment() >= NEUTRAL && !player->isCt()) {
             player->print("A holy word cannot be pronounced on a good creature.\n");
             return(0);
@@ -1015,14 +1010,14 @@ int cmdHolyword(Player* player, cmd* cmnd) {
         chance = ((int)(level - target->getLevel())*20) +
                  bonus(player->piety.getCur()) * 5 + 25;
 
-        chance = MIN(chance, 90);
+        chance = std::min(chance, 90);
         if(player->isDm())
             chance = 101;
 
         if(Random::get(1,100) > chance) {
-            player->print("Your holy word is ineffective on %N.\n", target);
+            player->print("Your holy word is ineffective on %N.\n", target.get());
             player->checkImprove("holyword", false);
-            broadcast(player->getSock(), player->getParent(), "%M tried to pronounce a holy word on %N.", player, target);
+            broadcast(player->getSock(), player->getParent(), "%M tried to pronounce a holy word on %N.", player.get(), target.get());
             return(0);
         }
 
@@ -1030,16 +1025,15 @@ int cmdHolyword(Player* player, cmd* cmnd) {
             if(target->chkSave(LCK, player, 0)) {
                 player->printColor("^yYour holyword failed!\n");
                 player->checkImprove("holyword", false);
-                target->print("You avoided %N's holy word.\n", player);
+                target->print("You avoided %N's holy word.\n", player.get());
                 return(0);
             }
         }
 
         if((Random::get(1,100) > (90 - bonus(player->piety.getCur()))) || (player->isDm())) {
-            player->print("Your holy word utterly destroys %N.\n", target);
+            player->print("Your holy word utterly destroys %N.\n", target.get());
             player->checkImprove("holyword", true);
-            broadcast(player->getSock(), player->getParent(), "%M's holy word utterly destroys %N.",
-                player, target);
+            broadcast(player->getSock(), player->getParent(), "%M's holy word utterly destroys %N.", player.get(), target.get());
             if(mTarget)
                 mTarget->adjustThreat(player, target->hp.getCur());
             //player->statistics.attackDamage(target->hp.getCur(), "holyword");
@@ -1049,11 +1043,11 @@ int cmdHolyword(Player* player, cmd* cmnd) {
             dmg = Random::get((int)level + alnum, (int)(level*4)) + bonus(player->piety.getCur());
             //player->statistics.attackDamage(dmg, "holyword");
 
-            player->print("Your holy word does %d damage to %N.\n", dmg, target);
+            player->print("Your holy word does %d damage to %N.\n", dmg, target.get());
             player->checkImprove("holyword", true);
             target->stun((bonus(player->piety.getCur()) + Random::get(2, 6)) );
 
-            broadcast(player->getSock(), player->getParent(), "%M pronounces a holy word on %N.", player, target);
+            broadcast(player->getSock(), player->getParent(), "%M pronounces a holy word on %N.", player.get(), target.get());
 
             player->doDamage(target, dmg, CHECK_DIE);
         }
@@ -1097,15 +1091,15 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 
         chance = ((int)(level - target->getLevel())*20) +
                  bonus(player->piety.getCur()) * 5 + 25;
-        chance = MIN(chance, 90);
+        chance = std::min(chance, 90);
         if(player->isDm())
             chance = 101;
         if(Random::get(1,100) > chance) {
-            player->print("Your holy word is ineffective on %N.\n", target);
+            player->print("Your holy word is ineffective on %N.\n", target.get());
             player->checkImprove("holyword", false);
             broadcast(player->getSock(), target->getSock(), player->getParent(),
-                "%M tried to pronounce a holy word on %N.", player, target);
-            target->print("%M tried to pronounce a holy word you!\n", player);
+                "%M tried to pronounce a holy word on %N.", player.get(), target.get());
+            target->print("%M tried to pronounce a holy word you!\n", player.get());
             return(0);
         }
 
@@ -1113,18 +1107,18 @@ int cmdHolyword(Player* player, cmd* cmnd) {
             if(target->chkSave(LCK, player, 0)) {
                 player->printColor("^yYour holyword failed!\n");
                 player->checkImprove("holyword", false);
-                target->print("You avoided %N's holy word.\n", player);
+                target->print("You avoided %N's holy word.\n", player.get());
                 return(0);
             }
         }
 
         if((Random::get(1,100) > (90 - bonus(player->piety.getCur()))) || player->isDm()) {
 
-            player->print("Your holy word utterly destroys %N.\n", target);
+            player->print("Your holy word utterly destroys %N.\n", target.get());
             player->checkImprove("holyword", true);
-            target->print("You are utterly destroyed by %N's holy word!\n", player);
+            target->print("You are utterly destroyed by %N's holy word!\n", player.get());
             broadcast(player->getSock(), target->getSock(), player->getParent(),
-                "%M utterly destroys %N with %s holy word!", player, target, target->hisHer());
+                "%M utterly destroys %N with %s holy word!", player.get(), target.get(), target->hisHer());
             player->statistics.attackDamage(target->hp.getCur(), "holyword");
             target->die(player);
 
@@ -1134,13 +1128,13 @@ int cmdHolyword(Player* player, cmd* cmnd) {
                    + bonus(player->piety.getCur())) - bonus(target->piety.getCur());
             player->statistics.attackDamage(dmg, "holyword");
 
-            player->printColor("Your holy word does %s%d^x damage to %N.\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg, target);
+            player->printColor("Your holy word does %s%d^x damage to %N.\n", player->customColorize("*CC:DAMAGE*").c_str(), dmg, target.get());
             player->checkImprove("holyword", true);
             target->stun((bonus(player->piety.getCur()) + Random::get(2, 6)) );
 
-            target->printColor("%M pronounced a holy word on you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmg);
+            target->printColor("%M pronounced a holy word on you for %s%d^x damage.\n", player.get(), target->customColorize("*CC:DAMAGE*").c_str(), dmg);
             broadcast(player->getSock(), target->getSock(), player->getParent(),
-                "%M pronounced a holy word on %N!", player, target);
+                "%M pronounced a holy word on %N!", player.get(), target.get());
             player->doDamage(target, dmg, CHECK_DIE);
         }
 
@@ -1154,9 +1148,9 @@ int cmdHolyword(Player* player, cmd* cmnd) {
 //                      cmdBandage
 //*********************************************************************
 
-int cmdBandage(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
-    Object  *object=nullptr;
+int cmdBandage(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Object> object=nullptr;
     int     heal=0;
 
     player->clearFlag(P_AFK);
@@ -1233,11 +1227,9 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
 
         if(object->getShotsCur() < 1)
-            player->printColor("Your %s %s all used up.\n", object->getCName(),
-                  (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
+            player->printColor("Your %s %s all used up.\n", object->getCName(), (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
 
-        broadcast(player->getSock(), player->getParent(), "%M bandages %sself.",
-            player, player->himHer());
+        broadcast(player->getSock(), player->getParent(), "%M bandages %sself.", player.get(), player->himHer());
 
         player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
 
@@ -1266,46 +1258,45 @@ int cmdBandage(Player* player, cmd* cmnd) {
         }
 
         if(object->getType() != ObjectType::BANDAGE) {
-            player->print("You cannot bandage %N with that.\n", creature);
+            player->print("You cannot bandage %N with that.\n", creature.get());
             return(0);
         }
 
         if(object->getShotsCur() < 1) {
-            player->print("You can't bandage %N with that. It's used up.\n", creature);
+            player->print("You can't bandage %N with that. It's used up.\n", creature.get());
             return(0);
         }
 
 
         if(creature->hp.getCur() == creature->hp.getMax()) {
-            player->print("%M doesn't need to be bandaged right now.\n", creature);
+            player->print("%M doesn't need to be bandaged right now.\n", creature.get());
             return(0);
         }
 
         if(creature->getClass() == CreatureClass::LICH) {
-            player->print("The aura of death around %N causes bandaging to fail.\n",creature);
+            player->print("The aura of death around %N causes bandaging to fail.\n",creature.get());
             object->decShotsCur();
             return(0);
         }
 
         if(creature->isPlayer() && creature->inCombat()) {
-            player->print("You cannot bandage %N while %s's fighting a monster.\n", creature, creature->heShe());
+            player->print("You cannot bandage %N while %s's fighting a monster.\n", creature.get(), creature->heShe());
             return(0);
         }
 
-        if(creature->getType() !=PLAYER && !creature->isPet() && creature->getAsMonster()->nearEnemy()
-                && !creature->getAsMonster()->isEnemy(player)) {
-            player->print("Not while %N is in combat with someone.\n", creature);
+        if(creature->getType() !=PLAYER && !creature->isPet() && creature->getAsMonster()->nearEnemy() && !creature->getAsMonster()->isEnemy(player)) {
+            player->print("Not while %N is in combat with someone.\n", creature.get());
             return(0);
         }
 
 
         if(creature->isPlayer() && creature->isEffected("stoneskin")) {
-            player->print("%M's stoneskin spell resists your bandaging efforts.\n", creature);
+            player->print("%M's stoneskin spell resists your bandaging efforts.\n", creature.get());
             return(0);
         }
 
         if(creature->pFlagIsSet(P_LINKDEAD)) {
-            player->print("%M doesn't want to be bandaged right now.\n", creature);
+            player->print("%M doesn't want to be bandaged right now.\n", creature.get());
             return(0);
         }
 
@@ -1316,14 +1307,14 @@ int cmdBandage(Player* player, cmd* cmnd) {
 
         heal = creature->hp.increase(heal);
 
-        player->print("%M regains %d hit points.\n", creature, heal);
+        player->print("%M regains %d hit points.\n", creature.get(), heal);
 
 
         if(object->getShotsCur() < 1)
             player->printColor("Your %s %s all used up.\n", object->getCName(),
                   (object->flagIsSet(O_SOME_PREFIX) ? "are":"is"));
 
-        broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M bandages %N.", player, creature);
+        broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M bandages %N.", player.get(), creature.get());
         player->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
     }
 
@@ -1334,7 +1325,7 @@ int cmdBandage(Player* player, cmd* cmnd) {
 //                      splHallow
 //*********************************************************************
 
-int splHallow(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splHallow(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     int strength = 10;
     long duration = 600;
 
@@ -1347,7 +1338,7 @@ int splHallow(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
         }
         player->print("You cast a hallow spell.\n");
-        broadcast(player->getSock(), player->getParent(), "%M casts a hallow spell.", player);
+        broadcast(player->getSock(), player->getParent(), "%M casts a hallow spell.", player.get());
     }
 
     if(player->getRoomParent()->hasPermEffect("hallow")) {
@@ -1368,7 +1359,7 @@ int splHallow(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splUnhallow
 //*********************************************************************
 
-int splUnhallow(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splUnhallow(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     int strength = 10;
     long duration = 600;
 
@@ -1382,7 +1373,7 @@ int splUnhallow(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
     }
     player->print("You cast an unhallow spell.\n");
-    broadcast(player->getSock(), player->getParent(), "%M casts an unhallow spell.", player);
+    broadcast(player->getSock(), player->getParent(), "%M casts an unhallow spell.", player.get());
 
     if(player->getRoomParent()->hasPermEffect("unhallow")) {
         player->print("The spell didn't take hold.\n");

@@ -37,7 +37,6 @@
 #include "playerClass.hpp"           // for PlayerClass
 #include "statistics.hpp"            // for Statistics, LevelInfo
 #include "stats.hpp"                 // for Stat, StatModifier, ModifierMap
-#include "utils.hpp"                 // for MAX, MIN
 
 
 
@@ -83,7 +82,7 @@ double getConBonusPercentage(unsigned int pCon) {
     const double c = 0.9939294404;
     const unsigned int x = pCon;
     double percentage = ((a*x*x)+(b*x)+c);
-    percentage = MAX<double>(1.0, percentage)-1.0;
+    percentage = std::max<double>(1.0, percentage)-1.0;
     return(percentage);
 
 }
@@ -95,7 +94,7 @@ double getIntBonusPercentage(unsigned int pInt) {
 
     const unsigned int x = pInt;
     double percentage = ((a*x*x)+(b*x)+c);
-    percentage = MAX<double>(1.0, percentage)-1.0;
+    percentage = std::max<double>(1.0, percentage)-1.0;
     return(percentage);
 
 }
@@ -113,8 +112,7 @@ void Stat::reCalc() {
     cur = initial;
     max = initial;
 
-    for(const ModifierMap::value_type& p : modifiers) {
-        StatModifier *mod = p.second;
+    for(const auto& [modId, mod] : modifiers) {
         if(!mod) continue;
         switch(mod->getModType()) {
         case MOD_MAX:
@@ -156,15 +154,19 @@ void Stat::reCalc() {
     }
     dirty = false;
 }
-StatModifier* Stat::getModifier(const std::string &pName) {
+bool Stat::hasModifier(const std::string &pName) {
+    return (modifiers.find(pName) != modifiers.end());
+}
+std::shared_ptr<StatModifier>& Stat::getModifier(const std::string &pName) {
     auto it = modifiers.find(pName);
-    if(it == modifiers.end()) return(nullptr);
-    else                      return(it->second);
+    if(it == modifiers.end())
+        throw std::runtime_error("Requested unknown modifier " + pName);
+    return(it->second);
 }
 int Stat::getModifierAmt(const std::string &pName) {
-    StatModifier* mod = getModifier(pName);
-    if(mod) return(mod->getModAmt());
-    else    return(0);
+    if(!hasModifier(pName)) return(0);
+
+    return getModifier(pName)->getModAmt();
 }
 Stat* Creature::getStat(std::string_view statName) {
     if     (statName == "strength")            return(&strength);
@@ -208,7 +210,7 @@ bool Creature::setStatDirty(std::string_view statName) {
 bool Stat::addModifier(StatModifier* toAdd) {
     if(!toAdd) return(false);
 
-    if(getModifier(toAdd->getName()) != nullptr) {
+    if(hasModifier(toAdd->getName())) {
         std::clog << "Not adding modifer " << toAdd->getName() << std::endl;
         delete toAdd;
         return(false);
@@ -222,7 +224,7 @@ void Stat::setDirty() {
     if(influences) influences->setDirty();
 }
 bool Stat::addModifier(const std::string &pName, int modAmt, ModifierType modType) {
-    if(getModifier(pName) != nullptr) return(false);
+    if(hasModifier(pName)) return(false);
     return(addModifier(new StatModifier(pName, modAmt, modType)));
 }
 
@@ -230,26 +232,20 @@ bool Stat::removeModifier(const std::string &pName) {
     auto it = modifiers.find(pName);
     if(it == modifiers.end()) return(false);
 
-    delete it->second;
     modifiers.erase(it);
     setDirty();
     return(true);
 }
 void Stat::clearModifiers() {
-    auto it = modifiers.begin();
-
-    while(it != modifiers.end()) {
-        delete it->second;
-        modifiers.erase(it++);
-    }
+    modifiers.clear();
 }
 bool Stat::adjustModifier(const std::string &pName, int modAmt, ModifierType modType) {
-    StatModifier* mod = getModifier(pName);
-    if(!mod) {
+    if(!hasModifier(pName)) {
         if(modAmt == 0) return(true);
-        mod = new StatModifier(pName, 0, modType);
+        auto mod = std::make_shared<StatModifier>(pName, 0, modType);
         modifiers.insert(ModifierMap::value_type(pName, mod));
     }
+    auto mod = getModifier(pName);
     mod->adjust(modAmt);
 
     if(mod->getModAmt() == 0) return(removeModifier(pName));
@@ -260,15 +256,16 @@ bool Stat::adjustModifier(const std::string &pName, int modAmt, ModifierType mod
 }
 
 bool Stat::setModifier(const std::string &pName, int newAmt, ModifierType modType) {
-    StatModifier* mod = getModifier(pName);
+    bool hasMod = hasModifier(pName);
     if(newAmt == 0) {
-        if(!mod) return(true);
+        if(!hasMod) return(true);
         else return(removeModifier(pName));
     }
-    if(!mod) {
-        mod = new StatModifier(pName, 0, modType);
+    if(!hasMod) {
+        auto mod = new StatModifier(pName, 0, modType);
         modifiers.insert(ModifierMap::value_type(pName, mod));
     }
+    auto mod = getModifier(pName);
     mod->set(newAmt);
     mod->setType(modType);
     setDirty();
@@ -298,11 +295,9 @@ Stat& Stat::operator=(const Stat& st) {
     return(*this);
 }
 void Stat::doCopy(const Stat& st) {
-    StatModifier* mod = nullptr;
-    for(const ModifierMap::value_type& p : st.modifiers) {
-        mod = new StatModifier();
-        (*mod) = (*p.second);
-        modifiers.insert(ModifierMap::value_type(mod->getName(), mod));
+    for(const auto& [modId, mod] : st.modifiers) {
+        auto newMod = std::make_shared<StatModifier>(*mod.get());
+        modifiers.insert(ModifierMap::value_type(newMod->getName(), newMod));
     }
     name = st.name;
     cur = st.cur;
@@ -314,9 +309,6 @@ void Stat::doCopy(const Stat& st) {
 }
 
 Stat::~Stat() {
-    for(const ModifierMap::value_type& p : modifiers) {
-        delete p.second;
-    }
     modifiers.clear();
 }
 
@@ -339,7 +331,7 @@ unsigned int Stat::adjust(int amt) {
 
 // Legacy for hp.increase()
 unsigned int Stat::increase(unsigned int amt) {
-    int increaseAmt = MAX<int>(0, MIN(amt, getMax() - getCur()));
+    int increaseAmt = std::max<int>(0, std::min(amt, getMax() - getCur()));
         
     adjustModifier("CurModifier", increaseAmt);
     
@@ -352,7 +344,7 @@ unsigned int Stat::increase(unsigned int amt) {
 
 // Legacy for hp.decrease()
 unsigned int Stat::decrease(unsigned int amt) {
-    int decreaseAmt = MIN(amt, getCur());
+    int decreaseAmt = std::min(amt, getCur());
     
     adjustModifier("CurModifier", -decreaseAmt);
     
@@ -387,7 +379,7 @@ unsigned int Stat::getInitial() const { return(initial); }
 //                      addInitial
 //*********************************************************************
 
-void Stat::addInitial(unsigned int a) { initial = MAX<int>(1, initial + a); setDirty(); }
+void Stat::addInitial(unsigned int a) { initial = std::max<int>(1, initial + a); setDirty(); }
 
 //*********************************************************************
 //                      setMax
@@ -397,7 +389,7 @@ double round(double r) {
 }
 
 void Stat::setMax(unsigned int newMax, bool allowZero) {
-    newMax = MAX<int>(allowZero ? 0 : 1, MIN<int>(newMax, 30000));
+    newMax = std::max<int>(allowZero ? 0 : 1, std::min<int>(newMax, 30000));
 
     int dmSet = getModifierAmt("DmSet");
     int rounding = getModifierAmt("Rounding");
@@ -455,7 +447,7 @@ void Stat::setMax(unsigned int newMax, bool allowZero) {
 //*********************************************************************
 
 void Stat::setCur(unsigned int newCur) {
-    newCur = MIN(newCur, getMax());
+    newCur = std::min(newCur, getMax());
     int modCur = (int)newCur - (int)getCur();
     adjustModifier("CurModifier", modCur);
 }
@@ -477,8 +469,7 @@ std::string Stat::toString() {
 
     oStr << "^C" << name << ": ^c" << getCur() << "/" << getMax() << "(" << getInitial() << ")\n";
     int i = 1;
-    for(const ModifierMap::value_type& p : modifiers) {
-        StatModifier* mod = p.second;
+    for(const auto& [modId, mod] : modifiers) {
         oStr << "\t" << i++ << ") ";
         oStr << "^C" << mod->getName() << "^c ";
         switch(mod->getModType()) {
@@ -521,7 +512,7 @@ unsigned int Stat::restore() {
 //                      modifyStatTotalByEffect
 //*********************************************************************
 
-int modifyStatTotalByEffect(const Player* player, std::string_view effect) {
+int modifyStatTotalByEffect(const std::shared_ptr<Player>& player, std::string_view effect) {
     const EffectInfo* ef = player->getEffect(effect);
     if(ef) return(ef->getStrength());
     return(0);
@@ -543,8 +534,8 @@ bool Player::statsAddUp() const {
 //*********************************************************************
 
 bool Creature::addStatModEffect(EffectInfo* effect) {
-    Stat* stat=nullptr;
-    Player* pThis = getAsPlayer();
+    Stat* stat;
+    std::shared_ptr<Player> pThis = getAsPlayer();
     bool good;
     ModifierType modType = MOD_CUR_MAX;
     const auto& effectName = effect->getName();
@@ -622,8 +613,8 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
         statMax = 30000;
         statMin = 1;
     }
-    addAmt = MIN<int>(addAmt, statMax - stat->getCur());
-    addAmt = MAX<int>(addAmt, statMin - stat->getCur());
+    addAmt = std::min<int>(addAmt, statMax - stat->getCur());
+    addAmt = std::max<int>(addAmt, statMin - stat->getCur());
 
     effect->setStrength(addAmt);
     stat->addModifier(effect->getName(), addAmt, modType);
@@ -641,7 +632,7 @@ bool Creature::addStatModEffect(EffectInfo* effect) {
 
 bool Creature::remStatModEffect(EffectInfo* effect) {
     Stat* stat=nullptr;
-    Player* pThis = getAsPlayer();
+    std::shared_ptr<Player> pThis = getAsPlayer();
     const auto& effectName = effect->getName();
 
     if(effectName == "strength" || effectName == "enfeeblement" || effectName == "berserk") {
@@ -685,7 +676,7 @@ void Stat::upgradeSetCur(unsigned int newCur) {
 }
 
 // Note: Used for upgradeStats
-void checkEffect(Creature* creature, std::string_view effName, unsigned int &stat, bool positive)  {
+void checkEffect(const std::shared_ptr<Creature>& creature, std::string_view effName, unsigned int &stat, bool positive)  {
     EffectInfo* eff = creature->getEffect(effName);
     if(eff) {
         int str = eff->getStrength();
@@ -726,19 +717,20 @@ void Player::upgradeStats() {
     unsigned int cInt = intelligence.getCur(false);
     unsigned int cPie = piety.getCur(false);
 
-    checkEffect(this, "strength", cStr, true);
-    checkEffect(this, "enfeeblement", cStr, false);
-    checkEffect(this, "haste", cDex, true);
-    checkEffect(this, "slow", cDex, false);
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
+    checkEffect(pThis, "strength", cStr, true);
+    checkEffect(pThis, "enfeeblement", cStr, false);
+    checkEffect(pThis, "haste", cDex, true);
+    checkEffect(pThis, "slow", cDex, false);
 
-    checkEffect(this, "fortitude", cCon, true);
-    checkEffect(this, "weakness", cCon, false);
+    checkEffect(pThis, "fortitude", cCon, true);
+    checkEffect(pThis, "weakness", cCon, false);
 
-    checkEffect(this, "insight", cInt, true);
-    checkEffect(this, "feeblemind", cInt, false);
+    checkEffect(pThis, "insight", cInt, true);
+    checkEffect(pThis, "feeblemind", cInt, false);
 
-    checkEffect(this, "prayer", cPie, true);
-    checkEffect(this, "damnation", cPie, false);
+    checkEffect(pThis, "prayer", cPie, true);
+    checkEffect(pThis, "damnation", cPie, false);
 
     PlayerClass *pClass = gConfig->classes[getClassString()];
     LevelGain *lGain = nullptr;
@@ -817,19 +809,20 @@ void Monster::upgradeStats() {
     unsigned int cHp = hp.getCur(false);
     unsigned int cMp = mp.getCur(false);
 
-    checkEffect(this, "strength", cStr, true);
-    checkEffect(this, "enfeeblement", cStr, false);
-    checkEffect(this, "haste", cDex, true);
-    checkEffect(this, "slow", cDex, false);
+    auto mThis = Containable::downcasted_shared_from_this<Monster>();
+    checkEffect(mThis, "strength", cStr, true);
+    checkEffect(mThis, "enfeeblement", cStr, false);
+    checkEffect(mThis, "haste", cDex, true);
+    checkEffect(mThis, "slow", cDex, false);
 
-    checkEffect(this, "fortitude", cCon, true);
-    checkEffect(this, "weakness", cCon, false);
+    checkEffect(mThis, "fortitude", cCon, true);
+    checkEffect(mThis, "weakness", cCon, false);
 
-    checkEffect(this, "insight", cInt, true);
-    checkEffect(this, "feeblemind", cInt, false);
+    checkEffect(mThis, "insight", cInt, true);
+    checkEffect(mThis, "feeblemind", cInt, false);
 
-    checkEffect(this, "prayer", cPie, true);
-    checkEffect(this, "damnation", cPie, false);
+    checkEffect(mThis, "prayer", cPie, true);
+    checkEffect(mThis, "damnation", cPie, false);
 
     hp.setInitial(cHp);
     mp.setInitial(cMp);

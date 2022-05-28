@@ -33,33 +33,33 @@ class Player;
 class UniqueRoom;
 
 namespace Move {
-    bool tooFarAway(BaseRoom* pRoom, BaseRoom* tRoom, bool track);
-    bool tooFarAway(Creature *player, BaseRoom* room);
-    bool tooFarAway(Creature *player, Creature *target, const std::string& action);
-    void broadcast(Creature* player, Container* container, bool ordinal, const std::string& exit, bool hiddenExit);
+    bool tooFarAway(const std::shared_ptr<BaseRoom>& pRoom, const std::shared_ptr<BaseRoom>& tRoom, bool track);
+    bool tooFarAway(const std::shared_ptr<Creature>& player, const std::shared_ptr<BaseRoom>& room);
+    bool tooFarAway(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, const std::string& action);
+    void broadcast(const std::shared_ptr<Creature>& player, const std::shared_ptr<const Container>& container, bool ordinal, const std::string& exit, bool hiddenExit);
     std::string formatFindExit(cmd* cmnd);
     bool isSneaking(cmd* cmnd);
     bool isOrdinal(cmd* cmnd);
-    AreaRoom *recycle(AreaRoom* room, Exit* exit);
-    UniqueRoom *getUniqueRoom(Creature* creature, Player* player, Exit* exit, MapMarker* tMapmarker);
-    void update(Player* player);
-    void broadMove(Creature* player, Exit* exit, cmd* cmnd, bool sneaking);
-    bool track(UniqueRoom* room, MapMarker *mapmarker, Exit* exit, Player* player, bool reset);
-    void track(UniqueRoom* room, MapMarker *mapmarker, Exit* exit, Player *leader, std::list<Creature*> *followers);
-    bool sneak(Player* player, bool sneaking);
-    bool canEnter(Player* player, Exit* exit, bool leader);
-    bool canMove(Player* player, cmd* cmnd);
-    Exit *getExit(Creature* player, cmd* cmnd);
-    std::string getString(Creature* creature, bool ordinal=false, std::string_view exit = "");
-    void checkFollowed(Player* player, Exit* exit, BaseRoom* room, std::list<Creature*> *followers);
-    void finish(Creature* creature, BaseRoom* room, bool self, std::list<Creature*> *followers);
-    bool getRoom(Creature* creature, const Exit* exit, BaseRoom **newRoom, bool justLooking=false, MapMarker* tMapmarker=0, bool recycle=true);
-    BaseRoom* start(Creature* creature, cmd* cmnd, Exit **gExit, bool leader, std::list<Creature*> *followers, int* numPeople, bool& roomPurged);
+    std::shared_ptr<AreaRoom> recycle(std::shared_ptr<AreaRoom> room, const std::shared_ptr<Exit>& exit);
+    std::shared_ptr<UniqueRoom> getUniqueRoom(std::shared_ptr<Creature> creature, std::shared_ptr<Player> player, std::shared_ptr<Exit> exit, MapMarker* tMapmarker);
+    void update(const std::shared_ptr<Player>& player);
+    void broadMove(const std::shared_ptr<Creature>& player, const std::shared_ptr<Exit>& exit, cmd* cmnd, bool sneaking);
+    bool track(const std::shared_ptr<UniqueRoom>& room, const MapMarker& mapmarker, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Player>& player, bool reset);
+    void track(const std::shared_ptr<UniqueRoom>& room, const MapMarker& mapmarker, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Player>&leader, std::list<std::shared_ptr<Creature>> *followers);
+    bool sneak(const std::shared_ptr<Player>& player, bool sneaking);
+    bool canEnter(const std::shared_ptr<Player>& player, const std::shared_ptr<Exit>& exit, bool leader);
+    bool canMove(const std::shared_ptr<Player>& player, cmd* cmnd);
+    std::shared_ptr<Exit> getExit(std::shared_ptr<Creature> player, cmd* cmnd);
+    std::string getString(const std::shared_ptr<Creature>& creature, bool ordinal=false, std::string_view exit = "");
+    void checkFollowed(const std::shared_ptr<Player>& player, const std::shared_ptr<Exit>& exit, const std::shared_ptr<BaseRoom>& room, std::list<std::shared_ptr<Creature>> *followers);
+    void finish(const std::shared_ptr<Creature>& creature, const std::shared_ptr<BaseRoom>& room, bool self, std::list<std::shared_ptr<Creature>> *followers);
+    bool getRoom(const std::shared_ptr<Creature>& creature, const std::shared_ptr<Exit>& exit, std::shared_ptr<BaseRoom>& newRoom, bool justLooking=false, MapMarker* tMapmarker=0, bool recycle=true);
+    std::shared_ptr<BaseRoom> start(const std::shared_ptr<Creature>& creature, cmd* cmnd, std::shared_ptr<Exit> *gExit, bool leader, std::list<std::shared_ptr<Creature>> *followers, int* numPeople, bool& roomPurged);
 
-    void createPortal(BaseRoom* room, BaseRoom* target, const Player* player, bool initial=true);
-    bool usePortal(Creature* player, BaseRoom* room, Exit* exit, bool initial=true);
-    bool deletePortal(BaseRoom* room, Exit* exit, const Creature* leader=0, std::list<Creature*> *followers=0, bool initial=true);
-    bool deletePortal(BaseRoom* room, const std::string &name, const Creature* leader=0, std::list<Creature*> *followers=0, bool initial=true);
+    void createPortal(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<BaseRoom>& target, const std::shared_ptr<Player>& player, bool initial=true);
+    bool usePortal(const std::shared_ptr<Creature> &creature, const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Exit>& exit, bool initial=true);
+    bool deletePortal(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Exit>& exit, const std::shared_ptr<Creature> & leader=0, std::list<std::shared_ptr<Creature>> *followers=0, bool initial=true);
+    bool deletePortal(const std::shared_ptr<BaseRoom>& room, const std::string &name, const std::shared_ptr<Creature> & leader=0, std::list<std::shared_ptr<Creature>> *followers=0, bool initial=true);
 }
 
 #endif

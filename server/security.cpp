@@ -54,7 +54,7 @@ const char *passCriteria =
     "4) Must contain no leading or trailing spaces.\n";
 
 
-bool isValidPassword(Socket* sock, const std::string &pass) {
+bool isValidPassword(std::shared_ptr<Socket> sock, const std::string &pass) {
     int         len=0, alpha=0, i=0, digits=0, special=0;
 
     if(!sock)
@@ -116,7 +116,7 @@ bool isValidPassword(Socket* sock, const std::string &pass) {
 // This function cllls the function to allow
 // a player to change their password.
 
-int cmdPassword(Player* player, cmd* cmnd) {
+int cmdPassword(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
     if(player->isBraindead()) {
         player->print("You are brain-dead. You can't do that.\n");
@@ -147,8 +147,8 @@ int cmdPassword(Player* player, cmd* cmnd) {
 // wrong password  or an invalid password (too short or long),
 // the password will not be changed and the procedure is aborted.
 
-void changePassword(Socket* sock, const std::string& str) {
-    Player* player = sock->getPlayer();
+void changePassword(std::shared_ptr<Socket> sock, const std::string& str) {
+    std::shared_ptr<Player> player = sock->getPlayer();
     gServer->processOutput();
 
     switch (sock->getState()) {

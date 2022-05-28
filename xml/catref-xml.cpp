@@ -124,7 +124,7 @@ bool Config::loadCatRefInfo() {
     const CatRefInfo *parent=nullptr;
 
     char filename[80];
-    snprintf(filename, 80, "%s/catRefInfo.xml", Path::Game);
+    snprintf(filename, 80, "%s/catRefInfo.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "CatRefInfo");
 
     if(xmlDoc == nullptr)
@@ -189,7 +189,7 @@ void Config::saveCatRefInfo() const {
     for(it = catRefInfo.begin() ; it != catRefInfo.end() ; it++)
         (*it)->save(rootNode);
 
-    sprintf(filename, "%s/catRefInfo.xml", Path::Game);
+    sprintf(filename, "%s/catRefInfo.xml", Path::Game.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }

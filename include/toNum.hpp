@@ -1,9 +1,22 @@
-//
-// Created by jason on 10/18/21.
-//
+/*
+ * toNum.hpp
+ *   toNum template functions
+ *   ____            _
+ *  |  _ \ ___  __ _| |_ __ ___  ___
+ *  | |_) / _ \/ _` | | '_ ` _ \/ __|
+ *  |  _ <  __/ (_| | | | | | | \__ \
+ *  |_| \_\___|\__,_|_|_| |_| |_|___/
+ *
+ * Permission to use, modify and distribute is granted via the
+ *  GNU Affero General Public License v3 or later
 
-#ifndef REALMSPYTHON_TONUM_HPP
-#define REALMSPYTHON_TONUM_HPP
+ *  Copyright (C) 2007-2021 Jason Mitchell, Randi Mitchell
+ *     Contributions by Tim Callahan, Jonathan Hseu
+ *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
+ *
+ */
+
+#pragma once
 
 #include <string>
 #include <boost/lexical_cast.hpp>
@@ -20,6 +33,3 @@ Type toNum(const std::string &fromStr) {
 
     return (toReturn);
 }
-
-
-#endif //REALMSPYTHON_TONUM_HPP

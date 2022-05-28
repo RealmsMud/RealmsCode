@@ -42,10 +42,10 @@
 #include "mudObjects/creatures.hpp"                 // for Creature, SkillMap
 #include "mudObjects/monsters.hpp"                  // for Monster
 #include "mudObjects/mudObject.hpp"                 // for MudObject
+#include "mudObjects/objects.hpp"                   // for Object
 #include "mudObjects/players.hpp"                   // for Player
 #include "mudObjects/rooms.hpp"                     // for NUM_PERM_SLOTS
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
-#include "os.hpp"                                   // for merror
 #include "proto.hpp"                                // for mprofic, zero
 #include "raceData.hpp"                             // for RaceData
 #include "realm.hpp"                                // for MAX_REALM, COLD
@@ -55,28 +55,27 @@
 #include "specials.hpp"                             // for SpecialAttack
 #include "stats.hpp"                                // for Stat
 #include "structs.hpp"                              // for daily, saves
-#include "utils.hpp"                                // for MAX
 #include "xml.hpp"                                  // for newStringChild
 
 class Object;
 
-int convertProf(Creature* player, Realm realm) {
+int convertProf(const std::shared_ptr<Creature>& player, Realm realm) {
     int skill = player->getLevel()*7 + player->getLevel()*3 * mprofic(player, realm) / 100 - 5;
-    skill = MAX(0, skill);
+    skill = std::max(0, skill);
     return(skill);
 }
 
 int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
     xmlNodePtr curNode;
-    int i;
     CreatureClass c = CreatureClass::NONE;
 
-    Player *pPlayer = getAsPlayer();
-    Monster *mMonster = getAsMonster();
+    auto cThis = getAsCreature();
+    auto pThis = getAsPlayer();
+    auto mThis = getAsMonster();
 
-    if(mMonster) {
-        mMonster->info.load(rootNode);
-        mMonster->info.id = (short)xml::getIntProp(rootNode, "Num");
+    if(mThis) {
+        mThis->info.load(rootNode);
+        mThis->info.id = (short)xml::getIntProp(rootNode, "Num");
     }
     xml::copyPropToString(version, rootNode, "Version");
 
@@ -103,21 +102,21 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         else if(NODE_NAME(curNode, "Class")) c = static_cast<CreatureClass>(xml::toNum<short>(curNode));
         else if(NODE_NAME(curNode, "AttackPower")) setAttackPower(xml::toNum<unsigned int>(curNode));
         else if(NODE_NAME(curNode, "DefenseSkill")) {
-            if(mMonster) {
-                mMonster->setDefenseSkill(xml::toNum<int>(curNode));
+            if(mThis) {
+                mThis->setDefenseSkill(xml::toNum<int>(curNode));
             }
         }
         else if(NODE_NAME(curNode, "WeaponSkill")) {
-            if(mMonster) {
-                mMonster->setWeaponSkill(xml::toNum<int>(curNode));
+            if(mThis) {
+                mThis->setWeaponSkill(xml::toNum<int>(curNode));
             }
         }
         else if(NODE_NAME(curNode, "Class2")) {
-            if(pPlayer) {
-                pPlayer->setSecondClass(static_cast<CreatureClass>(xml::toNum<short>(curNode)));
-            } else if(mMonster) {
+            if(pThis) {
+                pThis->setSecondClass(static_cast<CreatureClass>(xml::toNum<short>(curNode)));
+            } else if(mThis) {
                 // TODO: Dom: for compatability, remove when possible
-                mMonster->setMobTrade(xml::toNum<unsigned short>(curNode));
+                mThis->setMobTrade(xml::toNum<unsigned short>(curNode));
             }
         }
         else if(NODE_NAME(curNode, "Alignment")) setAlignment(xml::toNum<short>(curNode));
@@ -140,15 +139,15 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             xml::loadNumArray<long>(curNode, proficiency, "Proficiency", 6);
 
             // monster jail rooms shouldn't be stored here
-            if(mMonster && mMonster->getVersion() < "2.42b") {
-                mMonster->setCastChance((short)proficiency[0]);
-                mMonster->rescue[0].setArea("misc");
-                mMonster->rescue[0].id = (short)proficiency[1];
-                mMonster->rescue[1].setArea("misc");
-                mMonster->rescue[1].id = (short)proficiency[2];
-                mMonster->setMaxLevel((unsigned short)proficiency[3]);
-                mMonster->jail.setArea("misc");
-                mMonster->jail.id = (short)proficiency[4];
+            if(mThis && mThis->getVersion() < "2.42b") {
+                mThis->setCastChance((short)proficiency[0]);
+                mThis->rescue[0].setArea("misc");
+                mThis->rescue[0].id = (short)proficiency[1];
+                mThis->rescue[1].setArea("misc");
+                mThis->rescue[1].id = (short)proficiency[2];
+                mThis->setMaxLevel((unsigned short)proficiency[3]);
+                mThis->jail.setArea("misc");
+                mThis->jail.id = (short)proficiency[4];
             }
         }
         else if(NODE_NAME(curNode, "Dice")) damage.load(curNode);
@@ -159,7 +158,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             loadFactions(curNode);
         }
         else if(NODE_NAME(curNode, "Effects")) {
-            effects.load(curNode, this);
+            effects.load(curNode, cThis);
         }
         else if(NODE_NAME(curNode, "SpecialAttacks")) {
             loadAttacks(curNode);
@@ -169,18 +168,17 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         }
         else if(NODE_NAME(curNode, "Flags")) {
             // Clear flags before loading incase we're loading a reference creature
-            for(i=0; i<CRT_FLAG_ARRAY_SIZE; i++)
-                flags[i] = 0;
-            loadBits(curNode, flags);
+            flags.reset();
+            loadBitset(curNode, flags);
         }
         else if(NODE_NAME(curNode, "Spells")) {
-            loadBits(curNode, spells);
+            loadBitset(curNode, spells);
         }
         else if(NODE_NAME(curNode, "Quests")) {
-            loadBits(curNode, old_quests);
+            loadBitset(curNode, old_quests);
         }
         else if(NODE_NAME(curNode, "Languages")) {
-            loadBits(curNode, languages);
+            loadBitset(curNode, languages);
         }
         else if(NODE_NAME(curNode, "DailyTimers")) {
             loadDailys(curNode, daily);
@@ -194,19 +192,52 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         else if(NODE_NAME(curNode, "Inventory")) {
             readObjects(curNode, offline);
         }
+        else if(NODE_NAME(curNode, "Equipment")) {
+            xmlNodePtr equipNode = curNode->children;
+            std::shared_ptr<Object>  obj;
+            CatRef cr;
+            int wearLoc;
+
+            while(equipNode) {
+                obj = nullptr;
+                wearLoc = xml::getIntProp(equipNode, "WearLoc");
+                if(NODE_NAME(equipNode, "Object")) {
+                    obj = std::make_shared<Object>();
+                    obj->readFromXml(equipNode, nullptr);
+                } else {
+                    cr.load(equipNode);
+                    cr.id = xml::getIntProp(equipNode, "Num");
+                    if(!validObjId(cr)) {
+                        std::clog << "Invalid object " << cr.displayStr() << std::endl;
+                    } else {
+                        if(loadObject(cr, obj)) {
+                            // These two flags might be cleared on the reference object, so let that object set them if it wants to
+                            obj->clearFlag(O_HIDDEN);
+                            obj->clearFlag(O_CURSED);
+                            obj->readFromXml(equipNode, nullptr, offline);
+                        }
+                    }
+                }
+                if(obj) {
+                    ready[wearLoc] = obj;
+                }
+                equipNode = equipNode->next;
+            }
+
+        }
         else if(NODE_NAME(curNode, "Pets")) {
             readCreatures(curNode, offline);
         }
-        else if(NODE_NAME(curNode, "AreaRoom")) gServer->areaInit(this, curNode);
+        else if(NODE_NAME(curNode, "AreaRoom")) gServer->areaInit(cThis, curNode);
         else if(NODE_NAME(curNode, "Size")) setSize(whatSize(xml::toNum<int>(curNode)));
         else if(NODE_NAME(curNode, "Hooks")) hooks.load(curNode);
 
 
             // code for only players
-        else if(pPlayer) pPlayer->readXml(curNode, offline);
+        else if(pThis) pThis->readXml(curNode, offline);
 
             // code for only monsters
-        else if(mMonster) mMonster->readXml(curNode, offline);
+        else if(mThis) mThis->readXml(curNode, offline);
 
         curNode = curNode->next;
     }
@@ -224,10 +255,10 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
         if (getRace() >= OLD_MAX_PLAYABLE_RACE && getRace() < OLD_RACE_COUNT)
             setRace(getRace()+10);
     }
-    
+
     if(isPlayer()) {
         if(getVersion() < "2.47b") {
-            pPlayer->recordLevelInfo();
+            pThis->recordLevelInfo();
         }
     }
     if(isPlayer()) {
@@ -242,6 +273,10 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 addEffect("incognito", -1);
                 clearFlag(P_OLD_INCOGNITO);
             }
+        }
+        if(getVersion() < "2.54h") {
+#define P_OLD_NO_AUTO_WEAR              79       // Player won't wear all when they log on
+            clearFlag(P_OLD_NO_AUTO_WEAR);
         }
         if(getVersion() < "2.47a") {
             // Update weapon skills
@@ -280,7 +315,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 skill *= 7;
             }
             skill -= 5;
-            skill = MAX(0, skill);
+            skill = std::max(0, skill);
 
             addSkill("abjuration", skill);
             addSkill("conjuration", skill);
@@ -292,12 +327,12 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             addSkill("translocation", skill);
             addSkill("transmutation", skill);
 
-            addSkill("fire", convertProf(this, FIRE));
-            addSkill("water", convertProf(this, WATER));
-            addSkill("earth", convertProf(this, EARTH));
-            addSkill("air", convertProf(this, WIND));
-            addSkill("cold", convertProf(this, COLD));
-            addSkill("electric", convertProf(this, ELEC));
+            addSkill("fire", convertProf(cThis, FIRE));
+            addSkill("water", convertProf(cThis, WATER));
+            addSkill("earth", convertProf(cThis, EARTH));
+            addSkill("air", convertProf(cThis, WIND));
+            addSkill("cold", convertProf(cThis, COLD));
+            addSkill("electric", convertProf(cThis, ELEC));
         }
         if(getVersion() < "2.45c" && getCastingType() == Divine) {
             int skill = level;
@@ -307,7 +342,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 skill *= 7;
             }
             skill -= 5;
-            skill = MAX(0, skill);
+            skill = std::max(0, skill);
 
             addSkill("healing", skill);
             addSkill("destruction", (int)getSkillGained("evocation"));
@@ -343,13 +378,13 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             getDeity() == ARES || getDeity() == GRADIUS)))
             {
                 int initialSkill = (int)getSkillGained("chain");
-                initialSkill = MAX(1,initialSkill-(initialSkill/10));
+                initialSkill = std::max(1,initialSkill-(initialSkill/10));
                 addSkill("scale",initialSkill);
                 addSkill("ring",initialSkill);
             }
         }
 
-         if(isPlayer()) {   
+         if(isPlayer()) {
 
             if(getVersion() < "2.52") {
                 #define P_NO_LONG_DESCRIPTION_OLD      4
@@ -370,7 +405,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
              //reset all saves to max of 99
               if(getVersion() < "2.54c") {
                 for(int a=POI; a<=SPL;a++)
-                    saves[a].chance = MIN<short>(99,saves[a].chance);
+                    saves[a].chance = std::min<short>(99,saves[a].chance);
              }
 
               if(getVersion() < "2.54f") {
@@ -379,7 +414,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 else
                     daily[DL_TELEP].cur = 3;
                 if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
-                    daily[DL_TELEP].cur = MIN(10, (int)getSkillLevel("translocation")/5);
+                    daily[DL_TELEP].cur = std::min(10, (int)getSkillLevel("translocation")/5);
 
              }
         }
@@ -461,22 +496,18 @@ void Creature::loadFactions(xmlNodePtr rootNode) {
 
 void MudObject::readCreatures(xmlNodePtr curNode, bool offline) {
     xmlNodePtr childNode = curNode->children;
-    Monster *mob=nullptr;
+    std::shared_ptr<Monster> mob=nullptr;
     CatRef  cr;
 
-    Creature* cParent = getAsCreature();
-//  Monster* mParent = parent->getMonster();
-//  Player* pParent = parent->getPlayer();
-    UniqueRoom* rParent = getAsUniqueRoom();
-    Object* oParent = getAsObject();
+    std::shared_ptr<Creature> cParent = getAsCreature();
+    std::shared_ptr<UniqueRoom> rParent = getAsUniqueRoom();
+    std::shared_ptr<Object>  oParent = getAsObject();
 
     while(childNode) {
         mob = nullptr;
         if(NODE_NAME( childNode , "Creature")) {
             // If it's a full creature, read it in
-            mob = new Monster;
-            if(!mob)
-                merror("loadCreaturesXml", FATAL);
+            mob = std::make_shared<Monster>();
             mob->readFromXml(childNode);
         } else if(NODE_NAME( childNode, "CrtRef")) {
             // If it's an creature reference, we want to first load the parent creature
@@ -484,7 +515,7 @@ void MudObject::readCreatures(xmlNodePtr curNode, bool offline) {
             cr.load(childNode);
             cr.id = xml::getIntProp( childNode, "Num" );
 
-            if(loadMonster(cr, &mob)) {
+            if(loadMonster(cr, mob)) {
                 mob->readFromXml(childNode);
             } else {
                 //printf("Unable to load creature %d\n", num);
@@ -547,7 +578,7 @@ void Creature::loadStats(xmlNodePtr curNode) {
             else if(statName == "Hp") hp.load(childNode, statName);
             else if(statName == "Mp") mp.load(childNode, statName);
             else if(statName == "Focus") {
-                Player* player = getAsPlayer();
+                std::shared_ptr<Player> player = getAsPlayer();
                 if(player)
                     player->focus.load(childNode, statName);
             }
@@ -565,8 +596,7 @@ void Creature::loadAttacks(xmlNodePtr rootNode) {
     xmlNodePtr curNode = rootNode->children;
     while(curNode) {
         if(NODE_NAME(curNode, "SpecialAttack")) {
-            auto* newAttack = new SpecialAttack(curNode);
-            specials.push_back(newAttack);
+            specials.emplace_back(curNode);
         }
         curNode = curNode->next;
     }
@@ -668,8 +698,8 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
     if(getName()[0] == '\0' || rootNode == nullptr)
         return(-1);
 
-    const Player    *pPlayer = getAsConstPlayer();
-    const Monster   *mMonster = getAsConstMonster();
+    const auto pPlayer = getAsConstPlayer();
+    const auto mMonster = getAsConstMonster();
 
     if(pPlayer) {
         xml::newProp(rootNode, "Name", pPlayer->getName());
@@ -698,6 +728,7 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
             //pPlayer->currentLocation.mapmarker.save(curNode);
         } else
             pPlayer->currentLocation.room.save(rootNode, "Room", true);
+
     }
 
     // Saved for LoadType::LS_REF and LoadType::LS_FULL
@@ -798,14 +829,14 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
             saveSavingThrow(curNode, i, saves[i]);
 
         // Perhaps change this into saveInt/CharArray
-        saveBits(rootNode, "Spells", MAXSPELL, spells);
-        saveBits(rootNode, "Quests", MAXSPELL, old_quests);
+        saveBitset(rootNode, "Spells", MAXSPELL, spells);
+        saveBitset(rootNode, "Quests", MAXSPELL, old_quests);
         xml::saveNonZeroNum(rootNode, "CurrentLanguage", current_language);
-        saveBits(rootNode, "Languages", LANGUAGE_COUNT, languages);
+        saveBitset(rootNode, "Languages", LANGUAGE_COUNT, languages);
     }
 
     // Saved for LoadType::LS_FULL and LoadType::LS_REF
-    saveBits(rootNode, "Flags", pPlayer ? MAX_PLAYER_FLAGS : MAX_MONSTER_FLAGS, flags);
+    saveBitset(rootNode, "Flags", pPlayer ? MAX_PLAYER_FLAGS : MAX_MONSTER_FLAGS, flags);
 
     // Save lasttimes
     for(i=0; i<TOTAL_LTS; i++) {
@@ -819,6 +850,28 @@ int Creature::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, bo
 
     curNode = xml::newStringChild(rootNode, "Inventory");
     saveObjectsXml(curNode, objects, permOnly);
+
+    curNode = xml::newStringChild(rootNode, "Equipment");
+    std::shared_ptr<Object>obj;
+    xmlNodePtr objNode;
+    LoadType lt;
+    for(i=0; i<MAXWEAR; i++) {
+        obj = ready[i];
+        if(obj && (permOnly == ALLITEMS || (permOnly == PERMONLY && obj->flagIsSet(O_PERM_ITEM)))) {
+            if (obj->flagIsSet(O_CUSTOM_OBJ) || obj->flagIsSet(O_SAVE_FULL) || !obj->info.id) {
+                // If it's a custom or has the save flag set, save the entire object
+                objNode = xml::newStringChild(curNode, "Object");
+                lt = LoadType::LS_FULL;
+            } else {
+                // Just save a reference and any changed fields
+                objNode = xml::newStringChild(curNode, "ObjRef");
+                lt = LoadType::LS_REF;
+            }
+            xml::newNumProp(objNode, "WearLoc", i);
+            obj->saveToXml(objNode, permOnly, lt, 1, true, nullptr);
+        }
+    }
+
 
     // We want quests saved after inventory so when they are loaded we can calculate
     // if the quest is complete or not and store it in the appropriate variables
@@ -865,9 +918,8 @@ void Creature::saveSkills(xmlNodePtr rootNode) const {
 
 void Creature::saveAttacks(xmlNodePtr rootNode) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, "SpecialAttacks");
-    std::list<SpecialAttack*>::const_iterator eIt;
-    for(eIt = specials.begin() ; eIt != specials.end() ; eIt++) {
-        (*eIt)->save(curNode);
+    for(const auto& attack : specials) {
+        attack.save(curNode);
     }
 }
 
@@ -878,7 +930,7 @@ void Creature::saveAttacks(xmlNodePtr rootNode) const {
 
 int saveCreaturesXml(xmlNodePtr parentNode, const MonsterSet& set, int permOnly) {
     xmlNodePtr curNode;
-    for(const Monster* mons : set) {
+    for(const auto &mons : set) {
         if( mons && mons->isMonster() &&
             (   (permOnly == ALLITEMS && !mons->isPet()) ||
                 (permOnly == PERMONLY && mons->flagIsSet(M_PERMENANT_MONSTER))
@@ -908,7 +960,7 @@ int saveCreaturesXml(xmlNodePtr parentNode, const MonsterSet& set, int permOnly)
 void Creature::savePets(xmlNodePtr parentNode) const {
     xmlNodePtr curNode;
 
-    for(const Monster* pet : pets) {
+    for(const auto& pet : pets) {
         // Only save pets, not creatures just following
         if(!pet->isPet()) continue;
         curNode = xml::newStringChild(parentNode, "Creature");

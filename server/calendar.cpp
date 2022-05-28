@@ -32,7 +32,7 @@
 #include "mudObjects/players.hpp"  // for Player
 #include "mudObjects/rooms.hpp"    // for BaseRoom
 #include "paths.hpp"               // for Game, PlayerData
-#include "proto.hpp"               // for getOrdinal, file_exists, isDay
+#include "proto.hpp"               // for getOrdinal, isDay
 #include "server.hpp"              // for PlayerMap, Server, gServer
 
 class cmd;
@@ -191,7 +191,7 @@ void Calendar::resetToMidnight() {
     setLastPirate("");
 }
 
-bool Calendar::isBirthday(const Player* target) const {
+bool Calendar::isBirthday(std::shared_ptr<const Player> target) const {
     cDay* b = target->getBirthday();
     if(!b)
         return(false);
@@ -223,7 +223,7 @@ void Calendar::setSeason() {
 //                      printtime
 //*********************************************************************
 
-void Calendar::printtime(const Player* player) const {
+void Calendar::printtime(const std::shared_ptr<Player> player) const {
     int daytime = gConfig->currentHour(), sun=0;
     cMonth* month = getMonth(curMonth);
     const CatRefInfo* cri = gConfig->getCatRefInfo(player->getConstRoomParent(), 1);
@@ -371,8 +371,8 @@ void Calendar::setLastPirate(std::string_view name) {
 //                      checkBirthdays
 //*********************************************************************
 
-int checkBirthdays(Player* player, cmd* cmnd) {
-    const Player* target=nullptr;
+int checkBirthdays(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<const Player> target=nullptr;
     const Calendar* calendar = gConfig->getCalendar();
     bool    found = false;
 
@@ -434,22 +434,18 @@ const Calendar* Config::getCalendar() const {
 //                      reloadCalendar
 //*********************************************************************
 
-int reloadCalendar(Player* player) {
-    char    filename[80], filename2[80], command[255];
+int reloadCalendar(std::shared_ptr<Player> player) {
+    const auto filename = Path::Game / "calendar.load.xml";
+    const auto filename2 = Path::PlayerData / "calendar.xml";
 
-    sprintf(filename, "%s/calendar.load.xml", Path::Game);
-    sprintf(filename2, "%s/calendar.xml", Path::PlayerData);
-
-    if(!file_exists(filename)) {
-        player->print("File %s does not exist!\n", filename);
+    if(!fs::exists(filename)) {
+        *player << "File " << filename.string() << " does not exist!\n";
         return(0);
     }
 
-    sprintf(command, "cp %s %s", filename, filename2);
-    system(command);
+    fs::copy(filename, filename2, fs::copy_options::overwrite_existing);
     gConfig->loadCalendar();
-
-    player->printColor("^gCalendar reloaded from %s!\n", filename);
+    *player << ColorOn << "^gCalendar reloaded from " << filename.string() << "!\n" << ColorOff;
     return(0);
 }
 

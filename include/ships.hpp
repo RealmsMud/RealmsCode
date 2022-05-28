@@ -19,6 +19,7 @@
 #define SHIPS_H_
 
 #include <list>
+#include <boost/dynamic_bitset.hpp>
 #include <libxml/parser.h>  // for xmlNodePtr
 
 #include "catRef.hpp"
@@ -76,7 +77,7 @@ protected:
     std::string name;
 
     bool    raid;
-    char    flags[16]{};
+    boost::dynamic_bitset<> flags{128};
     std::string arrives;
     std::string departs;
 
@@ -91,16 +92,14 @@ public:
     bool createExit();
     void removeExit();
     void spawnRaiders(ShipRaid* sRaid);
-    BaseRoom* getRoom(bool useOrigin);
+    std::shared_ptr<BaseRoom> getRoom(bool useOrigin) const;
     bool swap(const Swap& s);
+
+    [[nodiscard]] std::string getName() const;
+    [[nodiscard]] bool getRaid() const;
+    [[nodiscard]] std::string getArrives() const;
+    [[nodiscard]] std::string getDeparts() const;
     
-    std::string getName() const;
-    bool getRaid() const;
-    std::string getArrives() const;
-    std::string getDeparts() const;
-    
-    const char *getFlags() const;
-    void setFlags(char f);
 };
 
 
@@ -128,7 +127,7 @@ public:
     // announce room range
     std::list<Range> announce;
 
-    std::list<ShipExit*> exits;
+    std::list<std::shared_ptr<ShipExit>> exits;
     ShipRaid    *raid;
     
     // stored in minutes
@@ -145,7 +144,7 @@ public:
     void load(xmlNodePtr curNode);
     void loadStops(xmlNodePtr curNode);
     void save(xmlNodePtr rootNode) const;
-    bool belongs(const CatRef& cr);
+    bool belongs(const CatRef& cr) const;
     bool swap(const Swap& s);
     
     // this info gets changed by the mud to keep track of where stuff is
@@ -173,9 +172,9 @@ public:
 
 
 
-void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message);
-int cmdQueryShips(Player* player, cmd* cmnd);
-int shipSetExits(Ship *ship, ShipStop *stop);
-int shipDeleteExits(Ship *ship, ShipStop *stop);
+void shipBroadcastRange(const Ship &ship, ShipStop *stop, const std::string& message);
+int cmdQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd);
+int shipSetExits(Ship &ship, ShipStop *stop);
+int shipDeleteExits(Ship &ship, ShipStop *stop);
 
 #endif /*SHIPS_H_*/

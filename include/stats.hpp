@@ -53,7 +53,7 @@ private:
 
 };
 
-typedef std::map<std::string, StatModifier*, alphanum_less<std::string> > ModifierMap;
+typedef std::map<std::string, std::shared_ptr<StatModifier>, alphanum_less<std::string> > ModifierMap;
 
 class Stat
 {
@@ -76,10 +76,10 @@ public:
     unsigned int increase(unsigned int amt);
     unsigned int decrease(unsigned int amt);
     unsigned int adjust(int amt);
-    
-    unsigned int getCur(bool recalc = true);
-    unsigned int getMax();
-    unsigned int getInitial() const;
+
+    [[nodiscard]] unsigned int getCur(bool recalc = true);
+    [[nodiscard]] unsigned int getMax();
+    [[nodiscard]] unsigned int getInitial() const;
 
     void addInitial(unsigned int a);
     void setMax(unsigned int newMax, bool allowZero=false);
@@ -102,7 +102,8 @@ public:
 
     void clearModifiers();
 
-    StatModifier* getModifier(const std::string &pName);
+    std::shared_ptr<StatModifier>& getModifier(const std::string &pName);
+    bool hasModifier(const std::string &pName);
     int getModifierAmt(const std::string &pName);
 
     void upgradeSetCur(unsigned int newCur);  // Used only in upgrading to new stats

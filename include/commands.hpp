@@ -16,10 +16,10 @@
  *
  */
 
-#ifndef COMMANDS_H_
-#define COMMANDS_H_
+#pragma once
 
 #include <string>
+#include <memory>
 #include "global.hpp"
 
 class BaseRoom;
@@ -33,150 +33,147 @@ class Object;
 class Player;
 class Socket;
 
-int orderPet(Player* player, cmd* cmnd);
+int orderPet(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // Effects.cpp
-int dmEffectList(Player* player, cmd* cmnd);
-int dmShowEffectsIndex(Player* player, cmd* cmnd);
+int dmEffectList(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmShowEffectsIndex(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // songs.cpp
-int cmdPlay(Player* player, cmd* cmnd);
+int cmdPlay(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // alchemy.cpp
-int cmdBrew(Player* player, cmd* cmnd);
+int cmdBrew(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
-int cmdWeapons(Player* player, cmd* cmnd);
+int cmdWeapons(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // proxy.c
-int cmdProxy(Player* player, cmd* cmnd);
+int cmdProxy(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // action.c
-int plyAction(Player* player, cmd* cmnd);
-int cmdAction(Creature* player, cmd* cmnd);
+int plyAction(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdAction(const std::shared_ptr<Creature>& player, cmd* cmnd);
 bool isBadSocial(const std::string& str);
 bool isSemiBadSocial(const std::string& str);
 bool isGoodSocial(const std::string& str);
 
 // attack.c
-int cmdAttack(Creature* player, cmd* cmnd);
+int cmdAttack(const std::shared_ptr<Creature>& player, cmd* cmnd);
 
 // bank.c
-int cmdBalance(Player* player, cmd* cmnd);
-int cmdDeposit(Player* player, cmd* cmnd);
-int cmdWithdraw(Player* player, cmd* cmnd);
-int cmdTransfer(Player* player, cmd* cmnd);
-int cmdStatement(Player* player, cmd* cmnd);
-int cmdDeleteStatement(Player* player, cmd* cmnd);
+int cmdBalance(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdDeposit(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdWithdraw(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdTransfer(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdStatement(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdDeleteStatement(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // color.c
-int cmdColors(Player* player, cmd* cmnd);
+int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // command2.c
-int cmdLook(Player* player, cmd* cmnd);
-int cmdKnock(Creature* player, cmd* cmnd);
-int cmdThrow(Creature* creature, cmd* cmnd);
+int cmdLook(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdKnock(const std::shared_ptr<Creature>& player, cmd* cmnd);
+int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd);
 
 // command1.c
-int cmdNoExist(Player* player, cmd* cmnd);
-int cmdNoAuth(Player* player);
-void command(Socket* sock, const std::string& str);
+int cmdNoExist(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdNoAuth(const std::shared_ptr<Player>& player);
+void command(std::shared_ptr<Socket> sock, const std::string& str);
 void parse(std::string_view str, cmd* cmnd);
 
-int cmdPush(Player* player, cmd* cmnd);
-int cmdPull(Player* player, cmd* cmnd);
-int cmdPress(Player* player, cmd* cmnd);
+int cmdPush(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPull(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPress(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // command4.c
-int cmdScore(Player* player, cmd* cmnd);
-int cmdDaily(Player* player, cmd* cmnd);
-int cmdChecksaves(Player* player, cmd* cmnd);
-int cmdHelp(Player* player, cmd* cmnd);
-int cmdWiki(Player* player, cmd* cmnd);
-int cmdWelcome(Player* player, cmd* cmnd);
-int cmdAge(Player* player, cmd* cmnd);
-int cmdVersion(Player* player, cmd* cmnd);
-int cmdLevelHistory(Player* player, cmd* cmnd);
-int cmdStatistics(Player* player, cmd* cmnd);
-int cmdInfo(Player* player, cmd* cmnd);
-int cmdSpells(Creature* player, cmd* cmnd);
-void spellsUnder(const Player *viewer, const Creature* target, bool notSelf);
+int cmdScore(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdDaily(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdChecksaves(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdHelp(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdWiki(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdWelcome(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdAge(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdVersion(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdLevelHistory(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdStatistics(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdInfo(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSpells(const std::shared_ptr<Creature>& player, cmd* cmnd);
+void spellsUnder(const std::shared_ptr<Player>& viewer, const std::shared_ptr<Creature> & target, bool notSelf);
 
 
 // command5.c
-int cmdWho(Player* player, cmd* cmnd);
-int cmdClasswho(Player* player, cmd* cmnd);
-int cmdWhois(Player* player, cmd* cmnd);
-int cmdSuicide(Player* player, cmd* cmnd);
-void deletePlayer(Player* player);
-int cmdConvert(Player* player, cmd* cmnd);
-int flag_list(Creature* player, cmd* cmnd);
-int cmdPrefs(Player* player, cmd* cmnd);
-int cmdTelOpts(Player* player, cmd* cmnd);
-int cmdQuit(Player* player, cmd* cmnd);
-int cmdChangeStats(Player* player, cmd* cmnd);
-void changingStats(Socket* sock, const std::string& str );
+int cmdWho(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdClasswho(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdWhois(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSuicide(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdConvert(const std::shared_ptr<Player>& player, cmd* cmnd);
+int flag_list(const std::shared_ptr<Creature>& player, cmd* cmnd);
+int cmdPrefs(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdTelOpts(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdQuit(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdChangeStats(const std::shared_ptr<Player>& player, cmd* cmnd);
+void changingStats(std::shared_ptr<Socket> sock, const std::string& str );
 
 
 // command7.c
-int cmdTrain(Player* player, cmd* cmnd);
+int cmdTrain(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // command8.c
 char *timestr(long t);
-int cmdTime(Player* player, cmd* cmnd);
-int cmdSave(Player* player, cmd* cmnd);
+int cmdTime(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSave(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // command10.c
-void lose_all(Player* player, bool destroyAll, const char* lostTo);
-int cmdBreak(Player* player, cmd* cmnd);
+int cmdBreak(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // command11.c
-std::string doFinger(const Player* player, std::string name, CreatureClass cls);
-int cmdFinger(Player* player, cmd* cmnd);
-int cmdPayToll(Player* player, cmd* cmnd);
-unsigned long tollcost(const Player* player, const Exit *exit, Monster* keeper);
-int infoGamestat(Player* player, cmd* cmnd);
-int cmdDescription(Player* player, cmd* cmnd);
-int hire(Player* player, cmd* cmnd);
+std::string doFinger(const std::shared_ptr<Player>& player, std::string name, CreatureClass cls);
+int cmdFinger(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPayToll(const std::shared_ptr<Player>& player, cmd* cmnd);
+unsigned long tollcost(const std::shared_ptr<const Player>& player, const std::shared_ptr<Exit> exit, std::shared_ptr<Monster>  keeper);
+int infoGamestat(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdDescription(const std::shared_ptr<Player>& player, cmd* cmnd);
+int hire(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // communication.c
 std::string getFullstrTextTrun(std::string str, int skip, char toSkip = ' ', bool colorEscape=false);
 std::string getFullstrText(std::string str, int skip, char toSkip = ' ', bool colorEscape=false, bool truncate=false);
-int communicateWith(Player* player, cmd* cmnd);
-int pCommunicate(Player* player, cmd* cmnd);
-int communicate(Creature* player, cmd* cmnd);
-int channel(Player* player, cmd* cmnd );
-int cmdIgnore(Player* player, cmd* cmnd);
-int cmdSpeak(Player* player, cmd* cmnd);
-int cmdLanguages(Player* player, cmd* cmnd);
-bool canCommunicate(Player* player);
+int communicateWith(const std::shared_ptr<Player>& player, cmd* cmnd);
+int pCommunicate(const std::shared_ptr<Player>& player, cmd* cmnd);
+int communicate(const std::shared_ptr<Creature>& player, cmd* cmnd);
+int channel(const std::shared_ptr<Player>& player, cmd* cmnd );
+int cmdIgnore(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdLanguages(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // commerce.c
-int cmdShop(Player* player, cmd* cmnd);
-int cmdList(Player* player, cmd* cmnd);
-int cmdPurchase(Player* player, cmd* cmnd);
-int cmdSelection(Player* player, cmd* cmnd);
-int cmdBuy(Player* player, cmd* cmnd);
-int cmdSell(Player* player, cmd* cmnd);
-int cmdValue(Player* player, cmd* cmnd);
-int cmdRefund(Player* player, cmd* cmnd);
-int cmdTrade(Player* player, cmd* cmnd);
-int cmdAuction(Player* player, cmd* cmnd);
-int cmdReclaim(Player* player, cmd* cmnd);
+int cmdShop(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdList(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPurchase(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSelection(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdBuy(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSell(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdValue(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdRefund(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdTrade(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdAuction(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdReclaim(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // demographics.cpp
-int cmdDemographics(Player* player, cmd* cmnd);
+int cmdDemographics(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // effects.cpp
-int cmdEffects(Creature* player, cmd* cmnd);
+int cmdEffects(const std::shared_ptr<Creature>& player, cmd* cmnd);
 
 
 // ------ everything below this line has not yet been ordered ------ //
@@ -185,260 +182,258 @@ int cmdEffects(Creature* player, cmd* cmnd);
 
 
 // property.cpp
-int dmProperties(Player* player, cmd* cmnd);
-int cmdProperties(Player* player, cmd* cmnd);
-int cmdHouse(Player* player, cmd* cmnd);
+int dmProperties(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdProperties(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdHouse(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 
 
 
 // skills.c
-int dmSetSkills(Player *admin, cmd* cmnd);
-int cmdSkills(Player* player, cmd* cmnd);
-int cmdPrepareObject(Player* player, cmd* cmnd);
-int cmdUnprepareObject(Player* player, cmd* cmnd);
-int cmdCraft(Player* player, cmd* cmnd);
-int cmdFish(Player* player, cmd* cmnd);
-int cmdReligion(Player* player, cmd* cmnd);
+int dmSetSkills(const std::shared_ptr<Player>& admin, cmd* cmnd);
+int cmdSkills(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPrepareObject(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdUnprepareObject(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdCraft(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdFish(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdReligion(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
-bool isPtester(const Creature* player);
-bool isPtester(Socket* sock);
+bool isPtester(const std::shared_ptr<Creature> & player);
+bool isPtester(std::shared_ptr<Socket> sock);
 
 
 
 // Combine.c
 
-int sneak(Creature* player, cmd* cmnd);
-int cmdMove(Player* player, cmd* cmnd);
+int sneak(const std::shared_ptr<Creature>& player, cmd* cmnd);
+int cmdMove(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
-int cmdInventory(Player* player, cmd* cmnd);
-int cmdDrop(Creature* player, cmd* cmnd);
+int cmdInventory(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdDrop(const std::shared_ptr<Creature>& player, cmd* cmnd);
 
 
-int cmdTrack(Player* player, cmd* cmnd);
-int cmdPeek(Player* player, cmd* cmnd);
+int cmdTrack(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int cmdHide(Player* player, cmd* cmnd);
-int cmdSearch(Player* player, cmd* cmnd);
+int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSearch(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int cmdOpen(Player* player, cmd* cmnd);
-int cmdClose(Player* player, cmd* cmnd);
-int cmdLock(Player* player, cmd* cmnd);
-int cmdPickLock(Player* player, cmd* cmnd);
+int cmdOpen(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdClose(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdLock(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPickLock(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int cmdShoplift(Player* player, cmd* cmnd);
-int cmdBackstab(Player* player, cmd* cmnd);
-int cmdAmbush(Player* player, cmd* cmnd);
-
-
-int cmdGive(Creature* player, cmd* cmnd);
-int cmdRepair(Player* player, cmd* cmnd);
-
-int cmdCircle(Player* player, cmd* cmnd);
-int cmdBash(Player* player, cmd* cmnd);
-int cmdKick(Player* player, cmd* cmnd);
-int cmdMaul(Player* player, cmd* cmnd);
-int cmdTalk(Player* player, cmd* cmnd);
+int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdAmbush(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
-int cmdBribe(Player* player, cmd* cmnd);
-int cmdFrenzy(Player* player, cmd* cmnd);
-int cmdPray(Player* player, cmd* cmnd);
-int cmdBerserk(Player* player, cmd* cmnd);
-int cmdBloodsacrifice(Player* player, cmd* cmnd);
-int cmdUse(Player* player, cmd* cmnd);
-int cmdCommune(Player* player, cmd* cmnd);
-int cmdBandage(Player* player, cmd* cmnd);
+int cmdGive(const std::shared_ptr<Creature>& player, cmd* cmnd);
+int cmdRepair(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int ply_bounty(Creature* player, cmd* cmnd);
+int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdMaul(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdTalk(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
+int cmdBribe(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdFrenzy(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPray(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdBerserk(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdBloodsacrifice(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdUse(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdCommune(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdBandage(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int cmdHypnotize(Player* player, cmd* cmnd);
-int cmdMeditate(Player* player, cmd* cmnd);
-int cmdTouchOfDeath(Player* player, cmd* cmnd);
-int cmdScout(Player* player, cmd* cmnd);
+int ply_bounty(const std::shared_ptr<Creature>& player, cmd* cmnd);
 
 
 
+int cmdHypnotize(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdMeditate(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdTouchOfDeath(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
-int cmdBite(Player* player, cmd* cmnd);
-int cmdDisarm(Player* player, cmd* cmnd);
-int cmdCharm(Player* player, cmd* cmnd);
-int cmdEnthrall(Player* player, cmd* cmnd);
-int cmdIdentify(Player* player, cmd* cmnd);
-int cmdMist(Player* player, cmd* cmnd);
-int cmdUnmist(Player* player, cmd* cmnd);
-int cmdRegenerate(Player* player, cmd* cmnd);
-int cmdCreepingDoom(Player* player, cmd* cmnd);
-int cmdPoison(Player* player, cmd* cmnd);
-int cmdEarthSmother(Player* player, cmd* cmnd);
-int cmdDrainLife(Player* player, cmd* cmnd);
-int cmdFocus(Player* player, cmd* cmnd);
-int cmdBarkskin(Player* player, cmd* cmnd);
 
-int cmdEnvenom(Player* player, cmd* cmnd);
-int cmdLayHands(Player* player, cmd* cmnd);
-int cmdHarmTouch(Player* player, cmd* cmnd);
-//int watcher_send(Creature* player, cmd* cmnd);
-int cmdGamble(Player* player, cmd* cmnd);
 
-int cmdMistbane(Player* player, cmd* cmnd);
+
+int cmdBite(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdDisarm(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdCharm(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdEnthrall(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdIdentify(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdMist(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdUnmist(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdRegenerate(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdCreepingDoom(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPoison(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdEarthSmother(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdDrainLife(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdFocus(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdBarkskin(const std::shared_ptr<Player>& player, cmd* cmnd);
+
+int cmdEnvenom(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdLayHands(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdHarmTouch(const std::shared_ptr<Player>& player, cmd* cmnd);
+//int watcher_send(const std::shared_ptr<Creature>& player, cmd* cmnd);
+int cmdGamble(const std::shared_ptr<Player>& player, cmd* cmnd);
+
+int cmdMistbane(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 
 
 // Duel.c
-int cmdDuel(Player* player, cmd* cmnd);
+int cmdDuel(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // Equipment.c
-int cmdCompare(Player* player, cmd* cmnd);
-void finishDropObject(Object* object, BaseRoom* room, Creature* player, bool cash=false, bool printPlayer=true, bool printRoom=true);
-int cmdGet(Creature* player, cmd* cmnd);
-int cmdCost(Player* player, cmd* cmnd);
+int cmdCompare(const std::shared_ptr<Player>& player, cmd* cmnd);
+void finishDropObject(const std::shared_ptr<Object>&  object, const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Creature>& player, bool cash=false, bool printPlayer=true, bool printRoom=true);
+int cmdGet(const std::shared_ptr<Creature>& player, cmd* cmnd);
+int cmdCost(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // Gag.c
-int cmdGag(Player* player, cmd* cmnd);
+int cmdGag(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // Group.c
-int cmdFollow(Player* player, cmd* cmnd);
-int cmdLose(Player* player, cmd* cmnd);
-int cmdGroup(Player* player, cmd* cmnd);
+int cmdFollow(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdLose(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdGroup(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // Guilds.c
-int cmdGuild(Player* player, cmd* cmnd);
-int cmdGuildSend(Player* player, cmd* cmnd);
-int cmdGuildHall(Player* player, cmd* cmnd);
-int dmListGuilds(Player* player, cmd* cmnd);
-void doGuildSend(const Guild* guild, Player* player, std::string txt);
+int cmdGuild(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdGuildSend(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdGuildHall(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmListGuilds(const std::shared_ptr<Player>& player, cmd* cmnd);
+void doGuildSend(const Guild* guild, std::shared_ptr<Player> player, std::string txt);
 
 // Lottery.c
-int cmdClaim(Player* player, cmd* cmnd);
-int cmdLottery(Player* player, cmd* cmnd);
+int cmdClaim(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdLottery(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // Magic1.c
 
 // Magic3.c
-int cmdTurn(Player* player, cmd* cmnd);
-int cmdRenounce(Player* player, cmd* cmnd);
-int cmdHolyword(Player* player, cmd* cmnd);
+int cmdTurn(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdRenounce(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdHolyword(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // Magic6.c
-int conjureCmd(Player* player, cmd* cmnd);
-int animateDeadCmd(Player* player, cmd* cmnd);
+int conjureCmd(const std::shared_ptr<Player>& player, cmd* cmnd);
+int animateDeadCmd(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // Magic9.c
-int cmdEnchant(Player* player, cmd* cmnd);
-int cmdTransmute(Player* player, cmd* cmnd);
+int cmdEnchant(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdTransmute(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // Mccp.c
-int mccp(Player* player, cmd* cmnd);
+int mccp(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // Missile.c
-int shoot(Creature* player, cmd* cmnd);
+int shoot(const std::shared_ptr<Creature>& player, cmd* cmnd);
 
 // Threat.cpp
-int cmdTarget(Player* player, cmd* cmnd);
-int cmdAssist(Player* player, cmd* cmnd);
+int cmdTarget(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdAssist(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // Clans.c
-int cmdPledge(Player* player, cmd* cmnd);
-int cmdRescind(Player* player, cmd* cmnd);
+int cmdPledge(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdRescind(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // cmd.c
-int cmdProcess(Creature *user, cmd* cmnd, Creature* pet=nullptr);
+int cmdProcess(std::shared_ptr<Creature>user, cmd* cmnd, const std::shared_ptr<Creature>& pet=nullptr);
 
 // socials.cpp
-int cmdSocial(Creature* creature, cmd* cmnd);
+int cmdSocial(const std::shared_ptr<Creature>& creature, cmd* cmnd);
 
 // specials.c
-int dmSpecials(Player* player, cmd* cmnd);
+int dmSpecials(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // startlocs.cpp
-int dmStartLocs(Player* player, cmd* cmnd);
+int dmStartLocs(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // quests.c
-int cmdTalkNew(Player* player, cmd* cmnd);
-int cmdQuests(Player* player, cmd* cmnd);
+int cmdTalkNew(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // web.cpp
-int dmFifo(Player* player, cmd* cmnd);
-int cmdForum(Player* player, cmd* cmnd);
+int dmFifo(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdForum(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // update.cpp
-int list_act(Player* player, cmd* cmnd);
+int list_act(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // Somewhere
-int cmdPrepare(Player* player, cmd* cmnd);
-int cmdTitle(Player* player, cmd* cmnd);
-int cmdReconnect(Player* player, cmd* cmnd);
-int cmdWear(Player* player, cmd* cmnd);
-int cmdRemoveObj(Player* player, cmd* cmnd);
-int cmdEquipment(Player *creature, cmd* cmnd);
-int cmdReady(Player* player, cmd* cmnd);
-int cmdHold(Player* player, cmd* cmnd);
-int cmdSecond(Player* player, cmd* cmnd);
+int cmdPrepare(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdTitle(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdReconnect(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdWear(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdRemoveObj(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdEquipment(const std::shared_ptr<Player>& creature, cmd* cmnd);
+int cmdReady(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdHold(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSecond(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int cmdCast(Creature* creature, cmd* cmnd);
-int cmdTeach(Player* player, cmd* cmnd);
-int cmdStudy(Player* player, cmd* cmnd);
-int cmdReadScroll(Player* player, cmd* cmnd);
-int cmdConsume(Player* player, cmd* cmnd);
-int cmdUseWand(Player* player, cmd* cmnd);
-int cmdUnlock(Player* player, cmd* cmnd);
+int cmdCast(const std::shared_ptr<Creature>& creature, cmd* cmnd);
+int cmdTeach(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdStudy(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdReadScroll(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdConsume(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdUseWand(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdUnlock(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int checkBirthdays(Player* player, cmd* cmnd);
-int cmdFlee(Player* player, cmd* cmnd);
-int cmdPrepareForTraps(Player* player, cmd* cmnd);
-int cmdSteal(Player* player, cmd* cmnd);
-int cmdRecall(Player* player, cmd* cmnd);
-int cmdPassword(Player* player, cmd* cmnd);
-int cmdSongs(Player* player, cmd* cmnd);
-int cmdSurname(Player* player, cmd* cmnd);
-int cmdVisible(Player* player, cmd* cmnd);
-int cmdDice(Creature* player, cmd* cmnd);
-int cmdChooseAlignment(Player* player, cmd* cmnd);
-int cmdKeep(Player* player, cmd* cmnd);
-int cmdUnkeep(Player* player, cmd* cmnd);
-int cmdLabel(Player* player, cmd* cmnd);
-int cmdGo(Player* player, cmd* cmnd);
-int cmdSing(Creature* creature, cmd* cmnd);
+int checkBirthdays(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdFlee(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPrepareForTraps(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdRecall(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdPassword(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSongs(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSurname(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdVisible(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd);
+int cmdChooseAlignment(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdKeep(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdUnkeep(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdLabel(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdGo(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSing(const std::shared_ptr<Creature>& creature, cmd* cmnd);
 
 
 
 // refuse.cpp
-int cmdRefuse(Player* player, cmd* cmnd);
-int cmdWatch(Player* player, cmd* cmnd);
+int cmdRefuse(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdWatch(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // data.cpp
-int cmdRecipes(Player* player, cmd* cmnd);
+int cmdRecipes(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // faction.cpp
-int cmdFactions(Player* player, cmd* cmnd);
+int cmdFactions(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // post.cpp
-int cmdSendMail(Player* player, cmd* cmnd);
-int cmdReadMail(Player* player, cmd* cmnd);
-int cmdDeleteMail(Player* player, cmd* cmnd);
-int cmdEditHistory(Player* player, cmd* cmnd);
-int cmdHistory(Player* player, cmd* cmnd);
-int cmdDeleteHistory(Player* player, cmd* cmnd);
+int cmdSendMail(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdReadMail(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdDeleteMail(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdEditHistory(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdHistory(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdDeleteHistory(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // weaponless.cpp
-int cmdHowl(Creature* player, cmd* cmnd);
+int cmdHowl(const std::shared_ptr<Creature>& player, cmd* cmnd);
 
 
 
-int dmStatDetail(Player* player, cmd* cmnd);
+int dmStatDetail(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-void doCastPython(MudObject* caster, Creature* target, std::string_view spell, int strength = 130);
-
-#endif /*COMMANDS_H_*/
+void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creature>& target, std::string_view spell, int strength = 130);

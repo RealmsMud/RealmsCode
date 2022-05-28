@@ -128,47 +128,47 @@ typedef enum {
 namespace Create {
     const int doPrint=1;
     const int doWork=2;
-    void addStartingItem(Player* player, const std::string &area, int id, bool wear=true, bool skipUseCheck=false, int num=1);
-    void addStartingWeapon(Player* player, const std::string &weapon);
+    void addStartingItem(const std::shared_ptr<Player>& player, const std::string &area, int id, bool wear=true, bool skipUseCheck=false, int num=1);
+    void addStartingWeapon(const std::shared_ptr<Player>& player, const std::string &weapon);
 
     // work functions
-    bool getSex(Socket* sock, std::string str, int mode);
-    bool getRace(Socket* sock, std::string str, int mode);
-    bool getSubRace(Socket* sock, std::string str, int mode);
-    void finishRace(Socket* sock);
-    bool getClass(Socket* sock, std::string str, int mode);
-    bool getDeity(Socket* sock, std::string str, int mode);
-    bool getLocation(Socket* sock, const std::string &str, int mode);
-    bool getStatsChoice(Socket* sock, std::string str, int mode);
-    bool getStats(Socket* sock, std::string str, int mode);
-    void finishStats(Socket* sock);
-    bool getBonusStat(Socket* sock, std::string str, int mode);
-    bool getPenaltyStat(Socket* sock, std::string str, int mode);
-    bool handleWeapon(Socket* sock, int mode, char ch);
-    bool getProf(Socket* sock, std::string str, int mode);
-    bool getSecondProf(Socket* sock, std::string str, int mode);
-    bool getPassword(Socket* sock, const std::string &str, int mode);
-    void done(Socket* sock, const std::string &str, int mode);
+    bool getSex(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getRace(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getSubRace(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    void finishRace(const std::shared_ptr<Socket>& sock);
+    bool getClass(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getDeity(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getLocation(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
+    bool getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getStats(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    void finishStats(const std::shared_ptr<Socket>& sock);
+    bool getBonusStat(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getPenaltyStat(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool handleWeapon(const std::shared_ptr<Socket>& sock, int mode, char ch);
+    bool getProf(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getSecondProf(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getPassword(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
+    void done(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
 
     // character customization functions
-    bool startCustom(Socket* sock, std::string str, int mode);
-    bool getCommunity(Socket* sock, std::string str, int mode);
-    bool getFamily(Socket* sock, std::string str, int mode);
-    bool getSocial(Socket* sock, std::string str, int mode);
-    bool getEducation(Socket* sock, std::string str, int mode);
-    bool getHeight(Socket* sock, std::string str, int mode);
-    bool getWeight(Socket* sock, std::string str, int mode);
+    bool startCustom(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getCommunity(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getFamily(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getSocial(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getEducation(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getHeight(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getWeight(const std::shared_ptr<Socket>& sock, std::string str, int mode);
 
-    void doFamily(Player* player, int mode);
+    void doFamily(const std::shared_ptr<Player>& player, int mode);
     int calcHeight(int race, int mode);
     int calcWeight(int race, int mode);
 }
 
 // Various login functions
-void convertNewWeaponSkills(Socket* sock, const std::string& str);
-void login(Socket* sock, const std::string& str);
-void createPlayer(Socket* sock, const std::string& str);
-void doSurname(Socket* sock, const std::string& str);
-void doTitle(Socket* sock, const std::string& str);
+void convertNewWeaponSkills(std::shared_ptr<Socket> sock, const std::string& str);
+void login(std::shared_ptr<Socket> sock, const std::string& inStr);
+void createPlayer(std::shared_ptr<Socket> sock, const std::string& str);
+void doSurname(std::shared_ptr<Socket> sock, const std::string& str);
+void doTitle(std::shared_ptr<Socket> sock, const std::string& str);
 
 #endif

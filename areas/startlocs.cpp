@@ -53,7 +53,7 @@
 //*********************************************************************
 // setup the player for the first time they are bound
 
-void initialBind(Player* player, const std::string &str) {
+void initialBind(std::shared_ptr<Player> player, const std::string &str) {
     const StartLoc* location = gConfig->getStartLoc(str);
     if(!location) {
         broadcast(isCt, fmt::format("Invalid start location: {}", str).c_str());
@@ -84,7 +84,7 @@ void initialBind(Player* player, const std::string &str) {
 // choose = true    return true if they made a valid selection
 //                  return false if they made an invalid selection
 
-bool startingChoices(Player *player, std::string str, char *location, bool choose) {
+bool startingChoices(std::shared_ptr<Player> player, std::string str, char *location, bool choose) {
 
     // if only one start location is defined, our choices are easy!
     if (gConfig->start.size() == 1) {
@@ -288,7 +288,7 @@ bool startingChoices(Player *player, std::string str, char *location, bool choos
 //                      dmStartLocs
 //*********************************************************************
 
-int dmStartLocs(Player* player, cmd* cmnd) {
+int dmStartLocs(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("Starting Locations:\n");
 
     std::map<std::string, StartLoc*>::iterator it;
@@ -307,9 +307,9 @@ int dmStartLocs(Player* player, cmd* cmnd) {
 // it must belong to a list of rooms. If used from the floor, it can point
 // to any room
 
-int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* creature=nullptr;
-    Player* target=nullptr, *pPlayer = player->getAsPlayer();
+int splBind(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Player> target=nullptr, pPlayer = player->getAsPlayer();
     const StartLoc* location=nullptr;
 
     if(!pPlayer)
@@ -387,13 +387,13 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(pPlayer == target) {
 
             pPlayer->print("Bind spell cast.\nYou are now bound to %s.\n", location->getBindName().c_str());
-            broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a bind spell on %sself.", pPlayer, pPlayer->himHer());
+            broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts a bind spell on %sself.", pPlayer.get(), pPlayer->himHer());
 
         } else {
 
             // nosummon flag
             if( target->flagIsSet(P_NO_SUMMON) &&
-                !pPlayer->checkStaff("The spell fizzles.\n%M's summon flag is not set.\n", target))
+                !pPlayer->checkStaff("The spell fizzles.\n%M's summon flag is not set.\n", target.get()))
             {
                 target->print("%s tried to bind you to this room!\nIf you wish to be bound, type \"set summon\".\n", pPlayer->getCName());
                 return(0);
@@ -402,9 +402,9 @@ int splBind(Creature* player, cmd* cmnd, SpellData* spellData) {
             pPlayer->print("Bind cast on %s.\n%s is now bound to %s.\n",
                 target->getCName(), target->getCName(), location->getBindName().c_str());
             target->print("%M casts a bind spell on you.\nYou are now bound to %s.\n",
-                pPlayer, location->getBindName().c_str());
+                pPlayer.get(), location->getBindName().c_str());
             broadcast(player->getSock(), target->getSock(), pPlayer->getRoomParent(),
-                "%M casts a bind spell on %N.", pPlayer, target);
+                "%M casts a bind spell on %N.", pPlayer.get(), target.get());
 
         }
 

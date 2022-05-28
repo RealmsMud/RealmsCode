@@ -58,13 +58,11 @@
 #include "commands.hpp"                             // for command, changing...
 #include "config.hpp"                               // for Config, gConfig
 #include "flags.hpp"                                // for P_READING_FILE
-#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for MAXALVL
 #include "login.hpp"                                // for createPlayer, CON...
 #include "msdp.hpp"                                 // for ReportedMsdpVariable
 #include "mud.hpp"                                  // for StartTime
 #include "mudObjects/players.hpp"                   // for Player
-#include "os.hpp"                                   // for ASSERTLOG
 #include "paths.hpp"                                // for Config
 #include "post.hpp"                                 // for histedit, postedit
 #include "property.hpp"                             // for Property
@@ -72,7 +70,6 @@
 #include "security.hpp"                             // for changePassword
 #include "server.hpp"                               // for Server, gServer
 #include "socket.hpp"                               // for Socket, Socket::S...
-#include "utils.hpp"                                // for MIN, MAX
 #include "version.hpp"                              // for VERSION
 #include "xml.hpp"                                  // for copyToBool, newBo...
 
@@ -215,7 +212,6 @@ void Socket::reset() {
     opts.lastColor = '\0';
 
     opts.compressing = false;
-    inPlayerList = false;
 
     outCompressBuf = nullptr;
     outCompress = nullptr;
@@ -239,7 +235,7 @@ void Socket::reset() {
 
     zero(tempstr, sizeof(tempstr));
     inBuf.clear();
-    spyingOn = nullptr;
+    spyingOn.reset();
 }
 
 //********************************************************************
@@ -252,7 +248,7 @@ Socket::Socket(int pFd) {
     numSockets++;
 }
 
-Socket::Socket(int pFd, sockaddr_in pAddr, bool dnsDone) {
+Socket::Socket(int pFd, sockaddr_in pAddr) {
     reset();
 
     struct linger ling{};
@@ -281,8 +277,6 @@ Socket::Socket(int pFd, sockaddr_in pAddr, bool dnsDone) {
     }
 
     startTelnetNeg();
-
-    showLoginScreen(dnsDone);
 }
 
 //********************************************************************
@@ -299,7 +293,11 @@ void Socket::cleanUp() {
             myPlayer->save(true);
             myPlayer->uninit();
         }
-        freePlayer();
+        if(registered) {
+            gServer->clearPlayer(myPlayer->getName());
+            registered=false;
+        }
+        myPlayer = nullptr;
     }
     endCompress();
     if(fd > -1) {
@@ -319,25 +317,6 @@ Socket::~Socket() {
     cleanUp();
 }
 
-//********************************************************************
-//                      addToPlayerList
-//********************************************************************
-
-void Socket::addToPlayerList() {
-    inPlayerList = true;
-}
-
-//********************************************************************
-//                      freePlayer
-//********************************************************************
-
-void Socket::freePlayer() {
-    if (myPlayer)
-        free_crt(myPlayer, inPlayerList);
-    myPlayer = nullptr;
-    inPlayerList = false;
-}
-
 // End - Constructors, Destructors, etc
 //--------------------------------------------------------------------
 
@@ -346,9 +325,9 @@ void Socket::freePlayer() {
 //********************************************************************
 
 void Socket::clearSpying() {
-    if (spyingOn) {
-        spyingOn->removeSpy(this);
-        spyingOn = nullptr;
+    if (auto spied = spyingOn.lock()) {
+        spied->removeSpy(this);
+        spyingOn.reset();
     }
 }
 
@@ -357,9 +336,8 @@ void Socket::clearSpying() {
 //********************************************************************
 
 void Socket::clearSpiedOn() {
-    std::list<Socket*>::iterator it;
-    for (it = spying.begin(); it != spying.end(); it++) {
-        Socket *sock = *it;
+    for (auto & it : spying) {
+        auto sock = it.lock();
         if (sock)
             sock->setSpying(nullptr);
     }
@@ -370,13 +348,13 @@ void Socket::clearSpiedOn() {
 //                      setSpying
 //********************************************************************
 
-void Socket::setSpying(Socket *sock) {
+void Socket::setSpying(const std::shared_ptr<Socket>& sock) {
     if (sock)
         clearSpying();
     spyingOn = sock;
 
     if (sock)
-        sock->addSpy(this);
+        sock->addSpy(shared_from_this());
     if (!sock) {
         if (myPlayer)
             myPlayer->clearFlag(P_SPYING);
@@ -388,7 +366,10 @@ void Socket::setSpying(Socket *sock) {
 //********************************************************************
 
 void Socket::removeSpy(Socket *sock) {
-    spying.remove(sock);
+    spying.remove_if([&sock](const std::weak_ptr<Socket>& ptr) {
+        return ptr.lock().get() == sock;
+    });
+
     if (myPlayer->getClass() >= sock->myPlayer->getClass())
         sock->printColor("^r%s is no longer observing you.\n",
                 sock->myPlayer->getCName());
@@ -398,7 +379,7 @@ void Socket::removeSpy(Socket *sock) {
 //                      addSpy
 //********************************************************************
 
-void Socket::addSpy(Socket *sock) {
+void Socket::addSpy(const std::shared_ptr<Socket>& sock) {
     spying.push_back(sock);
 }
 
@@ -540,7 +521,7 @@ std::string Socket::stripTelnet(std::string_view inStr) {
 //********************************************************************
 
 void Socket::checkLockOut() {
-    int lockStatus = gConfig->isLockedOut(this);
+    int lockStatus = gConfig->isLockedOut(shared_from_this());
     if (lockStatus == 0) {
         askFor("\n\nPlease enter name: ");
         setState(LOGIN_GET_NAME);
@@ -918,7 +899,7 @@ int Socket::processInput() {
     // handle backspaces
     n = inBuf.length();
 
-    for (i = MAX<int>(n - tmp.length(), 0); i < (unsigned) n; i++) {
+    for (i = std::max<int>(n - tmp.length(), 0); i < (unsigned) n; i++) {
         if (inBuf.at(i) == '\b' || inBuf.at(i) == 127) {
             if (n < 2) {
                 inBuf = "";
@@ -1119,13 +1100,12 @@ int Socket::processOneCommand() {
 
     // Send the command to the people we're spying on
     if (!spying.empty()) {
-        std::list<Socket*>::iterator it;
-        for (const auto sock : spying) {
-            if (sock) sock->write(fmt::format("[{}]\n", cmd), false);
+        for (const auto& sIt : spying) {
+            if (auto sock = sIt.lock()) sock->write(fmt::format("[{}]\n", cmd), false);
         }
     }
 
-    ((void(*)(Socket*, std::string)) (fn))(this, cmd);
+    ((void(*)(std::shared_ptr<Socket> , std::string)) (fn))(shared_from_this(), cmd);
 
     return (1);
 }
@@ -1137,14 +1117,14 @@ int Socket::processOneCommand() {
 
 void Socket::restoreState() {
     setState(lastState);
-    createPlayer(this, "");
+    createPlayer(shared_from_this(), "");
 }
 
 //*********************************************************************
 //                      pauseScreen
 //*********************************************************************
 
-void pauseScreen(Socket* sock, const std::string &str) {
+void pauseScreen(std::shared_ptr<Socket> sock, const std::string &str) {
     if(str == "quit")
         sock->disconnect();
     else
@@ -1160,25 +1140,29 @@ void Socket::reconnect(bool pauseScreen) {
     clearSpiedOn();
     msdpClearReporting();
 
-    freePlayer();
+    if(myPlayer) {
+        // TODO: Only clear if we're the one who registered the player
+        gServer->clearPlayer(myPlayer->getName());
+        myPlayer = nullptr;
+    }
 
     if (pauseScreen) {
         setState(LOGIN_PAUSE_SCREEN);
-        printColor(
-                "\nPress ^W[RETURN]^x to reconnect or type ^Wquit^x to disconnect.\n: ");
+        printColor("\nPress ^W[RETURN]^x to reconnect or type ^Wquit^x to disconnect.\n: ");
     } else {
         setState(LOGIN_GET_NAME);
         showLoginScreen();
+        askFor("\n\nPlease enter name: ");
     }
 }
 
 
-void viewFileReverse(Socket *sock, const std::string& file) {
+void viewFileReverse(std::shared_ptr<Socket> sock, const std::string& file) {
     sock->viewFileReverse(file);
 }
 
 
-void handlePaging(Socket* sock, const std::string& inStr) {
+void handlePaging(const std::shared_ptr<Socket>& sock, const std::string& inStr) {
     sock->handlePaging(inStr);
 }
 
@@ -1192,7 +1176,7 @@ void Socket::sendPages(int numPages) {
 
 void Socket::handlePaging(const std::string& inStr) {
     if(inStr == "") {
-        int numPages = MIN<int>(getMaxPages(), pagerOutput.size());
+        int numPages = std::min<int>(getMaxPages(), pagerOutput.size());
         sendPages(numPages);
 
         if(!pagerOutput.empty()) {
@@ -1370,14 +1354,14 @@ void Socket::printPaged(std::string_view toPrint) {
 }
 
 int Socket::getMaxPages() const {
-    return MAX(term.rows - 2, MIN_PAGES);
+    return std::max(term.rows - 2, MIN_PAGES);
 }
 
 void Socket::donePaging() {
     const int maxRows = getMaxPages();
     if (paged < maxRows) {
         // Send lines up to the first page size
-        sendPages(MIN<int>(pagerOutput.size(), maxRows - paged));
+        sendPages(std::min<int>(pagerOutput.size(), maxRows - paged));
         if(paged == maxRows)
             askFor("\n[Hit Return, Any Key to Quit]: ");
     }
@@ -1417,12 +1401,12 @@ void Socket::appendPaged(std::string_view toAppend) {
 
 void Socket::bprint(std::string_view toPrint) {
     if (!toPrint.empty())
-        output.append(toPrint);
+        output << toPrint;
 }
 
 void Socket::bprintPython(const std::string& toPrint) {
     if (!toPrint.empty())
-        output.append(toPrint);
+        output << toPrint;
 }
 
 //********************************************************************
@@ -1463,13 +1447,15 @@ void Socket::printColor(const char* fmt, ...) {
 // Flush pending output and send a prompt
 
 void Socket::flush() {
+    if (fd == -1) return;
+
     ssize_t n;
     if(!processedOutput.empty()) {
         n = write(processedOutput, false, false);
     } else {
-        if ((n = write(output)) == 0)
+        if ((n = write(output.str())) == 0)
             return;
-        output.clear();
+        output = std::stringstream();
     }
     // If we only wrote OOB data or partial data was written because of EWOULDBLOCK,
     // then n is -2, don't send a prompt in that case
@@ -1550,9 +1536,8 @@ ssize_t Socket::write(std::string_view toWrite, bool pSpy, bool process) {
 
         boost::replace_all(forSpy, "\n", "\n<Spy> ");
         if(!forSpy.empty()) {
-            std::list<Socket*>::iterator it;
-            for(const auto sock : spying) {
-                if (sock)
+            for(const auto &sIt : spying) {
+                if (auto sock = sIt.lock())
                     sock->write("<Spy> " + forSpy, false);
             }
         }
@@ -1634,6 +1619,7 @@ int Socket::endCompress() {
 
         delete[] outCompressBuf;
 
+        free(outCompress);
         outCompress = nullptr;
         outCompressBuf = nullptr;
 
@@ -1655,7 +1641,7 @@ size_t Socket::processCompressed() {
 
     if (len > 0) {
         for (i = 0, n = 0; i < len; i += n) {
-            block = MIN<size_t>(len - i, 4096);
+            block = std::min<size_t>(len - i, 4096);
             if ((n = ::write(fd, outCompressBuf + i, block)) < 0)
                 return (-1);
             written += n;
@@ -1729,7 +1715,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
 //********************************************************************
 
 bool Socket::hasOutput() const {
-    return (!processedOutput.empty() || !output.empty());
+    return (!processedOutput.empty() || output.rdbuf()->in_avail());
 }
 
 //********************************************************************
@@ -1746,7 +1732,7 @@ bool Socket::hasCommand() const {
 // True if the socket is playing (ie: fn is command and fnparam is 1)
 
 bool Socket::canForce() const {
-    return (fn == (void(*)(Socket*, const std::string&)) ::command && fnparam == 1);
+    return (fn == (void(*)(std::shared_ptr<Socket>, const std::string&)) ::command && fnparam == 1);
 }
 
 //********************************************************************
@@ -1760,7 +1746,8 @@ bool Socket::isConnected() const {
     return (connState < LOGIN_START && connState != CON_DISCONNECTING);
 }
 bool Player::isConnected() const {
-    return (getSock()->isConnected());
+    auto sock = getSock();
+    return (sock && sock->isConnected());
 }
 
 int Socket::getFd() const {
@@ -1840,15 +1827,18 @@ void Socket::setHostname(std::string_view pName) {
 void Socket::setIp(std::string_view pIp) {
     host.ip = pIp;
 }
-void Socket::setPlayer(Player* ply) {
+void Socket::setPlayer(std::shared_ptr<Player> ply) {
     myPlayer = ply;
+}
+void Socket::clearPlayer() {
+    myPlayer = nullptr;
 }
 
 bool Socket::hasPlayer() const {
     return myPlayer != nullptr;
 }
 
-Player* Socket::getPlayer() const {
+std::shared_ptr<Player> Socket::getPlayer() const {
     return (myPlayer);
 }
 
@@ -1868,9 +1858,9 @@ int nonBlock(int pFd) {
 //*********************************************************************
 //                      showLoginScreen
 //*********************************************************************
-const auto LOGIN_FILE = fmt::format("{}/login_screen.txt", Path::Config);
+const auto LOGIN_FILE = Path::Config / "login_screen.txt";
 
-void Socket::showLoginScreen(bool dnsDone) {
+void Socket::showLoginScreen() {
     //*********************************************************************
     // As a part of the copyright agreement this section must be left intact
     //*********************************************************************
@@ -1878,11 +1868,7 @@ void Socket::showLoginScreen(bool dnsDone) {
     print("Programmed by: Jason Mitchell, Randi Mitchell and Tim Callahan.\n");
     print("Contributions by: Jordan Carr, Jonathan Hseu.");
 
-
     viewFile(LOGIN_FILE);
-
-    if (dnsDone)
-        checkLockOut();
     flush();
 }
 
@@ -1893,7 +1879,6 @@ const char EOR_STR[] = {(char) IAC, (char) EOR, '\0' };
 const char GA_STR[] = {(char) IAC, (char) GA, '\0' };
 
 void Socket::askFor(const char *str) {
-    ASSERTLOG( str);
     if (eorEnabled()) {
         printColor(str);
         print(EOR_STR);
@@ -2262,6 +2247,15 @@ void Socket::viewFileReverse(const std::string& str) {
 
 bool Socket::hasPagerOutput() {
     return(!pagerOutput.empty());
+}
+
+void Socket::registerPlayer() {
+    if(myPlayer) {
+        registered = true;
+        gServer->addPlayer(myPlayer);
+    } else {
+        registered = false;
+    }
 }
 
 

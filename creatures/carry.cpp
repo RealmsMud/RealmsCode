@@ -68,7 +68,7 @@ xmlNodePtr Carry::save(xmlNodePtr curNode, const char* childName, bool saveNonZe
 
 std::string Carry::str(std::string current, char color) const {
     std::ostringstream oStr;
-    oStr << info.str(current, color);
+    oStr << info.displayStr(current, color);
     if(numTrade)
         oStr << " (" << numTrade << ")";
     return(oStr.str());

@@ -31,6 +31,8 @@
 #include <string>                                // for string, operator<<
 #include <string_view>                           // for operator<<, string_view
 #include <utility>                               // for pair
+#include <fstream>
+#include <streambuf>
 
 #include "area.hpp"                              // for MapMarker
 #include "calendar.hpp"                          // for Calendar
@@ -41,7 +43,6 @@
 #include "creatureStreams.hpp"                   // for Streamable
 #include "dice.hpp"                              // for Dice
 #include "flags.hpp"                             // for M_DM_FOLLOW, M_SNEAKING
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for CreatureClass, BRE, DEA
 #include "group.hpp"                             // for Group
 #include "lasttime.hpp"                          // for lasttime, crlasttime
@@ -62,13 +63,13 @@
 #include "proto.hpp"                             // for broadcast, bonus
 #include "raceData.hpp"                          // for RaceData
 #include "random.hpp"                            // for Random
+#include "specials.hpp"                          // for SpecialAttack
 #include "server.hpp"                            // for Server, gServer
 #include "size.hpp"                              // for getSizeName, NO_SIZE
 #include "statistics.hpp"                        // for Statistics
 #include "stats.hpp"                             // for Stat
 #include "structs.hpp"                           // for saves, ttag
 #include "threat.hpp"                            // for ThreatTable, operator<<
-#include "utils.hpp"                             // for MAX, MIN
 #include "xml.hpp"                               // for loadMonster
 
 const short Creature::OFFGUARD_REMOVE=0;
@@ -79,7 +80,7 @@ const short Creature::OFFGUARD_NOPRINT=2;
 //                      sameRoom
 //*********************************************************************
 
-bool Creature::inSameRoom(const Creature *b) const {
+bool Creature::inSameRoom(const std::shared_ptr<const Creature> &b) const {
     return(getConstRoomParent() == b->getConstRoomParent());
 }
 
@@ -87,13 +88,13 @@ bool Creature::inSameRoom(const Creature *b) const {
 //                      getFirstAggro
 //*********************************************************************
 
-Monster *getFirstAggro(Monster* creature, const Creature* player) {
-    Monster *foundCrt=nullptr;
+std::shared_ptr<Monster> getFirstAggro(std::shared_ptr<Monster>  creature, const std::shared_ptr<const Creature> & player) {
+    std::shared_ptr<Monster> foundCrt=nullptr;
 
     if(creature->isPlayer())
         return(creature);
 
-    for(Monster* mons : creature->getConstRoomParent()->monsters) {
+    for(const auto& mons : creature->getConstRoomParent()->monsters) {
         if(mons->getName() != creature->getName())
             continue;
 
@@ -115,16 +116,16 @@ Monster *getFirstAggro(Monster* creature, const Creature* player) {
 
 // Add target to the threat list of this monster
 
-bool Monster::addEnemy(Creature* target, bool print) {
+bool Monster::addEnemy(const std::shared_ptr<Creature>& target, bool print) {
     if(isEnemy(target))
         return false;
 
     if(print) {
       if(aggroString[0])
-          broadcast(nullptr, getRoomParent(), "%M says, \"%s.\"", this, aggroString);
+          broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "%M says, \"%s.\"", this, aggroString);
 
       target->printColor("^r%M attacks you.\n", this);
-      broadcast(target->getSock(), getRoomParent(), "%M attacks %N.", this, target);
+      broadcast(target->getSock(), getRoomParent(), "%M attacks %N.", this, target.get());
     }
 
     if(target->isPlayer()) {
@@ -143,30 +144,33 @@ bool Monster::addEnemy(Creature* target, bool print) {
     return(true);
 }
 bool Monster::isEnemy(const Creature* target) const {
-    return(threatTable->isEnemy(target));
+    return(threatTable.isEnemy(target));
+}
+bool Monster::isEnemy(const std::shared_ptr<const Creature> & target) const {
+    return(threatTable.isEnemy(target));
 }
 
 bool Monster::hasEnemy() const {
-    return(threatTable->hasEnemy());
+    return(threatTable.hasEnemy());
 }
 
-long Monster::adjustContribution(Creature* target, long modAmt) {
-    return(threatTable->adjustThreat(target, modAmt, 0));
+long Monster::adjustContribution(const std::shared_ptr<Creature>& target, long modAmt) {
+    return(threatTable.adjustThreat(target, modAmt, 0));
 }
-long Monster::adjustThreat(Creature* target, long modAmt, double threatFactor) {
-    target->checkTarget(this);
-    return(threatTable->adjustThreat(target, modAmt, threatFactor));
+long Monster::adjustThreat(const std::shared_ptr<Creature>& target, long modAmt, double threatFactor) {
+    target->checkTarget(Containable::downcasted_shared_from_this<Creature>());
+    return(threatTable.adjustThreat(target, modAmt, threatFactor));
 }
-long Monster::clearEnemy(Creature* target) {
-    return(threatTable->removeThreat(target));
+long Monster::clearEnemy(const std::shared_ptr<Creature>& target) {
+    return(threatTable.removeThreat(target));
 }
 //**********************************************************************
 //* getTarget
 //**********************************************************************
 // Returns the first valid creature with the highest threat
 // (in the same room if sameRoom == true)
-Creature* Monster::getTarget(bool sameRoom) {
-    return(threatTable->getTarget(sameRoom));
+std::shared_ptr<Creature> Monster::getTarget(bool sameRoom) {
+    return(threatTable.getTarget(sameRoom));
 }
 
 
@@ -178,7 +182,7 @@ bool Monster::nearEnemy() const {
     if(nearEnmPly())
         return(true);
 
-    for(Monster* mons : getConstRoomParent()->monsters) {
+    for(const auto& mons : getConstRoomParent()->monsters) {
         if(isEnemy(mons) && !mons->flagIsSet(M_FAST_WANDER))
             return(true);
     }
@@ -191,9 +195,11 @@ bool Monster::nearEnemy() const {
 //*********************************************************************
 
 bool Monster::nearEnmPly() const {
-    for(Player* ply : getConstRoomParent()->players) {
-        if(isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS))
-            return(true);
+    for(const auto& pIt: getConstRoomParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS))
+                return (true);
+        }
     }
 
     return(false);
@@ -204,16 +210,18 @@ bool Monster::nearEnmPly() const {
 //*********************************************************************
 // Searches for a near enemy, excluding the current player being attacked.
 
-bool Monster::nearEnemy(const Creature* target) const {
-    const BaseRoom* room = getConstRoomParent();
+bool Monster::nearEnemy(const std::shared_ptr<Creature> & target) const {
+    const std::shared_ptr<const BaseRoom> room = getConstRoomParent();
 
-    for(Player* ply : room->players) {
-        if( isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS) && target->getName() != ply->getName())
-            return(true);
+    for(const auto& pIt: room->players) {
+        if(auto ply = pIt.lock()) {
+            if (isEnemy(ply) && !ply->flagIsSet(P_DM_INVIS) && target->getName() != ply->getName())
+                return (true);
+        }
 
     }
 
-    for(Monster* mons : room->monsters) {
+    for(const auto& mons : room->monsters) {
         if(isEnemy(mons) && !mons->flagIsSet(M_FAST_WANDER))
             return(true);
 
@@ -230,7 +238,7 @@ bool Monster::nearEnemy(const Creature* target) const {
 void Object::tempPerm() {
     setFlag(O_PERM_INV_ITEM);
     setFlag(O_TEMP_PERM);
-    for(Object* obj : objects) {
+    for(const auto& obj : objects) {
         obj->tempPerm();
     }
 }
@@ -245,14 +253,11 @@ void Object::tempPerm() {
 
 void Monster::diePermCrt() {
     std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=nullptr;
-    Monster *temp_mob=nullptr;
-    UniqueRoom  *room=nullptr;
-    char    perm[80];
+    crlasttime* crtm;
+    std::shared_ptr<Monster> temp_mob=nullptr;
+    std::shared_ptr<UniqueRoom> room;
     long    t = time(nullptr);
-    int     i=0;
-
-    strcpy(perm,getCName());
+    auto pName = getName();
 
     if(!inUniqueRoom())
         return;
@@ -264,33 +269,26 @@ void Monster::diePermCrt() {
             continue;
         if(crtm->ltime + crtm->interval > t)
             continue;
-        if(!loadMonster(crtm->cr, &temp_mob))
+        if(!loadMonster(crtm->cr, temp_mob))
             continue;
         if(temp_mob->getName() == getName()) {
             crtm->ltime = t;
-            free_crt(temp_mob);
+            temp_mob->reset();
             break;
         }
-        free_crt(temp_mob);
+        temp_mob->reset();
     }
 
     if(flagIsSet(M_DEATH_SCENE) && !flagIsSet(M_FOLLOW_ATTACKER)) {
-        int     fd,n;
-        char    tmp[2048], file[80],pName[80];
+        std::replace(pName.begin(), pName.end(), ' ', '_');
 
-        strcpy(pName, getCName());
-        for(i=0; pName[i]; i++)
-            if(pName[i] == ' ')
-                pName[i] = '_';
+        fs::path file = Path::Desc / fmt::format("{}_{}", pName, level);
+        if(fs::exists(file)) {
+            std::ifstream f(file);
+            std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
 
-        sprintf(file,"%s/%s_%d", Path::Desc, pName, level);
-        fd = open(file,O_RDONLY,0);
-        if(fd) {
-            n = read(fd,tmp,2048);
-            tmp[n] = 0;
-            broadcast(nullptr, getRoomParent(), "\n%s", tmp);
+            broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "\n%s", str.c_str());
         }
-        close(fd);
     }
 }
 
@@ -301,9 +299,9 @@ void Monster::diePermCrt() {
 // consider how difficult it would be to kill the creature in the
 // second parameter.
 
-std::string Player::consider(Creature* creature) const {
+std::string Player::consider(const std::shared_ptr<Creature>& creature) const {
     int     diff=0;
-    std::string str = "";
+    std::string str;
 
     if(creature->mFlagIsSet(M_UNKILLABLE))
         return("");
@@ -315,7 +313,7 @@ std::string Player::consider(Creature* creature) const {
         diff = 4;
     else {
         diff = level - creature->getLevel();
-        diff = MAX(-4, MIN(4, diff));
+        diff = std::max(-4, std::min(4, diff));
     }
 
     // upHeShe is used most often
@@ -365,7 +363,7 @@ bool Creature::hasCharm(const std::string &charmed) {
     if(charmed.empty())
         return(false);
 
-    Player* player = getAsPlayer();
+    std::shared_ptr<Player> player = getAsPlayer();
 
     if(!player)
         return(false);
@@ -379,7 +377,7 @@ bool Creature::hasCharm(const std::string &charmed) {
 // This function adds the creature pointed to by the first
 // parameter to the charm list of the creature
 
-int Player::addCharm(Creature* creature) {
+int Player::addCharm(const std::shared_ptr<Creature>& creature) {
     if(!creature)
         return(0);
 
@@ -399,7 +397,7 @@ int Player::addCharm(Creature* creature) {
 // This function deletes the creature pointed to by the first
 // parameter from the charm list of the creature
 
-int Player::delCharm(Creature* creature) {
+int Player::delCharm(const std::shared_ptr<Creature>& creature) {
     if(!creature)
         return(0);
 
@@ -414,7 +412,7 @@ int Player::delCharm(Creature* creature) {
 //                      mobileEnter
 //*********************************************************************
 
-bool mobileEnter(Exit* exit) {
+bool mobileEnter(const std::shared_ptr<Exit>& exit) {
     return( !exit->flagIsSet(X_SECRET) &&
         !exit->flagIsSet(X_NO_SEE) &&
         !exit->flagIsSet(X_LOCKED) &&
@@ -436,8 +434,8 @@ bool mobileEnter(Exit* exit) {
 // the M_MOBILE_MONSTER flag is set the creature will move around.
 
 int Monster::mobileCrt() {
-    BaseRoom *newRoom=nullptr;
-    AreaRoom *caRoom = getAreaRoomParent();
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
+    std::shared_ptr<AreaRoom> caRoom = getAreaRoomParent();
     int     i=0, num=0, ret=0;
     bool    mem=false;
 
@@ -451,7 +449,7 @@ int Monster::mobileCrt() {
     if(nearEnemy())
         return(0);
 
-    for(Exit* exit : getRoomParent()->exits) {
+    for(const auto& exit : getRoomParent()->exits) {
         // count up exits
         if(mobileEnter(exit))
             i += 1;
@@ -462,15 +460,15 @@ int Monster::mobileCrt() {
 
     num = Random::get(1, i);
     i = 0;
-
-    for(Exit* exit : getRoomParent()->exits) {
+    auto mThis = Containable::downcasted_shared_from_this<Monster>();
+    for(const auto& exit : getRoomParent()->exits) {
         if(mobileEnter(exit))
             i += 1;
 
         if(i == num) {
 
             // get us out of this room
-            if(!Move::getRoom(this, exit, &newRoom))
+            if(!Move::getRoom(mThis, exit, newRoom))
                 return(0);
             if(newRoom->isAreaRoom()) {
                 mem = newRoom->getAsAreaRoom()->getStayInMemory();
@@ -488,7 +486,7 @@ int Monster::mobileCrt() {
                 return(0);
 
             if(exit->flagIsSet(X_CLOSED) && !exit->flagIsSet(X_LOCKED)) {
-                broadcast(nullptr, getRoomParent(), "%M just opened the %s.", this, exit->getCName());
+                broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "%M just opened the %s.", this, exit->getCName());
                 exit->clearFlag(X_CLOSED);
             }
 
@@ -498,15 +496,15 @@ int Monster::mobileCrt() {
             if( flagIsSet(M_SNEAKING) && Random::get(1,100) <= (3+dexterity.getCur())*3) {
                 broadcast(::isStaff, getSock(), getRoomParent(), "*DM* %M just snuck to the %s.", this,exit->getCName());
             } else {
-                Creature* lookingFor = nullptr;
+                std::shared_ptr<Creature> lookingFor = nullptr;
                 if(flagIsSet(M_CHASING_SOMEONE) && hasEnemy() && ((lookingFor = getTarget(false)) != nullptr) ) {
 
-                    broadcast(nullptr, getRoomParent(), "%M %s to the %s^x, looking for %s.",
-                        this, Move::getString(this).c_str(), exit->getCName(), lookingFor->getCName());
+                    broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "%M %s to the %s^x, looking for %s.",
+                        this, Move::getString(mThis).c_str(), exit->getCName(), lookingFor->getCName());
                 }
                 else
-                    broadcast(nullptr, getRoomParent(), "%M just %s to the %s^x.",
-                        this, Move::getString(this).c_str(), exit->getCName());
+                    broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "%M just %s to the %s^x.",
+                        this, Move::getString(mThis).c_str(), exit->getCName());
 
                 clearFlag(M_SNEAKING);
             }
@@ -542,8 +540,8 @@ int Monster::mobileCrt() {
 //*********************************************************************
 // This function should make monsters attack each other
 
-void Monster::monsterCombat(Monster *target) {
-    broadcast(nullptr, getRoomParent(), "%M attacks %N.\n", this, target);
+void Monster::monsterCombat(const std::shared_ptr<Monster>& target) {
+    broadcast((std::shared_ptr<Socket> )nullptr, getRoomParent(), "%M attacks %N.\n", this, target.get());
 
     addEnemy(target);
 }
@@ -553,7 +551,7 @@ void Monster::monsterCombat(Monster *target) {
 //*********************************************************************
 
 int Monster::mobWield() {
-    Object  *returnObject=nullptr;
+    std::shared_ptr<Object> returnObject=nullptr;
     int     i=0, found=0;
 
     if(objects.empty())
@@ -562,7 +560,7 @@ int Monster::mobWield() {
     if(ready[WIELD - 1])
         return(0);
 
-    for(Object* obj : objects) {
+    for(const auto& obj : objects) {
         for(i=0;i<10;i++) {
             if(carry[i].info == obj->info) {
                 found=1;
@@ -690,8 +688,8 @@ void Creature::attackDelay(long delay) {
 //                      enm_in_group
 //*********************************************************************
 
-Creature *enm_in_group(Creature *target) {
-    Creature *enemy=nullptr;
+std::shared_ptr<Creature>enm_in_group(std::shared_ptr<Creature>target) {
+    std::shared_ptr<Creature>enemy=nullptr;
     int     chosen=0;
 
 
@@ -718,7 +716,7 @@ Creature *enm_in_group(Creature *target) {
 //*********************************************************************
 
 void Monster::clearEnemyList() {
-    threatTable->clear();
+    threatTable.clear();
 }
 
 //*********************************************************************
@@ -726,12 +724,12 @@ void Monster::clearEnemyList() {
 //*********************************************************************
 
 void Monster::clearMobInventory() {
-    Object* object=nullptr;
+    std::shared_ptr<Object>  object=nullptr;
     ObjectSet::iterator it;
     for(it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
         this->delObj(object, false, false, true, false);
-        delete object;
+        object.reset();
     }
     checkDarkness();
 }
@@ -758,7 +756,7 @@ int Monster::cleanMobForSaving() {
 //  // If the creature is possessed, clean that up
     if(flagIsSet(M_DM_FOLLOW)) {
         clearFlag(M_DM_FOLLOW);
-        Player* master;
+        std::shared_ptr<Player> master;
         if(getMaster() != nullptr && (master = getMaster()->getAsPlayer()) != nullptr) {
             master->clearFlag(P_ALIASING);
             master->getAsPlayer()->setAlias(nullptr);
@@ -800,25 +798,26 @@ unsigned int Creature::displayFlags() const {
 //                      displayCreature
 //*********************************************************************
 
-int Player::displayCreature(Creature* target)  {
+int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
     int     percent=0, align=0, rank=0, chance=0;
     unsigned int flags = displayFlags();
-    Player  *pTarget = target->getAsPlayer();
-    Monster *mTarget = target->getAsMonster();
+    std::shared_ptr<Player> pTarget = target->getAsPlayer();
+    std::shared_ptr<Monster> mTarget = target->getAsMonster();
     std::ostringstream oStr;
-    std::string str = "";
+    std::string str;
     bool space=false;
 
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
     if(mTarget) {
-        oStr << "You see " << mTarget->getCrtStr(this, flags, 1) << ".\n";
+        oStr << "You see " << mTarget->getCrtStr(pThis, flags, 1) << ".\n";
         if(!mTarget->getDescription().empty())
             oStr << mTarget->getDescription() << "\n";
         else
-            oStr << "There is nothing special about " << mTarget->getCrtStr(this, flags, 0) << ".\n";
+            oStr << "There is nothing special about " << mTarget->getCrtStr(pThis, flags, 0) << ".\n";
 
         if(mTarget->getMobTrade()) {
             rank = mTarget->getSkillLevel()/10;
-            oStr << "^y" << mTarget->getCrtStr(this, flags | CAP, 0) << " is a " << mTarget->getMobTradeName()
+            oStr << "^y" << mTarget->getCrtStr(pThis, flags | CAP, 0) << " is a " << mTarget->getMobTradeName()
                  << ". " << mTarget->upHisHer() << " skill level: " << get_skill_string(rank) << ".^x\n";
         }
     } else if(pTarget) {
@@ -888,13 +887,13 @@ int Player::displayCreature(Creature* target)  {
 
 
     if((cClass == CreatureClass::CLERIC && deity == JAKAR && level >=7) || isCt())
-        oStr << "^y" << target->getCrtStr(this, flags | CAP, 0 ) << " is carrying "
+        oStr << "^y" << target->getCrtStr(pThis, flags | CAP, 0 ) << " is carrying "
              << target->coins[GOLD] << " gold coin"
              << (target->coins[GOLD] != 1 ? "s" : "") << ".^x\n";
 
     if(isEffected("know-aura") || cClass==CreatureClass::PALADIN) {
         space = true;
-        oStr << target->getCrtStr(this, flags | CAP, 0) << " ";
+        oStr << target->getCrtStr(pThis, flags | CAP, 0) << " ";
 
         align = target->getAdjustedAlignment();
 
@@ -987,16 +986,15 @@ int Player::displayCreature(Creature* target)  {
         if(pTarget->isBraindead())
             oStr << pTarget->getName() << "%M is currently brain dead.\n";
     } else {
-        if(mTarget->isEnemy(this))
+        if(mTarget->isEnemy(pThis))
             oStr << mTarget->upHeShe() << " looks very angry at you.\n";
         else if(!mTarget->getPrimeFaction().empty())
             oStr << mTarget->upHeShe() << " " << getFactionMessage(mTarget->getPrimeFaction()) << ".\n";
 
-        Creature* firstEnm = nullptr;
+        std::shared_ptr<Creature> firstEnm = nullptr;
         if((firstEnm = mTarget->getTarget(false)) != nullptr) {
-            if(firstEnm == this) {
-                if(  !mTarget->flagIsSet(M_HIDDEN) &&
-                    !(mTarget->isInvisible() && isEffected("detect-invisible")))
+            if(firstEnm.get() == this) {
+                if(  !mTarget->flagIsSet(M_HIDDEN) && !(mTarget->isInvisible() && isEffected("detect-invisible")))
                     oStr << mTarget->upHeShe() << " is attacking you.\n";
             } else
                 oStr << mTarget->upHeShe() << " is attacking " << firstEnm->getName() << ".\n";
@@ -1008,8 +1006,8 @@ int Player::displayCreature(Creature* target)  {
         oStr << consider(mTarget);
 
         // pet code
-        if(mTarget->isPet() && mTarget->getMaster() == this) {
-            str = mTarget->listObjects(this, true);
+        if(mTarget->isPet() && mTarget->getMaster() == pThis) {
+            str = mTarget->listObjects(pThis, true);
             oStr << mTarget->upHeShe() << " ";
             if(str.empty())
                 oStr << "isn't holding anything.\n";
@@ -1018,7 +1016,7 @@ int Player::displayCreature(Creature* target)  {
         }
     }
     printColor("%s", oStr.str().c_str());
-    target->printEquipList(this);
+    target->printEquipList(pThis);
     return(0);
 }
 
@@ -1045,7 +1043,7 @@ void Monster::checkSpellWearoff() {
 }
 
 
-bool Creature::isSitting() {
+bool Creature::isSitting() const {
     return(pFlagIsSet(P_SITTING));
 }
 
@@ -1070,7 +1068,7 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
             return(false);
 
     } else {
-        //Player* pThis = getPlayer();
+        //std::shared_ptr<Player> pThis = getPlayer();
         if(!ableToDoCommand())
             return(false);
 
@@ -1088,7 +1086,7 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
 
         if(checkTimer && !isEffected("fear") && !isStaff()) {
             t = time(nullptr);
-            i = MAX(getLTAttack(), MAX(lasttime[LT_SPELL].ltime,lasttime[LT_READ_SCROLL].ltime)) + 3L;
+            i = std::max(getLTAttack(), std::max(lasttime[LT_SPELL].ltime,lasttime[LT_READ_SCROLL].ltime)) + 3L;
             if(t < i) {
                 if(displayFail)
                     pleaseWait(i-t);
@@ -1102,7 +1100,7 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
 
 
         // players can only flee if someone/something else is in the room
-        for(Monster* mons : getConstRoomParent()->monsters) {
+        for(const auto& mons : getConstRoomParent()->monsters) {
             if(!mons->isPet()) {
                 crtInRoom = true;
                 break;
@@ -1110,8 +1108,9 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
         }
 
         if(!crtInRoom) {
-            for(Player* ply : getConstRoomParent()->players) {
-                if(ply == this)
+            for(const auto& pIt: getConstRoomParent()->players) {
+                auto ply = pIt.lock();
+                if(!ply || ply.get() == this)
                     continue;
                 if(!ply->isStaff()) {
                     crtInRoom = true;
@@ -1134,14 +1133,14 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
 //                      canFleeToExit
 //*********************************************************************
 
-bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
-    Player  *pThis = getAsPlayer();
+bool Creature::canFleeToExit(const std::shared_ptr<Exit>& exit, bool skipScary, bool blinking) {
+    std::shared_ptr<Player> pThis = getAsPlayer();
 
     // flags both players and mobs have to obey
     if(!canEnter(exit, false, blinking) ||
 
         exit->flagIsSet(X_SECRET) ||
-        exit->isConcealed(this) ||
+        exit->isConcealed(Containable::downcasted_shared_from_this<Creature>()) ||
         exit->flagIsSet(X_DESCRIPTION_ONLY) ||
 
         exit->flagIsSet(X_NO_FLEE) ||
@@ -1198,18 +1197,18 @@ bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
                         {
                             int roomNum = getUniqueRoomParent()->info.id;
                             if(scary) {
-                                int size = 0;
+                                int lSize = 0;
                                 while(*scary) {
-                                    size++;
+                                    lSize++;
                                     if(*scary == roomNum)
                                         break;
                                     scary++;
                                 }
                                 if(!*scary) {
                                     // LEAK: Next line reported to be leaky: 10 count
-                                    pThis->scared_of = (int *) realloc(pThis->scared_of, (size + 2) * sizeof(int));
-                                    (pThis->scared_of)[size] = roomNum;
-                                    (pThis->scared_of)[size + 1] = 0;
+                                    pThis->scared_of = (int *) realloc(pThis->scared_of, (lSize + 2) * sizeof(int));
+                                    (pThis->scared_of)[lSize] = roomNum;
+                                    (pThis->scared_of)[lSize + 1] = 0;
                                 }
                             } else {
                                 // LEAK: Next line reported to be leaky: 10 count
@@ -1235,13 +1234,13 @@ bool Creature::canFleeToExit(const Exit *exit, bool skipScary, bool blinking) {
 //                      getFleeableExit
 //*********************************************************************
 
-Exit* Creature::getFleeableExit() {
+std::shared_ptr<Exit> Creature::getFleeableExit() {
     int     i=0, exit=0;
     bool    skipScary=false;
 
     // count exits so we can randomly pick one
 
-    for(Exit* ext : getRoomParent()->exits) {
+    for(const auto& ext : getRoomParent()->exits) {
         if(canFleeToExit(ext))
             i++;
     }
@@ -1254,7 +1253,7 @@ Exit* Creature::getFleeableExit() {
         skipScary = true;
         i=0;
 
-        for(Exit* ext : getRoomParent()->exits) {
+        for(const auto& ext : getRoomParent()->exits) {
             if(canFleeToExit(ext, true))
                 i++;
         }
@@ -1266,7 +1265,7 @@ Exit* Creature::getFleeableExit() {
         return(nullptr);
 
     i=0;
-    for(Exit* ext : getRoomParent()->exits) {
+    for(const auto& ext : getRoomParent()->exits) {
         if(canFleeToExit(ext, skipScary))
             i++;
         if(i == exit)
@@ -1281,13 +1280,13 @@ Exit* Creature::getFleeableExit() {
 //                      getFleeableRoom
 //*********************************************************************
 
-BaseRoom* Creature::getFleeableRoom(Exit* exit) {
-    BaseRoom* newRoom=nullptr;
+std::shared_ptr<BaseRoom> Creature::getFleeableRoom(const std::shared_ptr<Exit>& exit) {
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
     if(!exit)
         return(nullptr);
     // exit flags have already been taken care of above, so
     // feign teleporting so we don't recycle the room
-    Move::getRoom(this, exit, &newRoom, false, nullptr, false);
+    Move::getRoom(Containable::downcasted_shared_from_this<Creature>(), exit, newRoom, false, nullptr, false);
     return(newRoom);
 }
 
@@ -1300,8 +1299,8 @@ BaseRoom* Creature::getFleeableRoom(Exit* exit) {
 // the player as fleeing and try to flee during the combat update
 
 int Creature::flee(bool magicTerror, bool wimpyFlee) {
-    Monster* mThis = getAsMonster();
-    Player* pThis = getAsPlayer();
+    std::shared_ptr<Monster>  mThis = getAsMonster();
+    std::shared_ptr<Player> pThis = getAsPlayer();
 
     if(!magicTerror && !canFlee(true, false))
         return(0);
@@ -1318,12 +1317,12 @@ int Creature::flee(bool magicTerror, bool wimpyFlee) {
 }
 
 bool Creature::doFlee(bool magicTerror) {
-    Monster* mThis = getAsMonster();
-    Player* pThis = getAsPlayer();
-    BaseRoom* oldRoom = getRoomParent(), *newRoom=nullptr;
-    UniqueRoom* uRoom=nullptr;
+    std::shared_ptr<Monster>  mThis = getAsMonster();
+    std::shared_ptr<Player> pThis = getAsPlayer();
+    std::shared_ptr<BaseRoom> oldRoom = getRoomParent(), newRoom=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
 
-    Exit*   exit=nullptr;
+    std::shared_ptr<Exit>   exit=nullptr;
     unsigned int n=0;
 
     if(isEffected("fear"))
@@ -1385,7 +1384,7 @@ bool Creature::doFlee(bool magicTerror) {
     broadcast(getSock(), oldRoom, "%M flees to the %s^x.", this, exit->getCName());
     if(mThis) {
         mThis->diePermCrt();
-        if(exit->doEffectDamage(this))
+        if(exit->doEffectDamage(Containable::downcasted_shared_from_this<Creature>()))
             return(true);
         mThis->deleteFromRoom();
         mThis->addToRoom(newRoom);
@@ -1404,7 +1403,7 @@ bool Creature::doFlee(bool magicTerror) {
             pThis->removeEffect("berserk");
         }
 
-        Move::track(getUniqueRoomParent(), &currentLocation.mapmarker, exit, pThis, false);
+        Move::track(getUniqueRoomParent(), currentLocation.mapmarker, exit, pThis, false);
 
         if(pThis->flagIsSet(P_ALIASING)) {
             pThis->getAlias()->deleteFromRoom();
@@ -1419,22 +1418,22 @@ bool Creature::doFlee(bool magicTerror) {
 
         if(cClass == CreatureClass::PALADIN && deity != GRADIUS && !magicTerror && level >= 10) {
             n = level * 8;
-            n = MIN<long>(experience, n);
+            n = std::min<long>(experience, n);
             print("You lose %d experience for your cowardly retreat.\n", n);
             experience -= n;
         }
 
-        if(exit->doEffectDamage(this))
+        if(exit->doEffectDamage(Containable::downcasted_shared_from_this<Creature>()))
             return(true);
         pThis->deleteFromRoom();
         pThis->addToRoom(newRoom);
 
-        for(Monster* pet : pThis->pets) {
+        for(const auto& pet : pThis->pets) {
             if(pet && inSameRoom(pThis))
-                broadcast(getSock(), oldRoom, "%M flees to the %s^x with its master.", pet, exit->getCName());
+                broadcast(getSock(), oldRoom, "%M flees to the %s^x with its master.", pet.get(), exit->getCName());
         }
     }
-    exit->checkReLock(this, false);
+    exit->checkReLock(Containable::downcasted_shared_from_this<Creature>(), false);
 
     broadcast(getSock(), newRoom, "%M just fled rapidly into the room.", this);
 
@@ -1454,48 +1453,51 @@ bool Creature::doFlee(bool magicTerror) {
 }
 
 
+Creature::~Creature() {
+    for(auto it = targetingThis.begin() ; it != targetingThis.end() ; ) {
+        if(auto targeter = it->lock()) {
+            targeter->clearTarget(false);
+        }
+        it++;
+    }
+    targetingThis.clear();
 
-//*********************************************************************
-//                      free_crt
-//*********************************************************************
-// This function releases the creature pointed to by the first parameter
-// from memory. All items that creature has readied or carries will
-// also be released. *ASSUMPTION*: This function will only be called
-// from delete room. If it is called from somewhere else, unresolved
-// links may remain and cause a game crash. *EXCEPTION*: This function
-// can be called independently to free a player's information from
-// memory (but not a monster).
+    clearTarget();
 
-void free_crt(Creature* creature, bool remove) {
+    factions.clear();
+
+    Skill* skill;
+    std::map<std::string, Skill*>::iterator csIt;
+    for(csIt = skills.begin() ; csIt != skills.end() ; csIt++) {
+        skill = (*csIt).second;
+        delete skill;
+    }
+    skills.clear();
+
+    effects.removeAll();
+    minions.clear();
+    specials.clear();
+
     ttag    *tp=nullptr, *tempt=nullptr;
     int i;
     for(i=0; i<MAXWEAR; i++) {
-        if(creature->ready[i])
-            creature->unequip(i+1, UNEQUIP_DELETE, false);
+        if(ready[i]) ready[i] = nullptr;
     }
 
-    ObjectSet::iterator it;
-    Object* obj;
-    for(it = creature->objects.begin() ; it != creature->objects.end() ; ) {
-        obj = (*it++);
-        delete obj;
-    }
-    creature->objects.clear();
+    objects.clear();
 
-    if(creature->getGroup(false)) {
-        creature->getGroup(false)->remove(creature);
+    if(getGroup(false)) {
+        getGroup(false)->remove(Containable::downcasted_shared_from_this<Creature>());
     }
-    for(Monster* mons : creature->pets) {
-        if(mons->isPet()) {
-            free_crt(mons);
-        } else {
+    for(const auto& mons : pets) {
+        if(!mons->isPet()) {
             mons->setMaster(nullptr);
         }
     }
-    creature->pets.clear();
+    pets.clear();
 
-    tp = creature->first_tlk;
-    creature->first_tlk = nullptr;
+    tp = first_tlk;
+    first_tlk = nullptr;
     while(tp) {
         tempt = tp->next_tag;
         delete[] tp->key;
@@ -1507,15 +1509,8 @@ void free_crt(Creature* creature, bool remove) {
     }
 
 
-    gServer->removeDelayedActions(creature);
+    gServer->removeDelayedActions(this);
 
-    if(creature->isMonster()) {
-        if(gServer->isActive(creature->getAsMonster()))
-            gServer->delActive(creature->getAsMonster());
-    }
-    else if(remove)
-        gServer->clearPlayer(creature->getAsPlayer());
-    delete creature;
 }
 
 
@@ -1565,15 +1560,15 @@ std::string Player::getFlagList(std::string_view sep) const {
 // Because of ethereal plane, we don't always know where we're going to
 // recall to. We need a function to figure out where we are going.
 
-BaseRoom* Creature::recallWhere() {
+std::shared_ptr<BaseRoom> Creature::recallWhere() {
     // A builder should never get this far, but let's not chance it.
     // Only continue if they can't load the perm_low_room.
     if(cClass == CreatureClass::BUILDER) {
-        UniqueRoom* uRoom=nullptr;
+        std::shared_ptr<UniqueRoom> uRoom=nullptr;
         CatRef cr;
         cr.setArea("test");
         cr.id = 1;
-        if(loadRoom(cr, &uRoom))
+        if(loadRoom(cr, uRoom))
             return(uRoom);
     }
 
@@ -1583,10 +1578,10 @@ BaseRoom* Creature::recallWhere() {
         return(teleportWhere());
     }
 
-    BaseRoom* room = getRecallRoom().loadRoom(getAsPlayer());
+    std::shared_ptr<BaseRoom> room = getRecallRoom().loadRoom(getAsPlayer());
     // uh oh!
     if(!room)
-        return(abortFindRoom(this, "recallWhere"));
+        return(abortFindRoom(Containable::downcasted_shared_from_this<Creature>(), "recallWhere"));
     return(room);
 
 }
@@ -1598,30 +1593,30 @@ BaseRoom* Creature::recallWhere() {
 // Loops through rooms and finds us a place we can teleport to.
 // This function will always return a room or it will crash trying to.
 
-BaseRoom* Creature::teleportWhere() {
-    BaseRoom *newRoom=nullptr;
+std::shared_ptr<BaseRoom> Creature::teleportWhere() {
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
     const CatRefInfo* cri = gConfig->getCatRefInfo(getRoomParent());
     int     i=0, zone = cri ? cri->getTeleportZone() : 0;
-    Area    *area=nullptr;
+    std::shared_ptr<Area> area=nullptr;
     Location l;
     bool    found = false;
 
 
-
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
     // A builder should never get this far, but let's not chance it.
     // Only continue if they can't load the perm_low_room.
     if(cClass == CreatureClass::BUILDER) {
         CatRef cr;
         cr.setArea("test");
         cr.id = 1;
-        UniqueRoom* uRoom =nullptr;
-        if(loadRoom(cr, &uRoom))
+        std::shared_ptr<UniqueRoom> uRoom =nullptr;
+        if(loadRoom(cr, uRoom))
             return(uRoom);
     }
 
     do {
         if(i>250)
-            return(abortFindRoom(this, "teleportWhere"));
+            return(abortFindRoom(cThis, "teleportWhere"));
         cri = gConfig->getRandomCatRefInfo(zone);
 
         // if this fails, we have nowhere to teleport to
@@ -1632,16 +1627,16 @@ BaseRoom* Creature::teleportWhere() {
         if(cri->getArea() == "area") {
             area = gServer->getArea(cri->getId());
             l.mapmarker.set(area->id, Random::get<short>(0, area->width), Random::get<short>(0, area->height), Random::get<short>(0, area->depth));
-            if(area->canPass(nullptr, &l.mapmarker, true)) {
+            if(area->canPass(nullptr, l.mapmarker, true)) {
                 //area->adjustCoords(&mapmarker.x, &mapmarker.y, &mapmarker.z);
 
                 // don't bother sending a creature because we've already done
                 // canPass check here
                 //aRoom = area->loadRoom(0, &mapmarker, false);
-                if(Move::getRoom(this, nullptr, &newRoom, false, &l.mapmarker)) {
+                if(Move::getRoom(cThis, nullptr, newRoom, false, &l.mapmarker)) {
                     if(newRoom->isUniqueRoom()) {
                         // recheck, just to be safe
-                        found = newRoom->getAsUniqueRoom()->canPortHere(this);
+                        found = newRoom->getAsUniqueRoom()->canPortHere(cThis);
                         if(!found)
                             newRoom = nullptr;
                     } else {
@@ -1652,11 +1647,11 @@ BaseRoom* Creature::teleportWhere() {
         } else {
             l.room.setArea(cri->getArea());
             // if misc, first 1000 rooms are off-limits
-            l.room.id = Random::get(l.room.isArea("misc") ? 1000 : 1, cri->getTeleportWeight());
-            UniqueRoom* uRoom = nullptr;
+            l.room.id = Random::get<short>(l.room.isArea("misc") ? 1000 : 1, cri->getTeleportWeight());
+            std::shared_ptr<UniqueRoom> uRoom = nullptr;
 
-            if(loadRoom(l.room, &uRoom))
-                found = uRoom->canPortHere(this);
+            if(loadRoom(l.room, uRoom))
+                found = uRoom->canPortHere(cThis);
             if(found)
                 newRoom = uRoom;
         }
@@ -1665,7 +1660,7 @@ BaseRoom* Creature::teleportWhere() {
     } while(!found);
 
     if(!newRoom)
-        return(abortFindRoom(this, "teleportWhere"));
+        return(abortFindRoom(cThis, "teleportWhere"));
     return(newRoom);
 }
 

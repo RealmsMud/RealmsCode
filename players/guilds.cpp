@@ -41,7 +41,6 @@
 #include "config.hpp"                            // for Config, gConfig, Gui...
 #include "creatureStreams.hpp"                   // for Streamable
 #include "flags.hpp"                             // for P_CREATING_GUILD, P_AFK
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for PROP_GUILDHALL, PROP...
 #include "guilds.hpp"                            // for Guild, GuildCreation
 #include "location.hpp"                          // for Location
@@ -57,7 +56,6 @@
 #include "proto.hpp"                             // for broadcast, broadcast...
 #include "server.hpp"                            // for Server, gServer, Pla...
 #include "socket.hpp"                            // for Socket
-#include "utils.hpp"                             // for MAX, MIN
 #include "web.hpp"                               // for callWebserver
 #include "xml.hpp"                               // for loadPlayer, loadRoom
 
@@ -100,7 +98,7 @@ void Guild::incPkillsWon(long pk) { pkillsWon += pk; }
 // Calling function must provide fmt with 2 %s's. Example:
 // "Your guildhall is located at %s in the city of %s.\n"
 
-void Guild::guildhallLocations(const Player* player, const char* fmt) const {
+void Guild::guildhallLocations(const std::shared_ptr<Player> player, const char* fmt) const {
     std::list<Property*>::const_iterator it;
 
     for(it = gConfig->properties.begin() ; it !=  gConfig->properties.end() ; it++) {
@@ -124,7 +122,7 @@ GuildCreation::GuildCreation() {
 
 // Prototypes
 
-void printGuildSyntax(Player* player) {
+void printGuildSyntax(std::shared_ptr<Player> player) {
     player->printColor("Syntax: guild ^e<^xlist^e>\n");
     player->printColor("              ^e<^xfound^e>^x ^e<^cguild name^e>\n");
     if(!gConfig->getWebserver().empty()) {
@@ -181,9 +179,9 @@ const int   GUILD_FOUND_LEVEL = 13,
 //                      isGuildKill
 //********************************************************************
 
-bool Player::isGuildKill(const Player *killer) const {
+bool Player::isGuildKill(const std::shared_ptr<Player>killer) const {
     // Dueling guild members don't count
-    if(induel(killer, this))
+    if(induel(killer, Containable::downcasted_shared_from_this<Player>()))
         return(false);
 
     // Staff members don't count
@@ -209,7 +207,7 @@ bool Player::isGuildKill(const Player *killer) const {
 //*********************************************************************
 // Player command used to do various guild functions
 
-int cmdGuild(Player* player, cmd* cmnd) {
+int cmdGuild(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     len=0;
 
     if(cmnd->num < 2) {
@@ -278,7 +276,7 @@ int cmdGuild(Player* player, cmd* cmnd) {
 //                      create
 //*********************************************************************
 
-void Guild::create(Player* player, cmd* cmnd) {
+void Guild::create(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int len,i=0,j=0, a=0;
     GuildCreation* newGuildCreation;
     char guildName[41];
@@ -363,7 +361,7 @@ void Guild::create(Player* player, cmd* cmnd) {
 //                      cancel
 //*********************************************************************
 
-void Guild::cancel(Player* player, cmd* cmnd) {
+void Guild::cancel(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->flagIsSet(P_CREATING_GUILD)) {
         player->print("You aren't currently creating any guilds!\n");
         return;
@@ -384,7 +382,7 @@ void Guild::cancel(Player* player, cmd* cmnd) {
 //*********************************************************************
 // calls the webserver - no work is done here (besides parsing)
 
-void Guild::forum(Player* player, cmd* cmnd) {
+void Guild::forum(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->getGuild() || player->getGuildRank() != GUILD_MASTER) {
         player->print("You are not a guildmaster.\n");
         return;
@@ -424,7 +422,7 @@ void Guild::forum(Player* player, cmd* cmnd) {
 //                      support
 //*********************************************************************
 
-void Guild::support(Player* player, cmd* cmnd) {
+void Guild::support(const std::shared_ptr<Player>& player, cmd* cmnd) {
     GuildCreation *toSupport=nullptr;
     char    guildName[41];
     int     len=0, i=0, j=0;
@@ -506,7 +504,7 @@ void Guild::support(Player* player, cmd* cmnd) {
     toSupport->addSupporter(player);
 
     if(toSupport->numSupporters >= SUPPORT_REQUIRED) {
-        Player* leader=nullptr;
+        std::shared_ptr<Player> leader=nullptr;
 
         toSupport->status = GUILD_AWAITING_APPROVAL;
         // We now have enough players to seek staff approval
@@ -524,8 +522,8 @@ void Guild::support(Player* player, cmd* cmnd) {
 //                      invite
 //*********************************************************************
 
-void Guild::invite(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+void Guild::invite(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
     if(!player->getGuild() || player->getGuildRank() < GUILD_OFFICER) {
         player->print("You are not an officer in a guild.\n");
@@ -601,7 +599,7 @@ void Guild::invite(Player* player, cmd* cmnd) {
 //                      shopStaysWithGuild
 //*********************************************************************
 
-bool shopStaysWithGuild(const UniqueRoom* shop) {
+bool shopStaysWithGuild(const std::shared_ptr<UniqueRoom> shop) {
     return(!shop->exits.empty() && shop->exits.front()->target.room.isArea("guild"));
 }
 
@@ -609,10 +607,10 @@ bool shopStaysWithGuild(const UniqueRoom* shop) {
 //                      remove
 //*********************************************************************
 
-void shopRemoveGuild(Property *p, Player* player, UniqueRoom* shop, UniqueRoom* storage);
+void shopRemoveGuild(Property *p, std::shared_ptr<Player> player, std::shared_ptr<UniqueRoom> shop, std::shared_ptr<UniqueRoom> storage);
 
-void Guild::remove(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+void Guild::remove(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     Property* p=nullptr;
     int guildId = player->getGuild();
 
@@ -654,7 +652,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
 
     if(!target) {
         online = false;
-        if(!loadPlayer(cmnd->str[2], &target)) {
+        if(!loadPlayer(cmnd->str[2], target)) {
             player->print("That player does not exist.\n");
             return;
         }
@@ -696,7 +694,7 @@ void Guild::remove(Player* player, cmd* cmnd) {
                 shopRemoveGuild(*pt, target, nullptr, nullptr);
             } else {
                 std::string output = (*pt)->getName();
-                broadcast(isCt, "^r%s was removed from guild %d.\nProperty \"%s\" belongs to the guild, but is not a shop.", target, guildId, output.c_str());
+                broadcast(isCt, "^r%s was removed from guild %d.\nProperty \"%s\" belongs to the guild, but is not a shop.", target.get(), guildId, output.c_str());
             }
         }
     }
@@ -707,16 +705,14 @@ void Guild::remove(Player* player, cmd* cmnd) {
         p->expelToExit(target, !online);
 
     gConfig->saveProperties();
-    if(!online)
-        free_crt(target);
 }
 
 //*********************************************************************
 //                      promote
 //*********************************************************************
 
-void Guild::promote(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+void Guild::promote(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     int newRank=0;
     char rank[80];
 
@@ -765,17 +761,17 @@ void Guild::promote(Player* player, cmd* cmnd) {
     }
 
     target->setGuildRank(newRank);
-    player->print("You promote %s to %s.\n", target, rank);
+    player->print("You promote %s to %s.\n", target.get(), rank);
     target->print("You have been promoted to %s by %s.\n", rank, player->getCName());
-    broadcastGuild(player->getGuild(), 1, "%s has been promoted to the rank of %s by %s.", target, rank, player->getCName());
+    broadcastGuild(player->getGuild(), 1, "%s has been promoted to the rank of %s by %s.", target.get(), rank, player->getCName());
 }
 
 //*********************************************************************
 //                      demote
 //*********************************************************************
 
-void Guild::demote(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+void Guild::demote(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     int newRank=0;
     char rank[80];
 
@@ -822,16 +818,16 @@ void Guild::demote(Player* player, cmd* cmnd) {
     }
 
     target->setGuildRank(newRank);
-    player->print("You demote %s to %s.\n", target, rank);
+    player->print("You demote %s to %s.\n", target.get(), rank);
     target->print("You have been demoted to %s rank by %s.\n", rank, player->getCName());
-    broadcastGuild(player->getGuild(), 1, "%s has been demoted to %s rank by %s.", target, rank, player->getCName());
+    broadcastGuild(player->getGuild(), 1, "%s has been demoted to %s rank by %s.", target.get(), rank, player->getCName());
 }
 
 //*********************************************************************
 //                      abdicate
 //*********************************************************************
 
-void Guild::abdicate(Player* player, Player* target, bool online) {
+void Guild::abdicate(std::shared_ptr<Player> player, std::shared_ptr<Player> target, bool online) {
     int guildId = player->getGuild();
 
     if(!guildId || player->getGuildRank() != GUILD_MASTER) {
@@ -867,10 +863,10 @@ void Guild::abdicate(Player* player, Player* target, bool online) {
             } else if((*pt)->getType() == PROP_SHOP) {
                 // shops located inside the guild transfer ownership to the new guildmaster
                 CatRef cr = (*pt)->ranges.front().low;
-                UniqueRoom* room=nullptr;
+                std::shared_ptr<UniqueRoom> room=nullptr;
                 bool transferOwnership = false;
 
-                if(loadRoom(cr, &room)) {
+                if(loadRoom(cr, room)) {
                     // Look for the first exit linking to a guild
                     if(shopStaysWithGuild(room))
                         transferOwnership = true;
@@ -902,8 +898,8 @@ void Guild::abdicate(Player* player, Player* target, bool online) {
     callWebserver(url.str());
 }
 
-void Guild::abdicate(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+void Guild::abdicate(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     int guildId = player->getGuild();
 
     if((!guildId || player->getGuildRank() != GUILD_MASTER) && cmnd->num >= 3) {
@@ -930,7 +926,7 @@ void Guild::abdicate(Player* player, cmd* cmnd) {
 //                      join
 //*********************************************************************
 
-void Guild::join(Player* player, cmd *cmnd) {
+void Guild::join(std::shared_ptr<Player> player, cmd *cmnd) {
     std::string name = "";
     if(!player->getGuildRank()) {
         player->print("You have not been invited to join any guilds!\n");
@@ -970,7 +966,7 @@ void Guild::join(Player* player, cmd *cmnd) {
 //                      reject
 //*********************************************************************
 
-void Guild::reject(Player* player, cmd* cmnd) {
+void Guild::reject(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->getGuild() || player->getGuildRank() >= GUILD_PEON) {
         player->print("You have no offer to reject.\n");
         return;
@@ -985,7 +981,7 @@ void Guild::reject(Player* player, cmd* cmnd) {
 //                      disband
 //*********************************************************************
 
-void Guild::disband(Player* player, cmd* cmnd) {
+void Guild::disband(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->getGuild() || player->getGuildRank() < GUILD_MASTER) {
         player->print("You are not the guildmaster.\n");
         return;
@@ -1000,7 +996,7 @@ void Guild::disband(Player* player, cmd* cmnd) {
     }
 
     broadcastGuild(guildId, 1, "Your guild has been disbanded by %s.", player->getCName());
-    Player* ply;
+    std::shared_ptr<Player> ply;
     for(const auto& p : gServer->players) {
         ply = p.second;
 
@@ -1017,7 +1013,7 @@ void Guild::disband(Player* player, cmd* cmnd) {
 //                      cmdGuildHall
 //*********************************************************************
 
-int cmdGuildHall(Player* player, cmd* cmnd) {
+int cmdGuildHall(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Property::manage(player, cmnd, PROP_GUILDHALL, 1);
     return(0);
 }
@@ -1027,7 +1023,7 @@ int cmdGuildHall(Player* player, cmd* cmnd) {
 //*********************************************************************
 // aka guildchat
 
-void doGuildSend(const Guild *guild, Player* player, std::string txt) {
+void doGuildSend(const Guild *guild, std::shared_ptr<Player> player, std::string txt) {
     if(!guild) {
         player->print("Invalid guild!\n");
         return;
@@ -1044,7 +1040,7 @@ void doGuildSend(const Guild *guild, Player* player, std::string txt) {
 //                      cmdGuildSend
 //*********************************************************************
 
-int cmdGuildSend(Player* player, cmd* cmnd) {
+int cmdGuildSend(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string text = "";
 
     player->clearFlag(P_AFK);
@@ -1081,7 +1077,7 @@ int cmdGuildSend(Player* player, cmd* cmnd) {
 //                      dmApproveGuild
 //*********************************************************************
 
-int dmApproveGuild(Player* player, cmd* cmnd) {
+int dmApproveGuild(const std::shared_ptr<Player>& player, cmd* cmnd) {
     char guildName[41];
     GuildCreation * toApprove;
     int len,i=0,j=0;
@@ -1134,7 +1130,7 @@ int dmApproveGuild(Player* player, cmd* cmnd) {
 //                      dmRejectGuild
 //*********************************************************************
 
-int dmRejectGuild(Player* player, cmd* cmnd) {
+int dmRejectGuild(const std::shared_ptr<Player>& player, cmd* cmnd) {
     char guildName[41];
     char *reason=nullptr;
     GuildCreation * toReject;
@@ -1163,7 +1159,7 @@ int dmRejectGuild(Player* player, cmd* cmnd) {
     // Keep going untill we get to the end of the string or a -
     while(i+j < strLen && cmnd->fullstr[i+j] != '\0' && cmnd->fullstr[i+j] != '-')
         j++;
-    j = MIN(j, 40);
+    j = std::min(j, 40);
     memcpy(guildName, &cmnd->fullstr[i], j);
     guildName[j] = '\0';
     // Kill trailling whitespace
@@ -1217,7 +1213,7 @@ int dmRejectGuild(Player* player, cmd* cmnd) {
 //                      showGuildsNeedingApproval
 //*********************************************************************
 
-void showGuildsNeedingApproval(Player* viewer) {
+void showGuildsNeedingApproval(std::shared_ptr<Player> viewer) {
     GuildCreation *gcp;
     int num = 0;
     std::list<GuildCreation*>::iterator it;
@@ -1252,7 +1248,7 @@ void showGuildsNeedingApproval(Player* viewer) {
 //                      viewMembers
 //*********************************************************************
 
-void Guild::viewMembers(Player* player, cmd* cmnd) {
+void Guild::viewMembers(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 3) {
         player->print("What guild were you looking for?\n\n");
         Guild::list(player, cmnd);
@@ -1284,7 +1280,7 @@ void Guild::viewMembers(Player* player, cmd* cmnd) {
 //                      list
 //*********************************************************************
 
-void Guild::list(Player* player, cmd* cmnd) {
+void Guild::list(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int num = 1;
 
     player->printColor("^b    %-25s %-15s  Info\n", "Guild", "Leader");
@@ -1325,7 +1321,7 @@ void Guild::list(Player* player, cmd* cmnd) {
 //*********************************************************************
 // List currently created guilds, and guilds being opted for creation
 
-int dmListGuilds(Player* player, cmd* cmnd) {
+int dmListGuilds(const std::shared_ptr<Player>& player, cmd* cmnd) {
     GuildCreation * gcp;
     int     found = 0;
 
@@ -1441,7 +1437,7 @@ bool Config::addGuildCreation(GuildCreation* toAdd) {
 //                      supporter functions
 //*********************************************************************
 
-bool GuildCreation::addSupporter(Player* supporter) {
+bool GuildCreation::addSupporter(std::shared_ptr<Player> supporter) {
     if(supporter && supporters.find(supporter->getName()) == supporters.end()) {
         supporters[supporter->getName()] = supporter->getSock()->getIp();
         numSupporters++;
@@ -1500,25 +1496,19 @@ GuildCreation* Config::findGuildCreation(std::string_view creationName) {
 
 void Guild::recalcLevel() {
     std::list<std::string>::iterator mIt;
-    Player* member=nullptr;
-    bool    online;
+    std::shared_ptr<Player> member=nullptr;
 
     broadcast(isCt, "\n^yError: Guild level for \"%s\" is being recalculated.\n", name.c_str());
 
     level = 0;
     for(mIt = members.begin() ; mIt != members.end() ; mIt++) {
-        online = false;
         member = gServer->findPlayer((*mIt).c_str());
         if(!member) {
-            if(!loadPlayer((*mIt).c_str(), &member))
+            if(!loadPlayer((*mIt).c_str(), member))
                 continue;
-        } else
-            online = true;
+        }
 
         level += member->getLevel();
-
-        if(!online)
-            free_crt(member);
     }
 
     gConfig->saveGuilds();
@@ -1534,8 +1524,8 @@ int Guild::averageLevel() {
     if(!level)
         recalcLevel();
 
-    cLevel = MAX(1L, level);
-    cMembers = MAX(1, numMembers);
+    cLevel = std::max(1L, level);
+    cMembers = std::max(1, numMembers);
 
     return(cLevel/cMembers);
 }
@@ -1577,7 +1567,7 @@ std::string getGuildName(int guildNum) {
 // True only if the guild will still have 3 or more players in it
 // otherwise it must be disbanded
 
-bool canRemovePlyFromGuild(Player* player) {
+bool canRemovePlyFromGuild(std::shared_ptr<Player> player) {
     const Guild* guild  = gConfig->getGuild(player->getGuild());
     if(!guild)
         return(false);
@@ -1591,7 +1581,7 @@ bool canRemovePlyFromGuild(Player* player) {
 //*********************************************************************
 // Updates level statistics based upon the player, and 'what' is happening
 
-void updateGuild(Player* player, int what) {
+void updateGuild(std::shared_ptr<Player> player, int what) {
     if(!player || !player->getGuild() || player->getGuildRank() < GUILD_PEON)
         return;
     std::ostringstream url;
@@ -1623,7 +1613,7 @@ void updateGuild(Player* player, int what) {
         // the guildmaster is leaving and did not abdicate their position!
         // find someone to take their place
         if(player->getGuildRank() == GUILD_MASTER) {
-            Player* leader=nullptr;
+            std::shared_ptr<Player> leader=nullptr;
 
             do {
                 guild->setLeader(guild->members.front());
@@ -1633,16 +1623,13 @@ void updateGuild(Player* player, int what) {
                     online = true;
                 else {
                     online = false;
-                    if(!loadPlayer(guild->getLeader().c_str(), &leader))
+                    if(!loadPlayer(guild->getLeader().c_str(), leader))
                         leader = nullptr;
                 }
 
 
                 if(leader) {
                     Guild::abdicate(player, leader, online);
-
-                    if(!online)
-                        free_crt(leader);
                     break;
                 }
 
@@ -1659,7 +1646,7 @@ void updateGuild(Player* player, int what) {
         std::list<std::string>::const_iterator it;
 
         if(!player->getForum().empty()) {
-            Player* target=nullptr;
+            std::shared_ptr<Player> target=nullptr;
             bool removeForum = true;
 
             for(it = guild->members.begin(); it != guild->members.end(); it++) {
@@ -1668,7 +1655,7 @@ void updateGuild(Player* player, int what) {
                     online = true;
                 else {
                     online = false;
-                    if(!loadPlayer((*it).c_str(), &target))
+                    if(!loadPlayer((*it).c_str(), target))
                         target = nullptr;
                 }
 
@@ -1677,8 +1664,6 @@ void updateGuild(Player* player, int what) {
                     // if another member of this guild has the same forum account, don't remove the account
                     if(player->getForum() == target->getForum())
                         removeForum = false;
-                    if(!online)
-                        free_crt(target);
                 }
 
                 if(!removeForum)
@@ -1704,7 +1689,7 @@ void updateGuild(Player* player, int what) {
 
 void Config::creationToGuild(GuildCreation* toApprove) {
     std::map<std::string, std::string>::iterator sIt;
-    Player *leader=nullptr, *officer=nullptr;
+    std::shared_ptr<Player>leader=nullptr, officer=nullptr;
     int     guildId=0;
     bool    online=false;
     std::ostringstream url;
@@ -1716,7 +1701,7 @@ void Config::creationToGuild(GuildCreation* toApprove) {
     // If the leader doesn't exist, we delete the guild.
     leader = gServer->findPlayer(toApprove->leader.c_str());
     if(!leader) {
-        if(!loadPlayer(toApprove->leader.c_str(), &leader)) {
+        if(!loadPlayer(toApprove->leader.c_str(), leader)) {
             broadcast(isCt, "^yError creating guild '%s': Can't find the leader %s.\nThis guild is being erased.",
                 toApprove->name.c_str(), toApprove->leader.c_str());
             removeGuildCreation(toApprove->leader);
@@ -1732,8 +1717,6 @@ void Config::creationToGuild(GuildCreation* toApprove) {
         broadcast(isCt, "^yError creating guild '%s': %s is not flagged as creating a guild.\nThis guild is being erased.^",
             toApprove->name.c_str(), toApprove->leader.c_str());
         removeGuildCreation(leader->getName());
-        if(!online)
-            free_crt(leader);
         return;
     }
 
@@ -1741,12 +1724,11 @@ void Config::creationToGuild(GuildCreation* toApprove) {
     // If we can't load the supporters
     for(sIt = toApprove->supporters.begin() ; sIt != toApprove->supporters.end() ; sIt++) {
         if(!gServer->findPlayer((*sIt).first.c_str())) {
-            if(!loadPlayer((*sIt).first.c_str(), &officer)) {
+            if(!loadPlayer((*sIt).first.c_str(), officer)) {
                 broadcast(isCt, "^yError loading guild supporter %s in guild %s.\nRemoving this person from the support list.", (*sIt).first.c_str(), toApprove->name.c_str());
                 toApprove->removeSupporter((*sIt).first);
                 return;
             }
-            free_crt(officer);
         }
     }
 
@@ -1790,7 +1772,7 @@ void Config::creationToGuild(GuildCreation* toApprove) {
 
         officer = gServer->findPlayer((*sIt).first.c_str());
         if(!officer) {
-            if(!loadPlayer((*sIt).first.c_str(), &officer)) {
+            if(!loadPlayer((*sIt).first.c_str(), officer)) {
                 broadcast(isCt, "^yError making %s an officer in %s.", (*sIt).first.c_str(), guild->getName().c_str());
                 continue;
             }
@@ -1804,15 +1786,11 @@ void Config::creationToGuild(GuildCreation* toApprove) {
         guild->incNumMembers();
         guild->incLevel( officer->getLevel());
         guild->addMember(officer->getName());
-        if(!offOnline)
-            free_crt(officer);
-        else
+        if(offOnline)
             officer->print("You are now an officer of %s.\n", guild->getName().c_str());
     }
 
     removeGuildCreation(leader->getName());
-    if(!online)
-        free_crt(leader);
 
     callWebserver(url.str());
 }
@@ -1823,7 +1801,7 @@ void Config::creationToGuild(GuildCreation* toApprove) {
 //*********************************************************************
 
 void rejectGuild(GuildCreation * toReject, char *reason) {
-    Player  *leader=nullptr, *officer=nullptr;
+    std::shared_ptr<Player> leader=nullptr, officer=nullptr;
     std::string leaderName = "";
     int     error = 0, ff;
     char    Reason[250], file[80], outStr[1024], datestr[40];
@@ -1838,7 +1816,7 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
 
     leader = gServer->findPlayer(toReject->leader.c_str());
     if(!leader) {
-        if(!loadPlayer(toReject->leader.c_str(), &leader)) {
+        if(!loadPlayer(toReject->leader.c_str(), leader)) {
             broadcast(isCt, "^yError rejecting guild '%s': Can't find the leader %s.", toReject->name.c_str(), toReject->leader.c_str());
             error = 1;
         }
@@ -1852,7 +1830,7 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
 
         if(!online) {
             // Send them a mudmail
-            sprintf(file, "%s/%s.txt", Path::Post, leader->getCName());
+            sprintf(file, "%s/%s.txt", Path::Post.c_str(), leader->getCName());
             ff = open(file, O_CREAT | O_APPEND | O_RDWR, ACC);
             if(ff > 0) {
                 time(&t);
@@ -1863,7 +1841,6 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
                 close(ff);
                 leader->setFlag(P_UNREAD_MAIL);
             }
-            free_crt(leader);
         } else
             leader->print("Your guild %s has been rejected.\nReason: %s\n", toReject->name.c_str(), Reason);
 
@@ -1875,14 +1852,12 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
         online = false;
         officer = gServer->findPlayer((*sIt).first.c_str());
         if(!officer) {
-            if(!loadPlayer((*sIt).first.c_str(), &officer))
+            if(!loadPlayer((*sIt).first.c_str(), officer))
                 continue;
         } else
             online = true;
         officer->clearFlag(P_CREATING_GUILD);
         officer->save(online);
-        if(!online)
-            free_crt(officer);
     }
 
     gConfig->removeGuildCreation(leaderName);
@@ -1935,10 +1910,10 @@ Guild* Config::getGuild(int guildId) {
 // Will find a guild based on "txt". If a guild could not be found, it
 // will print a message to the player informing them of such.
 
-Guild* Config::getGuild(const Player* player, std::string txt) {
+Guild* Config::getGuild(const std::shared_ptr<Player> player, std::string txt) {
     Guild* guild=nullptr;
     // 0 = not found, -1 = not unique
-    int check = 0, len = txt.length();
+    int check = 0;
     boost::to_lower(txt);
 
     GuildMap::iterator it;
@@ -1977,11 +1952,9 @@ bool Config::deleteGuild(int guildId) {
     Guild* guild = guilds[guildId];
     guilds.erase(guildId);
 
-    Player *player = gServer->findPlayer(guild->getLeader().c_str());
-    bool online = true;
+    std::shared_ptr<Player> player = gServer->findPlayer(guild->getLeader().c_str());
     if(!player) {
-        online = false;
-        if(!loadPlayer(guild->getLeader().c_str(), &player))
+        if(!loadPlayer(guild->getLeader().c_str(), player))
             player = nullptr;
     }
 
@@ -1998,8 +1971,8 @@ bool Config::deleteGuild(int guildId) {
                 // If the shop is located inside the guildhall, then destroy it.
                 // If it isn't, then unlink it.
                 CatRef cr = (*it)->ranges.front().low;
-                UniqueRoom* shop=nullptr;
-                if(loadRoom(cr, &shop)) {
+                std::shared_ptr<UniqueRoom> shop=nullptr;
+                if(loadRoom(cr, shop)) {
                     // If the shop belongs to the guild, remove and continue
                     if(!shop->exits.empty() && !shopStaysWithGuild(shop)) {
                         shopRemoveGuild(*it, player, shop, nullptr);
@@ -2013,8 +1986,6 @@ bool Config::deleteGuild(int guildId) {
             it = properties.erase(it);
         }
 
-        if(!online)
-            free_crt(player);
     }
 
     std::ostringstream url;

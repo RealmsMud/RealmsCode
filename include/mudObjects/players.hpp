@@ -22,6 +22,8 @@
 
 #include "mudObjects/creatures.hpp"
 
+class Fishing;
+
 class Player : public Creature {
 public:
     static std::string hashPassword(const std::string &pass);
@@ -34,8 +36,8 @@ protected:
     std::string showList(const std::list<std::string> &list) const;
     void addList(std::list<std::string> &list, const std::string &name);
     void delList(std::list<std::string> &list, const std::string &name);
-    int doDeleteFromRoom(BaseRoom* room, bool delPortal);
-    void finishAddPlayer(BaseRoom* room);
+    int doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) override;
+    void finishAddPlayer(const std::shared_ptr<BaseRoom>& room);
     long getInterest(long principal, double annualRate, long seconds);
 
 public:
@@ -45,14 +47,14 @@ public:
     Player(const Player& cr);
     Player& operator=(const Player& cr);
     bool operator< (const Player& t) const;
-    ~Player();
+    ~Player() override;
     int save(bool updateTime=false, LoadType saveType=LoadType::LS_NORMAL);
     int saveToFile(LoadType saveType=LoadType::LS_NORMAL);
     void loadAnchors(xmlNodePtr curNode);
     void readXml(xmlNodePtr curNode, bool offline=false);
     void saveXml(xmlNodePtr curNode) const;
-    void validateId();
-    void upgradeStats();
+    void validateId() override;
+    void upgradeStats() override;
     void recordLevelInfo();
 
 protected:
@@ -61,28 +63,28 @@ protected:
     std::string proxyName;
     std::string proxyId;
 
-    char customColors[CUSTOM_COLOR_SIZE];
-    unsigned short warnings;
-    unsigned short actual_level;
-    unsigned short tickDmg;
-    unsigned short negativeLevels;
-    unsigned short guild; // Guild this player is in
-    unsigned short guildRank; // Rank this player holds in their guild
+    char customColors[CUSTOM_COLOR_SIZE]{};
+    unsigned short warnings{};
+    unsigned short actual_level{};
+    unsigned short tickDmg{};
+    unsigned short negativeLevels{};
+    unsigned short guild{}; // Guild this player is in
+    unsigned short guildRank{}; // Rank this player holds in their guild
     CreatureClass cClass2;
-    unsigned short wimpy;
-    short barkskin;
-    unsigned short pkin;
-    unsigned short pkwon;
-    int wrap;
-    int luck;
-    int ansi;
-    unsigned short weaponTrains; // Number of weapons they are able to train in
-    long lastLogin;
-    long lastInterest;
-    unsigned long timeout;
+    unsigned short wimpy{};
+    short barkskin{};
+    unsigned short pkin{};
+    unsigned short pkwon{};
+    int wrap{};
+    int luck{};
+    int ansi{};
+    unsigned short weaponTrains{}; // Number of weapons they are able to train in
+    long lastLogin{};
+    long lastInterest{};
+    unsigned long timeout{};
     std::string lastPassword;
     std::string afflictedBy;    // used to determine master with vampirism/lycanthropy
-    int tnum[5];
+    int tnum[5]{};
     std::list<std::string> ignoring;
     std::list<std::string> gagging;
     std::list<std::string> refusing;
@@ -92,30 +94,32 @@ protected:
     std::string password;
     std::string title;
     std::string tempTitle;  // this field is purposely not saved
-    Socket* mySock;
+    std::weak_ptr<Socket> mySock;
     std::string surname;
     std::string oldCreated;
-    long created;
+    long created{};
     std::string lastCommand;
     std::string lastCommunicate;
     std::string forum;      // forum account this character is associated with
-    char songs[32];
-    struct StatsContainer oldStats;
-    struct StatsContainer newStats;
-    Anchor *anchor[MAX_DIMEN_ANCHORS];
-    cDay *birthday;
-    Monster* alias_crt;
+    boost::dynamic_bitset<> songs{256};
+    struct StatsContainer oldStats{};
+    struct StatsContainer newStats{};
+    Anchor *anchor[MAX_DIMEN_ANCHORS]{};
+    cDay *birthday{};
+    std::shared_ptr<Monster>  alias_crt;
     std::list<CatRef> roomExp; // rooms they have gotten exp from
-    unsigned short thirst;
-    Object* lastPawn;
-    int uniqueObjId;
+    unsigned short thirst{};
+    std::shared_ptr<Object>  lastPawn;
+    int uniqueObjId{};
     typedef std::map<std::string, bool> KnownAlchemyEffectsMap;
     KnownAlchemyEffectsMap knownAlchemyEffects;
 
     bool fleeing = false;
 
 public:
-    std::string getFlagList(std::string_view sep=", ") const;
+    std::string getFlagList(std::string_view sep=", ") const override;
+    void hardcoreDeath();
+    void deletePlayer();
 
 // Data
     std::list<CatRef> storesRefunded;   // Shops the player has refunded an item in
@@ -123,12 +127,14 @@ public:
     std::list<CatRef> objIncrease; // rooms they have gotten exp from
 
     std::set<std::string> charms;
-    int *scared_of;
+    int *scared_of{};
 
     std::list<CatRef> lore;
     std::list<int> recipes;
-    typedef std::map<int, QuestCompletion*> QuestCompletionMap;
-    typedef std::map<int, QuestCompleted*> QuestCompletedMap;
+
+    // TODO: emplace
+    typedef std::map<CatRef, QuestCompletion*> QuestCompletionMap;
+    typedef std::map<CatRef, QuestCompleted*> QuestCompletedMap;
 
     QuestCompletionMap questsInProgress;
     QuestCompletedMap questsCompleted;    // List of all quests we've finished and how many times
@@ -141,9 +147,9 @@ public:
     Range   bRange[MAX_BUILDER_RANGE];
 
 
-    bool checkProxyAccess(Player* proxy);
+    bool checkProxyAccess(const std::shared_ptr<Player>& proxy);
 
-    void setProxy(Player* proxy);
+    void setProxy(std::shared_ptr<Player> proxy);
     void setProxy(std::string_view pProxyName, std::string_view pProxyId);
     void setProxyName(std::string_view pProxyName);
     void setProxyId(std::string_view pProxyId);
@@ -153,40 +159,40 @@ public:
 
     // Combat & Death
     unsigned int computeAttackPower();
-    void dieToPet(Monster *killer);
-    void dieToMonster(Monster *killer);
-    void dieToPlayer(Player *killer);
-    void loseExperience(Monster *killer);
-    void dropEquipment(bool dropAll=false, Socket* killSock = nullptr);
-    void dropBodyPart(Player *killer);
-    bool isGuildKill(const Player *killer) const;
-    bool isClanKill(const Player *killer) const;
-    bool isGodKill(const Player *killer) const;
-    int guildKill(Player *killer);
-    int godKill(Player *killer);
-    int clanKill(Player *killer);
+    void dieToPet(const std::shared_ptr<Monster>& killer);
+    void dieToMonster(const std::shared_ptr<Monster>& killer);
+    void dieToPlayer(const std::shared_ptr<Player>&killer);
+    void loseExperience(const std::shared_ptr<Monster>& killer);
+    void dropEquipment(bool dropAll=false, std::shared_ptr<Creature> killer = nullptr);
+    void dropBodyPart(const std::shared_ptr<Player>&killer);
+    bool isGuildKill(std::shared_ptr<Player>killer) const;
+    bool isClanKill(const std::shared_ptr<Player>&killer) const;
+    bool isGodKill(const std::shared_ptr<Player>&killer) const;
+    int guildKill(const std::shared_ptr<Player>&killer);
+    int godKill(const std::shared_ptr<Player>&killer);
+    int clanKill(const std::shared_ptr<Player>&killer);
     int checkLevel();
-    void updatePkill(Player *killer);
-    void logDeath(Creature *killer);
-    void resetPlayer(Creature *killer);
-    void getPkilled(Player *killer, bool dueling, bool reset=true);
+    void updatePkill(const std::shared_ptr<Player>&killer);
+    void logDeath(const std::shared_ptr<Creature>&killer);
+    void resetPlayer(const std::shared_ptr<Creature>&killer);
+    void getPkilled(const std::shared_ptr<Player>&killer, bool pDueling, bool reset=true);
     void die(DeathType dt);
     bool dropWeapons();
-    int checkPoison(Creature* target, Object* weapon);
-    int attackCreature(Creature *victim, AttackType attackType = ATTACK_NORMAL);
-    void adjustAlignment(Monster *victim);
+    int checkPoison(std::shared_ptr<Creature> target, std::shared_ptr<Object>  weapon);
+    int attackCreature(const std::shared_ptr<Creature>&victim, AttackType attackType = ATTACK_NORMAL);
+    void adjustAlignment(std::shared_ptr<Monster> victim);
     void checkWeaponSkillGain();
     void loseAcid();
-    void dissolveItem(Creature* creature);
-    int computeDamage(Creature* victim, Object* weapon, AttackType attackType,
+    void dissolveItem(std::shared_ptr<Creature> creature);
+    int computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon, AttackType attackType,
                       AttackResult& result, Damage& attackDamage, bool computeBonus,
-                      int& drain, float multiplier = 1.0);
+                      unsigned int &drain, float multiplier = 1.0) override;
     int packBonus();
-    int getWeaponSkill(const Object* weapon = nullptr) const;
-    int getDefenseSkill() const;
+    int getWeaponSkill(std::shared_ptr<Object>  weapon = nullptr) const override;
+    int getDefenseSkill() const override;
     void damageArmor(int dmg);
     void checkArmor(int wear);
-    void gainExperience(Monster* victim, Creature* killer, int expAmount, bool groupExp = false);
+    void gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount, bool groupExp = false) override;
     void disarmSelf();
     bool lagProtection();
     void computeAC();
@@ -235,14 +241,14 @@ public:
 
 // Quests
     bool addQuest(QuestInfo* toAdd);
-    bool hasQuest(int questId) const;
+    bool hasQuest(const CatRef& questId) const;
     bool hasQuest(const QuestInfo *quest) const;
-    bool hasDoneQuest(int questId) const;
-    QuestCompleted* getQuestCompleted(const int questId) const;
-    void updateMobKills(Monster* monster);
+    bool hasDoneQuest(const CatRef& questId) const;
+    QuestCompleted* getQuestCompleted(const CatRef& questId) const;
+    void updateMobKills(const std::shared_ptr<Monster>&  monster);
     int countItems(const QuestCatRef& obj);
-    void updateItems(Object* object);
-    void updateRooms(UniqueRoom* room);
+    void updateItems(const std::shared_ptr<Object>&  object);
+    void updateRooms(const std::shared_ptr<UniqueRoom>& room);
     void saveQuests(xmlNodePtr rootNode) const;
     bool questIsSet(int quest) const;
     void setQuest(int quest);
@@ -279,13 +285,13 @@ public:
     std::string getForum() const;
     long getCreated() const;
     std::string getCreatedStr() const;
-    Monster* getAlias() const;
+    std::shared_ptr<Monster>  getAlias() const;
     cDay* getBirthday() const;
     std::string getAnchorAlias(int i) const;
     std::string getAnchorRoomName(int i) const;
     const Anchor* getAnchor(int i) const;
     bool hasAnchor(int i) const;
-    bool isAnchor(int i, const BaseRoom* room) const;
+    bool isAnchor(int i, const std::shared_ptr<BaseRoom>& room) const;
     unsigned short getThirst() const;
     std::string getCustomColor(CustomColor i, bool caret) const;
     int numDiscoveredRooms() const;
@@ -317,7 +323,7 @@ public:
     void setCreated();
     void setSurname(const std::string& s);
     void setForum(std::string_view f);
-    void setAlias(Monster* m);
+    void setAlias(std::shared_ptr<Monster>  m);
     void setBirthday();
     void delAnchor(int i);
     void setAnchor(int i, std::string_view a);
@@ -332,50 +338,50 @@ public:
 
 // Staff
     bool checkRangeRestrict(const CatRef& cr, bool reading=true) const;
-    bool checkBuilder(UniqueRoom* room, bool reading=true) const;
+    bool checkBuilder(std::shared_ptr<UniqueRoom> room, bool reading=true) const;
     bool checkBuilder(const CatRef& cr, bool reading=true) const;
-    void listRanges(const Player* viewer) const;
+    void listRanges(const std::shared_ptr<const Player> &viewer) const;
     void initBuilder();
     bool builderCanEditRoom(std::string_view action);
 
 // Movement
     Location getBound();
     void bind(const StartLoc* location);
-    void dmPoof(BaseRoom* room, BaseRoom *newRoom);
-    void doFollow(BaseRoom* oldRoom);
+    void dmPoof(const std::shared_ptr<BaseRoom>& room, std::shared_ptr<BaseRoom> newRoom);
+    void doFollow(const std::shared_ptr<BaseRoom>& oldRoom);
     void doPetFollow();
     void doRecall(int roomNum = -1);
-    void addToSameRoom(Creature* target);
-    void addToRoom(BaseRoom* room);
-    void addToRoom(AreaRoom* aUoom);
-    void addToRoom(UniqueRoom* uRoom);
-    bool showExit(const Exit* exit, int magicShowHidden=0) const;
-    int checkTraps(UniqueRoom* room, bool self=true, bool isEnter=true);
-    int doCheckTraps(UniqueRoom* room);
+    void addToSameRoom(const std::shared_ptr<Creature>& target);
+    void addToRoom(const std::shared_ptr<BaseRoom>& room);
+    void addToRoom(const std::shared_ptr<AreaRoom>& aUoom);
+    void addToRoom(const std::shared_ptr<UniqueRoom>& uRoom);
+    bool showExit(const std::shared_ptr<Exit>& exit, int magicShowHidden=0) const;
+    int checkTraps(std::shared_ptr<UniqueRoom> room, bool self=true, bool isEnter=true);
+    int doCheckTraps(const std::shared_ptr<UniqueRoom>& room);
     bool checkHeavyRestrict(std::string_view skill) const;
 
 // Recipes
     void unprepareAllObjects() const;
     void removeItems(const std::list<CatRef>* list, int numIngredients);
-    void learnRecipe(int id);
+    void learnRecipe(unsigned int id);
     void learnRecipe(Recipe* recipe);
-    bool knowsRecipe(int id) const;
+    bool knowsRecipe(unsigned int id) const;
     bool knowsRecipe(Recipe* recipe) const;
     Recipe* findRecipe(cmd* cmnd, std::string_view skill, bool* searchRecipes, Size recipeSize=NO_SIZE, int numIngredients=1) const;
 
     // Alchemy
-    bool alchemyEffectVisible(Object* obj, std::string_view effect);
-    bool learnAlchemyEffect(Object* obj, std::string_view effect);
-    int endConsume(Object* object, bool forceDelete=false);
-    int consume(Object* object, cmd* cmnd);
+    bool alchemyEffectVisible(const std::shared_ptr<const Object>&  obj, std::string_view effect) const;
+    bool learnAlchemyEffect(const std::shared_ptr<const Object>&  obj, std::string_view effect);
+    int endConsume(const std::shared_ptr<Object>&  object, bool forceDelete=false);
+    int consume(const std::shared_ptr<Object>&  object, cmd* cmnd);
     void recallLog(std::string_view name, std::string_view cname, std::string_view room);
-    int recallCheckBag(Object *cont, cmd* cmnd, int show, int log);
+    int recallCheckBag(const std::shared_ptr<Object>&cont, cmd* cmnd, int show, int log);
     int useRecallPotion(int show, int log);
 
 
 // Stats & Ticking
     long tickInterval(Stat& stat, bool fastTick, bool deathSickness, bool vampAndDay, std::string_view effectName);
-    void pulseTick(long t);
+    void pulseTick(long t) override;
     int getHpTickBonus() const;
     int getMpTickBonus() const;
     void changeStats();
@@ -383,7 +389,7 @@ public:
 
     bool isPureFighter();
     void decreaseFocus();
-    void increaseFocus(FocusAction action, unsigned int amt = 0, Creature* target = nullptr);
+    void increaseFocus(FocusAction action, unsigned int amt = 0, std::shared_ptr<Creature> target = nullptr);
     void clearFocus();
     bool doPlayerHarmRooms();
     bool doDoTs();
@@ -396,18 +402,18 @@ public:
 // Formating
     std::string getWhoString(bool whois=false, bool color=true, bool ignoreIllusion=false) const;
     std::string getTimePlayed() const;
-    std::string consider(Creature* creature) const;
-    int displayCreature(Creature* target);
+    std::string consider(const std::shared_ptr<Creature>& creature) const;
+    int displayCreature(const std::shared_ptr<Creature>& target);
     void sendPrompt();
     void defineColors();
     void setSockColors();
-    void vprint(const char *fmt, va_list ap) const;
-    void escapeText();
-    std::string getClassString() const;
-    void score(const Player* viewer);
-    void information(const Player* viewer=0, bool online=true);
-    void showAge(const Player* viewer) const;
-    std::string customColorize(const std::string& text, bool caret=true) const;
+    void vprint(const char *fmt, va_list ap) const override;
+    void escapeText() override;
+    std::string getClassString() const override;
+    void score(std::shared_ptr<Player> viewer);
+    void information(std::shared_ptr<Player> viewer=0, bool online=true);
+    void showAge(std::shared_ptr<Player> viewer) const;
+    std::string customColorize(const std::string& text, bool caret=true) const override;
     void resetCustomColors();
 
 // Misellaneous
@@ -421,7 +427,7 @@ public:
     std::string expInLevel() const;
     std::string expForLevel() const;
     std::string expNeededDisplay() const;
-    int getAdjustedAlignment() const;
+    int getAdjustedAlignment() const override;
     void hasNewMudmail() const;
     bool checkConfusion();
     int autosplit(long amt);
@@ -451,20 +457,20 @@ public:
     int getVision() const;
 
     bool halftolevel() const;
-    bool canWear(const Object* object, bool all=false) const;
-    bool canUse(Object* object, bool all=false);
+    bool canWear(const std::shared_ptr<Object>&  object, bool all=false) const;
+    bool canUse(const std::shared_ptr<Object>&  object, bool all=false);
     void checkInventory();
-    void checkTempEnchant(Object* object);
-    void checkEnvenom(Object* object);
-    bool breakObject(Object* object, int loc);
+    void checkTempEnchant(const std::shared_ptr<Object>&  object);
+    void checkEnvenom(const std::shared_ptr<Object>&  object);
+    bool breakObject(const std::shared_ptr<Object>&  object, int loc);
     void wearCursed();
     bool canChooseCustomTitle() const;
     bool alignInOrder() const;
 
-    Socket* getSock() const;
-    bool hasSock() const;
+    std::shared_ptr<Socket> getSock() const override;
+    bool hasSock() const override;
     bool isConnected() const;
-    void setSock(Socket* pSock);
+    void setSock(std::shared_ptr<Socket> pSock);
 
     bool songIsKnown(int song) const;
     void learnSong(int song);
@@ -476,11 +482,27 @@ public:
 
     static bool exists(std::string_view name);
     time_t getIdle();
-    int delCharm(Creature* creature);
-    int addCharm(Creature* creature);
+    int delCharm(const std::shared_ptr<Creature>& creature);
+    int addCharm(const std::shared_ptr<Creature>& creature);
 
-    void setLastPawn(Object* object);
+    void setLastPawn(const std::shared_ptr<Object>&  object);
     bool restoreLastPawn();
     void checkFreeSkills(const std::string &skill);
     void computeInterest(long t, bool online);
+
+    // Traps
+    void loseAll(bool destroyAll, std::string lostTo);
+    void teleportTrap();
+    void rockSlide();
+    void etherealTravel();
+
+    // Skills
+    bool canTrack();
+    bool canFish(const Fishing** list, std::shared_ptr<Object>& pole) const;
+
+    bool scentTrack();
+    void doTrack();
+
+    bool doFish();
+
 };

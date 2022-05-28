@@ -17,7 +17,7 @@
  */
 
 #include <printf.h>                  // for register_printf_specifier, print...
-#include <stdarg.h>                  // for va_list, va_end, va_start, va_copy
+#include <cstdarg>                   // for va_list, va_end, va_start, va_copy
 #include <cstdio>                    // for asprintf, fprintf, vasprintf, FILE
 #include <cstdlib>                   // for free
 #include <ostream>                   // for operator<<, ostringstream, endl
@@ -35,12 +35,12 @@
 // Function Prototypes
 std::string delimit(const char *str, int wrap);
 
-void Creature::printPaged(std::string_view toPrint) {
+void Creature::printPaged(std::string_view toPrint) const {
     if(hasSock())
         getSock()->printPaged(toPrint);
 }
 
-void Creature::donePaging() {
+void Creature::donePaging() const {
     if(hasSock())
         getSock()->donePaging();
 }
@@ -58,7 +58,7 @@ void Creature::print(const char *fmt,...) const {
     if(!this)
         return;
 
-    Socket* printTo = getSock();
+    std::shared_ptr<Socket> printTo = getSock();
 
     if(isPet())
         printTo = getConstMaster()->getSock();
@@ -77,7 +77,7 @@ void Creature::print(const char *fmt,...) const {
 }
 
 void Creature::printColor(const char *fmt,...) const {
-    Socket* printTo = getSock();
+    std::shared_ptr<Socket> printTo = getSock();
 
     if(isPet())
         printTo = getConstMaster()->getSock();
@@ -95,8 +95,11 @@ void Creature::printColor(const char *fmt,...) const {
     va_end(ap);
 }
 void Player::vprint(const char *fmt, va_list ap) const {
-    if(this && mySock)
-        mySock->vprint(fmt, ap);
+    if(this) {
+        if (auto sock = mySock.lock()) {
+            sock->vprint(fmt, ap);
+        }
+    }
 }
 
 
@@ -150,7 +153,7 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
         const std::ostringstream *tmp = *((const std::ostringstream **) (args[0]));
         len = asprintf(&buffer, "%s", tmp->str().c_str());
     }
-    // M = Capital Monster N = small monster
+    // M = Capital Monster; N = small monster
     else if(info->spec == 'M' || info->spec == 'N') {
         const Creature *crt = *((const Creature **) (args[0]));
         if(info->spec == 'M') {
@@ -170,7 +173,7 @@ int print_objcrt(FILE *stream, const struct printf_info *info, const void *const
         if(len == -1)
             return(-1);
     }
-    // O = Capital Object P = small object
+    // O = Capital Object; P = small object
     else if(info->spec == 'O' || info->spec == 'P') {
         const Object *obj = *((const Object **) (args[0]));
         if(info->spec == 'O') {

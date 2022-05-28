@@ -44,7 +44,7 @@ const DeityData* Config::getDeity(int id) const {
 //                      dmShowDeities
 //*********************************************************************
 
-int dmShowDeities(Player* player, cmd* cmnd) {
+int dmShowDeities(const std::shared_ptr<Player>& player, cmd* cmnd) {
     DeityDataMap::iterator it;
     std::map<int, PlayerTitle*>::iterator tt;
     DeityData* data=nullptr;
@@ -110,7 +110,7 @@ std::string DeityData::getName() const {
 //                      cmdReligion
 //**********************************************************************
 
-int cmdReligion(Player* player, cmd* cmnd) {
+int cmdReligion(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->getDeity()) {
         player->print("You do not belong to a religion.\n");
     } else {

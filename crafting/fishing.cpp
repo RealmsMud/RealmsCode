@@ -45,51 +45,50 @@
 #include "server.hpp"                  // for Server, gServer
 #include "statistics.hpp"              // for Statistics
 #include "unique.hpp"                  // for Lore, Unique
-#include "utils.hpp"                   // for MAX, MIN
 #include "xml.hpp"                     // for loadObject, loadMonster
 
 //**********************************************************************
 //                      canFish
 //**********************************************************************
 
-bool canFish(const Player* player, const Fishing** list, Object** pole) {
-    *pole = player->ready[HELD-1];
+bool Player::canFish(const Fishing** list, std::shared_ptr<Object>&  pole) const {
+    pole = ready[HELD-1];
 
-    if(!player->isStaff()) {
-        if(!player->ableToDoCommand())
+    if(!isStaff()) {
+        if(!ableToDoCommand())
             return(false);
 
-        if(player->isBlind()) {
-            player->printColor("^CYou can't do that! You're blind!\n");
+        if(isBlind()) {
+            printColor("^CYou can't do that! You're blind!\n");
             return(false);
         }
-        if(player->inCombat()) {
-            player->printColor("You are too busy to do that now!\n");
-            return(false);
-        }
-
-        if(player->isEffected("mist")) {
-            player->printColor("You must be in corporeal form to work with items.\n");
-            return(false);
-        }
-        if(player->isEffected("berserk")) {
-            player->print("You are too angry to go fishing!\n");
+        if(inCombat()) {
+            printColor("You are too busy to do that now!\n");
             return(false);
         }
 
-        if(!*pole || !(*pole)->flagIsSet(O_FISHING)) {
-            player->printColor("You need a fishing pole to go fishing.\n");
+        if(isEffected("mist")) {
+            printColor("You must be in corporeal form to work with items.\n");
+            return(false);
+        }
+        if(isEffected("berserk")) {
+            print("You are too angry to go fishing!\n");
+            return(false);
+        }
+
+        if(!pole || !(pole)->flagIsSet(O_FISHING)) {
+            printColor("You need a fishing pole to go fishing.\n");
             return(false);
         }
     }
 
-    if(player->inAreaRoom())
-        *list = player->getConstAreaRoomParent()->getFishing();
-    else if(player->inUniqueRoom())
-        *list = player->getConstUniqueRoomParent()->getFishing();
+    if(inAreaRoom())
+        *list = getConstAreaRoomParent()->getFishing();
+    else if(inUniqueRoom())
+        *list = getConstUniqueRoomParent()->getFishing();
 
     if(!*list || (*list)->empty()) {
-        player->printColor("You can't go fishing here!\n");
+        printColor("You can't go fishing here!\n");
         return(false);
     }
 
@@ -100,7 +99,7 @@ bool canFish(const Player* player, const Fishing** list, Object** pole) {
 //                      failFishing
 //**********************************************************************
 
-bool failFishing(Player* player, const std::string& adminMsg, bool almost=true) {
+bool failFishing(const std::shared_ptr<Player>& player, const std::string& adminMsg, bool almost=true) {
     if(almost) {
         switch(Random::get(0,1)) {
         case 1:
@@ -132,35 +131,35 @@ bool failFishing(Player* player, const std::string& adminMsg, bool almost=true) 
 //                      doFish
 //**********************************************************************
 
-bool hearMobAggro(Socket* sock);
+bool hearMobAggro(std::shared_ptr<Socket> sock);
 
-bool doFish(Player* player) {
+bool Player::doFish() {
     const Fishing* list=nullptr;
-    const FishingItem* item=nullptr;
-    Monster* monster=nullptr;
-    Object* pole=nullptr, *fish=nullptr;
-    double chance=0.0, comp=0.0, skill=0.0, quality=0.0;
+    const FishingItem* item;
+    std::shared_ptr<Monster>  monster=nullptr;
+    std::shared_ptr<Object>  pole=nullptr, fish=nullptr;
+    double chance=0.0, comp, skill, quality;
     bool day = isDay();
 
-    player->unhide();
+    unhide();
 
-    if(!canFish(player, &list, &pole))
+    if(!canFish(&list, pole))
         return(false);
 
-    if(!player->knowsSkill("fishing"))
-        player->addSkill("fishing", 1);
+    if(!knowsSkill("fishing"))
+        addSkill("fishing", 1);
 
     // did they break the fishing pole?
     if(pole) {
         if(!Random::get(0, 3))
             pole->decShotsCur();
         if(pole->getShotsCur() < 1) {
-            player->breakObject(pole, HELD);
+            breakObject(pole, HELD);
             return(false);
         }
     }
-
-    skill = player->getSkillLevel("fishing");
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
+    skill = getSkillLevel("fishing");
     comp = skill * 100 / 40;  // turn from 1-40 to %
     comp = comp * 2 / 3;  // skill accounts for 2/3 of your success
     chance += comp;
@@ -170,124 +169,126 @@ bool doFish(Player* player) {
     comp /= 3;  // the fishing pole accounts for 1/3 of your success
     chance += comp;
 
-    chance = MAX<double>(10, MIN<double>(95, chance));
+    chance = std::max<double>(10, std::min<double>(95, chance));
 
     if(Random::get(1,100) > chance)
-        return(failFishing(player, "Dice roll.", false));
+        return(failFishing(pThis, "Dice roll.", false));
 
     item = list->getItem((short)skill, (short)quality);
 
     if(!item)
-        return(failFishing(player, "No FishingItem found.", false));
-    if(list->id == "river" && player->getRoomParent()->isWinter())
-        return(failFishing(player, "Winter."));
+        return(failFishing(pThis, "No FishingItem found.", false));
+    if(list->id == "river" && getRoomParent()->isWinter())
+        return(failFishing(pThis, "Winter."));
     if(day && item->isNightOnly())
-        return(failFishing(player, "Night-time only.", false));
+        return(failFishing(pThis, "Night-time only.", false));
     if(!day && item->isDayOnly())
-        return(failFishing(player, "Day-time only.", false));
+        return(failFishing(pThis, "Day-time only.", false));
 
     if(!item->isMonster()) {
         // most fish they get will be objects
-        if(!loadObject(item->getFish(), &fish))
-            return(failFishing(player, "Object failed to load.", false));
-        if(!Unique::canGet(player, fish)) {
-            delete fish;
-            return(failFishing(player, "Cannot have unique item."));
+        if(!loadObject(item->getFish(), fish))
+            return(failFishing(pThis, "Object failed to load.", false));
+        if(!Unique::canGet(pThis, fish)) {
+            fish.reset();
+            return(failFishing(pThis, "Cannot have unique item."));
         }
-        if(!Lore::canHave(player, fish, false)) {
-            delete fish;
-            return(failFishing(player, "Cannot have lore item (inventory)."));
+        if(!Lore::canHave(pThis, fish, false)) {
+            fish.reset();
+            return(failFishing(pThis, "Cannot have lore item (inventory)."));
         }
-        if(!Lore::canHave(player, fish)) {
-            delete fish;
-            return(failFishing(player, "Cannot have lore item (bag)."));
+        if(!Lore::canHave(pThis, fish)) {
+            fish.reset();
+            return(failFishing(pThis, "Cannot have lore item (bag)."));
         }
-        if(player->getLevel() < fish->getLevel() && fish->getQuestnum() > 0) {
-            delete fish;
-            return(failFishing(player, "Too low level."));
+        if(getLevel() < fish->getLevel() && fish->getQuestnum() > 0) {
+            fish.reset();
+            return(failFishing(pThis, "Too low level."));
         }
-        if((player->getWeight() + fish->getActualWeight()) > player->maxWeight()) {
-            delete fish;
-            return(failFishing(player, "Too heavy."));
+        if((getWeight() + fish->getActualWeight()) > maxWeight()) {
+            fish.reset();
+            return(failFishing(pThis, "Too heavy."));
         }
-        if(player->tooBulky(fish->getActualBulk())) {
-            delete fish;
-            return(failFishing(player, "Too bulky."));
+        if(tooBulky(fish->getActualBulk())) {
+            fish.reset();
+            return(failFishing(pThis, "Too bulky."));
         }
-        if(fish->getQuestnum() && player->questIsSet(fish->getQuestnum()-1)) {
-            delete fish;
-            return(failFishing(player, "Already completed the quest."));
+        if(fish->getQuestnum() && questIsSet(fish->getQuestnum()-1)) {
+            fish.reset();
+            return(failFishing(pThis, "Already completed the quest."));
         }
     } else {
         // some fish they get will be monsters
-        if(!loadMonster(item->getFish(), &monster))
-            return(failFishing(player, "Monster failed to load.", false));
-        if(player->getRoomParent()->countCrt() + 1 >= player->getRoomParent()->getMaxMobs()) {
-            delete monster;
-            return(failFishing(player, "Room too full.", false));
+        if(!loadMonster(item->getFish(), monster))
+            return(failFishing(pThis, "Monster failed to load.", false));
+        if(getRoomParent()->countCrt() + 1 >= getRoomParent()->getMaxMobs()) {
+            monster.reset();
+            return(failFishing(pThis, "Room too full.", false));
         }
         // TODO: do this so the print functions work properly
-        monster->setParent(player->getParent());
-//      monster->parent_rom = player->parent_rom;
-//      monster->area_room = player->area_room;
+        monster->setParent(getParent());
+//      monster->parent_rom = parent_rom;
+//      monster->area_room = area_room;
     }
 
     // they caught something!
 
     if(!item->isMonster()) {
         if(item->getExp()) {
-            if(!player->halftolevel()) {
-                player->printColor("You %s %d experience for catching %1P!\n", gConfig->isAprilFools() ? "lose" : "gain", item->getExp(), fish);
-                player->addExperience(item->getExp());
+            if(!halftolevel()) {
+                printColor("You %s %d experience for catching %1P!\n", gConfig->isAprilFools() ? "lose" : "gain", item->getExp(), fish.get());
+                addExperience(item->getExp());
             }
         } else {
-            player->printColor("You catch %1P!\n", fish);
+            printColor("You catch %1P!\n", fish.get());
         }
-        broadcast(player->getSock(), player->getParent(), "%M catches something!", player);
+        broadcast(getSock(), getParent(), "%M catches something!", this);
     } else {
         if(item->getExp()) {
-            if(!player->halftolevel()) {
-                player->printColor("You %s %d experience for catching %1N!\n", gConfig->isAprilFools() ? "lose" : "gain", item->getExp(), monster);
-                player->addExperience(item->getExp());
+            if(!halftolevel()) {
+                printColor("You %s %d experience for catching %1N!\n", gConfig->isAprilFools() ? "lose" : "gain", item->getExp(), monster.get());
+                addExperience(item->getExp());
             }
         } else {
-            player->printColor("You catch %1N!\n", monster);
+            printColor("You catch %1N!\n", monster.get());
         }
-        broadcast(player->getSock(), player->getParent(), "%M catches %1N!", player, monster);
+        broadcast(getSock(), getParent(), "%M catches %1N!", this, monster.get());
     }
 
-    player->statistics.fish();
-    player->checkImprove("fishing", true);
+    statistics.fish();
+    checkImprove("fishing", true);
 
     if(!item->isMonster()) {
-        doGetObject(fish, player);
+        doGetObject(fish, pThis);
     } else {
-        monster->addToRoom(player->getRoomParent(), 1);
+        monster->addToRoom(getRoomParent(), 1);
 
         // most fish will be angry about this
         if(item->willAggro()) {
             // don't let them swing right away
             monster->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-            monster->addEnemy(player, true);
+            monster->addEnemy(pThis, true);
 
             broadcast(hearMobAggro, "^y*** %s(R:%s) added %s to %s attack list (fishing aggro).",
-                monster->getCName(), player->getRoomParent()->fullName().c_str(), player->getCName(), monster->hisHer());
+                monster->getCName(), getRoomParent()->fullName().c_str(), getCName(), monster->hisHer());
         }
     }
     return(true);
 }
 
 void doFish(const DelayedAction* action) {
-    doFish(action->target->getAsPlayer());
+    if(auto t = action->target.lock()) {
+        t->getAsPlayer()->doFish();
+    }
 }
 
 //**********************************************************************
 //                      cmdFish
 //**********************************************************************
 
-int cmdFish(Player* player, cmd* cmnd) {
+int cmdFish(const std::shared_ptr<Player>& player, cmd* cmnd) {
     const Fishing* list=nullptr;
-    Object* pole=nullptr;
+    std::shared_ptr<Object>  pole=nullptr;
 
     player->unhide();
 
@@ -296,14 +297,14 @@ int cmdFish(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    if(!canFish(player, &list, &pole))
+    if(!player->canFish(&list, pole))
         return(0);
 
     player->interruptDelayedActions();
     gServer->addDelayedAction(doFish, player, nullptr, ActionFish, 10 - (int)(player->getSkillLevel("fishing") / 10) - Random::get(0,3));
 
     player->print("You begin fishing.\n");
-    broadcast(player->getSock(), player->getParent(), "%M begins fishing.", player);
+    broadcast(player->getSock(), player->getParent(), "%M begins fishing.", player.get());
     return(0);
 }
 
@@ -313,7 +314,8 @@ int cmdFish(Player* player, cmd* cmnd) {
 
 FishingItem::FishingItem() {
     dayOnly = nightOnly = monster = aggro = false;
-    weight = minQuality = minSkill = exp = 0;
+    weight = minQuality = minSkill = 0;
+    exp = 0;
 }
 
 CatRef FishingItem::getFish() const { return(fish); }
@@ -350,7 +352,7 @@ bool Fishing::empty() const {
 //*********************************************************************
 
 const FishingItem* Fishing::getItem(short skill, short quality) const {
-    int total=0, pick=0;
+    int total=0, pick;
     std::list<FishingItem>::const_iterator it;
     bool day = isDay();
 
@@ -387,18 +389,21 @@ const FishingItem* Fishing::getItem(short skill, short quality) const {
 //*********************************************************************
 
 const Fishing* AreaRoom::doGetFishing(short y, short x) const {
-    const TileInfo* tile = area->getTile(area->getTerrain(nullptr, &mapmarker, y, x, 0, true), area->getSeasonFlags(&mapmarker));
-    const AreaZone* zone=nullptr;
-    const Fishing* list=nullptr;
-    std::list<AreaZone*>::const_iterator it;
+    auto myArea = area.lock();
+    if(!myArea) return(0);
+
+    const std::shared_ptr<TileInfo>  tile = myArea->getTile(myArea->getTerrain(nullptr, mapmarker, y, x, 0, true), myArea->getSeasonFlags(mapmarker));
+    std::shared_ptr<const AreaZone>  zone;
+    const Fishing* list;
+    std::list<std::shared_ptr<AreaZone> >::const_iterator it;
 
     if(!tile || !tile->isWater())
         return(nullptr);
 
     // zone comes first
-    for(it = area->zones.begin() ; it != area->zones.end() ; it++) {
+    for(it = myArea->areaZones.begin() ; it != myArea->areaZones.end() ; it++) {
         zone = (*it);
-        if(zone->inside(area, &mapmarker) && !zone->getFishing().empty()) {
+        if(zone->inside(myArea, mapmarker) && !zone->getFishing().empty()) {
             list = gConfig->getFishing(zone->getFishing());
             if(list)
                 return(list);
@@ -413,7 +418,7 @@ const Fishing* AreaRoom::doGetFishing(short y, short x) const {
     }
 
     // then catrefinfo
-    const CatRefInfo* cri = gConfig->getCatRefInfo(this);
+    const CatRefInfo* cri = gConfig->getCatRefInfo(Container::downcasted_shared_from_this<AreaRoom>());
     if(cri && !cri->getFishing().empty()) {
         list = gConfig->getFishing(cri->getFishing());
         if(list)
@@ -428,7 +433,7 @@ const Fishing* AreaRoom::doGetFishing(short y, short x) const {
 //*********************************************************************
 
 const Fishing* AreaRoom::getFishing() const {
-    short y=0,x=0;
+    short y,x;
     const Fishing* list = doGetFishing(0, 0);
     if(list)
         return(list);
@@ -448,7 +453,7 @@ const Fishing* AreaRoom::getFishing() const {
 }
 
 const Fishing* UniqueRoom::getFishing() const {
-    const Fishing *list=0;
+    const Fishing *list;
 
     // room fish list comes first
     if(!fishing.empty()) {
@@ -458,7 +463,7 @@ const Fishing* UniqueRoom::getFishing() const {
     }
 
     // then catrefinfo
-    const CatRefInfo* cri = gConfig->getCatRefInfo(this);
+    const CatRefInfo* cri = gConfig->getCatRefInfo(Container::downcasted_shared_from_this<UniqueRoom>());
     if(cri && !cri->getFishing().empty()) {
         list = gConfig->getFishing(cri->getFishing());
         if(list)
@@ -506,15 +511,15 @@ const Fishing *Config::getFishing(const std::string &id) const {
 //                      dmFishing
 //*********************************************************************
 
-int dmFishing(Player* player, cmd* cmnd) {
+int dmFishing(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::map<std::string, Fishing>::const_iterator it;
     std::list<FishingItem>::const_iterator ft;
     std::ostringstream oStr;
-    const Fishing *list=nullptr;
-    const FishingItem *item=nullptr;
-    Object* fish=nullptr;
-    Monster* monster=nullptr;
-    std::string name="";
+    const Fishing *list;
+    const FishingItem *item;
+    std::shared_ptr<Object>  fish=nullptr;
+    std::shared_ptr<Monster>  monster=nullptr;
+    std::string name;
     bool all = !strcmp(cmnd->str[1], "all");
 
     oStr.setf(std::ios::left, std::ios::adjustfield);
@@ -528,21 +533,21 @@ int dmFishing(Player* player, cmd* cmnd) {
         for(ft = list->items.begin() ; ft != list->items.end() ; ft++) {
             item = &(*ft);
 
-            oStr << "      ^c" << item->getFish().str();
+            oStr << "      ^c" << item->getFish().displayStr();
 
 
             name = "";
             if(!item->isMonster()) {
                 // are they catching an object?
-                if(loadObject(item->getFish(), &fish)) {
+                if(loadObject(item->getFish(), fish)) {
                     name = fish->getName();
-                    delete fish;
+                    fish.reset();
                 }
             } else {
                 // or a monster?
-                if(loadObject(item->getFish(), &fish)) {
+                if(loadObject(item->getFish(), fish)) {
                     name = monster->getName();
-                    delete monster;
+                    monster.reset();
                 }
             }
 

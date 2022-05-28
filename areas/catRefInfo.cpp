@@ -102,7 +102,7 @@ std::string CatRefInfo::str() const {
 //*********************************************************************
 
 std::string Config::catRefName(std::string_view area) const {
-    const CatRefInfo* cri = gConfig->getCatRefInfo(area);
+    const CatRefInfo* cri = getCatRefInfo(area);
     if(cri)
         return(cri->getName());
     return("");
@@ -161,11 +161,11 @@ const CatRefInfo* Config::getCatRefInfo(std::string_view area, int id, int shoul
 //                      getCatRefInfo
 //*********************************************************************
 
-const CatRefInfo* Config::getCatRefInfo(const BaseRoom* room, int shouldGetParent) const {
-    const AreaRoom* aRoom=nullptr;
-    const UniqueRoom* uRoom=nullptr;
+const CatRefInfo* Config::getCatRefInfo(const std::shared_ptr<const BaseRoom>& room, int shouldGetParent) const {
+    std::shared_ptr<const AreaRoom> aRoom=nullptr;
+    std::shared_ptr<const UniqueRoom> uRoom=nullptr;
     int id = 0;
-    std::string area = "";
+    std::string area;
 
     if(room) {
         uRoom = room->getAsConstUniqueRoom();
@@ -176,7 +176,9 @@ const CatRefInfo* Config::getCatRefInfo(const BaseRoom* room, int shouldGetParen
         area = uRoom->info.area;
     } else if(aRoom) {
         area = "area";
-        id = aRoom->area->id;
+        if(auto roomArea = aRoom->area.lock()) {
+            id = roomArea->id;
+        }
     } else {
         area = "misc";
     }
