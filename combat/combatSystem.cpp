@@ -55,7 +55,7 @@ const std::string NONE_STR = "none";
 //                      computeAttackPower
 //**********************************************************************
 
-unsigned int Player::computeAttackPower() {
+int Player::computeAttackPower() {
     attackPower = 0;
 
     switch(cClass) {
@@ -135,7 +135,7 @@ unsigned int Player::computeAttackPower() {
 //                      getBaseDamage
 //****************************************************************************
 
-unsigned int Creature::getBaseDamage() const {
+int Creature::getBaseDamage() const {
     return(getAttackPower()/15);
 }
 
@@ -433,7 +433,7 @@ int Player::getDefenseSkill() const {
 // 295 - 300 = -5 * .01% less chance to miss
 // 320 - 300 = 20 * .01% more chance to miss
 
-AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, const std::shared_ptr<Object>&  weapon, unsigned int resultFlags, int altSkillLevel) {
+AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, const std::shared_ptr<Object>&  weapon, int resultFlags, int altSkillLevel) {
     /*
     int pFd;
     if(isPlayer())
@@ -684,7 +684,7 @@ double Creature::getParryChance(const std::shared_ptr<Creature>& attacker, const
             return(0);
 
     }
-    double chance = (std::max<unsigned int>(dexterity.getCur(), 80) - 80) * .03;
+    double chance = (std::max<int>(dexterity.getCur(), 80) - 80) * .03;
     chance += adjustChance(difference);
 
     // Riposte is harder against some attacker types
@@ -735,7 +735,7 @@ bool Creature::canParry(const std::shared_ptr<Creature>& attacker) {
 //   try a parry, so parry returns 0 without going off. -TC
 
     // +3% fail for every monster mad at this besides the one he's currently hitting
-    combatPercent = 3*(std::max<unsigned int>(0, numEnemyMonInRoom()-1));
+    combatPercent = 3*(std::max<int>(0, numEnemyMonInRoom()-1));
     // Group members are assumed to fight together to help one another.
     // -2% fail for every member in the this's group besides themself in the same room
     if(getGroup())
@@ -1107,7 +1107,7 @@ bool Creature::canHit(const std::shared_ptr<Creature>& victim, std::shared_ptr<O
 //********************************************************************************
 // Returns 0 on normal computation, 1 if the weapon was shattered
 
-int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon, AttackType attackType, AttackResult& result, Damage& attackDamage, bool computeBonus, unsigned int &drain, float multiplier) {
+int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon, AttackType attackType, AttackResult& result, Damage& attackDamage, bool computeBonus, int &drain, float multiplier) {
     int retVal = 0;
     Damage bonusDamage;
     std::string weaponCategory = weapon ? weapon->getWeaponCategory() : "none";
@@ -1320,7 +1320,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
 
     if(retVal != 1) {
         // If we didn't shatter, minimum of 1 damage
-        attackDamage.set(std::max<unsigned int>(attackDamage.get(), 1));
+        attackDamage.set(std::max<int>(attackDamage.get(), 1));
     }
 
     return(retVal);
@@ -1330,7 +1330,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
 //                      computeDamage
 //**********************************************************************
 
-int Monster::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon, AttackType attackType, AttackResult& result, Damage& attackDamage, bool computeBonus, unsigned int &drain, float multiplier) {
+int Monster::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon, AttackType attackType, AttackResult& result, Damage& attackDamage, bool computeBonus, int &drain, float multiplier) {
     Damage bonusDamage;
 
     if(computeBonus)
@@ -1361,7 +1361,7 @@ int Monster::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obj
     victim->modifyDamage(Containable::downcasted_shared_from_this<Monster>(), PHYSICAL, bonusDamage);
     attackDamage.setBonus(bonusDamage);
 
-    attackDamage.set(std::max<unsigned int>(1, attackDamage.get()));
+    attackDamage.set(std::max<int>(1, attackDamage.get()));
     return(0);
 }
 
@@ -1369,7 +1369,7 @@ int Monster::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obj
 //                      computeBlock
 //**********************************************************************
 
-unsigned int Creature::computeBlock(unsigned int dmg) {
+int Creature::computeBlock(int dmg) {
     // TODO: Tweak amount of blockage based on the shield
     // for now, just half the damage
     dmg /= 2;
@@ -1542,7 +1542,7 @@ int Creature::parry(const std::shared_ptr<Creature>& target) {
         // We have a riposte, calculate damage and such
         std::string verb = getWeaponVerb();
         std::string verbPlural = getWeaponVerbPlural();
-        unsigned int drain=0;
+        int drain=0;
         bool wasKilled = false, freeTarget = false, meKilled = false;
         //int enchant = 0;
         //if(weapon)
@@ -1554,7 +1554,7 @@ int Creature::parry(const std::shared_ptr<Creature>& target) {
         // So mob riposte isn't soo mean
         if(isMonster()) {
             attackDamage.set(attackDamage.get() / 2);
-            attackDamage.set(std::max<unsigned int>(1, attackDamage.get()));
+            attackDamage.set(std::max<int>(1, attackDamage.get()));
         }
 
         switch(Random::get(1,7)) {
@@ -1703,9 +1703,9 @@ bool Creature::negAuraRepel() const {
 //                      doResistMagic
 //*********************************************************************
 
-unsigned int Creature::doResistMagic(unsigned int dmg, const std::shared_ptr<Creature>& enemy) {
+int Creature::doResistMagic(int dmg, const std::shared_ptr<Creature>& enemy) {
     double resist=0;
-    dmg = std::max<unsigned int>(1, dmg);
+    dmg = std::max<int>(1, dmg);
 
     if(negAuraRepel() && enemy && this != enemy.get()) {
         resist = (10.0 + Random::get(1,3) + level + bonus(constitution.getCur()))
@@ -1723,7 +1723,7 @@ unsigned int Creature::doResistMagic(unsigned int dmg, const std::shared_ptr<Cre
         dmg -= (int)resist;
     }
 
-    return(std::max<unsigned int>(0, dmg));
+    return(std::max<int>(0, dmg));
 }
 
 int Creature::getPrimaryDelay() {

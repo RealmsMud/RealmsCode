@@ -76,23 +76,23 @@ ModifierType StatModifier:: getModType() {
     return(modType);
 }
 
-double getConBonusPercentage(unsigned int pCon) {
+double getConBonusPercentage(int pCon) {
     const double a = 0.000007672564844;
     const double b = -0.0004485369366;
     const double c = 0.9939294404;
-    const unsigned int x = pCon;
+    const int x = pCon;
     double percentage = ((a*x*x)+(b*x)+c);
     percentage = std::max<double>(1.0, percentage)-1.0;
     return(percentage);
 
 }
 
-double getIntBonusPercentage(unsigned int pInt) {
+double getIntBonusPercentage(int pInt) {
     const double a =  0.000004207194636;
     const double b = -0.0004146634469;
     const double c =  1.00300606;
 
-    const unsigned int x = pInt;
+    const int x = pInt;
     double percentage = ((a*x*x)+(b*x)+c);
     percentage = std::max<double>(1.0, percentage)-1.0;
     return(percentage);
@@ -320,7 +320,7 @@ void Stat::setName(std::string_view pName) {
 //                      adjust
 //*********************************************************************
 
-unsigned int Stat::adjust(int amt) {
+int Stat::adjust(int amt) {
     if(amt > 0) return(increase(amt));
     else        return(-1 * decrease(amt * -1));
 }
@@ -330,7 +330,7 @@ unsigned int Stat::adjust(int amt) {
 //*********************************************************************
 
 // Legacy for hp.increase()
-unsigned int Stat::increase(unsigned int amt) {
+int Stat::increase(int amt) {
     int increaseAmt = std::max<int>(0, std::min(amt, getMax() - getCur()));
         
     adjustModifier("CurModifier", increaseAmt);
@@ -343,7 +343,7 @@ unsigned int Stat::increase(unsigned int amt) {
 //*********************************************************************
 
 // Legacy for hp.decrease()
-unsigned int Stat::decrease(unsigned int amt) {
+int Stat::decrease(int amt) {
     int decreaseAmt = std::min(amt, getCur());
     
     adjustModifier("CurModifier", -decreaseAmt);
@@ -355,7 +355,7 @@ unsigned int Stat::decrease(unsigned int amt) {
 //                      getCur
 //*********************************************************************
 
-unsigned int Stat::getCur(bool recalc) {
+int Stat::getCur(bool recalc) {
     if(recalc) reCalc();
     return(cur);
 }
@@ -364,7 +364,7 @@ unsigned int Stat::getCur(bool recalc) {
 //                      getMax
 //*********************************************************************
 
-unsigned int Stat::getMax() {
+int Stat::getMax() {
     reCalc();
     return(max);
 }
@@ -373,13 +373,13 @@ unsigned int Stat::getMax() {
 //                      getInitial
 //*********************************************************************
 
-unsigned int Stat::getInitial() const { return(initial); }
+int Stat::getInitial() const { return(initial); }
 
 //*********************************************************************
 //                      addInitial
 //*********************************************************************
 
-void Stat::addInitial(unsigned int a) { initial = std::max<int>(1, initial + a); setDirty(); }
+void Stat::addInitial(int a) { initial = std::max<int>(1, initial + a); setDirty(); }
 
 //*********************************************************************
 //                      setMax
@@ -388,7 +388,7 @@ double round(double r) {
     return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
 }
 
-void Stat::setMax(unsigned int newMax, bool allowZero) {
+void Stat::setMax(int newMax, bool allowZero) {
     newMax = std::max<int>(allowZero ? 0 : 1, std::min<int>(newMax, 30000));
 
     int dmSet = getModifierAmt("DmSet");
@@ -418,7 +418,7 @@ void Stat::setMax(unsigned int newMax, bool allowZero) {
         // Target max value we want before any bonus
         double target = targetMax / (1.0+percentage);
         // Current amount, less bonus and any set amounts
-        unsigned int curMax = getMax() - bonus - dmSet - rounding;
+        int curMax = getMax() - bonus - dmSet - rounding;
         // Adjustment needed to get to the target value before bonus
         adjustment = (int)round(target) - (int)curMax;
 
@@ -434,7 +434,7 @@ void Stat::setMax(unsigned int newMax, bool allowZero) {
             setModifier("Rounding", 0, MOD_MAX);
         }
     } else {
-        unsigned int curMax = getMax() - dmSet;
+        int curMax = getMax() - dmSet;
         adjustment = (int)newMax - (int)curMax;
         this->setModifier("DmSet", adjustment, MOD_MAX);
     }
@@ -446,7 +446,7 @@ void Stat::setMax(unsigned int newMax, bool allowZero) {
 //                      setCur
 //*********************************************************************
 
-void Stat::setCur(unsigned int newCur) {
+void Stat::setCur(int newCur) {
     newCur = std::min(newCur, getMax());
     int modCur = (int)newCur - (int)getCur();
     adjustModifier("CurModifier", modCur);
@@ -497,13 +497,13 @@ std::string Stat::toString() {
 //                      setInitial
 //*********************************************************************
 
-void Stat::setInitial(unsigned int i) { initial = i; setDirty(); }
+void Stat::setInitial(int i) { initial = i; setDirty(); }
 
 //*********************************************************************
 //                      restore
 //*********************************************************************
 
-unsigned int Stat::restore() {
+int Stat::restore() {
     if(cur < max) setCur(max);
     return(cur);
 }
@@ -671,12 +671,12 @@ bool Creature::remStatModEffect(EffectInfo* effect) {
 //*********************************************************************
 
 // Only used for upgradeStats
-void Stat::upgradeSetCur(unsigned int newCur) {
+void Stat::upgradeSetCur(int newCur) {
     cur = newCur;
 }
 
 // Note: Used for upgradeStats
-void checkEffect(const std::shared_ptr<Creature>& creature, std::string_view effName, unsigned int &stat, bool positive)  {
+void checkEffect(const std::shared_ptr<Creature>& creature, std::string_view effName, int &stat, bool positive)  {
     EffectInfo* eff = creature->getEffect(effName);
     if(eff) {
         int str = eff->getStrength();
@@ -711,11 +711,11 @@ void Player::upgradeStats() {
     loseFrenzy();
     losePray();
 
-    unsigned int cStr = strength.getCur(false);
-    unsigned int cDex = dexterity.getCur(false);
-    unsigned int cCon = constitution.getCur(false);
-    unsigned int cInt = intelligence.getCur(false);
-    unsigned int cPie = piety.getCur(false);
+    int cStr = strength.getCur(false);
+    int cDex = dexterity.getCur(false);
+    int cCon = constitution.getCur(false);
+    int cInt = intelligence.getCur(false);
+    int cPie = piety.getCur(false);
 
     auto pThis = Containable::downcasted_shared_from_this<Player>();
     checkEffect(pThis, "strength", cStr, true);
@@ -800,14 +800,14 @@ void Monster::upgradeStats() {
     std::clog << "Upgrading stats for " << getName() << std::endl;
     *this << "Upgrading your stats to the new format.\n";
 
-    unsigned int cStr = strength.getCur(false);
-    unsigned int cDex = dexterity.getCur(false);
-    unsigned int cCon = constitution.getCur(false);
-    unsigned int cInt = intelligence.getCur(false);
-    unsigned int cPie = piety.getCur(false);
+    int cStr = strength.getCur(false);
+    int cDex = dexterity.getCur(false);
+    int cCon = constitution.getCur(false);
+    int cInt = intelligence.getCur(false);
+    int cPie = piety.getCur(false);
 
-    unsigned int cHp = hp.getCur(false);
-    unsigned int cMp = mp.getCur(false);
+    int cHp = hp.getCur(false);
+    int cMp = mp.getCur(false);
 
     auto mThis = Containable::downcasted_shared_from_this<Monster>();
     checkEffect(mThis, "strength", cStr, true);

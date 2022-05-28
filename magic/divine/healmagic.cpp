@@ -375,7 +375,7 @@ int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> ta
 
 void niceExp(const std::shared_ptr<Creature>&healer, const std::shared_ptr<Creature>&creature, int heal, CastType how) {
     std::shared_ptr<Player> player=nullptr, target=nullptr;
-    unsigned int exp=0;
+    int exp=0;
 
     if(how != CastType::CAST)
         return;

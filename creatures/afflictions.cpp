@@ -163,7 +163,7 @@ int cmdPoison(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Monster> mCreature=nullptr;
     long    i=0, t=0;
     int     chance=0;
-    unsigned int dur=0;
+    int dur=0;
 
     player->clearFlag(P_AFK);
     if(!player->ableToDoCommand())
@@ -257,7 +257,7 @@ int cmdPoison(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     player->checkImprove("poison", true);
-    creature->poison(player, (unsigned int)level, dur);
+    creature->poison(player, (int)level, dur);
     return(0);
 }
 
@@ -266,7 +266,7 @@ int cmdPoison(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //********************************************************************
 // the calling function is responsible for announcing the poisoning
 
-void Creature::poison(const std::shared_ptr<Creature>&enemy, unsigned int damagePerPulse, unsigned int duration) {
+void Creature::poison(const std::shared_ptr<Creature>&enemy, int damagePerPulse, int duration) {
     if(immuneToPoison())
         return;
     setPoisonedBy("");
@@ -394,7 +394,7 @@ bool Effects::removePoison() {
 //                      standardPoisonDuration
 //********************************************************************
 
-unsigned int standardPoisonDuration(short level, short con) {
+int standardPoisonDuration(short level, short con) {
     int dur = 60 * Random::get(1,3) - (60*bonus((int)con)) + level*10;
     if(con > 120) {
         // a spread between 400 (50%) and 120 (0%) resistance
@@ -414,7 +414,7 @@ unsigned int standardPoisonDuration(short level, short con) {
 //********************************************************************
 // the calling function is responsible for announcing the diseasing
 
-void Creature::disease(const std::shared_ptr<Creature>& enemy, unsigned int damagePerPulse) {
+void Creature::disease(const std::shared_ptr<Creature>& enemy, int damagePerPulse) {
     if(immuneToDisease())
         return;
     addPermEffect("disease", damagePerPulse, false);

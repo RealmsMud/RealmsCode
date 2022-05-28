@@ -525,7 +525,7 @@ void Config::resetShipsFile() {
     fs::copy(sfile1, sfile2, fs::copy_options::overwrite_existing);
 }
 
-std::string Config::getFlag(unsigned int flagNum, MudFlagMap& flagMap) {
+std::string Config::getFlag(int flagNum, MudFlagMap& flagMap) {
     // Flags are offset by one
     auto flag = flagMap.find(flagNum + 1);
     if (flag == flagMap.end())

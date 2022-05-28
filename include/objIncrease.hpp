@@ -38,7 +38,7 @@ public:
 
     IncreaseType type;
     std::string increase;
-    unsigned int amount{};
+    int amount{};
     bool onlyOnce{};
     bool canAddIfNotKnown{};
 };

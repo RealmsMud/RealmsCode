@@ -442,7 +442,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
     Damage attackDamage;
 
     long t = time(nullptr);
-    unsigned int drain = 0, hit = 0, wcdmg = 0;
+    int drain = 0, hit = 0, wcdmg = 0;
     bool glow = true;
 
     std::string atk;
@@ -696,7 +696,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 
                 if(!meKilled && drain && victim->hp.getCur() > attackDamage.get()) {
 
-                    drain = std::min<unsigned int>(victim->hp.getCur() - attackDamage.get(), drain);
+                    drain = std::min<int>(victim->hp.getCur() - attackDamage.get(), drain);
                     printColor("Your aura of evil drains %s%ud^x hit point%s from your opponent.\n",
                         customColorize("*CC:DAMAGE*").c_str(), drain, drain == 1 ? "" : "s");
                     victim->printColor("^r%M drains %s%d^r hit points from you!\n", this, victim->customColorize("*CC:DAMAGE*").c_str(), drain);
@@ -842,7 +842,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 //                      castWeapon
 //*********************************************************************
 
-unsigned int Creature::castWeapon(const std::shared_ptr<Creature>& target, std::shared_ptr<Object>weapon, bool &meKilled) {
+int Creature::castWeapon(const std::shared_ptr<Creature>& target, std::shared_ptr<Object>weapon, bool &meKilled) {
     Damage attackDamage;
     const char  *spellname;
     osp_t   *osp;
@@ -1099,7 +1099,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
             // zerkers: 1/5
             // everyone else: 1/7
             attackDamage.set(attackDamage.get() - (attackDamage.get() / (cClass == CreatureClass::BERSERKER ? 5 : 7)));
-            attackDamage.set(std::max<unsigned int>(1, attackDamage.get()));
+            attackDamage.set(std::max<int>(1, attackDamage.get()));
         }
 
         // monsters do more damage while berserked
@@ -1109,7 +1109,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         // armor damage reduction
         if(enemy) {
             const float damageReduction = enemy->getDamageReduction(Containable::downcasted_shared_from_this<Creature>());
-            attackDamage.set(attackDamage.get() - (unsigned int)((float)attackDamage.get() * damageReduction));
+            attackDamage.set(attackDamage.get() - (int)((float)attackDamage.get() * damageReduction));
         }
 
         // Werewolf silver vulnerability
@@ -1125,7 +1125,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         if(resistPet)
             attackDamage.set(attackDamage.get() / 2);
         if(vulnPet)
-            attackDamage.add(Random::get(std::max<unsigned int>(1, attackDamage.get()/6),std::max<unsigned int>(2, attackDamage.get()/2)));
+            attackDamage.add(Random::get(std::max<int>(1, attackDamage.get()/6),std::max<int>(2, attackDamage.get()/2)));
         if(immunePet)
             attackDamage.set(1);
     }
@@ -1176,7 +1176,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         attackDamage.set(attackDamage.get() / 2);
     }
 
-    attackDamage.set(std::max<unsigned int>(0, attackDamage.get()));
+    attackDamage.set(std::max<int>(0, attackDamage.get()));
 
     // check drain last
     if(dmgType == NEGATIVE_ENERGY || dmgType == MAGICAL_NEGATIVE) {
@@ -1184,10 +1184,10 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
             if(dmgType == NEGATIVE_ENERGY)
                 attackDamage.setDrain(attackDamage.get() / 2);
             else
-                attackDamage.setDrain(Random::get<unsigned int>(0, attackDamage.get() / 4));
+                attackDamage.setDrain(Random::get<int>(0, attackDamage.get() / 4));
 
             // don't drain more than can be drained!
-            attackDamage.setDrain(std::min<unsigned int>(attackDamage.getDrain(), hp.getCur()));
+            attackDamage.setDrain(std::min<int>(attackDamage.getDrain(), hp.getCur()));
 
             // liches can't use drain damage as their HP is their MP
             // they can do more damage instead
@@ -1217,7 +1217,7 @@ bool Creature::canBeDrained() const {
 //                      doWeaponResist
 //*********************************************************************
 
-unsigned int Creature::doWeaponResist(unsigned int dmg, const std::string &weaponCategory) const {
+int Creature::doWeaponResist(int dmg, const std::string &weaponCategory) const {
     if(isEffected("resist-" + weaponCategory)) {
         dmg /= 2;
     }
@@ -1327,7 +1327,7 @@ bool Monster::willAggro(const std::shared_ptr<Player>& player) const {
 
 std::shared_ptr<Player> Monster::whoToAggro() const {
     std::list<std::shared_ptr<Player>> players;
-    unsigned int total=0, pick=0;
+    int total=0, pick=0;
     const std::shared_ptr<const BaseRoom> myRoom = getConstRoomParent();
 
     if(!myRoom) {
@@ -1339,7 +1339,7 @@ std::shared_ptr<Player> Monster::whoToAggro() const {
         if(auto player = ply.lock()) {
             if (canSee(player) && !player->flagIsSet(P_HIDDEN)) {
                 if (willAggro(player)) {
-                    total += std::max<unsigned int>(1, 300 - player->piety.getCur());
+                    total += std::max<int>(1, 300 - player->piety.getCur());
                     players.push_back(player);
                 }
             }
@@ -1355,11 +1355,11 @@ std::shared_ptr<Player> Monster::whoToAggro() const {
 
     // this logic is currently copied from old mordor lowest peity algorithm:
     // higher piety = lower chance of being picked
-    pick = Random::get<unsigned int>(1, total);
+    pick = Random::get<int>(1, total);
     total = 0;
 
     for(const auto& player : players) {
-        total += std::max<unsigned int>(1, 300 - player->piety.getCur());
+        total += std::max<int>(1, 300 - player->piety.getCur());
         if(total >= pick)
             return(player);
     }

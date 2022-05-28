@@ -50,10 +50,10 @@ Clan::Clan() {
     name = "";
 }
 
-unsigned int Clan::getId() const { return(id); }
-unsigned int Clan::getJoin() const { return(join); }
-unsigned int Clan::getRescind() const { return(rescind); }
-unsigned int Clan::getDeity() const { return(deity); }
+int Clan::getId() const { return(id); }
+int Clan::getJoin() const { return(join); }
+int Clan::getRescind() const { return(rescind); }
+int Clan::getDeity() const { return(deity); }
 std::string Clan::getName() const { return(name); }
 
 short Clan::getSkillBonus(const std::string &skill) const {
@@ -68,7 +68,7 @@ short Clan::getSkillBonus(const std::string &skill) const {
 //                      getClan
 //*********************************************************************
 
-const Clan* Config::getClan(unsigned int id) const {
+const Clan* Config::getClan(int id) const {
     auto it = clans.find(id);
 
     if(it == clans.end())
@@ -81,7 +81,7 @@ const Clan* Config::getClan(unsigned int id) const {
 //                      getClanByDeity
 //*********************************************************************
 
-const Clan* Config::getClanByDeity(unsigned int deity) const {
+const Clan* Config::getClanByDeity(int deity) const {
     ClanMap::const_iterator it;
     Clan* clan=nullptr;
 
@@ -229,7 +229,7 @@ int cmdPledge(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdRescind(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Monster>  creature=nullptr;
-    unsigned int amte=0;
+    int amte=0;
     const Clan* clan=nullptr;
 
     player->clearFlag(P_AFK);

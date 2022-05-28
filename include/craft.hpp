@@ -46,14 +46,14 @@ public:
     bool canUseEquipment(const std::shared_ptr<const Player> &player, std::string_view pSkill) const;
     bool canBeEdittedBy(const std::shared_ptr<const Player> player) const;
 
-    void setId(unsigned int i);
+    void setId(int i);
     void setExperience(int exp);
     void setSizable(bool size);
     void setResult(const CatRef &cr);
     void setSkill(std::string_view s);
     void setRequiresRecipe(bool r);
     void setCreator(std::string_view c);
-    [[nodiscard]] unsigned int getId() const;
+    [[nodiscard]] int getId() const;
     [[nodiscard]] int getExperience() const;
     [[nodiscard]] bool isSizable() const;
     [[nodiscard]] CatRef getResult() const;
@@ -70,7 +70,7 @@ public:
     std::list<CatRef> equipment;
 
 protected:
-    unsigned int id;
+    int id;
     CatRef result;
     std::string resultName;
     std::string skill;

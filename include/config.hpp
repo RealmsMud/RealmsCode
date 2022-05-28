@@ -109,13 +109,13 @@ typedef std::set<Spell, namableCmp> SpellSet;
 typedef std::set<Song, namableCmp> SongSet;
 typedef std::map<std::string, AlchemyInfo, comp> AlchemyMap;
 typedef std::map<std::string, MsdpVariable> MsdpVariableMap;
-typedef std::map<unsigned int, MudFlag> MudFlagMap;
+typedef std::map<int, MudFlag> MudFlagMap;
 
-typedef std::map<unsigned int, RaceData*> RaceDataMap;
-typedef std::map<unsigned int, DeityData*> DeityDataMap;
-typedef std::map<unsigned int, Recipe*> RecipeMap;
-typedef std::map<unsigned int, Clan*> ClanMap;
-typedef std::map<unsigned int, Guild*> GuildMap;
+typedef std::map<int, RaceData*> RaceDataMap;
+typedef std::map<int, DeityData*> DeityDataMap;
+typedef std::map<int, Recipe*> RecipeMap;
+typedef std::map<int, Clan*> ClanMap;
+typedef std::map<int, Guild*> GuildMap;
 typedef std::map<CatRef, QuestInfo*> QuestInfoMap;
 typedef std::map<std::string, Zone> ZoneMap;
 typedef std::map<long, std::string> DiscordTokenMap; // webhookId --> token
@@ -313,8 +313,8 @@ public:
 // Clans
     bool loadClans();
     void clearClans();
-    [[nodiscard]] const Clan *getClan(unsigned int id) const;
-    [[nodiscard]] const Clan *getClanByDeity(unsigned int deity) const;
+    [[nodiscard]] const Clan *getClan(int id) const;
+    [[nodiscard]] const Clan *getClanByDeity(int deity) const;
 
 // Recipes
     bool loadRecipes();
@@ -382,7 +382,7 @@ public:
 
 // Misc
     [[nodiscard]] const RaceData* getRace(std::string race) const;
-    [[nodiscard]] const RaceData* getRace(unsigned int id) const;
+    [[nodiscard]] const RaceData* getRace(int id) const;
     [[nodiscard]] const DeityData* getDeity(int id) const;
 
     static unsigned long expNeeded(int level);
@@ -645,7 +645,7 @@ public:
     MudFlagMap propHouseFlags;
     MudFlagMap propGuildFlags;
 
-    static std::string getFlag(unsigned int flagNum, MudFlagMap& flagMap);
+    static std::string getFlag(int flagNum, MudFlagMap& flagMap);
 
     inline std::string getRFlag(int flagNum) { return getFlag(flagNum, rflags); };
     inline std::string getXFlag(int flagNum) { return getFlag(flagNum, xflags); };

@@ -158,7 +158,7 @@ public:
     std::string getProxyId() const;
 
     // Combat & Death
-    unsigned int computeAttackPower();
+    int computeAttackPower();
     void dieToPet(const std::shared_ptr<Monster>& killer);
     void dieToMonster(const std::shared_ptr<Monster>& killer);
     void dieToPlayer(const std::shared_ptr<Player>&killer);
@@ -186,7 +186,7 @@ public:
     void dissolveItem(std::shared_ptr<Creature> creature);
     int computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon, AttackType attackType,
                       AttackResult& result, Damage& attackDamage, bool computeBonus,
-                      unsigned int &drain, float multiplier = 1.0) override;
+                      int &drain, float multiplier = 1.0) override;
     int packBonus();
     int getWeaponSkill(std::shared_ptr<Object>  weapon = nullptr) const override;
     int getDefenseSkill() const override;
@@ -363,9 +363,9 @@ public:
 // Recipes
     void unprepareAllObjects() const;
     void removeItems(const std::list<CatRef>* list, int numIngredients);
-    void learnRecipe(unsigned int id);
+    void learnRecipe(int id);
     void learnRecipe(Recipe* recipe);
-    bool knowsRecipe(unsigned int id) const;
+    bool knowsRecipe(int id) const;
     bool knowsRecipe(Recipe* recipe) const;
     Recipe* findRecipe(cmd* cmnd, std::string_view skill, bool* searchRecipes, Size recipeSize=NO_SIZE, int numIngredients=1) const;
 
@@ -389,7 +389,7 @@ public:
 
     bool isPureFighter();
     void decreaseFocus();
-    void increaseFocus(FocusAction action, unsigned int amt = 0, std::shared_ptr<Creature> target = nullptr);
+    void increaseFocus(FocusAction action, int amt = 0, std::shared_ptr<Creature> target = nullptr);
     void clearFocus();
     bool doPlayerHarmRooms();
     bool doDoTs();

@@ -75,7 +75,7 @@ public:
     SpellData();
     CastType how;
     int splno;
-    unsigned int level;
+    int level;
     std::shared_ptr<Object>  object;
     SchoolOfMagic school;
     DomainOfMagic domain;

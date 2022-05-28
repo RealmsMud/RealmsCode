@@ -44,7 +44,7 @@ int cmdBite(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Player> pTarget;
     long    i, t;
     int     chance;
-    unsigned int dmgnum=0;
+    int dmgnum=0;
     Damage damage;
 
 
@@ -141,7 +141,7 @@ int cmdBite(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     dmgnum = damage.get();
 
-    damage.set(std::min<unsigned int>(damage.get(), target->hp.getCur() + 1));
+    damage.set(std::min<int>(damage.get(), target->hp.getCur() + 1));
     if(damage.get() < 1)
         damage.set(1);
 
@@ -623,7 +623,7 @@ int cmdDrainLife(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(pTarget && pTarget->isEffected("berserk"))
         damage.set(damage.get() + (damage.get() / 5));
 
-    damage.set(std::min<unsigned int>(damage.get(), target->hp.getCur() + 1));
+    damage.set(std::min<int>(damage.get(), target->hp.getCur() + 1));
     if(damage.get() < 1)
         damage.set(1);
 

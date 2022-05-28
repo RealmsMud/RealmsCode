@@ -405,7 +405,7 @@ const RaceData* Config::getRace(std::string race) const {
 //                      getRace
 //**********************************************************************
 
-const RaceData* Config::getRace(unsigned int id) const {
+const RaceData* Config::getRace(int id) const {
     auto it = races.find(id);
 
     if(it == races.end())

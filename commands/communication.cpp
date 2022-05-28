@@ -852,7 +852,7 @@ std::string mxpTag(std::string_view str) {
 int channel(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string text, chanStr, extra;
     size_t i = 0;
-    unsigned int check=0, skip=1;
+    int check=0, skip=1;
     const Guild* guild=nullptr;
 
     const int max_class = static_cast<int>(CreatureClass::CLASS_COUNT)-1;
@@ -1043,7 +1043,7 @@ channelPtr getChannelByDiscordChannel(const unsigned long discordChannelID) {
     return nullptr;
 }
 
-void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &text, const std::string &extra, unsigned int check,
+void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &text, const std::string &extra, int check,
                     const channelInfo *chan, const std::string &etxt, const std::string &oocName, const std::string &icName) {
     // more complicated checks go here
     std::shared_ptr<Socket> sock=nullptr;

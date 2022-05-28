@@ -164,7 +164,7 @@ public:
 
     int computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon, AttackType attackType,
                       AttackResult& result, Damage& attackDamage, bool computeBonus,
-                      unsigned int &drain, float multiplier = 1.0);
+                      int &drain, float multiplier = 1.0);
     int mobWield();
     int checkScrollDrop();
     int grabCoins(const std::shared_ptr<Player>& player);
@@ -175,7 +175,7 @@ public:
     unsigned short getMobTrade() const;
     std::string getMobTradeName() const;
     int getSkillLevel() const;
-    unsigned int getMaxLevel() const;
+    int getMaxLevel() const;
     unsigned short getNumWander() const;
     unsigned short getLoadAggro() const;
     unsigned short getUpdateAggro() const;

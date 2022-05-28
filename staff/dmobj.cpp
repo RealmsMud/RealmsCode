@@ -109,7 +109,7 @@ int dmCreateObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //*********************************************************************
 //  Display information on object given to player given.
 
-std::string Object::statObj(unsigned int statFlags) {
+std::string Object::statObj(int statFlags) {
     std::ostringstream objStr;
     std::shared_ptr<Object>  object=nullptr;
     std::string str = "";
@@ -439,7 +439,7 @@ int stat_obj(const std::shared_ptr<Player>& player, const std::shared_ptr<Object
         log_immort(false,player, "%s statted object %s(%s).\n",
             player->getCName(), object->getCName(), object->info.displayStr().c_str());
 
-    unsigned int statFlags = 0;
+    int statFlags = 0;
     if(player->isCt())
         statFlags |= ISCT;
     if(player->isDm())

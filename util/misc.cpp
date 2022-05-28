@@ -144,7 +144,7 @@ int statBonus[MAXALVL] = {
     4, 4, 4,            // 25 - 27
     5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };   // 28+
 
-int bonus(unsigned int num) {
+int bonus(int num) {
     return( statBonus[std::min<int>(num/10, MAXALVL - 1)] );
 }
 
@@ -570,8 +570,8 @@ void Creature::stun(int delay) {
 //                      numEnemyMonInRoom
 //*********************************************************************
 
-unsigned int Creature::numEnemyMonInRoom() {
-    unsigned int count = 0;
+int Creature::numEnemyMonInRoom() {
+    int count = 0;
     for (const auto &mons: getRoomParent()->monsters) {
         if (mons->getAsMonster()->isEnemy(getAsCreature()))
             count++;
@@ -745,7 +745,7 @@ std::shared_ptr<MudObject> findPlyTarget(std::shared_ptr<Creature> player, Playe
 //                      findTarget
 //*********************************************************************
 
-std::shared_ptr<MudObject> Creature::findTarget(unsigned int findWhere, unsigned int findFlags, const std::string& str, int val) {
+std::shared_ptr<MudObject> Creature::findTarget(int findWhere, int findFlags, const std::string& str, int val) {
     int match=0;
     std::shared_ptr<MudObject> target;
     do {

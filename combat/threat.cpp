@@ -315,12 +315,12 @@ const std::string & ThreatEntry::getUid() const {
 //*********************************************************************
 // Heal a target and dish out threat as needed!
 
-unsigned int Creature::doHeal(const std::shared_ptr<Creature>& target, int amt, double threatFactor) {
+int Creature::doHeal(const std::shared_ptr<Creature>& target, int amt, double threatFactor) {
     auto cThis = Containable::downcasted_shared_from_this<Creature>();
     if(threatFactor < 0.0)
         threatFactor = 1.0;
 
-    unsigned int healed = target->hp.increase(amt);
+    int healed = target->hp.increase(amt);
 
     // If the target is a player/pet and they're in combat then this counts towards the damage done/hatred on that monster
     if((target->isPlayer() || target->isPet()) && target->inCombat(false)) {

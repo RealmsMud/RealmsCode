@@ -305,7 +305,7 @@ public:
     [[nodiscard]] short getLotteryNumbers(short i) const;
     [[nodiscard]] int getRecipe() const;
     [[nodiscard]] Material getMaterial() const;
-    [[nodiscard]] std::string getObjStr(const std::shared_ptr<const Creature> & viewer = nullptr, unsigned int ioFlags = 0, int num = 0) const;
+    [[nodiscard]] std::string getObjStr(const std::shared_ptr<const Creature> & viewer = nullptr, int ioFlags = 0, int num = 0) const;
     [[nodiscard]] const std::string & getMaterialName() const;
     [[nodiscard]] std::string getCompass(const std::shared_ptr<const Creature> & creature, bool useName) const;
     [[nodiscard]] const std::string & getVersion() const;
@@ -405,7 +405,7 @@ public:
     [[nodiscard]] bool isQuestValid() const; // Is this object valid for a quest?
 
     [[nodiscard]] std::string showAlchemyEffects(const std::shared_ptr<const Player>& player = nullptr) const;
-    [[nodiscard]] std::string statObj(unsigned int statFlags);
+    [[nodiscard]] std::string statObj(int statFlags);
     [[nodiscard]] double winterProtection() const;
     [[nodiscard]] bool isKey(const std::shared_ptr<UniqueRoom>& room, const std::shared_ptr<Exit> exit) const;
 
