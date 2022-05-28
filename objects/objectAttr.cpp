@@ -141,6 +141,6 @@ bool Object::isLabeledBy(const Creature* creature) const {
     return creature->getId() == label.playerId;
 }
 
-bool Object::isLabelMatch(std::string str) const {
+bool Object::isLabelMatch(const std::string & str) const {
     return keyTxtCompare(label.label.c_str(), str.c_str(), str.length());
 }
