@@ -907,6 +907,7 @@ bool MudObject::removeOppositeEffect(const EffectInfo *effect) {
     return(effects.removeOppositeEffect(effect));
 }
 
+
 bool Effects::removeOppositeEffect(const EffectInfo *effect) {
     auto* parentEffect = effect->getEffect();
 

@@ -1483,18 +1483,18 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
         } else if(!strcmp(cmnd->str[3], "lore")) {
 
             if(!pTarget) {
-                player->print("Lore may only be reset on players.\n");
+                player->print("Lore may only be plyReset on players.\n");
                 return(0);
             }
             if(ctModBuilder) {
-                player->print("Error: you cannot reset lore on builders.\n");
+                player->print("Error: you cannot plyReset lore on builders.\n");
                 return(0);
             }
 
             player->printColor("Before: ^c%d  ", pTarget->lore.size());
             Lore::reset(pTarget);
             player->printColor("After: ^c%d\n", pTarget->lore.size());
-            player->print("%s's lore count has been reset.\n", pTarget->getCName());
+            player->print("%s's lore count has been plyReset.\n", pTarget->getCName());
 
         } else {
 
@@ -1991,7 +1991,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 target->saves[MEN].gained = 0;
                 target->saves[SPL].chance = 0;
                 target->saves[SPL].gained = 0;
-                player->print("%s's saves reset to 0.\n", target->getCName());
+                player->print("%s's saves plyReset to 0.\n", target->getCName());
 
                 break;
             } else {

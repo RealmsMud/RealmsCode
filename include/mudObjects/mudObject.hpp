@@ -76,6 +76,8 @@ public:
 
 public:
     MudObject();
+    MudObject(MudObject& mo);
+    MudObject(const MudObject& mo);
     virtual ~MudObject();
     void moReset();
 

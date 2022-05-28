@@ -71,15 +71,15 @@ bool Creature::useSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>
     if(attack.flagIsSet(SA_REQUIRE_HIDE) && !isHidden())
         return(false);
 
-    long i, t;
-    i = attack.ltime.ltime;
+    long t;
     t = time(nullptr);
     // See if we can use this attack yet
-    if(t - i < attack.delay)
+    if(t - attack.ltime.ltime < attack.ltime.interval)
         return(false);  // Not enough time has passed yet
 
     // Check random chance that this attack goes off -- Chance of 101 means always go off
-    if(attack.chance < Random::get(1, 100))
+    const int chance = Random::get(1, 100);
+    if(attack.chance < chance)
         return(false);
 
     // Check time here
@@ -92,7 +92,7 @@ bool Creature::useSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>
     if(attack.flagIsSet(SA_REQUIRE_HIDE) && isHidden())
         unhide();
 
-    attack.ltime.ltime = time(nullptr);
+    attack.ltime.ltime = t;
     attack.ltime.interval = attack.delay;
 
     if(!attack.isAreaAttack() && !attack.flagIsSet(SA_SINGLE_TARGET))
@@ -1359,4 +1359,38 @@ SpecialAttack* Creature::addSpecial(std::string_view specialName) {
 
 std::string SpecialAttack::getName() {
     return(name);
+}
+
+SpecialAttack::SpecialAttack(SpecialAttack &sa) {
+    copySpecial(sa);
+}
+
+SpecialAttack::SpecialAttack(const SpecialAttack &sa) {
+    copySpecial(sa);
+}
+
+void SpecialAttack::copySpecial(const SpecialAttack& sa) {
+    name = sa.name;
+    verb = sa.verb;
+    selfStr = sa.selfStr;
+    selfFailStr = sa.selfFailStr;
+    targetStr = sa.targetStr;
+    roomStr = sa.roomStr;
+    targetFailStr = sa.targetFailStr;
+    roomFailStr = sa.roomFailStr;
+    saveType = sa.saveType;
+    saveBonus = sa.saveBonus;
+    maxBonus = sa.maxBonus;
+    targetSaveStr = sa.targetSaveStr;
+    selfSaveStr = sa.selfSaveStr;
+    roomSaveStr = sa.roomSaveStr;
+    chance = sa.chance;
+    delay = sa.delay;
+    ltime = sa.ltime;
+    stunLength = sa.stunLength;
+    type = sa.type;
+    flags = sa.flags;
+    damage = sa.damage;
+    limit = sa.limit;
+    used = sa.used;
 }

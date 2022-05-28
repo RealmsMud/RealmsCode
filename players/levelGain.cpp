@@ -356,7 +356,7 @@ void Player::upLevel() {
             for(a=POI; a<= SPL;a++) 
                 saves[a].gained = 0;
 
-            logn("log.saveswtf", "upLevel(): %s[%d] - all saves gained reset to 0\n", getCName(), level);
+            logn("log.saveswtf", "upLevel(): %s[%d] - all saves gained plyReset to 0\n", getCName(), level);
         }
 
         // Give out skills here

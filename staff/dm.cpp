@@ -2434,6 +2434,6 @@ int dmCache(const std::shared_ptr<Player>& player, cmd* cmnd) {
 int dmTxtOnCrash(const std::shared_ptr<Player>& player, cmd* cmnd) {
     gConfig->toggleTxtOnCrash();
     player->printColor("Setting toggled to %s.\n", gConfig->sendTxtOnCrash() ? "^GYes" : "^RNo");
-    player->print("Note that, on reboot, text-on-crash is reset to No!\n");
+    player->print("Note that, on reboot, text-on-crash is plyReset to No!\n");
     return(0);
 }
