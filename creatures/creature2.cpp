@@ -579,7 +579,10 @@ bool isGuardLoot(const std::shared_ptr<BaseRoom>& inRoom, const std::shared_ptr<
 //*********************************************************************
 
 bool Monster::isRaceAggro(int x, bool checkInvert) const {
-    bool set = raceAggro.test(x-1);
+    const int toTest = x - 1;
+    if(toTest < 0 || toTest > RACE_COUNT) return false;
+
+    bool set = raceAggro.test(toTest);
     if(!checkInvert)
         return(set);
     return(set ? !flagIsSet(M_RACE_AGGRO_INVERT) : flagIsSet(M_RACE_AGGRO_INVERT));
@@ -597,7 +600,10 @@ void Monster::clearRaceAggro(int x) {
 //*********************************************************************
 
 bool Monster::isClassAggro(int x, bool checkInvert) const {
-    bool set = cClassAggro.test(x-1);
+    const int toTest = x - 1;
+    if(toTest < 0 || toTest > static_cast<int>(CreatureClass::CLASS_COUNT)) return false;
+
+    bool set = cClassAggro.test(toTest);
     if(!checkInvert)
         return(set);
     return(set ? !flagIsSet(M_CLASS_AGGRO_INVERT) : flagIsSet(M_CLASS_AGGRO_INVERT));
@@ -615,7 +621,10 @@ void Monster::clearClassAggro(int x) {
 //*********************************************************************
 
 bool Monster::isDeityAggro(int x, bool checkInvert) const {
-    bool set = deityAggro.test(x-1);
+    const int toTest = x - 1;
+    if(toTest < 0 || toTest > DEITY_COUNT) return false;
+
+    bool set = deityAggro.test(toTest);
     if(!checkInvert)
         return(set);
     return(set ? !flagIsSet(M_DEITY_AGGRO_INVERT) : flagIsSet(M_DEITY_AGGRO_INVERT));
