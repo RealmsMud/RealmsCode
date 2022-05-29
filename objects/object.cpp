@@ -390,7 +390,7 @@ int cmdUnkeep(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //                      cmdLabel
 //*********************************************************************
 
-int cmdLabel(Player* player, cmd* cmnd) {
+int cmdLabel(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
         player->print("Label what?\n");
         return(0);
@@ -401,7 +401,7 @@ int cmdLabel(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    Object *object = player->findObject(player, cmnd, 1);
+    std::shared_ptr<Object> object = player->findObject(player, cmnd, 1);
     if(!object) {
         player->print("You don't have that in your inventory.\n");
         return(0);
@@ -409,7 +409,7 @@ int cmdLabel(Player* player, cmd* cmnd) {
 
     object->setLabel(player, cmnd->str[2]);
 
-    player->printColor("%P labeled as \"%s\".\n", object, cmnd->str[2]);
+    player->printColor("%P labeled as \"%s\".\n", object.get(), cmnd->str[2]);
     return(0);
 }
 
@@ -417,7 +417,7 @@ int cmdLabel(Player* player, cmd* cmnd) {
 //                      cantDropInBag
 //*********************************************************************
 
-bool cantDropInBag(std::shared_ptr<Object>  object) {
+bool cantDropInBag(const std::shared_ptr<Object>&  object) {
     for(const auto& obj : object->objects) {
         if(obj->flagIsSet(O_NO_DROP))
             return(true);
@@ -432,9 +432,9 @@ bool cantDropInBag(std::shared_ptr<Object>  object) {
 std::shared_ptr<MudObject> Creature::findObjTarget(ObjectSet &set, int findFlags, const std::string& str, int val, int* match) {
     if(set.empty())
         return(nullptr);
-
+    const auto cThis = getAsConstCreature();
     for(const auto& obj : set) {
-        if(keyTxtEqual(obj, str.c_str()) || (obj->isLabeledBy(this) && obj->isLabelMatch(str))) {
+        if(keyTxtEqual(obj, str.c_str()) || (obj->isLabeledBy(cThis) && obj->isLabelMatch(str))) {
             (*match)++;
             if(*match == val) {
                 return(obj);

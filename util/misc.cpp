@@ -748,6 +748,7 @@ std::shared_ptr<MudObject> findPlyTarget(std::shared_ptr<Creature> player, Playe
 std::shared_ptr<MudObject> Creature::findTarget(int findWhere, int findFlags, const std::string& str, int val) {
     int match=0;
     std::shared_ptr<MudObject> target;
+    const auto cThis = getAsConstCreature();
     do {
         if(findWhere & FIND_OBJ_INVENTORY) {
             if((target = findObjTarget(objects, findFlags, str, val, &match))) {
@@ -762,7 +763,7 @@ std::shared_ptr<MudObject> Creature::findTarget(int findWhere, int findFlags, co
             for(n=0; n<MAXWEAR; n++) {
                 if(!ready[n])
                     continue;
-                if(keyTxtEqual(ready[n], str.c_str()) || (ready[n]->isLabeledBy(this) && ready[n]->isLabelMatch(str)))
+                if(keyTxtEqual(ready[n], str.c_str()) || (ready[n]->isLabeledBy(cThis) && ready[n]->isLabelMatch(str)))
                     match++;
                 else
                     continue;

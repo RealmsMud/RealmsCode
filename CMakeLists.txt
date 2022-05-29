@@ -190,7 +190,6 @@ set(COMMON_HEADER_FILES
     include/track.hpp
     include/traps.hpp
     include/unique.hpp
-    include/utils.hpp
     include/version.hpp
     include/vprint.hpp
     include/wanderInfo.hpp

@@ -339,7 +339,7 @@ int displayObject(const std::shared_ptr<const Player> &player, const std::shared
 int new_scroll(int level, std::shared_ptr<Object> &new_obj);
 
 
-bool cantDropInBag(std::shared_ptr<Object>  object);
+bool cantDropInBag(const std::shared_ptr<Object>&  object);
 
 std::string getDamageString(const std::shared_ptr<Creature>& player, std::shared_ptr<Object> weapon, bool critical);
 

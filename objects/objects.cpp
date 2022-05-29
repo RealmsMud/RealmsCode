@@ -1134,7 +1134,7 @@ void Object::popBag(const std::shared_ptr<Creature>& creature, bool quest, bool 
 //                      isKey
 //*********************************************************************
 
-bool Object::isKey(const std::shared_ptr<UniqueRoom>& room, const std::shared_ptr<Exit> exit) const {
+bool Object::isKey(const std::shared_ptr<UniqueRoom>& room, const std::shared_ptr<Exit>& exit) const {
     // storage room exist must be a storage room key
     if(exit->flagIsSet(X_TO_STORAGE_ROOM))
         return(getName() == "storage room key");

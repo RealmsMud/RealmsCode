@@ -24,7 +24,6 @@
 #include "mudObjects/objects.hpp"  // for Object, ObjectType, ObjectType::ARMOR
 #include "mudObjects/players.hpp"  // for Player
 #include "size.hpp"                // for Size
-#include "utils.hpp"               // for MAX, MIN
 #include "proto.hpp"               // for keyTxtCompare
 
 
@@ -85,7 +84,7 @@ void Object::setRecipe(int r) { recipe = r; }
 void Object::setMaterial(Material m) { material = m; }
 void Object::setQuestOwner(const std::shared_ptr<Player> player) { questOwner = player->getName(); }
 
-void Object::setLabel(const Player* player, std::string text) {
+void Object::setLabel(const std::shared_ptr<Player>& player, std::string text) {
     label.playerId = player->getId();
     label.label = text;
 }
@@ -137,7 +136,7 @@ bool Object::isBroken() const {
     return(shotsCur == 0 && shotsMax >= 0 && (type == ObjectType::ARMOR || type == ObjectType::KEY || type == ObjectType::WEAPON));
 }
 
-bool Object::isLabeledBy(const Creature* creature) const {
+bool Object::isLabeledBy(const std::shared_ptr<const Creature>& creature) const {
     return creature->getId() == label.playerId;
 }
 
