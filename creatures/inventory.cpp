@@ -23,7 +23,6 @@
 #include "mudObjects/rooms.hpp"             // for BaseRoom, ExitList
 #include "proto.hpp"                        // for bonus, broadcast, abortFindRoom
 #include "unique.hpp"                       // for remove, deleteOwner
-#include "utils.hpp"                        // for MAX, MIN
 
 //*********************************************************************
 //                      addObj
@@ -31,12 +30,12 @@
 // This function adds the object pointer to by the first parameter to
 // the inventory of the player pointed to by the second parameter.
 
-void Creature::addObj(Object* object) {
-    Player* pPlayer = getAsPlayer();
+void Creature::addObj(const std::shared_ptr<Object>&  object) {
+    std::shared_ptr<Player> pPlayer = getAsPlayer();
 
     object->validateId();
-
-    Hooks::run(this, "beforeAddObject", object, "beforeAddToCreature");
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
+    Hooks::run(cThis, "beforeAddObject", object, "beforeAddToCreature");
     object->clearFlag(O_JUST_LOADED);
 
     // players have big inventories; to keep the mud from searching them when it
@@ -46,13 +45,13 @@ void Creature::addObj(Object* object) {
     if(object->flagIsSet(O_DARKNESS))
         setFlag(pPlayer ? P_DARKNESS : M_DARKNESS);
 
-    object->addTo(this);
+    object->addTo(cThis);
     //add(object);
 
     if(pPlayer)
         pPlayer->updateItems(object);
 
-    Hooks::run(this, "afterAddObject", object, "afterAddToCreature");
+    Hooks::run(cThis, "afterAddObject", object, "afterAddToCreature");
 
     killDarkmetal();
 }
@@ -69,11 +68,11 @@ void Creature::addObj(Object* object) {
 // if you pass false to darkness, you MUST run checkDarkness() unless
 // you are certain the item you are deleted isn't flagged O_DARKNESS
 
-void Creature::finishDelObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep) {
+void Creature::finishDelObj(const std::shared_ptr<Object>&  object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep) {
     if(darkmetal)
         killDarkmetal();
     if(breakUnique || removeUnique) {
-        Player* player = getPlayerMaster();
+        std::shared_ptr<Player> player = getPlayerMaster();
         if(player) {
             if(breakUnique)
                 Limited::remove(player, object);
@@ -86,15 +85,15 @@ void Creature::finishDelObj(Object* object, bool breakUnique, bool removeUnique,
     if(!keep)
         object->clearFlag(O_KEEP);
 
-    Hooks::run(this, "afterRemoveObject", object, "afterRemoveFromCreature");
+    Hooks::run(Containable::downcasted_shared_from_this<Creature>(), "afterRemoveObject", object, "afterRemoveFromCreature");
 }
 
 //*********************************************************************
 //                      delObj
 //*********************************************************************
 
-void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep) {
-    Hooks::run(this, "beforeRemoveObject", object, "beforeRemoveFromCreature");
+void Creature::delObj(std::shared_ptr<Object>  object, bool breakUnique, bool removeUnique, bool darkmetal, bool darkness, bool keep) {
+    Hooks::run(Containable::downcasted_shared_from_this<Creature>(), "beforeRemoveObject", object, "beforeRemoveFromCreature");
 
     // don't run checkDarkness if this isnt a dark item
     if(!object->flagIsSet(O_DARKNESS))
@@ -112,9 +111,9 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
         } else {
             // the object is in a bag somewhere
             // problem is, we don't know which bag
-            for(Object* obj : objects) {
+            for(const auto& obj : objects) {
                 if(obj->getType() == ObjectType::CONTAINER) {
-                    for(Object* subObj : obj->objects ) {
+                    for(const auto& subObj : obj->objects ) {
                         if(subObj == object) {
                             obj->delObj(object);
                             finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
@@ -129,7 +128,7 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
                 if(!i)
                     continue;
                 if(i->getType() == ObjectType::CONTAINER) {
-                    for(Object* obj : i->objects) {
+                    for(const auto& obj : i->objects) {
                         if(obj == object) {
                             i->delObj(object);
                             finishDelObj(object, breakUnique, removeUnique, darkmetal, darkness, keep);
@@ -157,11 +156,11 @@ void Creature::delObj(Object* object, bool breakUnique, bool removeUnique, bool 
 
 int Creature::countInv(bool permOnly) {
     int total=0;
-    for(Object *obj : objects ) {
+    for(const auto& obj : objects ) {
         if(!permOnly || (permOnly && (obj->flagIsSet(O_PERM_ITEM))))
             total++;
     }
-    return(MIN(100,total));
+    return(std::min(100,total));
 }
 
 
@@ -170,7 +169,7 @@ int Creature::countInv(bool permOnly) {
 //*********************************************************************
 int Creature::countBagInv() {
     int total=0;
-    for(Object *obj : objects ) {
+    for(const auto& obj : objects ) {
         total++;
         if(obj && obj->getType() == ObjectType::CONTAINER) {
             total += obj->countObj();
@@ -184,7 +183,7 @@ int Creature::countBagInv() {
 //                  equip
 //*********************************************************************
 
-bool Creature::equip(Object* object, bool showMessage) {
+bool Creature::equip(const std::shared_ptr<Object>&  object, bool showMessage) {
     bool isWeapon = false;
 
     switch(object->getWearflag()) {
@@ -216,16 +215,16 @@ bool Creature::equip(Object* object, bool showMessage) {
             if(!ready[WIELD-1]) {
                 // weapons going in the first hand
                 if(showMessage) {
-                    printColor("You wield %1P.\n", object);
-                    broadcast(getSock(), getRoomParent(), "%M wields %1P.", this, object);
+                    printColor("You wield %1P.\n", object.get());
+                    broadcast(getSock(), getRoomParent(), "%M wields %1P.", this, object.get());
                 }
                 ready[WIELD-1] = object;
             } else if(!ready[HELD-1]) {
                 // weapons going in the off hand
                 if(showMessage) {
-                    printColor("You wield %1P in your off hand.\n", object);
+                    printColor("You wield %1P in your off hand.\n", object.get());
                     broadcast(getSock(), getRoomParent(), "%M wields %1P in %s off hand.",
-                              this, object, hisHer());
+                              this, object.get(), hisHer());
                 }
                 ready[HELD-1] = object;
             } else
@@ -239,8 +238,8 @@ bool Creature::equip(Object* object, bool showMessage) {
 
     // message for armor/rings
     if(!isWeapon && showMessage) {
-        printColor("You wear %1P.\n", object);
-        broadcast(getSock(), getRoomParent(), "%M wore %1P.", this, object);
+        printColor("You wear %1P.\n", object.get());
+        broadcast(getSock(), getRoomParent(), "%M wore %1P.", this, object.get());
     }
 
 
@@ -255,7 +254,7 @@ bool Creature::equip(Object* object, bool showMessage) {
         if(Effect::objectCanBestowEffect(object->getEffect())) {
             if(!isEffected(object->getEffect())) {
                 // passing keepApplier = true, which means this effect will continue to point to this object
-                addEffect(object->getEffect(), object->getEffectDuration(), object->getEffectStrength(), object, true, this, true);
+                addEffect(object->getEffect(), object->getEffectDuration(), object->getEffectStrength(), object, true, Containable::downcasted_shared_from_this<Creature>(), true);
             }
         } else {
             object->clearFlag(O_EQUIPPING_BESTOWS_EFFECT);
@@ -271,10 +270,9 @@ bool Creature::equip(Object* object, bool showMessage) {
 //                      unequip
 //*********************************************************************
 
-Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool showEffect) {
+std::shared_ptr<Object>  Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool showEffect) {
     wearloc--;
-    Object* object = ready[wearloc];
-    ready[wearloc] = nullptr;
+    std::shared_ptr<Object> object = ready[wearloc];
     if(object) {
         object->clearFlag(O_WORN);
 
@@ -287,13 +285,13 @@ Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool
         if(action == UNEQUIP_DELETE) {
             Limited::remove(getAsPlayer(), object);
             darkness = object->flagIsSet(O_DARKNESS);
-            delete object;
             object = nullptr;
         } else if(action == UNEQUIP_ADD_TO_INVENTORY) {
             darkness = false;
             addObj(object);
         }
     }
+    ready[wearloc] = nullptr;
     if(darkness)
         checkDarkness();
     return(object);
@@ -304,72 +302,72 @@ Object* Creature::unequip(int wearloc, UnequipAction action, bool darkness, bool
 //                      printEquipList
 //*********************************************************************
 
-void Creature::printEquipList(const Player* viewer) {
+void Creature::printEquipList(const std::shared_ptr<Player>& viewer) {
     bool showIndicator = viewer->flagIsSet(P_SHOW_DURABILITY_INDICATOR);
 
     if(ready[BODY-1]){
-        viewer->printColor("On body:   %1P  %s\n", ready[BODY-1], showIndicator ? ready[BODY-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On body:   %1P  %s\n", ready[BODY-1].get(), showIndicator ? ready[BODY-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[ARMS-1]){
-        viewer->printColor("On arms:   %1P  %s\n", ready[ARMS-1], showIndicator ? ready[ARMS-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On arms:   %1P  %s\n", ready[ARMS-1].get(), showIndicator ? ready[ARMS-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[LEGS-1]){
-        viewer->printColor("On legs:   %1P  %s\n", ready[LEGS-1], showIndicator ? ready[LEGS-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On legs:   %1P  %s\n", ready[LEGS-1].get(), showIndicator ? ready[LEGS-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[NECK-1]){
-        viewer->printColor("On neck:   %1P  %s\n", ready[NECK-1], showIndicator ? ready[NECK-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On neck:   %1P  %s\n", ready[NECK-1].get(), showIndicator ? ready[NECK-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[HANDS-1]){
-        viewer->printColor("On hands:  %1P  %s\n", ready[HANDS-1], showIndicator ? ready[HANDS-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On hands:  %1P  %s\n", ready[HANDS-1].get(), showIndicator ? ready[HANDS-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[HEAD-1]){
-        viewer->printColor("On head:   %1P  %s\n", ready[HEAD-1], showIndicator ? ready[HEAD-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On head:   %1P  %s\n", ready[HEAD-1].get(), showIndicator ? ready[HEAD-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[BELT-1]){
-        viewer->printColor("On waist:  %1P  %s\n", ready[BELT -1], showIndicator ? ready[BELT-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On waist:  %1P  %s\n", ready[BELT -1].get(), showIndicator ? ready[BELT-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[FEET-1]){
-        viewer->printColor("On feet:   %1P  %s\n", ready[FEET-1], showIndicator ? ready[FEET-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On feet:   %1P  %s\n", ready[FEET-1].get(), showIndicator ? ready[FEET-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[FACE-1]){
-        viewer->printColor("On face:   %1P  %s\n", ready[FACE-1], showIndicator ? ready[FACE-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On face:   %1P  %s\n", ready[FACE-1].get(), showIndicator ? ready[FACE-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[FINGER1-1]){
-        viewer->printColor("On finger: %1P  %s\n", ready[FINGER1-1], showIndicator ? ready[FINGER1-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER1-1].get(), showIndicator ? ready[FINGER1-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[FINGER2-1]){
-        viewer->printColor("On finger: %1P  %s\n", ready[FINGER2-1], showIndicator ? ready[FINGER2-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER2-1].get(), showIndicator ? ready[FINGER2-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[FINGER3-1]){
-        viewer->printColor("On finger: %1P  %s\n", ready[FINGER3-1], showIndicator ? ready[FINGER3-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER3-1].get(), showIndicator ? ready[FINGER3-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[FINGER4-1]){
-        viewer->printColor("On finger: %1P  %s\n", ready[FINGER4-1], showIndicator ? ready[FINGER4-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER4-1].get(), showIndicator ? ready[FINGER4-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[FINGER5-1]){
-        viewer->printColor("On finger: %1P  %s\n", ready[FINGER5-1], showIndicator ? ready[FINGER5-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER5-1].get(), showIndicator ? ready[FINGER5-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[FINGER6-1]){
-        viewer->printColor("On finger: %1P  %s\n", ready[FINGER6-1], showIndicator ? ready[FINGER6-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER6-1].get(), showIndicator ? ready[FINGER6-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[FINGER7-1]){
-        viewer->printColor("On finger: %1P  %s\n", ready[FINGER7-1], showIndicator ? ready[FINGER7-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER7-1].get(), showIndicator ? ready[FINGER7-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[FINGER8-1]){
-        viewer->printColor("On finger: %1P  %s\n", ready[FINGER8-1], showIndicator ? ready[FINGER8-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("On finger: %1P  %s\n", ready[FINGER8-1].get(), showIndicator ? ready[FINGER8-1]->getDurabilityIndicator().c_str() : "");
     }
     // dual wield
     if(ready[HELD-1]) {
         if(ready[HELD-1]->getWearflag() != WIELD)
-            viewer->printColor("Holding:   %1P  %s\n", ready[HELD-1], showIndicator ? ready[HELD-1]->getDurabilityIndicator().c_str() : "");
+            viewer->printColor("Holding:   %1P  %s\n", ready[HELD-1].get(), showIndicator ? ready[HELD-1]->getDurabilityIndicator().c_str() : "");
         else if(ready[HELD-1]->getWearflag() == WIELD)
-            viewer->printColor("In Hand:   %1P  %s\n", ready[HELD-1], showIndicator ? ready[HELD-1]->getDurabilityIndicator().c_str() : "");
+            viewer->printColor("In Hand:   %1P  %s\n", ready[HELD-1].get(), showIndicator ? ready[HELD-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[SHIELD-1]){
-        viewer->printColor("Shield:    %1P  %s\n", ready[SHIELD-1], showIndicator ? ready[SHIELD-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("Shield:    %1P  %s\n", ready[SHIELD-1].get(), showIndicator ? ready[SHIELD-1]->getDurabilityIndicator().c_str() : "");
     }
     if(ready[WIELD-1]){
-        viewer->printColor("Wielded:   %1P  %s\n", ready[WIELD-1], showIndicator ? ready[WIELD-1]->getDurabilityIndicator().c_str() : "");
+        viewer->printColor("Wielded:   %1P  %s\n", ready[WIELD-1].get(), showIndicator ? ready[WIELD-1]->getDurabilityIndicator().c_str() : "");
     }
 }
 
@@ -387,7 +385,7 @@ void Creature::checkDarkness() {
             return;
         }
     }
-    for(Object *obj : objects) {
+    for(const auto& obj : objects) {
         if(obj->flagIsSet(O_DARKNESS)) {
             setFlag(isPlayer() ? P_DARKNESS : M_DARKNESS);
             return;

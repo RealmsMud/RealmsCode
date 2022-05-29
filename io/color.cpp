@@ -38,7 +38,6 @@
 #include "mudObjects/monsters.hpp"               // for Monster
 #include "mudObjects/players.hpp"                // for Player
 #include "socket.hpp"                            // for Socket, Socket::Sock...
-#include "utils.hpp"
 
 #define CLEAR       "\033[0m"       // Resets color
 #define C_BLACK     "\033[0;30m"    // Normal colors
@@ -213,11 +212,11 @@ const char* colorSection(bool staff, const char* color, char colorChar = 0) {
     return(str);
 }
 
-int cmdColors(Player* player, cmd* cmnd) {
+int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
     bool staff = player->isStaff();
 
-    if(!strcmp(cmnd->str[1], "reset")) {
-        player->print("Custom colors have been reset to defaults.\n");
+    if(!strcmp(cmnd->str[1], "plyReset")) {
+        player->print("Custom colors have been plyReset to defaults.\n");
         player->resetCustomColors();
         return(0);
     } else if(cmnd->num > 2) {
@@ -304,7 +303,7 @@ int cmdColors(Player* player, cmd* cmnd) {
     player->print("\n");
     player->printColor("Custom Colors:  type [color ^W<type> <color>^x]\n");
     player->printColor("                Choose ^Wtype^x from below, ^Wcolor^x from above.\n");
-    player->printColor("                Type ^Wcolor reset^x to return to default colors.\n\n");
+    player->printColor("                Type ^Wcolor plyReset^x to return to default colors.\n\n");
 
     std::map<std::string,std::string> options;
     std::map<std::string,std::string>::iterator it;
@@ -354,14 +353,16 @@ int cmdColors(Player* player, cmd* cmnd) {
 // creation.  Character flags override these settings after creation
 
 void Player::defineColors() {
-    if(mySock->getColorOpt() == ANSI_COLOR) {
-        setFlag(P_ANSI_COLOR);
-        clearFlag(P_MXP_ENABLED);
-        clearFlag(P_NEWLINE_AFTER_PROMPT);
-    } else if(mySock->getColorOpt() == NO_COLOR) {
-        clearFlag(P_ANSI_COLOR);
-        clearFlag(P_MXP_ENABLED);
-        clearFlag(P_NEWLINE_AFTER_PROMPT);
+    if(auto sock = mySock.lock()) {
+        if (sock->getColorOpt() == ANSI_COLOR) {
+            setFlag(P_ANSI_COLOR);
+            clearFlag(P_MXP_ENABLED);
+            clearFlag(P_NEWLINE_AFTER_PROMPT);
+        } else if (sock->getColorOpt() == NO_COLOR) {
+            clearFlag(P_ANSI_COLOR);
+            clearFlag(P_MXP_ENABLED);
+            clearFlag(P_NEWLINE_AFTER_PROMPT);
+        }
     }
 }
 //***********************************************************************
@@ -370,10 +371,12 @@ void Player::defineColors() {
 // Set color options on the socket according to player flags (which can
 // overide what we've negotiated)
 void Player::setSockColors() {
-    if(flagIsSet(P_ANSI_COLOR)) {
-        mySock->setColorOpt(ANSI_COLOR);
-    } else {
-        mySock->setColorOpt(NO_COLOR);
+    if(auto sock = mySock.lock()) {
+        if (flagIsSet(P_ANSI_COLOR)) {
+            sock->setColorOpt(ANSI_COLOR);
+        } else {
+            sock->setColorOpt(NO_COLOR);
+        }
     }
 }
 
@@ -447,7 +450,7 @@ std::string escapeColor(std::string_view colored) {
 
 
 std::string padColor(const std::string &toPad, size_t pad) {
-    pad -= MIN(lengthNoColor(toPad), pad);
+    pad -= std::min(lengthNoColor(toPad), pad);
     if(pad <= 0)
         return {toPad};
     else

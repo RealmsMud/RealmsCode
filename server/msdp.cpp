@@ -49,19 +49,19 @@
 #define MSDP_DEBUG
 
 void Server::processMsdp() {
-    for(auto &sock : sockets) {
-        if(sock.getState() == CON_DISCONNECTING)
+    for(const auto& sock : sockets) {
+        if(sock->getState() == CON_DISCONNECTING)
             continue;
 
-        if(sock.mccpEnabled()) {
-            for(auto& [vName, var] : sock.msdpReporting) {
-                if(var.getRequiresPlayer() && (!sock.getPlayer() || sock.getState() != CON_PLAYING)) continue;
+        if(sock->mccpEnabled()) {
+            for(auto& [vName, var] : sock->msdpReporting) {
+                if(var.getRequiresPlayer() && (!sock->getPlayer() || sock->getState() != CON_PLAYING)) continue;
                 if(!var.checkTimer()) continue;
 
                 var.update();
                 if(!var.isDirty()) continue;
 
-                var.send(sock);
+                var.send(*sock);
                 var.setDirty(false);
             }
         }
@@ -103,7 +103,7 @@ bool Socket::processMsdpVarVal(const std::string &variable, const std::string &v
                 if(reportedVar == nullptr)
                     return(false);
 
-                // If it's a write once variable, we can only set it if the value is currently unknown
+                // If it's a write-once variable, we can only set it if the value is currently unknown
                 if(msdpVar->isWriteOnce() && reportedVar->getValue() != "unknown")
                     return(false);
 
@@ -221,7 +221,7 @@ ReportedMsdpVariable* Socket::msdpReport(const std::string &value) {
         return reported;
     }
 
-    msdpReporting.emplace(msdpVar->getName(), ReportedMsdpVariable(msdpVar, this));
+    msdpReporting.emplace(msdpVar->getName(), ReportedMsdpVariable(msdpVar, shared_from_this()));
 #ifdef MSDP_DEBUG
     std::clog << "MsdpHandleReport: Now Reporting '" << msdpVar->getName() << "'" << std::endl;
 #endif
@@ -369,7 +369,7 @@ MsdpVariable* Config::getMsdpVariable(const std::string &name) {
         return &(it->second);
 }
 
-ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, Socket* sock) {
+ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, std::shared_ptr<Socket> sock) {
     name = mv->getName();
     parentSock = sock;
     configurable = mv->isConfigurable();
@@ -472,10 +472,11 @@ bool ReportedMsdpVariable::isDirty() const {
 
 void ReportedMsdpVariable::update() {
     if(!isUpdatable()) return;
-    if(!parentSock) return;
+    auto sock = parentSock.lock();
+    if(!sock) return;
 
     std::string oldValue = value;
-    setValue(MsdpVariable::valueFn(*parentSock, parentSock->getPlayer()));
+    setValue(MsdpVariable::valueFn(*sock, sock->getPlayer()));
 }
 
 void ReportedMsdpVariable::setDirty(bool pDirty) {
@@ -489,7 +490,7 @@ std::string BaseRoom::getExitsMsdp() const {
         oStr << (unsigned char) MSDP_VAR << "EXITS"
              << (unsigned char) MSDP_VAL << (unsigned char) MSDP_TABLE_OPEN;
 
-        for (auto exit : exits ) {
+        for (const auto& exit : exits ) {
             oStr << (unsigned char) MSDP_VAR << exit->getName()
                  << (unsigned char) MSDP_VAL << (unsigned char) MSDP_TABLE_OPEN;
 
@@ -573,7 +574,7 @@ std::string AreaRoom::getMsdp(bool showExits) const {
     return oStr.str();
 }
 
-std::string Group::getMsdp(Creature* viewer) const {
+std::string Group::getMsdp(const std::shared_ptr<Creature>& viewer) const {
     int i = 0;
     std::ostringstream oStr;
 
@@ -595,7 +596,9 @@ std::string Group::getMsdp(Creature* viewer) const {
          << (unsigned char) MSDP_VAL << (unsigned char) MSDP_TABLE_OPEN; // Members
 
 
-        for(Creature* target : members) {
+        for(const auto& weakTarget : members) {
+            const auto& target = weakTarget.lock();
+
             if(!viewer->isStaff() && (target->pFlagIsSet(P_DM_INVIS) || (target->isEffected("incognito") && !viewer->inSameRoom(target))))
                 continue;
 
@@ -676,96 +679,96 @@ namespace msdp {
     const std::string UNKNOWN_STR = "unknown";
     const std::string NONE_STR = "none";
 
-    std::string getServerId(Socket &sock, Player* player) {
+    std::string getServerId(Socket &sock, const std::shared_ptr<Player>& player) {
         return (gConfig->getMudNameAndVersion());
     }
 
-    std::string getServerTime(Socket &sock, Player* player) {
+    std::string getServerTime(Socket &sock, const std::shared_ptr<Player>& player) {
         return (Server::getServerTime());
     }
 
-    const std::string &getCharacterName(Socket &sock, Player* player) {
+    const std::string &getCharacterName(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? player->getName() : UNKNOWN_STR);
     }
 
-    std::string getHealth(Socket &sock, Player* player) {
+    std::string getHealth(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? std::to_string(player->hp.getCur()) : UNKNOWN_STR);
     }
-    std::string getHealthMax(Socket &sock, Player* player) {
+    std::string getHealthMax(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? std::to_string(player->hp.getMax()) : UNKNOWN_STR);
     }
-    std::string getMana(Socket &sock, Player* player) {
+    std::string getMana(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? std::to_string(player->mp.getCur()) : UNKNOWN_STR);
     }
-    std::string getManaMax(Socket &sock, Player* player) {
+    std::string getManaMax(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? std::to_string(player->mp.getMax()) : UNKNOWN_STR);
     }
-    std::string getExperience(Socket &sock, Player* player) {
+    std::string getExperience(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? std::to_string(player->getExperience()) : UNKNOWN_STR);
     }
-    std::string getExperienceMax(Socket &sock, Player* player) {
+    std::string getExperienceMax(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? player->expNeededDisplay() : UNKNOWN_STR);
     }
-    std::string getExperienceTNL(Socket &sock, Player* player) {
+    std::string getExperienceTNL(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? std::to_string(player->expToLevel()) : UNKNOWN_STR);
     }
-    std::string getExperienceTNLMax(Socket &sock, Player* player) {
+    std::string getExperienceTNLMax(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? player->expForLevel() : UNKNOWN_STR);
     }
-    std::string getWimpy(Socket &sock, Player* player) {
+    std::string getWimpy(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? std::to_string(player->getWimpy()) : UNKNOWN_STR);
     }
-    std::string getMoney(Socket &sock, Player* player) {
+    std::string getMoney(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? player->getCoinDisplay() : UNKNOWN_STR);
     }
-    std::string getBank(Socket &sock, Player* player) {
+    std::string getBank(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? player->getBankDisplay() : UNKNOWN_STR);
     }
-    std::string getArmor(Socket &sock, Player* player) {
+    std::string getArmor(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? std::to_string(player->getArmor()) : UNKNOWN_STR);
     }
-    std::string getArmorAbsorb(Socket &sock, Player* player) {
+    std::string getArmorAbsorb(Socket &sock, const std::shared_ptr<Player>& player) {
         return (player ? std::to_string(floor(player->getDamageReduction(player)*100.0)) : UNKNOWN_STR);
     }
-    std::string getGroup(Socket &sock, Player* player) {
+    std::string getGroup(Socket &sock, const std::shared_ptr<Player>& player) {
         if(player && player->getGroup()) {
             return player->getGroup()->getMsdp(player);
         } else {
             return UNKNOWN_STR;
         }
     }
-    const std::string& getTarget(Socket &sock, Player* player) {
+    const std::string& getTarget(Socket &sock, const std::shared_ptr<Player>& player) {
         if(player) {
-            auto *target = player->getTarget();
+            auto target = player->getTarget();
             return(target ? target->getName() : NONE_STR);
         } else {
             return UNKNOWN_STR;
         }
     }
-    const std::string& getTargetID(Socket &sock, Player* player) {
+    const std::string& getTargetID(Socket &sock, const std::shared_ptr<Player>& player) {
         if(player) {
-            auto *target = player->getTarget();
+            auto target = player->getTarget();
             return(target ? target->getId() : NONE_STR);
         } else {
             return UNKNOWN_STR;
         }
     }
-    std::string getTargetHealth(Socket &sock, Player* player) {
+    std::string getTargetHealth(Socket &sock, const std::shared_ptr<Player>& player) {
         if(player && player->getTarget()) {
-            auto *target = player->getTarget();
+            auto target = player->getTarget();
             return(std::to_string(round((target->hp.getCur()*10000.0) / (target->hp.getMax()*1.0))/100));
         } else {
             return UNKNOWN_STR;
         }
     }
-    std::string getTargetHealthMax(Socket &sock, Player* player) {
+    std::string getTargetHealthMax(Socket &sock, const std::shared_ptr<Player>& player) {
         if(player && player->getTarget()) {
             return std::to_string(100);
         } else {
             return UNKNOWN_STR;
         }
     }
-    std::string getTargetStrength(Socket &sock, Player* player) {
+    std::string getTargetStrength(Socket &sock, const std::shared_ptr<Player>& player) {
         if(player && player->getTarget()) {
             // Not implemented
             return UNKNOWN_STR;
@@ -773,7 +776,7 @@ namespace msdp {
             return UNKNOWN_STR;
         }
     }
-    std::string getRoom(Socket &sock, Player* player) {
+    std::string getRoom(Socket &sock, const std::shared_ptr<Player>& player) {
         if(player && player->getRoomParent()) {
             return player->getRoomParent()->getMsdp();
         } else

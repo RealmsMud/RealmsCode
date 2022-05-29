@@ -38,14 +38,14 @@ struct DelayedAction {
     // It will be called when the action is complete.
     void (*callback)(const DelayedAction*);
 
-    MudObject* target;
+    std::weak_ptr<MudObject> target{};
     DelayedActionType type;
     long whenFinished;
     bool canInterrupt;
     cmd cmnd;
     std::string script;
 
-    DelayedAction(void (*callback)(DelayedActionFn), MudObject* target, cmd* cmnd, DelayedActionType type, long whenFinished, bool canInterrupt) {
+    DelayedAction(void (*callback)(DelayedActionFn), std::weak_ptr<MudObject> target, cmd* cmnd, DelayedActionType type, long whenFinished, bool canInterrupt) {
         this->callback = callback;
         this->target = target;
         this->type = type;
@@ -56,7 +56,7 @@ struct DelayedAction {
         this->script = "";
     }
 
-    DelayedAction(void (*callback)(DelayedActionFn), MudObject* target, std::string_view script, long whenFinished, bool canInterrupt) {
+    DelayedAction(void (*callback)(DelayedActionFn), std::weak_ptr<MudObject> target, std::string_view script, long whenFinished, bool canInterrupt) {
         this->callback = callback;
         this->target = target;
         this->type = ActionScript;

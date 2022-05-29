@@ -26,7 +26,6 @@
 #include "commands.hpp"                // for lose_all
 #include "dm.hpp"                      // for dmMax, builderMob, builderObj
 #include "flags.hpp"                   // for P_BUILDER_MOBS, P_BUILDER_OBJS
-#include "free_crt.hpp"                // for free_crt
 #include "global.hpp"                  // for CreatureClass, CreatureClass::...
 #include "location.hpp"                // for Location
 #include "mudObjects/creatures.hpp"    // for Creature
@@ -43,8 +42,8 @@
 //                      dmMakeBuilder
 //*********************************************************************
 
-int dmMakeBuilder(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmMakeBuilder(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
     if(!cmnd->str[1][0]) {
         player->print("Builderize whom?");
@@ -71,8 +70,7 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
     target->setDeity(0);
     target->initBuilder();
     target->setFlag(P_DM_INVIS);
-    target->setFlag(P_NO_AUTO_WEAR);
-    lose_all(target, true, "builder-promotion");
+    target->loseAll(true, "builder-promotion");
 
     target->printColor("\n\n^yYou are now a building member of the staff.\n\n");
     player->print("%s is now a builder.\n", target->getCName());
@@ -82,16 +80,16 @@ int dmMakeBuilder(Player* player, cmd* cmnd) {
         !target->getUniqueRoomParent()->info.isArea("test") ||
         target->getUniqueRoomParent()->info.id != 1)
     {
-        UniqueRoom* uRoom=nullptr;
+        std::shared_ptr<UniqueRoom> uRoom=nullptr;
         CatRef cr;
         cr.setArea("test");
         cr.id = 1;
 
-        if(!loadRoom(cr, &uRoom)) {
-            player->print("Error: could not load Builder Waiting Room (%s)\n", cr.str().c_str());
+        if(!loadRoom(cr, uRoom)) {
+            player->print("Error: could not load Builder Waiting Room (%s)\n", cr.displayStr().c_str());
             return(0);
         }
-        BaseRoom* oldRoom = target->getRoomParent();
+        std::shared_ptr<BaseRoom> oldRoom = target->getRoomParent();
         target->dmPoof(target->getRoomParent(), uRoom);
 
         target->deleteFromRoom();
@@ -149,7 +147,7 @@ bool Player::checkRangeRestrict(const CatRef& cr, bool reading) const {
 // Checks against a builder's allowed room range. Returns true if legal,
 // false if illegal.
 
-bool Player::checkBuilder(UniqueRoom* room, bool reading) const {
+bool Player::checkBuilder(std::shared_ptr<UniqueRoom> room, bool reading) const {
     if(cClass != CreatureClass::BUILDER)
         return(true);
     if(!room || !room->info.id)
@@ -165,7 +163,7 @@ bool Player::checkBuilder(const CatRef& cr, bool reading) const {
         printColor("\n^r*** Number assignment violation.\n");
         print("Your range assignments are as follows:\n");
 
-        listRanges(this);
+        listRanges(getAsConstPlayer());
 
         print("\n");
         return(false);
@@ -178,7 +176,7 @@ bool Player::checkBuilder(const CatRef& cr, bool reading) const {
 //                      listRanges
 //*********************************************************************
 
-void Player::listRanges(const Player* viewer) const {
+void Player::listRanges(const std::shared_ptr<const Player> &viewer) const {
 
     if(viewer->fd == fd)
         viewer->print("Your assigned number ranges:\n\n");
@@ -204,9 +202,8 @@ void Player::listRanges(const Player* viewer) const {
 //                      dmRange
 //*********************************************************************
 
-int dmRange(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
-    int     offline=0;
+int dmRange(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
     if(player->getClass() == CreatureClass::BUILDER || cmnd->num == 1) {
         player->listRanges(player);
@@ -216,11 +213,10 @@ int dmRange(Player* player, cmd* cmnd) {
     cmnd->str[1][0] = up(cmnd->str[1][0]);
     target = gServer->findPlayer(cmnd->str[1]);
     if(!target) {
-        if(!loadPlayer(cmnd->str[1], &target)) {
+        if(!loadPlayer(cmnd->str[1], target)) {
             player->print("Player does not exist.\n");
             return(0);
-        } else
-            offline = 1;
+        }
     }
 
     if(!target) {
@@ -231,9 +227,6 @@ int dmRange(Player* player, cmd* cmnd) {
     target->listRanges(player);
     player->print("\n");
 
-
-    if(offline)
-        free_crt(target);
 
     return(0);
 }
@@ -254,7 +247,7 @@ void Player::initBuilder() {
 
     doDispelMagic();
 
-    dmMax(this, nullptr);
+    dmMax(getAsPlayer(), nullptr);
 
     cureDisease();
     curePoison();
@@ -269,7 +262,7 @@ void Player::initBuilder() {
 //                      builderObj
 //*********************************************************************
 
-bool builderObj(const Creature* player) {
+bool builderObj(const std::shared_ptr<Creature> & player) {
     return(player->canBuildObjects());
 }
 
@@ -277,7 +270,7 @@ bool builderObj(const Creature* player) {
 //                      builderMob
 //*********************************************************************
 
-bool builderMob(const Creature* player) {
+bool builderMob(const std::shared_ptr<Creature> & player) {
     return(player->canBuildMonsters());
 }
 
@@ -324,7 +317,7 @@ bool Player::builderCanEditRoom(std::string_view action) {
 bool BaseRoom::isConstruction() const {
     if(flagIsSet(R_CONSTRUCTION))
         return(true);
-    const UniqueRoom* uRoom = getAsConstUniqueRoom();
+    const std::shared_ptr<const UniqueRoom> uRoom = getAsConstUniqueRoom();
     if(uRoom && uRoom->info.isArea("test"))
         return(true);
     return(false);

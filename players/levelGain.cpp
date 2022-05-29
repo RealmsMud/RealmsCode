@@ -36,7 +36,6 @@
 #include "mud.hpp"                                  // for ALIGNMENT_LEVEL
 #include "mudObjects/players.hpp"                   // for Player
 #include "mudObjects/rooms.hpp"                     // for BaseRoom
-#include "os.hpp"                                   // for merror
 #include "playerClass.hpp"                          // for PlayerClass
 #include "proto.hpp"                                // for updateGuild, broa...
 #include "raceData.hpp"                             // for RaceData
@@ -45,7 +44,6 @@
 #include "statistics.hpp"                           // for LevelInfo, Statis...
 #include "stats.hpp"                                // for Stat, MOD_CUR_MAX
 #include "structs.hpp"                              // for saves
-#include "utils.hpp"                                // for MIN
 #include "web.hpp"                                  // for updateRecentActivity
 #include "xml.hpp"                                  // for NODE_NAME, copyToNum
 
@@ -152,7 +150,7 @@ int LevelGain::getMp() { return(mp); }
 //                      doTrain
 //*********************************************************************
 
-void doTrain(Player* player) {
+void doTrain(std::shared_ptr<Player> player) {
     player->upLevel();
     player->setFlag(P_JUST_TRAINED);
     broadcast("### %s just made a level!", player->getCName());
@@ -201,7 +199,7 @@ void Player::upLevel() {
         print("Error: Can't find your class!\n");
         if(!isStaff()) {
             std::string errorStr = "Error: Can't find class: " + getClassString();
-            merror(errorStr.c_str(), FATAL);
+            throw std::runtime_error(errorStr);
         }
         return;
     } else {
@@ -211,7 +209,7 @@ void Player::upLevel() {
             print("Error: Can't find any information for your level!\n");
             if(!isStaff()) {
                 std::string errorStr = fmt::format("Error: Can't find level info for {} {}", getClassString(), level);
-                merror(errorStr.c_str(), FATAL);
+                throw std::runtime_error(errorStr);
             }
             return;
         }
@@ -358,7 +356,7 @@ void Player::upLevel() {
             for(a=POI; a<= SPL;a++) 
                 saves[a].gained = 0;
 
-            logn("log.saveswtf", "upLevel(): %s[%d] - all saves gained reset to 0\n", getCName(), level);
+            logn("log.saveswtf", "upLevel(): %s[%d] - all saves gained plyReset to 0\n", getCName(), level);
         }
 
         // Give out skills here
@@ -433,7 +431,7 @@ void Player::upLevel() {
         learnSpell(S_TRACK);
     }
 
-    updateGuild(this, GUILD_LEVEL);
+    updateGuild(Containable::downcasted_shared_from_this<Player>(), GUILD_LEVEL);
     update();
 
     // getting [custom] as a title lets you pick a new one,
@@ -551,7 +549,7 @@ void Player::downLevel() {
     }
     //  }
 
-    updateGuild(this, GUILD_DIE);
+    updateGuild(Containable::downcasted_shared_from_this<Player>(), GUILD_DIE);
     setMonkDice();
 
 }
@@ -563,7 +561,7 @@ void Player::downLevel() {
 // training location and has enough gold and experience.  If so, the
 // character goes up a level.
 
-int cmdTrain(Player* player, cmd* cmnd) {
+int cmdTrain(const std::shared_ptr<Player>& player, cmd* cmnd) {
     unsigned long goldneeded=0, expneeded=0, bankneeded=0, maxgold=0;
 
     if(player->getClass() == CreatureClass::BUILDER) {
@@ -611,7 +609,7 @@ int cmdTrain(Player* player, cmd* cmnd) {
     else
         maxgold = ((player->getLevel()-22)*500000) + 3000000;
 
-    goldneeded = MIN(maxgold, expneeded / 2L);
+    goldneeded = std::min(maxgold, expneeded / 2L);
 
     if(player->getRace() == HUMAN)
         goldneeded += goldneeded/3/10; // Humans have +10% training costs.

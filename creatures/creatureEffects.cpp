@@ -21,7 +21,6 @@
 #include "mudObjects/creatures.hpp"         // for Creature, PetList
 #include "mudObjects/objects.hpp"           // for Object, ObjectType, ObjectType...
 #include "proto.hpp"                        // for bonus
-#include "utils.hpp"                        // for MIN, MAX
 
 
 //*********************************************************************
@@ -34,14 +33,14 @@ bool Creature::doPetrificationDmg() {
 
     wake("Terrible nightmares disturb your sleep!");
     printColor("^c^#Petrification spreads toward your heart.\n");
-    hp.decrease(MAX<int>(1,(hp.getMax()/15 - bonus(constitution.getCur()))));
+    hp.decrease(std::max<int>(1,(hp.getMax()/15 - bonus(constitution.getCur()))));
 
     if(hp.getCur() < 1) {
-        Player* pThis = getAsPlayer();
+        std::shared_ptr<Player> pThis = getAsPlayer();
         if(pThis)
             pThis->die(PETRIFIED);
         else
-            die(this);
+            die(Containable::downcasted_shared_from_this<Creature>());
         return(true);
     }
     return(false);

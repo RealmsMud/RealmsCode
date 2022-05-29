@@ -19,6 +19,7 @@
 #ifndef _ASYNCH_H
 #define _ASYNCH_H
 
+#include <memory>
 #include "proc.hpp"
 
 class Player;
@@ -34,7 +35,7 @@ protected:
     int fds[2];
 public:
     Async();
-    AsyncResult branch(const Player* player, ChildType type);
+    AsyncResult branch(const std::shared_ptr<const Player>& player, ChildType type);
 };
 
 

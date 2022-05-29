@@ -44,7 +44,6 @@
 #include "dice.hpp"                         // for Dice
 #include "effects.hpp"                      // for EffectInfo
 #include "flags.hpp"                        // for P_DM_INVIS, P_CHAOTIC, O_DARKNESS
-#include "free_crt.hpp"                     // for free_crt
 #include "global.hpp"                       // for CreatureClass, CreatureClass::...
 #include "guilds.hpp"                       // for Guild
 #include "lasttime.hpp"                     // for lasttime
@@ -62,7 +61,6 @@
 #include "mudObjects/players.hpp"           // for Player
 #include "mudObjects/rooms.hpp"             // for BaseRoom, ExitList
 #include "mudObjects/uniqueRooms.hpp"       // for UniqueRoom
-#include "os.hpp"                           // for merror
 #include "paths.hpp"                        // for Help, Bank, DMHelp, History
 #include "playerClass.hpp"                  // for PlayerClass
 #include "property.hpp"                     // for Property
@@ -79,8 +77,8 @@
 #include "stats.hpp"                        // for Stat, MOD_CUR
 #include "structs.hpp"                      // for daily
 #include "unique.hpp"                       // for remove, deleteOwner
-#include "utils.hpp"                        // for MIN, MAX
 #include "xml.hpp"                          // for loadRoom
+#include "toNum.hpp"
 
 
 //********************************************************************
@@ -91,11 +89,12 @@
 // logs on.
 
 void Player::init() {
-    char    file[80], str[50];
-    BaseRoom *newRoom=nullptr;
+    char    str[50];
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
     long    t = time(nullptr);
 
-    statistics.setParent(this);
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
+    statistics.setParent(pThis);
 
     // always make sure size matches up with race
     if(size == NO_SIZE) {
@@ -146,8 +145,8 @@ void Player::init() {
 
     if(!isStaff()) {
         daily[DL_ENCHA].max = 3;
-        daily[DL_FHEAL].max = MAX(3, 3 + (level) / 3);
-        daily[DL_TRACK].max = MAX(3, 3 + (level) / 3);
+        daily[DL_FHEAL].max = std::max(3, 3 + (level) / 3);
+        daily[DL_TRACK].max = std::max(3, 3 + (level) / 3);
         daily[DL_DEFEC].max = 1;    
         
          if(level < 15)
@@ -157,9 +156,9 @@ void Player::init() {
 
         // Mages and liches get more ports than other classes; dependent on translocation magic skill
         if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
-            daily[DL_TELEP].max = MIN(10, (int)getSkillLevel("translocation")/5);
+            daily[DL_TELEP].max = std::min(10, (int)getSkillLevel("translocation")/5);
 
-        daily[DL_RCHRG].max = MAX(7, level / 2);
+        daily[DL_RCHRG].max = std::max(7, level / 2);
         daily[DL_HANDS].max = 3;
 
         daily[DL_RESURRECT].max = 1;
@@ -282,9 +281,9 @@ void Player::init() {
     lasttime[LT_PLAYER_SEND].misc = 0;
 
     if(currentLocation.mapmarker.getArea() != 0) {
-        Area *area = gServer->getArea(currentLocation.mapmarker.getArea());
+        std::shared_ptr<Area> area = gServer->getArea(currentLocation.mapmarker.getArea());
         if(area)
-            newRoom = area->loadRoom(nullptr, &currentLocation.mapmarker, false);
+            newRoom = area->loadRoom(nullptr, currentLocation.mapmarker, false);
 
     }
     // load up parent_rom for the broadcast below, but don't add the
@@ -301,12 +300,12 @@ void Player::init() {
             if(l.room.id)
                 currentLocation.room = l.room;
             else
-                gServer->areaInit(this, l.mapmarker);
+                gServer->areaInit(pThis, l.mapmarker);
 
             if(this->currentLocation.mapmarker.getArea() != 0) {
-                Area *area = gServer->getArea(currentLocation.mapmarker.getArea());
+                std::shared_ptr<Area> area = gServer->getArea(currentLocation.mapmarker.getArea());
                 if(area)
-                    newRoom = area->loadRoom(nullptr, &currentLocation.mapmarker, false);
+                    newRoom = area->loadRoom(nullptr, currentLocation.mapmarker, false);
             }
         }
     }
@@ -314,31 +313,32 @@ void Player::init() {
 
     // area_room might get set by areaInit, so check again
     if(!newRoom) {
-        UniqueRoom  *uRoom=nullptr;
-        if(!loadRoom(currentLocation.room, &uRoom)) {
+        std::shared_ptr<UniqueRoom> uRoom=nullptr;
+        if(!loadRoom(currentLocation.room, uRoom)) {
             loge(fmt::format("{}: {} ({}) Attempted logon to bad or missing room!\n", getName(),
-                getSock()->getHostname(), currentLocation.room.str()).c_str());
+                getSock()->getHostname(), currentLocation.room.displayStr()).c_str());
             // NOTE: Using ::isCt to use the global function, not the local function
             broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room (normal)!", getName(),
-                getSock()->getHostname(), currentLocation.room.str()).c_str());
-            newRoom = abortFindRoom(this, "init_ply");
+                getSock()->getHostname(), currentLocation.room.displayStr()).c_str());
+            newRoom = abortFindRoom(pThis, "init_ply");
             uRoom = newRoom->getAsUniqueRoom();
         }
 
 
         if(uRoom && !isStaff() && !gServer->isRebooting()) {
             if( (   uRoom->flagIsSet(R_LOG_INTO_TRAP_ROOM) || uRoom->flagIsSet(R_SHOP_STORAGE) || uRoom->hasTraining()) &&
-                uRoom->getTrapExit().id && !loadRoom(uRoom->getTrapExit(), &uRoom)) {
-                broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room!", getName(), getSock()->getHostname(), uRoom->getTrapExit().str()).c_str());
-                newRoom = abortFindRoom(this, "init_ply");
+                uRoom->getTrapExit().id && !loadRoom(uRoom->getTrapExit(), uRoom)) {
+                broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room!", getName(), getSock()->getHostname(),
+                                              uRoom->getTrapExit().displayStr()).c_str());
+                newRoom = abortFindRoom(pThis, "init_ply");
                 uRoom = newRoom->getAsUniqueRoom();
             }
 
             if( uRoom && (   uRoom->isFull() || uRoom->flagIsSet(R_NO_LOGIN) || (!isStaff() && !flagIsSet(P_PTESTER) && uRoom->isConstruction()) || (!isStaff() && uRoom->flagIsSet(R_SHOP_STORAGE)))) {
-                newRoom = getRecallRoom().loadRoom(this);
+                newRoom = getRecallRoom().loadRoom(pThis);
                 if(!newRoom) {
                     broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room!", getName(), getSock()->getHostname(), getRecallRoom().str()).c_str());
-                    newRoom = abortFindRoom(this, "init_ply");
+                    newRoom = abortFindRoom(pThis, "init_ply");
                 }
                 uRoom = newRoom->getAsUniqueRoom();
             }
@@ -361,7 +361,7 @@ void Player::init() {
     // broadcast
     if(!gServer->isRebooting()) {
         setSockColors();
-        broadcastLogin(this, newRoom, 1);
+        broadcastLogin(pThis, newRoom, 1);
     }
 
     // don't do the actual adding until after broadcast
@@ -369,8 +369,8 @@ void Player::init() {
 
     checkDarkness();
 
-    for(Monster* pet : pets) {
-        pet->setMaster(this);
+    for(const auto& pet : pets) {
+        pet->setMaster(pThis);
         pet->fixLts();
 
         pet->updateAttackTimer();
@@ -393,36 +393,28 @@ void Player::init() {
 
 
     wearCursed();
-    if(!flagIsSet(P_NO_AUTO_WEAR))
-        wearAll(this, true);
 
     computeLuck();
     update();
 
-    Socket* sock = getSock();
+    std::shared_ptr<Socket> sock = getSock();
 
     if(!gServer->isRebooting()) {
-        sprintf(file, "%s/news.txt",Path::Help);
-        sock->viewFile(file);
+        sock->viewFile(Path::Help / "news.txt");
 
-        sprintf(file, "%s/newbie_news.txt",Path::Help);
-        sock->viewFile(file);
+        sock->viewFile(Path::Help / "newbie_news.txt");
 
         if(isCt()) {
-            sprintf(file, "%s/news.txt", Path::DMHelp);
-            sock->viewFile(file);
+            sock->viewFile(Path::DMHelp / "news.txt");
         }
         if(isStaff() && getName() != "Bane") {
-            sprintf(file, "%s/news.txt", Path::BuilderHelp);
-            sock->viewFile(file);
+            sock->viewFile(Path::BuilderHelp / "news.txt");
         }
         if(isCt() || flagIsSet(P_WATCHER)) {
-            sprintf(file, "%s/watcher_news.txt", Path::DMHelp);
-            sock->viewFile(file);
+            sock->viewFile(Path::DMHelp / "watcher_news.txt");
         }
 
-        sprintf(file, "%s/latest_post.txt", Path::Help);
-        sock->viewFile(file, false);
+        sock->viewFile(Path::Help / "latest_post.txt", false);
 
         hasNewMudmail();
 
@@ -443,7 +435,7 @@ void Player::init() {
     }
 
     if(isCt())
-        showGuildsNeedingApproval(this);
+        showGuildsNeedingApproval(pThis);
 
     if(hp.getCur() < 0)
         hp.setCur(1);
@@ -481,7 +473,7 @@ void Player::init() {
 
 
     if(actual_level < level)
-        actual_level = MAX(level, actual_level);
+        actual_level = std::max(level, actual_level);
 
     killDarkmetal();
 
@@ -512,11 +504,10 @@ void Player::uninit() {
     clearMaybeDueling();
     removeFromGroup(!gServer->isRebooting());
 
-    for(Monster* pet : pets) {
+    for(const auto& pet : pets) {
         if(pet->isPet()) {
-            gServer->delActive(pet);
+            gServer->delActive(pet.get());
             pet->deleteFromRoom();
-            free_crt(pet);
         } else {
             pet->setMaster(nullptr);
         }
@@ -531,7 +522,7 @@ void Player::uninit() {
     }
 
     if(!gServer->isRebooting() && Crash == 0)
-        broadcastLogin(this, this->getRoomParent(), 0);
+        broadcastLogin(Containable::downcasted_shared_from_this<Player>(), this->getRoomParent(), 0);
 
     if(this->inRoom())
         deleteFromRoom();
@@ -571,14 +562,14 @@ void Player::courageous() {
 //                      checkTempEnchant
 //*********************************************************************
 
-void Player::checkTempEnchant( Object* object) {
+void Player::checkTempEnchant( const std::shared_ptr<Object>&  object) {
     long i=0, t=0;
     if(object) {
         if( object->flagIsSet(O_TEMP_ENCHANT)) {
             t = time(nullptr);
             i = LT(object, LT_ENCHA);
             if(i < t) {
-                object->setArmor(MAX(0, object->getArmor() - object->getAdjustment()));
+                object->setArmor(std::max(0, object->getArmor() - object->getAdjustment()));
                 object->setAdjustment(0);
                 object->clearFlag(O_TEMP_ENCHANT);
                 object->clearFlag(O_RANDOM_ENCHANT);
@@ -590,7 +581,7 @@ void Player::checkTempEnchant( Object* object) {
             auto it = object->objects.begin();
             auto end = object->objects.end();
             while(it != end) {
-                Object* subObj = *it;
+                std::shared_ptr<Object>  subObj = *it;
                 ++it;
                 checkTempEnchant(subObj);
             }
@@ -602,7 +593,7 @@ void Player::checkTempEnchant( Object* object) {
 //                      checkEnvenom
 //*********************************************************************
 
-void Player::checkEnvenom( Object* object) {
+void Player::checkEnvenom( const std::shared_ptr<Object>&  object) {
     long i=0, t=0;
     if(object && object->flagIsSet(O_ENVENOMED)) {
         t = time(nullptr);
@@ -627,7 +618,7 @@ void Player::checkInventory( ) {
     auto it = objects.begin();
     auto end = objects.end();
     while(it != end) {
-        Object* obj = *it;
+        std::shared_ptr<Object>  obj = *it;
         ++it;
         checkTempEnchant(obj);
     }
@@ -645,7 +636,7 @@ void Player::checkInventory( ) {
 // if some of them have expired.  If so, flags are set accordingly.
 
 void Player::update() {
-    BaseRoom* room=nullptr;
+    std::shared_ptr<BaseRoom> room=nullptr;
     long    t = time(nullptr);
     int     item=0;
     bool    fighting = inCombat();
@@ -654,6 +645,7 @@ void Player::update() {
     lasttime[LT_AGE].ltime = t;
 
     checkInventory();
+    auto pThis = Containable::downcasted_shared_from_this<Player>();
 
     if(flagIsSet(P_LAG_PROTECTION_SET) && flagIsSet(P_LAG_PROTECTION_ACTIVE) && level > 1) {
         // Suspends lag protect if this not in battle.
@@ -666,7 +658,7 @@ void Player::update() {
         clearAsEnemy();
 
     if(flagIsSet(P_UNIQUE_TO_DECAY) && !fighting) {
-        gConfig->uniqueDecay(this);
+        gConfig->uniqueDecay(pThis);
         clearFlag(P_UNIQUE_TO_DECAY);
     }
 
@@ -685,11 +677,11 @@ void Player::update() {
 
     room = getRoomParent();
     if(room && !flagIsSet(P_LINKDEAD))
-        doRoomHarms(room, this);
+        doRoomHarms(room, pThis);
 
     if(t > LT(this, LT_PLAYER_SAVE)) {
         lasttime[LT_PLAYER_SAVE].ltime = t;
-        cmdSave(this, nullptr);
+        cmdSave(pThis, nullptr);
     }
 
     item = getLight();
@@ -749,8 +741,8 @@ void Player::computeAC() {
     }
 
     if((cClass == CreatureClass::DRUID || isCt()) && isEffected("barkskin")) {
-        EffectInfo* barkskin = getEffect("barkskin");
-        ac += (int)(((level+bonus(constitution.getCur())) * barkskin->getStrength())*4.4);
+        EffectInfo* barkskinEff = getEffect("barkskin");
+        ac += (int)(((level+bonus(constitution.getCur())) * barkskinEff->getStrength()) * 4.4);
     }
 
     if(isEffected("armor"))
@@ -765,7 +757,7 @@ void Player::computeAC() {
     if(isEffected("weakness"))
         ac -= 100;
 
-    armor = MAX(0, ac);
+    armor = std::max(0, ac);
 }
 
 
@@ -776,7 +768,7 @@ void Player::computeAC() {
 int Player::getArmorWeight() const {
     int weight=0;
 
-    for(auto i : ready) {
+    for(const auto& i : ready) {
         if( i && i->getType() == ObjectType::ARMOR &&
             (   (i->getWearflag() < FINGER) ||
                 (i->getWearflag() > HELD)
@@ -814,23 +806,19 @@ int Player::getFallBonus()  {
 // The pointer to that player is returned. In the case of a tie, one of
 // them is randomly chosen.
 
-Player* lowest_piety(BaseRoom* room, bool invis) {
-    Creature* player=nullptr;
+std::shared_ptr<Player> lowest_piety(const std::shared_ptr<BaseRoom>& room, bool invis) {
+    std::shared_ptr<Creature> player=nullptr;
     int     totalpiety=0, pick=0;
 
     if(room->players.empty())
         return(nullptr);
 
-    for(Player* ply : room->players) {
-        if( ply->flagIsSet(P_HIDDEN) ||
-            (   ply->isInvisible() &&
-                !invis
-            ) ||
-            ply->flagIsSet(P_DM_INVIS) )
-        {
+    for(const auto& pIt: room->players) {
+        auto ply = pIt.lock();
+        if( !ply || ply->flagIsSet(P_HIDDEN) || (ply->isInvisible() && !invis) || ply->flagIsSet(P_DM_INVIS) ) {
             continue;
         }
-        totalpiety += MAX<int>(1, (25 - ply->piety.getCur()));
+        totalpiety += std::max<int>(1, (25 - ply->piety.getCur()));
     }
 
     if(!totalpiety)
@@ -839,16 +827,12 @@ Player* lowest_piety(BaseRoom* room, bool invis) {
 
     totalpiety = 0;
 
-    for(Player* ply : room->players) {
-        if( ply->flagIsSet(P_HIDDEN) ||
-            (   ply->isInvisible() &&
-                !invis
-            ) ||
-            ply->flagIsSet(P_DM_INVIS) )
-        {
+    for(const auto& pIt: room->players) {
+        auto ply = pIt.lock();
+        if( !ply || ply->flagIsSet(P_HIDDEN) || ( ply->isInvisible() && !invis) || ply->flagIsSet(P_DM_INVIS) ) {
             continue;
         }
-        totalpiety += MAX<int>(1, (25 - ply->piety.getCur()));
+        totalpiety += std::max<int>(1, (25 - ply->piety.getCur()));
         if(totalpiety >= pick) {
             player = ply;
             break;
@@ -929,7 +913,7 @@ int Player::computeLuck() {
     if(!isStaff())
         num -= (coins[GOLD] / 20000);
 
-    num = MAX(1, MIN(99, num));
+    num = std::max(1, std::min(99, num));
 
     luck = num;
     return(num);
@@ -1091,7 +1075,7 @@ Dice monk_dice[41] =
 };
 
 void Player::setMonkDice() {
-    int nLevel = MAX<int>(0, MIN<int>(level, MAXALVL));
+    int nLevel = std::max<int>(0, std::min<int>(level, MAXALVL));
 
     // reset monk dice?
     if(cClass == CreatureClass::MONK) {
@@ -1256,14 +1240,14 @@ void Player::initLanguages() {
 //*********************************************************************
 
 void Player::doRecall(int roomNum) {
-    UniqueRoom  *new_rom=nullptr;
-    BaseRoom *newRoom=nullptr;
+    std::shared_ptr<UniqueRoom> new_rom=nullptr;
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
 
     if(roomNum == -1) {
         newRoom = recallWhere();
     } else {
-        if(!loadRoom(roomNum, &new_rom))
-            newRoom = abortFindRoom(this, "doRecall");
+        if(!loadRoom(roomNum, new_rom))
+            newRoom = abortFindRoom(Containable::downcasted_shared_from_this<Player>(), "doRecall");
         else
             newRoom = new_rom;
     }
@@ -1371,7 +1355,7 @@ int Player::getVision() const {
     if(isEffected("farsight"))
         vision *= 2;
 
-    return(MIN(MAX_VISION, vision));
+    return(std::min(MAX_VISION, vision));
 }
 
 
@@ -1387,56 +1371,56 @@ int Player::getSneakChance()  {
         return(101);
 
     // this is the base chance for most classes
-    int chance = MIN(70, 5 + 2 * sLvl + 3 * bonus(dexterity.getCur()));
+    int chance = std::min(70, 5 + 2 * sLvl + 3 * bonus(dexterity.getCur()));
 
     switch(cClass) {
     case CreatureClass::THIEF:
         if(cClass2 == CreatureClass::MAGE)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
+            chance = std::min(90, 5 + 8 * std::max(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
         else
-            chance = MIN(90, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
+            chance = std::min(90, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::ASSASSIN:
-        chance = MIN(90, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
+        chance = std::min(90, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
         break;
     case CreatureClass::CLERIC:
         if(cClass2 == CreatureClass::ASSASSIN)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
+            chance = std::min(90, 5 + 8 * std::max(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
         else if(deity == KAMIRA || deity == ARACHNUS)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(piety.getCur()));
+            chance = std::min(90, 5 + 8 * std::max(1,sLvl-2) + 3 * bonus(piety.getCur()));
 
         break;
     case CreatureClass::FIGHTER:
         if(cClass2 == CreatureClass::THIEF)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
+            chance = std::min(90, 5 + 8 * std::max(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::MAGE:
         if(cClass2 == CreatureClass::THIEF || cClass2 == CreatureClass::ASSASSIN)
-            chance = MIN(90, 5 + 8 * MAX(1,sLvl-3) + 3 * bonus(dexterity.getCur()));
+            chance = std::min(90, 5 + 8 * std::max(1,sLvl-3) + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::DRUID:
         if(getConstRoomParent()->isForest())
-            chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus(dexterity.getCur()));
+            chance = std::min(95 , 5 + 10 * sLvl + 3 * bonus(dexterity.getCur()));
 
         break;
     case CreatureClass::RANGER:
         if(getConstRoomParent()->isForest())
-            chance = MIN(95 , 5 + 10 * sLvl + 3 * bonus(dexterity.getCur()));
+            chance = std::min(95 , 5 + 10 * sLvl + 3 * bonus(dexterity.getCur()));
         else
-            chance = MIN(83, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
+            chance = std::min(83, 5 + 8 * sLvl + 3 * bonus(dexterity.getCur()));
         break;
     case CreatureClass::ROGUE:
-        chance = MIN(85, 5 + 7 * sLvl + 3 * bonus(dexterity.getCur()));
+        chance = std::min(85, 5 + 7 * sLvl + 3 * bonus(dexterity.getCur()));
         break;
     default:
         break;
     }
 
     if(isBlind())
-        chance = MIN(20, chance);
+        chance = std::min(20, chance);
 
     if(isEffected("camouflage")) {
         if(getConstRoomParent()->isOutdoors())
@@ -1445,7 +1429,7 @@ int Player::getSneakChance()  {
             chance += 5;
     }
 
-    return(MIN(99, chance));
+    return(std::min(99, chance));
 }
 
 
@@ -1455,7 +1439,7 @@ int Player::getSneakChance()  {
 //*********************************************************************
 // breaks a worn object and readds it to the player's inventory
 
-bool Player::breakObject(Object* object, int loc) {
+bool Player::breakObject(const std::shared_ptr<Object>&  object, int loc) {
     bool darkness = false;
 
     if(!object)
@@ -1471,7 +1455,7 @@ bool Player::breakObject(Object* object, int loc) {
         }
 
         object->clearFlag(O_WORN);
-        Limited::remove(this, object);
+        Limited::remove(Containable::downcasted_shared_from_this<Player>(), object);
 
         if(object->flagIsSet(O_DARKNESS)) {
             darkness = true;
@@ -1531,7 +1515,7 @@ std::string Player::getWhoString(bool whois, bool color, bool ignoreIllusion) co
     }
 
     whoStr << (color ? "^x[^c" : "[") << std::setw(2) << level
-           << ":" << std::setw(4) << std::string(getShortClassName(this)).substr(0, 4)
+           << ":" << std::setw(4) << getShortClassName(Containable::downcasted_shared_from_this<Player>()).substr(0, 4)
            << (color ? "^x] " : "] ");
 
     if(isHardcore())
@@ -1634,7 +1618,7 @@ std::string Player::expInLevel() const {
     }
 
     std::ostringstream oStr;
-    oStr << MIN<long>((experience - Config::expNeeded(displayLevel-1)),
+    oStr << std::min<long>((experience - Config::expNeeded(displayLevel-1)),
             (Config::expNeeded(displayLevel) - Config::expNeeded(displayLevel-1)));
     return(oStr.str());
 }
@@ -1665,7 +1649,7 @@ std::string Player::expNeededDisplay() const {
 //*********************************************************************
 
 bool Player::exists(std::string_view name) {
-    return(file_exists(fmt::format("{}/{}.xml", Path::Player, name).c_str()));
+    return fs::exists((Path::Player / name).replace_extension("xml"));
 }
 
 //*********************************************************************
@@ -1745,7 +1729,7 @@ void Player::addDueling(const std::string &name) {
     delList(maybeDueling, name);
 
     // if they aren't dueling us, add us to their maybe dueling list
-    Player* player = gServer->findPlayer(name);
+    std::shared_ptr<Player> player = gServer->findPlayer(name);
     if(player && !player->isDueling(name))
         player->addMaybeDueling(getName());
 
@@ -1799,7 +1783,7 @@ void Player::clearDueling() {
     dueling.clear();
 }
 void Player::clearMaybeDueling() {
-    Player* player=nullptr;
+    std::shared_ptr<Player> player=nullptr;
     for(const auto& pName : maybeDueling) {
         player = gServer->findPlayer(pName);
         if(!player)
@@ -1818,22 +1802,13 @@ void Player::clearWatching() {
 //*********************************************************************
 
 void renamePlayerFiles(const char *old_name, const char *new_name) {
-    char    file[80], file2[80];
+    std::error_code ec;
 
-    sprintf(file, "%s/%s.xml", Path::Player, old_name);
-    unlink(file);
+    fs::remove((Path::Player / old_name).replace_extension("xml"), ec);
 
-    sprintf(file, "%s/%s.txt", Path::Post, old_name);
-    sprintf(file2, "%s/%s.txt", Path::Post, new_name);
-    rename(file, file2);
-
-    sprintf(file, "%s/%s.txt", Path::History, old_name);
-    sprintf(file2, "%s/%s.txt", Path::History, new_name);
-    rename(file, file2);
-
-    sprintf(file, "%s/%s.txt", Path::Bank, old_name);
-    sprintf(file2, "%s/%s.txt", Path::Bank, new_name);
-    rename(file, file2);
+    fs::rename((Path::Post / old_name).replace_extension("txt"),    (Path::Post / new_name).replace_extension("txt"), ec);
+    fs::rename((Path::History / old_name).replace_extension("txt"), (Path::History / new_name).replace_extension("txt"), ec);
+    fs::rename((Path::Bank / old_name).replace_extension("txt"),    (Path::Bank / new_name).replace_extension("txt"), ec);
 }
 
 //*********************************************************************
@@ -1855,10 +1830,10 @@ bool Player::checkHeavyRestrict(std::string_view skill) const {
 
     bool mediumOK = (getClass() == CreatureClass::RANGER);
 
-    for(auto i : ready) {
+    for(const auto& i : ready) {
         if( i && (   i->isHeavyArmor() || (   !mediumOK && i->isMediumArmor()))) {
             printColor(fmt::format("You can't ^W{}^x while wearing heavy armor!\n", skill).c_str());
-            printColor("^W%O^x would hinder your movement too much!\n", i);
+            printColor("^W%O^x would hinder your movement too much!\n", i.get());
             return(true);
         }
     }
@@ -1878,10 +1853,10 @@ void Player::validateId() {
 bool Player::checkConfusion() {
     int     action=0, dmg=0;
     mType   targetType = PLAYER;
-    char    atk[50];
-    Creature* target=nullptr;
-    Exit    *newExit=nullptr;
-    BaseRoom* room = getRoomParent(), *bRoom=nullptr;
+    std::string atk;
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Exit> newExit=nullptr;
+    std::shared_ptr<BaseRoom> room = getRoomParent(), bRoom=nullptr;
     CatRef  cr;
 
 
@@ -1891,14 +1866,12 @@ bool Player::checkConfusion() {
     action = Random::get(1,4);
     switch(action) {
         case 1: // Stand confused
-
             broadcast(getSock(), room, "%M stands with a confused look on %s face.", this, hisHer());
             printColor("^BYou are confused and dizzy. You stand and look around cluelessly.\n");
             stun(Random::get(5,10));
             return(true);
             break;
         case 2: // Wander to random exit
-
             newExit = getFleeableExit();
             if(!newExit)
                 return(false);
@@ -1941,7 +1914,7 @@ bool Player::checkConfusion() {
                     break;
             }
 
-            if(!target || target == this)
+            if(!target || target.get() == this)
                 targetType = INVALID;
 
 
@@ -1963,17 +1936,17 @@ bool Player::checkConfusion() {
                             dmg = Random::get(1,2) + level/3 + Random::get(1,(1+level)/2);
                             if(strength.getCur() < 90) {
                                 dmg -= (90-strength.getCur())/10;
-                                dmg = MAX(1,dmg);
+                                dmg = std::max(1,dmg);
                             }
                         } else
                             dmg = damage.roll();
                     }
 
-                    getDamageString(atk, this, ready[WIELD - 1]);
+                    atk = getDamageString(Containable::downcasted_shared_from_this<Player>(), ready[WIELD - 1], false);
 
-                    printColor("^BYou %s yourself for %d damage!\n", atk, dmg);
+                    printColor("^BYou %s yourself for %d damage!\n", atk.c_str(), dmg);
 
-                    broadcast(getSock(), room, "%M %s %sself!", this, atk, himHer());
+                    broadcast(getSock(), room, "%M %s %sself!", this, atk.c_str(), himHer());
                     hp.decrease(dmg);
                     if(hp.getCur() < 1) {
 
@@ -1985,7 +1958,7 @@ bool Player::checkConfusion() {
                         mp.setCur(1);
 
                         if(!inJail()) {
-                            bRoom = getLimboRoom().loadRoom(this);
+                            bRoom = getLimboRoom().loadRoom(Containable::downcasted_shared_from_this<Player>());
                             if(bRoom) {
                                 deleteFromRoom();
                                 addToRoom(bRoom);
@@ -1999,7 +1972,7 @@ bool Player::checkConfusion() {
                     if(target->flagIsSet(M_UNKILLABLE))
                         return(false);
 
-                    printColor("^BYou think %s is attacking you!\n", target);
+                    printColor("^BYou think %s is attacking you!\n", target.get());
                     broadcast(getSock(), room, "%M yells, \"DIE %s!!!\"\n", this, target->getCName());
                     attackCreature(target);
                     return(true);
@@ -2034,23 +2007,23 @@ CatRef getEtherealTravelRoom() {
 //                      etherealTravel
 //********************************************************************
 
-void etherealTravel(Player* player) {
-    UniqueRoom  *newRoom=nullptr;
+void Player::etherealTravel() {
+    std::shared_ptr<UniqueRoom> newRoom=nullptr;
     CatRef  cr = getEtherealTravelRoom();
 
-    if(!loadRoom(cr, &newRoom))
+    if(!loadRoom(cr, newRoom))
         return;
 
-    player->deleteFromRoom();
-    player->addToRoom(newRoom);
-    player->doPetFollow();
+    deleteFromRoom();
+    addToRoom(newRoom);
+    doPetFollow();
 }
 
 //********************************************************************
 //                      cmdVisible
 //********************************************************************
 
-int cmdVisible(Player* player, cmd* cmnd) {
+int cmdVisible(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->isInvisible()) {
         player->print("You are not invisible.\n");
         return(0);
@@ -2065,7 +2038,7 @@ int cmdVisible(Player* player, cmd* cmnd) {
 //                      cmdDice
 //********************************************************************
 
-int cmdDice(Creature* player, cmd* cmnd) {
+int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd) {
     char    *str=nullptr, *tok=nullptr, diceOutput[256], add[256];
     int     strLen=0, i=0;
     int     diceSides=0,diceNum=0,diceAdd=0;
@@ -2101,35 +2074,35 @@ int cmdDice(Creature* player, cmd* cmnd) {
         player->print(Syntax);
         return(0);
     }
-    diceNum = atoi(tok);
+    diceNum = toNum<int>(tok);
 
     tok = strtok(nullptr, "+");
     if(!tok) {
         player->print(Syntax);
         return(0);
     }
-    diceSides = atoi(tok);
+    diceSides = toNum<int>(tok);
 
     tok = strtok(nullptr, "+");
 
     if(tok)
-        diceAdd = atoi(tok);
+        diceAdd = toNum<int>(tok);
 
     if(diceNum < 0) {
         player->print("How can you roll a negative number of dice?\n");
         return(0);
     }
 
-    diceNum = MAX(1, diceNum);
+    diceNum = std::max(1, diceNum);
 
     if(diceSides<2) {
         player->print("A die has a minimum of 2 sides.\n");
         return(0);
     }
 
-    diceNum = MIN(100, diceNum);
-    diceSides = MIN(100, diceSides);
-    diceAdd = MAX(-100,MIN(100, diceAdd));
+    diceNum = std::min(100, diceNum);
+    diceSides = std::min(100, diceSides);
+    diceAdd = std::max(-100,std::min(100, diceAdd));
 
 
     sprintf(diceOutput, "%dd%d", diceNum, diceSides);
@@ -2149,7 +2122,7 @@ int cmdDice(Creature* player, cmd* cmnd) {
 
 
     player->print("You roll %s\n: %d\n", diceOutput, total);
-    broadcast(player->getSock(), player->getParent(), "(Dice %s): %M got %d.", diceOutput, player, total );
+    broadcast(player->getSock(), player->getParent(), "(Dice %s): %M got %d.", diceOutput, player.get(), total );
 
     return(0);
 }

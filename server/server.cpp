@@ -16,13 +16,13 @@
  *
  */
 
-#include <assert.h>                                 // for assert
+#include <cassert>                                  // for assert
 #include <bits/types/struct_tm.h>                   // for tm
 #include <libxml/parser.h>                          // for xmlFreeDoc, xmlDo...
 #include <netdb.h>                                  // for getnameinfo, EAI_...
 #include <netinet/in.h>                             // for sockaddr_in, htons
 #include <poll.h>                                   // for pollfd, poll, POL...
-#include <signal.h>                                 // for sigaction, signal
+#include <csignal>                                  // for sigaction, signal
 #include <sys/resource.h>                           // for rlimit, setrlimit
 #include <sys/select.h>                             // for FD_ZERO, FD_ISSET
 #include <sys/socket.h>                             // for AF_INET, accept
@@ -59,8 +59,8 @@
 #include "delayedAction.hpp"                        // for DelayedAction
 #include "factions.hpp"                             // for Faction
 #include "flags.hpp"                                // for M_PERMENANT_MONSTER
-#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for FATAL, ALLITEMS
+#include "httpServer.hpp"                           // for HttpServer
 #include "lasttime.hpp"                             // for lasttime
 #include "login.hpp"                                // for CON_DISCONNECTING
 #include "magic.hpp"                                // for S_CURE_POISON
@@ -75,12 +75,12 @@
 #include "mudObjects/players.hpp"                   // for Player
 #include "mudObjects/rooms.hpp"                     // for BaseRoom
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
-#include "os.hpp"                                   // for merror, ASSERTLOG
 #include "paths.hpp"                                // for Config, Game, Are...
 #include "proc.hpp"                                 // for childProcess, Chi...
 #include "proto.hpp"                                // for broadcast, isDay
 #include "pythonHandler.hpp"                        // for PythonHandler
 #include "random.hpp"                               // for Random
+#include "ships.hpp"                                // for Ship
 #include "server.hpp"                               // for Server, Server::c...
 #include "serverTimer.hpp"                          // for ServerTimer
 #include "socket.hpp"                               // for Socket, xmlNode
@@ -106,11 +106,10 @@ Server* gServer = nullptr;
 // Static initialization
 Server* Server::myInstance = nullptr;
 
-bool CanCleanupRoomFn::operator()( UniqueRoom* r ) { return r->players.empty(); }
+bool CanCleanupRoomFn::operator()( const std::shared_ptr<UniqueRoom>& r ) { return r->players.empty(); }
 
-void CleanupRoomFn::operator()( UniqueRoom* r ) {
+void CleanupRoomFn::operator()(const std::shared_ptr<UniqueRoom>& r ) {
 	r->saveToFile(PERMONLY);
-	delete r;
 }
 
 // Custom comparison operator to sort by the numeric id instead of standard string comparison
@@ -157,6 +156,7 @@ Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCach
     maxPlayerId = maxObjectId = maxMonsterId = 0;
     loadDnsCache();
     pythonHandler = nullptr;
+    httpServer = nullptr;
     idDirty = false;
 
 #ifdef SQL_LOGGER
@@ -176,16 +176,18 @@ Server::~Server() {
     }
     sockets.clear();
     players.clear();
+    areas.clear();
+    activeList.clear();
     flushRoom();
     flushObject();
     flushMonster();
     effectsIndex.clear();
     PythonHandler::cleanUpPython();
     cleanupDiscordBot();
+    cleanupHttpServer();
 
-    clearAreas();
+
     delete vSockets;
-
 #ifdef SQL_LOGGER
     cleanUpSql();
 #endif // SQL_LOGGER
@@ -250,6 +252,7 @@ bool Server::init() {
     std::clog << "Loading Areas..." << (loadAreas() ? "done" : "*** FAILED ***") << std::endl;
     gConfig->loadAfterPython();
 
+    initHttpServer();
     initDiscordBot();
 
 
@@ -269,9 +272,8 @@ bool Server::init() {
         finishReboot();
     } else if (!gConfig->isListing()) {
         addListenPort(Port);
-        char filename[80];
-        snprintf(filename, 80, "%s/reboot.xml", Path::Config);
-        unlink(filename);
+        std::error_code ec;
+        fs::remove(Path::Config / "reboot.xml", ec);
     }
     return(true);
 }
@@ -282,14 +284,15 @@ bool Server::init() {
 
 void Server::installSignalHandlers() {
     if (!gConfig->isListing()) {
-        struct sigaction crash_sa{};
-        crash_sa.sa_handler = crash;
-        sigaction(SIGABRT, &crash_sa, nullptr); // abnormal termination triggered by abort call
-        std::clog << ".";
-        sigaction(SIGFPE, &crash_sa, nullptr);  // floating point exception
-        std::clog << ".";
-        sigaction(SIGSEGV, &crash_sa, nullptr); // segment violation
-        std::clog << ".";
+        // TODO(SPT)
+//        struct sigaction crash_sa{};
+//        crash_sa.sa_handler = crash;
+//        sigaction(SIGABRT, &crash_sa, nullptr); // abnormal termination triggered by abort call
+//        std::clog << ".";
+//        sigaction(SIGFPE, &crash_sa, nullptr);  // floating point exception
+//        std::clog << ".";
+//        sigaction(SIGSEGV, &crash_sa, nullptr); // segment violation
+//        std::clog << ".";
     } else {
         std::clog << "Ignoring crash handlers";
     }
@@ -348,7 +351,7 @@ void Server::populateVSockets() {
     if(vSockets)
         return;
     vSockets = new SocketVector();
-    for(auto &sock : sockets) vSockets->push_back(&sock);
+    for(auto &sock : sockets) vSockets->push_back(sock);
 
     Random::shuffle(vSockets->begin(), vSockets->end());
 }
@@ -358,13 +361,17 @@ void Server::populateVSockets() {
 //                      run
 //********************************************************************
 
-int Server::run() {
+void Server::run() {
     ServerTimer timer{};
     if(!running) {
         std::cerr << "Not bound to any ports, exiting." << std::endl;
         exit(-1);
     }
 
+    if(httpServer)
+        httpServer->run();
+
+    std::clog << "Starting Sock Loop\n";
     while(running) {
         if(!children.empty()) reapChildren();
 
@@ -403,7 +410,6 @@ int Server::run() {
         timer.sleep();
     }
 
-    return(0);
 }
 
 //********************************************************************
@@ -481,12 +487,12 @@ int Server::poll() {
         FD_SET(cs.control, &inSet);
     }
 
-    for(Socket &sock : sockets) {
-        if(sock.getFd() > maxFd)
-            maxFd = sock.getFd();
-        FD_SET(sock.getFd(), &inSet);
-        FD_SET(sock.getFd(), &outSet);
-        FD_SET(sock.getFd(), &excSet);
+    for(const auto &sock : sockets) {
+        if(sock->getFd() > maxFd)
+            maxFd = sock->getFd();
+        FD_SET(sock->getFd(), &inSet);
+        FD_SET(sock->getFd(), &outSet);
+        FD_SET(sock->getFd(), &excSet);
     }
 
     if(select(maxFd+1, &inSet, &outSet, &excSet, &noTime) < 0)
@@ -533,7 +539,10 @@ int Server::handleNewConnection(controlSock& cs) {
         close(fd);
         return -1;
     }
-    sockets.emplace_back(fd, addr, false);
+    auto sock = std::make_shared<Socket>(fd, addr);
+    sock->showLoginScreen();
+    sockets.emplace_back(sock);
+    if(sock->dnsDone) sock->checkLockOut();
     return(0);
 }
 
@@ -543,24 +552,24 @@ int Server::handleNewConnection(controlSock& cs) {
 
 int Server::processInput() {
 
-    for(Socket &sock : sockets) {
-        if(sock.getState() == CON_DISCONNECTING)
+    for(const auto &sock : sockets) {
+        if(sock->getState() == CON_DISCONNECTING)
             continue;
 
         // Clear out the descriptor of we have an exception
-        if(FD_ISSET(sock.getFd(), &excSet)) {
-            FD_CLR(sock.getFd(), &inSet);
-            FD_CLR(sock.getFd(), &outSet);
-            sock.setState(CON_DISCONNECTING);
+        if(FD_ISSET(sock->getFd(), &excSet)) {
+            FD_CLR(sock->getFd(), &inSet);
+            FD_CLR(sock->getFd(), &outSet);
+            sock->setState(CON_DISCONNECTING);
             std::clog << "Exception found\n";
             continue;
         }
         // Try to read something
-        if(FD_ISSET(sock.getFd(), &inSet)) {
-            if(sock.processInput() != 0) {
-                FD_CLR(sock.getFd(), &outSet);
-                std::clog << "Error reading from socket " << sock.getFd() << std::endl;
-                sock.setState(CON_DISCONNECTING);
+        if(FD_ISSET(sock->getFd(), &inSet)) {
+            if(sock->processInput() != 0) {
+                FD_CLR(sock->getFd(), &outSet);
+                std::clog << "Error reading from socket " << sock->getFd() << std::endl;
+                sock->setState(CON_DISCONNECTING);
                 continue;
             }
         }
@@ -573,9 +582,9 @@ int Server::processInput() {
 //********************************************************************
 
 int Server::processCommands() {
-    for(Socket *sock : *vSockets) {
-        if(sock != nullptr && sock->hasCommand() && sock->getState() != CON_DISCONNECTING) {
-            if(sock->processOneCommand() == -1) {
+    for(const auto &unlockedSock : *vSockets) {
+        if(auto sock = unlockedSock.lock()) {
+            if(sock->hasCommand() && sock->getState() != CON_DISCONNECTING && sock->processOneCommand() == -1) {
                 sock->setState(CON_DISCONNECTING);
                 continue;
             }
@@ -589,17 +598,20 @@ int Server::processCommands() {
 //********************************************************************
 
 int Server::updatePlayerCombat() {
-    for(Socket * sock : *vSockets) {
-        Player* player=sock->getPlayer();
-        if(player) {
-            if(player->isFleeing() && player->canFlee(false)) {
-                player->doFlee();
-            } else if(player->autoAttackEnabled() && !player->isFleeing() && player->hasAttackableTarget() && player->isAttackingTarget()) {
-                if(!player->checkAttackTimer(false))
-                    continue;
+    for(const auto &unlockedSock : *vSockets) {
+        if(auto sock = unlockedSock.lock()) {
+            if(auto player = sock->getPlayer()) {
+                if (player->isFleeing() && player->canFlee(false)) {
+                    player->doFlee();
+                } else if (player->autoAttackEnabled() && !player->isFleeing() && player->hasAttackableTarget() && player->isAttackingTarget()) {
+                    if (!player->checkAttackTimer(false))
+                        continue;
 
-                player->attackCreature(player->getTarget(), ATTACK_NORMAL);
+                    player->attackCreature(player->getTarget(), ATTACK_NORMAL);
+                }
             }
+        } else {
+            std::clog << "Error locking socket" << std::endl;
         }
     }
     return(0);
@@ -613,9 +625,11 @@ int Server::updatePlayerCombat() {
 int Server::processOutput() {
     // This can be called outside of the normal server loop so verify VSockets is populated
     populateVSockets();
-    for(Socket * sock : *vSockets) {
-        if(FD_ISSET(sock->getFd(), &outSet) && sock->hasOutput()) {
-            sock->flush();
+    for(const auto& unlockedSock : *vSockets) {
+        if(auto sock = unlockedSock.lock()) {
+            if (sock->getFd() != -1 && FD_ISSET(sock->getFd(), &outSet) && sock->hasOutput()) {
+                sock->flush();
+            }
         }
     }
     return(0);
@@ -626,9 +640,9 @@ int Server::processOutput() {
 //********************************************************************
 
 void Server::disconnectAll() {
-    for(Socket &sock : sockets) {
+    for(const auto &sock : sockets) {
         // Set everyone to disconnecting
-        sock.setState(CON_DISCONNECTING);
+        sock->setState(CON_DISCONNECTING);
     }
     // And now clean them up
     cleanUp();
@@ -638,10 +652,10 @@ void Server::disconnectAll() {
 //                      cleanUp
 //********************************************************************
 
-bool isDisconnecting(Socket &sock) {
-    if(sock.getState() == CON_DISCONNECTING) {
+bool isDisconnecting(const std::shared_ptr<Socket>& sock) {
+    if(sock->getState() == CON_DISCONNECTING) {
         // Flush any residual data
-        sock.flush();
+        sock->flush();
         return true;
     }
     return false;
@@ -717,12 +731,14 @@ void Server::pruneDns() {
 
 void Server::pulseTicks(long t) {
 
-    for(Socket* sock : *vSockets) {
-        Player* player=sock->getPlayer();
-        if(player) {
-            player->pulseTick(t);
-            if(player->isPlaying())
-                player->pulseSong(t);
+    for(const auto& unlockedSock : *vSockets) {
+        if(auto sock = unlockedSock.lock()) {
+            std::shared_ptr<Player> player = sock->getPlayer();
+            if (player) {
+                player->pulseTick(t);
+                if (player->isPlaying())
+                    player->pulseSong(t);
+            }
         }
     }
 }
@@ -737,26 +753,26 @@ void Server::updateUsers(long t) {
     int tout;
     lastUserUpdate = t;
 
-    for(Socket* sock : *vSockets) {
+    for(const auto& unlockedSock : *vSockets) {
+        if(auto sock = unlockedSock.lock()) {
+            std::shared_ptr<Player> player = sock->getPlayer();
 
-        Player* player= sock->getPlayer();
-
-        if(player) {
-            if(player->isDm()) tout = INT_MAX;
-            else if(player->isStaff()) tout = 1200;
-            else tout = 600;
-        } else {
-            tout = 300;
+            if (player) {
+                if (player->isDm()) tout = INT_MAX;
+                else if (player->isStaff()) tout = 1200;
+                else tout = 600;
+            } else {
+                tout = 300;
+            }
+            if (t - sock->ltime > tout) {
+                sock->write("\n\rTimed out.\n\r");
+                sock->setState(CON_DISCONNECTING);
+            }
+            if (player) {
+                player->checkOutlawAggro();
+                player->update();
+            }
         }
-        if(t - sock->ltime > tout) {
-            sock->write("\n\rTimed out.\n\r");
-            sock->setState(CON_DISCONNECTING);
-        }
-        if(player) {
-            player->checkOutlawAggro();
-            player->update();
-        }
-
     }
 }
 
@@ -768,10 +784,10 @@ void Server::updateUsers(long t) {
 // a room, it is loaded and items it is carrying will be loaded with it.
 
 void Server::updateRandom(long t) {
-    Monster* monster=nullptr;
-    BaseRoom* room=nullptr;
-    UniqueRoom* uRoom=nullptr;
-    AreaRoom* aRoom=nullptr;
+    std::shared_ptr<Monster>  monster=nullptr;
+    std::shared_ptr<BaseRoom> room=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
+    std::shared_ptr<AreaRoom> aRoom=nullptr;
     WanderInfo* wander=nullptr;
     CatRef  cr;
     int     num=0, l=0;
@@ -779,93 +795,96 @@ void Server::updateRandom(long t) {
 
     lastRandomUpdate = t;
 
-    Player* player;
-    for(Socket * sock : *vSockets) {
-        player = sock->getPlayer();
+    std::shared_ptr<Player> player;
+    for(const auto &unlockedSock : *vSockets) {
+        if(auto sock = unlockedSock.lock()) {
+            player = sock->getPlayer();
 
-        if(!player || !player->getRoomParent())
-            continue;
-        uRoom = player->getUniqueRoomParent();
-        aRoom = player->getAreaRoomParent();
-        room = player->getRoomParent();
+            if (!player || !player->getRoomParent())
+                continue;
+            uRoom = player->getUniqueRoomParent();
+            aRoom = player->getAreaRoomParent();
+            room = player->getRoomParent();
 
-        if(uRoom) {
-            // handle monsters arriving in unique rooms
-            if(!uRoom->info.id)
+            if (uRoom) {
+                // handle monsters arriving in unique rooms
+                if (!uRoom->info.id)
+                    continue;
+
+                if (check.find(uRoom->info.displayStr()) != check.end())
+                    continue;
+
+                check[uRoom->info.displayStr()] = true;
+                wander = &uRoom->wander;
+            } else {
+                // handle monsters arriving in area rooms
+                if (check.find(aRoom->mapmarker.str()) != check.end())
+                    continue;
+                if (aRoom->unique.id)
+                    continue;
+
+                check[aRoom->mapmarker.str()] = true;
+                wander = aRoom->getRandomWanderInfo();
+            }
+            if (!wander)
                 continue;
 
-            if(check.find(uRoom->info.str()) != check.end())
+            if (Random::get(1, 100) > wander->getTraffic())
                 continue;
 
-            check[uRoom->info.str()] = true;
-            wander = &uRoom->wander;
-        } else {
-            // handle monsters arriving in area rooms
-            if(check.find(aRoom->mapmarker.str()) != check.end())
+            cr = wander->getRandom();
+            if (!cr.id)
                 continue;
-            if(aRoom->unique.id)
+            if (room->countCrt() >= room->getMaxMobs())
                 continue;
 
-            check[aRoom->mapmarker.str()] = true;
-            wander = aRoom->getRandomWanderInfo();
-        }
-        if(!wander)
-            continue;
+            // Will make mobs not spawn if a DM is invis in the room. -TC
+            if (!room->countVisPly())
+                continue;
 
-        if(Random::get(1,100) > wander->getTraffic())
-            continue;
+            if (!loadMonster(cr, monster))
+                continue;
 
-        cr = wander->getRandom();
-        if(!cr.id)
-            continue;
-        if(room->countCrt() >= room->getMaxMobs())
-            continue;
+            // if the monster can't go there, they won't wander there
+            if (aRoom) {
+                auto aArea = aRoom->area.lock();
+                if (!aArea || !aArea->canPass(monster, aRoom->mapmarker, true)) {
+                    continue;
+                }
+            }
 
-        // Will make mobs not spawn if a DM is invis in the room. -TC
-        if(!room->countVisPly())
-            continue;
+            if (!monster->flagIsSet(M_CUSTOM))
+                monster->validateAc();
 
-        if(!loadMonster(cr, &monster))
-            continue;
+            if (((monster->flagIsSet(M_NIGHT_ONLY) && isDay()) || (monster->flagIsSet(M_DAY_ONLY) && !isDay())) && !monster->inCombat()) {
+                continue;
+            }
 
-        // if the monster can't go there, they won't wander there
-        if(aRoom && !aRoom->area->canPass(monster, &aRoom->mapmarker, true)) {
-            free_crt(monster);
-            continue;
-        }
-
-        if(!monster->flagIsSet(M_CUSTOM))
-            monster->validateAc();
-
-        if( ((monster->flagIsSet(M_NIGHT_ONLY) && isDay()) ||(monster->flagIsSet(M_DAY_ONLY) && !isDay())) && !monster->inCombat()) {
-            free_crt(monster);
-            continue;
-        }
-
-        if(room->flagIsSet(R_PLAYER_DEPENDENT_WANDER))
-            num = Random::get(1, room->countVisPly());
-        else if(monster->getNumWander() > 1)
-            num = Random::get<unsigned short>(1, monster->getNumWander());
-        else
-            num = 1;
-
-        for(l=0; l<num; l++) {
-            monster->initMonster();
-
-            if(monster->flagIsSet(M_PERMENANT_MONSTER))
-                monster->clearFlag(M_PERMENANT_MONSTER);
-
-            if(!l)
-                monster->addToRoom(room, num);
+            if (room->flagIsSet(R_PLAYER_DEPENDENT_WANDER))
+                num = Random::get(1, room->countVisPly());
+            else if (monster->getNumWander() > 1)
+                num = Random::get<unsigned short>(1, monster->getNumWander());
             else
-                monster->addToRoom(room, 0);
+                num = 1;
 
-            if(!monster->flagIsSet(M_PERMENANT_MONSTER) || monster->flagIsSet(M_NO_ADJUST))
-                monster->adjust(-1);
+            for (l = 0; l < num; l++) {
+                monster->initMonster();
 
-            gServer->addActive(monster);
-            if(l != num-1)
-                loadMonster(cr, &monster);
+                if (monster->flagIsSet(M_PERMENANT_MONSTER))
+                    monster->clearFlag(M_PERMENANT_MONSTER);
+
+                if (!l)
+                    monster->addToRoom(room, num);
+                else
+                    monster->addToRoom(room, 0);
+
+                if (!monster->flagIsSet(M_PERMENANT_MONSTER) || monster->flagIsSet(M_NO_ADJUST))
+                    monster->adjust(-1);
+
+                gServer->addActive(monster);
+                if (l != num - 1)
+                    loadMonster(cr, monster);
+            }
         }
     }
 }
@@ -878,13 +897,12 @@ void Server::updateRandom(long t) {
 // for monsters in rooms that are occupied by players.
 
 void Server::updateActive(long t) {
-    Creature* target = nullptr;
-    Monster* monster = nullptr;
-    BaseRoom* room = nullptr;
+    std::shared_ptr<Creature> target = nullptr;
+    std::shared_ptr<BaseRoom> room = nullptr;
 
     long    tt = gConfig->currentHour();
     int     timetowander=0, immort=0;
-    bool    print=false;
+    bool    shouldoPrint=false;
 
     lastActiveUpdate = t;
 
@@ -893,19 +911,20 @@ void Server::updateActive(long t) {
 
     auto it = activeList.begin();
     while(it != activeList.end()) {
+        std::shared_ptr<Monster>  monster;
         // Increment the iterator in case this monster dies during the update and is removed from the active list
-        monster = (*it++);
+        if(!(monster = it->lock())) {
+            std::clog << "UpdateActive: Can't lock monster" << std::endl;
+            it = activeList.erase(it);
+            continue;
+        }
+
 
         // Better be a monster to be on the active list
-        ASSERTLOG(monster);
-
         if(!monster->inRoom()) {
-            broadcast(isStaff, "^y%s without a parent/area room on the active list. Info: %s. Deleting.",
-                monster->getCName(), monster->info.str().c_str());
+            broadcast(isStaff, "^y%s without a parent/area room on the active list. Info: %s. Deleting.", monster->getCName(), monster->info.displayStr().c_str());
             monster->deleteFromRoom();
-            gServer->delActive(monster);
-            free_crt(monster);
-            it = activeList.begin();
+            it = activeList.erase(it);
             continue;
         }
 
@@ -916,23 +935,20 @@ void Server::updateActive(long t) {
         if(tt == 7 && ((t - last_time_update) / 2) == 0)
             monster->daily[DL_BROAD].cur = 20;
 
-        if( (monster->flagIsSet(M_NIGHT_ONLY) && isDay()) ||
-            (monster->flagIsSet(M_DAY_ONLY) && !isDay()))
-        {
-
-            for(Player* ply : room->players) {
-                if(ply->isStaff()) {
-                    immort = 1;
-                    break;
+        if( (monster->flagIsSet(M_NIGHT_ONLY) && isDay()) || (monster->flagIsSet(M_DAY_ONLY) && !isDay())) {
+            for(const auto& pIt: room->players) {
+                if(auto ply = pIt.lock()) {
+                    if (ply->isStaff()) {
+                        immort = 1;
+                        break;
+                    }
                 }
             }
             if(!immort) {
                 timetowander=1;
-                broadcast(nullptr, monster->getRoomParent(), "%M wanders slowly away.", monster);
+                broadcast((std::shared_ptr<Socket> )nullptr, monster->getRoomParent(), "%M wanders slowly away.", monster.get());
                 monster->deleteFromRoom();
-                gServer->delActive(monster);
-                free_crt(monster);
-                it = activeList.begin();
+                it = activeList.erase(it);
                 continue;
             }
 
@@ -950,31 +966,29 @@ void Server::updateActive(long t) {
             !monster->flagIsSet(M_PERMENANT_MONSTER) &&
             !monster->flagIsSet(M_AGGRESSIVE))
         {
-            gServer->delActive(monster);
-            it = activeList.begin();
+            std::clog << "Removing " << monster->getName() << " from active list" << std::endl;
+            it = activeList.erase(it);
             continue;
         }
 
         // Lets see if we'll attack any other monsters in this room
         if(monster->checkEnemyMobs()) {
+            it++;
             continue;
         }
 
 
         if(monster->flagIsSet(M_KILL_PERMS)) {
-            for(Monster* mons : room->monsters) {
+            for(const auto& mons : room->monsters) {
                 if(mons == monster)
                     continue;
-                if( mons->flagIsSet(M_PERMENANT_MONSTER) &&
-                    !monster->willAssist(mons->getAsMonster()) &&
-                    !monster->isEnemy(mons)
-                )
+                if( mons->flagIsSet(M_PERMENANT_MONSTER) && !monster->willAssist(mons->getAsMonster()) && !monster->isEnemy(mons))
                     monster->addEnemy(mons);
             }
         }
 
         if(monster->flagIsSet(M_KILL_NON_ASSIST_MOBS)) {
-            for(Monster* mons : room->monsters) {
+            for(const auto& mons : room->monsters) {
                 if(mons == monster)
                     continue;
                 if( !monster->willAssist(mons->getAsMonster()) &&
@@ -995,14 +1009,16 @@ void Server::updateActive(long t) {
                 monster->mp.getCur() >=6 &&
                 (Random::get(1,100) < (30+monster->intelligence.getCur()/10)))
             {
-                broadcast(nullptr, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster, monster->himHer());
+                broadcast((std::shared_ptr<Socket> )nullptr, monster->getRoomParent(), "%M casts a curepoison spell on %sself.", monster.get(), monster->himHer());
                 monster->mp.decrease(6);
                 monster->curePoison();
+                it++;
                 continue;
             }
         }
 
         if(!monster->checkAttackTimer(false)) {
+            it++;
             continue;
         }
 
@@ -1021,6 +1037,7 @@ void Server::updateActive(long t) {
             monster->beneficialCaster();
 
         if(monster->petCaster()) {
+            it++;
             continue;
         }
 
@@ -1030,16 +1047,14 @@ void Server::updateActive(long t) {
 
 
         // summoned monsters expire here
-        if( monster->isPet() &&
-            (t > LT(monster, LT_INVOKE) || t > LT(monster, LT_ANIMATE)))
-        {
+        if( monster->isPet() && (t > LT(monster, LT_INVOKE) || t > LT(monster, LT_ANIMATE))) {
             if(monster->isUndead())
-                broadcast(nullptr, room, "%1M wanders away.", monster);
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%1M wanders away.", monster.get());
             else
-                broadcast(nullptr, room, "%1M fades away.", monster);
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%1M fades away.", monster.get());
 
+            it = activeList.erase(it);
             monster->die(monster->getMaster());
-            it = activeList.begin();
             continue;
         }
 
@@ -1052,8 +1067,6 @@ void Server::updateActive(long t) {
 
         if(monster->flagIsSet(M_WILL_WIELD))
             monster->mobWield();
-        else
-            monster->clearFlag(M_WILL_WIELD);
 
         // Grab some stuff from the room
         monster->checkScavange(t);
@@ -1061,19 +1074,18 @@ void Server::updateActive(long t) {
         // See if we can wander around or away
         int mobileResult = monster->checkWander(t);
         if(mobileResult == 1) {
+            it++;
             continue;
         } if(mobileResult == 2) {
+            it = activeList.erase(it);
             monster->deleteFromRoom();
-            gServer->delActive(monster);
-            free_crt(monster);
-            it = activeList.begin();
             continue;
         }
 
 
         // Steal from people
         if(monster->flagIsSet(M_STEAL_ALWAYS) && (t - monster->lasttime[LT_STEAL].ltime) > 60 && Random::get<bool>(0.05)) {
-            Player* ply = lowest_piety(room, monster->isEffected("detect-invisible"));
+            std::shared_ptr<Player> ply = lowest_piety(room, monster->isEffected("detect-invisible"));
             if(ply)
                 monster->steal(ply);
         }
@@ -1111,18 +1123,16 @@ void Server::updateActive(long t) {
         target = monster->whoToAggro();
         if(target) {
 
-            print = (   !monster->flagIsSet(M_HIDDEN) &&
-                        !(monster->isInvisible() &&
-                        target->isEffected("detect-invisible"))
-                    );
+            shouldoPrint = (!monster->flagIsSet(M_HIDDEN) && !(monster->isInvisible() && target->isEffected("detect-invisible")));
 
             monster->updateAttackTimer(true, DEFAULT_WEAPON_DELAY);
-            monster->addEnemy(target, print);
+            monster->addEnemy(target, shouldoPrint);
 
             if(target->flagIsSet(P_LAG_PROTECTION_SET))
                 target->setFlag(P_LAG_PROTECTION_ACTIVE);
 
         }
+        it++;
     }
 }
 
@@ -1140,23 +1150,14 @@ void Server::updateActive(long t) {
 // This function adds a monster to the active-monster list. A pointer
 // to the monster is passed in the first parameter.
 
-void Server::addActive(Monster* monster) {
+void Server::addActive(const std::shared_ptr<Monster>& monster) {
 
     if(!monster) {
         loga("add_active: tried to activate a null crt!\n");
         return;
     }
-    if(isActive(monster))
+    if(isActive(monster.get()))
         return;
-    // try and guess if the creature is valid
-    {
-        const char *p = monster->getCName();
-        while(*p) {
-            ASSERTLOG(isPrintable((unsigned char)*p));
-            p++;
-        }
-        ASSERTLOG(p - monster->getCName());
-    }
 
     monster->validateId();
 
@@ -1171,20 +1172,21 @@ void Server::addActive(Monster* monster) {
 
 void Server::delActive(Monster* monster) {
     if(activeList.empty()) {
-        std::cerr << "Attempting to delete '" << monster->getName() << "' from active list with an empty active list." << std::endl;
-        broadcast(isStaff, "^yAttempting to delete %s from active list with an empty active list.", monster->getCName());
         return;
     }
+    const auto it = std::find_if(activeList.begin(), activeList.end(), [&monster](const std::weak_ptr<Creature>& crt) {
+        auto locked = crt.lock();
+        return locked && locked.get() == monster;
+    });
 
-    auto it = std::find(activeList.begin(), activeList.end(), monster);
+
     if(it == activeList.end()) {
-        std::cerr << "Attempting to delete '" << monster->getName() << "' from active list but could not find them on the list." << std::endl;
-        broadcast(isStaff, "^yAttempting to delete %s from active list but could not find them on the list.", monster->getCName());
+        // No longer an error condition with weak ptrs
         return;
     }
 
 
-    activeList.remove(monster);
+    activeList.erase(it);
 }
 
 
@@ -1198,11 +1200,15 @@ bool Server::isActive(Monster* monster) {
     if(activeList.empty())
         return(false);
 
-    auto it = std::find(activeList.begin(), activeList.end(), monster);
+    const auto it = std::find_if(activeList.begin(), activeList.end(), [&monster](const std::weak_ptr<Creature>& crt) {
+        auto locked = crt.lock();
+        return locked && locked.get() == monster;
+    });
+
     if(it == activeList.end())
         return(false);
 
-    return *it == monster;
+    return true;
 
 }
 
@@ -1228,7 +1234,7 @@ int Server::reapChildren() {
     pollfd *fds = nullptr;
 
     while(!children.empty()) {
-        delete fds;
+        delete[] fds;
         fds = new pollfd[children.size()];
         int i = 0;
         for(const childProcess& c : children) {
@@ -1275,11 +1281,12 @@ int Server::reapChildren() {
                 dnsChild = true;
 
                 // Now we want to look through all connected sockets and update dns where appropriate
-                for(Socket &sock : sockets) {
-                    if(sock.getState() == LOGIN_DNS_LOOKUP && sock.getIp() == cp->extra) {
+                for(const auto &sock : sockets) {
+                    if(sock->getState() == LOGIN_DNS_LOOKUP && sock->getIp() == cp->extra) {
                         // Be sure to set the hostname first, then check for lockout
-                        sock.setHostname(tmpBuf);
-                        sock.checkLockOut();
+                        sock->dnsDone = true;
+                        sock->setHostname(tmpBuf);
+                        sock->checkLockOut();
                     }
                 }
                 std::clog << "Reaped DNS child (" << cp->pid << "-" << tmpBuf << ")\n";
@@ -1310,7 +1317,7 @@ int Server::reapChildren() {
                 } else if(myChild.type == ChildType::SWAP_FINISH) {
                     gConfig->offlineSwap(myChild, true);
                 } else if(myChild.type == ChildType::PRINT) {
-                    const Player* player = gServer->findPlayer(myChild.extra);
+                    const std::shared_ptr<Player> player = gServer->findPlayer(myChild.extra);
                     std::string output = gServer->simpleChildRead(myChild);
                     if(player && !output.empty())
                         player->printColor("%s\n", output.c_str());
@@ -1323,7 +1330,7 @@ int Server::reapChildren() {
     if(dnsChild)
         saveDnsCache();
     if(fds != nullptr) {
-        delete fds;
+        delete[] fds;
         fds = nullptr;
     }
     // just in case, kill off any zombies
@@ -1337,11 +1344,11 @@ int Server::reapChildren() {
 
 int Server::processListOutput(const childProcess &lister) {
     bool found = false;
-    Socket* foundSock;
+    std::shared_ptr<Socket> foundSock;
     for(auto& sock : sockets) {
-        if(sock.getPlayer() && lister.extra == sock.getPlayer()->getName()) {
+        if(sock->getPlayer() && lister.extra == sock->getPlayer()->getName()) {
             found = true;
-            foundSock = &sock;
+            foundSock = sock;
             break;
         }
     }
@@ -1380,7 +1387,7 @@ int Server::processChildren() {
         } else if(child.type == ChildType::SWAP_FINISH) {
             gConfig->offlineSwap(child, false);
         } else if(child.type == ChildType::PRINT) {
-            const Player* player = gServer->findPlayer(child.extra);
+            const std::shared_ptr<Player> player = gServer->findPlayer(child.extra);
             std::string output = gServer->simpleChildRead(child);
             if(player && !output.empty())
                 player->printColor("%s\n", output.c_str());
@@ -1396,7 +1403,7 @@ int Server::processChildren() {
 //                      startDnsLookup
 //********************************************************************
 
-int Server::startDnsLookup(Socket* sock, struct sockaddr_in addr) {
+int Server::startDnsLookup(Socket *sock, struct sockaddr_in addr) {
     int fds[2];
     int pid;
 
@@ -1498,12 +1505,12 @@ void Server::saveDnsCache() {
     std::list<dnsCache>::iterator it;
     for( it = cachedDns.begin(); it != cachedDns.end() ; it++) {
         curNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Dns", nullptr);
-        xml::newStringChild(curNode, "Ip", (*it).ip.c_str());
-        xml::newStringChild(curNode, "HostName", (*it).hostName.c_str());
+        xml::newStringChild(curNode, "Ip", (*it).ip);
+        xml::newStringChild(curNode, "HostName", (*it).hostName);
         xml::newNumChild(curNode, "Time", (long)(*it).time);
     }
 
-    sprintf(filename, "%s/dns.xml", Path::Config);
+    sprintf(filename, "%s/dns.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }
@@ -1517,7 +1524,7 @@ void Server::loadDnsCache() {
     xmlNodePtr curNode, childNode;
 
     char filename[80];
-    snprintf(filename, 80, "%s/dns.xml", Path::Config);
+    snprintf(filename, 80, "%s/dns.xml", Path::Config.c_str());
     xmlDoc = xml::loadFile(filename, "DnsCache");
 
     if(xmlDoc == nullptr)
@@ -1569,8 +1576,8 @@ bool Server::startReboot(bool resetShips) {
 
     gServer->setRebooting();
     // First give all players a free restore
-    for(Socket &sock : sockets) {
-        Player* player = sock.getPlayer();
+    for(const auto& sock : sockets) {
+        std::shared_ptr<Player> player = sock->getPlayer();
         if(player && player->fd > -1) {
             player->hp.restore();
             player->mp.restore();
@@ -1581,22 +1588,21 @@ bool Server::startReboot(bool resetShips) {
     saveRebootFile(resetShips);
 
     // Now disconnect people that won't make it through the reboot
-    for(Socket &sock : sockets) {
-        Player* player = sock.getPlayer();
+    for(const auto& sock : sockets) {
+        std::shared_ptr<Player> player = sock->getPlayer();
         if(player && player->fd > -1 ) {
             // End the compression, we'll try to restart it after the reboot
-            if(sock.mccpEnabled()) {
-                sock.endCompress();
+            if(sock->mccpEnabled()) {
+                sock->endCompress();
             }
             player->save(true);
-            players[player->getName()] = nullptr;
             player->uninit();
-            free_crt(player);
             player = nullptr;
-            sock.setPlayer(nullptr);
+            players[player->getName()] = nullptr;
+            sock->clearPlayer();
         } else {
-            sock.write("\n\r\n\r\n\rSorry, we are rebooting. You may reconnect in a few seconds.\n\r");
-            sock.disconnect();
+            sock->write("\n\r\n\r\n\rSorry, we are rebooting. You may reconnect in a few seconds.\n\r");
+            sock->disconnect();
         }
     }
 
@@ -1606,18 +1612,14 @@ bool Server::startReboot(bool resetShips) {
     if(resetShips)
         Config::resetShipsFile();
 
-    char port[10], path[80];
+//    char port[10], path[80];
+    std::string port = std::to_string(Port);
+    execl(gConfig->cmdline.c_str(), gConfig->cmdline.c_str(), "-r", port.c_str(), (char *)nullptr);
 
-    sprintf(port, "%d", Port);
-    strcpy(path, gConfig->cmdline);
+    std::error_code ec;
+    fs::remove(Path::Config / "config.xml", ec);
 
-    execl(path, path, "-r", port, (char *)nullptr);
-
-    char filename[80];
-    snprintf(filename, 80, "%s/config.xml", Path::Config);
-    unlink(filename);
-
-    merror("dmReboot failed!!!", FATAL);
+    throw std::runtime_error("dmReboot failed!!!");
     return(false);
 }
 
@@ -1655,22 +1657,22 @@ bool Server::saveRebootFile(bool resetShips) {
     xml::newNumChild(serverNode, "UnCompressedBytes", UnCompressedBytes);
     if(resetShips)
         xml::newStringChild(serverNode, "ResetShips", "true");
-    for(Socket &sock : sockets) {
-        Player*player = sock.getPlayer();
+    for(const auto &sock : sockets) {
+        std::shared_ptr<Player>player = sock->getPlayer();
         if(player && player->fd > -1) {
             curNode = xmlNewChild(rootNode, nullptr, BAD_CAST"Player", nullptr);
             xml::newStringChild(curNode, "Name", player->getCName());
-            xml::newNumChild(curNode, "Fd", sock.getFd());
-            xml::newStringChild(curNode, "Ip", std::string(sock.getIp()).c_str());
-            xml::newStringChild(curNode, "HostName", std::string(sock.getHostname()).c_str());
+            xml::newNumChild(curNode, "Fd", sock->getFd());
+            xml::newStringChild(curNode, "Ip", std::string(sock->getIp()));
+            xml::newStringChild(curNode, "HostName", std::string(sock->getHostname()));
             xml::newStringChild(curNode, "ProxyName", player->getProxyName());
             xml::newStringChild(curNode, "ProxyId", player->getProxyId());
-            sock.saveTelopts(curNode);
+            sock->saveTelopts(curNode);
         }
     }
 
     char filename[80];
-    snprintf(filename, 80, "%s/reboot.xml", Path::Config);
+    snprintf(filename, 80, "%s/reboot.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);
@@ -1691,14 +1693,14 @@ int Server::finishReboot() {
     rebooting = true;
 
     char filename[80];
-    snprintf(filename, 80, "%s/reboot.xml", Path::Config);
+    snprintf(filename, 80, "%s/reboot.xml", Path::Config.c_str());
     // build an XML tree from a the file
     doc = xml::loadFile(filename, "Reboot");
     unlink(filename);
 
     if(doc == nullptr) {
         std::clog << "Unable to loadBeforePython reboot file\n";
-        merror("Loading reboot file", FATAL);
+        throw std::runtime_error("Loading reboot file");
     }
 
     curNode = xmlDocGetRootElement(doc);
@@ -1709,7 +1711,7 @@ int Server::finishReboot() {
     }
     if(curNode == nullptr) {
         xmlFreeDoc(doc);
-        merror("Parsing reboot file", FATAL);
+        throw std::runtime_error("Parsing reboot file");
     }
 
     Numplayers = 0;
@@ -1746,22 +1748,22 @@ int Server::finishReboot() {
             }
         } else if(NODE_NAME(curNode, "Player")) {
             childNode = curNode->children;
-            Player* player=nullptr;
-            Socket* sock=nullptr;
+            std::shared_ptr<Player> player=nullptr;
+            std::shared_ptr<Socket> sock=nullptr;
             while(childNode != nullptr) {
                 if(NODE_NAME(childNode, "Name")) {
                     std::string name;
                     xml::copyToString(name, childNode);
-                    if(!loadPlayer(name.c_str(), &player)) {
-                        merror("finishReboot: loadPlayer", FATAL);
+                    if(!loadPlayer(name.c_str(), player)) {
+                        throw std::runtime_error("finishReboot: loadPlayer");
                     }
                 }
                 else if(NODE_NAME(childNode, "Fd")) {
                     short fd;
                     xml::copyToNum(fd, childNode);
-                    sock = &sockets.emplace_back(fd);
+                    sock = sockets.emplace_back(std::make_shared<Socket>(fd));
                     if(!player || !sock)
-                        merror("finishReboot: No Sock/Player", FATAL);
+                        throw std::runtime_error("finishReboot: No Sock/Player");
 
                     player->fd = fd;
 
@@ -1792,7 +1794,7 @@ int Server::finishReboot() {
             }
 
             if(!player || !sock)
-                merror("finishReboot: Finished, still no Sock/Player", FATAL);
+                throw std::runtime_error("finishReboot: Finished, still no Sock/Player");
 
             sock->ltime = time(nullptr);
             sock->print("The world comes back into focus!\n");
@@ -1837,7 +1839,7 @@ int Server::finishReboot() {
 //                      findPlayer
 //********************************************************************
 
-Player* Server::findPlayer(const std::string &name) {
+std::shared_ptr<Player> Server::findPlayer(const std::string &name) {
     auto it = players.find(name);
 
     if(it != players.end())
@@ -1852,7 +1854,7 @@ Player* Server::findPlayer(const std::string &name) {
 // This function saves all players currently in memory.
 
 void Server::saveAllPly() {
-    for(std::pair<std::string, Player*> p : players) {
+    for(std::pair<std::string, std::shared_ptr<Player>> p : players) {
         if(!p.second->isConnected())
             continue;
         p.second->save(true);
@@ -1866,13 +1868,15 @@ void Server::saveAllPly() {
 // This will NOT free up the player, it will just remove them from the list
 
 bool Server::clearPlayer(const std::string &name) {
-    players.erase(name);
-    return(true);
+    auto pIt = players.find(name);
+    if (pIt != players.end())
+        return clearPlayer(pIt->second);
+    return false;
 }
 
-bool Server::clearPlayer(Player* player) {
-    players.erase(player->getName());
+bool Server::clearPlayer(const std::shared_ptr<Player>& player) {
     player->unRegisterMo();
+    players.erase(player->getName());
     return(true);
 }
 
@@ -1880,11 +1884,10 @@ bool Server::clearPlayer(Player* player) {
 //                      addPlayer
 //*********************************************************************
 
-bool Server::addPlayer(Player* player) {
+bool Server::addPlayer(const std::shared_ptr<Player>& player) {
     player->validateId();
     players[player->getName()] = player;
-    player->getSock()->addToPlayerList();
-    player->registerMo();
+    player->registerMo(player);
     return(true);
 }
 
@@ -1892,14 +1895,14 @@ bool Server::addPlayer(Player* player) {
 //                      checkDuplicateName
 //*********************************************************************
 
-bool Server::checkDuplicateName(Socket &sock, bool dis) {
-    for(Socket &s : sockets) {
-        if(&sock != &s && s.hasPlayer() && s.getPlayer()->getName() ==  sock.getPlayer()->getName()) {
+bool Server::checkDuplicateName(std::shared_ptr<Socket> sock, bool dis) {
+    for(const auto &s : sockets) {
+        if(sock != s && s->hasPlayer() && s->getPlayer()->getName() ==  sock->getPlayer()->getName()) {
             if(!dis) {
-                sock.printColor("\n\n^ySorry, that character is already logged in.^x\n\n\n");
-                sock.reconnect();
+                sock->printColor("\n\n^ySorry, that character is already logged in.^x\n\n\n");
+                sock->reconnect();
             } else {
-                s.disconnect();
+                s->disconnect();
             }
             return(true);
         }
@@ -1912,35 +1915,35 @@ bool Server::checkDuplicateName(Socket &sock, bool dis) {
 //*********************************************************************
 // returning true will disconnect the connecting socket (sock)
 
-bool Server::checkDouble(Socket &sock) {
+bool Server::checkDouble(std::shared_ptr<Socket> sock) {
     if(!gConfig->getCheckDouble())
         return(false);
 
-    if(sock.getPlayer() && sock.getPlayer()->isStaff())
+    if(sock->getPlayer() && sock->getPlayer()->isStaff())
         return(false);
 
 //    if(sock.getHostname().find("localhost") != std::string_view::npos)
 //        return(false);
 
-    Player* player=nullptr;
+    std::shared_ptr<Player> player=nullptr;
     int cnt = 0;
-    for(Socket &s : sockets) {
-        player = s.getPlayer();
-        if(!player || &s == &sock)
+    for(const auto &s : sockets) {
+        player = s->getPlayer();
+        if(!player || s == sock)
             continue;
 
         if(player->isCt())
             continue;
         if(player->flagIsSet(P_LINKDEAD))
             continue;
-        if(sock.getIp() != s.getIp())
+        if(sock->getIp() != s->getIp())
             continue;
 
         cnt++;
 
         if(cnt >= gConfig->getMaxDouble()) {
-            sock.write("\nMaximum number of connections has been exceeded!\n\n");
-            sock.disconnect();
+            sock->write("\nMaximum number of connections has been exceeded!\n\n");
+            sock->disconnect();
             return true;
         }
     }
@@ -1952,11 +1955,10 @@ bool Server::checkDouble(Socket &sock) {
 //*********************************************************************
 
 void Server::sendCrash() {
-    char filename[80];
-    snprintf(filename, 80, "%s/crash.txt", Path::Config);
+    auto filename = Path::Config / "crash.txt";
 
-    for(Socket &sock : sockets) {
-        sock.viewFile(filename);
+    for(const auto &sock : sockets) {
+        sock->viewFile(filename);
     }
 }
 
@@ -2050,7 +2052,7 @@ std::string Server::getServerTime() {
 
 int Server::getNumPlayers() {
     int numPlayers=0;
-    Player* target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     for(const auto& p : players) {
         target = p.second;
 
@@ -2067,7 +2069,7 @@ int Server::getNumPlayers() {
 // Functions that deal with unique IDs
 // *************************************
 
-bool Server::registerMudObject(MudObject* toRegister, bool reassignId) {
+bool Server::registerMudObject(const std::shared_ptr<MudObject>& toRegister, bool reassignId) {
     assert(toRegister != nullptr);
 
     if(toRegister->getId() =="-1")
@@ -2126,7 +2128,8 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
     }
     if(!registered) {
         std::ostringstream oStr;
-        if((*it).second == toUnRegister) {
+
+        if(!it->second.expired() && it->second.lock().get() == toUnRegister) {
             oStr << "ERROR: ID: " << toUnRegister->getId() << " thought it wasn't registered, but the server thought it was.";
             broadcast(isDm, "%s", oStr.str().c_str());
             std::clog << oStr.str() << std::endl;
@@ -2145,7 +2148,7 @@ bool Server::unRegisterMudObject(MudObject* toUnRegister) {
     return(true);
 }
 
-Object* Server::lookupObjId(const std::string &toLookup) {
+std::shared_ptr<Object>  Server::lookupObjId(const std::string &toLookup) {
     if(toLookup[0] != 'O')
         return(nullptr);
 
@@ -2153,12 +2156,13 @@ Object* Server::lookupObjId(const std::string &toLookup) {
 
     if(it == registeredIds.end())
         return(nullptr);
-    else
-        return(((*it).second)->getAsObject());
-
+    else {
+        auto res = it->second.lock();
+        return res ? res->getAsObject() : nullptr;
+    }
 }
 
-Creature* Server::lookupCrtId(const std::string &toLookup) {
+std::shared_ptr<Creature> Server::lookupCrtId(const std::string &toLookup) {
     if(toLookup[0] != 'M' && toLookup[0] != 'P')
         return(nullptr);
 
@@ -2166,25 +2170,28 @@ Creature* Server::lookupCrtId(const std::string &toLookup) {
 
     if(it == registeredIds.end())
         return(nullptr);
-    else
-        return(((*it).second)->getAsCreature());
-
+    else {
+        auto res = it->second.lock();
+        return res ? res->getAsCreature() : nullptr;
+    }
 }
-Player* Server::lookupPlyId(const std::string &toLookup) {
+std::shared_ptr<Player> Server::lookupPlyId(const std::string &toLookup) {
     if(toLookup[0] != 'P')
         return(nullptr);
     auto it = registeredIds.find(toLookup);
 
     if(it == registeredIds.end())
         return(nullptr);
-    else
-        return(((*it).second)->getAsPlayer());
-
+    else{
+        auto res = it->second.lock();
+        return res ? res->getAsPlayer() : nullptr;
+    }
 }
 std::string Server::getRegisteredList() {
     std::ostringstream oStr;
-    for(const auto& p : registeredIds) {
-        oStr << p.first << " - " << p.second->getName() << std::endl;
+    for(const auto& [id, mo] : registeredIds) {
+        if(auto locked = mo.lock())
+            oStr << id << " - " << locked->getName() << std::endl;
     }
     return(oStr.str());
 }
@@ -2228,7 +2235,7 @@ void Server::loadIds() {
     xmlNodePtr curNode;
 
     char filename[80];
-    snprintf(filename, 80, "%s/ids.xml", Path::Game);
+    snprintf(filename, 80, "%s/ids.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "Ids");
 
     if(xmlDoc == nullptr)
@@ -2271,36 +2278,37 @@ void Server::saveIds() {
     xml::newNumChild(rootNode, "MaxPlayerId",  maxPlayerId);
     xml::newNumChild(rootNode, "MaxObjectId",  maxObjectId);
 
-    sprintf(filename, "%s/ids.xml", Path::Game);
+    sprintf(filename, "%s/ids.xml", Path::Game.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 
     idDirty = false;
 }
 
-void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, std::string_view logType) {
+void Server::logGold(GoldLog dir, const std::shared_ptr<Player>& player, Money amt, std::shared_ptr<MudObject> target, std::string_view logType) {
     std::string pName = player->getName();
     std::string pId = player->getId();
     // long amt
-    std::string targetStr = "";
-    std::string source = "";
+    std::string targetStr;
+    std::string source;
 
     if(target) {
         targetStr = stripColor(target->getName());
-        Object* oTarget = target->getAsObject();
+        std::shared_ptr<Object>  oTarget = target->getAsObject();
         if(oTarget) {
-            targetStr += "(" + oTarget->info.str() + ")";
+            targetStr += "(" + oTarget->info.displayStr() + ")";
             if(dir == GOLD_IN) {
                 source = oTarget->droppedBy.str();
             }
         }
     }
-    std::string room = "";
-    if(player->getRoomParent()) {
-        if(player->getRoomParent()->getAsUniqueRoom()) {
-            room = std::string(player->getRoomParent()->getName()) + "(" + player->getRoomParent()->getAsUniqueRoom()->info.str() + ")";
-        } else if (player->getRoomParent()->getAsAreaRoom()) {
-            room = player->getRoomParent()->getAsAreaRoom()->area->name + "(" + player->getRoomParent()->getAsAreaRoom()->mapmarker.str() + ")";
+    std::string room;
+    if(auto parentRoom = player->getRoomParent()) {
+        if(auto uniqueRoom = parentRoom->getAsUniqueRoom()) {
+            room = std::string(parentRoom->getName()) + "(" + uniqueRoom->info.displayStr() + ")";
+        } else if (auto areaRoom = parentRoom->getAsAreaRoom()) {
+            auto area = areaRoom->area.lock();
+            room = (area ? area->name : "<invalid>") + "(" + areaRoom->mapmarker.str() + ")";
         }
     }
     // logType
@@ -2319,33 +2327,31 @@ void Server::logGold(GoldLog dir, Player* player, Money amt, MudObject* target, 
 // allows you to make changes to a room, and then reload it, even if it's
 // already in the memory room queue.
 
-bool Server::reloadRoom(BaseRoom* room) {
-    UniqueRoom* uRoom = room->getAsUniqueRoom();
+bool Server::reloadRoom(const std::shared_ptr<BaseRoom>& room) {
+    auto uRoom = room->getAsUniqueRoom();
 
     if(uRoom) {
     	CatRef cr = uRoom->info;
-        if(reloadRoom(cr))
-        {
+        if(reloadRoom(cr)) {
             roomCache.fetch(cr, false)->addPermCrt();
             return(true);
         }
-    } else {
+    } else  {
 
-        AreaRoom* aRoom = room->getAsAreaRoom();
+        auto aRoom = room->getAsAreaRoom();
+        auto area = aRoom->area.lock();
         char    filename[256];
-        sprintf(filename, "%s/%d/%s", Path::AreaRoom, aRoom->area->id,
-            aRoom->mapmarker.filename().c_str());
+        sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), area->id, aRoom->mapmarker.filename().c_str());
 
-        if(file_exists(filename)) {
+        if(fs::exists(filename)) {
             xmlDocPtr   xmlDoc;
             xmlNodePtr  rootNode;
 
             if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == nullptr)
-                merror("Unable to read arearoom file", FATAL);
+                throw std::runtime_error("Unable to read arearoom file");
 
             rootNode = xmlDocGetRootElement(xmlDoc);
 
-            Area *area = aRoom->area;
             aRoom->reset();
             aRoom->area = area;
             aRoom->load(rootNode);
@@ -2355,42 +2361,44 @@ bool Server::reloadRoom(BaseRoom* room) {
     return(false);
 }
 
-UniqueRoom* Server::reloadRoom(const CatRef& cr) {
-    UniqueRoom  *room=nullptr, *oldRoom=nullptr;
+std::shared_ptr<UniqueRoom> Server::reloadRoom(const CatRef& cr) {
+    std::shared_ptr<UniqueRoom> room=nullptr, oldRoom=nullptr;
 
-    std::string str = cr.str();
+    std::string str = cr.displayStr();
     oldRoom = roomCache.fetch(cr);
     if(!oldRoom)
     	return nullptr;
 
-    if(!loadRoomFromFile(cr, &room))
+    if(!loadRoomFromFile(cr, room))
         return(nullptr);
 
     // Move any current players & monsters into the new room
-    for(Player* ply : oldRoom->players) {
-        room->players.insert(ply);
-        ply->setParent(room);
+    for(const auto& pIt: oldRoom->players) {
+        if(auto ply = pIt.lock()) {
+            room->players.insert(ply);
+            ply->setParent(room);
+        }
     }
     oldRoom->players.clear();
 
     if(room->monsters.empty()) {
-        for(Monster* mons : oldRoom->monsters) {
+        for(const auto& mons : oldRoom->monsters) {
             room->monsters.insert(mons);
             mons->setParent(room);
         }
         oldRoom->monsters.clear();
     }
     if(room->objects.empty()) {
-        for(Object* obj : oldRoom->objects) {
+        for(const auto& obj : oldRoom->objects) {
             room->objects.insert(obj);
             obj->setParent(room);
         }
         oldRoom->objects.clear();
     }
 
-    roomCache.insert(cr, &room);
+    roomCache.insert(cr, room);
 
-    room->registerMo();
+    room->registerMo(room);
 
     return(room);
 }
@@ -2402,21 +2410,21 @@ UniqueRoom* Server::reloadRoom(const CatRef& cr) {
 // altering its position on the queue.
 
 int Server::resaveRoom(const CatRef& cr) {
-    UniqueRoom *room = roomCache.fetch(cr);
+    std::shared_ptr<UniqueRoom> room = roomCache.fetch(cr);
     if(room)
         room->saveToFile(ALLITEMS);
     return(0);
 }
 
 
-int Server::saveStorage(UniqueRoom* uRoom) {
+int Server::saveStorage(const std::shared_ptr<UniqueRoom>& uRoom) {
     if(uRoom->flagIsSet(R_SHOP))
         saveStorage(shopStorageRoom(uRoom));
     return(saveStorage(uRoom->info));
 }
 int Server::saveStorage(const CatRef& cr) {
 
-    UniqueRoom *room = roomCache.fetch(cr);
+    std::shared_ptr<UniqueRoom> room = roomCache.fetch(cr);
     if(room) {
         if(room->saveToFile(ALLITEMS) < 0) {
             return(-1);
@@ -2424,4 +2432,9 @@ int Server::saveStorage(const CatRef& cr) {
     }
 
     return(0);
+}
+
+void Server::stop() {
+    if(httpServer) httpServer->stop();
+
 }

@@ -31,7 +31,6 @@
 #include "commands.hpp"              // for cmdSkills, dmSetSkills
 #include "config.hpp"                // for Config, SkillInfoMap, gConfig
 #include "flags.hpp"                 // for P_DM_INVIS, P_SHOW_SKILL_PROGRESS
-#include "free_crt.hpp"              // for free_crt
 #include "global.hpp"                // for MAXALVL, CreatureClass, Creature...
 #include "lasttime.hpp"              // for lasttime
 #include "levelGain.hpp"             // for LevelGain
@@ -39,14 +38,12 @@
 #include "mudObjects/container.hpp"  // for Container
 #include "mudObjects/creatures.hpp"  // for Creature, SkillMap
 #include "mudObjects/players.hpp"    // for Player
-#include "os.hpp"                    // for ASSERTLOG
 #include "playerClass.hpp"           // for PlayerClass
 #include "proto.hpp"                 // for up, songBless, songFlight, songHeal
 #include "random.hpp"                // for Random
 #include "server.hpp"                // for Server, gServer
 #include "skills.hpp"                // for Skill, SkillInfo, SkillGainType
 #include "skillCommand.hpp"          // for SkillCommand
-#include "utils.hpp"                 // for MIN, MAX
 #include "xml.hpp"                   // for loadPlayer
 
 #define NOT_A_SKILL (-10)
@@ -225,7 +222,7 @@ void Creature::checkImprove(const std::string&  skillName, bool success, int att
     }
 
     // Unless max for level, 3% chance minimum
-    chance = MAX(chance, 3);
+    chance = std::max(chance, 3);
 
     // 10 skill points per level possible, can't go over that
     if (gained >= (level * 10))
@@ -247,7 +244,7 @@ void Creature::checkImprove(const std::string&  skillName, bool success, int att
             lasttime[LT_SKILL_INCREASE].ltime = t;
             // Length of wait is based on skill level, not player level
             long wait = 10L + (gained / 10);
-            wait = MIN(wait, 150L);
+            wait = std::min(wait, 150L);
             lasttime[LT_SKILL_INCREASE].interval = wait;
         }
         // Chance for a double improve for a hard skill
@@ -402,8 +399,8 @@ const char skillLevelStr[][SKILL_CHART_SIZE] = { "^rHorrible^x",          // 0-2
         };
 
 std::string getSkillLevelStr(int gained) {
-	int displayNum = MIN<int>(gained, MAXALVL * 10.0) / 25;
-	return skillLevelStr[MAX<int>(0, MIN<int>(SKILL_CHART_SIZE-1, displayNum))];
+	int displayNum = std::min<int>(gained, MAXALVL * 10.0) / 25;
+	return skillLevelStr[std::max<int>(0, std::min<int>(SKILL_CHART_SIZE-1, displayNum))];
 }
 
 
@@ -415,7 +412,7 @@ const char craftSkillLevelStr[][25] = { "Novice", "Apprentice", "Journeyman", "E
 //********************************************************************
 // Show the skills and skill levels of 'player'  to 'sock'
 
-int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool showWeapons = false) {
+int showSkills(const std::shared_ptr<Player>& toShow, std::shared_ptr<Creature> player, bool showMagic = false, bool showWeapons = false) {
     std::map<std::string, std::string>::iterator sgIt;
     std::map<std::string, Skill*>::iterator sIt;
     Skill* crtSkill = nullptr;
@@ -458,8 +455,8 @@ int showSkills(Player* toShow, Creature* player, bool showMagic = false, bool sh
 
                 int curSkill = 0;
                 float maxSkill = 0;
-                maxSkill = MIN<int>(player->getLevel()*10.0, MAXALVL*10.0);
-                curSkill = MIN<int>(crtSkill->getGained(), maxSkill);
+                maxSkill = std::min<int>(player->getLevel()*10.0, MAXALVL*10.0);
+                curSkill = std::min<int>(crtSkill->getGained(), maxSkill);
 
                 skill = curSkill;
                 if (clan)
@@ -533,15 +530,15 @@ double Creature::getSkillLevel(const std::string&  skillName, bool useBase) cons
             gained += c->getSkillBonus(skillName);
     }
 
-    double level = 0.0;
+    double lLevel = 0.0;
     if (gained <= 100) {
         // If less than 100, adding 5 to help out lower levels
-        level = ((double) gained + 5.0) / 10.0;
+        lLevel = ((double) gained + 5.0) / 10.0;
     } else {
         // If over 100, divide by 9.5 to provide more returns for higher levels
-        level = (double) gained / 9.5;
+        lLevel = (double) gained / 9.5;
     }
-    return (level);
+    return (lLevel);
 }
 
 //********************************************************************
@@ -576,11 +573,11 @@ double Creature::getTradeSkillGained(const std::string& skillName, bool useBase)
     double gained = (skill->getGained() * 1.0);
 
     if (level < 7) {
-        gained = MIN(gained, 75.0);
+        gained = std::min(gained, 75.0);
     } else if (level < 13) {
-        gained = MIN(gained, 150.0);
+        gained = std::min(gained, 150.0);
     } else {
-        gained = MIN(gained, 300.0);
+        gained = std::min(gained, 300.0);
     }
 
     return (gained);
@@ -606,7 +603,7 @@ const std::string& skillColor(int gainType) {
             return EMPTY_STR;
     }
 }
-int dmSkills(Player* player, cmd* cmnd) {
+int dmSkills(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if (cmnd->num < 2) {
         std::map<std::string, std::string>::iterator sgIt;
@@ -621,8 +618,6 @@ int dmSkills(Player* player, cmd* cmnd) {
         player->printPaged(
                 fmt::format("\n^xSkills\n%{:<20} - {:30} - {:<15}\n-------------------------------------------------------------\n",
                 "Name", "DisplayName", "Group"));
-        SkillInfo* skill;
-
         for (const auto& [groupName, groupDisplayName] : gConfig->skillGroups) {
             for(const auto& [skillName, skillInfo] : gConfig->skills) {
                 if (skillInfo.getGroup() == groupName) {
@@ -633,7 +628,7 @@ int dmSkills(Player* player, cmd* cmnd) {
         }
         player->donePaging();
     } else {
-        Creature* target = nullptr;
+        std::shared_ptr<Creature> target = nullptr;
         cmnd->str[1][0] = up(cmnd->str[1][0]);
         target = gServer->findPlayer(cmnd->str[1]);
         cmnd->str[1][0] = low(cmnd->str[1][0]);
@@ -655,8 +650,8 @@ int dmSkills(Player* player, cmd* cmnd) {
 //                      dmSetSkills
 //********************************************************************
 
-int dmSetSkills(Player *admin, cmd* cmnd) {
-    Player* target = nullptr;
+int dmSetSkills(const std::shared_ptr<Player>& admin, cmd* cmnd) {
+    std::shared_ptr<Player> target = nullptr;
 
     if (cmnd->num < 2) {
         admin->print("Set skills for who?\n");
@@ -698,10 +693,9 @@ int dmSetSkills(Player *admin, cmd* cmnd) {
 //********************************************************************
 // Display all skills a player knows and their level
 
-int cmdSkills(Player* player, cmd* cmnd) {
-    Creature* target = player;
+int cmdSkills(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target = player;
     bool magicOnly = false;
-    bool online = true;
     int pos = 1;
 
     magicOnly = cmnd->str[1][0] && !strncmp(cmnd->str[1], "magic", strlen(cmnd->str[1]));
@@ -714,10 +708,9 @@ int cmdSkills(Player* player, cmd* cmnd) {
             target = gServer->findPlayer(cmnd->str[pos]);
 
             if (!target) {
-                Player* pTarget = nullptr;
-                loadPlayer(cmnd->str[pos], &pTarget);
+                std::shared_ptr<Player> pTarget = nullptr;
+                loadPlayer(cmnd->str[pos], pTarget);
                 target = pTarget;
-                online = false;
             }
 
             if (!target) {
@@ -726,16 +719,12 @@ int cmdSkills(Player* player, cmd* cmnd) {
             }
             if (target->isDm() && !player->isDm()) {
                 player->print("You cannot view that player's skills.\n");
-                if (!online)
-                    free_crt(target);
                 return (0);
             }
         }
     }
 
     showSkills(player, target, magicOnly);
-    if (!online)
-        free_crt(target);
     return (0);
 }
 // End Skill functions related to Creatures
@@ -762,10 +751,7 @@ int songlist_size = sizeof(songlist) / sizeof(*songlist);
 //**********************************************************************
 const char *get_song_name(int nIndex) {
     // do bounds checking
-    ASSERTLOG(nIndex >= 0);
-    ASSERTLOG(nIndex < songlist_size);
-
-    nIndex = MAX(0, MIN(nIndex, songlist_size));
+    nIndex = std::max(0, std::min(nIndex, songlist_size));
 
     return (songlist[nIndex].songstr);
 }
@@ -775,10 +761,7 @@ const char *get_song_name(int nIndex) {
 //**********************************************************************
 int get_song_num(int nIndex) {
     // do bounds checking
-    ASSERTLOG(nIndex >= 0);
-    ASSERTLOG(nIndex < songlist_size);
-
-    nIndex = MAX(0, MIN(nIndex, songlist_size));
+    nIndex = std::max(0, std::min(nIndex, songlist_size));
 
     return (songlist[nIndex].songno);
 }
@@ -788,10 +771,7 @@ int get_song_num(int nIndex) {
 //**********************************************************************
 SONGFN get_song_function(int nIndex) {
     // do bounds checking
-    ASSERTLOG(nIndex >= 0);
-    ASSERTLOG(nIndex < songlist_size);
-
-    nIndex = MAX(0, MIN(nIndex, songlist_size));
+    nIndex = std::max(0, std::min(nIndex, songlist_size));
 
     return (songlist[nIndex].songfn);
 }

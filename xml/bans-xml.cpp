@@ -37,7 +37,7 @@ bool Config::loadBans() {
     xmlNodePtr cur;
 
     char filename[80];
-    snprintf(filename, 80, "%s/bans.xml", Path::Config);
+    snprintf(filename, 80, "%s/bans.xml", Path::Config.c_str());
     xmlDoc = xml::loadFile(filename, "Bans");
 
     if(xmlDoc == nullptr)
@@ -134,7 +134,7 @@ bool Config::saveBans() const {
         // Prefix
         xmlNewChild(curNode, nullptr, BAD_CAST "Prefix", BAD_CAST iToYesNo(ban->isPrefix));
     }
-    sprintf(filename, "%s/bans.xml", Path::Config);
+    sprintf(filename, "%s/bans.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);

@@ -34,17 +34,17 @@
 #include "random.hpp"                // for Random
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MIN
 
 //*********************************************************************
 //                      cmdBite
 //*********************************************************************
 
-int cmdBite(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
-    Player  *pTarget=nullptr;
-    long    i=0, t=0;
-    int     chance=0, dmgnum=0;
+int cmdBite(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target;
+    std::shared_ptr<Player> pTarget;
+    long    i, t;
+    int     chance;
+    int dmgnum=0;
     Damage damage;
 
 
@@ -118,7 +118,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 
 
     chance = 35 + ((int)((player->getSkillLevel("bite") - target->getLevel()) * 20) + bonus(player->strength.getCur()) * 5);
-    chance = MIN(chance, 85);
+    chance = std::min(chance, 85);
 
     if(target->isEffected("drain-shield"))
         chance /= 2;
@@ -129,8 +129,8 @@ int cmdBite(Player* player, cmd* cmnd) {
     if(Random::get(1, 100) > chance) {
         player->print("%s eludes your bite.\n", target->upHeShe());
         player->checkImprove("bite", false);
-        target->print("%M tried to bite you!\n",player);
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to bite %N.", player, target);
+        target->print("%M tried to bite you!\n",player.get());
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to bite %N.", player.get(), target.get());
         return(0);
     }
 
@@ -141,26 +141,26 @@ int cmdBite(Player* player, cmd* cmnd) {
 
     dmgnum = damage.get();
 
-    damage.set(MIN<int>(damage.get(), target->hp.getCur() + 1));
+    damage.set(std::min<int>(damage.get(), target->hp.getCur() + 1));
     if(damage.get() < 1)
         damage.set(1);
 
-    player->printColor("You bite %N for %s%d^x damage.\n", target, player->customColorize("*CC:DAMAGE*").c_str(), dmgnum);
+    player->printColor("You bite %N for %s%d^x damage.\n", target.get(), player->customColorize("*CC:DAMAGE*").c_str(), dmgnum);
     player->checkImprove("bite", true);
 
     if(player->hp.getCur() < player->hp.getMax() && damage.getDrain()) {
-        player->print("The blood of %N revitalizes your strength.\n", target);
+        player->print("The blood of %N revitalizes your strength.\n", target.get());
         player->hp.increase(damage.getDrain());
     }
 
     if(player->getClass() == CreatureClass::CARETAKER)
         log_immort(false,player, "%s bites %s.\n", player->getCName(), target->getCName());
 
-    target->printColor("%M bites you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), dmgnum);
+    target->printColor("%M bites you for %s%d^x damage.\n", player.get(), target->customColorize("*CC:DAMAGE*").c_str(), dmgnum);
     target->stun((Random::get(5, 8) + bonus(player->strength.getCur())));
-    broadcast(player->getSock(), target->getSock(), player->getParent(), "%M bites %N!", player, target);
+    broadcast(player->getSock(), target->getSock(), player->getParent(), "%M bites %N!", player.get(), target.get());
     broadcastGroup(false, target, "^M%M^x bites ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n",
-        player, target, dmgnum, target->heShe(), target->getStatusStr(dmgnum));
+        player.get(), target.get(), dmgnum, target->heShe(), target->getStatusStr(dmgnum));
 
     player->statistics.attackDamage(dmgnum, "bite");
 
@@ -181,7 +181,7 @@ int cmdBite(Player* player, cmd* cmnd) {
 //                      `Mist
 //*********************************************************************
 
-int cmdMist(Player* player, cmd* cmnd) {
+int cmdMist(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i=0, t=0;
     t = time(nullptr);
     i = player->getLTAttack() > LT(player, LT_SPELL) ? player->getLTAttack() : LT(player, LT_SPELL);
@@ -237,7 +237,7 @@ int cmdMist(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    broadcast(player->getSock(), player->getParent(), "%M turns to mist.", player);
+    broadcast(player->getSock(), player->getParent(), "%M turns to mist.", player.get());
     player->addEffect("mist", -1);
     player->print("You turn to mist.\n");
     //player->checkImprove("mist", true);
@@ -275,7 +275,7 @@ bool Player::canMistNow() const {
 //                      cmdUnmist
 //*********************************************************************
 
-int cmdUnmist(Player* player, cmd* cmnd) {
+int cmdUnmist(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isEffected("mist")) {
         player->unmist();
     } else {
@@ -291,8 +291,8 @@ int cmdUnmist(Player* player, cmd* cmnd) {
 //                      cmdHypnotize
 //*********************************************************************
 
-int cmdHypnotize(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
+int cmdHypnotize(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
     int     dur=0, chance=0;
     long    i=0, t=0;
 
@@ -347,7 +347,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
     }
 
     if(target->isPlayer() && target->getClass() == CreatureClass::RANGER && target->getLevel() > player->getLevel()) {
-        player->print("%M is immune to your hypnotizing gaze.\n", target);
+        player->print("%M is immune to your hypnotizing gaze.\n", target.get());
         return(0);
     }
 
@@ -365,16 +365,16 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 
     player->lasttime[LT_HYPNOTIZE].ltime = t;
     player->lasttime[LT_HYPNOTIZE].interval = 600L;
-    chance = MIN(90, 40 + (int)(player->getSkillLevel("hypnotize") - target->getLevel()) * 20 + 4 *
+    chance = std::min(90, 40 + (int)(player->getSkillLevel("hypnotize") - target->getLevel()) * 20 + 4 *
             bonus(player->intelligence.getCur()));
     if(target->flagIsSet(M_PERMENANT_MONSTER))
         chance-=25;
     if(player->isDm())
         chance = 101;
     if(Random::get(1, 100) > chance && !player->isCt()) {
-        player->print("You fail to hypnotize %N.\n", target);
+        player->print("You fail to hypnotize %N.\n", target.get());
         player->checkImprove("hypnotize", false);
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M attempts to hypnotize %N.",player, target);
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M attempts to hypnotize %N.",player.get(), target.get());
         if(target->isMonster()) {
             target->getAsMonster()->addEnemy(player);
             if(player->flagIsSet(P_LAG_PROTECTION_SET)) {    // Activates lag protection.
@@ -382,7 +382,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
             }
             return(0);
         }
-        target->printColor("^m%M tried to hypnotize you.\n", player);
+        target->printColor("^m%M tried to hypnotize you.\n", player.get());
         return(0);
     }
 
@@ -394,7 +394,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 
     if(!player->isCt()) {
         if(target->chkSave(MEN, player,0)) {
-            player->print("%M avoided your hypnotizing gaze.\n", target);
+            player->print("%M avoided your hypnotizing gaze.\n", target.get());
             player->checkImprove("hypnotize", false);
             target->print("You avoided %s's hypnotizing gaze.\n", player->getCName());
             return(0);
@@ -403,10 +403,10 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 
     log_immort(false,player, "%s hypnotizes %s.\n", player->getCName(), target->getCName());
 
-    player->print("You hypnotize %N.\n", target);
+    player->print("You hypnotize %N.\n", target.get());
     player->checkImprove("hypnotize", true);
-    broadcast(player->getSock(), target->getSock(), player->getParent(), "%M hypnotizes %N!", player, target);
-    target->print("%M hypnotizes you.\n", player);
+    broadcast(player->getSock(), target->getSock(), player->getParent(), "%M hypnotizes %N!", player.get(), target.get());
+    target->print("%M hypnotizes you.\n", player.get());
 
 
     player->addCharm(target);
@@ -429,7 +429,7 @@ int cmdHypnotize(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This command is for liches.
 
-int cmdRegenerate(Player* player, cmd* cmnd) {
+int cmdRegenerate(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     chance=0, xtra=0, pasthalf=0,inCombat=0;
     long    i=0, t=0;
 
@@ -470,18 +470,20 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
     //  120 = 0
     //  400 = 93.3
     chance = (player->constitution.getCur() - 120) / 3;
-    chance = MIN(85, level * 4 + chance);
+    chance = std::min(85, level * 4 + chance);
     if(player->isCt())
         chance = 101;
 
     if(Random::get(1, 100) <= chance) {
         player->print("Your dark essence draws from the positive energy around you.\n");
         player->checkImprove("regenerate", true);
-        broadcast(player->getSock(), player->getParent(), "%M regenerates.", player);
+        broadcast(player->getSock(), player->getParent(), "%M regenerates.", player.get());
 
-        for(Player* ply : player->getRoomParent()->players) {
-            if(!ply->isUndead())
-                ply->print("You shiver from a sudden deathly coldness.\n");
+        for(const auto& ply: player->getRoomParent()->players) {
+            if(auto lockedPly = ply.lock()) {
+                if (!lockedPly->isUndead())
+                    lockedPly->print("You shiver from a sudden deathly coldness.\n");
+            }
         }
 
         if(inCombat)
@@ -515,7 +517,7 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
     } else {
         player->print("You failed to regenerate.\n");
         player->checkImprove("regenerate", false);
-        broadcast(player->getSock(), player->getParent(), "%M tried to regenerate.", player);
+        broadcast(player->getSock(), player->getParent(), "%M tried to regenerate.", player.get());
         player->lasttime[LT_REGENERATE].ltime = t;
         player->lasttime[LT_REGENERATE].interval = 6L;
     }
@@ -529,9 +531,9 @@ int cmdRegenerate(Player* player, cmd* cmnd) {
 // This allows a lich to drain hp from someone else and add half the
 // damage to their own
 
-int cmdDrainLife(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
-    Player  *pTarget=nullptr;
+int cmdDrainLife(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Player> pTarget=nullptr;
     long    i=0, t=0;
     int     chance=0;
     Damage damage;
@@ -598,17 +600,17 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     int level = (int)player->getSkillLevel("drain");
 
     chance = (level - target->getLevel()) * 20 + bonus(player->constitution.getCur()) * 5 + 25;
-    chance = MIN(chance, 80);
+    chance = std::min(chance, 80);
 
     if(target->isEffected("drain-shield"))
         chance /= 2;
 
     if(Random::get(1, 100) > chance) {
-        player->print("You failed to drain %N's life.\n", target);
+        player->print("You failed to drain %N's life.\n", target.get());
         player->checkImprove("drain", false);
 
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to drain %N's life.", player, target);
-        target->print("%M tried drain your life!\n", player);
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to drain %N's life.", player.get(), target.get());
+        target->print("%M tried drain your life!\n", player.get());
         return(0);
     }
 
@@ -621,14 +623,14 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     if(pTarget && pTarget->isEffected("berserk"))
         damage.set(damage.get() + (damage.get() / 5));
 
-    damage.set(MIN<int>(damage.get(), target->hp.getCur() + 1));
+    damage.set(std::min<int>(damage.get(), target->hp.getCur() + 1));
     if(damage.get() < 1)
         damage.set(1);
 
     if(!target->isCt()) {
         if(target->chkSave(DEA, player, 0)) {
             player->printColor("^yYour life-drain failed!\n");
-            target->print("%M failed to drain your life.\n", player);
+            target->print("%M failed to drain your life.\n", player.get());
             return(0);
         }
     }
@@ -639,16 +641,16 @@ int cmdDrainLife(Player* player, cmd* cmnd) {
     if(!target->isEffected("drain-shield"))
         player->hp.increase(damage.get() / 3);
 
-    player->printColor("You drained %N for %s%d^x damage.\n", target, player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
+    player->printColor("You drained %N for %s%d^x damage.\n", target.get(), player->customColorize("*CC:DAMAGE*").c_str(), damage.get());
     player->checkImprove("drain", true);
 
     player->statistics.attackDamage(damage.get(), "drain-life");
 
     if(target->isEffected("drain-shield"))
-        player->print("%M resisted your drain!\n", target);
+        player->print("%M resisted your drain!\n", target.get());
 
-    target->printColor("%M drained you for %s%d^x damage.\n", player, target->customColorize("*CC:DAMAGE*").c_str(), damage.get());
-    broadcast(player->getSock(), target->getSock(), player->getParent(), "%M drained %N's life.", player, target);
+    target->printColor("%M drained you for %s%d^x damage.\n", player.get(), target->customColorize("*CC:DAMAGE*").c_str(), damage.get());
+    broadcast(player->getSock(), target->getSock(), player->getParent(), "%M drained %N's life.", player.get(), target.get());
 
     if(player->doDamage(target, damage.get(), CHECK_DIE)) {
         if(player->getClass() == CreatureClass::CARETAKER && pTarget)

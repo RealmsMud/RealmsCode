@@ -33,7 +33,7 @@ public:
         name = pCmdStr;
     }
     ~SocialCommand() override = default;
-    int execute(Creature* player, cmd* cmnd) const override;
+    int execute(const std::shared_ptr<Creature>& player, cmd* cmnd) const override;
 
     [[nodiscard]] bool getWakeTarget() const;
     [[nodiscard]] bool getRudeWakeTarget() const;
@@ -50,7 +50,7 @@ public:
     [[nodiscard]] std::string_view getRoomOnSelf() const;
 
 private:
-    std::function<int(Creature* player, cmd* cmnd)> fn;
+    std::function<int(const std::shared_ptr<Creature>& player, cmd* cmnd)> fn;
 
     std::string script;
 

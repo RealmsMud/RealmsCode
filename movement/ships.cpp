@@ -35,7 +35,6 @@
 #include "config.hpp"                               // for Config, gConfig
 #include "creatureStreams.hpp"                      // for Streamable, ColorOff
 #include "flags.hpp"                                // for MAX_EXIT_FLAGS
-#include "free_crt.hpp"                             // for free_crt
 #include "global.hpp"                               // for CAP, NONUM
 #include "location.hpp"                             // for Location
 #include "move.hpp"                                 // for getString
@@ -51,9 +50,9 @@
 #include "range.hpp"                                // for Range
 #include "server.hpp"                               // for Server, gServer
 #include "ships.hpp"                                // for ShipStop, ShipRaid
-#include "utils.hpp"                                // for MAX
 #include "wanderInfo.hpp"                           // for WanderInfo
 #include "xml.hpp"                                  // for copyToString, sav...
+#include "toNum.hpp"
 
 
 #define PIRATE_QUEST (54 - 1)
@@ -85,15 +84,14 @@ bool ShipStop::belongs(const CatRef& cr) {
     return(false);
 }
 
-bool Ship::belongs(const CatRef& cr) {
-    std::list<Range>::iterator rt;
-    for(rt = ranges.begin() ; rt != ranges.end() ; rt++)
+bool Ship::belongs(const CatRef& cr) const {
+    for(auto rt = ranges.begin() ; rt != ranges.end() ; rt++)
         if((*rt).belongs(cr))
             return(true);
     return(false);
 }
 
-void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message) {
+void shipBroadcastRange(const Ship &ship, ShipStop *stop, const std::string& message) {
 
     if(message.empty())
         return;
@@ -104,7 +102,7 @@ void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message) 
         return;
     }
 
-    Player* target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     // otherwise go through each player
     for(const auto& p : gServer->players) {
         target = p.second;
@@ -114,7 +112,7 @@ void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message) 
         if(!target->inUniqueRoom())
             continue;
 
-        if( ship->belongs(target->getUniqueRoomParent()->info) ||
+        if( ship.belongs(target->getUniqueRoomParent()->info) ||
             stop->belongs(target->getUniqueRoomParent()->info)
         )
             target->print("%s\n", message.c_str());
@@ -129,19 +127,18 @@ void shipBroadcastRange(Ship *ship, ShipStop *stop, const std::string& message) 
 // run through the exits declared as Raid and spawn some raiders!
 
 void ShipExit::spawnRaiders(ShipRaid* sRaid) {
-    Monster *raider=nullptr;
-    BaseRoom *room=nullptr;
+    std::shared_ptr<Monster> raider=nullptr;
+    std::shared_ptr<BaseRoom> room=nullptr;
     int     l=0, total=0;
 
     if(name.empty() || !raid || !origin.getId() || !target.getId())
         return;
 
-    if(!loadMonster(sRaid->getSearchMob(), &raider))
+    if(!loadMonster(sRaid->getSearchMob(), raider))
         return;
 
     room = getRoom(false);
     if(!room) {
-        free_crt(raider);
         return;
     }
 
@@ -149,7 +146,6 @@ void ShipExit::spawnRaiders(ShipRaid* sRaid) {
         raider->validateAc();
 
     if(!raider->getName()[0] || raider->getName()[0] == ' ') {
-        free_crt(raider);
         return;
     }
 
@@ -168,7 +164,7 @@ void ShipExit::spawnRaiders(ShipRaid* sRaid) {
         gServer->addActive(raider);
         l++;
         if(l < total)
-            loadMonster(sRaid->getSearchMob(), &raider);
+            loadMonster(sRaid->getSearchMob(), raider);
     }
 }
 
@@ -177,7 +173,7 @@ void ShipExit::spawnRaiders(ShipRaid* sRaid) {
 //                      getRoom
 //*********************************************************************
 
-BaseRoom* ShipExit::getRoom(bool useOrigin) {
+std::shared_ptr<BaseRoom> ShipExit::getRoom(bool useOrigin) const {
     if(useOrigin)
         return(origin.loadRoom());
     return(target.loadRoom());
@@ -195,8 +191,9 @@ void ShipStop::spawnRaiders() {
     if(!raid || !raid->getSearchMob())
         return;
 
-    for(xt = exits.begin() ; xt != exits.end() ; xt++)
-        (*xt)->spawnRaiders(raid);
+    for(const auto& exit : exits) {
+        exit->spawnRaiders(raid);
+    }
 }
 
 
@@ -207,9 +204,7 @@ void ShipStop::spawnRaiders() {
 // it also takes care of announcing the ship's arrival
 
 bool ShipExit::createExit() {
-    BaseRoom* newRoom=nullptr;
-    int     i=0;
-
+    std::shared_ptr<BaseRoom> newRoom;
     if(name.empty() || !origin.getId() || !target.getId())
         return(false);
 
@@ -219,17 +214,15 @@ bool ShipExit::createExit() {
 
     link_rom(newRoom, target, name);
 
-    for(Exit* ext : newRoom->exits) {
+    for(const auto& ext : newRoom->exits) {
         if(ext->getName() == name) {
-            zero(ext->flags, sizeof(ext->flags));
+            ext->flags.reset();
+            ext->flags = flags;
 
-            // TODO: Dom: needs to use getFlags() and setFlags()
-            for(i=sizeof(ext->flags)-1; i>=0; i--)
-                ext->flags[i] = flags[i];
             ext->setFlag(X_MOVING);
 
             if(!arrives.empty())
-                broadcast(nullptr, newRoom, "%s", arrives.c_str());
+                broadcast((std::shared_ptr<Socket> )nullptr, newRoom, "%s", arrives.c_str());
             return(true);
         }
     }
@@ -239,12 +232,11 @@ bool ShipExit::createExit() {
 
 // hand on that responsibility!
 // but do broadcasting and raider-spawning
-int shipSetExits(Ship *ship, ShipStop *stop) {
-    std::list<ShipExit*>::iterator exit;
+int shipSetExits(Ship &ship, ShipStop *stop) {
     bool        broad = false;
 
-    for(exit = stop->exits.begin() ; exit != stop->exits.end() ; exit++)
-        broad = (*exit)->createExit() || broad;
+    for(const auto& exit : stop->exits)
+        broad = exit->createExit() || broad;
 
     if(broad)
         shipBroadcastRange(ship, stop, stop->arrives);
@@ -261,69 +253,68 @@ int shipSetExits(Ship *ship, ShipStop *stop) {
 // Will also cause raiders to wander away.
 
 void ShipExit::removeExit() {
-    Monster *raider=nullptr;
-    BaseRoom* newRoom=nullptr;
-    AreaRoom* aRoom=nullptr;
-    int     i=0, n=0;
+    std::shared_ptr<Monster> raider;
+    std::shared_ptr<BaseRoom> newRoom;
+    std::shared_ptr<AreaRoom> aRoom;
+    int i = 0, n;
 
     newRoom = getRoom(true);
-    if(!newRoom)
+    if (!newRoom)
         return;
 
     // kill all raiders
     auto mIt = newRoom->monsters.begin();
-    while(mIt != newRoom->monsters.end()) {
+    while (mIt != newRoom->monsters.end()) {
         raider = (*mIt++);
 
-        if(raider && raider->flagIsSet(M_RAIDING)) {
-            broadcast(nullptr, newRoom, "%1M just %s away.", raider, Move::getString(raider).c_str());
-            gServer->delActive(raider);
+        if (raider && raider->flagIsSet(M_RAIDING)) {
+            broadcast((std::shared_ptr<Socket> )nullptr, newRoom, "%1M just %s away.", raider.get(), Move::getString(raider).c_str());
+            gServer->delActive(raider.get());
             raider->deleteFromRoom();
             raider->clearAsEnemy();
-            free_crt(raider);
         }
     }
 
 
-    if(!departs.empty())
-        broadcast(nullptr, newRoom, "%s", departs.c_str());
+    if (!departs.empty())
+        broadcast((std::shared_ptr<Socket> )nullptr, newRoom, "%s", departs.c_str());
 
     aRoom = newRoom->getAsAreaRoom();
-    ExitList::iterator xit;
-    for(xit = newRoom->exits.begin() ; xit != newRoom->exits.end() ; ) {
-        Exit* ext = (*xit++);
-        // if we're given an exit, delete it
-        // otherwise delete all exits
-        if(ext->flagIsSet(X_MOVING) && ext->getName() == name) {
+    for (auto xit = newRoom->exits.begin(); xit != newRoom->exits.end();) {
+        const auto &ext = *xit;
+        // if we're given an exit, delete it; otherwise delete all exits
+        if (ext->flagIsSet(X_MOVING) && ext->getName() == name) {
             //oldPrintColor(4, "^rDeleting^w exit %s in room %d.\n", xt->name, room);
-            if(i < 8 && aRoom) {
+            if (i < 8 && aRoom) {
                 // it's a cardinal direction, clear all flags
-                for(n=0; n<MAX_EXIT_FLAGS; n++)
+                for (n = 0; n < MAX_EXIT_FLAGS; n++)
                     ext->clearFlag(n);
                 ext->target.room.id = 0;
                 aRoom->updateExits();
-            } else
-                newRoom->delExit(ext);
+                i++;
+            } else {
+                xit = newRoom->exits.erase(xit);
+                continue;
+            }
         }
-        i++;
+        xit++;
     }
 }
 
 // hand on that responsibility!
 // but do broadcasting and kicking people off a raiding vessel
-int shipDeleteExits(Ship *ship, ShipStop *stop) {
-    std::list<ShipExit*>::iterator exit;
-    Monster     *raider=nullptr;
-    UniqueRoom      *room=nullptr, *newRoom=nullptr;
+int shipDeleteExits(Ship &ship, ShipStop *stop) {
+    std::shared_ptr<Monster> raider=nullptr;
+    std::shared_ptr<UniqueRoom> room=nullptr, newRoom=nullptr;
     int         found=1;
 
     if(stop->raid) {
         // record when the last pirate raid was
         if(stop->raid->getRecord())
-            gConfig->calendar->setLastPirate(ship->name);
+            gConfig->calendar->setLastPirate(ship.name);
 
         // kick people off the ship!
-        if( stop->raid->getSearchMob() && (stop->raid->getDump().id || stop->raid->getPrison().id) && loadMonster(stop->raid->getSearchMob(), &raider)) {
+        if( stop->raid->getSearchMob() && (stop->raid->getDump().id || stop->raid->getPrison().id) && loadMonster(stop->raid->getSearchMob(), raider)) {
             // otherwise go through each player
             for(const auto& [pId, ply] : gServer->players) {
 
@@ -334,11 +325,11 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                 if(!ply->inUniqueRoom())
                     continue;
 
-                if(!ship->belongs(ply->getUniqueRoomParent()->info))
+                if(!ship.belongs(ply->getUniqueRoomParent()->info))
                     continue;
 
 
-                if(!loadRoom(ply->getUniqueRoomParent()->info, &room))
+                if(!loadRoom(ply->getUniqueRoomParent()->info, room))
                     continue;
                 if(!room->wander.getTraffic())
                     continue;
@@ -376,7 +367,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
 
                 ply->wake("You awaken suddenly!");
 
-                if( stop->raid->getDump().id && !(ply->isUnconscious() && stop->raid->getUnconInPrison()) && loadRoom(stop->raid->getDump(), &newRoom)) {
+                if( stop->raid->getDump().id && !(ply->isUnconscious() && stop->raid->getUnconInPrison()) && loadRoom(stop->raid->getDump(), newRoom)) {
                     if(!stop->raid->getDumpTalk().empty()) {
                         *ply << ColorOn << raider->getCrtStr(nullptr, CAP|NONUM, 0) << " says to you, \"" << stop->raid->getDumpTalk() << "\".\n" << ColorOff;
                     }
@@ -392,7 +383,7 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                     ply->addToRoom(newRoom);
                     ply->doPetFollow();
 
-                } else if(stop->raid->getPrison().id && loadRoom(stop->raid->getPrison(), &newRoom)) {
+                } else if(stop->raid->getPrison().id && loadRoom(stop->raid->getPrison(), newRoom)) {
 
                     if(!stop->raid->getPrisonTalk().empty()) {
                         *ply << ColorOn << raider->getCrtStr(nullptr, CAP|NONUM, 0) << "says to you \"" << stop->raid->getPrisonTalk() + "\".\n" << ColorOff;
@@ -410,14 +401,13 @@ int shipDeleteExits(Ship *ship, ShipStop *stop) {
                     ply->doPetFollow();
                 }
 
-                broadcast(nullptr, room, "%M was hauled off by %N.", ply, raider);
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%M was hauled off by %N.", ply.get(), raider.get());
             }
-            free_crt(raider);
         }
     }
 
-    for(exit = stop->exits.begin() ; exit != stop->exits.end() ; exit++)
-        (*exit)->removeExit();
+    for(const auto& exit : stop->exits)
+        (exit)->removeExit();
 
     shipBroadcastRange(ship, stop, stop->departs);
     return(0);
@@ -455,7 +445,7 @@ void ShipRaid::load(xmlNodePtr curNode) {
 
         childNode = childNode->next;
     }
-    minSpawnNum = MAX(0, minSpawnNum);
+    minSpawnNum = std::max(0, minSpawnNum);
     if(maxSpawnNum < minSpawnNum)
         maxSpawnNum = minSpawnNum;
 }
@@ -522,7 +512,7 @@ bool ShipRaid::getUnconInPrison() const {
 
 ShipExit::ShipExit() {
     raid = false;
-    zero(flags, sizeof(flags));
+    flags.reset();
     name = "";
     arrives = "";
     departs = "";
@@ -532,23 +522,13 @@ std::string ShipExit::getName() const { return(name); }
 bool ShipExit::getRaid() const { return(raid); }
 std::string ShipExit::getArrives() const { return(arrives); }
 std::string ShipExit::getDeparts() const { return(departs); }
-const char *ShipExit::getFlags() const { return(flags); }
-
-void ShipExit::setFlags(char f) {
-    int i = sizeof(flags);
-    char tmp[i];
-    zero(tmp, i);
-    *(tmp) = f;
-    for(i--; i>=0; i--)
-        flags[i] = tmp[i];
-}
 
 
 void ShipExit::save(xmlNodePtr curNode) const {
     xml::saveNonNullString(curNode, "Name", name);
     origin.save(curNode, "Origin");
     target.save(curNode, "Target");
-    saveBits(curNode, "Flags", MAX_EXIT_FLAGS, flags);
+    saveBitset(curNode, "Flags", MAX_EXIT_FLAGS, flags);
     xml::saveNonNullString(curNode, "Arrives", arrives);
     xml::saveNonNullString(curNode, "Departs", departs);
     xml::saveNonZeroNum(curNode, "Raid", raid);
@@ -563,7 +543,7 @@ void ShipExit::load(xmlNodePtr curNode) {
         else if(NODE_NAME(childNode, "Target")) target.load(childNode);
         else if(NODE_NAME(childNode, "Arrives")) xml::copyToString(arrives, childNode);
         else if(NODE_NAME(childNode, "Departs")) xml::copyToString(departs, childNode);
-        else if(NODE_NAME(childNode, "Flags")) loadBits(childNode, flags);
+        else if(NODE_NAME(childNode, "Flags")) loadBitset(childNode, flags);
         else if(NODE_NAME(childNode, "Raid")) raid = true;
         childNode = childNode->next;
     }
@@ -580,15 +560,7 @@ ShipStop::ShipStop() {
 }
 
 ShipStop::~ShipStop() {
-    ShipExit* exit=nullptr;
-
     delete raid;
-
-    while(!exits.empty()) {
-        exit = exits.front();
-        delete exit;
-        exits.pop_front();
-    }
     exits.clear();
 }
 
@@ -629,11 +601,11 @@ void ShipStop::load(xmlNodePtr curNode) {
 
 void ShipStop::loadExits(xmlNodePtr curNode) {
     xmlNodePtr childNode = curNode->children;
-    ShipExit    *exit=nullptr;
+    std::shared_ptr<ShipExit> exit=nullptr;
 
     while(childNode) {
         if(NODE_NAME(childNode, "Exit")) {
-            exit = new ShipExit;
+            exit = std::make_shared<ShipExit>();
             exit->load(childNode);
             if(exit->origin.room.id || exit->origin.mapmarker.getArea())
                 exit->removeExit();
@@ -662,10 +634,9 @@ void ShipStop::save(xmlNodePtr rootNode) const {
 
     childNode = xml::newStringChild(curNode, "Exits");
 
-    std::list<ShipExit*>::const_iterator exit;
-    for(exit = exits.begin() ; exit != exits.end() ; exit++) {
+    for(const auto& exit : exits) {
         xchildNode = xml::newStringChild(childNode, "Exit");
-        (*exit)->save(xchildNode);
+        (exit)->save(xchildNode);
     }
 
     if(!announce.empty()) {
@@ -703,7 +674,7 @@ Ship::~Ship() {
 
 // used in dmQueryShips to print out the ranges
 
-void shipPrintRange(Player* player, std::list<Range>* list) {
+void shipPrintRange(const std::shared_ptr<Player>& player, std::list<Range>* list) {
     std::list<Range>::iterator rt;
     for(rt = list->begin() ; rt != list->end() ; rt++)
         player->print("  %s\n", (*rt).str().c_str());
@@ -714,16 +685,13 @@ void shipPrintRange(Player* player, std::list<Range>* list) {
 //*********************************************************************
 // dm command to show all information about ships
 
-int dmQueryShips(Player* player, cmd* cmnd) {
+int dmQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int         mod=0, id=0;
-    std::list<Ship*>::iterator it;
     std::list<ShipStop*>::iterator st;
     std::list<ShipExit*>::iterator xt;
-    Ship        *ship=nullptr;
     ShipStop    *stop=nullptr;
-    ShipExit    *exit=nullptr;
-    int shipID = atoi(getFullstrText(cmnd->fullstr, 1).c_str());
-    int stopID = atoi(getFullstrText(cmnd->fullstr, 2).c_str());
+    int shipID = toNum<int>(getFullstrText(cmnd->fullstr, 1));
+    int stopID = toNum<int>(getFullstrText(cmnd->fullstr, 2));
     const Calendar* calendar = nullptr;
 
     if(!shipID) {
@@ -732,14 +700,13 @@ int dmQueryShips(Player* player, cmd* cmnd) {
         player->printColor("^b-------------------------------------------------------------------------------\n");
 
         id = 1;
-        for(it = gConfig->ships.begin() ; it != gConfig->ships.end() ; it++) {
-            ship = (*it);
-            player->print("  %-25s %s", ship->name.c_str(), ship->inPort ? "Stopped at " : "In transit, going to ");
+        for(auto& ship : gConfig->ships) {
+            player->print("  %-25s %s", ship.name.c_str(), ship.inPort ? "Stopped at " : "In transit, going to ");
 
-            st = ship->stops.begin();
+            st = ship.stops.begin();
             stop = (*st);
             player->print("%s.\n     #%-25dWill ", stop->name.c_str(), id);
-            if(ship->inPort) {
+            if(ship.inPort) {
                 st++;
                 stop = (*st);
                 player->print("depart for %s", stop->name.c_str());
@@ -747,10 +714,10 @@ int dmQueryShips(Player* player, cmd* cmnd) {
                 player->print("arrive");
             }
             player->print(" in ");
-            mod = ship->timeLeft / 60;
+            mod = ship.timeLeft / 60;
             if(mod)
-                player->print("%d hour%s%s", mod, mod==1 ? "" : "s", ship->timeLeft % 60 ? " " : "");
-            mod = ship->timeLeft % 60;
+                player->print("%d hour%s%s", mod, mod==1 ? "" : "s", ship.timeLeft % 60 ? " " : "");
+            mod = ship.timeLeft % 60;
             if(mod)
                 player->print("%d minute%s", mod, mod==1 ? "" : "s");
             player->print(".\n");
@@ -768,43 +735,44 @@ int dmQueryShips(Player* player, cmd* cmnd) {
 
     mod = 1;
     // find the ship we're looking at
-    for(it = gConfig->ships.begin() ; it != gConfig->ships.end() && mod != shipID ; it++)
+    auto it = gConfig->ships.begin();
+    for( ; it != gConfig->ships.end() && mod != shipID ; it++)
         mod++;
-    ship = (*it);
+    auto ship = (*it);
 
-    if(!ship) {
+    if(mod != shipID) {
         player->print("Invalid ship!\n");
         return(0);
     }
 
-    player->print("Information on %s:\n", ship->name.c_str());
+    player->print("Information on %s:\n", ship.name.c_str());
     player->printColor("^b-------------------------------------------------------------------------------\n");
 
-    stop = ship->stops.front();
-    player->print("In Port:   %s\n", ship->inPort ? "Yes" : "No");
-    player->print("Time Left: %d minutes\n", ship->timeLeft);
+    stop = ship.stops.front();
+    player->print("In Port:   %s\n", ship.inPort ? "Yes" : "No");
+    player->print("Time Left: %d minutes\n", ship.timeLeft);
 
     if(!stopID) {
 
-        player->print("Can Query: %s\n", ship->canQuery ? "Yes" : "No");
-        if(!ship->transit.empty())
-            player->print("Transit:   %s\n", ship->transit.c_str());
-        if(!ship->movement.empty())
-            player->print("Movement:  %s\n", ship->movement.c_str());
-        if(!ship->docked.empty())
-            player->print("Docked:    %s\n", ship->docked.c_str());
+        player->print("Can Query: %s\n", ship.canQuery ? "Yes" : "No");
+        if(!ship.transit.empty())
+            player->print("Transit:   %s\n", ship.transit.c_str());
+        if(!ship.movement.empty())
+            player->print("Movement:  %s\n", ship.movement.c_str());
+        if(!ship.docked.empty())
+            player->print("Docked:    %s\n", ship.docked.c_str());
         player->print("\n");
 
         // boat range
         player->print("Boat Ranges:\n");
-        shipPrintRange(player, &ship->ranges);
+        shipPrintRange(player, &ship.ranges);
         player->print("\n");
 
         player->print("Stops:\n");
 
         id = 1;
 
-        for(st = ship->stops.begin() ; st != ship->stops.end() ; st++) {
+        for(st = ship.stops.begin() ; st != ship.stops.end() ; st++) {
             stop = (*st);
             player->print("-----------------------\n");
             player->print("  Stop: %d - %s\n", id, stop->name.c_str());
@@ -812,10 +780,9 @@ int dmQueryShips(Player* player, cmd* cmnd) {
 
             player->print("  Exits:\n");
             mod = 1;
-            for(xt = stop->exits.begin() ; xt != stop->exits.end() ; xt++) {
-                exit = (*xt);
+            for(const auto& exit : stop->exits) {
                 player->print("     Exit: %d - %s, room %s %s\n", mod, exit->getName().c_str(),
-                    exit->origin.room.str().c_str(), exit->origin.mapmarker.getArea() ? exit->origin.mapmarker.str().c_str() : "");
+                              exit->origin.room.displayStr().c_str(), exit->origin.mapmarker.getArea() ? exit->origin.mapmarker.str().c_str() : "");
                 mod++;
             }
 
@@ -829,7 +796,7 @@ int dmQueryShips(Player* player, cmd* cmnd) {
 
         mod = 1;
         // find the stop we're looking at
-        for(st = ship->stops.begin() ; st != ship->stops.end() && mod != stopID ; st++)
+        for(st = ship.stops.begin() ; st != ship.stops.end() && mod != stopID ; st++)
             mod++;
 
         stop = (*st);
@@ -856,8 +823,8 @@ int dmQueryShips(Player* player, cmd* cmnd) {
             player->print("Raid Info:\n-----------------------\n");
             player->print("Record:          %s\n", stop->raid->getRecord() ? "Yes" : "No");
             player->print("Search Mob:      %d\n", stop->raid->getSearchMob());
-            player->print("Dump Room:       %s\n", stop->raid->getDump().str().c_str());
-            player->print("Prison Room:     %s\n", stop->raid->getPrison().str().c_str());
+            player->print("Dump Room:       %s\n", stop->raid->getDump().displayStr().c_str());
+            player->print("Prison Room:     %s\n", stop->raid->getPrison().displayStr().c_str());
             if(!stop->raid->getDumpTalk().empty())
                 player->print("Dump Talk:       %s\n", stop->raid->getDumpTalk().c_str());
             if(!stop->raid->getPrisonTalk().empty())
@@ -878,12 +845,11 @@ int dmQueryShips(Player* player, cmd* cmnd) {
         player->print("-----------------------\n");
 
         mod = 1;
-        for(xt = stop->exits.begin() ; xt != stop->exits.end() ; xt++) {
-            exit = (*xt);
+        for(const auto& exit: stop->exits) {
             player->print("  Exit:    %d - %s\n", mod, exit->getName().c_str());
-            player->print("  uOrigin: %s   aOrigin: %s\n", exit->origin.room.str().c_str(),
+            player->print("  uOrigin: %s   aOrigin: %s\n", exit->origin.room.displayStr().c_str(),
                 exit->origin.mapmarker.str().c_str());
-            player->print("  uTarget: %s   aTarget: %s\n", exit->target.room.str().c_str(),
+            player->print("  uTarget: %s   aTarget: %s\n", exit->target.room.displayStr().c_str(),
                 exit->target.mapmarker.str().c_str());
             player->print("  Raid:    %s\n", exit->getRaid() ? "Yes" : "No");
             if(!exit->getArrives().empty())
@@ -905,11 +871,9 @@ int dmQueryShips(Player* player, cmd* cmnd) {
 //*********************************************************************
 // let the player see where ships are
 
-int cmdQueryShips(Player* player, cmd* cmnd) {
+int cmdQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     mod=0;
-    std::list<Ship*>::iterator it;
-    std::list<ShipStop*>::iterator st;
-    Ship    *ship=nullptr;
+    std::list<ShipStop*>::const_iterator st;
     ShipStop *stop=nullptr;
 
     if(!player->ableToDoCommand())
@@ -917,21 +881,20 @@ int cmdQueryShips(Player* player, cmd* cmnd) {
 
     player->print("Location of Chartered Ships:\n");
     player->printColor("^b-------------------------------------------------------------------------------\n");
-
-    for(it = gConfig->ships.begin() ; it != gConfig->ships.end() ; it++) {
-        ship = (*it);
+    
+    for(const auto& ship : gConfig->ships) {
         // the wizard's eye tower can be viewed by clan members
-        if(ship->canQuery || (ship->clan && ship->clan == player->getClan())) {
-            player->print("  %-25s ", ship->name.c_str());
-            if(ship->inPort)
-                player->print("%s at ", ship->docked.c_str());
+        if(ship.canQuery || (ship.clan && ship.clan == player->getClan())) {
+            player->print("  %-25s ", ship.name.c_str());
+            if(ship.inPort)
+                player->print("%s at ", ship.docked.c_str());
             else
-                player->print("%s, %s to ", ship->transit.c_str(), ship->movement.c_str());
+                player->print("%s, %s to ", ship.transit.c_str(), ship.movement.c_str());
 
-            st = ship->stops.begin();
+            st = ship.stops.begin();
             stop = (*st);
             player->print("%s.\n%-31sWill ", stop->name.c_str(), " ");
-            if(ship->inPort) {
+            if(ship.inPort) {
                 st++;
                 stop = (*st);
                 player->print("depart for %s", stop->name.c_str());
@@ -939,18 +902,17 @@ int cmdQueryShips(Player* player, cmd* cmnd) {
                 player->print("arrive");
 
             player->print(" in ");
-            mod = ship->timeLeft / 60;
+            mod = ship.timeLeft / 60;
             if(mod)
-                player->print("%d hour%s%s", mod, mod==1 ? "" : "s", ship->timeLeft % 60 ? " " : "");
-            mod = ship->timeLeft % 60;
+                player->print("%d hour%s%s", mod, mod==1 ? "" : "s", ship.timeLeft % 60 ? " " : "");
+            mod = ship.timeLeft % 60;
             if(mod)
                 player->print("%d minute%s", mod, mod==1 ? "" : "s");
             player->print(".\n");
         }
     }
 
-    // Dont let staff cheat and set the quest on themselves
-    // to see where the Marauder will be.
+    // Don't let staff cheat and set the quest on themselves to see where the Marauder will be.
     if(player->isStaff() && !player->isDm())
         return(0);
 
@@ -958,19 +920,4 @@ int cmdQueryShips(Player* player, cmd* cmnd) {
         player->print("\nThe last pirate raid was: %s\n", gConfig->getCalendar()->getLastPirate().c_str());
 
     return(0);
-}
-
-//*********************************************************************
-//                      clearShips
-//*********************************************************************
-
-void Config::clearShips() {
-    Ship    *ship=nullptr;
-
-    while(!ships.empty()) {
-        ship = ships.front();
-        delete ship;
-        ships.pop_front();
-    }
-    ships.clear();
 }

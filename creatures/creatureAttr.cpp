@@ -66,9 +66,9 @@
 #include "structs.hpp"                         // for SEX_FEMALE, SEX_MALE, Sex
 #include "threat.hpp"                          // for ThreatTable
 #include "timer.hpp"                           // for Timer
-#include "utils.hpp"                           // for MIN, MAX
 #include "version.hpp"                         // for VERSION
 #include "xml.hpp"                             // for copyPropToString
+#include "server.hpp"
 
 //*********************************************************************
 //                      getClass
@@ -79,7 +79,7 @@ CreatureClass Creature::getClass() const { return(cClass); }
 int Creature::getClassInt() const { return(static_cast<int>(cClass)); }
 
 int Creature::getSecondClassInt() const {
-    const Player* pThis = getAsConstPlayer();
+    const std::shared_ptr<const Player> pThis = getAsConstPlayer();
 
     if(pThis)
         return(static_cast<int>(pThis->getSecondClass()));
@@ -92,7 +92,7 @@ unsigned short Creature::getLevel() const { return(level); }
 
 short Creature::getAlignment() const { return(alignment); }
 
-unsigned int Creature::getArmor() const { return(armor); }
+int Creature::getArmor() const { return(armor); }
 
 unsigned long Creature::getExperience() const { return(experience); }
 
@@ -108,7 +108,7 @@ unsigned short Creature::getDeity() const { return(deity); }
 
 Size Creature::getSize() const { return(size); }
 
-unsigned int Creature::getAttackPower() const { return(attackPower); }
+int Creature::getAttackPower() const { return(attackPower); }
 
 std::string Creature::getDescription() const { return(description); }
 std::string Creature::getVersion() const { return(version); }
@@ -163,7 +163,7 @@ void Creature::subExperience(unsigned long e) {
 //                      setExperience
 //*********************************************************************
 
-void Creature::setExperience(unsigned long e) { experience = MIN<unsigned long>(2100000000, e); }
+void Creature::setExperience(unsigned long e) { experience = std::min<unsigned long>(2100000000, e); }
 
 //*********************************************************************
 //                      setClass
@@ -199,30 +199,30 @@ void Creature::setClass(CreatureClass c) {
 
 void Creature::setClan(unsigned short c) { clan = c; }
 
-void Creature::setLevel(unsigned short l, bool isDm) { level = MAX(1, MIN<int>(l, isDm ? 127 : MAXALVL)); }
+void Creature::setLevel(unsigned short l, bool isDm) { level = std::max(1, std::min<int>(l, isDm ? 127 : MAXALVL)); }
 
-void Creature::setAlignment(short a) { alignment = MAX<short>(-1000, MIN<short>(1000, a)); }
+void Creature::setAlignment(short a) { alignment = std::max<short>(-1000, std::min<short>(1000, a)); }
 
 
 void Creature::subAlignment(unsigned short a) { setAlignment(alignment - a); }
 
 
-void Creature::setArmor(unsigned int a) { armor = MAX<int>(MIN(a, MAX_ARMOR), 0); }
+void Creature::setArmor(int a) { armor = std::max<int>(std::min(a, MAX_ARMOR), 0); }
 
 
-void Creature::setAttackPower(unsigned int a) { attackPower = MIN<int>(1500, a); }
+void Creature::setAttackPower(int a) { attackPower = std::min<int>(1500, a); }
 
 
-void Creature::setDeity(unsigned short d) { deity = MIN<unsigned short>(d, DEITY_COUNT-1); }
+void Creature::setDeity(unsigned short d) { deity = std::min<unsigned short>(d, DEITY_COUNT-1); }
 
 
-void Creature::setRace(unsigned short r) { race = MIN<unsigned short>(gConfig->raceCount()-1, r); }
+void Creature::setRace(unsigned short r) { race = std::min<unsigned short>(gConfig->raceCount()-1, r); }
 
 
-void Creature::setSize(Size s) { size = MAX(NO_SIZE, MIN(MAX_SIZE, s)); }
+void Creature::setSize(Size s) { size = std::max(NO_SIZE, std::min(MAX_SIZE, s)); }
 
 
-void Creature::setType(unsigned short t) { type = (mType)MIN<short>(MAX_MOB_TYPES-1, t); }
+void Creature::setType(unsigned short t) { type = (mType)std::min<short>(MAX_MOB_TYPES-1, t); }
 
 
 void Creature::setType(mType t) { type = t; }
@@ -286,7 +286,7 @@ std::string getSexName(Sex sex) {
 void Creature::setDeathType(DeathType d) { deathtype = d; }
 
 
-void Creature::setRealm(unsigned long num, Realm r) { realm[r-1] = MIN<unsigned long>(10000000, num); }
+void Creature::setRealm(unsigned long num, Realm r) { realm[r-1] = std::min<unsigned long>(10000000, num); }
 void Creature::addRealm(unsigned long num, Realm r) { setRealm(getRealm(r) + num, r); }
 void Creature::subRealm(unsigned long num, Realm r) { setRealm(num > getRealm(r) ? 0 : getRealm(r) - num, r); }
 
@@ -296,7 +296,7 @@ unsigned short Monster::getMobTrade() const { return(mobTrade); }
 
 int Monster::getSkillLevel() const { return(skillLevel); }
 
-unsigned int Monster::getMaxLevel() const { return(maxLevel); }
+int Monster::getMaxLevel() const { return(maxLevel); }
 
 unsigned short Monster::getNumWander() const { return(numwander); }
 unsigned short Monster::getLoadAggro() const { return(loadAggro); }
@@ -307,14 +307,14 @@ unsigned short Monster::getMagicResistance() const { return(magicResistance); }
 std::string Monster::getPrimeFaction() const { return(primeFaction); }
 std::string Monster::getTalk() const { return(talk); }
 
-void Monster::setMaxLevel(unsigned short l) { maxLevel = MAX<unsigned short>(0, MIN<unsigned short>(l, MAXALVL)); }
-void Monster::setCastChance(unsigned short c) { cast = MAX<unsigned short>(0, MIN<unsigned short>(c, 100)); }
-void Monster::setMagicResistance(unsigned short m) { magicResistance = MAX<unsigned short>(0, MIN<unsigned short>(100, m)); }
-void Monster::setLoadAggro(unsigned short a) { loadAggro = MAX<unsigned short>(0, MIN<unsigned short>(a, 99)); }
-void Monster::setUpdateAggro(unsigned short a) { updateAggro = MAX<unsigned short>(1, MIN<unsigned short>(a, 99)); }
-void Monster::setNumWander(unsigned short n) { numwander = MAX<unsigned short>(0, MIN<unsigned short>(6, n)); }
-void Monster::setSkillLevel(int l) { skillLevel = MAX(0, MIN(100, l)); }
-void Monster::setMobTrade(unsigned short t) { mobTrade = MAX<unsigned short>(0,MIN<unsigned short>(MOBTRADE_COUNT-1, t)); }
+void Monster::setMaxLevel(unsigned short l) { maxLevel = std::max<unsigned short>(0, std::min<unsigned short>(l, MAXALVL)); }
+void Monster::setCastChance(unsigned short c) { cast = std::max<unsigned short>(0, std::min<unsigned short>(c, 100)); }
+void Monster::setMagicResistance(unsigned short m) { magicResistance = std::max<unsigned short>(0, std::min<unsigned short>(100, m)); }
+void Monster::setLoadAggro(unsigned short a) { loadAggro = std::max<unsigned short>(0, std::min<unsigned short>(a, 99)); }
+void Monster::setUpdateAggro(unsigned short a) { updateAggro = std::max<unsigned short>(1, std::min<unsigned short>(a, 99)); }
+void Monster::setNumWander(unsigned short n) { numwander = std::max<unsigned short>(0, std::min<unsigned short>(6, n)); }
+void Monster::setSkillLevel(int l) { skillLevel = std::max(0, std::min(100, l)); }
+void Monster::setMobTrade(unsigned short t) { mobTrade = std::max<unsigned short>(0,std::min<unsigned short>(MOBTRADE_COUNT-1, t)); }
 void Monster::setPrimeFaction(std::string_view f) { primeFaction = f; }
 void Monster::setTalk(std::string_view t) { talk = t; boost::replace_all(talk, "*CR*", "\n"); }
 
@@ -360,7 +360,7 @@ std::string Player::getCreatedStr() const {
 }
 
 
-Monster* Player::getAlias() const { return(alias_crt); }
+std::shared_ptr<Monster>  Player::getAlias() const { return(alias_crt); }
 
 cDay* Player::getBirthday() const { return(birthday); }
 
@@ -370,7 +370,7 @@ std::string Player::getAnchorRoomName(int i) const { return(anchor[i] ? anchor[i
 const Anchor* Player::getAnchor(int i) const { return(anchor[i]); }
 
 bool Player::hasAnchor(int i) const { return anchor[i] != nullptr; }
-bool Player::isAnchor(int i, const BaseRoom* room) const { return(anchor[i]->is(room)); }
+bool Player::isAnchor(int i, const std::shared_ptr<BaseRoom>& room) const { return(anchor[i]->is(room)); }
 
 unsigned short Player::getThirst() const { return(thirst); }
 
@@ -383,25 +383,25 @@ void Player::setWarnings(unsigned short w) { warnings = w; }
 void Player::addWarnings(unsigned short w) { setWarnings(w + warnings); }
 void Player::subWarnings(unsigned short w) { setWarnings(w > warnings ? 0 : warnings - w); }
 void Player::setWimpy(unsigned short w) { wimpy = w; }
-void Player::setActualLevel(unsigned short l) { actual_level = MAX<unsigned short>(1, MIN<unsigned short>(l, MAXALVL)); }
+void Player::setActualLevel(unsigned short l) { actual_level = std::max<unsigned short>(1, std::min<unsigned short>(l, MAXALVL)); }
 void Player::setSecondClass(CreatureClass c) { cClass2 = c; }
 void Player::setGuild(unsigned short g) { guild = g; }
 void Player::setGuildRank(unsigned short g) { guildRank = g; }
-void Player::setNegativeLevels(unsigned short l) { negativeLevels = MAX<unsigned short>(0, MIN<unsigned short>(exp_to_lev(experience), l)); }
+void Player::setNegativeLevels(unsigned short l) { negativeLevels = std::max<unsigned short>(0, std::min<unsigned short>(exp_to_lev(experience), l)); }
 void Player::setLuck(int l) { luck = l; }
 void Player::setWeaponTrains(unsigned short t) { weaponTrains = t; }
 void Player::subWeaponTrains(unsigned short t) { setWeaponTrains(t > weaponTrains ? 0 : weaponTrains - t); }
 
 void Player::setLastPassword(std::string_view p) { lastPassword = p; }
 void Player::setAfflictedBy(std::string_view a) { afflictedBy = a; }
-void Player::setLastLogin(long l) { lastLogin = MAX<long>(0, l); }
-void Player::setLastInterest(long l) { lastInterest = MAX<long>(0, l); }
+void Player::setLastLogin(long l) { lastLogin = std::max<long>(0, l); }
+void Player::setLastInterest(long l) { lastInterest = std::max<long>(0, l); }
 void Player::setLastCommunicate(std::string_view c) { lastCommunicate = c; }
 void Player::setLastCommand(std::string_view c) { lastCommand = c; boost::trim(lastCommand); }
 void Player::setCreated() { created = time(nullptr); }
 void Player::setSurname(const std::string& s) { surname = s.substr(0, 20); }
 void Player::setForum(std::string_view f) { forum = f; }
-void Player::setAlias(Monster* m) { alias_crt = m; }
+void Player::setAlias(std::shared_ptr<Monster>  m) { alias_crt = m; }
 
 void Player::setBirthday() {
     const Calendar* calendar = gConfig->getCalendar();
@@ -421,7 +421,7 @@ void Player::delAnchor(int i) {
 
 void Player::setAnchor(int i, std::string_view a) {
     delAnchor(i);
-    anchor[i] = new Anchor(a, this);
+    anchor[i] = new Anchor(a, Containable::downcasted_shared_from_this<Player>());
 }
 
 void Player::setThirst(unsigned short t) { thirst = t; }
@@ -438,21 +438,21 @@ int Player::setWrap(int newWrap) {
 
 void Player::setCustomColor(CustomColor i, char c) { customColors[i] = c; }
 
-Creature* Creature::getMaster() {
-    return((isMonster() ? getAsMonster()->getMaster() : this));
+std::shared_ptr<Creature> Creature::getMaster() {
+    return((isMonster() ? getAsMonster()->getMaster() : Containable::downcasted_shared_from_this<Creature>()));
 }
 
-const Creature* Creature::getConstMaster() const {
-    return((isMonster() ? getAsConstMonster()->getMaster() : this));
+std::shared_ptr<const Creature> Creature::getConstMaster() const {
+    return((isMonster() ? getAsConstMonster()->getMaster() : Containable::downcasted_shared_from_this<Creature>()));
 }
 
-Player* Creature::getPlayerMaster() {
+std::shared_ptr<Player> Creature::getPlayerMaster() {
     if(!getMaster())
         return(nullptr);
     return(getMaster()->getAsPlayer());
 }
 
-const Player* Creature::getConstPlayerMaster() const {
+std::shared_ptr<const Player> Creature::getConstPlayerMaster() const {
     if(!getConstMaster())
         return(nullptr);
     return(getConstMaster()->getAsConstPlayer());
@@ -475,17 +475,16 @@ void Creature::crtReset() {
     // Reset Stream related
     initStreamable();
 
-    // Reset other related
-    moReset();
     playing = nullptr;
-    myTarget = nullptr;
+    myTarget.reset();
 
-    for(Creature* targeter : targetingThis) {
-        targeter->clearTarget(false);
+    for(auto it = targetingThis.begin() ; it != targetingThis.end() ; ) {
+        if(auto targeter = it->lock()) {
+            targeter->clearTarget(false);
+        }
+        it++;
     }
-
-    // Clear out any skills/factions/etc
-    crtDestroy();
+    targetingThis.clear();
 
     zero(key, sizeof(key));
 
@@ -494,19 +493,18 @@ void Creature::crtReset() {
 
     fd = -1;
     cClass = CreatureClass::NONE;
-    level = race = alignment = experience =
-        temp_experience = clan = 0;
+    level = race = alignment = experience = temp_experience = clan = 0;
     size = NO_SIZE;
     type = PLAYER;
     deathtype = DT_NONE;
 
     int i;
     coins.zero();
+    flags.reset();
     zero(realm, sizeof(realm));
-    zero(flags, sizeof(flags));
-    zero(spells, sizeof(spells));
-    zero(old_quests, sizeof(old_quests));
-    zero(languages, sizeof(languages));
+    spells.reset();
+    old_quests.reset();
+    languages.reset();
     questnum = 0;
 
     strength.setName("Strength");
@@ -518,8 +516,9 @@ void Creature::crtReset() {
     hp.setName("Hp");
     mp.setName("Mp");
 
-    if(getAsPlayer()) {
-        getAsPlayer()->focus.setName("Focus");
+    auto* pThis = dynamic_cast<Player*>(this);
+    if(pThis) {
+        pThis->focus.setName("Focus");
 
         constitution.setInfluences(&hp);
         hp.setInfluencedBy(&constitution);
@@ -550,6 +549,7 @@ void Creature::crtReset() {
 
     memset(spellTimer, 0, sizeof(spellTimer));
     armor = 0;
+    specials.clear();
 
     for(i=0; i<21; i++)
         misc[i] = 0;
@@ -559,9 +559,7 @@ void Creature::crtReset() {
 //                      reset
 //*********************************************************************
 
-void Monster::reset() {
-    // Call Creature::reset first
-    crtReset();
+void Monster::monReset() {
     int i;
 
     info.clear();
@@ -584,16 +582,16 @@ void Monster::reset() {
     for(i=0; i<NUM_RESCUE; i++)
         rescue[i].clear();
 
-    myMaster = nullptr;
+    myMaster.reset();
     updateAggro = 0;
     cast = 0;
     magicResistance = 0;
     jail.clear();
 
     primeFaction = "";
-    memset(cClassAggro, 0, sizeof(cClassAggro));
-    memset(raceAggro, 0, sizeof(raceAggro));
-    memset(deityAggro, 0, sizeof(deityAggro));
+    cClassAggro.reset();
+    raceAggro.reset();
+    deityAggro.reset();
 
     std::list<TalkResponse*>::iterator tIt;
     for(tIt = responses.begin() ; tIt != responses.end() ; tIt++) {
@@ -606,10 +604,7 @@ void Monster::reset() {
 //                      reset
 //*********************************************************************
 
-void Player::reset() {
-    // Call Creature::reset first
-    crtReset();
-    //playing = NULL;
+void Player::plyReset() {
     wrap = -1;
     cClass2 = CreatureClass::NONE;
     wimpy = 0;
@@ -622,7 +617,7 @@ void Player::reset() {
     lastPassword = afflictedBy = forum = "";
     tickDmg = pkwon = pkin = lastLogin = lastInterest = uniqueObjId = 0;
 
-    memset(songs, 0, sizeof(songs));
+    songs.reset();
     guild = guildRank = 0;
     cClass2 = CreatureClass::NONE;
 
@@ -664,19 +659,24 @@ void Player::reset() {
 //                      Creature
 //*********************************************************************
 
-Creature::Creature() {
-    hooks.setParent(this);
+Creature::Creature(): MudObject(), ready(MAXWEAR) {
+    crtReset();
 }
 
-//*********************************************************************
-//                      CopyCommon
-//*********************************************************************
+Creature::Creature(Creature &cr): MudObject(cr), ready(MAXWEAR) {
+    crtCopy(cr);
+}
+Creature::Creature(const Creature &cr): MudObject(cr), ready(MAXWEAR) {
+    crtCopy(cr);
+}
 
-void Creature::CopyCommon(const Creature& cr) {
-    int     i=0;
+void Creature::crtCopy(const Creature &cr, bool assign) {
+    crtReset();
+    if(assign) {
+        moCopy(cr);
+    }
 
-    moCopy(cr);
-
+    int     i;
     description = cr.description;
     for(i=0; i<3; i++) {
         strcpy(key[i], cr.key[i]);
@@ -700,8 +700,7 @@ void Creature::CopyCommon(const Creature& cr) {
     for(Realm r = MIN_REALM; r<MAX_REALM; r = (Realm)((int)r + 1))
         setRealm(cr.getRealm(r), r);
 
-    for(i=0; i<CRT_FLAG_ARRAY_SIZE; i++)
-        flags[i] = cr.flags[i];
+    flags = cr.flags;
 
     poison_dur = cr.poison_dur;
     poison_dmg = cr.poison_dmg;
@@ -744,12 +743,10 @@ void Creature::CopyCommon(const Creature& cr) {
 
     for(i=0; i<6; i++)
         saves[i] = cr.saves[i];
-    for(i=0; i<16; i++)
-        languages[i] = cr.languages[i];
-    for(i=0; i<32; i++) {
-        spells[i] = cr.spells[i];
-        old_quests[i] = cr.old_quests[i];
-    }
+
+    languages = cr.languages;
+    spells = cr.spells;
+    old_quests = cr.old_quests;
 
     coins.set(cr.coins);
 
@@ -782,15 +779,11 @@ void Creature::CopyCommon(const Creature& cr) {
         minions.push_back(*mIt);
     }
 
-    SpecialAttack* attack;
-    std::list<SpecialAttack*>::const_iterator sIt;
-    for(sIt = cr.specials.begin() ; sIt != cr.specials.end() ; sIt++) {
-        attack = new SpecialAttack();
-        (*attack) = *(*sIt);
-        specials.push_back(attack);
+    for(const auto& special : cr.specials) {
+        specials.push_back(special);
     }
 
-    for(Monster* pet : cr.pets) {
+    for(const auto& pet : cr.pets) {
         pets.push_back(pet);
     }
 
@@ -803,11 +796,11 @@ void Creature::CopyCommon(const Creature& cr) {
 //                      doCopy
 //*********************************************************************
 
-void Player::doCopy(const Player& cr) {
-    // We want a copy of what we're getting, so clear out anything that was here before
-    reset();
-    // Copy anything in common with the base class
-    CopyCommon(cr);
+void Player::plyCopy(const Player& cr, bool assign) {
+    plyReset();
+    if (assign) {
+        crtCopy(cr, assign);
+    }
 
     // Players have a unique ID, so copy that
     id = cr.id;
@@ -875,8 +868,7 @@ void Player::doCopy(const Player& cr) {
     bound = cr.bound;
     statistics = cr.statistics;
 
-    for(i=0; i<32; i++)
-        songs[i] = cr.songs[i];
+    songs = cr.songs;
 
     guild = cr.guild;
     guildRank = cr.guildRank;
@@ -914,11 +906,11 @@ void Player::doCopy(const Player& cr) {
     weaponTrains = cr.weaponTrains;
     attackTimer = cr.attackTimer;
 
-    for(auto p : cr.questsInProgress) {
+    for(const auto& p : cr.questsInProgress) {
         questsInProgress[p.first] = new QuestCompletion(*(p.second));
     }
 
-    for(auto qc : cr.questsCompleted) {
+    for(const auto& qc : cr.questsCompleted) {
         questsCompleted.insert(std::make_pair(qc.first, new QuestCompleted(*qc.second)));
     }
 
@@ -931,11 +923,11 @@ void Player::doCopy(const Player& cr) {
 //                      doCopy
 //*********************************************************************
 
-void Monster::doCopy(const Monster& cr) {
-    // We want a copy of what we're getting, so clear out anything that was here before
-    reset();
-    // Copy anything in common with the base class
-    CopyCommon(cr);
+void Monster::monCopy(const Monster& cr, bool assign) {
+    monReset();
+    if (assign) {
+        crtCopy(cr, assign);
+    }
 
     // Now do monster specific copies
     int i;
@@ -1008,17 +1000,16 @@ void Monster::doCopy(const Monster& cr) {
 //                      getLocation
 //*********************************************************************
 
-Monster::Monster() {
-    reset();
-    threatTable = new ThreatTable(this);
+Monster::Monster() : MudObject(), Creature(), threatTable(this) {
+    monReset();
 }
 
-Monster::Monster(Monster& cr) {
-    doCopy(cr);
+Monster::Monster(Monster& cr) : MudObject(cr), Creature(cr), threatTable(this)  {
+    monCopy(cr);
 }
 
-Monster::Monster(const Monster& cr) {
-    doCopy(cr);
+Monster::Monster(const Monster& cr) : MudObject(cr), Creature(cr), threatTable(this) {
+    monCopy(cr);
 }
 
 //*********************************************************************
@@ -1026,7 +1017,8 @@ Monster::Monster(const Monster& cr) {
 //*********************************************************************
 
 Monster& Monster::operator=(const Monster& cr) {
-    doCopy(cr);
+    if(&cr != this)
+        monCopy(cr, true);
     return(*this);
 }
 
@@ -1034,19 +1026,18 @@ Monster& Monster::operator=(const Monster& cr) {
 //                      Player
 //*********************************************************************
 
-Player::Player() {
-    reset();
-    mySock = nullptr;
-    // initial flags for new characters
-    setFlag(P_NO_AUTO_WEAR);
+Player::Player() : MudObject(), Creature() {
+    plyReset();
 }
 
-Player::Player(Player& cr) {
-    doCopy(cr);
+Player::Player(Player& cr) : MudObject(cr), Creature(cr) {
+    // We want a copy of what we're getting, so clear out anything that was here before
+    plyCopy(cr);
 }
 
-Player::Player(const Player& cr) {
-    doCopy(cr);
+Player::Player(const Player& cr) : MudObject(cr), Creature(cr)  {
+    // We want a copy of what we're getting, so clear out anything that was here before
+    plyCopy(cr);
 }
 
 //*********************************************************************
@@ -1054,65 +1045,27 @@ Player::Player(const Player& cr) {
 //*********************************************************************
 
 Player& Player::operator=(const Player& cr) {
-    doCopy(cr);
+    std::clog << "Player=" << cr.getName() << std::endl;
+    if(&cr != this)
+        plyCopy(cr, true);
     return(*this);
 }
 
-//*********************************************************************
-//                      crtDestroy
-//*********************************************************************
-
-// Things all subclasses must destroy
-void Creature::crtDestroy() {
-
-    for(Creature* targeter : targetingThis) {
-        targeter->clearTarget(false);
-    }
-
-    clearTarget();
-
-    moDestroy();
-
-    factions.clear();
-
-    Skill* skill;
-    std::map<std::string, Skill*>::iterator csIt;
-    for(csIt = skills.begin() ; csIt != skills.end() ; csIt++) {
-        skill = (*csIt).second;
-        delete skill;
-    }
-    skills.clear();
-
-    effects.removeAll();
-    minions.clear();
-
-    SpecialAttack* attack;
-    std::list<SpecialAttack*>::iterator sIt;
-    for(sIt = specials.begin() ; sIt != specials.end() ; sIt++) {
-        attack = (*sIt);
-        delete attack;
-        (*sIt) = nullptr;
-    }
-    specials.clear();
-}
 
 //*********************************************************************
 //                      Monster
 //*********************************************************************
 
 Monster::~Monster() {
-    crtDestroy();
+    if(gServer->isActive(this))
+        gServer->delActive(this);
     for(auto it = responses.begin(); it != responses.end();) {
     	auto response = (*it);
     	it++;
     	delete response;
     }
     responses.clear();
-
-    if(threatTable) {
-        delete threatTable;
-        threatTable = nullptr;
-    }
+    specials.clear();
 }
 
 //*********************************************************************
@@ -1120,7 +1073,6 @@ Monster::~Monster() {
 //*********************************************************************
 
 Player::~Player() {
-    crtDestroy();
     int i = 0;
 
     if(birthday) {
@@ -1135,10 +1087,10 @@ Player::~Player() {
         }
     }
 
-    for(auto qp : questsInProgress) {
+    for(const auto& qp : questsInProgress) {
         delete qp.second;
     }
-    for(auto qc : questsCompleted) {
+    for(const auto& qc : questsCompleted) {
         delete qc.second;
     }
 
@@ -1212,7 +1164,7 @@ bool Creature::isAdm() const {
 //*********************************************************************
 
 bool Creature::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 bool Creature::pFlagIsSet(int flag) const {
     return(isPlayer() && flagIsSet(flag));
@@ -1225,7 +1177,7 @@ bool Creature::mFlagIsSet(int flag) const {
 //*********************************************************************
 
 void Creature::setFlag(int flag) {
-    flags[flag/8] |= 1<<(flag%8);
+    flags.set(flag);
     if(flag == P_NO_TRACK_STATS && isPlayer())
         getAsPlayer()->statistics.track = false;
 }
@@ -1244,7 +1196,7 @@ void Creature::mSetFlag(int flag) {
 //*********************************************************************
 
 void Creature::clearFlag(int flag) {
-    flags[flag/8] &= ~(1<<(flag%8));
+    flags.reset(flag);
     if(flag == P_NO_TRACK_STATS && isPlayer())
         getAsPlayer()->statistics.track = true;
 }
@@ -1265,10 +1217,7 @@ void Creature::mClearFlag(int flag) {
 //*********************************************************************
 
 bool Creature::toggleFlag(int flag) {
-    if(flagIsSet(flag))
-        clearFlag(flag);
-    else
-        setFlag(flag);
+    flags.flip(flag);
     return(flagIsSet(flag));
 }
 
@@ -1277,7 +1226,7 @@ bool Creature::toggleFlag(int flag) {
 //*********************************************************************
 
 bool Creature::languageIsKnown(int lang) const {
-    return(languages[lang/8] & 1<<(lang%8));
+    return(languages.test(lang));
 }
 
 //*********************************************************************
@@ -1285,7 +1234,7 @@ bool Creature::languageIsKnown(int lang) const {
 //*********************************************************************
 
 void Creature::learnLanguage(int lang) {
-    languages[lang/8] |= 1<<(lang%8);
+    languages.set(lang);
 }
 
 //*********************************************************************
@@ -1293,7 +1242,7 @@ void Creature::learnLanguage(int lang) {
 //*********************************************************************
 
 void Creature::forgetLanguage(int lang) {
-    languages[lang/8] &= ~(1<<(lang%8));
+    languages.reset(lang);
 }
 
 //*********************************************************************
@@ -1301,7 +1250,7 @@ void Creature::forgetLanguage(int lang) {
 //*********************************************************************
 
 bool Creature::spellIsKnown(int spell) const {
-    return(spells[spell/8] & 1<<(spell%8));
+    return(spells.test(spell));
 }
 
 //*********************************************************************
@@ -1315,7 +1264,7 @@ void Creature::learnSpell(int spell) {
         broadcast(::isDm, "^G*** Trying to set invalid spell %d on %s.  Spell List Size: %d\n", spell, getCName(), spllist_size);
         return;
     }
-    spells[spell/8] |= 1<<(spell%8);
+    spells.set(spell);
 }
 
 //*********************************************************************
@@ -1323,7 +1272,7 @@ void Creature::learnSpell(int spell) {
 //*********************************************************************
 
 void Creature::forgetSpell(int spell) {
-    spells[spell/8] &= ~(1<<(spell%8));
+    spells.reset(spell);
 }
 
 //*********************************************************************
@@ -1331,7 +1280,7 @@ void Creature::forgetSpell(int spell) {
 //*********************************************************************
 
 bool Player::questIsSet(int quest) const {
-    return(old_quests[quest/8] & 1<<(quest%8));
+    return(old_quests.test(quest));
 }
 
 //*********************************************************************
@@ -1339,7 +1288,7 @@ bool Player::questIsSet(int quest) const {
 //*********************************************************************
 
 void Player::setQuest(int quest) {
-    old_quests[quest/8] |= 1<<(quest%8);
+    old_quests.set(quest);
 }
 
 //*********************************************************************
@@ -1347,7 +1296,7 @@ void Player::setQuest(int quest) {
 //*********************************************************************
 
 void Player::clearQuest(int quest) {
-    old_quests[quest/8] &= ~(1<<(quest%8));
+    old_quests.reset(quest);
 }
 
 //*********************************************************************
@@ -1355,7 +1304,7 @@ void Player::clearQuest(int quest) {
 //*********************************************************************
 
 bool Player::songIsKnown(int song) const {
-    return(songs[song/8] & 1<<(song%8));
+    return(songs.test(song));
 }
 
 //*********************************************************************
@@ -1363,7 +1312,7 @@ bool Player::songIsKnown(int song) const {
 //*********************************************************************
 
 void Player::learnSong(int song) {
-    songs[song/8] |= 1<<(song%8);
+    songs.set(song);
 }
 
 //*********************************************************************
@@ -1371,7 +1320,7 @@ void Player::learnSong(int song) {
 //*********************************************************************
 
 void Player::forgetSong(int song) {
-    songs[song/8] &= ~(1<<(song%8));
+    songs.reset(song);
 }
 
 //*********************************************************************
@@ -1543,7 +1492,7 @@ bool Creature::isBraindead()  const {
 //*********************************************************************
 
 std::string Creature::fullName() const {
-    const Player *player = getAsConstPlayer();
+    const std::shared_ptr<const Player> player = getAsConstPlayer();
     std::string str = getName();
 
     if(player && !player->getProxyName().empty())
@@ -1616,7 +1565,7 @@ void Monster::setBaseRealm(Realm toSet) {
 }
 
 std::string Monster::getMobTradeName() const {
-    int nIndex = MAX<int>( 0, MIN<int>(this->mobTrade, MOBTRADE_COUNT) );
+    int nIndex = std::max<int>( 0, std::min<int>(this->mobTrade, MOBTRADE_COUNT) );
     return(mob_trade_str[nIndex]);
 
 }
@@ -1660,7 +1609,7 @@ bool Creature::hasSock() const {
     return false;
 }
 
-Socket* Creature::getSock() const {
+std::shared_ptr<Socket> Creature::getSock() const {
     return(nullptr);
 }
 
@@ -1669,18 +1618,18 @@ Socket* Creature::getSock() const {
 //*********************************************************************
 
 bool Player::hasSock() const {
-    return(mySock != nullptr);
+    return(!mySock.expired());
 }
 
-Socket* Player::getSock() const {
-    return(mySock);
+std::shared_ptr<Socket> Player::getSock() const {
+    return(mySock.lock());
 }
 
 //*********************************************************************
 //                      setSock
 //*********************************************************************
 
-void Player::setSock(Socket* pSock) {
+void Player::setSock(std::shared_ptr<Socket> pSock) {
     mySock = pSock;
 }
 
@@ -1693,7 +1642,7 @@ bool Creature::canSpeak() const {
         return(true);
     if(isEffected("silence"))
         return(false);
-    if(getParent()->isEffected("globe-of-silence"))
+    if(getParent() && getParent()->isEffected("globe-of-silence"))
         return(false);
     return(true);
 }
@@ -1752,7 +1701,7 @@ const char* Creature::getStatusStr(int dmg) {
     if(health < 1)
         return "'s dead!";
 
-    switch(MIN<int>(health * 10 / (hp.getMax() ? hp.getMax() : 1), 10)) {
+    switch(std::min<int>(health * 10 / (hp.getMax() ? hp.getMax() : 1), 10)) {
         case 10:
             return("'s unharmed.");
         case 9:

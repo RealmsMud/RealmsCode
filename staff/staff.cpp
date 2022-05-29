@@ -36,7 +36,7 @@
 //              <player> Who are we logging?
 
 // Log something done by an immortal, and optionally broadcast it
-int log_immort(int broad, Player* player, const char *fmt,...) {
+int log_immort(int broad, std::shared_ptr<Player> player, const char *fmt,...) {
     // broad==0 - no broadcast
     // broad==1 - broadcast
     // broad==2 - more needs to be done
@@ -106,92 +106,92 @@ bool Creature::checkStaff(const char *failStr,...) const {
     return(ret);
 }
 
-bool isPtester(const Creature* player) {
+bool isPtester(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->isCt() || player->flagIsSet(P_PTESTER));
 }
-bool isPtester(Socket* sock) {
+bool isPtester(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         return(isPtester(sock->getPlayer()));
     return(false);
 }
-bool isWatcher(const Creature* player) {
+bool isWatcher(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->isCt() || player->isWatcher());
 }
 
-bool isWatcher(Socket* sock) {
+bool isWatcher(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         return(isWatcher(sock->getPlayer()));
     return(false);
 }
 
-bool isStaff(const Creature* player) {
+bool isStaff(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->getClass() >= CreatureClass::BUILDER);
 }
 
-bool isStaff(Socket* sock) {
+bool isStaff(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         return(sock->getPlayer()->isStaff());
     return(false);
 }
 
-bool isCt(const Creature* player) {
+bool isCt(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->getClass() >= CreatureClass::CARETAKER);
 }
 
-bool isCt(Socket* sock) {
+bool isCt(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         return(sock->getPlayer()->isCt());
 
     return(false);
 }
 
-bool isDm(const Creature* player) {
+bool isDm(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->getClass() == CreatureClass::DUNGEONMASTER);
 }
 
-bool isDm(Socket* sock) {
+bool isDm(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         return(sock->getPlayer()->isDm());
     return(false);
 }
 
-bool isAdm(const Creature* player) {
+bool isAdm(const std::shared_ptr<Creature> & player) {
     if(player->isMonster())
         return(false);
     return(player->getName() == "Bane" || player->getName() == "Dominus" || player->getName() == "Ocelot");
 }
 
-bool isAdm(Socket* sock) {
+bool isAdm(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         return(isAdm(sock->getPlayer()));
     return(false);
 }
 
-bool watchingLog(Socket* sock) {
+bool watchingLog(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         if(sock->getPlayer()->flagIsSet(P_LOG_WATCH))
             return(true);
     return(false);
 }
 
-bool watchingEaves(Socket* sock) {
+bool watchingEaves(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         if(isCt(sock) && sock->getPlayer()->flagIsSet(P_EAVESDROPPER))
             return(true);
     return(false);
 }
 
-bool watchingSuperEaves(Socket* sock) {
+bool watchingSuperEaves(std::shared_ptr<Socket> sock) {
     if(sock->getPlayer())
         if(isCt(sock) && sock->getPlayer()->flagIsSet(P_SUPER_EAVESDROPPER))
             return(true);

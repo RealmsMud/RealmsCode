@@ -28,214 +28,214 @@ class Object;
 class Player;
 class UniqueRoom;
 
-int dmAlchemyList(Player* player, cmd* cmnd);
+int dmAlchemyList(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int dmRecipes(Player* player, cmd* cmnd);
-int dmCatRefInfo(Player* player, cmd* cmnd);
-int dmFishing(Player* player, cmd* cmnd);
+int dmRecipes(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmCatRefInfo(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmFishing(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // area.c
-int dmListArea(Player* player, cmd* cmnd);
+int dmListArea(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // builder.c
-int dmRange(Player* player, cmd* cmnd);
-int dmMakeBuilder(Player* player, cmd* cmnd);
+int dmRange(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmMakeBuilder(const std::shared_ptr<Player>& player, cmd* cmnd);
 // The following two are auth functions
-bool builderObj(const Creature* player);
-bool builderMob(const Creature* player);
+bool builderObj(const std::shared_ptr<Creature> & player);
+bool builderMob(const std::shared_ptr<Creature> & player);
 
 // bans.c
-int dmListbans(Player* player, cmd* cmnd);
-int dmBan(Player* player, cmd* cmnd);
-int dmUnban(Player* player, cmd* cmnd);
+int dmListbans(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmBan(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmUnban(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int dmShowFactions(Player *player, cmd* cmnd);
+int dmShowFactions(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int dmQueryShips(Player* player, cmd* cmnd);
+int dmQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // craft.cpp
-int dmCombine(Player* player, cmd* cmnd);
-int dmSetRecipe(Player* player, cmd* cmnd);
+int dmCombine(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSetRecipe(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // memory.c
-int dmMemory(Player* player, cmd* cmnd);
+int dmMemory(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int dmGag(Player* player, cmd* cmnd);
+int dmGag(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int dmReadmail(Player* player, cmd* cmnd);
-int dmDeletemail(Player* player, cmd* cmnd);
-int dmDeletehist(Player* player, cmd* cmnd);
+int dmReadmail(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmDeletemail(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmDeletehist(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int dmLottery(Player* player, cmd* cmnd);
-int dmSpelling(Player* player, cmd* cmnd);
+int dmLottery(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSpelling(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int dmApproveGuild(Player* player, cmd* cmnd);
-int dmRejectGuild(Player* player, cmd* cmnd);
+int dmApproveGuild(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmRejectGuild(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int dmSkills(Player* player, cmd* cmnd);
-//int dmAddSkills(Player* player, cmd* cmnd);
+int dmSkills(const std::shared_ptr<Player>& player, cmd* cmnd);
+//int dmAddSkills(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // Players.c
-int dmShowClasses(Player* admin, cmd* cmnd);
-int dmShowRaces(Player* player, cmd* cmnd);
-int dmShowDeities(Player* player, cmd* cmnd);
+int dmShowClasses(const std::shared_ptr<Player>& admin, cmd* cmnd);
+int dmShowRaces(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmShowDeities(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // spells.cpp
-int dmSpellList(Player* player, cmd* cmnd);
+int dmSpellList(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // songs.cpp
-int dmSongList(Player* player, cmd* cmnd);
+int dmSongList(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // talk.c
-int dmTalk(Player* player, cmd* cmnd);
+int dmTalk(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int dmUnique(Player* player, cmd* cmnd);
+int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd);
 // dm.c
-int dmCache(Player* player, cmd* cmnd);
-int dmTxtOnCrash(Player* player, cmd* cmnd);
-int dmReboot(Player* player, cmd* cmnd);
-int dmMobInventory(Player* player, cmd* cmnd);
-int dmSockets(Player* player, cmd* cmnd);
-int dmLoad(Player* player, cmd* cmnd);
-int dmSave(Player* player, cmd* cmnd);
-int dmTeleport(Player* player, cmd* cmnd);
-int dmUsers(Player* player, cmd* cmnd);
-int dmFlushSave(Player* player, cmd* cmnd);
-int dmShutdown(Player* player, cmd* cmnd);
-int dmFlushCrtObj(Player* player, cmd* cmnd);
-int dmResave(Player* player, cmd* cmnd);
-int dmPerm(Player* player, cmd* cmnd);
-int dmInvis(Player* player, cmd* cmnd);
-int dmIncog(Player* player, cmd *cmd);
-int dmAc(Player* player, cmd* cmnd);
-int dmWipe(Player* player, cmd* cmnd);
-int dmDeleteDb(Player* player, cmd* cmnd);
-int dmGameStatus(Player* player, cmd* cmnd);
-int dmWeather(Player* player, cmd* cmnd);
-int dmQuestList(Player* player, cmd* cmnd);
-int dmClanList(Player* player, cmd* cmnd);
-int dmBane(Player* player, cmd* cmnd);
-int dmHelp(Player* player, cmd* cmnd);
-int bhHelp(Player* player, cmd* cmnd);
-int dmParam(Player* player, cmd* cmnd);
-int dmOutlaw(Player* player, cmd* cmnd);
-int dmBroadecho(Player* player, cmd* cmnd);
-int dmCast(Player* player, cmd* cmnd);
-int dmSet(Player* player, cmd* cmnd);
-int dmLog(Player* player, cmd* cmnd);
-int dmList(Player* player, cmd* cmnd);
-int dmInfo(Player* player, cmd* cmnd);
-int dmMd5(Player* player, cmd* cmnd);
-int dmIds(Player* player, cmd* cmnd);
-int dmStat(Player* player, cmd* cmnd);
+int dmCache(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmTxtOnCrash(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmReboot(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmMobInventory(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSockets(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmLoad(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSave(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmTeleport(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmUsers(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmFlushSave(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmShutdown(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmFlushCrtObj(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmResave(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmPerm(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmInvis(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmIncog(const std::shared_ptr<Player>& player, cmd *cmd);
+int dmAc(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmWipe(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmDeleteDb(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmGameStatus(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmWeather(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmQuestList(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmClanList(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmBane(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmHelp(const std::shared_ptr<Player>& player, cmd* cmnd);
+int bhHelp(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmParam(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmOutlaw(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmBroadecho(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmCast(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSet(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmLog(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmList(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmInfo(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmMd5(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmIds(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmStat(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // dmcrt.c
-int dmCreateMob(Player* player, cmd* cmnd);
-int dmSetCrt(Player* player, cmd* cmnd);
-int dmCrtName(Player* player, cmd* cmnd);
-int dmAlias(Player* player, cmd* cmnd);
-int dmFollow(Player* player, cmd* cmnd);
-int dmAttack(Player* player, cmd* cmnd);
-int dmListEnemy(Player* player, cmd* cmnd);
-int dmListCharm(Player* player, cmd* cmnd);
-void dmSaveMob(Player* player, cmd* cmnd, const CatRef& cr);
-int dmAddMob(Player* player, cmd* cmnd);
-int dmForceWander(Player* player, cmd* cmnd);
-int dmBalance(Player* player, cmd* cmnd);
+int dmCreateMob(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmAlias(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmFollow(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmAttack(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmListEnemy(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmListCharm(const std::shared_ptr<Player>& player, cmd* cmnd);
+void dmSaveMob(const std::shared_ptr<Player>& player, cmd* cmnd, const CatRef& cr);
+int dmAddMob(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmForceWander(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmBalance(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // dmobj.c
-int dmCreateObj(Player* player, cmd* cmnd);
-int stat_obj(Player* player, Object* object);
-int dmSetObj(Player* player, cmd* cmnd);
-int dmObjName(Player* player, cmd* cmnd);
-int dmAddObj(Player* player, cmd* cmnd);
-void dmSaveObj(Player* player, cmd* cmnd, const CatRef& cr);
-void dmResaveObject(const Player* player, Object* object, bool flush=false);
-int dmSize(Player* player, cmd* cmnd);
-int dmClone(Player* player, cmd* cmnd);
+int dmCreateObj(const std::shared_ptr<Player>& player, cmd* cmnd);
+int stat_obj(const std::shared_ptr<Player>& player, const std::shared_ptr<Object>&  object);
+int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmObjName(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmAddObj(const std::shared_ptr<Player>& player, cmd* cmnd);
+void dmSaveObj(const std::shared_ptr<Player>& player, cmd* cmnd, const CatRef& cr);
+void dmResaveObject(const std::shared_ptr<Player>& player, const std::shared_ptr<Object>&  object, bool flush=false);
+int dmSize(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmClone(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // dmply.c
-std::string dmLastCommand(const Player* player);
-int dmForce(Player* player, cmd* cmnd);
-int dmSpy(Player* player, cmd* cmnd);
-int dmSilence(Player* player, cmd* cmnd);
-int dmTitle(Player* player, cmd* cmnd);
-int dmSurname(Player* player, cmd* cmnd);
-int dmGroup(Player* player, cmd* cmnd);
-int dmDust(Player* player, cmd* cmnd);
-int dmFlash(Player* player, cmd* cmnd);
-int dmAward(Player* player, cmd* cmnd);
-int dmBeep(Player* player, cmd* cmnd);
-int dmAdvance(Player* player, cmd* cmnd);
-int dmFinger(Player* player, cmd* cmnd);
-int dmDisconnect(Player* player, cmd* cmnd);
-int dmTake(Player* player, cmd* cmnd);
-int dmRemove(Player* player, cmd* cmnd);
-int dmPut(Player* player, cmd* cmnd);
-int dmMove(Player* player, cmd* cmnd);
-int dmWordAll(Player* player, cmd* cmnd);
-int dmRename(Player* player, cmd* cmnd);
-int dmPassword(Player* player, cmd* cmnd);
-int dmRestorePlayer(Player* player, cmd* cmnd);
-int dmBank(Player* player, cmd* cmnd);
-int dmInventoryValue(Player* player, cmd* cmnd);
-int dmWarn(Player* player, cmd* cmnd);
-int dmBugPlayer(Player* player, cmd* cmnd);
-int dmKillSwitch(Player* player, cmd* cmnd);
-int dmRepair(Player* player, cmd* cmnd);
-int dmMax(Player* player, cmd* cmnd);
-int dmBackupPlayer(Player* player, cmd* cmnd);
-int dmChangeStats(Player *admin, cmd* cmnd);
-int dmJailPlayer(Player *admin, cmd* cmnd);
-int dmLts(Player* player, cmd* cmnd);
-int dmLtClear(Player* player, cmd* cmnd);
+std::string dmLastCommand(const std::shared_ptr<const Player> &player);
+int dmForce(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSpy(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSilence(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmTitle(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSurname(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmGroup(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmDust(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmFlash(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmAward(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmBeep(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmAdvance(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmFinger(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmDisconnect(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmTake(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmRemove(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmPut(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmMove(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmWordAll(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmRename(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmPassword(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmRestorePlayer(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmBank(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmInventoryValue(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmWarn(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmBugPlayer(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmKillSwitch(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmRepair(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmMax(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmBackupPlayer(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmChangeStats(const std::shared_ptr<Player>& admin, cmd* cmnd);
+int dmJailPlayer(const std::shared_ptr<Player>& admin, cmd* cmnd);
+int dmLts(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmLtClear(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // dmroom.cpp
 bool isCardinal(std::string_view xname);
 std::string opposite_exit_name(const std::string &name);
-int dmPurge(Player* player, cmd* cmnd);
-int dmEcho(Player* player, cmd* cmnd);
-int dmReloadRoom(Player* player, cmd* cmnd);
-int dmResetPerms(Player *admin, cmd* cmnd);
-int stat_rom(Player* player, AreaRoom* room);
-int stat_rom(Player* player, UniqueRoom* room);
-int dmAddRoom(Player* player, cmd* cmnd);
-int dmSetRoom(Player* player, cmd* cmnd);
-int dmSetExit(Player* player, cmd* cmnd);
-int dmReplace(Player* player, cmd* cmnd);
-int dmDelete(Player* player, cmd* cmnd);
-int dmNameRoom(Player* player, cmd* cmnd);
-int dmAppend(Player* player, cmd* cmnd);
-int dmPrepend(Player* player, cmd* cmnd);
-int dmMobList(Player *admin, cmd* cmnd);
-int dmWrap(Player* player, cmd* cmnd);
-int dmDeleteAllExits(Player* player, cmd* cmnd);
-int dmArrangeExits(Player* player, cmd* cmnd);
-int dmFixExit(Player* player, cmd* cmnd);
-int dmUnfixExit(Player* player, cmd* cmnd);
-int dmRenameExit(Player *admin, cmd* cmnd);
-int dmDestroyRoom(Player* player, cmd* cmnd);
-void findRoomsWithFlag(const Player* player, const Range& range, int flag);
-void findRoomsWithFlag(const Player* player, CatRef area, int flag);
+int dmPurge(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmEcho(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmReloadRoom(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmResetPerms(const std::shared_ptr<Player>& admin, cmd* cmnd);
+int stat_rom(const std::shared_ptr<Player>& player, const std::shared_ptr<AreaRoom>& room);
+int stat_rom(const std::shared_ptr<Player>& player, const std::shared_ptr<UniqueRoom>& room);
+int dmAddRoom(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSetRoom(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmSetExit(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmReplace(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmDelete(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmNameRoom(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmAppend(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmPrepend(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmMobList(const std::shared_ptr<Player>& admin, cmd* cmnd);
+int dmWrap(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmDeleteAllExits(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmArrangeExits(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmFixExit(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmUnfixExit(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmRenameExit(const std::shared_ptr<Player>& admin, cmd* cmnd);
+int dmDestroyRoom(const std::shared_ptr<Player>& player, cmd* cmnd);
+void findRoomsWithFlag(const std::shared_ptr<Player>& player, const Range& range, int flag);
+void findRoomsWithFlag(const std::shared_ptr<Player>& player, CatRef area, int flag);
 CatRef findNextEmpty(const std::string &type, const std::string &area);
-int dmFind(Player* player, cmd* cmnd);
+int dmFind(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // watchers.c
-int dmCheckStats(Player* player, cmd* cmnd);
-int dmLocatePlayer(Player* player, cmd* cmnd);
-int dmWatcherBroad(Player *admin, cmd* cmnd);
-int reportTypo(Player* player, cmd* cmnd);
+int dmCheckStats(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmLocatePlayer(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmWatcherBroad(const std::shared_ptr<Player>& admin, cmd* cmnd);
+int reportTypo(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // swap.cpp
-int dmSwap(Player* player, cmd* cmnd);
-int dmRoomSwap(Player* player, cmd* cmnd);
-int dmObjSwap(Player* player, cmd* cmnd);
-int dmMobSwap(Player* player, cmd* cmnd);
+int dmSwap(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmRoomSwap(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmObjSwap(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmMobSwap(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 

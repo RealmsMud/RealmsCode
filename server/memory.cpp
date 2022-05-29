@@ -64,7 +64,7 @@ std::string sizeInfo(long size) {
 //                      showMemory
 //*********************************************************************
 
-void Server::showMemory(Socket* sock, bool extended) {
+void Server::showMemory(std::shared_ptr<Socket> sock, bool extended) {
     char buf[80];
     int  crts    = 0;
     int  rooms   = 0;
@@ -80,15 +80,14 @@ void Server::showMemory(Socket* sock, bool extended) {
     long bt_mem     = 0L;
     long total=0;
     ttag    *tlk;
-    UniqueRoom* r=nullptr;
 
     for(const auto& it : roomCache) {
-        r = it.second->second;
+        std::shared_ptr<UniqueRoom>& r = it.second->second;
         if(!r)
             continue;
         rooms++;
         rom_mem += sizeof(UniqueRoom);
-        for(Monster* mons : r->monsters) {
+        for(const auto& mons : r->monsters) {
             crts++;
             crt_mem += sizeof(Monster);
             // add object counting on crts
@@ -170,7 +169,7 @@ void Server::showMemory(Socket* sock, bool extended) {
 //                      dmMemory
 //*********************************************************************
 
-int dmMemory(Player* player, cmd* cmnd) {
+int dmMemory(const std::shared_ptr<Player>& player, cmd* cmnd) {
 	bool extended = false;
 	if(cmnd->num==2 && !strcmp(cmnd->str[1], "-h"))
 		extended = true;

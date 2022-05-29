@@ -45,7 +45,7 @@ protected:
     bool updateable{};         // Does this have an update function?
     bool isGroup{};            // Is this a group of related variables?
 
-    std::function<std::string(Socket&, Player*)> valueFn{nullptr}; // Function to send the variable
+    std::function<std::string(Socket&, std::shared_ptr<Player>)> valueFn{nullptr}; // Function to send the variable
 
     MsdpVariable(const MsdpVariable&) = default;
 public:
@@ -70,13 +70,13 @@ class ReportedMsdpVariable : public MsdpVariable {
 protected:
     std::string value;
     bool dirty;
-    Socket *parentSock; // Parent Socket
+    std::weak_ptr<Socket> parentSock; // Parent Socket
 
     Timer timer;
 
 public:
     ReportedMsdpVariable(const ReportedMsdpVariable&) = default;
-    ReportedMsdpVariable(const MsdpVariable *mv, Socket *sock);
+    ReportedMsdpVariable(const MsdpVariable *mv, std::shared_ptr<Socket> sock);
 
     [[nodiscard]] std::string getValue() const;
     void setValue(std::string_view newValue);
@@ -92,28 +92,28 @@ public:
 namespace msdp {
 
     // Reporting Functions
-    std::string getServerId(Socket &sock, Player *player);
-    std::string getServerTime(Socket &sock, Player *player);
-    const std::string &getCharacterName(Socket &sock, Player *player);
-    std::string getHealth(Socket &sock, Player *player);
-    std::string getHealthMax(Socket &sock, Player *player);
-    std::string getMana(Socket &sock, Player *player);
-    std::string getManaMax(Socket &sock, Player *player);
-    std::string getExperience(Socket &sock, Player* player);
-    std::string getExperienceMax(Socket &sock, Player* player);
-    std::string getExperienceTNL(Socket &sock, Player* player);
-    std::string getExperienceTNLMax(Socket &sock, Player* player);
-    std::string getWimpy(Socket &sock, Player* player);
-    std::string getMoney(Socket &sock, Player* player);
-    std::string getBank(Socket &sock, Player* player);
-    std::string getArmor(Socket &sock, Player* player);
-    std::string getArmorAbsorb(Socket &sock, Player* player);
-    std::string getGroup(Socket &sock, Player* player);
-    const std::string& getTarget(Socket &sock, Player* player);
-    const std::string& getTargetID(Socket &sock, Player* player);
-    std::string getTargetHealth(Socket &sock, Player* player);
-    std::string getTargetHealthMax(Socket &sock, Player* player);
-    std::string getTargetStrength(Socket &sock, Player* player);
-    std::string getRoom(Socket &sock, Player* player);
+    std::string getServerId(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getServerTime(Socket &sock, const std::shared_ptr<Player>& player);
+    const std::string &getCharacterName(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getHealth(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getHealthMax(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getMana(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getManaMax(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getExperience(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getExperienceMax(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getExperienceTNL(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getExperienceTNLMax(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getWimpy(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getMoney(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getBank(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getArmor(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getArmorAbsorb(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getGroup(Socket &sock, const std::shared_ptr<Player>& player);
+    const std::string& getTarget(Socket &sock, const std::shared_ptr<Player>& player);
+    const std::string& getTargetID(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getTargetHealth(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getTargetHealthMax(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getTargetStrength(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getRoom(Socket &sock, const std::shared_ptr<Player>& player);
 };
 #endif /* MDSP_H_ */

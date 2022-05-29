@@ -37,7 +37,7 @@
 #include "proto.hpp"               // for broadcast, isCt, log_immort, logn
 #include "server.hpp"              // for Server, gServer, SocketList
 #include "socket.hpp"              // for Socket
-#include "utils.hpp"               // for MAX, MIN
+#include "toNum.hpp"
 
 
 Ban::Ban() {
@@ -74,7 +74,7 @@ bool Ban::matches(std::string_view toMatch) {
 
 
 
-int dmListbans(Player* player, cmd* cmnd) {
+int dmListbans(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int found=0;
     std::ostringstream banStr;
     
@@ -139,8 +139,8 @@ int dmListbans(Player* player, cmd* cmnd) {
     return(0);
 }
 
-int dmBan(Player* player, cmd* cmnd) {
-    Player* target=nullptr;
+int dmBan(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     size_t  i=0, j=0, strLen, len;
     int     dur, iTmp = 0;
     int     isPrefix = 0, isSuffix = 0;
@@ -224,10 +224,10 @@ int dmBan(Player* player, cmd* cmnd) {
         // was specified, assume indefinite, and use the rest of the str as the
         // comment.
         if(isdigit(str[0])) {
-            dur = atoi(str);
+            dur = toNum<int>(str);
             // Anything less than 0 becomes 0 (indefinite) anything greater than
             // 1825 (5 years) becomes 1825
-            dur = MAX(MIN(dur, 1825), 0);
+            dur = std::max(std::min(dur, 1825), 0);
             i=i+j;
             // Kill all whitespace before the comment
             while(i < strLen && isspace(cmnd->fullstr[i]))
@@ -348,18 +348,18 @@ int dmBan(Player* player, cmd* cmnd) {
 void Server::checkBans() {
     static const char* banString = "\n\rThe watcher just arrived.\n\rThe watcher says, \"Begone from this place!\".\n\rThe watcher banishes your soul from this world.\n\r\n\r\n\r";
 
-    for(auto sock : sockets) {
-        if(sock.getPlayer() && (gConfig->isBanned(sock.getIp()) ||
-            gConfig->isBanned(sock.getHostname()))) {
-            if(sock.getPlayer()->getClass() <= CreatureClass::BUILDER) {
-                sock.write(banString);
-                sock.disconnect();
+    for(auto &sock : sockets) {
+        if(sock->getPlayer() && (gConfig->isBanned(sock->getIp()) ||
+            gConfig->isBanned(sock->getHostname()))) {
+            if(sock->getPlayer()->getClass() <= CreatureClass::BUILDER) {
+                sock->write(banString);
+                sock->disconnect();
             }
         }
     }
 }
 
-int dmUnban(Player* player, cmd* cmnd) {
+int dmUnban(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int toDel = 0, i;
 
     // Kill any trailing white space in the fullstr
@@ -419,7 +419,7 @@ bool Config::deleteBan(int toDel) {
 // a site that is being locked out.  If the site is password locked,
 // then 2 is returned.  If it's completely locked, 1 is returned.  If
 // it's not locked out at all, 0 is returned.
-int Config::isLockedOut( Socket* sock ) {
+int Config::isLockedOut( const std::shared_ptr<Socket>& sock ) {
     bool match = false;
     int count=0;
 

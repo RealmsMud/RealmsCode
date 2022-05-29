@@ -26,41 +26,44 @@
 
 class MudObject;
 class Socket;
+class CatRef;
 
 class Streamable {
 public:
     virtual ~Streamable() = default;
     void initStreamable();
     // Stream operators
+    Streamable& operator<< (const std::shared_ptr<MudObject> obj);
     Streamable& operator<< (const MudObject* obj);
     Streamable& operator<< (const MudObject& obj);
     Streamable& operator<< (std::string_view str);
     Streamable& operator<< (int num);
     Streamable& operator<< (Stat& stat);
+    Streamable& operator<< (const CatRef& cr);
 
     // This is to allow simple function based manipulators (like ColorOn, ColorOff)
     Streamable& operator <<( Streamable& (*op)(Streamable&));
 
-    void setManipFlags(unsigned int flags);
+    void setManipFlags(int flags);
     void setManipNum(int num);
     void setColorOn();
     void setColorOff();
     void setPagerOn();
     void setPagerOff();
 
-    unsigned int getManipFlags();
+    int getManipFlags();
     int getManipNum();
     //Creature& operator<< (creatureManip& manip)
 
 protected:
-    unsigned int manipFlags{};
+    int manipFlags{};
     int manipNum{};
     bool streamColor{};
     bool pager{};
     bool petPrinted{};
 
     void doPrint(std::string_view toPrint);
-    Socket* getMySock();
+    std::shared_ptr<Socket> getMySock();
 
 };
 

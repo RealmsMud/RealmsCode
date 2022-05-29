@@ -39,15 +39,15 @@
 
 void PartialOwner::load(xmlNodePtr rootNode) {
     xml::copyPropToString(name, rootNode, "Name");
-    loadBits(rootNode, flags);
+    loadBitset(rootNode, flags);
 }
 
 void PartialOwner::save(xmlNodePtr rootNode) const {
     xmlNodePtr curNode = xml::newStringChild(rootNode, "Owner") ;
 
-    xml::newProp(curNode, "Name", name.c_str());
+    xml::newProp(curNode, "Name", name);
     for(int i=0; i<32; i++) {
-        if(BIT_ISSET(flags, i))
+        if(flags.test(i))
             saveBit(curNode, i);
     }
 }
@@ -69,7 +69,7 @@ void Property::load(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "Location")) xml::copyToString(location, curNode);
         else if(NODE_NAME(curNode, "Guild")) xml::copyToNum(guild, curNode);
         else if(NODE_NAME(curNode, "Type")) type = (PropType)xml::toNum<int>(curNode);
-        else if(NODE_NAME(curNode, "Flags")) loadBits(curNode, flags);
+        else if(NODE_NAME(curNode, "Flags")) loadBitset(curNode, flags);
 
         else if(NODE_NAME(curNode, "Ranges")) {
             childNode = curNode->children;
@@ -116,9 +116,9 @@ void Property::load(xmlNodePtr rootNode) {
     // backwards compatability - removable when all are updated
     if(type != PROP_STORAGE && area.empty()) {
         // load intro room, find the out exit, look at the room info
-        UniqueRoom* room=nullptr;
-        if(loadRoom(low, &room)) {
-            for(Exit* ext : room->exits) {
+        std::shared_ptr<UniqueRoom> room=nullptr;
+        if(loadRoom(low, room)) {
+            for(const auto& ext : room->exits) {
                 if(ext->target.room.area != "shop" && low.area != ext->target.room.area) {
                     area = ext->target.room.area;
                     break;
@@ -142,7 +142,7 @@ void Property::save(xmlNodePtr rootNode) const {
     xml::saveNonNullString(curNode, "Location", location.c_str());
     xml::saveNonZeroNum(curNode, "Guild", guild);
     xml::saveNonZeroNum(curNode, "Type", (int)type);
-    saveBits(curNode, "Flags", 32, flags);
+    saveBitset(curNode, "Flags", 32, flags);
 
     if(!ranges.empty()) {
         std::list<Range>::const_iterator rt;
@@ -181,7 +181,7 @@ bool Config::loadProperties() {
     Property *p=nullptr;
 
     char filename[80];
-    snprintf(filename, 80, "%s/properties.xml", Path::PlayerData);
+    snprintf(filename, 80, "%s/properties.xml", Path::PlayerData.c_str());
     xmlDoc = xml::loadFile(filename, "Properties");
 
     if(xmlDoc == nullptr)
@@ -231,7 +231,7 @@ bool Config::saveProperties() const {
         (*it)->save(rootNode);
     }
 
-    sprintf(filename, "%s/properties.xml", Path::PlayerData);
+    sprintf(filename, "%s/properties.xml", Path::PlayerData.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);

@@ -77,13 +77,13 @@ std::string_view SocialCommand::getRoomOnSelf() const {
     return(roomOnSelf);
 }
 
-int cmdSocial(Creature* creature, cmd* cmnd) {
-    Container* parent = creature->getParent();
+int cmdSocial(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
+    std::shared_ptr<Container> parent = creature->getParent();
 
     assert(parent);
 
-    Player  *player=nullptr, *pTarget=nullptr;
-    Creature* target=nullptr;
+    std::shared_ptr<Player> player=nullptr, pTarget=nullptr;
+    std::shared_ptr<Creature> target=nullptr;
 
     player = creature->getAsPlayer();
     if(!creature->ableToDoCommand(cmnd))
@@ -169,7 +169,7 @@ int cmdSocial(Creature* creature, cmd* cmnd) {
 }
 
 
-void Container::doSocialEcho(std::string str, const Creature* actor, const Creature* target) {
+void Container::doSocialEcho(std::string str, const std::shared_ptr<Creature> & actor, const std::shared_ptr<Creature> & target) {
     if(str.empty() || !actor)
         return;
     boost::replace_all(str, "*A-HISHER*", actor->hisHer());
@@ -178,22 +178,24 @@ void Container::doSocialEcho(std::string str, const Creature* actor, const Creat
     boost::replace_all(str, "*A-UPHESHE*", actor->upHeShe());
 
 
-    for(Player* ply : players) {
-        if(ply == actor || ply == target) continue;
+    for(const auto& pIt: players) {
+        if(auto ply = pIt.lock()) {
+            if (ply == actor || ply == target) continue;
 
-        std::string out = str;
-        boost::replace_all(out, "*ACTOR*", actor->getCrtStr(ply, CAP));
-        if(target) {
-            boost::replace_all(out, "*TARGET*", target->getCrtStr(ply));
-            boost::replace_all(out, "*VICTIM*", target->getCrtStr(ply));
+            std::string out = str;
+            boost::replace_all(out, "*ACTOR*", actor->getCrtStr(ply, CAP));
+            if (target) {
+                boost::replace_all(out, "*TARGET*", target->getCrtStr(ply));
+                boost::replace_all(out, "*VICTIM*", target->getCrtStr(ply));
+            }
+            *ply << out << "\n";
         }
-        *ply << out << "\n";
     }
 
 }
 
 
 
-int SocialCommand::execute(Creature* player, cmd* cmnd) const {
+int SocialCommand::execute(const std::shared_ptr<Creature>& player, cmd* cmnd) const {
     return((fn)(player, cmnd));
 }

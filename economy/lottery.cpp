@@ -38,7 +38,6 @@
 #include "proto.hpp"                                // for broadcast, logn
 #include "random.hpp"                               // for Random
 #include "server.hpp"                               // for GOLD_IN, Server
-#include "utils.hpp"                                // for MIN
 #include "xml.hpp"                                  // for newStringChild
 
 
@@ -150,7 +149,7 @@ void Config::runLottery() {
         lotteryJackpot = 500000;
     else
         lotteryJackpot = (long)(lotteryJackpot * 1.15);
-    lotteryJackpot = MIN<long>(lotteryJackpot, 3000000);
+    lotteryJackpot = std::min<long>(lotteryJackpot, 3000000);
     lotteryWon = false;
     broadcast(
             "### The Highport Powerbone numbers have been drawn.\n### The jackpot is $%ld!",
@@ -163,7 +162,7 @@ void Config::runLottery() {
     setLotteryRunTime();
 }
 
-int dmLottery(Player* player, cmd* cmnd) {
+int dmLottery(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2 || strcmp(cmnd->str[1], "run") != 0) {
         player->print("Type \"*lottery run\" to run the lottery.\nTo view lottery info, type \"lottery\".\n");
         return(0);
@@ -172,7 +171,7 @@ int dmLottery(Player* player, cmd* cmnd) {
     return(0);
 }
 
-int createLotteryTicket(Object **object, const char *name) {
+int createLotteryTicket(std::shared_ptr<Object>& object, const char *name) {
     int numbers[6];
     int go=1, x=0, j=0, reCalc=0;
     char desc[80];
@@ -204,17 +203,16 @@ int createLotteryTicket(Object **object, const char *name) {
     sprintf(
             desc,
             "A lottery ticket with the numbers: %02d %02d %02d %02d %02d  (%02d)",
-            numbers[0], numbers[1], numbers[2], numbers[3], numbers[4],
-            numbers[5]);
-    (*object)->description = desc;
+            numbers[0], numbers[1], numbers[2], numbers[3], numbers[4], numbers[5]);
+    object->description = desc;
 
-    (*object)->setType(ObjectType::LOTTERYTICKET);
+    object->setType(ObjectType::LOTTERYTICKET);
     // Not valid untill next week
-    (*object)->setLotteryCycle(gConfig->getCurrentLotteryCycle() + 1);
+    object->setLotteryCycle(gConfig->getCurrentLotteryCycle() + 1);
     gConfig->increaseJackpot(gConfig->getLotteryTicketPrice()/2);
-    (*object)->setFlag(O_NO_DROP);
+    object->setFlag(O_NO_DROP);
     for(x = 0; x < 6; x++)
-        (*object)->setLotteryNumbers(x, numbers[x]);
+        object->setLotteryNumbers(x, numbers[x]);
 
     auto* ticket = new LottoTicket(name, numbers, gConfig->getCurrentLotteryCycle()+1);
     gConfig->addTicket(ticket);
@@ -224,7 +222,7 @@ void Config::increaseJackpot(int amnt) {
     if(amnt < 0)
         return;
     lotteryJackpot += amnt;
-    lotteryJackpot = MIN<long>(lotteryJackpot, 10000000);
+    lotteryJackpot = std::min<long>(lotteryJackpot, 10000000);
 }
 void Config::addTicket(LottoTicket* ticket) {
     tickets.push_back(ticket);
@@ -266,9 +264,9 @@ std::string Config::getLotteryRunTimeStr() {
 time_t Config::getLotteryRunTime() {
     return(lotteryRunTime);
 }
-int cmdClaim(Player* player, cmd* cmnd) {
-    BaseRoom *inRoom = player->getRoomParent();
-    Object  *ticket=nullptr;
+int cmdClaim(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<BaseRoom> inRoom = player->getRoomParent();
+    std::shared_ptr<Object> ticket=nullptr;
     long    prize=0;
 
     if(!player->ableToDoCommand())
@@ -319,7 +317,7 @@ int cmdClaim(Player* player, cmd* cmnd) {
     prize = checkPrize(ticket);
 
     player->delObj(ticket, true);
-    delete ticket;
+    ticket.reset();
 
     if(prize == 0) {
         player->print("Sorry, this ticket isn't worth anything.\n");
@@ -360,7 +358,7 @@ int lotteryPrizes[] = { 0, // 0
         500000 // 10
         };
 
-int checkPrize(Object *ticket) {
+int checkPrize(std::shared_ptr<Object>ticket) {
     short numbers[6];
     int matches=0, pb=0, i=0, j=0;
 
@@ -404,7 +402,7 @@ int checkPrize(Object *ticket) {
     return(0);
 }
 
-int cmdLottery(Player* player, cmd* cmnd) {
+int cmdLottery(const std::shared_ptr<Player>& player, cmd* cmnd) {
     short numbers[6];
 
     if(!player->ableToDoCommand())

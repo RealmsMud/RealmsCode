@@ -22,7 +22,7 @@ class cmd;
 class Player;
 
 // Function Prototypes
-int lookup(Player* player, cmd* cmnd);
-int restore(Player* player, cmd* cmnd);
+int lookup(const std::shared_ptr<Player>& player, cmd* cmnd);
+int restore(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 #endif /*IMPORT_H_*/

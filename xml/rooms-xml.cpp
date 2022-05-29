@@ -36,7 +36,6 @@
 #include "mudObjects/areaRooms.hpp"                 // for AreaRoom
 #include "mudObjects/rooms.hpp"                     // for NUM_PERM_SLOTS
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
-#include "os.hpp"                                   // for ASSERTLOG, merror
 #include "paths.hpp"                                // for checkDirExists
 #include "proto.hpp"                                // for roomPath, roomBac...
 #include "server.hpp"                               // for Server, gServer
@@ -49,13 +48,13 @@
 //                      loadRoom
 //*********************************************************************
 
-bool loadRoom(int index, UniqueRoom **pRoom, bool offline) {
+bool loadRoom(int index, std::shared_ptr<UniqueRoom>& pRoom, bool offline) {
     CatRef  cr;
     cr.id = index;
     return(loadRoom(cr, pRoom, offline));
 }
 
-bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline) {
+bool loadRoom(const CatRef& cr, std::shared_ptr<UniqueRoom> &pRoom, bool offline) {
     if(!validRoomId(cr))
         return(false);
 
@@ -64,7 +63,7 @@ bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline) {
             return(false);
         gServer->roomCache.insert(cr, pRoom);
         if(!offline) {
-            (*pRoom)->registerMo();
+            pRoom->registerMo(pRoom);
         }
     }
 
@@ -76,13 +75,13 @@ bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline) {
 //*********************************************************************
 // if we're loading only from a filename, get CatRef from file
 
-bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, std::string filename, bool offline) {
+bool loadRoomFromFile(const CatRef& cr, std::shared_ptr<UniqueRoom> &pRoom, std::string filename, bool offline) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     int         num;
 
     if(filename.empty())
-        filename = roomPath(cr);
+        filename = Path::roomPath(cr);
 
     if((xmlDoc = xml::loadFile(filename.c_str(), "Room")) == nullptr)
         return(false);
@@ -92,12 +91,10 @@ bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, std::string filename
     bool toReturn = false;
 
     if(cr.id == -1 || num == cr.id) {
-        *pRoom = new UniqueRoom;
-        if(!*pRoom)
-            merror("loadRoomFromFile", FATAL);
-        (*pRoom)->setVersion(xml::getProp(rootNode, "Version"));
+        pRoom = std::make_shared<UniqueRoom>();
+        pRoom->setVersion(xml::getProp(rootNode, "Version"));
 
-        (*pRoom)->readFromXml(rootNode, offline);
+        pRoom->readFromXml(rootNode, offline);
         toReturn = true;
     }
     xmlFreeDoc(xmlDoc);
@@ -118,7 +115,7 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode, bool offline) {
     info.load(rootNode);
     info.id = xml::getIntProp(rootNode, "Num");
 
-    setId(std::string("R") + info.rstr());
+    setId(std::string("R") + info.str());
 
     xml::copyPropToString(version, rootNode, "Version");
     curNode = rootNode->children;
@@ -147,7 +144,7 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode, bool offline) {
         else if(NODE_NAME(curNode, "RoomExp")) xml::copyToNum(roomExp, curNode);
         else if(NODE_NAME(curNode, "Flags")) {
             // No need to clear flags, no room refs
-            loadBits(curNode, flags);
+            loadBitset(curNode, flags);
         }
         else if(NODE_NAME(curNode, "PermMobs")) {
             loadCrLastTimes(curNode, permMonsters);
@@ -167,7 +164,7 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode, bool offline) {
         else if(NODE_NAME(curNode, "Exits")) {
             readExitsXml(curNode, offline);
         }
-        else if(NODE_NAME(curNode, "Effects")) effects.load(curNode, this);
+        else if(NODE_NAME(curNode, "Effects")) effects.load(curNode, getAsUniqueRoom());
         else if(NODE_NAME(curNode, "Size")) size = whatSize(xml::toNum<int>(curNode));
         else if(NODE_NAME(curNode, "Hooks")) hooks.load(curNode);
 
@@ -231,13 +228,12 @@ void loadCrLastTimes(xmlNodePtr curNode, std::map<int, crlasttime>& pCrLastTimes
 int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    char        filename[256];
+    fs::path filename;
 
-    ASSERTLOG( info.id >= 0 );
     if(saveType == LoadType::LS_BACKUP)
-        Path::checkDirExists(info.area, roomBackupPath);
+        Path::checkDirExists(info.area, Path::roomBackupPath);
     else
-        Path::checkDirExists(info.area, roomPath);
+        Path::checkDirExists(info.area, Path::roomPath);
 
     gServer->saveIds();
 
@@ -249,9 +245,9 @@ int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
     saveToXml(rootNode, permOnly);
 
     if(saveType == LoadType::LS_BACKUP)
-        strcpy(filename, roomBackupPath(info));
+        filename = Path::roomBackupPath(info);
     else
-        strcpy(filename, roomPath(info));
+        filename =Path::roomPath(info);
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(0);
@@ -271,8 +267,8 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
         return(-1);
 
     // record rooms saved during swap
-    if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((std::string)"r" + info.rstr(), false);
+    if(gConfig->swapIsInteresting(getAsConstUniqueRoom()))
+        gConfig->swapLog((std::string)"r" + info.str(), false);
 
     xml::newNumProp(rootNode, "Num", info.id);
     xml::newProp(rootNode, "Version", gConfig->getVersion());
@@ -303,7 +299,7 @@ int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
     xml::saveNonZeroNum(rootNode, "BeenHere", beenhere);
     xml::saveNonZeroNum(rootNode, "RoomExp", roomExp);
 
-    saveBits(rootNode, "Flags", MAX_ROOM_FLAGS, flags);
+    saveBitset(rootNode, "Flags", MAX_ROOM_FLAGS, flags);
 
     curNode = xml::newStringChild(rootNode, "Wander");
     wander.save(curNode);
@@ -369,7 +365,6 @@ void AreaRoom::load(xmlNodePtr rootNode) {
             readExitsXml(childNode);
         else if(NODE_NAME(childNode, "MapMarker")) {
             mapmarker.load(childNode);
-            area->rooms[mapmarker.str()] = this;
         }
         else if(NODE_NAME(childNode, "Unique")) unique.load(childNode);
         else if(NODE_NAME(childNode, "NeedsCompass")) xml::copyToBool(needsCompass, childNode);

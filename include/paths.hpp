@@ -18,53 +18,65 @@
 #ifndef PATHS_H_
 #define PATHS_H_
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 class CatRef;
 
-namespace Path {
-    extern const char* Bin;
-    extern const char* Log;
-    extern const char* BugLog;
-    extern const char* StaffLog;
-    extern const char* BankLog;
-    extern const char* GuildBankLog;
+struct Path {
+    static inline const fs::path BasePath = "/home/realms/realms";
+    static inline const fs::path Bin = BasePath / "bin";
+    static inline const fs::path Log = BasePath / "log";
+    static inline const fs::path BugLog = BasePath / "log/bug";
+    static inline const fs::path StaffLog = BasePath / "log/staff";
+    static inline const fs::path BankLog = BasePath / "log/bank";
+    static inline const fs::path GuildBankLog = BasePath / "log/guildbank";
 
-    extern const char* UniqueRoom;
-    extern const char* AreaRoom;
-    extern const char* Monster;
-    extern const char* Object;
-    extern const char* Player;
-    extern const char* PlayerBackup;
+    static inline const fs::path UniqueRoom = BasePath / "rooms";
+    static inline const fs::path AreaRoom = BasePath / "rooms/area";
+    static inline const fs::path Monster = BasePath / "monsters";
+    static inline const fs::path Object = BasePath / "objects";
+    static inline const fs::path Player = BasePath / "player";
+    static inline const fs::path PlayerBackup = BasePath / "player/backup";
 
-    extern const char* Config;
+    static inline const fs::path Config = BasePath / "config";
 
-    extern const char* Code;
-    extern const char* Python;
-    extern const char* Game;
-    extern const char* AreaData;
-    extern const char* Talk;
-    extern const char* Desc;
-    extern const char* Sign;
+    static inline const fs::path Code = Config / "code";
+// First check the docker install path; then the code directory, and finally fall back to the old place
+    static inline const fs::path Python = "/build/pythonLib/:/home/realms/realms/RealmsCode/pythonLib:/home/realms/realms/config/code/python/";
+    static inline const fs::path Game = Config / "game";
+    static inline const fs::path AreaData = Game / "area";
+    static inline const fs::path Talk = Game / "talk";
+    static inline const fs::path Desc = Game / "ddesc";
+    static inline const fs::path Sign = Game / "signs";
 
-    extern const char* PlayerData;
-    extern const char* Bank;
-    extern const char* GuildBank;
-    extern const char* History;
-    extern const char* Post;
+    static inline const fs::path PlayerData = Config / "player";
+    static inline const fs::path Bank = PlayerData / "bank";
+    static inline const fs::path GuildBank = PlayerData / "guildbank";
+    static inline const fs::path History = PlayerData / "history";
+    static inline const fs::path Post = PlayerData / "post";
 
-    extern const char* BaseHelp;
-    extern const char* Help;
-    extern const char* CreateHelp;
-    extern const char* Wiki;
-    extern const char* DMHelp;
-    extern const char* BuilderHelp;
-    extern const char* HelpTemplate;
+    static inline const fs::path BaseHelp = BasePath / "help";
+    static inline const fs::path Help = BaseHelp / "help";
+    static inline const fs::path CreateHelp = BaseHelp / "create";
+    static inline const fs::path Wiki = BaseHelp / "wiki";
+    static inline const fs::path DMHelp = BaseHelp / "dmhelp";
+    static inline const fs::path BuilderHelp = BaseHelp / "bhelp";
+    static inline const fs::path HelpTemplate = BaseHelp / "template";
 
-    bool checkDirExists(const char* filename);
-    bool checkDirExists(const std::string &area, char* (*fn)(const CatRef &cr));
+    static inline const fs::path Zone = BasePath / "zones";
 
-    bool checkPaths();
-}
+    static bool checkDirExists(const fs::path& path);
+    static bool checkDirExists(const std::string &area, fs::path (*fn)(const CatRef &cr));
+
+    static bool checkPaths();
+
+    static fs::path objectPath(const CatRef& cr);
+    static fs::path monsterPath(const CatRef& cr);
+    static fs::path roomPath(const CatRef& cr);
+    static fs::path roomBackupPath(const CatRef& cr);
+};
 
 
 #endif /*PATHS_H_*/

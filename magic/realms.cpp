@@ -58,13 +58,13 @@ int getOffensiveSpell(Realm realm, int level) {
 //*********************************************************************
 //                      realmResistPet
 //*********************************************************************
-bool Creature::checkResistPet(Creature *pet, bool& resistPet, bool& immunePet, bool& vulnPet) {
+bool Creature::checkResistPet(const std::shared_ptr<Creature>&pet, bool& resistPet, bool& immunePet, bool& vulnPet) {
     if(!pet->isPet())
         return(false);
-    std::string realm = getRealmSpellName(pet->getAsConstMonster()->getBaseRealm());
-    resistPet = isEffected("resist-" + realm);
-    immunePet = isEffected("immune-" + realm);
-    vulnPet = isEffected("vuln-" + realm);
+    std::string chkRealm = getRealmSpellName(pet->getAsConstMonster()->getBaseRealm());
+    resistPet = isEffected("resist-" + chkRealm);
+    immunePet = isEffected("immune-" + chkRealm);
+    vulnPet = isEffected("vuln-" + chkRealm);
     return(true);
 }
 
@@ -125,7 +125,7 @@ Realm getOppositeRealm(Realm realm) {
 //                      checkRealmResist
 //*********************************************************************
 
-unsigned int Creature::checkRealmResist(unsigned int dmg, Realm pRealm) const {
+int Creature::checkRealmResist(int dmg, Realm pRealm) const {
     std::string resistEffect = "resist-" + getRealmSpellName(pRealm);
     if(isEffected(resistEffect))
         dmg /= 2;
@@ -166,9 +166,9 @@ bool Player::checkOppositeResistSpell(std::string_view effect) {
 //*********************************************************************
 // This function replaces the code for the resist element functions
 
-int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm) {
-    Creature* target=nullptr;
-    Player* pTarget=nullptr;
+int genericResist(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, Realm realm) {
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Player> pTarget=nullptr;
 
     //int       lt = getRealmSpellLT(realm);
     std::string name = getRealmSpellName(realm);
@@ -178,7 +178,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
     if(cmnd->num == 2) {
         target = player;
         pTarget = player->getAsPlayer();
-        broadcast(player->getSock(), player->getParent(), "%M casts resist-%s.", player, name.c_str());
+        broadcast(player->getSock(), player->getParent(), "%M casts resist-%s.", player.get(), name.c_str());
 
         if(spellData->how == CastType::CAST) {
             player->print("You cast a resist-%s spell.\n", name.c_str());
@@ -198,17 +198,17 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
         if(checkRefusingMagic(player, target))
             return(0);
 
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a resist-%s spell on %N.", player, name.c_str(), target);
-        target->print("%M casts resist-%s on you.\n", player, name.c_str());
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a resist-%s spell on %N.", player.get(), name.c_str(), target.get());
+        target->print("%M casts resist-%s on you.\n", player.get(), name.c_str());
 
         if(spellData->how == CastType::CAST) {
-            player->print("You cast a resist-%s spell on %N.\n", name.c_str(), target);
+            player->print("You cast a resist-%s spell on %N.\n", name.c_str(), target.get());
 
             if(player->getRoomParent()->magicBonus()) {
                 player->print("The room's magical properties increase the power of your spell.\n");
             }
         } else {
-            player->print("%M resists %s.\n", target, name.c_str());
+            player->print("%M resists %s.\n", target.get(), name.c_str());
         }
     }
 
@@ -238,7 +238,7 @@ int genericResist(Creature* player, cmd* cmnd, SpellData* spellData, Realm realm
 //                      splResistWater
 //*********************************************************************
 
-int splResistWater(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splResistWater(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(genericResist(player, cmnd, spellData, WATER));
 }
 
@@ -246,7 +246,7 @@ int splResistWater(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splResistFire
 //*********************************************************************
 
-int splResistFire(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splResistFire(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(genericResist(player, cmnd, spellData, FIRE));
 }
 
@@ -254,7 +254,7 @@ int splResistFire(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splResistLightning
 //*********************************************************************
 
-int splResistLightning(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splResistLightning(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(genericResist(player, cmnd, spellData, ELEC));
 }
 
@@ -262,7 +262,7 @@ int splResistLightning(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splResistCold
 //*********************************************************************
 
-int splResistCold(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splResistCold(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(genericResist(player, cmnd, spellData, COLD));
 }
 
@@ -270,7 +270,7 @@ int splResistCold(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splResistAir
 //*********************************************************************
 
-int splResistAir(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splResistAir(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(genericResist(player, cmnd, spellData, WIND));
 }
 
@@ -278,7 +278,7 @@ int splResistAir(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splResistEarth
 //*********************************************************************
 
-int splResistEarth(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splResistEarth(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(genericResist(player, cmnd, spellData, EARTH));
 }
 

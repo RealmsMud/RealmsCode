@@ -36,7 +36,6 @@
 #include "proto.hpp"                 // for broadcast, bonus, up
 #include "size.hpp"                  // for Size, NO_SIZE, SIZE_COLOSSAL
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MIN, MAX
 
 //*********************************************************************
 //                      getSize
@@ -170,17 +169,17 @@ int searchMod(Size size) {
 //*********************************************************************
 
 int sizePower(int lvl) {
-    return(MIN(3, (lvl+10)/10));
+    return(std::min(3, (lvl+10)/10));
 }
 
 //*********************************************************************
 //                      splChangeSize
 //*********************************************************************
 
-int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const std::string& effect) {
+int splChangeSize(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const std::string& effect) {
     std::string power, opposite = effect == "enlarge" ? "reduce" : "enlarge";
     EffectInfo *e=nullptr;
-    Creature* target=nullptr;
+    std::shared_ptr<Creature> target=nullptr;
     int     strength=0, num=0, pos=0;
 
     std::string spell;
@@ -206,8 +205,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const std::
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("You cast %s on yourself.\n", spell.c_str());
-            broadcast(player->getSock(), player->getParent(), "%M casts %s on %sself.",
-                player, spell.c_str(), player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts %s on %sself.", player.get(), spell.c_str(), player->himHer());
         }
 
         // Cast the spell on another player
@@ -225,7 +223,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const std::
         }
 
         if(target->isEffected(effect)) {
-            player->print("%M is already magically %sd!\n", target, effect.c_str());
+            player->print("%M is already magically %sd!\n", target.get(), effect.c_str());
             return(0);
         }
 
@@ -234,10 +232,9 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const std::
                 return(0);
             target->wake("You awaken suddenly!");
         }
-        player->print("You cast %s on %N.\n", spell.c_str(), target);
-        target->print("%M casts %s on you.\n", player, spell.c_str());
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s on %N.",
-            player, spell.c_str(), target);
+        player->print("You cast %s on %N.\n", spell.c_str(), target.get());
+        target->print("%M casts %s on you.\n", player.get(), spell.c_str());
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s on %N.", player.get(), spell.c_str(), target.get());
     }
 
     if(target->getSize() == NO_SIZE) {
@@ -271,7 +268,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const std::
 
     if(spellData->how == CastType::CAST) {
         strength = sizePower(player->getLevel());
-        num = MAX(300, 400 + bonus(player->intelligence.getCur()) * 400) + 20 * player->getLevel();
+        num = std::max(300, 400 + bonus(player->intelligence.getCur()) * 400) + 20 * player->getLevel();
 
         if(player->getRoomParent()->magicBonus()) {
             player->print("The room's magical properties increase the power of your spell.\n");
@@ -296,7 +293,7 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const std::
                     if(player == target)
                         player->print("Your magic cannot affect your size in that manner.\n");
                     else
-                        player->print("Your magic cannot affect %N's size in that manner.\n", target);
+                        player->print("Your magic cannot affect %N's size in that manner.\n", target.get());
                     return(0);
                 }
                 strength = diff;
@@ -304,12 +301,12 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const std::
         }
         if(effect == "enlarge") {
             std::clog << "O:" << strength;
-            strength = MIN(strength, MAX_SIZE - target->getSize());
+            strength = std::min(strength, MAX_SIZE - target->getSize());
             std::clog << " N:" << strength << std::endl;
         }
         else {
             std::clog << "O:" << strength;
-            strength = MIN(strength, target->getSize() - NO_SIZE - 1);
+            strength = std::min(strength, target->getSize() - NO_SIZE - 1);
             std::clog << " N:" << strength << std::endl;
         }
 
@@ -329,10 +326,10 @@ int splChangeSize(Creature* player, cmd* cmnd, SpellData* spellData, const std::
 //                      size changing spells
 //*********************************************************************
 
-int splEnlarge(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splEnlarge(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splChangeSize(player, cmnd, spellData, "enlarge"));
 }
-int splReduce(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splReduce(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splChangeSize(player, cmnd, spellData, "reduce"));
 }
 
@@ -349,16 +346,15 @@ bool Creature::changeSize(int oldStrength, int newStrength, bool enlarge) {
         return(false);
     size = whatSize(size+change);
 
-    Player *player = getAsPlayer();
+    std::shared_ptr<Player> player = getAsPlayer();
     if(player) {
         wake("You awaken suddenly!");
         for(int i=0; i<MAXWEAR; i++) {
             if(player->ready[i] && !willFit(player->ready[i])) {
                 if(player->ready[i]->flagIsSet(O_CURSED)) {
-                    player->printColor("%O's cursed nature causes it to %s to fit your new size!\n",
-                        player->ready[i], enlarge ? "grow" : "shrink");
+                    player->printColor("%O's cursed nature causes it to %s to fit your new size!\n", player->ready[i].get(), enlarge ? "grow" : "shrink");
                 } else {
-                    player->printColor("%O no longer fits!\n", player->ready[i]);
+                    player->printColor("%O no longer fits!\n", player->ready[i].get());
                     // i is wearloc -1, so add 1
                     unequip(i+1);
                 }

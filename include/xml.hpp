@@ -20,14 +20,17 @@
 #define XML_H_
 
 #include <map>
+#include <filesystem>
 
 #include <libxml/parser.h>           // for xmlNodePtr
-
 #include <boost/lexical_cast.hpp>
+#include <boost/dynamic_bitset.hpp>
 
 #include "carry.hpp"
 #include "mudObjects/container.hpp"
 #include "enums/loadType.hpp"
+
+namespace fs = std::filesystem;
 
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
@@ -53,10 +56,6 @@ class Creature;
 #define CRT     3
 #define ROOM    4
 
-#define BIT_ISSET(p,f)    ((p)[(f)/8] & 1<<((f)%8))
-#define BIT_SET(p,f)      ((p)[(f)/8] |= 1<<((f)%8))
-#define BIT_CLEAR(p,f)      ((p)[(f)/8] &= ~(1<<((f)%8)))
-
 #define NODE_NAME(pNode, pName)         (!strcmp((char *)(pNode)->name, (pName) ))
 
 namespace xml {
@@ -69,8 +68,11 @@ namespace xml {
     // getProp -- You MUST free the return value
     std::string getProp(xmlNodePtr node, const char *name);
 
-    // getIntProp -- Properly frees the return valueusing toInt
+    // getIntProp -- Properly frees the return value using toNum
     int getIntProp(xmlNodePtr node, const char *name);
+
+    // getIntProp -- Properly frees the return value using toNum
+    short getShortProp(xmlNodePtr node, const char *name);
 
     // getCString -- You MUST free the return value
     char* getCString(xmlNodePtr node);
@@ -192,8 +194,8 @@ namespace xml {
     xmlChar* ConvertInput(const char *in, const char *encoding);
     char *doStrCpy(char *dest, char *src);
     char *doStrDup(char *src);
-    xmlDocPtr loadFile(const char *filename, const char *expectedRoot);
-    int saveFile(const char * filename, xmlDocPtr cur);
+    xmlDocPtr loadFile(const fs::path&, const char *expectedRoot);
+    int saveFile(const fs::path& filename, xmlDocPtr cur);
 
 } // End xml namespace
 
@@ -203,23 +205,24 @@ namespace xml {
 //  Load Section
 //******************
 
-bool loadMonster(int index, Monster** pMonster, bool offline=false);
-bool loadMonster(const CatRef& cr, Monster** pMonster, bool offline=false);
-bool loadMonsterFromFile(const CatRef& cr, Monster **pMonster, std::string filename="", bool offline=false);
-bool loadObject(int index, Object** pObject, bool offline=false);
-bool loadObject(const CatRef& cr, Object** pObject, bool offline=false);
-bool loadObjectFromFile(const CatRef& cr, Object** pObject, bool offline=false);
-bool loadRoom(int index, UniqueRoom **pRoom, bool offline=false);
-bool loadRoom(const CatRef& cr, UniqueRoom **pRoom, bool offline=false);
-bool loadRoomFromFile(const CatRef& cr, UniqueRoom **pRoom, std::string filename="", bool offline=false);
+bool loadMonster(int index, std::shared_ptr<Monster>& pMonster, bool offline=false);
+bool loadMonster(const CatRef& cr, std::shared_ptr<Monster>&  pMonster, bool offline=false);
+bool loadMonsterFromFile(const CatRef& cr, std::shared_ptr<Monster>& pMonster, std::string filename="", bool offline=false);
+bool loadObject(int index, std::shared_ptr<Object>&  pObject, bool offline=false);
+bool loadObject(const CatRef& cr, std::shared_ptr<Object>&  pObject, bool offline=false);
+bool loadObjectFromFile(const CatRef& cr, std::shared_ptr<Object>&  pObject, bool offline=false);
+const Object* getCachedObject(const CatRef& cr);
+bool loadRoom(int index, std::shared_ptr<UniqueRoom>& pRoom, bool offline=false);
+bool loadRoom(const CatRef& cr, std::shared_ptr<UniqueRoom> &pRoom, bool offline=false);
+bool loadRoomFromFile(const CatRef& cr, std::shared_ptr<UniqueRoom> &pRoom, std::string filename="", bool offline=false);
 
-bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType=LoadType::LS_NORMAL);
+bool loadPlayer(std::string_view name, std::shared_ptr<Player>& player, enum LoadType loadType=LoadType::LS_NORMAL);
 
 void loadCarryArray(xmlNodePtr curNode, Carry array[], const char* name, int maxProp);
 void loadCatRefArray(xmlNodePtr curNode, std::map<int, CatRef>& array, const char* name, int maxProp);
 void loadCatRefArray(xmlNodePtr curNode, CatRef array[], const char* name, int maxProp);
 void loadStringArray(xmlNodePtr curNode, void* array, int size, const char* name, int maxProp);
-void loadBits(xmlNodePtr curNode, char *bits);
+void loadBitset(xmlNodePtr curNode, boost::dynamic_bitset<>& bits);
 void loadDaily(xmlNodePtr curNode, struct daily* pDaily);
 void loadDailys(xmlNodePtr curNode, struct daily* pDailys);
 void loadCrLastTime(xmlNodePtr curNode, struct crlasttime* pCrLastTime);
@@ -228,7 +231,7 @@ void loadLastTime(xmlNodePtr curNode, struct lasttime* pLastTime);
 void loadLastTimes(xmlNodePtr curNode, struct lasttime* pLastTimes);
 void loadSavingThrow(xmlNodePtr curNode, struct saves* pSavingThrow);
 void loadSavingThrows(xmlNodePtr curNode, struct saves* pSavingThrows);
-void loadRanges(xmlNodePtr curNode, Player *pPlayer);
+void loadRanges(xmlNodePtr curNode, Player* player);
 
 
 //**********************
@@ -243,7 +246,7 @@ xmlNodePtr saveDaily(xmlNodePtr parentNode, int i, struct daily pDaily);
 xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, const struct crlasttime& pCrLastTime);
 xmlNodePtr saveLastTime(xmlNodePtr parentNode, int i, struct lasttime pLastTime);
 xmlNodePtr saveSavingThrow(xmlNodePtr parentNode, int i, struct saves pSavingThrow);
-xmlNodePtr saveBits(xmlNodePtr parentNode, const char* name, int maxBit, const char *bits);
+xmlNodePtr saveBitset(xmlNodePtr parentNode, const char* name, int maxBit, const boost::dynamic_bitset<>& bits);
 xmlNodePtr saveBit(xmlNodePtr parentNode, int bit);
 xmlNodePtr saveLongArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const long array[], int arraySize);
 xmlNodePtr saveULongArray(xmlNodePtr parentNode, const char* rootName, const char* childName, const unsigned long array[], int arraySize);

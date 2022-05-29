@@ -28,14 +28,14 @@ class Player;
 class Property;
 class UniqueRoom;
 
-bool shopStaysWithGuild(const UniqueRoom* shop);
+bool shopStaysWithGuild(const std::shared_ptr<UniqueRoom> shop);
 
 
 class GuildCreation {
 public:
     GuildCreation();
 
-    bool addSupporter(Player* supporter);
+    bool addSupporter(std::shared_ptr<Player> supporter);
     bool removeSupporter(const std::string &supporterName);
     void renameSupporter(const std::string &oldName, const std::string &newName);
     bool saveToXml(xmlNodePtr rootNode) const;
@@ -63,22 +63,22 @@ public:
     void parseGuildMembers(xmlNodePtr cur);
     bool saveToXml(xmlNodePtr rootNode) const;
 
-    static void create(Player* player, cmd* cmnd);
-    static void forum(Player* player, cmd* cmnd);
-    static void cancel(Player* player, cmd* cmnd);
-    static void support(Player* player, cmd* cmnd);
-    static void invite(Player* player, cmd* cmnd);
-    static void abdicate(Player* player, cmd* cmnd);
-    static void abdicate(Player* player, Player* target, bool online=true);
-    static void remove(Player* player, cmd* cmnd);
-    static void join(Player* player, cmd *cmnd);
-    static void reject(Player* player, cmd* cmnd);
-    static void disband(Player* player, cmd* cmnd);
+    static void create(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void forum(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void cancel(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void support(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void invite(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void abdicate(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void abdicate(std::shared_ptr<Player> player, std::shared_ptr<Player> target, bool online=true);
+    static void remove(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void join(std::shared_ptr<Player> player, cmd *cmnd);
+    static void reject(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void disband(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-    static void list(Player* player, cmd* cmnd);
-    static void viewMembers(Player* player, cmd* cmnd);
-    static void promote(Player* player, cmd* cmnd);
-    static void demote(Player* player, cmd* cmnd);
+    static void list(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void viewMembers(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void promote(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static void demote(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 public:
@@ -108,7 +108,7 @@ public:
     void incPkillsIn(long pk=1);
     void incPkillsWon(long pk=1);
 
-    void guildhallLocations(const Player* player, const char* fmt) const;
+    void guildhallLocations(const std::shared_ptr<Player> player, const char* fmt) const;
 protected:
     std::string name;
     unsigned short num;

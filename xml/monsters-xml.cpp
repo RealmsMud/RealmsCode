@@ -35,7 +35,6 @@
 #include "mud.hpp"                                  // for LT_TICK, LT_TICK_...
 #include "mudObjects/creatures.hpp"                 // for NUM_ASSIST_MOB
 #include "mudObjects/monsters.hpp"                  // for Monster
-#include "os.hpp"                                   // for merror
 #include "paths.hpp"                                // for checkDirExists
 #include "proto.hpp"                                // for monsterPath, load...
 #include "quests.hpp"                               // for TalkResponse, Que...
@@ -46,37 +45,36 @@
 //                      loadMonster
 //*********************************************************************
 
-bool loadMonster(int index, Monster ** pMonster, bool offline) {
+bool loadMonster(int index, std::shared_ptr<Monster>&  pMonster, bool offline) {
     CatRef cr;
     cr.id = index;
     return(loadMonster(cr, pMonster, offline));
 }
 
-bool loadMonster(const CatRef& cr, Monster ** pMonster, bool offline) {
+bool loadMonster(const CatRef& cr, std::shared_ptr<Monster>& pMonster, bool offline) {
     if(!validMobId(cr))
         return(false);
 
     // Check if monster is already loaded, and if so return pointer
     if(gServer->monsterCache.contains(cr)) {
-        *pMonster = new Monster;
-        gServer->monsterCache.fetch(cr, pMonster, false);
+        pMonster = std::make_shared<Monster>(*gServer->monsterCache.fetch_ptr(cr, false));
     } else {
         // Otherwise load the monster and return a pointer to the newly loaded monster
-        // Load the creature from it's file
+        // Load the creature from its file
         if(!loadMonsterFromFile(cr, pMonster, "", offline))
             return(false);
-        gServer->monsterCache.insert(cr, pMonster);
+        gServer->monsterCache.insert(cr, *pMonster);
     }
 
-    (*pMonster)->fd = -1;
-    (*pMonster)->lasttime[LT_TICK].ltime =
-    (*pMonster)->lasttime[LT_TICK_SECONDARY].ltime =
-    (*pMonster)->lasttime[LT_TICK_HARMFUL].ltime = time(nullptr);
+    pMonster->fd = -1;
+    pMonster->lasttime[LT_TICK].ltime =
+    pMonster->lasttime[LT_TICK_SECONDARY].ltime =
+    pMonster->lasttime[LT_TICK_HARMFUL].ltime = time(nullptr);
 
-    (*pMonster)->lasttime[LT_TICK].interval  =
-    (*pMonster)->lasttime[LT_TICK_SECONDARY].interval = 60;
-    (*pMonster)->lasttime[LT_TICK_HARMFUL].interval = 30;
-    (*pMonster)->getMobSave();
+    pMonster->lasttime[LT_TICK].interval  =
+    pMonster->lasttime[LT_TICK_SECONDARY].interval = 60;
+    pMonster->lasttime[LT_TICK_HARMFUL].interval = 30;
+    pMonster->getMobSave();
 
     return(true);
 }
@@ -85,42 +83,40 @@ bool loadMonster(const CatRef& cr, Monster ** pMonster, bool offline) {
 //                      loadMonsterFromFile
 //*********************************************************************
 
-bool loadMonsterFromFile(const CatRef& cr, Monster **pMonster, std::string filename, bool offline) {
-    xmlDocPtr   xmlDoc;
-    xmlNodePtr  rootNode;
-    int     num=0;
+bool loadMonsterFromFile(const CatRef& cr, std::shared_ptr<Monster>& pMonster, std::string filename, bool offline) {
+    xmlDocPtr xmlDoc;
+    xmlNodePtr rootNode;
+    int num;
 
-    if(filename.empty())
-        filename = monsterPath(cr);
+    if (filename.empty())
+        filename = Path::monsterPath(cr);
 
-    if((xmlDoc = xml::loadFile(filename.c_str(), "Creature")) == nullptr)
-        return(false);
+    if ((xmlDoc = xml::loadFile(filename.c_str(), "Creature")) == nullptr)
+        return (false);
 
-    if(xmlDoc == nullptr) {
+    if (xmlDoc == nullptr) {
         std::clog << "Error parsing file " << filename;
-        return(false);
+        return (false);
     }
     rootNode = xmlDocGetRootElement(xmlDoc);
     num = xml::getIntProp(rootNode, "Num");
 
-    if(cr.id == -1 || num == cr.id) {
-        *pMonster = new Monster;
-        if(!*pMonster)
-            merror("loadMonsterFromFile", FATAL);
-        (*pMonster)->setVersion(rootNode);
+    if (cr.id == -1 || num == cr.id) {
+        pMonster = std::make_shared<Monster>();
+        pMonster->setVersion(rootNode);
 
-        (*pMonster)->readFromXml(rootNode, offline);
-        (*pMonster)->setId("-1");
+        pMonster->readFromXml(rootNode, offline);
+        pMonster->setId("-1");
 
-        if((*pMonster)->flagIsSet(M_TALKS)) {
-            loadCreature_tlk((*pMonster));
-            (*pMonster)->convertOldTalks();
+        if (pMonster->flagIsSet(M_TALKS)) {
+            loadCreature_tlk(pMonster);
+            pMonster->convertOldTalks();
         }
     }
 
     xmlFreeDoc(xmlDoc);
     xmlCleanupParser();
-    return(true);
+    return (true);
 }
 
 
@@ -147,13 +143,13 @@ void Monster::readXml(xmlNodePtr curNode, bool offline) {
 
     else if(NODE_NAME(curNode, "SkillLevel")) setSkillLevel(xml::toNum<int>(curNode));
     else if(NODE_NAME(curNode, "ClassAggro")) {
-        loadBits(curNode, cClassAggro);
+        loadBitset(curNode, cClassAggro);
     }
     else if(NODE_NAME(curNode, "RaceAggro")) {
-        loadBits(curNode, raceAggro);
+        loadBitset(curNode, raceAggro);
     }
     else if(NODE_NAME(curNode, "DeityAggro")) {
-        loadBits(curNode, deityAggro);
+        loadBitset(curNode, deityAggro);
     }
     else if(NODE_NAME(curNode, "Attacks")) {
         loadStringArray(curNode, attack, CRT_ATTACK_LENGTH, "Attack", 3);
@@ -238,7 +234,6 @@ void loadCarryArray(xmlNodePtr curNode, Carry array[], const char* name, int max
 int Monster::saveToFile() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    char        filename[256];
 
     // If we can't clean the monster properly, don't save anything
     if(cleanMobForSaving() != 1)
@@ -247,7 +242,7 @@ int Monster::saveToFile() {
     // Invalid Number
     if(info.id < 0)
         return(-1);
-    Path::checkDirExists(info.area, monsterPath);
+    Path::checkDirExists(info.area, Path::monsterPath);
 
     gServer->saveIds();
 
@@ -261,8 +256,7 @@ int Monster::saveToFile() {
     saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
     id = idTemp;
 
-    strcpy(filename, monsterPath(info));
-    xml::saveFile(filename, xmlDoc);
+    xml::saveFile(Path::monsterPath(info), xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(0);
 }
@@ -277,8 +271,8 @@ void Monster::saveXml(xmlNodePtr curNode) const {
     xmlNodePtr childNode, subNode;
 
     // record monsters saved during swap
-    if(gConfig->swapIsInteresting(this))
-        gConfig->swapLog((std::string)"m" + info.rstr(), false);
+    if(gConfig->swapIsInteresting(getAsConstMonster()))
+        gConfig->swapLog((std::string)"m" + info.str(), false);
 
     xml::saveNonNullString(curNode, "Plural", plural);
     xml::saveNonZeroNum(curNode, "SkillLevel", skillLevel);
@@ -316,9 +310,9 @@ void Monster::saveXml(xmlNodePtr curNode) const {
     xml::saveNonZeroNum(curNode, "Cast", cast);
     saveCatRefArray(curNode, "Rescue", "Mob", rescue, NUM_RESCUE);
 
-    saveBits(curNode, "ClassAggro", 32, cClassAggro);
-    saveBits(curNode, "RaceAggro", 32, raceAggro);
-    saveBits(curNode, "DeityAggro", 32, deityAggro);
+    saveBitset(curNode, "ClassAggro", 32, cClassAggro);
+    saveBitset(curNode, "RaceAggro", 32, raceAggro);
+    saveBitset(curNode, "DeityAggro", 32, deityAggro);
 }
 
 //*********************************************************************

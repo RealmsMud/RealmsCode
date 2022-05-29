@@ -130,7 +130,7 @@ namespace telnet {
     void zlib_free(void *opaque, void *address);
 }
 
-class Socket {
+class Socket : public std::enable_shared_from_this<Socket> {
     friend class Server;
     struct Host {
         std::string hostName;
@@ -172,9 +172,10 @@ public:
     void viewFile(const std::string& str, bool shouldPage=false);
     void viewFileReverse(const std::string& str);
     void viewFileReverseReal(const std::string& str);
+    void registerPlayer();
 public:
     explicit Socket(int pFd);
-    Socket(int pFd, sockaddr_in pAddr, bool dnsDone);
+    Socket(int pFd, sockaddr_in pAddr);
     ~Socket();
 
     void cleanUp();
@@ -184,7 +185,6 @@ public:
     void continueTelnetNeg(bool queryTType);
     void setState(int pState, char pFnParam = 1);
     void restoreState();
-    void addToPlayerList();
 
     void finishLogin();
 
@@ -221,7 +221,7 @@ public:
 
     void reconnect(bool pauseScreen=false);
     void disconnect();
-    void showLoginScreen(bool dnsDone=true);
+    void showLoginScreen();
 
     void flush(); // Flush any pending output
 
@@ -271,17 +271,16 @@ public:
     void setColorOpt(int opt);
 
     [[nodiscard]] bool hasPlayer() const;
-    [[nodiscard]] Player* getPlayer() const;
-    void setPlayer(Player* ply);
-    void freePlayer();
-
+    [[nodiscard]] std::shared_ptr<Player> getPlayer() const;
+    void setPlayer(std::shared_ptr<Player> ply);
+    void clearPlayer();
 
 
     void clearSpying();
     void clearSpiedOn();
-    void setSpying(Socket *sock);
+    void setSpying(const std::shared_ptr<Socket>& sock);
     void removeSpy(Socket *sock);
-    void addSpy(Socket *sock);
+    void addSpy(const std::shared_ptr<Socket>& sock);
 
     // MXP Support
     void clearMxpClientSecure();
@@ -323,9 +322,9 @@ public:
 protected:
     int         fd;                 // File Descriptor of this socket
     Host        host;
+    bool        dnsDone{};
     Term        term;
     SockOptions opts{};
-    bool inPlayerList{};
 
     int         lastState{};
     int         connState{};
@@ -334,8 +333,8 @@ protected:
     bool        oneIAC{};
     bool        watchBrokenClient{};
 
-    std::string     output;
-    std::string     processedOutput;   // Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
+    std::stringstream output;
+    std::string       processedOutput;   // Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
 
     std::queue<std::string> input;      // Processed Input buffer
 
@@ -344,7 +343,8 @@ protected:
     std::string     inBuf;              // Input Buffer
     std::string     inLast;             // Last command
 
-    Player*     myPlayer{};
+    bool registered{};
+    std::shared_ptr<Player>     myPlayer{};
 
 
 // For MCCP
@@ -352,11 +352,11 @@ protected:
     z_stream    *outCompress{};
 
 // Old items from IOBUF that we might keep
-    void        (*fn)(Socket*, const std::string&){};
+    void        (*fn)(std::shared_ptr<Socket>, const std::string&){};
     char        fnparam{};
     char        commands{};
-    Socket      *spyingOn{};      // Socket we are spying on
-    std::list<Socket*> spying;    // Sockets spying on us
+    std::weak_ptr<Socket> spyingOn{};      // Socket we are spying on
+    std::list<std::weak_ptr<Socket>> spying;    // Sockets spying on us
     std::map<std::string, ReportedMsdpVariable> msdpReporting;
 // TEMP
 public:

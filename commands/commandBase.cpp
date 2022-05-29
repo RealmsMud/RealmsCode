@@ -37,7 +37,6 @@
 #include "config.hpp"                            // for Config, gConfig
 #include "factions.hpp"                          // for Faction
 #include "flags.hpp"                             // for P_AFK, M_TOLLKEEPER
-#include "free_crt.hpp"                          // for free_crt
 #include "global.hpp"                            // for CreatureClass, PROMPT
 #include "lasttime.hpp"                          // for lasttime
 #include "location.hpp"                          // for Location
@@ -51,13 +50,11 @@
 #include "mudObjects/objects.hpp"                // for Object
 #include "mudObjects/players.hpp"                // for Player
 #include "mudObjects/rooms.hpp"                  // for BaseRoom
-#include "os.hpp"                                // for ASSERTLOG
 #include "paths.hpp"                             // for Post
 #include "proto.hpp"                             // for broadcast, dmIson
 #include "raceData.hpp"                          // for RaceData
 #include "server.hpp"                            // for Server, gServer, GOL...
 #include "socket.hpp"                            // for Socket
-#include "utils.hpp"                             // for MAX, MIN
 #include "xml.hpp"                               // for loadPlayer
 
 class UniqueRoom;
@@ -67,7 +64,7 @@ class UniqueRoom;
 //*********************************************************************
 // This function tells the player the command does not exist.
 
-int cmdNoExist(Player* player, cmd* cmnd) {
+int cmdNoExist(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("The command \"%s\" does not exist.\n", cmnd->str[0]);
     return(0);
 }
@@ -77,7 +74,7 @@ int cmdNoExist(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function tells the player they're not allowed to use that command
 
-int cmdNoAuth(Player* player) {
+int cmdNoAuth(const std::shared_ptr<Player>& player) {
     player->print("You do not have the proper authorization to use that command.\n");
     return(0);
 }
@@ -90,7 +87,7 @@ int cmdNoAuth(Player* player) {
 // hence fd is a pet and ffd is a player. "fd == ffd" means a
 // player is running the command.
 
-int getFailFd(Creature *user) {
+int getFailFd(const std::shared_ptr<Creature>&user) {
     if(!user)
         return(-1);
     return(user->isPet() ? user->getMaster()->fd : user->fd);
@@ -104,17 +101,15 @@ int getFailFd(Creature *user) {
 // appropriate function, depending on what service is requested by the
 // player.
 
-void command(Socket* sock, const std::string& inStr) {
+void command(std::shared_ptr<Socket> sock, const std::string& inStr) {
     if(sock->hasPagerOutput()) {
         return sock->handlePaging(inStr);
     }
 
     cmd cmnd;
     int n;
-    Player* ply = sock->getPlayer();
+    std::shared_ptr<Player> ply = sock->getPlayer();
     std::string str = inStr;
-
-    ASSERTLOG( ply );
 
     /*
     this logn command will print out all the commands entered by players.
@@ -232,7 +227,7 @@ void parse(std::string_view str, cmd *cmnd) {
             else if(isdigit((int)token[0]) || (token[0] == '-' &&
                     isdigit((int)token[1]))) {
                 // this is a value for the previous command
-                cmnd->val[MAX(0, n - 1)] = atol(token.c_str());
+                cmnd->val[std::max(0, n - 1)] = atol(token.c_str());
             } else {
                 strncpy(cmnd->str[n], token.c_str(), MAX_TOKEN_SIZE);
                 cmnd->str[n][MAX_TOKEN_SIZE - 1] = '\0';
@@ -260,10 +255,10 @@ enum HandleObject {
 //                      handleObject
 //*********************************************************************
 
-void handleObject(Player* player, cmd* cmnd, HandleObject type) {
-    Object* object=0;
+void handleObject(const std::shared_ptr<Player>& player, cmd* cmnd, HandleObject type) {
+    std::shared_ptr<Object>  object;
     long t = time(0);
-    MudObject* target=0;
+    std::shared_ptr<MudObject> target;
 
     std::string action;
     std::string action2;
@@ -296,7 +291,7 @@ void handleObject(Player* player, cmd* cmnd, HandleObject type) {
             player->displayFlags(), cmnd->str[1], cmnd->val[1]);
 
         if(target != nullptr)
-            object = dynamic_cast<Object*>(target);
+            object = target->getAsObject();
     }
 
     if(!object) {
@@ -318,8 +313,8 @@ void handleObject(Player* player, cmd* cmnd, HandleObject type) {
             return;
         }
 
-        player->printColor("You %s %P^x.\n", action.c_str(), object);
-        broadcast(player->getSock(), player->getParent(), "%M %s %P^x.", player, action2.c_str(), object);
+        player->printColor("You %s %P^x.\n", action.c_str(), object.get());
+        broadcast(player->getSock(), player->getParent(), "%M %s %P^x.", player.get(), action2.c_str(), object.get());
 
         if(player->checkTraps(player->getUniqueRoomParent(), true, false))
             player->stun(3);
@@ -334,7 +329,7 @@ void handleObject(Player* player, cmd* cmnd, HandleObject type) {
 //                      cmdPush
 //*********************************************************************
 
-int cmdPush(Player* player, cmd* cmnd) {
+int cmdPush(const std::shared_ptr<Player>& player, cmd* cmnd) {
     handleObject(player, cmnd, Push);
     return(0);
 }
@@ -343,7 +338,7 @@ int cmdPush(Player* player, cmd* cmnd) {
 //                      cmdPull
 //*********************************************************************
 
-int cmdPull(Player* player, cmd* cmnd) {
+int cmdPull(const std::shared_ptr<Player>& player, cmd* cmnd) {
     handleObject(player, cmnd, Pull);
     return(0);
 }
@@ -352,7 +347,7 @@ int cmdPull(Player* player, cmd* cmnd) {
 //                      cmdPress
 //*********************************************************************
 
-int cmdPress(Player* player, cmd* cmnd) {
+int cmdPress(const std::shared_ptr<Player>& player, cmd* cmnd) {
     handleObject(player, cmnd, Press);
     return(0);
 }
@@ -363,10 +358,10 @@ int cmdPress(Player* player, cmd* cmnd) {
 //*********************************************************************
 // sending 0 to cls means we're not a player and we want reduced padding
 
-std::string doFinger(const Player* player, std::string name, CreatureClass cls) {
+std::string doFinger(const std::shared_ptr<Player>& player, std::string name, CreatureClass cls) {
     struct stat f_stat{};
     char    tmp[80];
-    Player* target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     std::ostringstream oStr;
     bool online=true;
 
@@ -382,15 +377,14 @@ std::string doFinger(const Player* player, std::string name, CreatureClass cls) 
     target = gServer->findPlayer(name);
 
     if(!target) {
-        if(!loadPlayer(name.c_str(), &target))
+        if(!loadPlayer(name.c_str(), target))
             return("Player does not exist.\n");
 
         online = false;
     }
 
     if(target->isStaff() && cls < target->getClass()) {
-        if(!online)
-            free_crt(target);
+        if(!online) target.reset();
         return("You are currently unable to finger that player.\n");
     }
 
@@ -413,7 +407,7 @@ std::string doFinger(const Player* player, std::string name, CreatureClass cls) 
              << target->getTitle() << "\n";
     }
 
-    sprintf(tmp, "%s/%s.txt", Path::Post, name.c_str());
+    sprintf(tmp, "%s/%s.txt", Path::Post.c_str(), name.c_str());
     if(stat(tmp, &f_stat))
         oStr << "No mail.\n";
     else if(f_stat.st_atime > f_stat.st_mtime)
@@ -428,7 +422,7 @@ std::string doFinger(const Player* player, std::string name, CreatureClass cls) 
         oStr << "Currently logged on.\n";
     } else {
         long t = target->getLastLogin();
-        free_crt(target, false);
+        target.reset();
         oStr << "Last login: " << ctime(&t);
     }
 
@@ -439,7 +433,7 @@ std::string doFinger(const Player* player, std::string name, CreatureClass cls) 
 //                      cmdFinger
 //*********************************************************************
 
-int cmdFinger(Player* player, cmd* cmnd) {
+int cmdFinger(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
@@ -459,10 +453,10 @@ int cmdFinger(Player* player, cmd* cmnd) {
 // defined as a long. X_LEVEL_BASED_TOLL will make the toll vary depending on the
 // players' level, making the cost equal exit->toll*player->getLevel().
 
-int cmdPayToll(Player* player, cmd* cmnd) {
-    Monster* target=nullptr;
-    BaseRoom    *newRoom=nullptr;
-    Exit    *exit=nullptr;
+int cmdPayToll(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster>  target=nullptr;
+    std::shared_ptr<BaseRoom>   newRoom=nullptr;
+    std::shared_ptr<Exit> exit=nullptr;
     unsigned long tc=0, amt=0;
 
     if(cmnd->num < 4) {
@@ -489,7 +483,7 @@ int cmdPayToll(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    amt = MIN<unsigned long>(amt, 30000);
+    amt = std::min<unsigned long>(amt, 30000);
 
     target = player->getParent()->findMonster(player, cmnd, 2);
     if(!target) {
@@ -498,12 +492,12 @@ int cmdPayToll(Player* player, cmd* cmnd) {
     }
 
     if(!Faction::willDoBusinessWith(player, target->getPrimeFaction())) {
-        player->print("%M refuses to do business with you.\n", target);
+        player->print("%M refuses to do business with you.\n", target.get());
         return(0);
     }
 
     if(!target->flagIsSet(M_TOLLKEEPER)) {
-        player->print("%M doesn't take toll payments.\n", target);
+        player->print("%M doesn't take toll payments.\n", target.get());
         return(0);
     }
 
@@ -542,15 +536,15 @@ int cmdPayToll(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    UniqueRoom* uRoom = newRoom->getAsUniqueRoom();
+    std::shared_ptr<UniqueRoom> uRoom = newRoom->getAsUniqueRoom();
     if(uRoom && !player->canEnter(uRoom, true))
         return(0);
 
     player->coins.sub(amt, GOLD);
     Server::logGold(GOLD_OUT, player, Money(amt, GOLD), exit, "Toll");
 
-    player->printColor("%M accepts your toll and ushers you through the %s^x.\n", target, exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M pays %N some coins and goes through the %s^x.", player, target, exit->getCName());
+    player->printColor("%M accepts your toll and ushers you through the %s^x.\n", target.get(), exit->getCName());
+    broadcast(player->getSock(), player->getParent(), "%M pays %N some coins and goes through the %s^x.", player.get(), target.get(), exit->getCName());
 
     player->deleteFromRoom();
     player->addToRoom(newRoom);
@@ -562,7 +556,7 @@ int cmdPayToll(Player* player, cmd* cmnd) {
 //                      tollcost
 //*********************************************************************
 
-unsigned long tollcost(const Player* player, const Exit* exit, Monster* keeper) {
+unsigned long tollcost(const std::shared_ptr<const Player>& player, const std::shared_ptr<Exit> exit, std::shared_ptr<Monster>  keeper) {
     unsigned long cost = exit->getToll() ? exit->getToll() : DEFAULT_TOLL;
     if(!player)
         return(cost);
@@ -584,12 +578,12 @@ unsigned long tollcost(const Player* player, const Exit* exit, Monster* keeper) 
 //                      infoGamestat
 //*********************************************************************
 
-int infoGamestat(Player* player, cmd* cmnd) {
+int infoGamestat(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     players=0, immorts=0;
     int     daytime=0;
     long    t=0, days=0, hours=0, minutes=0;
 
-    Player* target=nullptr;
+    std::shared_ptr<Player> target=nullptr;
     for(const auto& p : gServer->players) {
         target = p.second;
 
@@ -624,7 +618,7 @@ int infoGamestat(Player* player, cmd* cmnd) {
         player->printColor("^gThe mud has been running for %d game days.\n", gConfig->calendar->getTotalDays());
 
 
-    player->printColor("^MReal-Time: %s.\n", gServer->getServerTime().c_str());
+    player->printColor("^MReal-Time: %s.\n", Server::getServerTime().c_str());
 
     if(!days)
         player->printColor("^RRealms Uptime: %02ld:%02ld:%02ld\n", hours, minutes, (t - StartTime) % 60L);
@@ -648,7 +642,7 @@ int infoGamestat(Player* player, cmd* cmnd) {
 // this allows a player to set his/her description that is seen when you
 // look at them.
 
-int cmdDescription(Player* player, cmd* cmnd) {
+int cmdDescription(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())

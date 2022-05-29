@@ -45,7 +45,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for daily
-#include "utils.hpp"                 // for MAX
 #include "web.hpp"                   // for updateRecentActivity
 
 
@@ -53,8 +52,8 @@
 //                      healCombatCheck
 //*********************************************************************
 
-bool healCombatCheck(Creature* healer, Creature* target, bool print=true) {
-    Monster* mTarget = target->getAsMonster();
+bool healCombatCheck(const std::shared_ptr<Creature>& healer, std::shared_ptr<Creature> target, bool print=true) {
+    std::shared_ptr<Monster>  mTarget = target->getAsMonster();
 
     if(!mTarget)
         return(true);
@@ -69,7 +68,7 @@ bool healCombatCheck(Creature* healer, Creature* target, bool print=true) {
     if(healer->getGroup() == mTarget->getGroup())
         return(true);
     if(print)
-        healer->print("Not while %N is in combat with someone.\n", target);
+        healer->print("Not while %N is in combat with someone.\n", target.get());
     return(false);
 }
 
@@ -78,8 +77,8 @@ bool healCombatCheck(Creature* healer, Creature* target, bool print=true) {
 //                      getHeal
 //*********************************************************************
 
-int getHeal(Creature *healer, Creature* target, int spell) {
-    Player  *pHealer = healer->getAsPlayer();
+int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> target, int spell) {
+    std::shared_ptr<Player> pHealer = healer->getAsPlayer();
     int     level=0, statBns=0, base=0, mod=0, heal=0, dmg=0;
     int     vigPet=0;
 
@@ -87,7 +86,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
         /* Mobs with intelligence > 12 do not like people vigging their enemies and
            will attack them. -TC */
         if(target != healer && target->isPlayer() && target->inCombat()) {
-            for(Monster* mons : target->getRoomParent()->monsters) {
+            for(const auto& mons : target->getRoomParent()->monsters) {
                 if(mons->intelligence.getCur() > 120 && mons->getAsMonster()->isEnemy(target))
                     mons->getAsMonster()->addEnemy(healer);
 
@@ -189,7 +188,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
         break;
 
     case CreatureClass::DRUID:
-        statBns = MAX(bonus(healer->intelligence.getCur()), bonus(healer->constitution.getCur()));
+        statBns = std::max(bonus(healer->intelligence.getCur()), bonus(healer->constitution.getCur()));
         mod = level/4 + Random::get(1, 1 + level / 5);
         break;
     case CreatureClass::THIEF:
@@ -210,17 +209,17 @@ int getHeal(Creature *healer, Creature* target, int spell) {
     case CreatureClass::RANGER:
     case CreatureClass::BARD:
     case CreatureClass::PUREBLOOD:
-        statBns = MAX(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
+        statBns = std::max(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
         mod = Random::get(1,6);
         break;
     case CreatureClass::MAGE:
-        statBns = MAX(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
+        statBns = std::max(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
         mod = 0;
         break;
 
     case CreatureClass::CARETAKER:
     case CreatureClass::DUNGEONMASTER:
-        statBns = MAX(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
+        statBns = std::max(bonus(healer->piety.getCur()), bonus(healer->intelligence.getCur()));
         mod = Random::get(level/2, level);
         break;
 
@@ -299,7 +298,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
             healer->print("FOOL! You dare turn from %s's evil ways!\n", gConfig->getDeity(healer->getDeity())->getName().c_str());
             dmg = Random::get(1,10);
             healer->print("You are shocked for %d damage by %s's wrath!\n", dmg, gConfig->getDeity(healer->getDeity())->getName().c_str());
-            broadcast(healer->getSock(), healer->getRoomParent(), "%M doubles over in pain and wretches.\n", healer);
+            broadcast(healer->getSock(), healer->getRoomParent(), "%M doubles over in pain and wretches.\n", healer.get());
             healer->hp.decrease(dmg);
             mod = 0;
 
@@ -309,7 +308,7 @@ int getHeal(Creature *healer, Creature* target, int spell) {
                 healer->print("How DARE you heal the righteous and good of heart!\n");
                 dmg = Random::get(1,10);
                 healer->print("You are shocked for %d damage by %s's wrath!\n", dmg, gConfig->getDeity(healer->getDeity())->getName().c_str());
-                broadcast(healer->getSock(), healer->getRoomParent(), "%M doubles over in pain and wretches.\n", healer);
+                broadcast(healer->getSock(), healer->getRoomParent(), "%M doubles over in pain and wretches.\n", healer.get());
                 healer->hp.decrease(dmg);
                 mod = 0;
             } else if(  healer->getDeity() == ARAMON || (
@@ -370,13 +369,13 @@ int getHeal(Creature *healer, Creature* target, int spell) {
             heal = Random::get(1,3);
     }
 
-    return(MAX(1, heal));
+    return(std::max(1, heal));
 }
 
 
-void niceExp(Creature *healer, Creature *creature, int heal, CastType how) {
-    Player  *player=nullptr, *target=nullptr;
-    unsigned int exp=0;
+void niceExp(const std::shared_ptr<Creature>&healer, const std::shared_ptr<Creature>&creature, int heal, CastType how) {
+    std::shared_ptr<Player> player=nullptr, target=nullptr;
+    int exp=0;
 
     if(how != CastType::CAST)
         return;
@@ -389,9 +388,9 @@ void niceExp(Creature *healer, Creature *creature, int heal, CastType how) {
         return;
 
     if(player->getDeity() == CERIS || player->getDeity() == ENOCH || player->getDeity() == LINOTHAN)
-        exp = MAX(1, heal) / 4;
+        exp = std::max(1, heal) / 4;
     else
-        exp = MAX(1, heal) / 3;
+        exp = std::max(1, heal) / 3;
 
     if(player->getDeity() == ARAMON)
         exp = 0;
@@ -414,7 +413,7 @@ void niceExp(Creature *healer, Creature *creature, int heal, CastType how) {
 //                      canCastHealing
 //*********************************************************************
 
-bool canCastHealing(Creature* player, Creature* target, bool rej=false, bool healSpell=false, bool print=true) {
+bool canCastHealing(const std::shared_ptr<Creature>& player, std::shared_ptr<Creature> target, bool rej=false, bool healSpell=false, bool print=true) {
     if(!healCombatCheck(player, target, print))
         return(false);
 
@@ -430,13 +429,13 @@ bool canCastHealing(Creature* player, Creature* target, bool rej=false, bool hea
 
     if(target->getClass() == CreatureClass::LICH) {
         if(print)
-            player->print("The aura of death around %N nullifies your %s magic.\n", target, rej ? "healing" : "rejuvinating");
+            player->print("The aura of death around %N nullifies your %s magic.\n", target.get(), rej ? "healing" : "rejuvinating");
         return(false);
     }
     if(!rej && target->isEffected("stoneskin")) {
         // don't check this for liches
         if(print)
-            player->print("%M's stoneskin spell reflects your %s magic.\n", target, rej ? "healing" : "rejuvinating");
+            player->print("%M's stoneskin spell reflects your %s magic.\n", target.get(), rej ? "healing" : "rejuvinating");
         return(false);
     }
 
@@ -445,7 +444,7 @@ bool canCastHealing(Creature* player, Creature* target, bool rej=false, bool hea
 
     if(!rej && target->hp.getCur() >= target->hp.getMax()) {
         if(print)
-            player->print("%M is at full health right now.\n", target);
+            player->print("%M is at full health right now.\n", target.get());
         return(false);
     }
     return(true);
@@ -455,8 +454,8 @@ bool canCastHealing(Creature* player, Creature* target, bool rej=false, bool hea
 //                      castHealingSpell
 //*********************************************************************
 
-int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const char* spellName, const char* feelBetter, int flag, int defaultAmount) {
-    Creature* target=nullptr;
+int castHealingSpell(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* spellName, const char* feelBetter, int flag, int defaultAmount) {
+    std::shared_ptr<Creature> target=nullptr;
     char    capSpellName[25];
     int     heal=0;
 
@@ -489,8 +488,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL) {
             player->print("%s spell cast.\n", capSpellName);
-            broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on %sself.",
-                player, spellName, player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on %sself.", player.get(), spellName, player->himHer());
             return(1);
         } else {
             player->print("%s\n", feelBetter);
@@ -526,10 +524,10 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
         heal = player->doHeal(target, heal);
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("%s spell cast on %N.\n", capSpellName, target);
-            target->print("%M casts a %s spell on you.\n",  player, spellName);
+            player->print("%s spell cast on %N.\n", capSpellName, target.get());
+            target->print("%M casts a %s spell on you.\n",  player.get(), spellName);
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.",
-                player, spellName, target);
+                player.get(), spellName, target.get());
 
             niceExp(player, target, heal, spellData->how);
             return(1);
@@ -545,7 +543,7 @@ int castHealingSpell(Creature* player, cmd* cmnd, SpellData* spellData, const ch
 // This function will cause the vigor spell to be cast on a player or
 // another monster.
 
-int splVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splVigor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(castHealingSpell(player, cmnd, spellData, "vigor", "You feel better.", S_VIGOR, Random::get(1, 8)));
 }
 
@@ -557,7 +555,7 @@ int splVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
 // intelligence. If the player is a cleric then there is an additional
 // point of healing for each level of the cleric.
 
-int splMendWounds(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splMendWounds(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(castHealingSpell(player, cmnd, spellData, "mend-wounds", "You feel much better.", S_MEND_WOUNDS, dice(2, 7, 0)));
 }
 
@@ -567,8 +565,8 @@ int splMendWounds(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function will cause the vigor spell to be cast on a player or
 // another monster.
 
-int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splRejuvenate(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
     int     heal=0, mpHeal=0;
 
     if(!(player->getClass() == CreatureClass::CLERIC && player->getDeity() == CERIS) && spellData->how == CastType::CAST && !player->isCt()) {
@@ -626,8 +624,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL) {
 
             player->print("Rejuvenate spell cast.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts a rejuvenate spell on %sself.",
-                player, player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts a rejuvenate spell on %sself.", player.get(), player->himHer());
 
         } else {
             player->print("You feel revitalized.\n");
@@ -649,7 +646,7 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
 
         if(target->hp.getCur() >= target->hp.getMax() && target->mp.getCur() >= target->mp.getMax()) {
-            player->print("%M is at full health and magic right now.\n", target);
+            player->print("%M is at full health and magic right now.\n", target.get());
             return(0);
         }
 
@@ -684,10 +681,9 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
 
-            player->print("Rejuvenate spell cast on %N.\n", target);
-            target->print("%M casts a rejuvenate spell on you.\n", player);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a rejuvenate spell on %N.",
-                player, target);
+            player->print("Rejuvenate spell cast on %N.\n", target.get());
+            target->print("%M casts a rejuvenate spell on you.\n", player.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a rejuvenate spell on %N.", player.get(), target.get());
 
             niceExp(player, target, (heal+mpHeal)/2, spellData->how);
         }
@@ -703,8 +699,8 @@ int splRejuvenate(Creature* player, cmd* cmnd, SpellData* spellData) {
 // another monster. It heals all hit points damage but only works 3
 // times a day.
 
-int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* creature=nullptr;
+int splHeal(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> creature=nullptr;
 
 
     if(spellData->how == CastType::CAST && !player->isStaff()) {
@@ -744,8 +740,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
             player->print("Heal spell cast.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts a heal spell on %sself.", player,
-                player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts a heal spell on %sself.", player.get(), player->himHer());
             return(1);
         } else {
             player->print("You feel incredibly better.\n");
@@ -815,13 +810,12 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 
                 creature->hp.decrease(dmg);
 
-                player->print("The heal spell nearly kills %N!\n",creature);
+                player->print("The heal spell nearly kills %N!\n",creature.get());
 
                 if(creature->isPlayer())
-                    creature->print("%M's heal spell sucks away your life force!\n", player);
+                    creature->print("%M's heal spell sucks away your life force!\n", player.get());
 
-                broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M's heal spell nearly kills %N!",
-                    player, creature);
+                broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M's heal spell nearly kills %N!", player.get(), creature.get());
                 player->smashInvis();
                 if(creature->isMonster())
                     creature->getAsMonster()->adjustThreat(player, dmg);
@@ -833,14 +827,13 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 
             if(player->isPlayer())
                 player->getAsPlayer()->statistics.healingCast();
-            int healed = MAX<int>(creature->hp.getMax() - creature->hp.getCur() - Random::get(1,4), 0);
+            int healed = std::max<int>(creature->hp.getMax() - creature->hp.getCur() - Random::get(1,4), 0);
             player->doHeal(creature, healed, 0.33);
-            //creature->hp.setCur(MAX(1, creature->hp.getMax() - Random::get(1,4)));
+            //creature->hp.setCur(std::max(1, creature->hp.getMax() - Random::get(1,4)));
 
-            player->print("Heal spell cast on %N.\n", creature);
-            creature->print("%M casts a heal spell on you.\n", player);
-            broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M casts a heal spell on %N.",
-                player, creature);
+            player->print("Heal spell cast on %N.\n", creature.get());
+            creature->print("%M casts a heal spell on you.\n", player.get());
+            broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M casts a heal spell on %N.", player.get(), creature.get());
 
             logCast(player, creature, "heal");
             return(1);
@@ -855,7 +848,7 @@ int splHeal(Creature* player, cmd* cmnd, SpellData* spellData) {
 //*********************************************************************
 
 void Creature::removeStatEffects() {
-    Player* pThis = getAsPlayer();
+    std::shared_ptr<Player> pThis = getAsPlayer();
     if(pThis) {
         pThis->loseRage();
         pThis->loseFrenzy();
@@ -878,21 +871,21 @@ void Creature::removeStatEffects() {
 //*********************************************************************
 
 int doResLoss(int curr, int prev, bool full) {
-    return(MAX(0, (prev - (full ? 0 : (prev - curr) / 5))));
+    return(std::max(0, (prev - (full ? 0 : (prev - curr) / 5))));
 }
 
 //*********************************************************************
 //                      doRess
 //*********************************************************************
 
-int doRes(Creature* caster, cmd* cmnd, bool res) {
+int doRes(const std::shared_ptr<Creature>& caster, cmd* cmnd, bool res) {
     // if ress=false, it's a bloodfusion
-    Player  *player = caster->getAsPlayer();
+    std::shared_ptr<Player> player = caster->getAsPlayer();
     int     prevLevel=0;
     bool    full=false;
     long    t=0;
-    Player *target=nullptr;
-    BaseRoom *newRoom=nullptr;
+    std::shared_ptr<Player> target=nullptr;
+    std::shared_ptr<BaseRoom> newRoom=nullptr;
 
     if(player && !player->isDm()) {
         if(player->getNegativeLevels()) {
@@ -985,7 +978,7 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
     }
 
 
-    caster->print("You cast a %s spell on %N.\n", res ? "resurrection" : "bloodfusion", target);
+    caster->print("You cast a %s spell on %N.\n", res ? "resurrection" : "bloodfusion", target.get());
 
     prevLevel = target->getLevel();
     long expGain = full ? (target->statistics.getLastExperienceLoss()*4/5) : (target->statistics.getLastExperienceLoss());
@@ -1013,16 +1006,16 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
     dec_daily(&target->daily[DL_RESURRECT]);
 
 
-    broadcast(caster->getSock(), caster->getRoomParent(), "%M casts a %s spell on %N.", caster, res ? "resurrection" : "bloodfusion", target);
+    broadcast(caster->getSock(), caster->getRoomParent(), "%M casts a %s spell on %N.", caster.get(), res ? "resurrection" : "bloodfusion", target.get());
 
     logn("log.resurrect", "%s(L:%d) %s %s(L%d:%d) %s.\n", caster->getCName(), caster->getLevel(),
         res ? "resurrected" : "fused", target->getCName(), prevLevel, target->getLevel(),
         res ? "from the dead" : "with new blood");
 
     if(res)
-        broadcast("^R### %M just resurrected %s from the dead!", caster, target->getCName());
+        broadcast("^R### %M just resurrected %s from the dead!", caster.get(), target->getCName());
     else
-        broadcast("^R### %M just fused %s with new blood!", caster, target->getCName());
+        broadcast("^R### %M just fused %s with new blood!", caster.get(), target->getCName());
 
 
     if(player && !player->isDm()) {
@@ -1032,7 +1025,7 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
         caster->lasttime[LT_NOMPTICK].ltime = t;
         caster->lasttime[LT_NOMPTICK].interval = 120L;
 
-        broadcast(caster->getSock(), caster->getRoomParent(), "%M collapses from exhaustion.", caster);
+        broadcast(caster->getSock(), caster->getRoomParent(), "%M collapses from exhaustion.", caster.get());
         caster->print("You collapse from exhaustion.\n");
         caster->knockUnconscious(120);
 
@@ -1072,7 +1065,7 @@ int doRes(Creature* caster, cmd* cmnd, bool res) {
 //                      splResurrect
 //*********************************************************************
 
-int splResurrect(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splResurrect(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
 
     if(spellData->how != CastType::CAST)
         return(0);
@@ -1103,7 +1096,7 @@ int splResurrect(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splBloodfusion
 //*********************************************************************
 
-int splBloodfusion(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splBloodfusion(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
 
     if(spellData->how != CastType::CAST)
         return(0);
@@ -1137,8 +1130,8 @@ int splBloodfusion(Creature* player, cmd* cmnd, SpellData* spellData) {
 // a potion or a wand.  Restore should not be a cast-able spell because
 // it can restore magic points to full.
 
-int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splRestore(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
 
     if(spellData->how == CastType::CAST && player->isPlayer() && !player->isStaff()) {
         player->print("You may not cast that spell.\n");
@@ -1151,7 +1144,7 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::WAND) {
             player->print("Restore spell cast.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts restore on %sself.", player, player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts restore on %sself.", player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION)
             player->print("You feel restored.\n");
 
@@ -1169,10 +1162,9 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
 
-        player->print("Restore spell cast on %N.\n", target);
-        target->print("%M casts a restore spell on you.\n", player);
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a restore spell on %N.",
-            player, target);
+        player->print("Restore spell cast on %N.\n", target.get());
+        target->print("%M casts a restore spell on you.\n", player.get());
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a restore spell on %N.", player.get(), target.get());
 
         logCast(player, target, "restore");
     }
@@ -1193,7 +1185,7 @@ int splRestore(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splRoomVigor
 //*********************************************************************
 
-int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
+int splRoomVigor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     int      heal=0;
 
     if(spellData->how == CastType::POTION) {
@@ -1207,7 +1199,7 @@ int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
     }
 
     player->print("You cast vigor on everyone in the room.\n");
-    broadcast(player->getSock(), player->getParent(), "%M casts vigor on everyone in the room.\n", player);
+    broadcast(player->getSock(), player->getParent(), "%M casts vigor on everyone in the room.\n", player.get());
 
     heal = Random::get(1, 6) + bonus(player->piety.getCur());
 
@@ -1216,13 +1208,15 @@ int splRoomVigor(Creature* player, cmd* cmnd, SpellData* spellData) {
         player->print("\nThe room's magical properties increase the power of your spell\n");
     }
 
-    for(Player* ply : player->getRoomParent()->players) {
-        if(canCastHealing(player, ply, false, false, false)) {
-            if(ply != player)
-                ply->print("%M casts vigor on you.\n", player);
-            player->doHeal(ply, heal);
-            if(ply->inCombat(false))
-                player->smashInvis();
+    for(const auto& pIt: player->getRoomParent()->players) {
+        if(auto ply = pIt.lock()) {
+            if (canCastHealing(player, ply, false, false, false)) {
+                if (ply != player)
+                    ply->print("%M casts vigor on you.\n", player.get());
+                player->doHeal(ply, heal);
+                if (ply->inCombat(false))
+                    player->smashInvis();
+            }
         }
     }
 

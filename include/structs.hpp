@@ -15,8 +15,7 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef MSTRUCT_H
-#define MSTRUCT_H
+#pragma once
 
 #include <functional>
 #include <list>
@@ -197,8 +196,8 @@ public:
 
 
 typedef struct tagPlayer {
-    Player* ply;
-    Socket* sock;
+    std::shared_ptr<Player> ply;
+    std::shared_ptr<Socket> sock;
 //  iobuf   *io;
 //  extra   *extr;
 } plystruct;
@@ -282,15 +281,15 @@ public:
 class Command: public virtual MudMethod {
 public:
     ~Command() = default;
-    bool    (*auth)(const Creature *){};
+    bool    (*auth)(const std::shared_ptr<Creature> &){};
 
-    virtual int execute(Creature* player, cmd* cmnd) const = 0;
+    virtual int execute(const std::shared_ptr<Creature>& player, cmd* cmnd) const = 0;
 };
 
 // these are supplemental to the cmd class
 class CrtCommand: public Command {
 public:
-    CrtCommand(std::string_view pCmdStr, int pPriority, int (*pFn)(Creature* player, cmd* cmnd), bool (*pAuth)(const Creature *), std::string_view pDesc): fn(pFn)
+    CrtCommand(std::string_view pCmdStr, int pPriority, int (*pFn)(const std::shared_ptr<Creature>& player, cmd* cmnd), bool (*pAuth)(const std::shared_ptr<Creature> &), std::string_view pDesc): fn(pFn)
     {
         name = pCmdStr;
         priority = pPriority;
@@ -301,13 +300,13 @@ public:
         name = pCmdStr;
     }
     ~CrtCommand() = default;
-    int (*fn)(Creature* player, cmd* cmnd);
-    int execute(Creature* player, cmd* cmnd) const;
+    int (*fn)(const std::shared_ptr<Creature>& player, cmd* cmnd);
+    int execute(const std::shared_ptr<Creature>& player, cmd* cmnd) const;
 };
 
 class PlyCommand: public Command {
 public:
-    PlyCommand(std::string_view pCmdStr, int pPriority, int (*pFn)(Player* player, cmd* cmnd), bool (*pAuth)(const Creature *), std::string_view pDesc): fn(pFn)
+    PlyCommand(std::string_view pCmdStr, int pPriority, int (*pFn)(const std::shared_ptr<Player>& player, cmd* cmnd), bool (*pAuth)(const std::shared_ptr<Creature> &), std::string_view pDesc): fn(pFn)
     {
         name = std::string(pCmdStr);
         priority = pPriority;
@@ -318,10 +317,8 @@ public:
         name = pCmdStr;
     }
     ~PlyCommand() = default;
-    int (*fn)(Player* player, cmd* cmnd);
-    int execute(Creature* player, cmd* cmnd) const;
+    int (*fn)(const std::shared_ptr<Player>& player, cmd* cmnd);
+    int execute(const std::shared_ptr<Creature>& player, cmd* cmnd) const;
 };
 
 typedef int (*PFNCOMPARE)(const void *, const void *);
-
-#endif

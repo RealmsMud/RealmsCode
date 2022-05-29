@@ -27,9 +27,8 @@
 
 #include "calendar.hpp"                             // for cWeather, Calendar
 #include "global.hpp"                               // for FATAL
-#include "os.hpp"                                   // for merror
 #include "paths.hpp"                                // for PlayerData
-#include "proto.hpp"                                // for file_exists
+#include "proto.hpp"                                // for merror
 #include "season.hpp"                               // for Season
 #include "xml.hpp"                                  // for newStringChild
 
@@ -218,7 +217,7 @@ void Calendar::save() const {
         (*mt)->save(childNode);
     }
 
-    sprintf(filename, "%s/calendar.xml", Path::PlayerData);
+    sprintf(filename, "%s/calendar.xml", Path::PlayerData.c_str());
 
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
@@ -272,13 +271,13 @@ void Calendar::load() {
     xmlNodePtr  curNode;
     char        filename[80];
 
-    sprintf(filename, "%s/calendar.xml", Path::PlayerData);
+    sprintf(filename, "%s/calendar.xml", Path::PlayerData.c_str());
 
-    if(!file_exists(filename))
-        merror("Unable to find calendar file", FATAL);
+    if(!fs::exists(filename))
+        throw std::runtime_error("Unable to find calendar file");
 
     if((xmlDoc = xml::loadFile(filename, "Calendar")) == nullptr)
-        merror("Unable to read calendar file", FATAL);
+        throw std::runtime_error("Unable to read calendar file");
 
     rootNode = xmlDocGetRootElement(xmlDoc);
     curNode = rootNode->children;

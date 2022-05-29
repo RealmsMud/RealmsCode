@@ -31,33 +31,33 @@ public:
     Damage();
     void reset();
 
-    [[nodiscard]] unsigned int get() const;
-    [[nodiscard]] unsigned int getBonus() const;
-    [[nodiscard]] unsigned int getDrain() const;
-    [[nodiscard]] unsigned int getReflected() const;
-    [[nodiscard]] unsigned int getDoubleReflected() const;
-    [[nodiscard]] unsigned int getPhysicalReflected() const;
+    [[nodiscard]] int get() const;
+    [[nodiscard]] int getBonus() const;
+    [[nodiscard]] int getDrain() const;
+    [[nodiscard]] int getReflected() const;
+    [[nodiscard]] int getDoubleReflected() const;
+    [[nodiscard]] int getPhysicalReflected() const;
     [[nodiscard]] ReflectedDamageType getPhysicalReflectedType() const;
-    [[nodiscard]] unsigned int getPhysicalBonusReflected() const;
+    [[nodiscard]] int getPhysicalBonusReflected() const;
 
     void add(int d);
-    void set(unsigned int d);
+    void set(int d);
     void includeBonus(int fraction=1);
-    void setBonus(unsigned int b);
-    void setDrain(unsigned int b);
+    void setBonus(int b);
+    void setDrain(int b);
     void setBonus(Damage dmg);
-    void setReflected(unsigned int r);
-    void setDoubleReflected(unsigned int r);
-    void setPhysicalReflected(unsigned int r);
+    void setReflected(int r);
+    void setDoubleReflected(int r);
+    void setPhysicalReflected(int r);
     void setPhysicalReflectedType(ReflectedDamageType type);
 protected:
-    unsigned int damage{};
-    unsigned int bonus{};
-    unsigned int drain{};
-    unsigned int reflected{};
-    unsigned int doubleReflected{};
-    unsigned int physicalReflected{};
-    unsigned int physicalBonusReflected{};
+    int damage{};
+    int bonus{};
+    int drain{};
+    int reflected{};
+    int doubleReflected{};
+    int physicalReflected{};
+    int physicalBonusReflected{};
     ReflectedDamageType physicalReflectedType;
 };
 

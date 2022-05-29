@@ -31,7 +31,7 @@ public:
     CatRef  getRandom() const;
     void    load(xmlNodePtr curNode);
     void    save(xmlNodePtr curNode) const;
-    void    show(const Player* player, std::string_view area="") const;
+    void    show(const std::shared_ptr<Player> player, std::string_view area="") const;
 
     std::map<int, CatRef> random;
 

@@ -37,63 +37,52 @@
 
 #include "oldquest.hpp"
 
-class SkillInfo;
 class AlchemyInfo;
-class CatRefInfo;
-class QuestInfo;
-class MudFlag;
-class cWeather;
-
-class Lore;
-class Unique;
-class PlayerClass;
-class GuildCreation;
 class Ban;
-class Property;
-class Ship;
-class Effect;
-class Calendar;
-
-class ProxyManager;
-
-class MsdpVariable;
-class MxpElement;
-
-class CatRef;
-class MapMarker;
-class StartLoc;
-
-class Server;
-class Socket;
-
-class Guild;
-class Faction;
-class Clan;
-
 class BaseRoom;
+class Calendar;
+class CatRef;
+class CatRefInfo;
+class Clan;
+class ClassData;
 class Creature;
+class CrtCommand;
+class DeityData;
+class Effect;
+class Faction;
+class Fishing;
+class Guild;
+class GuildCreation;
+class Lore;
+class MapMarker;
 class Monster;
+class MsdpVariable;
+class MudFlag;
 class MudObject;
+class MxpElement;
 class Object;
 class Player;
-class UniqueRoom;
-
-class Spell;
-class Song;
-
+class PlayerClass;
 class PlyCommand;
-class CrtCommand;
-class SkillCommand;
-class SocialCommand;
-
-class Fishing;
-class Recipe;
-
-class ClassData;
-class DeityData;
+class Property;
+class ProxyManager;
+class QuestInfo;
 class RaceData;
-
+class Recipe;
+class Server;
+class Ship;
+class SkillCommand;
+class SkillInfo;
+class SocialCommand;
+class Socket;
+class Song;
+class Spell;
+class StartLoc;
 class Swap;
+class Unique;
+class UniqueRoom;
+class Zone;
+class cWeather;
 
 struct comp {
     bool operator() (const std::string& lhs, const std::string& rhs) const {
@@ -120,14 +109,15 @@ typedef std::set<Spell, namableCmp> SpellSet;
 typedef std::set<Song, namableCmp> SongSet;
 typedef std::map<std::string, AlchemyInfo, comp> AlchemyMap;
 typedef std::map<std::string, MsdpVariable> MsdpVariableMap;
-typedef std::map<unsigned int, MudFlag> MudFlagMap;
+typedef std::map<int, MudFlag> MudFlagMap;
 
-typedef std::map<unsigned int, RaceData*> RaceDataMap;
-typedef std::map<unsigned int, DeityData*> DeityDataMap;
-typedef std::map<unsigned int, Recipe*> RecipeMap;
-typedef std::map<unsigned int, Clan*> ClanMap;
-typedef std::map<unsigned int, Guild*> GuildMap;
-typedef std::map<unsigned int, QuestInfo*> QuestInfoMap;
+typedef std::map<int, RaceData*> RaceDataMap;
+typedef std::map<int, DeityData*> DeityDataMap;
+typedef std::map<int, Recipe*> RecipeMap;
+typedef std::map<int, Clan*> ClanMap;
+typedef std::map<int, Guild*> GuildMap;
+typedef std::map<CatRef, QuestInfo*> QuestInfoMap;
+typedef std::map<std::string, Zone> ZoneMap;
 typedef std::map<long, std::string> DiscordTokenMap; // webhookId --> token
 
 // Case insensitive
@@ -171,13 +161,13 @@ public:
 // Proxy
     void loadProxyAccess();
     void saveProxyAccess();
-    bool hasProxyAccess(Player* proxy, Player* proxied);
-    void grantProxyAccess(Player* proxy, Player* proxied);
-    bool removeProxyAccess(Player* proxy, Player* proxied);
-    bool removeProxyAccess(std::string_view id, Player* proxied);
+    bool hasProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
+    void grantProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
+    bool removeProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
+    bool removeProxyAccess(std::string_view id, std::shared_ptr<Player> proxied);
     void clearProxyAccess();
 
-    std::string getProxyList(Player* player = nullptr);
+    std::string getProxyList(std::shared_ptr<Player> player = nullptr);
 
 // MSDP
     bool initMsdp();
@@ -240,7 +230,7 @@ public:
     bool addBan(Ban* toAdd);
     bool deleteBan(int toDel);
     bool isBanned(std::string_view site);
-    int isLockedOut(Socket* sock);
+    int isLockedOut(const std::shared_ptr<Socket>& sock);
 
 
 // Guilds
@@ -249,7 +239,7 @@ public:
 
     Guild* getGuild(int guildId);
     Guild* getGuild(std::string_view name);
-    Guild* getGuild(const Player* player, std::string txt);
+    Guild* getGuild(const std::shared_ptr<Player> player, std::string txt);
     bool deleteGuild(int guildId);
 
 // GuildCreations
@@ -287,48 +277,51 @@ public:
     bool loadQuests();
     void clearQuests();
 
+// Zones
+    bool loadZones();
+
+
 // Ships
     bool loadShips();
     void saveShips() const;
-    void clearShips();
 
 // Calendar
     void loadCalendar();
     [[nodiscard]] const Calendar* getCalendar() const;
 
-    int classtoNum(std::string_view str);
+    static int classtoNum(std::string_view str);
     int racetoNum(std::string_view str);
     int deitytoNum(std::string_view str);
-    int stattoNum(std::string_view str);
-    int savetoNum(std::string_view str);
+    static int stattoNum(std::string_view str);
+    static int savetoNum(std::string_view str);
 
 // Uniques
     bool loadLimited();
     void saveLimited() const;
     void clearLimited();
     void addUnique(Unique* unique);
-    void listLimited(const Player* player);
-    [[nodiscard]] Unique* getUnique(const Object* object) const;
+    void listLimited(const std::shared_ptr<Player>& player);
+    [[nodiscard]] Unique* getUnique(const std::shared_ptr<const Object>&  object) const;
     [[nodiscard]] Unique* getUnique(int id) const;
-    void deleteUniques(Player* player);
+    void deleteUniques(const std::shared_ptr<Player>& player);
     void deleteUnique(Unique* unique);
     [[nodiscard]] Lore* getLore(const CatRef& cr) const;
     void addLore(const CatRef& cr, int i);
     void delLore(const CatRef& cr);
-    void uniqueDecay(Player* player=nullptr);
+    void uniqueDecay(const std::shared_ptr<Player>& player=nullptr);
 
 // Clans
     bool loadClans();
     void clearClans();
-    [[nodiscard]] const Clan *getClan(unsigned int id) const;
-    [[nodiscard]] const Clan *getClanByDeity(unsigned int deity) const;
+    [[nodiscard]] const Clan *getClan(int id) const;
+    [[nodiscard]] const Clan *getClanByDeity(int deity) const;
 
 // Recipes
     bool loadRecipes();
     void clearRecipes();
     bool saveRecipes() const;
     Recipe *getRecipe(int id);
-    Recipe *searchRecipes(const Player* player, std::string_view skill, Size recipeSize, int numIngredients, const Object* object=nullptr);
+    Recipe *searchRecipes(const std::shared_ptr<const Player> &player, std::string_view skill, Size recipeSize, int numIngredients, const std::shared_ptr<Object> &object=nullptr);
     void addRecipe(Recipe* recipe);
     void remRecipe(Recipe* recipe);
 
@@ -345,13 +338,13 @@ public:
     bool saveProperties() const;
     void clearProperties();
     void addProperty(Property* p);
-    void showProperties(Player* viewer, Player* player, PropType propType = PROP_NONE);
+    void showProperties(const std::shared_ptr<Player>& viewer, const std::shared_ptr<Player>& player, PropType propType = PROP_NONE);
     Property* getProperty(const CatRef& cr);
     void destroyProperty(Property *p);
     void destroyProperties(std::string_view owner);
     CatRef getAvailableProperty(PropType type, int numRequired);
-    void renamePropertyOwner(std::string_view oldName, Player *player);
-    CatRef getSingleProperty(const Player* player, PropType type);
+    void renamePropertyOwner(std::string_view oldName, const std::shared_ptr<Player>& player);
+    CatRef getSingleProperty(const std::shared_ptr<const Player>& player, PropType type);
 
 // CatRefInfo
     bool loadCatRefInfo();
@@ -359,13 +352,13 @@ public:
     void saveCatRefInfo() const;
     [[nodiscard]] std::string catRefName(std::string_view area) const;
     [[nodiscard]] const CatRefInfo* getCatRefInfo(std::string_view area, int id=0, int shouldGetParent=0) const;
-    [[nodiscard]] const CatRefInfo* getCatRefInfo(const BaseRoom* room, int shouldGetParent=0) const;
+    [[nodiscard]] const CatRefInfo* getCatRefInfo(const std::shared_ptr<const BaseRoom>& room, int shouldGetParent=0) const;
     [[nodiscard]] const CatRefInfo* getRandomCatRefInfo(int zone) const;
 
 
 // swap
     void swapLog(const std::string& log, bool external=true);
-    void swap(Player* player, std::string_view name);
+    void swap(std::shared_ptr<Player> player, std::string_view name);
     void swap(std::string str);
     void offlineSwap(childProcess &child, bool onReap);
     void offlineSwap();
@@ -381,15 +374,15 @@ public:
     int swapQueueSize();
     bool isSwapping() const;
     void setMovingRoom(const CatRef& o, const CatRef& t);
-    void swapInfo(const Player* player);
+    void swapInfo(const std::shared_ptr<Player>& player);
     void swapAbort();
-    bool checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), Player* player, bool online, std::string_view type);
-    bool swapChecks(const Player* player, const Swap& s);
-    bool swapIsInteresting(const MudObject* target) const;
+    bool checkSpecialArea(const CatRef& origin, const CatRef& target, int (CatRefInfo::*toCheck), const std::shared_ptr<Player>& player, bool online, std::string_view type);
+    bool swapChecks(const std::shared_ptr<Player>& player, const Swap& s) const;
+    bool swapIsInteresting(const std::shared_ptr<const MudObject>& target) const;
 
 // Misc
     [[nodiscard]] const RaceData* getRace(std::string race) const;
-    [[nodiscard]] const RaceData* getRace(unsigned int id) const;
+    [[nodiscard]] const RaceData* getRace(int id) const;
     [[nodiscard]] const DeityData* getDeity(int id) const;
 
     static unsigned long expNeeded(int level);
@@ -400,7 +393,7 @@ public:
     [[nodiscard]] std::string getMudNameAndVersion();
     [[nodiscard]] short getPortNum() const;
     void setPortNum(short pPort);
-    [[nodiscard]] std::string weatherize(WeatherString w, const BaseRoom* room) const;
+    [[nodiscard]] std::string weatherize(WeatherString w, const std::shared_ptr<BaseRoom>& room) const;
     [[nodiscard]] std::string getMonthDay() const;
     [[nodiscard]] bool isAprilFools() const;
     [[nodiscard]] bool willAprilFools() const;
@@ -469,7 +462,7 @@ public:
 // Races
     bool loadRaces();
     void clearRaces();
-    unsigned short raceCount();
+    unsigned short raceCount() const;
     unsigned short getPlayableRaceCount();
 
 // Deities
@@ -490,7 +483,7 @@ public:
 private:
     bool bHavePort = false;
 public:
-    bool hasPort() const;
+    [[nodiscard]] bool hasPort() const;
 
 private:
 
@@ -578,14 +571,19 @@ private:
 
     // Quests
 public:
+    // Global pointer to quests; quests are allocated in the individual zones
     QuestInfoMap quests;
     MxpElementMap mxpElements;
     stringMap mxpColors;
-    QuestInfo* getQuest(unsigned int questNum);
+    QuestInfo* getQuest(const CatRef& questNum);
+
+    // Zones
+public:
+    ZoneMap zones;
 
 public:
     // Misc
-    char        cmdline[256]{};
+    std::string cmdline{};
 
     // MSDP
     MsdpVariableMap msdpVariables;
@@ -647,7 +645,7 @@ public:
     MudFlagMap propHouseFlags;
     MudFlagMap propGuildFlags;
 
-    static std::string getFlag(unsigned int flagNum, MudFlagMap& flagMap);
+    static std::string getFlag(int flagNum, MudFlagMap& flagMap);
 
     inline std::string getRFlag(int flagNum) { return getFlag(flagNum, rflags); };
     inline std::string getXFlag(int flagNum) { return getFlag(flagNum, xflags); };
@@ -656,7 +654,7 @@ public:
     inline std::string getOFlag(int flagNum) { return getFlag(flagNum, oflags); };
 
     Calendar    *calendar{};
-    std::list<Ship*> ships;
+    std::list<Ship> ships;
 
 public:
     void setListing(bool isListing);
@@ -670,7 +668,7 @@ private:
 private:
     bool botEnabled = false;
 public:
-    bool isBotEnabled() const;
+    [[nodiscard]] bool isBotEnabled() const;
 
 private:
     std::string botToken;
@@ -681,7 +679,7 @@ public:
     [[nodiscard]] const std::string &getWebhookToken(long webhookID) const;
     void clearWebhookTokens();
 
-    int getMaxDouble() const;
+    [[nodiscard]] int getMaxDouble() const;
 };
 
 extern Config *gConfig;

@@ -52,8 +52,8 @@ def broadcastRoom(room, fmt, **kwargs):
     if 'target' in kwargs:
         target = kwargs['target']
 
-    for ply in room.players:
-        if ply.equals(ignore) or ply.equals(ignore2) or ply.isUnconscious():
+    for ply in room.getPlayers():
+        if not ply or ply.equals(ignore) or ply.equals(ignore2) or ply.isUnconscious():
             continue
           
         toSend = doReplace(fmt, ply, **kwargs)
@@ -121,7 +121,7 @@ def doPurchaseCast(actor, args, target):
         caster = target.getParent().findCreature(target, casterId)
         if not spell:
             target.send(caster.getCrtStr(target, CAP) + " casts " + indefinite_article(effect) + " " + effect + " spell on you.\n")
-            broadcastRoom(target.getRoom(), "*ACTOR* casts " + indefinite_article(effect) + " " + effect + " spell on *TARGET*.", actor = caster, target = target, ignore = target)
+            broadcastRoom(target.getRoom(), "*ACTOR* casts " + indefinite_article(effect) + " " + effect + " spell on *TARGET*.", actor=caster, target=target, ignore=target)
 
     if not spell:
         target.addEffect(effect, actor.getEffectDuration(), actor.getEffectStrength(), actor, True, target, False)

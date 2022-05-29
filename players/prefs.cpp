@@ -35,14 +35,13 @@
 #include "proto.hpp"                               // for isCt, isDm, isStaff
 #include "server.hpp"                              // for Server, gServer
 #include "socket.hpp"                              // for Socket
-#include "utils.hpp"                               // for MAX
 
 
 // having a pref that starts with a hyphen (-) is instead a category
 typedef struct prefInfo {
     std::string name;
     int     flag;
-    bool    (*canUse)(const Creature *);
+    bool    (*canUse)(const std::shared_ptr<Creature> &);
     std::string desc;
     bool    invert;                 // reverses the language
 } prefInfo, *prefPtr;
@@ -122,7 +121,6 @@ prefInfo prefList[] =
     { "durability", P_SHOW_DURABILITY_INDICATOR,nullptr,  "show durability indicator",  false },
 
     { "-Miscellaneous", 0, nullptr, "", false },
-    { "autowear",   P_NO_AUTO_WEAR,         nullptr,      "wear all on login",        true },
     { "summon",     P_NO_SUMMON,            nullptr,      "can be summoned",          true },
     //{ "pkill",        P_NO_PKILL_PERCENT,     0,      "show pkill percentage",    true },
     { "afk",        P_AFK,                  nullptr,      "away from keyboard",       false },
@@ -138,9 +136,9 @@ prefInfo prefList[] =
 //                      cmdTelOpts
 //*********************************************************************
 
-int cmdTelOpts(Player* player, cmd* cmnd) {
-    Socket* sock = player->getSock();
-    Player* target = player;
+int cmdTelOpts(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Socket> sock = player->getSock();
+    std::shared_ptr<Player> target = player;
 
 
     if(!sock)
@@ -214,7 +212,7 @@ int cmdTelOpts(Player* player, cmd* cmnd) {
 //                      cmdPrefs
 //*********************************************************************
 
-int cmdPrefs(Player* player, cmd* cmnd) {
+int cmdPrefs(const std::shared_ptr<Player>& player, cmd* cmnd) {
     prefPtr pref = nullptr;
     int     i=0, match=0, len=strlen(cmnd->str[1]);
     bool    set = cmnd->str[0][0]=='s';
@@ -390,13 +388,13 @@ int cmdPrefs(Player* player, cmd* cmnd) {
         if(pref->name == "afk") {
             // broadcast for going afk
             if(!player->flagIsSet(P_DM_INVIS))
-                broadcast(player->getSock(), player->getParent(), "%M has gone afk.", player);
+                broadcast(player->getSock(), player->getParent(), "%M has gone afk.", player.get());
             else
-                broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M has gone afk.", player);
+                broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M has gone afk.", player.get());
         }
         if(pref->name == "wimpy") {
             player->setWimpy(cmnd->val[1] == 1L ? 10 : cmnd->val[1]);
-            player->setWimpy(MAX<unsigned short>(player->getWimpy(), 2));
+            player->setWimpy(std::max<unsigned short>(player->getWimpy(), 2));
         }
         set = true;
 
@@ -444,7 +442,7 @@ int cmdPrefs(Player* player, cmd* cmnd) {
     player->print(".\n");
 
     if(pref->flag == P_NO_TRACK_STATS)
-        player->print("Note that player kill statistics are always tracked and cannot be reset.\n");
+        player->print("Note that player kill statistics are always tracked and cannot be plyReset.\n");
 
     return(0);
 }

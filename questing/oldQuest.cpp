@@ -30,7 +30,6 @@
 #include "oldquest.hpp"                             // for quest, questPtr
 #include "paths.hpp"                                // for Game
 #include "proto.hpp"                                // for get_quest_exp
-#include "utils.hpp"                                // for MAX, MIN
 #include "xml.hpp"                                  // for toNum, bad_lexica...
 
 
@@ -48,7 +47,7 @@ bool Config::loadQuestTable() {
     char    filename[80];
 
     // build an XML tree from a the file
-    sprintf(filename, "%s/questTable.xml", Path::Game);
+    sprintf(filename, "%s/questTable.xml", Path::Game.c_str());
     doc = xml::loadFile(filename, "Quests");
     if(doc == nullptr)
         return(false);
@@ -123,11 +122,11 @@ void freeQuest(questPtr toFree) {
     delete toFree;
 }
 
-void fulfillQuest(Player* player, Object* object) {
+void fulfillQuest(std::shared_ptr<Player> player, std::shared_ptr<Object>  object) {
     if(object->getQuestnum()) {
         player->print("Quest fulfilled!");
         if(object->getType() != ObjectType::MONEY) {
-            player->printColor(" Don't drop %P.\n", object);
+            player->printColor(" Don't drop %P.\n", object.get());
             player->print("You won't be able to pick it up again.");
         }
         player->print("\n");
@@ -136,7 +135,7 @@ void fulfillQuest(Player* player, Object* object) {
         if(!player->halftolevel())
             player->print("%ld experience granted.\n", get_quest_exp(object->getQuestnum()));
     }
-    for(Object *obj : object->objects) {
+    for(const auto& obj : object->objects) {
         fulfillQuest(player, obj);
     }
 }
@@ -150,7 +149,7 @@ long get_quest_exp(int nQuest) {
     // so subtract one first
     nQuest--;
 
-    nQuest = MAX(0, MIN(nQuest, numQuests ) );
+    nQuest = std::max(0, std::min(nQuest, numQuests ) );
 
     return(gConfig->questTable[nQuest]->exp);
 }
@@ -159,7 +158,7 @@ long get_quest_exp(int nQuest) {
 //                      get_quest_name()
 //*********************************************************************
 const char *get_quest_name(int nIndex) {
-    nIndex = MAX(-1, MIN(nIndex, numQuests));
+    nIndex = std::max(-1, std::min(nIndex, numQuests));
 
     if(nIndex==-1)
         return("None");

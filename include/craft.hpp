@@ -38,22 +38,22 @@ public:
     void saveList(xmlNodePtr curNode, const std::string &name, const std::list<CatRef> *list) const;
     void loadList(xmlNodePtr curNode, std::list<CatRef> *list);
     [[nodiscard]] bool isValid() const;
-    bool check(const Player *player, const std::list<CatRef> *list, std::string_view type, int numIngredients) const;
+    bool check(const std::shared_ptr<const Player> &player, const std::list<CatRef> *list, std::string_view type, int numIngredients) const;
     bool check(std::list<CatRef> *list, const std::list<CatRef> *require, int numIngredients) const;
-    bool isSkilled(const Player *player, Size recipeSize) const;
+    bool isSkilled(const std::shared_ptr<const Player> &player, Size recipeSize) const;
     std::string listIngredients(const std::list<CatRef> *list) const;
     std::string display();
-    bool canUseEquipment(const Player *player, std::string_view skill) const;
-    bool canBeEdittedBy(const Player *player) const;
+    bool canUseEquipment(const std::shared_ptr<const Player> &player, std::string_view pSkill) const;
+    bool canBeEdittedBy(const std::shared_ptr<const Player> player) const;
 
-    void setId(unsigned int i);
+    void setId(int i);
     void setExperience(int exp);
     void setSizable(bool size);
     void setResult(const CatRef &cr);
     void setSkill(std::string_view s);
     void setRequiresRecipe(bool r);
     void setCreator(std::string_view c);
-    [[nodiscard]] unsigned int getId() const;
+    [[nodiscard]] int getId() const;
     [[nodiscard]] int getExperience() const;
     [[nodiscard]] bool isSizable() const;
     [[nodiscard]] CatRef getResult() const;
@@ -63,14 +63,14 @@ public:
     [[nodiscard]] int getMinSkill() const;
     [[nodiscard]] bool requiresRecipe() const;
 
-    static bool goodObject(const Player *player, const Object *object, const CatRef *cr = nullptr);
+    static bool goodObject(const std::shared_ptr<const Player> &player, const std::shared_ptr<Object>&object, const CatRef *cr = nullptr);
 
     std::list<CatRef> ingredients;
     std::list<CatRef> reusables;
     std::list<CatRef> equipment;
 
 protected:
-    unsigned int id;
+    int id;
     CatRef result;
     std::string resultName;
     std::string skill;

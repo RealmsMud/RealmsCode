@@ -28,12 +28,10 @@
 #include "deityData.hpp"           // for DeityData
 #include "global.hpp"              // for CreatureClass, CreatureClass::CLAS...
 #include "mudObjects/players.hpp"  // for Player
-#include "os.hpp"                  // for ASSERTLOG
 #include "playerClass.hpp"         // for PlayerClass
 #include "playerTitle.hpp"         // for PlayerTitle
 #include "proto.hpp"               // for getLastDigit, ltoa, up, getClassAb...
 #include "random.hpp"              // for Random
-#include "utils.hpp"               // for MAX, MIN
 
 //
 //      class
@@ -56,7 +54,7 @@ char shortClassAbbrev[][8] = { "A", "Be", "Cl", "F", "M", "P", "R", "T", "Va", "
 char mob_skill_str[][16] = { "Horrible", "Poor", "Fair", "Decent", "Average", "Talented", "Very Good", "Exceptional",
         "Master", "Grand Master", "Godlike" };
 
-unsigned int permAC[30] = {
+int permAC[30] = {
         25, 70, 110, 155, 200, 245, 290, 335, 380, 425, 470, 510, 535, 560, 580, 600, 620, 645,
         670, 690, 710, 730, 760, 780, 820, 870, 890, 910, 960, 1000 };
 
@@ -259,7 +257,7 @@ std::string getOrdinal(int num) {
 }
 
 int get_perm_ac(int nIndex) {
-    nIndex = MAX( 0, MIN(nIndex, 29 ) );
+    nIndex = std::max( 0, std::min(nIndex, 29 ) );
 
     return(permAC[nIndex]);
 }
@@ -268,29 +266,20 @@ int get_perm_ac(int nIndex) {
 //*********************************************************************
 char *get_class_string(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < static_cast<int>(CreatureClass::CLASS_COUNT) );
-
-    nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
+    nIndex = std::max( 0, std::min(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(class_str[nIndex]);
 }
 
 char* get_lang_color(int nIndex) {
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < LANGUAGE_COUNT );
-
-    nIndex = MAX( 0, MIN(nIndex, LANGUAGE_COUNT-1 ) );
+    nIndex = std::max( 0, std::min(nIndex, LANGUAGE_COUNT-1 ) );
 
     return(lang_color[nIndex]);
 }
 
 char *get_language_adj(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < LANGUAGE_COUNT );
-
-    nIndex = MAX( 0, MIN(nIndex, LANGUAGE_COUNT - 1 ) );
+    nIndex = std::max( 0, std::min(nIndex, LANGUAGE_COUNT - 1 ) );
 
     return(language_adj[nIndex]);
 }
@@ -298,13 +287,10 @@ char *get_language_adj(int nIndex) {
 // language verb
 
 char *get_language_verb(int lang) {
-    int num=0;
-
-    ASSERTLOG( lang >= 0 );
-    ASSERTLOG( lang < LANGUAGE_COUNT );
+    int num;
 
     num = Random::get(1,3);
-    lang = MAX(0, MIN(lang, LANGUAGE_COUNT-1));
+    lang = std::max(0, std::min(lang, LANGUAGE_COUNT-1));
 
     return(language_verb[lang][num-1]);
 }
@@ -315,106 +301,89 @@ char *get_language_verb(int lang) {
 
 char *get_skill_string(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < 11 );
-
-    nIndex = MAX( 0, MIN(nIndex, 10) );
+    nIndex = std::max( 0, std::min(nIndex, 10) );
 
     return(mob_skill_str[nIndex]);
 }
 char *get_save_string(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < MAX_SAVE_COLOR );
-
-    nIndex = MAX( 0, MIN(nIndex, MAX_SAVE_COLOR-1 ) );
+    nIndex = std::max( 0, std::min(nIndex, MAX_SAVE_COLOR-1 ) );
 
     return(save_str[nIndex]);
 }
 
 char get_save_color(int nIndex) {
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < MAX_SAVE_COLOR );
-
-    nIndex = MAX( 0, MIN(nIndex, MAX_SAVE_COLOR-1 ) );
+    nIndex = std::max( 0, std::min(nIndex, MAX_SAVE_COLOR-1 ) );
 
     return(save_color[nIndex]);
 }
 
 char *getClassAbbrev(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < static_cast<int>(CreatureClass::CLASS_COUNT) );
-
-    nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
+    nIndex = std::max( 0, std::min(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(class_abbrev[nIndex] );
 }
 
-char *getClassName(Player* player) {
-    static char classname[1024];
+std::string getFullClassName(CreatureClass cClass, CreatureClass secondClass) {
+    if (secondClass == CreatureClass::NONE) {
+        return(get_class_string( static_cast<int>(cClass)));
+    }
+    std::ostringstream oStr;
+    oStr <<  get_class_string(static_cast<int>(cClass) ) << "/" << get_class_string( static_cast<int>(secondClass) );
+    return (oStr.str());
 
-    if(!player->hasSecondClass())
-        return(get_class_string( static_cast<int>(player->getClass())));
+}
+std::string getClassName(CreatureClass cClass, CreatureClass secondClass) {
+    if (secondClass == CreatureClass::NONE) {
+        return(get_class_string( static_cast<int>(cClass)));
+    }
+    std::ostringstream oStr;
+    oStr <<  getShortClassAbbrev(static_cast<int>(cClass) ) << "/" << getShortClassAbbrev( static_cast<int>(secondClass) );
+    return (oStr.str());
 
-    strcpy(classname, "");
-    strcpy(classname, getShortClassAbbrev( player->getClassInt() ) );
-    strcat(classname, "/");
-    strcat(classname, getShortClassAbbrev( player->getSecondClassInt() ) );
+}
 
-    return(classname);
+std::string getClassName(const std::shared_ptr<Player>& player) {
+    return getClassName(player->getClass(), player->getSecondClass());
 }
 
 
 char *getShortClassAbbrev(int nIndex) {
     // do bounds checking
-    ASSERTLOG( nIndex >= 0 );
-    ASSERTLOG( nIndex < static_cast<int>(CreatureClass::CLASS_COUNT) );
-
-    nIndex = MAX( 0, MIN(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
+    nIndex = std::max( 0, std::min(nIndex, static_cast<int>(CreatureClass::CLASS_COUNT) - 1 ) );
 
     return(shortClassAbbrev[nIndex-1] );
 }
 
-char *getShortClassName(const Player* player) {
-    static char classname[1024];
-
+std::string getShortClassName(const std::shared_ptr<const Player> &player) {
     if(!player->hasSecondClass())
         return(get_class_string(static_cast<int>(player->getClass())));
 
-    strcpy(classname, "");
-    strcpy(classname, getShortClassAbbrev(player->getClassInt()));
-    strcat(classname, "/");
-    strcat(classname, getShortClassAbbrev(player->getSecondClassInt()));
+    std::ostringstream oStr;
+    oStr << getShortClassAbbrev(player->getClassInt()) << "/" << getShortClassAbbrev(player->getSecondClassInt());
 
-    return(classname);
+    return(oStr.str());
 }
 
 
 //*********************************************************************
 //                      int_to_test()
 //*********************************************************************
-char *int_to_text(int nNumber) {
-    static char strNum[15];
-    char *strReturn;
-
+std::string int_to_text(int nNumber) {
     // check for array bounds
-    if(nNumber < 31 && nNumber >= 0) {
-        strReturn = number[nNumber];
-    } else {
-        sprintf(strNum, "%d", nNumber );
-        strReturn = strNum;
-    }
-
-    return(strReturn);
+    if(nNumber < 31 && nNumber >= 0)
+        return number[nNumber];
+    else
+        return std::to_string(nNumber);
 }
 
 bool isTitle(std::string_view str) {
     std::map<int, PlayerTitle*>::iterator tt;
 
     std::map<std::string, PlayerClass*>::iterator cIt;
-    PlayerClass* pClass=nullptr;
-    PlayerTitle* title=nullptr;
+    PlayerClass* pClass;
+    PlayerTitle* title;
     for(cIt = gConfig->classes.begin() ; cIt != gConfig->classes.end() ; cIt++) {
         pClass = (*cIt).second;
         for(tt = pClass->titles.begin() ; tt != pClass->titles.end(); tt++) {
@@ -425,7 +394,7 @@ bool isTitle(std::string_view str) {
     }
 
     DeityDataMap::iterator it;
-    DeityData* data=nullptr;
+    DeityData* data;
     for(it = gConfig->deities.begin() ; it != gConfig->deities.end() ; it++) {
         data = (*it).second;
         for(tt = data->titles.begin() ; tt != data->titles.end(); tt++) {

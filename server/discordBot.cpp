@@ -53,8 +53,8 @@ std::string getWho() {
     std::ostringstream whoStr;
 
     whoStr << "```\n";
-    auto cmp = [](const Player* a, const Player* b) { return a->getSock()->getHostname() < b->getSock()->getHostname(); };
-    std::multiset<Player*, decltype(cmp)> sortedPlayers;
+    auto cmp = [](const std::shared_ptr<Player> a, const std::shared_ptr<Player> b) { return a->getSock()->getHostname() < b->getSock()->getHostname(); };
+    std::multiset<std::shared_ptr<Player>, decltype(cmp)> sortedPlayers;
     for(const auto& [pId, ply] : gServer->players) sortedPlayers.insert(ply);
 
     for(const auto& player : sortedPlayers) {
@@ -82,7 +82,7 @@ bool Server::initDiscordBot() {
     }
 
     std::cout << "Initializing Discord bot" << std::endl;
-    discordBot = new dpp::cluster(gConfig->getBotToken());
+    discordBot = new dpp::cluster(gConfig->getBotToken(), dpp::i_message_content | dpp::i_default_intents | dpp::i_guild_members | dpp::i_guild_messages);
 
     /* Create command handler, and specify prefixes */
     commandHandler = new dpp::commandhandler (discordBot);

@@ -27,17 +27,17 @@ public:
     Clan();
     void load(xmlNodePtr curNode);
 
-    [[nodiscard]] unsigned int getId() const;
-    [[nodiscard]]     unsigned int getJoin() const;
-    [[nodiscard]] unsigned int getRescind() const;
-    [[nodiscard]] unsigned int getDeity() const;
+    [[nodiscard]] int getId() const;
+    [[nodiscard]]     int getJoin() const;
+    [[nodiscard]] int getRescind() const;
+    [[nodiscard]] int getDeity() const;
     [[nodiscard]] std::string getName() const;
     [[nodiscard]] short   getSkillBonus(const std::string &skill) const;
 protected:
-    unsigned int id;
-    unsigned int join;
-    unsigned int rescind;
-    unsigned int deity;
+    int id;
+    int join;
+    int rescind;
+    int deity;
     std::string name;
 public:
     // only to make iteration easy

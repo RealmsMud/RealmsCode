@@ -28,6 +28,7 @@
 
 #include <libxml/parser.h>                          // for xmlFreeDoc, xmlDo...
 #include <stdio.h>                                  // for snprintf
+#include <boost/dynamic_bitset.hpp>
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cstring>                                  // for strcpy, strlen
 #include <list>                                     // for list
@@ -116,17 +117,16 @@ void loadStringArray(xmlNodePtr curNode, void* array, int size, const char* name
 //*********************************************************************
 //                      loadBits
 //*********************************************************************
-// Sets all bits it finds into the given bit array
+// Sets all bits it finds into the given bitset
 
-void loadBits(xmlNodePtr curNode, char *bits) {
+void loadBitset(xmlNodePtr curNode, boost::dynamic_bitset<>& bits) {
     xmlNodePtr childNode = curNode->children;
     int bit=0;
 
     while(childNode) {
         if(NODE_NAME(childNode, "Bit")) {
             bit = xml::getIntProp(childNode, "Num");
-            // TODO: Sanity check bit
-            BIT_SET(bits, bit);
+            bits.set(bit);
         }
         childNode = childNode->next;
     }

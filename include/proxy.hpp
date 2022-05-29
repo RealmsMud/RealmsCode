@@ -35,10 +35,10 @@ public:
     ProxyManager();
     void save();
     void clear();
-    bool hasProxyAccess(Player* proxy, Player* proxied);
-    void grantProxyAccess(Player* proxy, Player* proxied);
-    bool removeProxyAccess(Player* proxy, Player* proxied);
-    bool removeProxyAccess(std::string_view id, Player* proxied);
+    bool hasProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
+    void grantProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
+    bool removeProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
+    bool removeProxyAccess(std::string_view id, std::shared_ptr<Player> proxied);
 
 protected:
     void loadProxies();
@@ -48,8 +48,8 @@ protected:
 class ProxyAccess {
 public:
     ProxyAccess(xmlNodePtr rootNode);
-    ProxyAccess(Player* proxy, Player* proxied);
-    bool hasProxyAccess(Player* proxy, Player* proxied);
+    ProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
+    bool hasProxyAccess(std::shared_ptr<Player> proxy, std::shared_ptr<Player> proxied);
     void save(xmlNodePtr rootNode);
 protected:
     // Character allowing proxy access

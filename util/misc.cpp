@@ -51,7 +51,6 @@
 #include "mudObjects/objects.hpp"                // for Object
 #include "mudObjects/players.hpp"                // for Player
 #include "mudObjects/rooms.hpp"                  // for BaseRoom
-#include "os.hpp"                                // for merror
 #include "paths.hpp"                             // for Config
 #include "proto.hpp"                             // for keyTxtEqual, findExit
 #include "random.hpp"                            // for Random
@@ -59,7 +58,6 @@
 #include "socket.hpp"                            // for Socket
 #include "stats.hpp"                             // for Stat
 #include "structs.hpp"                           // for daily
-#include "utils.hpp"                             // for MAX, MIN
 
 #include <boost/algorithm/string.hpp>            // split, join
 
@@ -146,15 +144,15 @@ int statBonus[MAXALVL] = {
     4, 4, 4,            // 25 - 27
     5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 };   // 28+
 
-int bonus(unsigned int num) {
-    return( statBonus[MIN<int>(num/10, MAXALVL - 1)] );
+int bonus(int num) {
+    return( statBonus[std::min<int>(num/10, MAXALVL - 1)] );
 }
 
-int crtWisdom(Creature* creature) {
+int crtWisdom(std::shared_ptr<Creature> creature) {
     return(bonus(creature->intelligence.getCur()) + bonus(creature->piety.getCur()))/2;
 }
 
-int crtAwareness(Creature* creature) {
+int crtAwareness(std::shared_ptr<Creature> creature) {
     return(bonus(creature->intelligence.getCur()) + bonus(creature->dexterity.getCur()))/2;
 }
 //*********************************************************************
@@ -254,10 +252,10 @@ int exp_to_lev(unsigned long exp) {
     if(level == MAXALVL) {
         level = exp/(Config::expNeeded(MAXALVL));
         level++;
-        level= MAX(MAXALVL, level);
+        level= std::max(MAXALVL, level);
     }
 
-    return(MAX(1,level));
+    return(std::max(1,level));
 }
 
 //*********************************************************************
@@ -312,22 +310,6 @@ int update_daily(struct daily *dly_ptr) {
     return(0);
 }
 
-
-//*********************************************************************
-//                      file_exists
-//*********************************************************************
-// This function returns 1 if the filename specified by the first
-// parameter exists, 0 if it doesn't.
-
-bool file_exists(const char *filename) {
-    int ff=0;
-    ff = open(filename, O_RDONLY);
-    if(ff > -1) {
-        close(ff);
-        return(true);
-    }
-    return(false);
-}
 
 /*====================================================================*/
 // checks if the given str contains all digits
@@ -408,10 +390,8 @@ bool parse_name(std::string_view name) {
     }
 
 
-    fp = fopen(fmt::format("{}/forbidden_name.txt", Path::Config).c_str(), "r");
-    if(!fp)
-        merror("ERROR - forbidden name.txt", NONFATAL);
-    else {
+    fp = fopen((Path::Config / "forbidden_name.txt").c_str(), "r");
+    if(fp) {
         while(!feof(fp)) {
             fscanf(fp, "%s", forbid);
             if(!name.compare(forbid)) {
@@ -435,7 +415,7 @@ bool parse_name(std::string_view name) {
 //*********************************************************************
 
 int dmIson() {
-    Player* player=nullptr;
+    std::shared_ptr<Player> player=nullptr;
     int     idle=0;
     long    t = time(nullptr);
 
@@ -471,9 +451,11 @@ int Player::autosplit(long amount) {
     if(!group)
         return(0);
 
-    for(Creature* crt : group->members) {
-        if(crt->isPlayer() && !crt->isStaff() && crt->inSameRoom(this))
-            party++;
+    for(auto it = group->members.begin() ; it != group->members.end() ; it++) {
+        if(auto crt = it->lock()) {
+            if(crt->isPlayer() && !crt->isStaff() && crt->inSameRoom(getAsPlayer()))
+                party++;
+        }
     }
     // If group is 1, return with no split.
     if(party < 2)
@@ -485,9 +467,10 @@ int Player::autosplit(long amount) {
     remain = amount % party;    // Find remaining odd coins.
     split = ((amount - remain) / party);  // Determine split minus the remaining odd coins.
 
-    for(Creature* crt : group->members) {
-        if(crt->isPlayer() && !crt->isStaff() && crt->inSameRoom(this)) {
-            if(crt == this) {
+    for(auto it = group->members.begin() ; it != group->members.end() ; it++) {
+        auto crt = it->lock();
+        if(crt && crt->isPlayer() && !crt->isStaff() && crt->inSameRoom(getAsPlayer())) {
+            if(crt.get() == this) {
                 crt->print("You received %d gold as your split.\n", split+remain);
                 crt->coins.add(split+remain, GOLD);
             } else {
@@ -587,14 +570,14 @@ void Creature::stun(int delay) {
 //                      numEnemyMonInRoom
 //*********************************************************************
 
-int numEnemyMonInRoom(Creature* player) {
-    int     count=0;
-    for(Monster* mons : player->getRoomParent()->monsters) {
-        if(mons->getAsMonster()->isEnemy(player))
+int Creature::numEnemyMonInRoom() {
+    int count = 0;
+    for (const auto &mons: getRoomParent()->monsters) {
+        if (mons->getAsMonster()->isEnemy(getAsCreature()))
             count++;
     }
 
-    return(count);
+    return count;
 }
 
 //*********************************************************************
@@ -656,7 +639,7 @@ int getLastDigit(int n, int digits) {
     double  num=0.0, sub=0.0;
     int     a=0, temp=0, digit=0;
 
-    digits = MAX(1,MIN(4,digits));
+    digits = std::max(1,std::min(4,digits));
 
     num = (double)n;
     for(a=5; a>digits-1; a--)   // start with 10^5th power (100000)
@@ -710,19 +693,40 @@ char *ltoa(
 //                      findCrt
 //*********************************************************************
 
-template<class SetType>
-MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const char *str, int val, int* match) {
+std::shared_ptr<MudObject> findMonTarget(std::shared_ptr<Creature> player, MonsterSet& set, int findFlags, const char *str, int val, int* match) {
 
     if(!player || !str || set.empty())
         return(nullptr);
 
-    for(typename SetType::key_type crt : set) {
+    for(auto crt : set) {
+        if(!crt) continue;
+        if(!player->canSee(crt)) continue;
+
+        if(keyTxtEqual(crt, str)) {
+            (*match)++;
+            if(*match == val) {
+                return(crt);
+            }
+        }
+
+    }
+    return(nullptr);
+}
+std::shared_ptr<MudObject> findPlyTarget(std::shared_ptr<Creature> player, PlayerSet& set, int findFlags, const char *str, int val, int* match) {
+
+    if(!player || !str || set.empty())
+        return(nullptr);
+
+    for(auto pIt = set.begin() ; pIt != set.end() ; ) {
+        auto crt = pIt->lock();
         if(!crt) {
+            pIt = set.erase(pIt);
             continue;
         }
-        if(!player->canSee(crt)) {
-            continue;
-        }
+        pIt++;
+
+        if(!crt) continue;
+        if(!player->canSee(crt)) continue;
 
         if(keyTxtEqual(crt, str)) {
             (*match)++;
@@ -741,9 +745,10 @@ MudObject* findCrtTarget(Creature * player, SetType& set, int findFlags, const c
 //                      findTarget
 //*********************************************************************
 
-MudObject* Creature::findTarget(unsigned int findWhere, unsigned int findFlags, const std::string& str, int val) {
+std::shared_ptr<MudObject> Creature::findTarget(int findWhere, int findFlags, const std::string& str, int val) {
     int match=0;
-    MudObject* target;
+    std::shared_ptr<MudObject> target;
+    const auto cThis = getAsConstCreature();
     do {
         if(findWhere & FIND_OBJ_INVENTORY) {
             if((target = findObjTarget(objects, findFlags, str, val, &match))) {
@@ -758,7 +763,7 @@ MudObject* Creature::findTarget(unsigned int findWhere, unsigned int findFlags, 
             for(n=0; n<MAXWEAR; n++) {
                 if(!ready[n])
                     continue;
-                if(keyTxtEqual(ready[n], str.c_str()))
+                if(keyTxtEqual(ready[n], str.c_str()) || (ready[n]->isLabeledBy(cThis) && ready[n]->isLabelMatch(str)))
                     match++;
                 else
                     continue;
@@ -779,19 +784,19 @@ MudObject* Creature::findTarget(unsigned int findWhere, unsigned int findFlags, 
         }
 
         if(findWhere & FIND_MON_ROOM) {
-            if((target = findCrtTarget<MonsterSet>(this, getParent()->monsters, findFlags, str.c_str(), val, &match))) {
+            if((target = findMonTarget(getAsCreature(), getParent()->monsters, findFlags, str.c_str(), val, &match))) {
                 break;
             }
         }
 
         if(findWhere & FIND_PLY_ROOM) {
-            if((target = findCrtTarget<PlayerSet>(this, getParent()->players, findFlags, str.c_str(), val, &match))) {
+            if((target = findPlyTarget(getAsCreature(), getParent()->players, findFlags, str.c_str(), val, &match))) {
                 break;
             }
         }
 
         if(findWhere & FIND_EXIT) {
-            if((target = findExit(this, str, val, getRoomParent()))) {
+            if((target = findExit(getAsCreature(), str, val, getRoomParent()))) {
                 break;
             }
         }
@@ -800,24 +805,9 @@ MudObject* Creature::findTarget(unsigned int findWhere, unsigned int findFlags, 
     return(target);
 }
 
-//**********************************************************************
-//                      new_merror
-//**********************************************************************
-// merror is called whenever an error message should be output to the
-// log file.  If the error is fatal, then the program is aborted
-
-void new_merror(const char *str, char errtype, const char *file, const int line) {
-    std::clog << "\nError: " << str << " @ " << file << " " << line << ".\n";
-    logn("error.log", "Error occured in %s in file %s line %d\n", str, file, line);
-    if(errtype == FATAL) {
-        abort();
-    }
-//  exit(-1);
-}
-
 //*********************************************************************
 //                      timeStr
-//*********************************************************************
+//******************************************************************
 
 std::string timeStr(int secs) {
     int hours = 0;
@@ -844,7 +834,7 @@ std::string timeStr(int secs) {
 //*********************************************************************
 
 std::string progressBar(int barLength, float percentFull, const std::string &text, char progressChar, bool enclosed) {
-    std::string str = "";
+    std::string str;
     int i=0, progress = (int)(barLength * percentFull);
     int lowTextBound=-1, highTextBound=-1;
 

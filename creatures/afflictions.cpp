@@ -28,7 +28,6 @@
 #include "deityData.hpp"             // for DeityData
 #include "effects.hpp"               // for Effects, EffectInfo, EffectList
 #include "flags.hpp"                 // for O_CURSED, P_DM_BLINDED, P_POISON...
-#include "free_crt.hpp"              // for free_crt
 #include "global.hpp"                // for CastType, CreatureClass, CastTyp...
 #include "lasttime.hpp"              // for lasttime
 #include "magic.hpp"                 // for SpellData, checkRefusingMagic
@@ -47,7 +46,6 @@
 #include "skills.hpp"                // for Skill
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
-#include "utils.hpp"                 // for MIN, MAX
 #include "xml.hpp"                   // for loadPlayer
 
 
@@ -55,9 +53,9 @@
 //                      cmdCreepingDoom
 //*********************************************************************
 
-int cmdCreepingDoom(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
-    Monster *mCreature=nullptr;
+int cmdCreepingDoom(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Monster> mCreature=nullptr;
     long    i=0, t=0;
     int     chance=0, dmg=0;
 
@@ -119,7 +117,7 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
 
 
     chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
-    chance = MIN(chance, 80);
+    chance = std::min(chance, 80);
 
     dmg = Random::get((int)(level*2), (int)(level*3));
 
@@ -128,25 +126,25 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
 
     if(!creature->isCt()) {
         if(Random::get(1, 100) > chance) {
-            player->print("You failed to strike %N with creeping doom.\n", creature);
-            broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to strike %N with creeping doom!", player, creature);
-            creature->print("%M tried to strike you with creeping doom!\n", player);
+            player->print("You failed to strike %N with creeping doom.\n", creature.get());
+            broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to strike %N with creeping doom!", player.get(), creature.get());
+            creature->print("%M tried to strike you with creeping doom!\n", player.get());
             player->checkImprove("creeping-doom", false);
             return(0);
         }
         if(creature->chkSave(BRE, player, 0)) {
             player->printColor("^yYour creeping-doom strike was interrupted!\n");
-            creature->print("You manage to partially avoid %N's creeping-doom strike.\n", player);
+            creature->print("You manage to partially avoid %N's creeping-doom strike.\n", player.get());
             dmg /= 2;
         }
     }
 
-    player->printColor("You struck %N with creeping doom for %s%d^x damage.\n", creature, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
+    player->printColor("You struck %N with creeping doom for %s%d^x damage.\n", creature.get(), player->customColorize("*CC:DAMAGE*").c_str(), dmg);
     player->checkImprove("creeping-doom", true);
     player->statistics.attackDamage(dmg, "creeping-doom");
 
-    creature->printColor("%M struck you with creeping doom for %s%d^x damage!\n", player, creature->customColorize("*CC:DAMAGE*").c_str(), dmg);
-    broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M struck %N with creeping doom!", player, creature);
+    creature->printColor("%M struck you with creeping doom for %s%d^x damage!\n", player.get(), creature->customColorize("*CC:DAMAGE*").c_str(), dmg);
+    broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M struck %N with creeping doom!", player.get(), creature.get());
 
     // if they didn't die from the damage, curse them
     if(!player->doDamage(creature, dmg, CHECK_DIE))
@@ -160,12 +158,12 @@ int cmdCreepingDoom(Player* player, cmd* cmnd) {
 //********************************************************************
 // the Arachnus ability to inflict enemies with poison
 
-int cmdPoison(Player* player, cmd* cmnd) {
-    Creature* creature=nullptr;
-    Monster *mCreature=nullptr;
+int cmdPoison(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Monster> mCreature=nullptr;
     long    i=0, t=0;
     int     chance=0;
-    unsigned int dur=0;
+    int dur=0;
 
     player->clearFlag(P_AFK);
     if(!player->ableToDoCommand())
@@ -229,7 +227,7 @@ int cmdPoison(Player* player, cmd* cmnd) {
 
 
     chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
-    chance = MIN(chance, 80);
+    chance = std::min(chance, 80);
     dur = standardPoisonDuration((short)level, creature->constitution.getCur());
 
     if(mCreature)
@@ -237,29 +235,29 @@ int cmdPoison(Player* player, cmd* cmnd) {
 
     if(!player->isCt()) {
         if(Random::get(1, 100) > chance || creature->isPoisoned() || creature->immuneToPoison()) {
-            player->printColor("^GYou fail to poison %N.\n", creature);
-            creature->printColor("^G%M tried to poison you!\n", player);
-            broadcastGroup(false, creature, "%M tried to poison %N.\n", player, creature);
-            broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to poison %N.", player, creature);
+            player->printColor("^GYou fail to poison %N.\n", creature.get());
+            creature->printColor("^G%M tried to poison you!\n", player.get());
+            broadcastGroup(false, creature, "%M tried to poison %N.\n", player.get(), creature.get());
+            broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M tried to poison %N.", player.get(), creature.get());
             player->checkImprove("poison", false);
             return(0);
         }
     }
 
-    player->printColor("^GYou poison %N.\n", creature);
-    creature->printColor("^G%M poisons you!\n", player);
-    broadcastGroup(false, creature, "^G%M poisons %N.\n", player, creature);
-    broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "^G%M poisons %N.", player, creature);
+    player->printColor("^GYou poison %N.\n", creature.get());
+    creature->printColor("^G%M poisons you!\n", player.get());
+    broadcastGroup(false, creature, "^G%M poisons %N.\n", player.get(), creature.get());
+    broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "^G%M poisons %N.", player.get(), creature.get());
 
     if(creature->chkSave(POI, player, 0)) {
-        player->print("%N partially resists your poison.\n", creature);
-        creature->print("You partially resists %N's poison.\n", player);
+        player->print("%N partially resists your poison.\n", creature.get());
+        creature->print("You partially resists %N's poison.\n", player.get());
         level = level * 2 / 3;
         dur = dur * 2 / 3;
     }
 
     player->checkImprove("poison", true);
-    creature->poison(player, (unsigned int)level, dur);
+    creature->poison(player, (int)level, dur);
     return(0);
 }
 
@@ -268,7 +266,7 @@ int cmdPoison(Player* player, cmd* cmnd) {
 //********************************************************************
 // the calling function is responsible for announcing the poisoning
 
-void Creature::poison(Creature *enemy, unsigned int damagePerPulse, unsigned int duration) {
+void Creature::poison(const std::shared_ptr<Creature>&enemy, int damagePerPulse, int duration) {
     if(immuneToPoison())
         return;
     setPoisonedBy("");
@@ -288,7 +286,7 @@ void Creature::poison(Creature *enemy, unsigned int damagePerPulse, unsigned int
                 setPoisonedBy(enemy->getMaster()->getName());
             else if(enemy->isMonster() && !enemy->flagIsSet(M_NO_PREFIX))
                 setPoisonedBy((std::string)"a " + enemy->getName());
-            else if(this == enemy)
+            else if(this == enemy.get())
                 setPoisonedBy((std::string)himHer() + "self");
             else
                 setPoisonedBy(enemy->getName());
@@ -307,7 +305,7 @@ void Creature::poison(Creature *enemy, unsigned int damagePerPulse, unsigned int
         }
     }
 
-    addEffect("poison", duration, damagePerPulse, nullptr, false, this);
+    addEffect("poison", duration, damagePerPulse, nullptr, false, Containable::downcasted_shared_from_this<Creature>());
 }
 
 //********************************************************************
@@ -396,7 +394,7 @@ bool Effects::removePoison() {
 //                      standardPoisonDuration
 //********************************************************************
 
-unsigned int standardPoisonDuration(short level, short con) {
+int standardPoisonDuration(short level, short con) {
     int dur = 60 * Random::get(1,3) - (60*bonus((int)con)) + level*10;
     if(con > 120) {
         // a spread between 400 (50%) and 120 (0%) resistance
@@ -404,7 +402,7 @@ unsigned int standardPoisonDuration(short level, short con) {
         percent *= dur;
         dur = (int)percent;
     }
-    return(MAX(60,dur));
+    return(std::max(60,dur));
 }
 
 // low con, level 40:  1-3 mins
@@ -416,7 +414,7 @@ unsigned int standardPoisonDuration(short level, short con) {
 //********************************************************************
 // the calling function is responsible for announcing the diseasing
 
-void Creature::disease(Creature* enemy, unsigned int damagePerPulse) {
+void Creature::disease(const std::shared_ptr<Creature>& enemy, int damagePerPulse) {
     if(immuneToDisease())
         return;
     addPermEffect("disease", damagePerPulse, false);
@@ -559,13 +557,13 @@ void Creature::makeVampire() {
         setFlag(P_CHAOTIC);
 
         // make sure the master still exists and is still a vampire
-        Player* player = getAsPlayer();
+        std::shared_ptr<Player> player = getAsPlayer();
         if(!player->getAfflictedBy().empty()) {
             bool online = true;
-            Player* master = gServer->findPlayer(player->getAfflictedBy());
+            std::shared_ptr<Player> master = gServer->findPlayer(player->getAfflictedBy());
 
             if(!master) {
-                loadPlayer(player->getAfflictedBy().c_str(), &master);
+                loadPlayer(player->getAfflictedBy().c_str(), master);
                 online = false;
             }
 
@@ -577,7 +575,7 @@ void Creature::makeVampire() {
             }
 
             if(master && !online)
-                free_crt(master);
+                master.reset();
         }
     }
     if(!knowsSkill("mist"))
@@ -613,7 +611,7 @@ bool Creature::willBecomeVampire() const {
 // if not, it does some cleanup that should have been done elsewhere
 // (an extra check to make sure everything is set properly)
 
-bool Creature::vampireCharmed(Player* master) {
+bool Creature::vampireCharmed(const std::shared_ptr<Player>& master) {
     if(!isPlayer() || !master)
         return(false);
 
@@ -622,7 +620,7 @@ bool Creature::vampireCharmed(Player* master) {
     if(isEffected("porphyria"))
         return(false);
 
-    Player* player = getAsPlayer();
+    std::shared_ptr<Player> player = getAsPlayer();
     bool charmed = true;
 
     // we need to make sure the minion lists match up;
@@ -661,14 +659,14 @@ bool Creature::vampireCharmed(Player* master) {
 void Creature::clearMinions() {
     if(!isPlayer())
         return;
-    Player* player = getAsPlayer(), *target=nullptr;
+    std::shared_ptr<Player> player = getAsPlayer(), target=nullptr;
     bool online = true;
 
     if(!player->getAfflictedBy().empty()) {
         target = gServer->findPlayer(player->getAfflictedBy());
 
         if(!target) {
-            loadPlayer(player->getAfflictedBy().c_str(), &target);
+            loadPlayer(player->getAfflictedBy().c_str(), target);
             online = false;
         }
 
@@ -677,7 +675,7 @@ void Creature::clearMinions() {
             target->save(online);
         }
         if(!online)
-            free_crt(target);
+            target.reset();
     }
 
     std::list<std::string>::iterator mIt;
@@ -686,7 +684,7 @@ void Creature::clearMinions() {
         target = gServer->findPlayer(*mIt);
 
         if(!target) {
-            loadPlayer((*mIt).c_str(), &target);
+            loadPlayer((*mIt).c_str(), target);
             online = false;
         }
 
@@ -696,7 +694,7 @@ void Creature::clearMinions() {
                 target->save(online);
             }
             if(!online)
-                free_crt(target);
+                target.reset();
         }
     }
 }
@@ -705,7 +703,7 @@ void Creature::clearMinions() {
 //                      addPorphyria
 //********************************************************************
 
-bool Creature::addPorphyria(Creature *killer, int chance) {
+bool Creature::addPorphyria(const std::shared_ptr<Creature>&killer, int chance) {
 
     const RaceData* rdata = gConfig->getRace(race);
     if(rdata)
@@ -720,7 +718,7 @@ bool Creature::addPorphyria(Creature *killer, int chance) {
     if(!killer || !killer->isNewVampire())
         return(false);
 
-    addEffect("porphyria", 0, 0, killer, true, this);
+    addEffect("porphyria", 0, 0, killer, true, Containable::downcasted_shared_from_this<Creature>());
 
     // if they become a vampire, they'll be permanently charmed by their master
     if(killer->isPlayer()) {
@@ -798,7 +796,7 @@ bool Creature::willBecomeWerewolf() const {
 //                      addLycanthropy
 //********************************************************************
 
-bool Creature::addLycanthropy(Creature *killer, int chance) {
+bool Creature::addLycanthropy(const std::shared_ptr<Creature>&killer, int chance) {
     if(Random::get(1,100) > chance)
         return(false);
     if(!willBecomeWerewolf())
@@ -808,7 +806,7 @@ bool Creature::addLycanthropy(Creature *killer, int chance) {
     if(!killer || !killer->isNewWerewolf())
         return(false);
 
-    addEffect("lycanthropy", 0, 0, killer, true, this);
+    addEffect("lycanthropy", 0, 0, killer, true, Containable::downcasted_shared_from_this<Creature>());
 
     if(killer->isPlayer()) {
         killer->print("You have infected %N with lycanthropy.\n", this);
@@ -828,8 +826,8 @@ bool Creature::addLycanthropy(Creature *killer, int chance) {
 // another player or a monster. It will remove any poison that is in
 // that player's system.
 
-int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splCurePoison(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
 
     if( player->isPlayer() &&
         player->getClass() !=  CreatureClass::CLERIC &&
@@ -848,7 +846,7 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
             player->print("Cure-poison spell cast on yourself.\n");
             player->print("You feel much better.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts cure-poison on %sself.",
-                player, player->himHer());
+                player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION && player->isPoisoned())
             player->print("You feel the poison subside.\n");
         else if(spellData->how == CastType::POTION)
@@ -871,9 +869,9 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
             return(0);
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("Cure-poison cast on %N.\n", target);
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts cure-poison on %N.", player, target);
-            target->print("%M casts cure-poison on you.\nYou feel much better.\n", player);
+            player->print("Cure-poison cast on %N.\n", target.get());
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts cure-poison on %N.", player.get(), target.get());
+            target->print("%M casts cure-poison on you.\nYou feel much better.\n", player.get());
         }
 
     }
@@ -888,8 +886,8 @@ int splCurePoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splSlowPoison
 //*********************************************************************
 
-int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splSlowPoison(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
 
     // slow_poison self
     if(cmnd->num == 2) {
@@ -897,7 +895,7 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Slow-poison spell cast on yourself.\n");
             broadcast(player->getSock(), player->getParent(), "%M casts slow-poison on %sself.",
-                player, player->himHer());
+                player.get(), player->himHer());
             if(!player->isPoisoned()) {
                 player->print("Nothing happens.\n");
                 return(0);
@@ -925,9 +923,9 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(checkRefusingMagic(player, target))
             return(0);
 
-        player->print("Slow-poison cast on %N.\n", target);
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts slow-poison on %N.", player, target);
-        target->print("%M casts slow-poison on you.\n", player);
+        player->print("Slow-poison cast on %N.\n", target.get());
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts slow-poison on %N.", player.get(), target.get());
+        target->print("%M casts slow-poison on you.\n", player.get());
 
         if(!target->isPoisoned()) {
             player->print("Nothing happens.\n");
@@ -950,8 +948,8 @@ int splSlowPoison(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splCureDisease
 //*********************************************************************
 
-int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splCureDisease(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
 
     if(player->getClass() !=  CreatureClass::CLERIC &&
         player->getClass() !=  CreatureClass::PALADIN &&
@@ -968,7 +966,7 @@ int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Cure-disease spell cast on yourself.\n");
             player->print("Your fever subsides.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts cure-disease on %sself.", player, player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts cure-disease on %sself.", player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION && player->isDiseased())
             player->print("You feel your fever subside.\n");
         else if(spellData->how == CastType::POTION)
@@ -988,9 +986,9 @@ int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
         if(checkRefusingMagic(player, target))
             return(0);
 
-        player->print("You cure-disease cast on %N.\n", target);
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts cure-disease on %N.", player, target);
-        target->print("%M casts cure-disease on you.\nYou feel your fever subside.\n", player);
+        player->print("You cure-disease cast on %N.\n", target.get());
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts cure-disease on %N.", player.get(), target.get());
+        target->print("%M casts cure-disease on you.\nYou feel your fever subside.\n", player.get());
 
     }
     if(target->inCombat(false))
@@ -1004,8 +1002,8 @@ int splCureDisease(Creature* player, cmd* cmnd, SpellData* spellData) {
 //                      splCureBlindness
 //*********************************************************************
 
-int splCureBlindness(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splCureBlindness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
 
     if(cmnd->num == 2) {
 
@@ -1036,11 +1034,11 @@ int splCureBlindness(Creature* player, cmd* cmnd, SpellData* spellData) {
 
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("You cast cure blindess on %N.\n", target);
+            player->print("You cast cure blindess on %N.\n", target.get());
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts cure blindness on %N.",
-                player, target);
+                player.get(), target.get());
             if(target->isPlayer()) {
-                target->print("%M casts cure blindness on you.\n", player);
+                target->print("%M casts cure blindness on you.\n", player.get());
 
                 if( target->isEffected("blindness") &&
                     (player->isCt() || !target->flagIsSet(P_DM_BLINDED))
@@ -1101,8 +1099,8 @@ bool EffectInfo::isPoison() const {
 //*********************************************************************
 // This function allows a player to curse a item in their inventory
 
-int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Object  *object=nullptr;
+int splCurse(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Object> object=nullptr;
 
     if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::LICH && !player->isStaff()) {
         player->print("Only mages and liches can curse.\n");
@@ -1126,8 +1124,8 @@ int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 
     object->setFlag(O_CURSED);
 
-    player->printColor("%O glows darkly.\n", object);
-    broadcast(player->getSock(), player->getParent(), "%M places a curse on %1P.", player, object);
+    player->printColor("%O glows darkly.\n", object.get());
+    broadcast(player->getSock(), player->getParent(), "%M places a curse on %1P.", player.get(), object.get());
 
     return(1);
 }
@@ -1138,8 +1136,8 @@ int splCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 // This function allows a player to remove a curse on all the items
 // in their inventory or on another player's inventory
 
-int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
-    Creature* target=nullptr;
+int splRemoveCurse(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Creature> target=nullptr;
     int     i=0;
     bool    equipment=true;
 
@@ -1149,7 +1147,7 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
         target = player;
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             player->print("Remove-curse spell cast.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts remove-curse on %sself.", player, player->himHer());
+            broadcast(player->getSock(), player->getParent(), "%M casts remove-curse on %sself.", player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION)
             player->print("You feel relieved of burdens.\n");
 
@@ -1168,13 +1166,13 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
 
         // this purposely does not check the refuse list
         if(target->flagIsSet(P_LINKDEAD) && target->isPlayer()) {
-            player->print("%M doesn't want that cast on them right now.\n", target);
+            player->print("%M doesn't want that cast on them right now.\n", target.get());
             return(0);
         }
 
-        player->print("Remove-curse cast on %N.\n", target);
-        target->print("%M casts a remove-curse spell on you.\n", player);
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts remove-curse on %N.", player, target);
+        player->print("Remove-curse cast on %N.\n", target.get());
+        target->print("%M casts a remove-curse spell on you.\n", player.get());
+        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts remove-curse on %N.", player.get(), target.get());
     }
 
     if(target->inCombat(false))
@@ -1195,11 +1193,11 @@ int splRemoveCurse(Creature* player, cmd* cmnd, SpellData* spellData) {
         }
 
         if(target->flagIsSet(P_DARKNESS)) {
-            for(Object* obj : target->objects) {
+            for(const auto& obj : target->objects) {
                 obj->clearFlag(O_DARKNESS);
             }
             player->print("The aura of darkness around you dissipates.\n");
-            broadcast(player->getSock(), player->getParent(), "The aura of darkness around %N dissipates.", player);
+            broadcast(player->getSock(), player->getParent(), "The aura of darkness around %N dissipates.", player.get());
             target->clearFlag(P_DARKNESS);
         }
     }

@@ -42,7 +42,6 @@
 #include "paths.hpp"                                // for Player, PlayerBackup
 #include "playerClass.hpp"                          // for PlayerClass
 #include "playerTitle.hpp"                          // for PlayerTitle
-#include "proto.hpp"                                // for file_exists
 #include "proxy.hpp"                                // for ProxyAccess, Prox...
 #include "quests.hpp"                               // for QuestCompleted
 #include "range.hpp"                                // for Range
@@ -60,18 +59,18 @@
 // Attempt to load the player named 'name' into the address given
 // return 0 on success, -1 on failure
 
-bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType) {
+bool loadPlayer(std::string_view name, std::shared_ptr<Player>& player, enum LoadType loadType) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-    std::string     filename;
-    std::string     pass = "", loadName = "";
+    fs::path    filename;
+    std::string     pass, loadName;
 
     if(loadType == LoadType::LS_BACKUP)
-        filename = fmt::format("{}/{}.bak.xml", Path::PlayerBackup, name);
+        filename = (Path::PlayerBackup / name).replace_extension("bak.xml");
     else if(loadType == LoadType::LS_CONVERT)
-        filename = fmt::format("{}/convert/{}.xml", Path::Player, name);
+        filename = (Path::Player / "convert" / name).replace_extension("xml");
     else // LoadType::LS_NORMAL
-        filename = fmt::format("{}/{}.xml", Path::Player, name);
+        filename = (Path::Player / name).replace_extension("xml");
 
     if((xmlDoc = xml::loadFile(filename.c_str(), "Player")) == nullptr)
         return(false);
@@ -85,15 +84,15 @@ bool loadPlayer(std::string_view name, Player** player, enum LoadType loadType) 
         return(false);
     }
 
-    *player = new Player;
+    player = std::make_shared<Player>();
 
-    (*player)->setName(xml::getProp(rootNode, "Name"));
+    (player)->setName(xml::getProp(rootNode, "Name"));
     xml::copyPropToString(pass, rootNode, "Password");
-    (*player)->setPassword(pass);
-    (*player)->setLastLogin(xml::getIntProp(rootNode, "LastLogin"));
+    (player)->setPassword(pass);
+    (player)->setLastLogin(xml::getIntProp(rootNode, "LastLogin"));
 
     // If we get here, we should be loading the correct player, so start reading them in
-    (*player)->readFromXml(rootNode);
+    (player)->readFromXml(rootNode);
 
     xmlFreeDoc(xmlDoc);
     xmlCleanupParser();
@@ -129,7 +128,7 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
     else if(NODE_NAME(curNode, "Wimpy")) setWimpy(xml::toNum<unsigned short>(curNode));
 
     else if(NODE_NAME(curNode, "Songs")) {
-        loadBits(curNode, songs);
+        loadBitset(curNode, songs);
     }
     else if(NODE_NAME(curNode, "Anchors")) {
         loadAnchors(curNode);
@@ -211,11 +210,12 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
         }
     }
     else if(NODE_NAME(curNode, "QuestsInProgress")) {
+        auto pThis = getAsPlayer();
         childNode = curNode->children;
         QuestCompletion* qc;
         while(childNode) {
             if(NODE_NAME(childNode, "QuestCompletion")) {
-                qc = new QuestCompletion(childNode, this);
+                qc = new QuestCompletion(childNode, pThis);
                 questsInProgress[qc->getParentQuest()->getId()] = qc;
             }
             childNode = childNode->next;
@@ -227,8 +227,8 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
             // Old format
             while(childNode) {
                 if(NODE_NAME(childNode, "Quest")) {
-                    int questNum = xml::toNum<int>(childNode);
-                    questsCompleted.insert(std::make_pair(questNum, new QuestCompleted(1)));
+                    CatRef questId = QuestInfo::getQuestId(childNode);
+                    questsCompleted.insert(std::make_pair(questId, new QuestCompleted(1)));
                 }
                 childNode = childNode->next;
             }
@@ -237,18 +237,16 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
             xmlNodePtr subNode;
             while(childNode) {
                 if(NODE_NAME(childNode, "Quest")) {
-                    int questNum = -1;
+                    CatRef questId;
                     int numCompletions = 1;
                     subNode = childNode->children;
                     while(subNode) {
                         if(NODE_NAME(subNode, "Id")) {
-                            questNum = xml::toNum<int>(subNode);
+                            questId = QuestInfo::getQuestId(subNode);
                         } else if(NODE_NAME(subNode, "Num")) {
                             numCompletions = xml::toNum<int>(subNode);
                         }
-                        if(questNum != -1) {
-                            questsCompleted.insert(std::make_pair(questNum, new QuestCompleted(numCompletions)));
-                        }
+                        questsCompleted.insert(std::make_pair(questId, new QuestCompleted(numCompletions)));
                         subNode = subNode->next;
                     }
                 }
@@ -256,12 +254,12 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
             }
         } else {
             // New - New format!
-            int id;
+            CatRef questId;
             while(childNode) {
                 if(NODE_NAME(childNode, "QuestCompleted")) {
-                    id = xml::getIntProp(childNode, "ID");
+                    questId = QuestInfo::getQuestId(childNode);
 
-                    questsCompleted.insert(std::make_pair(id, new QuestCompleted(childNode)));
+                    questsCompleted.insert(std::make_pair(questId, new QuestCompleted(childNode)));
 
                 }
                 childNode = childNode->next;
@@ -329,7 +327,7 @@ void Player::loadAnchors(xmlNodePtr curNode) {
 //*********************************************************************
 // Loads builder ranges into the provided creature
 
-void loadRanges(xmlNodePtr curNode, Player *pPlayer) {
+void loadRanges(xmlNodePtr curNode, Player* player) {
     xmlNodePtr childNode = curNode->children;
     int i=0;
 
@@ -337,7 +335,7 @@ void loadRanges(xmlNodePtr curNode, Player *pPlayer) {
         if(NODE_NAME(childNode, "Range")) {
             i = xml::getIntProp(childNode, "Num");
             if(i >= 0 && i < MAX_BUILDER_RANGE)
-                pPlayer->bRange[i].load(childNode);
+                player->bRange[i].load(childNode);
         }
         childNode = childNode->next;
     }
@@ -377,9 +375,9 @@ int Player::saveToFile(LoadType saveType) {
     saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
 
     if(saveType == LoadType::LS_BACKUP) {
-        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup, getCName());
+        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup.c_str(), getCName());
     } else {
-        sprintf(filename, "%s/%s.xml", Path::Player, getCName());
+        sprintf(filename, "%s/%s.xml", Path::Player.c_str(), getCName());
     }
 
     xml::saveFile(filename, xmlDoc);
@@ -397,7 +395,7 @@ void Player::saveXml(xmlNodePtr curNode) const {
     int i;
 
     // record people logging off during swap
-    if(gConfig->swapIsInteresting(this))
+    if(gConfig->swapIsInteresting(getAsConstPlayer()))
         gConfig->swapLog((std::string)"p" + getName(), false);
 
     bank.save("Bank", curNode);
@@ -434,7 +432,7 @@ void Player::saveXml(xmlNodePtr curNode) const {
 
     xml::saveNonNullString(curNode, "CustomColors", customColors);
     xml::saveNonZeroNum(curNode, "Thirst", thirst);
-    saveBits(curNode, "Songs", gConfig->getMaxSong(), songs);
+    saveBitset(curNode, "Songs", gConfig->getMaxSong(), songs);
 
     std::list<CatRef>::const_iterator it;
 
@@ -520,14 +518,14 @@ void Player::saveQuests(xmlNodePtr rootNode) const {
     xmlNodePtr questNode;
 
     questNode = xml::newStringChild(rootNode, "QuestsInProgress");
-    for(std::pair<int, QuestCompletion*> p : questsInProgress) {
-        p.second->save(questNode);
+    for(const auto&[questId, questCompletion] : questsInProgress) {
+        questCompletion->save(questNode);
     }
 
     questNode = xml::newStringChild(rootNode, "QuestsCompleted");
     if(!questsCompleted.empty()) {
-        for(auto qp : questsCompleted) {
-            qp.second->save(questNode, qp.first);
+        for(const auto& [questId, quest] : questsCompleted) {
+            quest->save(questNode, questId);
         }
     }
 }
@@ -636,7 +634,7 @@ bool Config::loadClasses() {
     xmlNodePtr curNode;
 
     char filename[80];
-    snprintf(filename, 80, "%s/classes.xml", Path::Game);
+    snprintf(filename, 80, "%s/classes.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "Classes");
 
     if(xmlDoc == nullptr)
@@ -694,7 +692,7 @@ void ProxyManager::save() {
         p.second.save(rootNode);
     }
 
-    sprintf(filename, "%s/proxies.xml", Path::PlayerData);
+    sprintf(filename, "%s/proxies.xml", Path::PlayerData.c_str());
 
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
@@ -706,9 +704,9 @@ void ProxyManager::loadProxies() {
     xmlNodePtr  curNode;
     char        filename[80];
 
-    sprintf(filename, "%s/proxies.xml", Path::PlayerData);
+    sprintf(filename, "%s/proxies.xml", Path::PlayerData.c_str());
 
-    if(!file_exists(filename))
+    if(!fs::exists(filename))
         return;
 
     if((xmlDoc = xml::loadFile(filename, "Proxies")) == nullptr)

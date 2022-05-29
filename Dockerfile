@@ -1,13 +1,7 @@
-ARG DPP_VERSION=9.0.15
-ARG DPP_FILENAME=libdpp-${DPP_VERSION}-linux-x64.deb
-
 FROM ubuntu:20.04 as BUILD
-ARG DPP_VERSION
-ARG DPP_FILENAME
 ENV TZ=US
 ENV CC=/usr/bin/clang
 ENV CXX=/usr/bin/clang++
-ENV DPP_URL=https://github.com/brainboxdotcc/DPP/releases/download/v${DPP_VERSION}/${DPP_FILENAME}
 
 
 # Update
@@ -27,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     build-essential \
     cmake \
     make \
+    git \
     clang-12 \
     lldb-12 \
     lld-12 \
@@ -36,8 +31,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     libsodium23 \
     libopus0 \
     libxml2-dev \
+    libssl-dev \
     libboost-python-dev \
     libboost-filesystem-dev \
+    libboost-date-time-dev \
     libpython3.8-dev \
     python3-dev \
     libaspell-dev \
@@ -47,10 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     zlib1g-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     ln -s /usr/bin/clang-12 /usr/bin/clang && \
-    ln -s /usr/bin/clang++-12 /usr/bin/clang++ && \
-    wget ${DPP_URL} && \
-    dpkg -i ${DPP_FILENAME}
-
+    ln -s /usr/bin/clang++-12 /usr/bin/clang++
 
 WORKDIR /build
 
@@ -63,14 +57,9 @@ RUN cmake . && make -j ${PARALLEL}
 
 FROM ubuntu:20.04 as RUN
 
-ARG DPP_VERSION
-ARG DPP_FILENAME
-
 # Update
 RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-COPY --from=BUILD /${DPP_FILENAME} .
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2 \
@@ -79,13 +68,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libboost-python1.71.0 \
     libboost-filesystem1.71.0 \
     libboost-system1.71.0 \
+    libboost-date-time1.71.0 \
     libsodium23 \
     libopus0 \
     aspell \
-    zlib1g  \
+    zlib1g \
+    locales \
+    locales-all \
     gdb && \
-    dpkg -i ${DPP_FILENAME} && \
-    rm ${DPP_FILENAME} && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ARG username=jason
@@ -104,9 +94,22 @@ ENV HOME /home/realms/
 
 COPY --from=BUILD /build/RealmsCode .
 COPY --from=BUILD /build/List .
-COPY --from=BUILD /build/leak.supp .
+COPY --from=BUILD /build/Updater .
 
-ENV ASAN_OPTIONS="detect_leaks=1"
-ENV LSAN_OPTIONS="suppressions=leak.supp"
+# Temporary Workaround
+COPY --from=BUILD /build/libRealmsLib.so .
+COPY --from=build /build/_deps/dpp-build/libdpp.so.2.9.2 .
+COPY --from=BUILD /build/MyLSan.supp .
+
+ENV LC_ALL en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
+
+# Temporary Workaround
+ENV LD_LIBRARY_PATH=./
+
+ENV ASAN_OPTIONS="detect_odr_violation=0,detect_leaks=0"
+ENV LSAN_OPTIONS="LSAN_OPTIONS=suppressions=../MyLSan.supp"
+
 CMD ["/mud/RealmsCode"]
 

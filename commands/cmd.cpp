@@ -57,14 +57,14 @@ class MudObject;
 
 
 
-int dmTest(Player* player, cmd* cmnd) {
+int dmTest(const std::shared_ptr<Player>& player, cmd* cmnd) {
     *player << gConfig->getProxyList();
 
     return(0);
 }
 
 
-int pcast(Player* player, cmd* cmnd) {
+int pcast(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int retVal = 0;
 
     const Spell* spell = gConfig->getSpell(cmnd->str[1], retVal);
@@ -83,7 +83,7 @@ int pcast(Player* player, cmd* cmnd) {
     }
 
     std::string args = getFullstrText(cmnd->fullstr, 2);
-    MudObject *target = nullptr;
+    std::shared_ptr<MudObject>target = nullptr;
 
     //target = player->getParent()->findTarget(cmnd->fullstr);
 
@@ -100,7 +100,7 @@ int pcast(Player* player, cmd* cmnd) {
 
 template<class Type>
 void compileSocialList(std::map<std::string, std::string>& list, const std::set<Type, namableCmp>& cList) {
-    std::string name = "";
+    std::string name;
 
     for(const auto& cmnd : cList) {
         auto* cc = dynamic_cast<const CrtCommand*>(&cmnd);
@@ -132,8 +132,8 @@ bool Config::writeSocialFile() const {
     std::map<std::string,std::string> list;
     std::map<std::string,std::string>::iterator it;
 
-    sprintf(file, "%s/socials.txt", Path::Help);
-    sprintf(fileLink, "%s/social.txt", Path::Help);
+    sprintf(file, "%s/socials.txt", Path::Help.c_str());
+    sprintf(fileLink, "%s/social.txt", Path::Help.c_str());
 
     // prepare to write the help file
     std::ofstream out(file);
@@ -222,8 +222,8 @@ void writeCommandFile(CreatureClass cls, const char* path, const char* tpl) {
     link(file, fileLink);
 }
 
-bool isCt(const Creature* player);
-bool isDm(const Creature* player);
+bool isCt(const std::shared_ptr<Creature> & player);
+bool isDm(const std::shared_ptr<Creature> & player);
 
 //**********************************************************************
 //                      initCommands
@@ -727,6 +727,7 @@ bool Config::initCommands() {
     playerCommands.emplace("changestats", 100, cmdChangeStats, nullptr, "");
     playerCommands.emplace("keep", 100, cmdKeep, nullptr, "Prevent accidentially throwing away an item.");
     playerCommands.emplace("unkeep", 100, cmdUnkeep, nullptr, "Unkeep an item.");
+    playerCommands.emplace("label", 100, cmdLabel, nullptr, "Set a custom label on an item.");
     playerCommands.emplace("alignment", 100, cmdChooseAlignment, nullptr, "Choose your alignment.");
     playerCommands.emplace("push", 100, cmdPush, nullptr, "");
     playerCommands.emplace("pull", 100, cmdPull, nullptr, "");
@@ -828,9 +829,9 @@ bool Config::initCommands() {
 
 
     // Once we've built the command tables, write their help files to the help directory
-    writeCommandFile(CreatureClass::NONE, Path::Help, "commands");
-    writeCommandFile(CreatureClass::DUNGEONMASTER, Path::DMHelp, "dmcommands");
-    writeCommandFile(CreatureClass::BUILDER, Path::BuilderHelp, "bhcommands");
+    writeCommandFile(CreatureClass::NONE, Path::Help.c_str(), "commands");
+    writeCommandFile(CreatureClass::DUNGEONMASTER, Path::DMHelp.c_str(), "dmcommands");
+    writeCommandFile(CreatureClass::BUILDER, Path::BuilderHelp.c_str(), "bhcommands");
 
     return (true);
 }
@@ -924,15 +925,15 @@ void examineList(std::set<Type, namableCmp>& mySet, const std::string &str, int&
     }
 }
 
-void getCommand(Creature *user, cmd* cmnd) {
-    std::string str = "";
+void getCommand(const std::shared_ptr<Creature>& user, cmd* cmnd) {
+    std::string str;
     // Match - Partial matches
     int     match=0;
     // Found - Exact match
     bool    found=false;
 //  int     i=0;
 
-    Player* pUser = user->getAsPlayer();
+    std::shared_ptr<Player> pUser = user->getAsPlayer();
     str = cmnd->str[0];
 
     //std::clog << "Looking for a match for '" << str << "'\n";
@@ -1051,13 +1052,13 @@ int allowedWhilePetrified(const std::string &str) {
 // This function takes the command structure of the person at the socket
 // in the first parameter and interprets the person's command.
 
-int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
+int cmdProcess(std::shared_ptr<Creature> user, cmd* cmnd, const std::shared_ptr<Creature>& pet) {
     if(!user) {
         std::clog << "invalid creature trying to use cmdProcess.\n";
         return(0);
     }
 
-    Player  *player=nullptr;
+    std::shared_ptr<Player> player=nullptr;
     int     fd = user->fd;
 
     if(fd > 0) {
@@ -1075,7 +1076,7 @@ int cmdProcess(Creature *user, cmd* cmnd, Creature* pet) {
 
     if(cmnd->ret == CMD_NOT_FOUND) {
         if(pet) {
-            user->print("Tell %N to do what?\n", user);
+            user->print("Tell %N to do what?\n", user.get());
         } else if(player)
             return(cmdNoExist(player, cmnd));
         return(0);
@@ -1106,14 +1107,14 @@ std::string Nameable::getDescription() const {
     return(description);
 }
 
-int PlyCommand::execute(Creature* player, cmd* cmnd) const {
-    Player *ply = player->getAsPlayer();
+int PlyCommand::execute(const std::shared_ptr<Creature>& player, cmd* cmnd) const {
+    std::shared_ptr<Player>ply = player->getAsPlayer();
     if(!ply) return(false);
 
     return((fn)(ply, cmnd));
 }
 
-int CrtCommand::execute(Creature* player, cmd* cmnd) const {
+int CrtCommand::execute(const std::shared_ptr<Creature>& player, cmd* cmnd) const {
     return((fn)(player, cmnd));
 }
 

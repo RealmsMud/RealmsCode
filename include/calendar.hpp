@@ -177,8 +177,8 @@ public:
     cMonth* getMonth(short id) const;
     void    setSeason();
     void    advance();
-    void    printtime(const Player* player) const;
-    bool    isBirthday(const Player* target) const;
+    void    printtime(const std::shared_ptr<Player> player) const;
+    bool    isBirthday(std::shared_ptr<const Player> target) const;
     [[nodiscard]] std::string getLastPirate() const;
     void    setLastPirate(std::string_view name);
     void    resetToMidnight();

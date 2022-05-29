@@ -50,16 +50,14 @@
 #include "mudObjects/objects.hpp"    // for Object
 #include "mudObjects/players.hpp"    // for Player
 #include "paths.hpp"                 // for AreaData
-#include "proto.hpp"                 // for zero, file_exists, showRoomFlags
+#include "proto.hpp"                 // for zero, showRoomFlags
 #include "season.hpp"                // for Season, NO_SEASON
 #include "server.hpp"                // for Server, gServer
 #include "socket.hpp"                // for Socket
 #include "track.hpp"                 // for Track
-#include "utils.hpp"                 // for MAX
+#include "toNum.hpp"                 // for toNum
 
 class BaseRoom;
-
-
 class WanderInfo;
 
 //*********************************************************************
@@ -98,9 +96,9 @@ void MapMarker::set(short _area, short _x, short _y, short _z) {
     z = _z;
 }
 void MapMarker::add(short _x, short _y, short _z) {
-    x += _x;
-    y += _y;
-    z += _z;
+    x += static_cast<short>(_x);
+    y += static_cast<short>(_y);
+    z += static_cast<short>(_z);
 }
 
 
@@ -133,10 +131,10 @@ void MapMarker::load(std::string str) {
     // trim
     str = str.substr(3, str.length()-1);
 
-    area = atoi(str.c_str());
-    x = atoi(getFullstrText(str, 1, ':').c_str());
-    y = atoi(getFullstrText(str, 2, ':').c_str());
-    z = atoi(getFullstrText(str, 3, ':').c_str());
+    area = toNum<short>(str);
+    x = toNum<short>(getFullstrText(str, 1, ':'));
+    y = toNum<short>(getFullstrText(str, 2, ':'));
+    z = toNum<short>(getFullstrText(str, 3, ':'));
 }
 
 
@@ -166,35 +164,35 @@ std::string MapMarker::str(bool color) const {
 //*********************************************************************
 // judges the direction to the target
 
-std::string MapMarker::direction(const MapMarker *mapmarker) const {
-    if(area != mapmarker->area || *this == *mapmarker)
+std::string MapMarker::direction(const MapMarker& mapmarker) const {
+    if(area != mapmarker.area || *this == mapmarker)
         return("nowhere");
 
     // the 360 degrees have been divided into 24 sections, 15 degrees each
-    std::string dir = "";
-    double dY = y - mapmarker->y;
-    double dX = x - mapmarker->x;
-    double dZ = z - mapmarker->z;
+    std::string dir;
+    double dY = y - mapmarker.y;
+    double dX = x - mapmarker.x;
+    double dZ = z - mapmarker.z;
     double angle = 0.0;
 
     // do the standard plane
-    if(x == mapmarker->getX()) {
-        if(y > mapmarker->getY()) {
+    if(x == mapmarker.getX()) {
+        if(y > mapmarker.getY()) {
             dir = "south";
-        } else if(y < mapmarker->getY()) {
+        } else if(y < mapmarker.getY()) {
             dir = "north";
         }
-    } else if(y == mapmarker->getY()) {
-        if(x > mapmarker->getX()) {
+    } else if(y == mapmarker.getY()) {
+        if(x > mapmarker.getX()) {
             dir = "west";
-        } else if(x < mapmarker->getX()) {
+        } else if(x < mapmarker.getX()) {
             dir = "east";
         }
     } else {
 
         angle = atan(dY / dX) * RADIAN;
 
-        if(y > mapmarker->getY()) {
+        if(y > mapmarker.getY()) {
 
             if(angle < -75)
                 dir = "south";
@@ -217,7 +215,7 @@ std::string MapMarker::direction(const MapMarker *mapmarker) const {
             else
                 dir = "south";
 
-        } else if(y < mapmarker->getY()) {
+        } else if(y < mapmarker.getY()) {
 
             if(angle < -75)
                 dir = "north";
@@ -244,10 +242,10 @@ std::string MapMarker::direction(const MapMarker *mapmarker) const {
     }
 
     // now do elevation
-    if(z != mapmarker->getZ()) {
+    if(z != mapmarker.getZ()) {
 
-        if(y == mapmarker->getY() && x == mapmarker->getX()) {
-            if(z > mapmarker->getZ())
+        if(y == mapmarker.getY() && x == mapmarker.getX()) {
+            if(z > mapmarker.getZ())
                 dir = "straight down";
             else
                 dir = "straight up";
@@ -268,7 +266,7 @@ std::string MapMarker::direction(const MapMarker *mapmarker) const {
 
             dir += " ";
 
-            if(z > mapmarker->getZ())
+            if(z > mapmarker.getZ())
                 dir += "descent";
             else
                 dir += "ascent";
@@ -284,12 +282,12 @@ std::string MapMarker::direction(const MapMarker *mapmarker) const {
 //*********************************************************************
 // estimates the distance between two points
 
-std::string MapMarker::distance(const MapMarker *mapmarker) const {
+std::string MapMarker::distance(const MapMarker& mapmarker) const {
     // we don't understand distance in these scenarios
-    if(area != mapmarker->getArea() || *this == *mapmarker)
+    if(area != mapmarker.getArea() || *this == mapmarker)
         return("");
 
-    int distance = (MAX(abs(z - mapmarker->getZ()), MAX(abs(x - mapmarker->getX()), abs(y - mapmarker->getY()))));
+    int distance = (std::max(abs(z - mapmarker.getZ()), std::max(abs(x - mapmarker.getX()), abs(y - mapmarker.getY()))));
 
     // The target is...
     if(distance <= 3)
@@ -324,6 +322,10 @@ std::string MapMarker::filename() const {
     return(str);
 }
 
+bool MapMarker::isValid() const {
+    return area != 0 && x != 0 && y != 0 && z != 0;
+}
+
 //*********************************************************************
 //                      AreaZone
 //*********************************************************************
@@ -340,13 +342,10 @@ AreaZone::AreaZone() {
     max.setY(-1000);
     max.setZ(-1000);
 
-    zero(flags, sizeof(flags));
+    flags.reset();
 }
 
 AreaZone::~AreaZone() {
-    for (auto const& [mapId, mapmarker] : coords) {
-        delete mapmarker;
-    }
     coords.clear();
 }
 
@@ -369,16 +368,17 @@ AreaZone::~AreaZone() {
 //  Return: 0 = outside, 1 = inside
 // This code is patterned after [Franklin, 2000]
 
-bool AreaZone::inside(const Area *area, const MapMarker *mapmarker) const {
-    MapMarker *vi=nullptr, *vn=nullptr;
+bool AreaZone::inside(const std::shared_ptr<const Area>& area, const MapMarker& mapmarker) const {
+    const MapMarker *vi=nullptr;
+    const MapMarker *vn=nullptr;
     // the crossing number counter
     int     cn = 0;
     int     i=0, n = coords.size();
     float   vt = 0.0;
 
     // if they aren't even within the established region, don't do the work
-    if( mapmarker->getX() > max.getX() || mapmarker->getY() > max.getY() || mapmarker->getZ() > max.getZ() ||
-        mapmarker->getX() < min.getX() || mapmarker->getY() < min.getY() || mapmarker->getZ() < min.getZ()
+    if( mapmarker.getX() > max.getX() || mapmarker.getY() > max.getY() || mapmarker.getZ() > max.getZ() ||
+        mapmarker.getX() < min.getX() || mapmarker.getY() < min.getY() || mapmarker.getZ() < min.getZ()
     ) {
         return(false);
     }
@@ -393,18 +393,18 @@ bool AreaZone::inside(const Area *area, const MapMarker *mapmarker) const {
     // loop through all edges of the polygon
     // edge from V[i] to V[i+1]
     for(i=0; i<n; i++) {
-        vi = (*coords.find(i)).second;
-        vn = (*coords.find(i+1 < n ? i+1 : 0)).second;
-        if( (vi->getY() <= mapmarker->getY() && vn->getY() > mapmarker->getY()) ||  // an upward crossing
-            (vi->getY() > mapmarker->getY() && vn->getY() <= mapmarker->getY()) // a downward crossing
+        vi = &(*coords.find(i)).second;
+        vn = &(*coords.find(i+1 < n ? i+1 : 0)).second;
+        if( (vi->getY() <= mapmarker.getY() && vn->getY() > mapmarker.getY()) ||  // an upward crossing
+            (vi->getY() > mapmarker.getY() && vn->getY() <= mapmarker.getY()) // a downward crossing
         ) {
             // compute the actual edge-ray intersect x-coordinate
-            vt = (float)(mapmarker->getY() - vi->getY());
+            vt = (float)(mapmarker.getY() - vi->getY());
             vt /= (float)(vn->getY() - vi->getY());
             vt *= (float)(vn->getX() - vi->getX());
             vt += (float)vi->getX();
             // P.x < intersect
-            if(mapmarker->getX() <= vt) {
+            if(mapmarker.getX() <= vt) {
                 // a valid crossing of y=P.y right of P.x
                 ++cn;
             }
@@ -430,7 +430,7 @@ bool AreaZone::inRestrict(char tile, const char *list) const {
 
 
 bool AreaZone::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 
 //*********************************************************************
@@ -443,7 +443,7 @@ TileInfo::TileInfo() {
     name = description = fishing = "";
     trackDur = cost = fly = 0;
     vision = 0.0;
-    zero(flags, sizeof(flags));
+    flags.reset();
     water = road = false;
     herbs.clear();
 }
@@ -457,7 +457,7 @@ float TileInfo::getVision() const { return(vision); }
 char TileInfo::getDisplay() const { return(display); }
 short TileInfo::getTrackDur() const { return(trackDur); }
 bool TileInfo::flagIsSet(int flag) const {
-    return(flags[flag/8] & 1<<(flag%8));
+    return flags.test(flag);
 }
 bool TileInfo::isWater() const { return(water); }
 bool TileInfo::isRoad() const { return(road); }
@@ -467,7 +467,7 @@ short TileInfo::getFly() const { return(fly); }
 //                      getStyle
 //*********************************************************************
 
-char TileInfo::getStyle(const Player* player) const {
+char TileInfo::getStyle(const std::shared_ptr<Player>& player) const {
     if(player && player->flagIsSet(P_INVERT_AREA_COLOR)) {
         // toggle case
         if(isupper(style))
@@ -484,7 +484,7 @@ char TileInfo::getStyle(const Player* player) const {
 //*********************************************************************
 
 AreaData::AreaData() {
-    area = nullptr;
+    area.reset();
     isTerrain = true;
 }
 
@@ -492,11 +492,15 @@ char AreaData::get(short x, short y, short z) const {
     try {
         return (data.at(z).at(y).at(x));
     } catch(std::out_of_range &e) {
-        return (area->errorTerrain);
+        auto a = area.lock();
+        if(a)
+            return a->errorTerrain;
+        else
+            return ' ';
     }
 }
 
-void AreaData::setArea(Area* a) { area = a; }
+void AreaData::setArea(const std::weak_ptr<Area>&  a) { area = a; }
 void AreaData::setTerrain(bool t) { isTerrain = t; }
 
 AreaData::~AreaData() {
@@ -516,37 +520,18 @@ Area::Area() {
     zero_offset_x = zero_offset_y = zero_offset_z = 0;
     flightPower = 0;
 
-    aTerrain.setArea(this);
-    aMap.setArea(this);
+    aTerrain.setArea(weak_from_this());
+    aMap.setArea(weak_from_this());
     aMap.setTerrain(false);
-    aSeason.setArea(this);
+    aSeason.setArea(weak_from_this());
     aSeason.setTerrain(false);
 }
 
 Area::~Area() {
-    for (auto const& [roomId, room] : rooms) {
-        delete room;
-    }
     rooms.clear();
-
-    for(auto const& zone : zones) {
-        delete zone;
-    }
-    zones.clear();
-
-    for (auto const& [tileId, tile] : ter_tiles) {
-        delete tile;
-    }
+    areaZones.clear();
     ter_tiles.clear();
-
-    for (auto const& [tileId, tile] : map_tiles) {
-        delete tile;
-    }
     map_tiles.clear();
-
-    for( auto const& aTrack : tracks) {
-        delete aTrack;
-    }
     tracks.clear();
 }
 
@@ -555,9 +540,9 @@ Area::~Area() {
 //                      getUnique
 //*********************************************************************
 
-CatRef Area::getUnique(const MapMarker *mapmarker) const {
-    for (auto const& zone : zones) {
-        if(zone->unique.id && zone->inside(this, mapmarker))
+CatRef Area::getUnique(const MapMarker& mapmarker) const {
+    for (auto const& zone : areaZones) {
+        if(zone->unique.id && zone->inside(shared_from_this(), mapmarker))
             return(zone->unique);
     }
 
@@ -569,30 +554,51 @@ CatRef Area::getUnique(const MapMarker *mapmarker) const {
 //                      move
 //*********************************************************************
 
+bool Area::moveMapMarker(std::shared_ptr<AreaRoom> room, const MapMarker &mapmarker) {
+    if(!room->canDelete()) return false;
+
+    room->unRegisterMo();
+    room->setId("-1");
+    rooms.erase(room->mapmarker.str());
+    room->setMapMarker(mapmarker);
+    rooms[mapmarker.str()] = room;
+    room->registerMo(room);
+    room->recycle();
+
+    return true;
+}
+
+void Area::setMapMarker(std::shared_ptr<AreaRoom> room, const MapMarker &mapmarker) {
+    room->setMapMarker(mapmarker);
+    rooms[mapmarker.str()] = room;
+    room->registerMo(room);
+    room->recycle();
+
+}
+
 // this function does not check rules for moving
-bool Area::move(Player* player, MapMarker *mapmarker) {
+bool Area::move(const std::shared_ptr<Player>& player, const MapMarker &mapmarker) {
     bool    mem=false;
     // does it already exist?
-    AreaRoom* room = getRoom(mapmarker);
+    std::shared_ptr<AreaRoom> room = getRoom(mapmarker);
 
     if(!room) {
         room = player->getAreaRoomParent();
 
         if(room && room->canDelete()) {
-            room->setMapMarker(mapmarker);
-            room->recycle();
+            moveMapMarker(room, mapmarker);
         } else {
-            room = new AreaRoom(this, mapmarker);
+            room = std::make_shared<AreaRoom>(shared_from_this());
+            setMapMarker(room, mapmarker);
         }
     }
 
-    // the room we are going to (could be the same room!) should not be
-    // deleted after everyone leaves
+    // the room we are going to (could be the same room!) should not be deleted after everyone leaves
     mem = room->getStayInMemory();
     room->setStayInMemory(true);
 
     // everyone leaves room
-    BaseRoom* old_room = player->getRoomParent();
+    std::shared_ptr<BaseRoom> old_room = player->getRoomParent();
     player->deleteFromRoom();
 
     room->killMortalObjects();
@@ -610,11 +616,10 @@ bool Area::move(Player* player, MapMarker *mapmarker) {
 //                      remove
 //*********************************************************************
 
-void Area::remove(AreaRoom* room) {
+void Area::remove(const std::shared_ptr<AreaRoom>& room) {
     if(!room)
         return;
     rooms.erase(room->mapmarker.str());
-    delete room;
 }
 
 
@@ -624,7 +629,7 @@ void Area::remove(AreaRoom* room) {
 // loads the room, including options for recycling, if needed.
 // creature is allowed to be null.
 
-AreaRoom *Area::loadRoom(Creature* creature, const MapMarker* mapmarker, bool recycle, bool p) {
+std::shared_ptr<AreaRoom> Area::loadRoom(const std::shared_ptr<Creature>& creature, const MapMarker& mapmarker, bool recycle, bool p) {
 
     // we only care about this if we have a creature
     if(creature) {
@@ -638,14 +643,16 @@ AreaRoom *Area::loadRoom(Creature* creature, const MapMarker* mapmarker, bool re
     }
 
     // does it already exist?
-    AreaRoom* room = getRoom(mapmarker);
+    std::shared_ptr<AreaRoom> room = getRoom(mapmarker);
 
     // because an AreaRoom can only be a candidate for recycling once
     // it is completely empty, we'll just use this room for now
     if(!room && creature && recycle)
         room = creature->getAreaRoomParent();
-    if(!room)
-        room = new AreaRoom(this, mapmarker);
+    if(!room) {
+        room = std::make_shared<AreaRoom>(shared_from_this());
+        setMapMarker(room, mapmarker);
+    }
 
     return(room);
 }
@@ -657,10 +664,10 @@ AreaRoom *Area::loadRoom(Creature* creature, const MapMarker* mapmarker, bool re
 // this set of functions forces us to uses a bounded map that cycles
 // when we get too far away from the center
 
-void Area::checkCycle(MapMarker *mapmarker) const {
-    mapmarker->setX(checkCycle(mapmarker->getX(), critical_x));
-    mapmarker->setY(checkCycle(mapmarker->getY(), critical_y));
-    mapmarker->setZ(checkCycle(mapmarker->getZ(), critical_z));
+void Area::checkCycle(MapMarker mapmarker) const {
+    mapmarker.setX(checkCycle(mapmarker.getX(), critical_x));
+    mapmarker.setY(checkCycle(mapmarker.getY(), critical_y));
+    mapmarker.setZ(checkCycle(mapmarker.getZ(), critical_z));
 }
 
 short Area::checkCycle(short vector, short critical) const {
@@ -679,13 +686,13 @@ short Area::checkCycle(short vector, short critical) const {
 // Tells if the creature can pass through this terrain. Send a null
 // creature to simulate a normal person
 
-bool Area::canPass(const Creature* creature, const MapMarker *mapmarker, bool adjust) const {
+bool Area::canPass(const std::shared_ptr<const Creature>& creature, const MapMarker& mapmarker, bool adjust) const {
     int fly = 0;
-    TileInfo* tile=nullptr;
+    std::shared_ptr<TileInfo>  tile=nullptr;
 
-    short x = mapmarker->getX();
-    short y = mapmarker->getY();
-    short z = mapmarker->getZ();
+    short x = mapmarker.getX();
+    short y = mapmarker.getY();
+    short z = mapmarker.getZ();
 
     if(adjust)
         adjustCoords(&x, &y, &z);
@@ -724,7 +731,7 @@ bool Area::isRoad(short x, short y, short z, bool adjust) const {
         adjustCoords(&x, &y, &z);
     if(outOfBounds(x, y, z))
         return(false);
-    TileInfo* tile = getTile(aMap.get(x,y,z), 0);
+    std::shared_ptr<TileInfo>  tile = getTile(aMap.get(x,y,z), 0);
     return(tile && tile->isRoad());
 }
 
@@ -736,7 +743,7 @@ bool Area::isRoad(short x, short y, short z, bool adjust) const {
 bool Area::isWater(short x, short y, short z, bool adjust) const {
     if(adjust)
         adjustCoords(&x, &y, &z);
-    TileInfo* tile = nullptr;
+    std::shared_ptr<TileInfo>  tile = nullptr;
     if(outOfBounds(x, y, z))
         tile = getTile(defaultTerrain, 0);
     else
@@ -750,7 +757,7 @@ bool Area::isWater(short x, short y, short z, bool adjust) const {
 // when getting a tile stored in memory, we may get a different tile
 // during a particular season. this is how rivers freeze during the winter
 
-TileInfo *Area::getTile(char grid, char seasonFlags, Season season, bool checkSeason) const {
+std::shared_ptr<TileInfo> Area::getTile(char grid, char seasonFlags, Season season, bool checkSeason) const {
     // figure out rules for season
     if(checkSeason)
         season = gConfig->getCalendar()->whatSeason();
@@ -762,7 +769,7 @@ TileInfo *Area::getTile(char grid, char seasonFlags, Season season, bool checkSe
 
     auto it = ter_tiles.find(grid);
     if(it != ter_tiles.end()) {
-        TileInfo* tile = (*it).second;
+        std::shared_ptr<TileInfo>  tile = (*it).second;
         if(season != NO_SEASON) {
             auto st = tile->season.find(season);
             if(st != tile->season.end()) {
@@ -784,15 +791,14 @@ TileInfo *Area::getTile(char grid, char seasonFlags, Season season, bool checkSe
 //                      getTerrain
 //*********************************************************************
 
-char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y, short x, short z, bool terOnly) const {
-    AreaRoom* room=nullptr;
+char Area::getTerrain(const std::shared_ptr<Player>& player, const MapMarker& mapmarker, short y, short x, short z, bool terOnly) const {
+    std::shared_ptr<AreaRoom> room=nullptr;
     bool    staff = player != nullptr && player->isStaff();
     bool    found=false;
 
     // If given a player, vision may be distorted based on properties on the player
     if(player) {
-        MapMarker m = *mapmarker;
-
+        MapMarker m = mapmarker;
         // adjust our mapmarker
         m.add(x, y, z);
         auto it = rooms.find(m.str());
@@ -805,14 +811,16 @@ char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y,
                 }
 
                 // can they see anybody in the room?
-                for(Player* ply : room->players) {
-                    if(player == ply || (player->canSee(ply) && (staff || !ply->flagIsSet(P_HIDDEN)))) {
-                        found = true;
-                        break;
+                for(const auto& pIt : room->players) {
+                    if(auto ply = pIt.lock()) {
+                        if (player == ply || (player->canSee(ply) && (staff || !ply->flagIsSet(P_HIDDEN)))) {
+                            found = true;
+                            break;
+                        }
                     }
                 }
                 if(!found) {
-                    for(Monster* mons : room->monsters) {
+                    for(const auto& mons : room->monsters) {
                         if( player->canSee(mons) && (staff || !mons->flagIsSet(M_HIDDEN))) {
                             found = true;
                             break;
@@ -828,9 +836,9 @@ char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y,
     }
 
     // adjust our coordinates
-    x += mapmarker->getX();
-    y += mapmarker->getY();
-    z += mapmarker->getZ();
+    x += (short)mapmarker.getX();
+    y += (short)mapmarker.getY();
+    z += (short)mapmarker.getZ();
 
     adjustCoords(&x, &y, &z);
 
@@ -846,11 +854,11 @@ char Area::getTerrain(const Player* player, const MapMarker *mapmarker, short y,
 //                      getSeasonFlags
 //*********************************************************************
 
-char Area::getSeasonFlags(const MapMarker *mapmarker, short y, short x, short z) const {
+char Area::getSeasonFlags(const MapMarker& mapmarker, short y, short x, short z) const {
     // adjust our coordinates
-    x += mapmarker->getX();
-    y += mapmarker->getY();
-    z += mapmarker->getZ();
+    x += mapmarker.getX();
+    y += mapmarker.getY();
+    z += mapmarker.getZ();
 
     adjustCoords(&x, &y, &z);
 
@@ -864,7 +872,7 @@ char Area::getSeasonFlags(const MapMarker *mapmarker, short y, short x, short z)
 //                      getLosPower
 //*********************************************************************
 
-float Area::getLosPower(const Player* player, int xVision, int yVision) const {
+float Area::getLosPower(const std::shared_ptr<Player>& player, int xVision, int yVision) const {
     // default
     float power = xVision - 0.5;
     // elves have great vision
@@ -883,8 +891,8 @@ float Area::getLosPower(const Player* player, int xVision, int yVision) const {
 //                      getGridText
 //*********************************************************************
 
-void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, int maxWidth) const {
-   TileInfo *tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
+void Area::getGridText(char grid[][80], int pHeight, const MapMarker& mapmarker, int maxWidth) const {
+   std::shared_ptr<TileInfo> tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
     std::string desc = tile ? tile->getDescription() : "";
     if(maxWidth < 80)
         desc = wrapText(desc, maxWidth);
@@ -894,12 +902,12 @@ void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, 
     int     i=0, n=0, k=0, lines=1, offset=0;
     bool    displayed = (desc.empty());
 
-    for(i=0; i<height; i++)
+    for(i=0; i < pHeight; i++)
         strcpy(grid[i], "");
 
     // see if there is any zone text to add
-    for (auto const& zone : zones) {
-        if(!zone->display.empty() && zone->inside(this, mapmarker)) {
+    for (auto const& zone : areaZones) {
+        if(!zone->display.empty() && zone->inside(shared_from_this(), mapmarker)) {
             if(!displayed) {
                 desc += "\n";
                 displayed = true;
@@ -919,11 +927,11 @@ void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, 
             lines++;
 
     // time to move the description into the array
-    offset = MAX(0, (height - lines) / 2);
+    offset = std::max(0, (pHeight - lines) / 2);
     k = desc.size()-1;
     n=0;
 
-    for(i=0; i<=k && offset<height; i++) {
+    for(i=0; i<=k && offset < pHeight; i++) {
         if(desc.at(i) == '\n' || i==k) {
             if(i==k)
                 i++;
@@ -937,9 +945,9 @@ void Area::getGridText(char grid[][80], int height, const MapMarker *mapmarker, 
 //                      showGrid
 //*********************************************************************
 
-std::string Area::showGrid(const Player* player, const MapMarker *mapmarker, bool compass) const {
-    std::list<AreaZone*>::const_iterator it;
-    std::string border = "";
+std::string Area::showGrid(const std::shared_ptr<Player>& player, const MapMarker& mapmarker, bool compass) const {
+    std::list<std::shared_ptr<AreaZone> >::const_iterator it;
+    std::string border;
     std::ostringstream grid;
     int     xVision = player->getVision();
     int     yVision = xVision * 2 / 3;
@@ -949,11 +957,11 @@ std::string Area::showGrid(const Player* player, const MapMarker *mapmarker, boo
     char    gridText[my][80];
     char    seasonFlags;
     Season  season = gConfig->getCalendar()->whatSeason();
-    TileInfo *tile=nullptr;
-    MapMarker m = *mapmarker;
+    std::shared_ptr<TileInfo> tile=nullptr;
+    MapMarker m = mapmarker;
 
     zero(gridText, sizeof(gridText));
-    getGridText(gridText, my, &m, player->getSock()->getTermCols()-mx-5);
+    getGridText(gridText, my, m, player->getSock()->getTermCols()-mx-5);
 
     // line of sight
     float   losGrid[my][mx];
@@ -1001,9 +1009,9 @@ std::string Area::showGrid(const Player* player, const MapMarker *mapmarker, boo
                         m.add(x, y, 0);
                         zInside = false;
                         zZone = 0;
-                        for(it = zones.begin() ; it != zones.end() ; it++) {
+                        for(it = areaZones.begin() ; it != areaZones.end() ; it++) {
                             zZone++;
-                            if((*it)->inside(this, mapmarker)) {
+                            if((*it)->inside(shared_from_this(), mapmarker)) {
                                 zHigh = zZone;
                                 zInside = true;
                             }
@@ -1084,13 +1092,13 @@ void Area::adjustCoords(short* x, short* y, short* z) const {
 //*********************************************************************
 // search, return if found
 
-Track* Area::getTrack(MapMarker* mapmarker) const {
-    std::list<AreaTrack*>::const_iterator it;
-    AreaTrack *aTrack=nullptr;
+Track* Area::getTrack(const MapMarker& mapmarker) const {
+    std::list<std::shared_ptr<AreaTrack> >::const_iterator it;
+    std::shared_ptr<AreaTrack> aTrack=nullptr;
 
     for(it = tracks.begin() ; it != tracks.end() ; it++) {
         aTrack = (*it);
-        if(*&aTrack->mapmarker == *mapmarker)
+        if(*&aTrack->mapmarker == mapmarker)
             return(&aTrack->track);
     }
     return(nullptr);
@@ -1102,7 +1110,7 @@ Track* Area::getTrack(MapMarker* mapmarker) const {
 //*********************************************************************
 // add, pop from end if too many
 
-void Area::addTrack(AreaTrack *aTrack) {
+void Area::addTrack(const std::shared_ptr<AreaTrack>& aTrack) {
     tracks.push_front(aTrack);
     while(tracks.size() > MAX_AREA_TRACK)
         tracks.pop_back();
@@ -1114,8 +1122,8 @@ void Area::addTrack(AreaTrack *aTrack) {
 //*********************************************************************
 // how long will the tracks last?
 
-int Area::getTrackDuration(const MapMarker* mapmarker) const {
-    TileInfo *tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
+int Area::getTrackDuration(const MapMarker& mapmarker) const {
+    std::shared_ptr<TileInfo> tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
     return(tile ? tile->getTrackDur() : 0);
 }
 
@@ -1127,7 +1135,7 @@ int Area::getTrackDuration(const MapMarker* mapmarker) const {
 
 void Area::updateTrack(int t) {
     auto it = tracks.begin();
-    AreaTrack *aTrack=nullptr;
+    std::shared_ptr<AreaTrack> aTrack;
 
     while(it != tracks.end()) {
         auto next = it;
@@ -1135,7 +1143,6 @@ void Area::updateTrack(int t) {
         aTrack = (*it);
         aTrack->setDuration(aTrack->getDuration() - t);
         if(aTrack->getDuration() <= 0) {
-            delete aTrack;
             tracks.erase(it);
         }
         it = next;
@@ -1167,15 +1174,15 @@ void Area::checkFileSize(int& size, const char* filename) const {
 //                      loadTerrain
 //*********************************************************************
 
-void Area::loadTerrain(int minDepth) {
+void Area::loadTerrain(int pMinDepth) {
     bool    gotOffset=false;
-    int     i=0, n=0, k=minDepth, len=0, size=0;
+    int     i=0, n=0, k=pMinDepth, len=0, size=0;
     char    filename[256];
-    char    storage[MAX(height, width)+1];
+    char    storage[std::max(height, width)+1];
 
     while(k < depth) {
-        sprintf(filename, "%s/%s.%d.ter", Path::AreaData, dataFile, k);
-        if(!file_exists(filename))
+        sprintf(filename, "%s/%s.%d.ter", Path::AreaData.c_str(), dataFile, k);
+        if(!fs::exists(filename))
             return;
 
         checkFileSize(size, filename);
@@ -1197,9 +1204,9 @@ void Area::loadTerrain(int minDepth) {
         t.close();
         aTerrain.data.push_back(vTer);
 
-        sprintf(filename, "%s/%s.%d.map", Path::AreaData, dataFile, k);
+        sprintf(filename, "%s/%s.%d.map", Path::AreaData.c_str(), dataFile, k);
         std::vector< std::vector<char> > vMap;
-        if(file_exists(filename)) {
+        if(fs::exists(filename)) {
             checkFileSize(size, filename);
             std::fstream m(filename, std::ios::in);
             i=0;
@@ -1216,7 +1223,7 @@ void Area::loadTerrain(int minDepth) {
                         if(!gotOffset) {
                             zero_offset_x = n;
                             zero_offset_y = i;
-                            zero_offset_z = k - minDepth;
+                            zero_offset_z = k - pMinDepth;
                             gotOffset = true;
                         }
                     } else {
@@ -1240,9 +1247,9 @@ void Area::loadTerrain(int minDepth) {
         }
         aMap.data.push_back(vMap);
 
-        sprintf(filename, "%s/%s.%d.sn", Path::AreaData, dataFile, k);
+        sprintf(filename, "%s/%s.%d.sn", Path::AreaData.c_str(), dataFile, k);
         std::vector< std::vector<char> > vSn;
-        if(file_exists(filename)) {
+        if(fs::exists(filename)) {
             checkFileSize(size, filename);
             std::fstream s(filename, std::ios::in);
             i=0;
@@ -1283,19 +1290,19 @@ void Area::loadTerrain(int minDepth) {
 //                      flagIsSet
 //*********************************************************************
 
-bool Area::flagIsSet(int flag, const MapMarker* mapmarker) const {
-    TileInfo *tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
+bool Area::flagIsSet(int flag, const MapMarker& mapmarker) const {
+    std::shared_ptr<TileInfo> tile = getTile(getTerrain(nullptr, mapmarker, 0, 0, 0, true), getSeasonFlags(mapmarker));
     if(!tile)
         return(false);
     if(tile->flagIsSet(flag))
         return(true);
 
-    std::list<AreaZone*>::const_iterator it;
-    AreaZone *zone=nullptr;
+    std::list<std::shared_ptr<AreaZone> >::const_iterator it;
+    std::shared_ptr<AreaZone> zone=nullptr;
 
-    for(it = zones.begin() ; it != zones.end() ; it++) {
+    for(it = areaZones.begin() ; it != areaZones.end() ; it++) {
         zone = (*it);
-        if(zone->flagIsSet(flag) && zone->inside(this, mapmarker))
+        if(zone->flagIsSet(flag) && zone->inside(shared_from_this(), mapmarker))
             return(true);
     }
     return(false);
@@ -1307,14 +1314,14 @@ bool Area::flagIsSet(int flag, const MapMarker* mapmarker) const {
 //*********************************************************************
 
 // a prototype needed for only this function: from dmroom.cpp
-void showMobList(Player* player, WanderInfo *wander, std::string_view type);
+void showMobList(const std::shared_ptr<Player>& player, WanderInfo *wander, std::string_view type);
 
-int dmListArea(Player* player, cmd* cmnd) {
+int dmListArea(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     a=0;
     std::string str = getFullstrText(cmnd->fullstr, 1);
 
     if(!str.empty())
-        a = atoi(str.c_str());
+        a = toNum<int>(str);
     if(!a)
         player->printColor("You may type ^y*arealist [num]^x to display only a specific area.\n\n");
 
@@ -1325,7 +1332,7 @@ int dmListArea(Player* player, cmd* cmnd) {
     bool wander = cmnd->num >= 3 && (!strcmp(cmnd->str[1], "zones") || !strcmp(cmnd->str[1], "tile")) && !strcmp(cmnd->str[2], "wander");
     bool track = cmnd->num >= 2 && !strcmp(cmnd->str[1], "track");
 
-    for(auto area : gServer->areas) {
+    for(const auto& area : gServer->areas) {
         if(a && a != area->id)
             continue;
         player->printColor("Area: ^C%s\n", area->name.c_str());
@@ -1406,7 +1413,7 @@ int dmListArea(Player* player, cmd* cmnd) {
                 else
                     player->printColor("^yTo show zone wander info, type \"*arealist zones wander\".\n");
             }
-            for(const auto& zone : area->zones) {
+            for(const auto& zone : area->areaZones) {
                 player->printColor("Name: ^c%s\n", zone->name.c_str());
                 if(wander) {
                     showMobList(player, &zone->wander, "zone");
@@ -1414,7 +1421,7 @@ int dmListArea(Player* player, cmd* cmnd) {
                     player->printColor("   Display: ^c%s\n", zone->display.c_str());
                     player->printColor("   TerRestrict: ^c%s^x  MapRestrict: ^c%s\n",
                         zone->terRestrict, zone->mapRestrict);
-                    player->printColor("   Unique: ^c%s\n", zone->unique.str().c_str());
+                    player->printColor("   Unique: ^c%s\n", zone->unique.displayStr().c_str());
                     player->printColor("   Min: (X:^c%d^x Y:^c%d^x Z:^c%d^x) Max: (X:^c%d^x Y:^c%d^x Z:^c%d^x)\n",
                         zone->min.getX(), zone->min.getY(), zone->min.getZ(),
                         zone->max.getX(), zone->max.getY(), zone->max.getZ());
@@ -1427,7 +1434,7 @@ int dmListArea(Player* player, cmd* cmnd) {
                         player->print("   Coords:\n");
                         for(const auto& [c, mapmarker] : zone->coords) {
                             player->printColor("      (X:^c%d^x Y:^c%d^x Z:^c%d^x)\n",
-                                mapmarker->getX(), mapmarker->getY(), mapmarker->getZ());
+                                mapmarker.getX(), mapmarker.getY(), mapmarker.getZ());
                         }
                     }
                 }
@@ -1460,11 +1467,11 @@ int dmListArea(Player* player, cmd* cmnd) {
     return(0);
 }
 
-void Server::areaInit(Creature* player, MapMarker mapmarker) {
-    Area *area = getArea(mapmarker.getArea());
+void Server::areaInit(const std::shared_ptr<Creature>& player, MapMarker mapmarker) {
+    std::shared_ptr<Area> area = getArea(mapmarker.getArea());
     if(area)
         player->currentLocation.mapmarker = mapmarker;
-//  AreaRoom* aRoom=0;
+//  std::shared_ptr<AreaRoom> aRoom=0;
 //  if(area)
 //      aRoom = area->loadRoom(0, &mapmarker, false);
 //  player->area_room = aRoom;
@@ -1498,14 +1505,14 @@ void Area::losCloser(int *x, int *y, int me_x, int me_y, int i) const {
 //*********************************************************************
 // recursive function to place values in our grid
 
-float Area::lineOfSight(float *grid, const Player* player, int width, int *y, int *x, int me_y, int me_x, int *i, const MapMarker *mapmarker) const {
+float Area::lineOfSight(float *grid, const std::shared_ptr<Player>& player, int pWidth, int *y, int *x, int me_y, int me_x, int *i, const MapMarker& mapmarker) const {
     int     og_y = (*y), og_x = (*x);
     float   *g, *h, cost=0.0;
-    TileInfo *tile=nullptr;
+    std::shared_ptr<TileInfo> tile=nullptr;
 
     // Calculate the position in the array you're going after
-    g = grid + (*y) * width + (*x);
-    h = grid + og_y * width + og_x;
+    g = grid + (*y) * pWidth + (*x);
+    h = grid + og_y * pWidth + og_x;
 
     // check to see if float is empty
     if((int)(*h))
@@ -1518,7 +1525,7 @@ float Area::lineOfSight(float *grid, const Player* player, int width, int *y, in
         // see how much this piece of terrain costs
         tile = getTile(getTerrain(nullptr, mapmarker, og_y - me_y, og_x - me_x, 0, true), getSeasonFlags(mapmarker, og_y - me_y, og_x - me_x));
         cost = tile ? tile->getVision() : 0;
-        if(isRoad(og_x - me_x + mapmarker->getX(), og_y - me_y + mapmarker->getY(), mapmarker->getZ(), true))
+        if(isRoad(og_x - me_x + mapmarker.getX(), og_y - me_y + mapmarker.getY(), mapmarker.getZ(), true))
             cost /= 4 ;
 
         // Profiling: Check flightpower before checking effect. Flightpower is less expensive
@@ -1545,7 +1552,7 @@ float Area::lineOfSight(float *grid, const Player* player, int width, int *y, in
         if((int)(*g))
             (*h) = cost + (*g);
         else
-            (*h) = cost + lineOfSight(grid, player, width, y, x, me_y, me_x, i, mapmarker);
+            (*h) = cost + lineOfSight(grid, player, pWidth, y, x, me_y, me_x, i, mapmarker);
     }
 
     return(*h);
@@ -1556,69 +1563,54 @@ float Area::lineOfSight(float *grid, const Player* player, int width, int *y, in
 //*********************************************************************
 // generates line of sight values in supplied grid
 
-void Area::makeLosGrid(float *grid, const Player* player, int height, int width, const MapMarker *mapmarker) const {
-    int     x=0, y=0, me_x = (width-1)/2, me_y = (height-1)/2;
+void Area::makeLosGrid(float *grid, const std::shared_ptr<Player>& player, int pHeight, int pWidth, const MapMarker& mapmarker) const {
+    int     x=0, y=0, me_x = (pWidth - 1) / 2, me_y = (pHeight - 1) / 2;
     int     zx=0, zy=0, zi=0;
     float   *g;
-    MapMarker m = *mapmarker;
+    MapMarker m = mapmarker;
 
-    zero(grid, height*width*sizeof(float));
+    zero(grid, (size_t)pHeight * (size_t)pWidth * sizeof(float));
 
-    for(y=0; y<height; y++) {
+    for(y=0; y < pHeight; y++) {
         zi = 1;
         zx = 0;
         zy = y;
-        lineOfSight(grid, player, width, &zy, &zx, me_y, me_x, &zi, &m);
+        lineOfSight(grid, player, pWidth, &zy, &zx, me_y, me_x, &zi, m);
         zi = 1;
-        zx = width-1;
+        zx = pWidth - 1;
         zy = y;
-        lineOfSight(grid, player, width, &zy, &zx, me_y, me_x, &zi, &m);
+        lineOfSight(grid, player, pWidth, &zy, &zx, me_y, me_x, &zi, m);
 
-        if(y == 0 || y == height-1) {
-            for(x=0; x<width-1; x++) {
+        if(y == 0 || y == pHeight - 1) {
+            for(x=0; x < pWidth - 1; x++) {
                 zi = 1;
                 zx = x;
                 zy = y;
-                lineOfSight(grid, player, width, &zy, &zx, me_y, me_x, &zi, &m);
+                lineOfSight(grid, player, pWidth, &zy, &zx, me_y, me_x, &zi, m);
             }
         }
 
     }
     // verification
-    for(y=0; y<height; y++) {
-        for(x=0; x<width-1; x++) {
-            g = grid + y * width + x;
+    for(y=0; y < pHeight; y++) {
+        for(x=0; x < pWidth - 1; x++) {
+            g = grid + y * pWidth + x;
             if((int)(*g))
                 continue;
             zi = 1;
             zx = x;
             zy = y;
-            lineOfSight(grid, player, width, &zy, &zx, me_y, me_x, &zi, &m);
+            lineOfSight(grid, player, pWidth, &zy, &zx, me_y, me_x, &zi, m);
         }
     }
-}
-
-//*********************************************************************
-//                      clearAreas
-//*********************************************************************
-
-void Server::clearAreas() {
-    Area    *area=nullptr;
-
-    while(!areas.empty()) {
-        area = areas.front();
-        delete area;
-        areas.pop_front();
-    }
-    areas.clear();
 }
 
 //*********************************************************************
 //                      getArea
 //*********************************************************************
 
-Area *Server::getArea(int id) {
-    for(auto area: areas) {
+std::shared_ptr<Area> Server::getArea(int id) {
+    for(const auto& area: areas) {
         if(area->id == id)
             return(area);
     }
@@ -1630,7 +1622,7 @@ Area *Server::getArea(int id) {
 //*********************************************************************
 
 void Server::cleanUpAreas() {
-    for(auto area : areas) {
+    for(const auto& area : areas) {
         area->cleanUpRooms();
     }
 }
@@ -1640,8 +1632,8 @@ void Server::cleanUpAreas() {
 //*********************************************************************
 
 void Area::cleanUpRooms() {
-    std::map<std::string, AreaRoom*>::iterator it;
-    AreaRoom* room=nullptr;
+    std::map<std::string, std::shared_ptr<AreaRoom>>::iterator it;
+    std::shared_ptr<AreaRoom> room=nullptr;
 
     for(it = rooms.begin() ; it != rooms.end() ; ) {
         room = (*it).second;
@@ -1649,7 +1641,6 @@ void Area::cleanUpRooms() {
 
         if(room->canDelete()) {
             rooms.erase(room->mapmarker.str());
-            delete room;
         }
     }
 }

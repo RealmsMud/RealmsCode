@@ -57,7 +57,6 @@
 #include "mudObjects/rooms.hpp"                     // for BaseRoom, NUM_PER...
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "oldquest.hpp"                             // for quest, questPtr
-#include "os.hpp"                                   // for merror
 #include "paths.hpp"                                // for Log, BuilderHelp
 #include "proto.hpp"                                // for get_spell_name
 #include "quests.hpp"                               // for QuestInfo
@@ -67,7 +66,6 @@
 #include "stats.hpp"                                // for Stat
 #include "toNum.hpp"                                // for toNum
 #include "track.hpp"                                // for Track
-#include "utils.hpp"                                // for MAX
 #include "weather.hpp"                              // for WEATHER_BEAUTIFUL...
 #include "xml.hpp"                                  // for iToYesNo, loadRoom
 
@@ -81,7 +79,7 @@ extern long last_weather_update;
 //                      dmReboot
 //*********************************************************************
 
-int dmReboot(Player* player, cmd* cmnd) {
+int dmReboot(const std::shared_ptr<Player>& player, cmd* cmnd) {
     bool    resetShips=false;
 
 
@@ -106,7 +104,7 @@ int dmReboot(Player* player, cmd* cmnd) {
 
     gServer->startReboot(resetShips);
 
-    merror("dmReboot failed!!!", FATAL);
+    throw std::runtime_error("dmReboot failed!!!");
     return(0);
 
 }
@@ -115,9 +113,9 @@ int dmReboot(Player* player, cmd* cmnd) {
 //                      dmMobInventory
 //*********************************************************************
 
-int dmMobInventory(Player* player, cmd* cmnd) {
-    Monster *monster=nullptr;
-    Object  *object;
+int dmMobInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster> monster=nullptr;
+    std::shared_ptr<Object> object;
     //char  str[2048];
     int     i=0;
 
@@ -146,17 +144,16 @@ int dmMobInventory(Player* player, cmd* cmnd) {
                 continue;
             }
 
-            if(!loadObject(monster->carry[i].info, &object))
+            if(!loadObject(monster->carry[i].info, object))
                 continue;
             if(!object)
                 continue;
 
             if(player->getClass() == CreatureClass::BUILDER && player->checkRangeRestrict(object->info))
-                player->print("Carry slot %d: %sout of range(%s).\n", i+1, i < 9 ? " " : "", object->info.str().c_str());
+                player->print("Carry slot %d: %sout of range(%s).\n", i+1, i < 9 ? " " : "", object->info.displayStr().c_str());
             else
-                player->printColor("Carry slot %d: %s%s(%s).\n", i+1, i < 9 ? " " : "", object->getCName(), object->info.str().c_str());
-
-            delete object;
+                player->printColor("Carry slot %d: %s%s(%s).\n", i+1, i < 9 ? " " : "", object->getCName(),
+                                   object->info.displayStr().c_str());
         }
 
         return(0);
@@ -178,14 +175,14 @@ int dmMobInventory(Player* player, cmd* cmnd) {
 //                      dmSockets
 //*********************************************************************
 
-int dmSockets(Player* player, cmd* cmnd) {
+int dmSockets(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int num=0;
 
     player->print("Connected Sockets:\n");
 
-    for(Socket &sock : gServer->sockets) {
+    for(const auto &sock : gServer->sockets) {
         num += 1;
-        player->bPrint(fmt::format("Fd: {:-2}   {} ({})\n", sock.getFd(), sock.getHostname(), sock.getIdle()));
+        player->bPrint(fmt::format("Fd: {:-2}   {} ({})\n", sock->getFd(), sock->getHostname(), sock->getIdle()));
     }
     player->print("%d total connection%s.\n", num, num != 1 ? "s" : "");
     return(PROMPT);
@@ -199,7 +196,7 @@ int dmSockets(Player* player, cmd* cmnd) {
 //*********************************************************************
 // handles loading and saving of a bunch of config files
 
-int dmLoadSave(Player* player, cmd* cmnd, bool load) {
+int dmLoadSave(const std::shared_ptr<Player>& player, cmd* cmnd, bool load) {
     if(cmnd->num < 2) {
         std::list<std::string> loadList;
         std::list<std::string> saveList;
@@ -411,7 +408,7 @@ int dmLoadSave(Player* player, cmd* cmnd, bool load) {
 //*********************************************************************
 // a wrapper
 
-int dmLoad(Player* player, cmd* cmnd) {
+int dmLoad(const std::shared_ptr<Player>& player, cmd* cmnd) {
     dmLoadSave(player, cmnd, true);
     return(0);
 }
@@ -421,7 +418,7 @@ int dmLoad(Player* player, cmd* cmnd) {
 //*********************************************************************
 // a wrapper
 
-int dmSave(Player* player, cmd* cmnd) {
+int dmSave(const std::shared_ptr<Player>& player, cmd* cmnd) {
     dmLoadSave(player, cmnd, false);
     return(0);
 }
@@ -433,10 +430,10 @@ int dmSave(Player* player, cmd* cmnd) {
 // a player's location.  It will also teleport a player to the DM or
 // one player to another.
 
-void Player::dmPoof(BaseRoom* room, BaseRoom *newRoom) {
+void Player::dmPoof(const std::shared_ptr<BaseRoom>& room, std::shared_ptr<BaseRoom> newRoom) {
     if(flagIsSet(P_ALIASING)) {
         alias_crt->deleteFromRoom();
-        broadcast(getSock(), room, "%M just wandered away.", alias_crt);
+        broadcast(getSock(), room, "%M just wandered away.", alias_crt.get());
         if(newRoom)
             alias_crt->addToRoom(newRoom);
     }
@@ -453,11 +450,11 @@ void Player::dmPoof(BaseRoom* room, BaseRoom *newRoom) {
     }
 }
 
-int dmTeleport(Player* player, cmd* cmnd) {
-    BaseRoom    *room=nullptr, *old_room=nullptr;
-    UniqueRoom      *uRoom=nullptr;
-    Creature    *creature=nullptr;
-    Player      *target=nullptr, *target2=nullptr;
+int dmTeleport(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<BaseRoom>room=nullptr, old_room=nullptr;
+    std::shared_ptr<UniqueRoom> uRoom=nullptr;
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Player> target=nullptr, target2=nullptr;
 
     Location    l;
 
@@ -478,9 +475,9 @@ int dmTeleport(Player* player, cmd* cmnd) {
 
         room =  l.loadRoom();
     } else if(cmnd->num < 2 || (!txt.empty() && txt.at(0))) {
-        Area        *area=nullptr;
+        std::shared_ptr<Area> area=nullptr;
 
-        getDestination(str, &l, player);
+        getDestination(str, l, player);
 
         if(player->getClass() !=  CreatureClass::BUILDER && l.mapmarker.getArea()) {
             if(player->inAreaRoom() && l.mapmarker == player->currentLocation.mapmarker) {
@@ -496,7 +493,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
 
             // pointer to old room
             player->dmPoof(player->getRoomParent(), nullptr);
-            area->move(player, &l.mapmarker);
+            area->move(player, l.mapmarker);
             // manual
             if(player->flagIsSet(P_ALIASING))
                 player->getAlias()->addToRoom(player->getRoomParent());
@@ -508,7 +505,7 @@ int dmTeleport(Player* player, cmd* cmnd) {
             player->print("Error: out of range.\n");
             return(0);
         }
-        if(!loadRoom(l.room, &uRoom)) {
+        if(!loadRoom(l.room, uRoom)) {
             player->print("Error (%s)\n", l.str().c_str());
             return(0);
         }
@@ -599,12 +596,12 @@ int dmTeleport(Player* player, cmd* cmnd) {
 // This function allows staff to list all users online, displaying
 // level, name, current room # and name, and address.
 
-int dmUsers(Player* player, cmd* cmnd) {
+int dmUsers(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    t = time(nullptr);
     bool    full=false;
     std::string tmp="", host="";
-    Player* user=nullptr;
-    //Socket* sock=0;
+    std::shared_ptr<Player> user=nullptr;
+    //std::shared_ptr<Socket> sock=0;
 
     std::ostringstream oStr;
     char    str[100];
@@ -625,9 +622,9 @@ int dmUsers(Player* player, cmd* cmnd) {
         oStr << "Room                 Address             Last Command      Idle";
     oStr << "\n---------------------------------------------------------------------------------------\n";
 
-    auto cmp = [](const Socket* a, const Socket* b) { return a->getHostname() < b->getHostname(); };
-    std::multiset<Socket*, decltype(cmp)> sortedSockets;
-    for(auto &sock : gServer->sockets) sortedSockets.insert(&sock);
+    auto cmp = [](const std::shared_ptr<Socket>& a, const std::shared_ptr<Socket>& b) { return a->getHostname() < b->getHostname(); };
+    std::multiset<std::shared_ptr<Socket>, decltype(cmp)> sortedSockets;
+    for(const auto &sock : gServer->sockets) sortedSockets.insert(sock);
 
     for(const auto &sock : sortedSockets) {
         user = sock->getPlayer();
@@ -645,7 +642,7 @@ int dmUsers(Player* player, cmd* cmnd) {
 
         if(user->isStaff())
             oStr << "^g";
-        oStr << std::setw(4) << std::string(getShortClassName(user)).substr(0, 4) << "^w ";
+        oStr << std::setw(4) << getShortClassName(user).substr(0, 4) << "^w ";
 
         if(!user->flagIsSet(P_SECURITY_CHECK_OK))
             oStr << "^r";
@@ -682,7 +679,7 @@ int dmUsers(Player* player, cmd* cmnd) {
             oStr << "^m" << std::setw(58) << host.substr(0, 58);
         } else {
             if(user->inUniqueRoom()) {
-                sprintf(str, "%s: ^b%s", user->getUniqueRoomParent()->info.str(cr, 'b').c_str(), stripColor(user->getUniqueRoomParent()->getCName()).c_str());
+                sprintf(str, "%s: ^b%s", user->getUniqueRoomParent()->info.displayStr(cr, 'b').c_str(), stripColor(user->getUniqueRoomParent()->getCName()).c_str());
                 oStr << std::setw(22 + (str[0] == '^' ? 4 : 0)) << std::string(str).substr(0, 22 + (str[0] == '^' ? 4 : 0));
             } else if(user->inAreaRoom()){
                 //sprintf(str, "%s", user->area_room->mapmarker.str(true).c_str());
@@ -719,7 +716,7 @@ int dmUsers(Player* player, cmd* cmnd) {
 // This function allows staff to save all the rooms in memory back to
 // disk in one fell swoop.
 
-int dmFlushSave(Player* player, cmd* cmnd) {
+int dmFlushSave(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
         player->print("All rooms and contents flushed to disk.\n");
         gServer->resaveAllRooms(0);
@@ -736,7 +733,7 @@ int dmFlushSave(Player* player, cmd* cmnd) {
 // This function allows staff to shut down the game in a given number of
 // minutes.
 
-int dmShutdown(Player* player, cmd* cmnd) {
+int dmShutdown(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("Ok.\n");
 
     log_immort(true, player, "*** Shutdown by %s.\n", player->getCName());
@@ -753,7 +750,7 @@ int dmShutdown(Player* player, cmd* cmnd) {
 // This function allows staff to flush the object and creature data so
 //  that updated data can be loaded into memory instead.
 
-int dmFlushCrtObj(Player* player, cmd* cmnd) {
+int dmFlushCrtObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->canBuildObjects() && !player->canBuildMonsters())
         return(cmdNoAuth(player));
@@ -774,7 +771,7 @@ int dmFlushCrtObj(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows staff to save a room back to disk.
 
-int dmResave(Player* player, cmd* cmnd) {
+int dmResave(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     s=0;
 
     if(!player->builderCanEditRoom("use *save"))
@@ -790,7 +787,7 @@ int dmResave(Player* player, cmd* cmnd) {
         }
 
         CatRef  cr;
-        getCatRef(str, &cr, player);
+        getCatRef(str, cr, player);
 
         if(!strcmp(cmnd->str[1], "c"))
             dmSaveMob(player, cmnd, cr);
@@ -830,10 +827,10 @@ int dmResave(Player* player, cmd* cmnd) {
 // This function allows staff to make a given object sitting on the
 // floor into a permanent object.
 
-int dmPerm(Player* player, cmd* cmnd) {
+int dmPerm(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::map<int, crlasttime>::iterator it;
-    Monster* target=nullptr;
-    Object  *object=nullptr;
+    std::shared_ptr<Monster>  target=nullptr;
+    std::shared_ptr<Object> object=nullptr;
     int     x=0;
 
     if(!player->canBuildMonsters() && !player->canBuildObjects())
@@ -905,9 +902,9 @@ int dmPerm(Player* player, cmd* cmnd) {
         player->getUniqueRoomParent()->permObjects[x].interval = (long)cmnd->val[2];
 
         log_immort(true, player, "%s permed %s^g in room %s.\n", player->getCName(),
-            object->getCName(), player->getUniqueRoomParent()->info.str().c_str());
+            object->getCName(), player->getUniqueRoomParent()->info.displayStr().c_str());
 
-        player->printColor("%s^x (%s) permed with timeout of %d.\n", object->getCName(), object->info.str().c_str(), cmnd->val[2]);
+        player->printColor("%s^x (%s) permed with timeout of %d.\n", object->getCName(), object->info.displayStr().c_str(), cmnd->val[2]);
 
         return(0);
         // perm Creature
@@ -965,9 +962,9 @@ int dmPerm(Player* player, cmd* cmnd) {
         player->getUniqueRoomParent()->permMonsters[x].interval = (long)cmnd->val[2];
 
         log_immort(true, player, "%s permed %s in room %s.\n", player->getCName(),
-            target->getCName(), player->getUniqueRoomParent()->info.str().c_str());
+            target->getCName(), player->getUniqueRoomParent()->info.displayStr().c_str());
 
-        player->print("%s (%s) permed with timeout of %d.\n", target->getCName(), target->info.str().c_str(), cmnd->val[2]);
+        player->print("%s (%s) permed with timeout of %d.\n", target->getCName(), target->info.displayStr().c_str(), cmnd->val[2]);
 
         return(0);
         // perm tracks
@@ -993,7 +990,7 @@ int dmPerm(Player* player, cmd* cmnd) {
 //*********************************************************************
 // This function allows staff to turn themself invisible.
 
-int dmInvis(Player* player, cmd* cmnd) {
+int dmInvis(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(player->flagIsSet(P_DM_INVIS)) {
         if(!player->builderCanEditRoom("turn off invis"))
@@ -1012,7 +1009,7 @@ int dmInvis(Player* player, cmd* cmnd) {
 //                      dmIncog
 //*********************************************************************
 
-int dmIncog(Player* player, cmd* cmnd) {
+int dmIncog(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(player->isEffected("incognito")) {
         if(!player->isCt()) {
@@ -1032,8 +1029,8 @@ int dmIncog(Player* player, cmd* cmnd) {
 // This function allows staff to take a look at their own special stats.
 // or another user's stats.
 
-int dmAc(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmAc(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
 
     if(cmnd->num == 2) {
         lowercize(cmnd->str[1], 1);
@@ -1057,7 +1054,7 @@ int dmAc(Player* player, cmd* cmnd) {
 //                      dmWipe
 //*********************************************************************
 
-int dmWipe(Player* player, cmd* cmnd) {
+int dmWipe(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //  Room* room=0;
     //otag  *op;
 //  int     a=0, fd = player->fd, low=0, high=0;
@@ -1123,7 +1120,7 @@ int dmWipe(Player* player, cmd* cmnd) {
 *
 */
 // TODO: -- REDO THIS to work with xml, easy enough to do.
-int dmDeleteDb(Player* player, cmd* cmnd) {
+int dmDeleteDb(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //  int         fd = player->fd, index, blah=0;
 
     if(cmnd->num < 2) {
@@ -1139,7 +1136,7 @@ int dmDeleteDb(Player* player, cmd* cmnd) {
 //*********************************************************************
 // Show the status of all configurable options in the game.
 
-int dmGameStatus(Player* player, cmd* cmnd) {
+int dmGameStatus(const std::shared_ptr<Player>& player, cmd* cmnd) {
     char **d;
     char buf[2048];
 
@@ -1209,8 +1206,8 @@ int dmGameStatus(Player* player, cmd* cmnd) {
 //                      dmWeather
 //*********************************************************************
 
-int dmWeather(Player* player, cmd* cmnd) {
-    BaseRoom* room = player->getRoomParent();
+int dmWeather(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<BaseRoom> room = player->getRoomParent();
     player->printColor("^BWeather Strings: note that these strings may be specific to this room.\n");
     player->printColor("^cSunrise: ^x%s\n", gConfig->weatherize(WEATHER_SUNRISE, room).c_str());
     player->printColor("^cSunset: ^x%s\n", gConfig->weatherize(WEATHER_SUNSET, room).c_str());
@@ -1244,7 +1241,7 @@ int dmWeather(Player* player, cmd* cmnd) {
 //                      dmAlchemyList
 //*********************************************************************
 
-int dmAlchemyList(Player* player, cmd* cmnd) {
+int dmAlchemyList(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->printPaged(fmt::format("Alchemy List ({}):\n", gConfig->alchemy.size()));
 
     player->printPaged(fmt::format("^B{:>25s} - {:>3} - {:<15}^x\n", "Name", "Pos", "Action"));
@@ -1256,7 +1253,7 @@ int dmAlchemyList(Player* player, cmd* cmnd) {
     return(0);
 }
 
-void printOldQuests(Player* player) {
+void printOldQuests(const std::shared_ptr<Player>& player) {
 
     player->print("Quest Table:\n\n");
     player->print("| # |             Name             |    Exp    |\n");
@@ -1275,7 +1272,7 @@ void printOldQuests(Player* player) {
 //                      dmQuestList
 //*********************************************************************
 
-int dmQuestList(Player* player, cmd* cmnd) {
+int dmQuestList(const std::shared_ptr<Player>& player, cmd* cmnd) {
     bool all = false;
     std::string output = getFullstrText(cmnd->fullstr, 1);
 
@@ -1286,7 +1283,7 @@ int dmQuestList(Player* player, cmd* cmnd) {
         return(0);
     } else if(!output.empty()) {
         output.erase(0, output.find_first_not_of('#')); // trimleft("#")
-        int questId = toNum<int>(output);
+        CatRef questId = QuestInfo::getQuestId(output);
         *player << "Looking for quest " << questId << ".\n";
         auto qPair = gConfig->quests.find(questId);
         if(qPair == gConfig->quests.end()) {
@@ -1301,7 +1298,7 @@ int dmQuestList(Player* player, cmd* cmnd) {
 
     player->printPaged("New style Quests:");
     for(auto& [questId, quest] : gConfig->quests) {
-        player->printPaged(fmt::format("{}) {}\n", questId, (all ? quest->getDisplayString() : quest->getDisplayName())));
+        player->printPaged(fmt::format("{}) {}\n", questId.str(), (all ? quest->getDisplayString() : quest->getDisplayName())));
     }
     player->donePaging();
 
@@ -1313,7 +1310,7 @@ int dmQuestList(Player* player, cmd* cmnd) {
 //                      dmBane
 //*********************************************************************
 
-int dmBane(Player* player, cmd* cmnd) {
+int dmBane(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->getName() != "Bane" && player->getName() != "Dominus")
         return(PROMPT);
 
@@ -1328,7 +1325,7 @@ int dmBane(Player* player, cmd* cmnd) {
 // This function allows a DM or CT to obtain a list of flags for rooms, exits,
 // monsters, players and objects.
 
-int dmHelp(Player* player, cmd* cmnd) {
+int dmHelp(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(player->getClass() == CreatureClass::BUILDER) {
         player->print("You must use the builder help file system.\n");
@@ -1337,7 +1334,7 @@ int dmHelp(Player* player, cmd* cmnd) {
     }
 
     if(cmnd->num < 2) {
-        player->getSock()->viewFile(fmt::format("{}/dmHelpfile.txt", Path::DMHelp), true);
+        player->getSock()->viewFile( Path::DMHelp / "dmHelpfile.txt", true);
         return(DOPROMPT);
     }
     if(strchr(cmnd->str[1], '/')!=nullptr) {
@@ -1345,7 +1342,7 @@ int dmHelp(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::DMHelp, cmnd->str[1]), true);
+    player->getSock()->viewFile((Path::DMHelp / cmnd->str[1]).replace_extension("txt"), true);
     return(DOPROMPT);
 
 }
@@ -1356,9 +1353,9 @@ int dmHelp(Player* player, cmd* cmnd) {
 // This function allows a builder to obtain a list of flags for rooms, exits,
 // monsters, players and objects.
 
-int bhHelp(Player* player, cmd* cmnd) {
+int bhHelp(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
-        player->getSock()->viewFile(fmt::format("{}/build_help.txt", Path::BuilderHelp), true);
+        player->getSock()->viewFile((Path::BuilderHelp / "build_help.txt"), true);
         return(DOPROMPT);
     }
     if(strchr(cmnd->str[1], '/')!=nullptr) {
@@ -1366,7 +1363,7 @@ int bhHelp(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    player->getSock()->viewFile(fmt::format("{}/{}.txt", Path::BuilderHelp, cmnd->str[1]), true);
+    player->getSock()->viewFile( (Path::BuilderHelp / cmnd->str[1]).replace_extension("txt"), true);
     return(DOPROMPT);
 
 }
@@ -1376,7 +1373,7 @@ int bhHelp(Player* player, cmd* cmnd) {
 //                      dmParam
 //*********************************************************************
 
-int dmParam(Player* player, cmd* cmnd) {
+int dmParam(const std::shared_ptr<Player>& player, cmd* cmnd) {
     extern short    Random_update_interval;
     long            t=0, days=0, hours=0, minutes=0;
     char szBuffer[256];
@@ -1427,8 +1424,8 @@ int dmParam(Player* player, cmd* cmnd) {
 // dmOutlaw allows staff to outlaw people for a time
 // up to 2 hrs of online time max. - TC
 
-int dmOutlaw(Player* player, cmd* cmnd) {
-    Creature* target=nullptr;
+int dmOutlaw(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
     int     minutes=0;
     long    t=0, i=0;
 
@@ -1519,7 +1516,7 @@ int dmOutlaw(Player* player, cmd* cmnd) {
         return(0);
     }
 
-    minutes = MAX(minutes, 10);
+    minutes = std::max(minutes, 10);
 
     target->setFlag(P_OUTLAW);
     target->lasttime[LT_OUTLAW].ltime = time(nullptr);
@@ -1571,7 +1568,7 @@ int dmOutlaw(Player* player, cmd* cmnd) {
 // the players in the game free of any message format. i.e. the msg
 // broadcasted appears exactly as it is typed
 
-int dmBroadecho(Player* player, cmd* cmnd) {
+int dmBroadecho(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     len=0, i=0, found=0;
 
     if(!player->flagIsSet(P_CT_CAN_DM_BROAD) && !player->isDm())
@@ -1612,7 +1609,7 @@ int dmBroadecho(Player* player, cmd* cmnd) {
 //                      dmGlobalSpells
 //*********************************************************************
 
-bool dmGlobalSpells(Player* player, int splno, bool check) {
+bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check) {
 
     // in case dynamic cast fails
     if(!player)
@@ -1910,8 +1907,8 @@ bool dmGlobalSpells(Player* player, int splno, bool check) {
 //                      dmCast
 //*********************************************************************
 
-int dmCast(Player* player, cmd* cmnd) {
-    Player  *target=nullptr;
+int dmCast(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
     char    rcast=0, *sp;
     int     splno=0, c=0, fd = player->fd, i=0, silent=0;
 
@@ -1952,32 +1949,38 @@ int dmCast(Player* player, cmd* cmnd) {
         player->print("Spell name is not unique.\n");
         return(0);
     }
-
+    auto room = player->getRoomParent();
 
     if(rcast) {
 
 
         if(splno == S_WORD_OF_RECALL) {
-            BaseRoom *room = player->getRecallRoom().loadRoom(player);
+            std::shared_ptr<BaseRoom> recallRoom = player->getRecallRoom().loadRoom(player);
 
-            if(!room) {
+            if(!recallRoom) {
                 player->print("Spell failure.\n");
                 return(0);
             }
             player->print("You cast %s on everyone in the room.\n", get_spell_name(splno));
             broadcast(player->getSock(), player->getParent(),
-                "%M casts %s on everyone in the room.\n", player, get_spell_name(splno));
+                "%M casts %s on everyone in the room.\n", player.get(), get_spell_name(splno));
 
             log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->getCName(), get_spell_name(splno),
-                player->getRoomParent()->fullName().c_str());
+                room->fullName().c_str());
 
-            auto pIt = player->getRoomParent()->players.begin();
-            while(pIt != player->getRoomParent()->players.end()) {
-                target = (*pIt++);
-                target->print("%M casts %s on you.\n", player, get_spell_name(splno));
+
+            for(auto pIt = room->players.begin() ; pIt != room->players.end() ; ) {
+                target = pIt->lock();
+                if(!target) {
+                    pIt = room->players.erase(pIt);
+                    continue;
+                }
+                pIt++;
+                target = (*pIt++).lock();
+                target->print("%M casts %s on you.\n", player.get(), get_spell_name(splno));
 
                 target->deleteFromRoom();
-                target->addToRoom(room);
+                target->addToRoom(recallRoom);
             }
             return(0);
         }
@@ -1989,19 +1992,20 @@ int dmCast(Player* player, cmd* cmnd) {
 
         player->print("You cast %s on everyone in the room.\n", get_spell_name(splno));
 
-        for(Player* ply : player->getRoomParent()->players) {
-            if(ply->flagIsSet(P_DM_INVIS))
-                continue;
+        for(const auto& pIt: room->players) {
+            if(auto ply = pIt.lock()) {
+                if (ply->flagIsSet(P_DM_INVIS))
+                    continue;
 
-            ply->print("%M casts %s on you.\n", player, get_spell_name(splno));
-            dmGlobalSpells(ply, splno, false);
+                ply->print("%M casts %s on you.\n", player.get(), get_spell_name(splno));
+                dmGlobalSpells(ply, splno, false);
+            }
         }
 
-        broadcast(player->getSock(), player->getParent(), "%M casts %s on everyone in the room.\n",
-            player, get_spell_name(splno));
+        broadcast(player->getSock(), player->getParent(), "%M casts %s on everyone in the room.\n", player.get(), get_spell_name(splno));
 
         log_immort(false, player, "%s casts %s on everyone in room %s.\n", player->getCName(), get_spell_name(splno),
-            player->getRoomParent()->fullName().c_str());
+            room->fullName().c_str());
 
     } else {
         if(!dmGlobalSpells(player, splno, true)) {
@@ -2016,26 +2020,23 @@ int dmCast(Player* player, cmd* cmnd) {
             player->print("You silently cast %s on everyone.\n", get_spell_name(splno));
         }
 
-        Player* ply;
+        std::shared_ptr<Player> ply;
         for(const auto& p : gServer->players) {
             ply = p.second;
 
-            if(!ply->isConnected())
-                continue;
-            if(ply->fd == fd)
-                continue;
-            if(ply->flagIsSet(P_DM_INVIS))
-                continue;
+            if(!ply->isConnected()) continue;
+            if(ply->fd == fd) continue;
+            if(ply->flagIsSet(P_DM_INVIS)) continue;
             if(!silent)
-                ply->print("%M casts %s on you.\n", player, get_spell_name(splno));
+                ply->print("%M casts %s on you.\n", player.get(), get_spell_name(splno));
             dmGlobalSpells(ply, splno, false);
         }
 
         if(!silent) {
-            broadcast("%M casts %s on everyone.",player, get_spell_name(splno));
+            broadcast("%M casts %s on everyone.",player.get(), get_spell_name(splno));
             log_immort(false,player, "%s globally casts %s on everyone.\n", player->getCName(), get_spell_name(splno));
         } else {
-            broadcast(isCt, "^y%M silently casts %s on everyone.",player, get_spell_name(splno));
+            broadcast(isCt, "^y%M silently casts %s on everyone.",player.get(), get_spell_name(splno));
             log_immort(false, player, "%s silently globally casts %s on everyone.\n", player->getCName(), get_spell_name(splno));
         }
 
@@ -2051,7 +2052,7 @@ int dmCast(Player* player, cmd* cmnd) {
 // This function allows staff to set a variable within a currently
 // existing data structure in the game.
 
-int dmSet(Player* player, cmd* cmnd) {
+int dmSet(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
         player->print("Set what?\n");
         return(0);
@@ -2087,31 +2088,31 @@ int dmSet(Player* player, cmd* cmnd) {
 // This function allows staff to peruse the log file while in the game.
 // If *log r is typed, then the log file is removed (i.e. cleared).
 
-int dmLog(Player* player, cmd* cmnd) {
-    char filename[80];
+int dmLog(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    fs::path filename = Path::Log;
 
     switch(tolower(cmnd->str[1][0])) {
     case 'a':
         if(!player->isDm())
             return(PROMPT);
-        sprintf(filename, "%s/assert.log.txt", Path::Log);
+        filename /= "assert.log.txt";
         break;
     case 'i':
         if(!player->isDm())
             return(PROMPT);
-        sprintf(filename, "%s/log.imm.txt", Path::Log);
+        filename /= "log.imm.txt";
         break;
     case 's':
-        sprintf(filename, "%s/log.suicide.txt", Path::Log);
+        filename /= "log.suicide.txt";
         break;
     case 'w':
         if(!player->isDm())
             return(PROMPT);
-        sprintf(filename, "%s/log.passwd.txt", Path::Log);
+        filename /= "log.passwd.txt";
         break;
     case 'p':
     default:
-        sprintf(filename, "%s/log.txt", Path::Log);
+        filename /= "log.txt";
         break;
     }
 
@@ -2137,7 +2138,7 @@ int dmLog(Player* player, cmd* cmnd) {
 // the command, and they can be entered here in the same way that they
 // are entered on the command line.
 
-int dmList(Player* player, cmd* cmnd) {
+int dmList(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->flagIsSet(P_CT_CAN_DM_LIST) && !player->isDm())
         return(cmdNoAuth(player));
 
@@ -2152,7 +2153,7 @@ int dmList(Player* player, cmd* cmnd) {
     return(0);
 }
 
-int dmIds(Player* player, cmd* cmnd) {
+int dmIds(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("%s", gServer->getRegisteredList().c_str());
     return(0);
 }
@@ -2161,7 +2162,7 @@ int dmIds(Player* player, cmd* cmnd) {
 //                      dmInfo
 //*********************************************************************
 
-int dmInfo(Player* player, cmd* cmnd) {
+int dmInfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long            t=0, days=0, hours=0, minutes=0;
     extern short    Random_update_interval;
 
@@ -2193,7 +2194,7 @@ int dmInfo(Player* player, cmd* cmnd) {
     return(0);
 }
 
-int dmMd5(Player* player, cmd* cmnd) {
+int dmMd5(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string tohash = getFullstrText(cmnd->fullstr, 1, ' ');
     player->print("MD5: '%s' = '%s'\n", tohash.c_str(), md5(tohash).c_str());
     return(0);
@@ -2203,8 +2204,8 @@ int dmMd5(Player* player, cmd* cmnd) {
 //*********************************************************************
 //  This function will allow staff to display detailed stat information
 
-int dmStatDetail(Player* player, cmd* cmnd) {
-    Creature* target = nullptr;
+int dmStatDetail(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target = nullptr;
 
     if(cmnd->num < 2)
         target = player;
@@ -2240,11 +2241,11 @@ int dmStatDetail(Player* player, cmd* cmnd) {
 //  This function will allow staff to display information on an object
 //  creature, player, or room.
 
-int dmStat(Player* player, cmd* cmnd) {
-    Object  *object=nullptr;
-    Creature* target=nullptr;
-    Monster* mTarget=nullptr;
-    Creature* player2=nullptr;
+int dmStat(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Object> object=nullptr;
+    std::shared_ptr<Creature> target=nullptr;
+    std::shared_ptr<Monster>  mTarget=nullptr;
+    std::shared_ptr<Creature> player2=nullptr;
     int i=0, j=0;
     CatRef  cr;
 
@@ -2262,10 +2263,10 @@ int dmStat(Player* player, cmd* cmnd) {
     std::string txt = getFullstrText(str, 1, '.');
 
     if(cmnd->num < 2 || (!txt.empty() && txt.at(0))) {
-        Area        *area=nullptr;
+        std::shared_ptr<Area> area=nullptr;
         MapMarker   mapmarker;
-        AreaRoom*   aRoom=nullptr;
-        UniqueRoom      *uRoom=nullptr;
+        std::shared_ptr<AreaRoom>   aRoom=nullptr;
+        std::shared_ptr<UniqueRoom> uRoom=nullptr;
 
         // if they're not *st-ing anything in particular
         if(str.empty()) {
@@ -2278,7 +2279,7 @@ int dmStat(Player* player, cmd* cmnd) {
             }
         } else {
 
-            getDestination(str, &mapmarker, &cr, player);
+            getDestination(str, mapmarker, cr, player);
 
         }
 
@@ -2291,13 +2292,14 @@ int dmStat(Player* player, cmd* cmnd) {
                     return(0);
                 }
 
-                aRoom = area->loadRoom(nullptr, &mapmarker, false);
+                aRoom = area->loadRoom(nullptr, mapmarker, false);
             }
 
             stat_rom(player, aRoom);
 
-            if(aRoom->canDelete())
-                aRoom->area->remove(aRoom);
+            if(aRoom->canDelete()) {
+                area->remove(aRoom);
+            }
 
         } else if(cr.id) {
 
@@ -2312,8 +2314,8 @@ int dmStat(Player* player, cmd* cmnd) {
             if(player->inUniqueRoom() && cr == player->getUniqueRoomParent()->info)
                 uRoom = player->getUniqueRoomParent();
             else {
-                if(!loadRoom(cr, &uRoom)) {
-                    player->print("Error (%s)\n", cr.str().c_str());
+                if(!loadRoom(cr, uRoom)) {
+                    player->print("Error (%s)\n", cr.displayStr().c_str());
                     return(0);
                 }
             }
@@ -2383,7 +2385,7 @@ int dmStat(Player* player, cmd* cmnd) {
         target = gServer->findPlayer(cmnd->str[1]);
 
     if(target && player->canSee(target)) {
-        Player  *pTarget = target->getAsPlayer();
+        std::shared_ptr<Player> pTarget = target->getAsPlayer();
         mTarget = target->getAsMonster();
 
         if(player->getClass() == CreatureClass::BUILDER) {
@@ -2419,7 +2421,7 @@ int dmStat(Player* player, cmd* cmnd) {
 //                      dmCache
 //*********************************************************************
 
-int dmCache(Player* player, cmd* cmnd) {
+int dmCache(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string cacheStr = gServer->getDnsCacheString();
     player->printColor("%s", cacheStr.c_str());
     return(0);
@@ -2429,9 +2431,9 @@ int dmCache(Player* player, cmd* cmnd) {
 //                      dmTxtOnCrash
 //*********************************************************************
 
-int dmTxtOnCrash(Player* player, cmd* cmnd) {
+int dmTxtOnCrash(const std::shared_ptr<Player>& player, cmd* cmnd) {
     gConfig->toggleTxtOnCrash();
     player->printColor("Setting toggled to %s.\n", gConfig->sendTxtOnCrash() ? "^GYes" : "^RNo");
-    player->print("Note that, on reboot, text-on-crash is reset to No!\n");
+    player->print("Note that, on reboot, text-on-crash is plyReset to No!\n");
     return(0);
 }

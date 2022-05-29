@@ -19,6 +19,7 @@
 #pragma once
 
 #include <string>
+#include <boost/dynamic_bitset.hpp>
 
 #include "mudObjects/rooms.hpp"
 
@@ -37,7 +38,7 @@ public:
     [[nodiscard]] std::string getLongDescription() const;
     [[nodiscard]] short getLowLevel() const;
     [[nodiscard]] short getHighLevel() const;
-    [[nodiscard]] short getMaxMobs() const;
+    [[nodiscard]] int getMaxMobs() const override;
     [[nodiscard]] short getTrap() const;
     [[nodiscard]] CatRef getTrapExit() const;
     [[nodiscard]] short getTrapWeight() const;
@@ -46,8 +47,8 @@ public:
     [[nodiscard]] long getBeenHere() const;
     [[nodiscard]] short getTerrain() const;
     [[nodiscard]] int getRoomExperience() const;
-    [[nodiscard]] Size getSize() const;
-    [[nodiscard]] bool canPortHere(const Creature* creature=0) const;
+    [[nodiscard]] Size getSize() const override;
+    [[nodiscard]] bool canPortHere(const std::shared_ptr<Creature> & creature=nullptr) const;
 
     void setShortDescription(std::string_view desc);
     void setLongDescription(std::string_view desc);
@@ -67,11 +68,11 @@ public:
     void setSize(Size s);
 
     bool swap(const Swap& s);
-    bool swapIsInteresting(const Swap& s) const;
+    [[nodiscard]] bool swapIsInteresting(const Swap& s) const;
 
-    std::string getMsdp(bool showExits = true) const;
+    std::string getMsdp(bool showExits = true) const override;
 protected:
-    char    flags[16]{};  // Max flags - 128
+    boost::dynamic_bitset<> flags{128};
     std::string fishing;
 
     std::string short_desc;     // Descriptions
@@ -116,12 +117,12 @@ public:
 
     void destroy();
 
-    bool flagIsSet(int flag) const;
-    void setFlag(int flag);
+    bool flagIsSet(int flag) const override;
+    void setFlag(int flag) override;
     void clearFlag(int flag);
     bool toggleFlag(int flag);
 
-    std::string getFishingStr() const;
+    [[nodiscard]] std::string getFishingStr() const;
     void setFishing(std::string_view id);
-    const Fishing* getFishing() const;
+    const Fishing* getFishing() const override;
 };

@@ -19,6 +19,8 @@
 #ifndef _BANK_H
 #define _BANK_H
 
+#include <memory>
+
 class BaseRoom;
 class cmd;
 class Guild;
@@ -26,19 +28,19 @@ class Monster;
 class Player;
 
 namespace Bank {
-    bool canSee(const Player* player);
-    bool can(Player* player, bool isGuild);
-    bool can(Player* player, bool isGuild, Guild** guild);
-    bool canAnywhere(const Player* player);
-    void say(const Player* player, const char* text);
-    Monster* teller(const BaseRoom* room);
+    bool canSee(const std::shared_ptr<Player> player);
+    bool can(std::shared_ptr<Player> player, bool isGuild);
+    bool can(std::shared_ptr<Player> player, bool isGuild, Guild** guild);
+    bool canAnywhere(const std::shared_ptr<Player> player);
+    void say(const std::shared_ptr<Player> player, const char* text);
+    std::shared_ptr<Monster>  teller(const std::shared_ptr<const BaseRoom> &room);
 
-    void balance(Player* player, bool isGuild=false);
-    void deposit(Player* player, cmd* cmnd, bool isGuild=false);
-    void withdraw(Player* player, cmd* cmnd, bool isGuild=false);
-    void transfer(Player* player, cmd* cmnd, bool isGuild=false);
-    void statement(Player* player, bool isGuild=false);
-    void deleteStatement(Player* player, bool isGuild=false);
+    void balance(std::shared_ptr<Player> player, bool isGuild=false);
+    void deposit(const std::shared_ptr<Player>& player, cmd* cmnd, bool isGuild=false);
+    void withdraw(const std::shared_ptr<Player>& player, cmd* cmnd, bool isGuild=false);
+    void transfer(const std::shared_ptr<Player>& player, cmd* cmnd, bool isGuild=false);
+    void statement(std::shared_ptr<Player> player, bool isGuild=false);
+    void deleteStatement(std::shared_ptr<Player> player, bool isGuild=false);
 
     void doLog(const char *file, const char *str);
     void log(const char *name, const char *fmt, ...);

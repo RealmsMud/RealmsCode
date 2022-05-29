@@ -23,13 +23,12 @@
 #include "mudObjects/creatures.hpp"  // for Creature
 #include "flags.hpp"                 // for M_LOGIC_MONSTER
 #include "global.hpp"                // for FATAL, NONFATAL
-#include "os.hpp"                    // for merror
 #include "paths.hpp"                 // for Talk
 #include "proto.hpp"                 // for logn, loadCreature_actions
 #include "structs.hpp"               // for ttag
 
 
-int loadCreature_actions( Creature* creature ) {
+int loadCreature_actions( std::shared_ptr<Creature> creature ) {
     ttag    *act,*a;
     char    crt_name[80], filename[256];
     char    cmdstr[80], responsestr[1024];
@@ -50,7 +49,7 @@ int loadCreature_actions( Creature* creature ) {
             crt_name[i] = '_';
 
 
-    sprintf(filename,"%s/%s-%d-act.txt", Path::Talk, crt_name, creature->getLevel());
+    sprintf(filename,"%s/%s-%d-act.txt", Path::Talk.c_str(), crt_name, creature->getLevel());
 
     fp = fopen(filename,"r");
     if(!fp)
@@ -66,8 +65,6 @@ int loadCreature_actions( Creature* creature ) {
         act->response = nullptr;
         act->next_tag = nullptr;
 
-        if(!act)
-            merror("loadCreature_actions",FATAL);
         ptr = cmdstr;
         act->type = count;
         while(*ptr) {
@@ -105,7 +102,6 @@ int loadCreature_actions( Creature* creature ) {
                     act->arg1 = atoi(++ptr);
                 break;
             default:
-                merror("ERROR - logic command", NONFATAL);
                 logn("Errors", "UNKOWN LOGIC COMMAND [%s] in %s\n",cmdstr,filename);
                 act->do_act = 0;
                 act->goto_cmd = 1;
@@ -130,7 +126,7 @@ int loadCreature_actions( Creature* creature ) {
 
             act->response = new char[strlen(responsestr)+1];
             if(!act->response)
-                merror("loadCreature_action",FATAL);
+                throw std::runtime_error("loadCreature_action");
             strcpy(act->response,responsestr);
         } else
             act->response = nullptr;

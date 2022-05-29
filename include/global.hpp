@@ -25,15 +25,11 @@
 
 // Size of exp array, also highest you can train
 const int MAXALVL = 40;
-const unsigned int MAX_ARMOR = 2000;
+const int MAX_ARMOR = 2000;
 
 // I/O buffer sizes
 const int IBUFSIZE = 1024;
 const int OBUFSIZ = 8192;
-
-// merror() error types
-const int FATAL = 1;
-const int NONFATAL = 0;
 
 const int DEFAULT_WEAPON_DELAY = 30;   // 3 seconds
 
@@ -83,9 +79,9 @@ const int MMAX = 20000;
 const int OMAX = 20000;
 const int PMAX = 1024;
 
-const unsigned int RQMAX = 600;  // Max number of these allowed in memory
-const unsigned int MQMAX = 200;  // at any one time
-const unsigned int OQMAX = 200;
+const int RQMAX = 600;  // Max number of these allowed in memory
+const int MQMAX = 200;  // at any one time
+const int OQMAX = 200;
 
 
 
@@ -132,7 +128,7 @@ enum CrtStats {
     PTY = 5,
     CHA = 6
 };
-const int MAX_STAT = PTY;
+const int MAX_STAT = PTY + 1;
 
 const int MIN_STAT_NUM = 10;
 const int MAX_STAT_NUM = MAXALVL*10;

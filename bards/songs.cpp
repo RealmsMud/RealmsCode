@@ -35,7 +35,7 @@
 
 
 
-int cmdPlay(Player* player, cmd* cmnd) {
+int cmdPlay(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(cmnd->num == 1) {
         if(player->isPlaying()) {
@@ -75,12 +75,12 @@ int cmdPlay(Player* player, cmd* cmnd) {
         player->setPlaying(song);
 
     player->print("You start playing \"%s\"\n", song->getName().c_str());
-    player->getRoomParent()->print(player->getSock(), "%M starts playing %s\n", player, song->getName().c_str());
+    player->getRoomParent()->print(player->getSock(), "%M starts playing %s\n", player.get(), song->getName().c_str());
 
     return(0);
 }
 
-int dmSongList(Player* player, cmd* cmnd) {
+int dmSongList(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string command = getFullstrText(cmnd->fullstr, 1);
 
     bool all = (command == "all");
@@ -126,7 +126,7 @@ const std::string& Song::getTargetType() const {
     return(targetType);
 }
 
-bool Song::runScript(MudObject* singer, MudObject* target) const {
+bool Song::runScript(std::shared_ptr<MudObject> singer, std::shared_ptr<MudObject> target) const {
 
     if(script.empty())
         return(false);

@@ -50,7 +50,7 @@
 //                      raceCount
 //*********************************************************************
 
-unsigned short Config::raceCount() {
+unsigned short Config::raceCount() const {
     return(races.size());
 }
 
@@ -154,7 +154,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     while(subNode) {
                         if(NODE_NAME(subNode, "Stat")) {
                             xml::copyPropToString(str, subNode, "id");
-                            xml::copyToNum(stats[gConfig->stattoNum(str)], subNode);
+                            xml::copyToNum(stats[Config::stattoNum(str)], subNode);
                         }
                         subNode = subNode->next;
                     }
@@ -214,7 +214,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
                     while(subNode) {
                         if(NODE_NAME(subNode, "SavingThrow")) {
                             xml::copyPropToString(str, subNode, "id");
-                            xml::copyToNum(saves[gConfig->savetoNum(str)], subNode);
+                            xml::copyToNum(saves[Config::savetoNum(str)], subNode);
                         }
                         subNode = subNode->next;
                     }
@@ -312,11 +312,9 @@ int Config::classtoNum(std::string_view str) {
 //*********************************************************************
 
 int Config::racetoNum(std::string_view str) {
-    for(unsigned i=0; i<races.size(); i++) {
-        if(!races[i])
-            continue;
-        if(str == races[i]->getName() || str == races[i]->getAdjective())
-            return(i);
+    for(const auto& [rId, race]: races) {
+        if(boost::iequals(str, race->getName()) || boost::iequals(str, race->getAdjective()))
+            return race->getId();
     }
     return(-1);
 }
@@ -330,7 +328,7 @@ int Config::deitytoNum(std::string_view str) {
         if(!deities[i])
             continue;
         if(str == deities[i]->getName())
-            return(i);
+            return((int)i);
     }
     return(-1);
 }
@@ -345,7 +343,7 @@ bool Config::loadRaces() {
     int     i=0;
 
     char filename[80];
-    snprintf(filename, 80, "%s/races.xml", Path::Game);
+    snprintf(filename, 80, "%s/races.xml", Path::Game.c_str());
     xmlDoc = xml::loadFile(filename, "Races");
 
     if(xmlDoc == nullptr)
@@ -385,7 +383,7 @@ bool Config::loadRaces() {
 const RaceData* Config::getRace(std::string race) const {
     RaceDataMap::const_iterator it;
     RaceData* data=nullptr;
-    int len = race.length();
+    size_t len = race.length();
     boost::algorithm::to_lower(race);
 
     for(it = races.begin() ; it != races.end() ; it++) {
@@ -407,7 +405,7 @@ const RaceData* Config::getRace(std::string race) const {
 //                      getRace
 //**********************************************************************
 
-const RaceData* Config::getRace(unsigned int id) const {
+const RaceData* Config::getRace(int id) const {
     auto it = races.find(id);
 
     if(it == races.end())
@@ -420,9 +418,9 @@ const RaceData* Config::getRace(unsigned int id) const {
 //                      dmShowRaces
 //*********************************************************************
 
-int dmShowRaces(Player* player, cmd* cmnd) {
+int dmShowRaces(const std::shared_ptr<Player>& player, cmd* cmnd) {
     RaceDataMap::const_iterator it;
-    RaceData* data=nullptr;
+    RaceData* data;
     bool    all = player->isDm() && cmnd->num > 1 && !strcmp(cmnd->str[1], "all");
     std::map<Sex, short>::const_iterator bIt;
     std::map<Sex, Dice>::const_iterator dIt;
