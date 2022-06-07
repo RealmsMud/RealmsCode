@@ -76,7 +76,7 @@ int list_rooms() {
             std::sort(rooms.begin(), rooms.end());
             for (const fs::path& room : rooms) {
                 if (fs::is_regular_file(room)) {
-                    auto *lRoom = new UniqueRoom();
+                    auto lRoom = std::make_shared<UniqueRoom>();
                     if((xmlDoc = xml::loadFile(room.c_str(), "Room")) == nullptr) {
                         std::cout << "Error loading: " << room.string() << "\n";
                         continue;
@@ -161,7 +161,7 @@ int list_objects() {
             std::sort(objects.begin(), objects.end());
             for (const fs::path& object : objects) {
                 if (fs::is_regular_file(object)) {
-                    auto *lObject = new Object();
+                    auto lObject = std::make_shared<Object>();
                     if((xmlDoc = xml::loadFile(object.c_str(), "Object")) == nullptr) {
                         std::cout << "Error loading: " << object.string() << "\n";
                         continue;

@@ -1517,13 +1517,14 @@ std::string Player::getWhoString(bool whois, bool color, bool ignoreIllusion) co
     whoStr << (color ? "^x[^c" : "[") << std::setw(2) << level
            << ":" << std::setw(4) << getShortClassName(Containable::downcasted_shared_from_this<Player>()).substr(0, 4)
            << (color ? "^x] " : "] ");
+    auto parentRoom = getConstRoomParent();
 
     if(isHardcore())
         whoStr << (color ? "^y" : "") << "H ";
     else if(flagIsSet(P_OUTLAW))
         whoStr << (color ? "^r" : "") << "O ";
     else if( (flagIsSet(P_NO_PKILL) || flagIsSet(P_DIED_IN_DUEL) ||
-            getConstRoomParent()->isPkSafe()) &&
+            (parentRoom && parentRoom->isPkSafe())) &&
             (flagIsSet(P_CHAOTIC) || clan || cClass == CreatureClass::CLERIC) )
         whoStr << (color ? "^y" : "") << "N ";
     else if(flagIsSet(P_CHAOTIC)) // Chaotic
