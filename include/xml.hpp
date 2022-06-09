@@ -25,6 +25,7 @@
 #include <libxml/parser.h>           // for xmlNodePtr
 #include <boost/lexical_cast.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include "boost/stacktrace.hpp"
 
 #include "carry.hpp"
 #include "mudObjects/container.hpp"
@@ -146,6 +147,7 @@ namespace xml {
         } catch (bad_lexical_cast &) {
             // And do nothing
             std::clog << "Error from lexical_cast `" << fromStr << "'\n";
+            std::clog << boost::stacktrace::stacktrace();
         }
 
         free(fromStr);

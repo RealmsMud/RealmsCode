@@ -25,7 +25,6 @@
 #include "xml.hpp"                                  // for newStringChild
 
 SpecialAttack::SpecialAttack(xmlNodePtr rootNode) {
-    std::clog << "Special ctor(xml)" << std::endl;
     xmlNodePtr curNode = rootNode->children;
     reset();
 

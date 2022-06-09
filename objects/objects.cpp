@@ -352,6 +352,14 @@ DroppedBy& DroppedBy::operator=(const DroppedBy& o) {
     return(*this);
 }
 
+Object& Object::operator=(const Object& cr) {
+    std::clog << "Object=" << cr.getName() << std::endl;
+    if(&cr != this)
+        objCopy(cr);
+    return(*this);
+}
+
+
 bool Object::operator==(const Object& o) const {
     int     i=0;
 
@@ -600,8 +608,6 @@ void Object::selectRandom() {
 
     object->setDroppedBy(Containable::downcasted_shared_from_this<Object>(), "RandomItemParent");
     *this = *object;
-    
-    object.reset();
 }
 
 //*********************************************************************

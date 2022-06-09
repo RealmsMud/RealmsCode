@@ -406,8 +406,9 @@ int shipDeleteExits(Ship &ship, ShipStop *stop) {
         }
     }
 
-    for(const auto& exit : stop->exits)
-        (exit)->removeExit();
+    for(auto exit = stop->exits.begin() ; exit != stop->exits.end() ; ) {
+        (*exit++)->removeExit();
+    }
 
     shipBroadcastRange(ship, stop, stop->departs);
     return(0);

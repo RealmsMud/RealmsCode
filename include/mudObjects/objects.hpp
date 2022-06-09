@@ -131,6 +131,7 @@ public:
     Object(Object& o);
     Object(const Object& o);
     [[nodiscard]] std::string getCompareStr() const ;
+    Object& operator=(const Object& o);
     bool operator==(const Object& o) const;
     bool operator!=(const Object& o) const;
     bool operator< (const Object& t) const;
