@@ -261,8 +261,9 @@ bool Config::loadBeforePython() {
     std::clog << "Initializing MSDP..." << (initMsdp() ? "done" : "*** FAILED ***") << std::endl;
 
     std::clog << "Loading Config..." << (loadConfig() ? "done" : "*** FAILED ***")<< std::endl;
-    std::clog << "Loading Discord Config..." << (loadDiscordConfig() ? "done" : "*** FAILED ***")<< std::endl;
-
+    if(!isListing()) {
+        std::clog << "Loading Discord Config..." << (loadDiscordConfig() ? "done" : "*** FAILED ***") << std::endl;
+    }
     std::clog << "Loading Zones..." << (loadZones() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Socials..." << (loadSocials() ? "done" : "*** FAILED ***") << std::endl;
     

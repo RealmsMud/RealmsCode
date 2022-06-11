@@ -236,15 +236,16 @@ bool Server::init() {
     else
         std::clog << "failed." << std::endl;
 
-    initWebInterface();
+    if(!gConfig->isListing()) {
+        initWebInterface();
 
-    std::clog <<  "Initializing Spell List...";
-    initSpellList();
-    std::clog << "done." << std::endl;
-
+        std::clog << "Initializing Spell List...";
+        initSpellList();
+        std::clog << "done." << std::endl;
+    }
     // Python
-    std::clog <<  "Initializing Python...";
-    if(!PythonHandler::initPython()) {
+    std::clog << "Initializing Python...";
+    if (!PythonHandler::initPython()) {
         std::clog << "failed!" << std::endl;
         exit(-1);
     }
@@ -252,8 +253,10 @@ bool Server::init() {
     std::clog << "Loading Areas..." << (loadAreas() ? "done" : "*** FAILED ***") << std::endl;
     gConfig->loadAfterPython();
 
-    initHttpServer();
-    initDiscordBot();
+    if(!gConfig->isListing()) {
+        initHttpServer();
+        initDiscordBot();
+    }
 
 
 
@@ -1241,7 +1244,7 @@ int Server::reapChildren() {
             fds[i].fd = c.fd;
             fds[i++].events = POLLHUP;
         }
-        int ret = ::poll(fds, i, -1);
+        int ret = ::poll(fds, i, 0);
         if (ret <= 0) break;
 
         std::list<childProcess>::const_iterator it, oldIt;
