@@ -1595,13 +1595,14 @@ bool Server::startReboot(bool resetShips) {
         std::shared_ptr<Player> player = sock->getPlayer();
         if(player && player->fd > -1 ) {
             // End the compression, we'll try to restart it after the reboot
+            auto playerName = player->getName();
             if(sock->mccpEnabled()) {
                 sock->endCompress();
             }
             player->save(true);
             player->uninit();
             player = nullptr;
-            players[player->getName()] = nullptr;
+            players[playerName] = nullptr;
             sock->clearPlayer();
         } else {
             sock->write("\n\r\n\r\n\rSorry, we are rebooting. You may reconnect in a few seconds.\n\r");
