@@ -229,6 +229,7 @@ int dmCheckStats(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmLocatePlayer(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmWatcherBroad(const std::shared_ptr<Player>& admin, cmd* cmnd);
 int reportTypo(const std::shared_ptr<Player>& player, cmd* cmnd);
+int reportBug(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // swap.cpp

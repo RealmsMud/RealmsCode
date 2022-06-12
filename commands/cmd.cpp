@@ -469,6 +469,7 @@ bool Config::initCommands() {
     playerCommands.emplace("*checkstats", 100, dmCheckStats, nullptr, "");
     playerCommands.emplace("*locate", 100, dmLocatePlayer, nullptr, "");
     playerCommands.emplace("*typo", 100, reportTypo, nullptr, "");
+    playerCommands.emplace("bug", 100, reportBug, nullptr, "Report a bug in a room");
     playerCommands.emplace("*gag", 100, dmGag, nullptr, "");
     playerCommands.emplace("*wts", 100, channel, nullptr, "");
     playerCommands.emplace("*award", 100, dmAward, nullptr, "Award a player roleplaying exp/gold.");
