@@ -19,16 +19,12 @@
 #include <dpp/commandhandler.h>                // for commandHandler
 
 #include <fmt/format.h>                        // for format
-#include <boost/algorithm/string/replace.hpp>  // for replace_all
-#include <deque>                               // for _Deque_iterator
+#include <regex>
 #include <iostream>                            // for operator<<, basic_ostream
 #include <map>                                 // for operator==, _Rb_tree_i...
-#include <sstream>                             // for basic_ostringstream<>:...
 #include <stdexcept>                           // for out_of_range
 #include <string>                              // for string, allocator, cha...
 #include <unordered_map>                       // for _Node_iterator, operat...
-#include <utility>                             // for pair
-#include <vector>                              // for vector
 
 #include "color.hpp"                           // for escapeColor
 #include "communication.hpp"                   // for getChannelByDiscordCha...
@@ -37,6 +33,7 @@
 #include "mudObjects/players.hpp"              // for Player
 #include "server.hpp"                          // for Server, PlayerMap, gSe...
 #include "socket.hpp"                          // for Socket
+#include "toNum.hpp"
 
 void Config::clearWebhookTokens() {
     webhookTokens.clear();
@@ -120,37 +117,57 @@ bool Server::initDiscordBot() {
             std::ostringstream contentStr;
 
             if (!event.msg.content.empty()) {
-                std::string content = event.msg.content;
-
-                // Replace all mentions with the actual users
+                const auto &content = event.msg.content;
+                std::unordered_map<dpp::snowflake, std::string> userMentions;
                 for (auto &[user, guildMember]: event.msg.mentions) {
                     const auto &mentionName = !guildMember.nickname.empty() ? guildMember.nickname : user.username;
-                    boost::replace_all(content, fmt::format("<@!{}>", guildMember.user_id), fmt::format("@{}", mentionName) );
-                    boost::replace_all(content, fmt::format("<@{}>", guildMember.user_id), fmt::format("@{}", mentionName) );
+                    userMentions.emplace(guildMember.user_id, mentionName);
                 }
 
-//                regex re("\\{([^\\}]*)\\}");
-//                text = boost::regex_replace(text, re, [] (const smatch& what) {
-//                    return what.str();
-//                });
+                std::regex re(R"(\<([^\>]*)\>)");
+                std::string::const_iterator it = content.cbegin(), end = content.cend();
+                for (std::smatch match; std::regex_search(it, end, match, re); it = match[0].second) {
+                    contentStr << match.prefix();
+                    if (match.size() == 2) {
+                        const auto matchedId = match[1].str();
+                        std::string::const_iterator idIt = matchedId.cbegin(), idEnd = matchedId.cend();
+                        for (; idIt != idEnd; idIt++) {
+                            if (std::isdigit(*idIt)) {
+                                break;
+                            }
+                        }
+                        std::string_view idType(matchedId.cbegin(), idIt), idVal(idIt, idEnd);
+                        auto mentionId = toNumSV<uint64_t>(idVal);
+                        if (idType == "@" || idType == "@!") {
+                            // Finding a user
+                            const auto &userMention = userMentions.find(mentionId);
+                            contentStr << "@" << ((userMention != userMentions.end()) ? userMention->second : "@<Unknown User>");
 
-                for (auto &mention: event.msg.mention_channels) {
-                    // TODO: Find <#{}> and lookup the channels
-                    boost::replace_all(content, fmt::format("<#{}>", mention.id), fmt::format("#{}", mention.name));
+                        } else if (idType == "@&") {
+                            // Finding a role
+                            auto role = dpp::find_role(mentionId);
+                            contentStr << "@" << ((role != nullptr) ? role->name : "@<Unknown Role>");
+
+                        } else if (idType == "#") {
+                            // Finding a Channel
+                            auto channel = dpp::find_channel(mentionId);
+                            contentStr << "#" << ((channel != nullptr) ? channel->name : "#<Unknown Channel>");
+                        }
+
+                    } else {
+                        contentStr << match.str();
+                    }
                 }
-                for (auto &mention: event.msg.mention_roles) {
-                    boost::replace_all(content, fmt::format("<@&{}>", mention), fmt::format("@{}", dpp::find_role(mention)->name));
-                }
-                contentStr << content;
+                contentStr << std::string_view(it, end);
             }
 
             if (!event.msg.attachments.empty())
                 for (auto& attachment : event.msg.attachments)
-                    contentStr << attachment.url;
+                    contentStr << "<" << attachment.url << ">";
 
             if (!event.msg.embeds.empty())
                 for (auto& embed: event.msg.embeds)
-                    contentStr << embed.url;
+                    contentStr << "<" << embed.url << ">";
 
             sendGlobalComm(nullptr, escapeColor(contentStr.str()), "", 0, chan, "", username, username);
         } else {
