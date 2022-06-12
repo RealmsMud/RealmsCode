@@ -838,8 +838,8 @@ int cmdSell(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->ableToDoCommand())
         return(0);
-
-    if(!player->getRoomParent()->flagIsSet(R_PAWN_SHOP)) {
+    auto room = player->getRoomParent();
+    if(!room->flagIsSet(R_PAWN_SHOP) && !room->flagIsSet(R_SHOP)) {
         *player << "This is not a pawn shop.\n";
         return(0);
     }

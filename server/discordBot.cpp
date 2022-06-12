@@ -82,7 +82,7 @@ bool Server::initDiscordBot() {
     }
 
     std::cout << "Initializing Discord bot" << std::endl;
-    discordBot = new dpp::cluster(gConfig->getBotToken(), dpp::i_message_content | dpp::i_default_intents | dpp::i_guild_members | dpp::i_guild_messages);
+    discordBot = new dpp::cluster(gConfig->getBotToken(), dpp::i_message_content | dpp::i_default_intents | dpp::i_guild_members | dpp::i_default_intents);
 
     /* Create command handler, and specify prefixes */
     commandHandler = new dpp::commandhandler (discordBot);
@@ -126,9 +126,16 @@ bool Server::initDiscordBot() {
                 for (auto &[user, guildMember]: event.msg.mentions) {
                     const auto &mentionName = !guildMember.nickname.empty() ? guildMember.nickname : user.username;
                     boost::replace_all(content, fmt::format("<@!{}>", guildMember.user_id), fmt::format("@{}", mentionName) );
+                    boost::replace_all(content, fmt::format("<@{}>", guildMember.user_id), fmt::format("@{}", mentionName) );
                 }
 
+//                regex re("\\{([^\\}]*)\\}");
+//                text = boost::regex_replace(text, re, [] (const smatch& what) {
+//                    return what.str();
+//                });
+
                 for (auto &mention: event.msg.mention_channels) {
+                    // TODO: Find <#{}> and lookup the channels
                     boost::replace_all(content, fmt::format("<#{}>", mention.id), fmt::format("#{}", mention.name));
                 }
                 for (auto &mention: event.msg.mention_roles) {
