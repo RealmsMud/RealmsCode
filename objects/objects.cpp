@@ -352,10 +352,12 @@ DroppedBy& DroppedBy::operator=(const DroppedBy& o) {
     return(*this);
 }
 
-Object& Object::operator=(const Object& cr) {
-    std::clog << "Object=" << cr.getName() << std::endl;
-    if(&cr != this)
-        objCopy(cr);
+Object& Object::operator=(const Object& obj) {
+    std::clog << "Object=" << obj.getName() << std::endl;
+    if(&obj != this) {
+        moCopy(obj);
+        objCopy(obj);
+    }
     return(*this);
 }
 

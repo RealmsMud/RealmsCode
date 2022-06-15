@@ -372,12 +372,10 @@ std::string Object::statObj(int statFlags) {
 
     if(!randomObjects.empty()) {
         objStr << "^WRandomObjects:^x this item will turn into these random objects:\n";
-        std::list<CatRef>::const_iterator it;
-        for(it = randomObjects.begin(); it != randomObjects.end(); it++) {
+        for(auto it = randomObjects.cbegin(); it != randomObjects.cend(); it++) {
             loadObject(*it, object);
 
-            objStr << "    " << std::setw(14) << (*it).displayStr("", 'y') << " ^y::^x "
-                   << (object ? object->getCName() : "") << "\n";
+            objStr << "    " << std::setw(14) << (*it).displayStr("", 'y') << " ^y::^x " << (object ? object->getName() : "") << "\n";
 
             if(object) {
                 object = nullptr;
