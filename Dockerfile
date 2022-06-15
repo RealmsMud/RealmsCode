@@ -56,7 +56,7 @@ ARG PARALLEL=12
 ARG LEAK
 RUN cmake . && make -j ${PARALLEL}
 
-FROM ubuntu:20.04 as RUN
+FROM ubuntu:22.04 as RUN
 
 # Update
 RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
@@ -66,6 +66,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2 \
     python3 \
     libssl \
+    clang-14 \
+    lldb-14 \
+    lld-14 \
+    gdb \
     libpython3.10 \
     libboost-python1.74.0 \
     libboost-filesystem1.74.0 \
