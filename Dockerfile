@@ -65,11 +65,10 @@ RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" &&
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2 \
     python3 \
-    libssl \
+    libssl3 \
     clang-14 \
     lldb-14 \
     lld-14 \
-    gdb \
     libpython3.10 \
     libboost-python1.74.0 \
     libboost-filesystem1.74.0 \
