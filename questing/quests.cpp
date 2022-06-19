@@ -1480,9 +1480,10 @@ bool QuestInfo::canGetQuest(const std::shared_ptr<const Player> &player, const s
 
     if(eligibility == QuestEligibility::INELIGIBLE_UNCOMPLETED_PREREQUISITES) {
         for(const CatRef & preReq : preRequisites) {
-            if(!player->hasDoneQuest(preReq) &&
+            auto q = gConfig->getQuest(preReq);
+            if(q && !player->hasDoneQuest(preReq) &&
                 !player->checkStaff("^m%M says, \"You're not ready for that information yet! Return when you have finished ^W%s^m.\"\n",
-                    giver.get(), gConfig->getQuest(preReq)->getName().c_str())
+                    giver.get(), q->getName().c_str())
             ) {
                 return(false);
             }

@@ -83,7 +83,11 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
             while(childNode) {
                 if(NODE_NAME(childNode, "Prerequisite")) {
                     preReq = QuestInfo::getQuestId(childNode);
-                    preRequisites.push_back(preReq);
+                    if(preReq.id != 0) {
+                        preRequisites.push_back(preReq);
+                    } else {
+                        std::clog << "Skipping invalid pre-requisite for quest " << name << std::endl;
+                    }
                 }
                 childNode = childNode->next;
             }
