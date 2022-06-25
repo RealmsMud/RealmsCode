@@ -904,6 +904,9 @@ int Socket::processInput() {
             if (n < 2) {
                 inBuf = "";
                 n = 0;
+            } else if (i == 0) {
+                inBuf.erase(i, 1);
+                i--;
             } else {
                 inBuf.erase(i - 1, 2);
                 n -= 2;
