@@ -18,6 +18,7 @@
 
 #include <boost/algorithm/string/replace.hpp>  // for replace_all
 #include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <boost/algorithm/string/trim.hpp>     // for trim
 #include <cctype>                              // for isdigit, isspace, isalpha
 #include <cstdio>                              // for sprintf
 #include <cstdlib>                             // for atoi, qsort
@@ -261,12 +262,12 @@ std::string Creature::statCrt(int statFlags) {
 
         for(i=0; i<3; i++) {
             if(mTarget->attack[i][0])
-                crtStr << "Attack type " << (n+1) << ": " << mTarget->attack[i] << "\n";
+                crtStr << "Attack type " << (i+1) << ": " << mTarget->attack[i] << "\n";
         }
 
         for(i=0; i<3; i++) {
             if(mTarget->movetype[i][0])
-                crtStr << "Movement type " << (n+1) << ": " << mTarget->movetype[i] << "\n";
+                crtStr << "Movement type " << (i+1) << ": " << mTarget->movetype[i] << "\n";
         }
 
         if(mTarget->ttalk[0])
@@ -2117,12 +2118,13 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
     char    modstr[32];
     char    which=0;
     std::string text = "";
-
+    std::string numStr = "";
     strcpy(modstr, "");
 
     if(cmnd->num < 2) {
-        player->print("\nRename what creature to what?\n");
-        player->print("*cname <creature> [#] [-Aadtmk] <name>\n");
+        *player << "\nRename what creature to what?\n";
+        *player << "*cname <creature> [#] [-A|a|d|t|m|k|tt] <name>\n";
+        *player << "-A aggro string\n-a[1-3] attack strings\n-d description\n-t talk string\n-m[1-3] movement strings\n-k[1-3] key strings\n-tt after trade talk string\n";
         return(PROMPT);
     }
 
@@ -2149,7 +2151,7 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     target = player->getParent()->findMonster(player, cmnd);
     if(!target) {
-        player->print("Monster not found in the room.\n");
+        *player << "Monster not found in the room.\n";
         return(PROMPT);
     }
 
@@ -2180,7 +2182,9 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         } else if(cmnd->fullstr[i+1] == 'a') {
             i += 2;
             which = 5;
-            num = toNum<int>(&cmnd->fullstr[i]);
+            numStr = cmnd->fullstr[i];
+            boost::trim(numStr);
+            num = toNum<int>(numStr);
             if(num <1 || num > 3)
                 num = 0;
             while(isdigit(cmnd->fullstr[i]))
@@ -2188,7 +2192,9 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         } else if(cmnd->fullstr[i+1] == 'k') {
             i += 2;
             which = 3;
-            num = toNum<int>(&cmnd->fullstr[i]);
+            numStr = cmnd->fullstr[i];
+            boost::trim(numStr);
+            num = toNum<int>(numStr);
             if(num <1 || num > 3)
                 num = 0;
             while(isdigit(cmnd->fullstr[i]))
@@ -2196,7 +2202,9 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         } else if(cmnd->fullstr[i+1] == 'm') {
             i += 2;
             which = 6;
-            num = toNum<int>(&cmnd->fullstr[i]);
+            numStr = cmnd->fullstr[i];
+            boost::trim(numStr);
+            num = toNum<int>(numStr);
             if(num <1 || num > 3)
                 num = 0;
             while(isdigit(cmnd->fullstr[i]))
@@ -2218,46 +2226,46 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(text.length() > 79)
             text = text.substr(0, 79);
         if(Pueblo::is(text)) {
-            player->print("That monster name is not allowed.\n");
+            *player << "That monster name is not allowed.\n";
             return(0);
         }
         target->setName( text.c_str());
-        player->print("\nName ");
+        *player << "\nName ";
         strcpy(modstr, "name");
         break;
     case 1:
         strcpy(modstr, "description");
         if(text == "0" && target->getDescription().empty()) {
             target->setDescription("");
-            player->print("Description cleared.\n");
+            *player << "Description cleared.\n";
             return(0);
         } else {
             target->setDescription(text);
-            player->print("\nDescription ");
+            *player << "\nDescription ";
         }
         break;
     case 2:
         strcpy(modstr, "talk string");
         if(text == "0" && !target->getTalk().empty()) {
             target->setTalk("");
-            player->print("Talk string cleared.\n");
+            *player << "Talk string cleared.\n";
             return(0);
         } else {
             target->setTalk(text);
-            player->print("\nTalk String ");
+            *player << "\nTalk String ";
         }
         break;
     case 3:
         if(num) {
             if(text == "0" && target->key[num-1][0]) {
                 zero(target->key[num-1], sizeof(target->key[num-1]));
-                player->print("Key #%d string cleared.\n", num);
+                *player << "Key #" << num << " string cleared.\n";
                 return(0);
             } else {
                 if(text.length() > 19)
                     text = text.substr(0, 19);
                 strcpy(target->key[num-1], text.c_str());
-                player->print("\nKey ");
+                *player << "\nKey ";
                 strcpy(modstr, "desc key");
             }
         }
@@ -2266,13 +2274,13 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         strcpy(modstr, "aggro string");
         if(text == "0" && target->aggroString[0]) {
             zero(target->aggroString, sizeof(target->aggroString));
-            player->print("Aggro string cleared.\n");
+            *player << "Aggro string cleared.\n";
             return(0);
         } else {
             if(text.length() > 79)
                 text = text.substr(0, 79);
             strcpy(target->aggroString, text.c_str());
-            player->print("\nAggro talk string ");
+            *player << "\nAggro talk string ";
         }
         break;
     case 5:
@@ -2280,13 +2288,13 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
             strcpy(modstr, "attack strings");
             if(text == "0" && target->attack[num-1][0]) {
                 zero(target->attack[num-1], sizeof(target->attack[num-1]));
-                player->print("Attack string %d cleared.\n", num);
+                *player << "Attack string " << num << " cleared.\n";
                 return(0);
             } else {
                 if(text.length() > 29)
                     text = text.substr(0, 29);
                 strcpy(target->attack[num-1], text.c_str());
-                player->print("Attack type %d ", num);
+                *player << "Attack type " << num << " ";
             }
         }
         break;
@@ -2295,13 +2303,13 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
             strcpy(modstr, "movement strings");
             if(text == "0" && target->movetype[num-1][0]) {
                 zero(target->movetype[num-1], sizeof(target->movetype[num-1]));
-                player->print("Movement string %d cleared.\n", num);
+                *player << "Movement string " << num << " cleared.\n";
                 return(0);
             } else {
                 if(text.length() > CRT_MOVETYPE_LENGTH-1)
                     text = text.substr(0, CRT_MOVETYPE_LENGTH-1);
                 strcpy(target->movetype[num-1], text.c_str());
-                player->print("Movement string %d ", num);
+                *player << "Movement string " << num << " ";
             }
         }
         break;
@@ -2309,19 +2317,19 @@ int dmCrtName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         strcpy(modstr, "trade talk string");
         if(text == "0" && target->ttalk[0]) {
             zero(target->ttalk, sizeof(target->ttalk));
-            player->print("After trade talk string cleared.\n");
+            *player << "After trade talk string cleared.\n";
             return(0);
         } else {
             if(text.length() > 79)
                 text = text.substr(0, 79);
             strcpy(target->ttalk, text.c_str());
-            player->print("\nAfter trade talk string ");
+            *player << "\nAfter trade talk string ";
         }
         break;
     default:
-        player->print("\nNothing ");
+        *player << "\nNothing ";
     }
-    player->print("done.\n");
+    *player << "done.\n";
 
     log_immort(true, player, "%s modified %s of creature %s(%s).\n",
         player->getCName(), modstr, target->getCName(), target->info.displayStr().c_str());
