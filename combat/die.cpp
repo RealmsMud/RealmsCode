@@ -147,8 +147,8 @@ std::string isHoliday() {
     std::string str = gConfig->getMonthDay();
 
     // see if today is a holiday
-    if(str == "Oct 31")
-        return("Happy Halloween!");
+    if(str == "Oct 31" || str == "Nov  1" || str == "Nov  2" || str == "Nov  3" || str == "Nov  4" || str == "Nov  5" || str == "Nov  6")
+        return("Happy Halloween Week!");
 
     if(str == "Dec 24" || str == "Dec 25")
         return("Merry Christmas!");
