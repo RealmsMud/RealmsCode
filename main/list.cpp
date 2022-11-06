@@ -126,7 +126,7 @@ int list_objects() {
               << "ReqSkill" << ","
               << "NumAttks" << ","
               << "Delay" << ","
-
+              << "Armor" << ","
               << "ShotsCur" << ","
               << "ShotsMax" << ","
 
@@ -190,7 +190,7 @@ int list_objects() {
                               << lObject->getRequiredSkill() << ","
                               << lObject->getNumAttacks() << ","
                               << (lObject->getDelay()/10.0) << ","
-
+                              << lObject->getArmor() << ","
                               << lObject->getShotsCur() << ","
                               << lObject->getShotsMax() << ","
 
