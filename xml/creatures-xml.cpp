@@ -414,7 +414,7 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 else
                     daily[DL_TELEP].cur = 3;
                 if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
-                    daily[DL_TELEP].cur = std::max(1,std::min(10, (int)getSkillLevel("translocation")/5));
+                    daily[DL_TELEP].cur = std::max(3,std::min(10, (int)getSkillLevel("translocation")/5));
 
              }
              if(getVersion() < "2.56c") {

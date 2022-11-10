@@ -154,9 +154,9 @@ void Player::init() {
         else
             daily[DL_TELEP].max = 3;
 
-        // Mages and liches get more ports than other classes; dependent on translocation magic skill
+        // Mages and liches get more default ports than other classes under level 15; more dependent on translocation magic skill
         if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
-            daily[DL_TELEP].max = std::max(1,std::min(10, (int)getSkillLevel("translocation")/5));
+            daily[DL_TELEP].max = std::max(3,std::min(10, (int)getSkillLevel("translocation")/5));
 
         daily[DL_RCHRG].max = std::max(7, level / 2);
         daily[DL_HANDS].max = 5;
