@@ -974,6 +974,7 @@ int dmRemove(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //*********************************************************************
 //                     dmComputeLuck
 //*********************************************************************
+// This command allows a CT or DM to re-compute a player's luck value
 
 int dmComputeLuck(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Player> target=nullptr;
