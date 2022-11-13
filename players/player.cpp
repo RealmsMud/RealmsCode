@@ -874,49 +874,62 @@ int Player::getLight() const {
 // This sets the luck value for a given player
 
 int Player::computeLuck() {
-    int     num=0, alg=0, con=0, smrt=0;
+    int alg=0,luckNum=0,statBase=0,luckMod=0;
+    bool classAlignmentException=false;
+    EffectInfo *bless = getEffect("bless");
 
-    alg = abs(alignment);
-    alg = alg + 1;
-
+    alg=abs(alignment);
     alg /= 10;
 
+    if ((cClass == CreatureClass::PALADIN && (deity == ENOCH || deity == LINOTHAN) && getAdjustedAlignment() >= PINKISH) ||
+        (cClass == CreatureClass::DEATHKNIGHT && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= LIGHTBLUE) ||
+         (cClass == CreatureClass::PALADIN && deity == GRADIUS && (getAdjustedAlignment() < ROYALBLUE && getAdjustedAlignment() > BLOODRED)) ||
+             (cClass == CreatureClass::CLERIC && (deity == ENOCH || deity == LINOTHAN || deity == MARA || deity == KAMIRA) && getAdjustedAlignment() >= LIGHTBLUE) ||
+                (cClass == CreatureClass::CLERIC && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= PINKISH) ||
+                    (cClass == CreatureClass::CLERIC && (deity == GRADIUS || deity == CERIS || deity == ARES) && (getAdjustedAlignment() < ROYALBLUE && getAdjustedAlignment() > BLOODRED)) ||
+                        (cClass == CreatureClass::LICH && getAdjustedAlignment() <= PINKISH) ) {
+        classAlignmentException = true;
+    }
 
-    // alignment only matters for these classes
-    if(cClass != CreatureClass::PALADIN && cClass != CreatureClass::CLERIC && cClass != CreatureClass::DEATHKNIGHT && cClass != CreatureClass::LICH)
-        alg = 0;
-
-
-    if( !alg ||
-        (cClass == CreatureClass::PALADIN && deity != GRADIUS && getAdjustedAlignment() > NEUTRAL) ||
-        (cClass == CreatureClass::DEATHKNIGHT && getAdjustedAlignment() < NEUTRAL) ||
-        (cClass == CreatureClass::LICH && alignment <= -500) ||
-        (cClass == CreatureClass::CLERIC && (deity == ENOCH || deity == LINOTHAN || deity == KAMIRA) && getAdjustedAlignment() >= LIGHTBLUE) ||
-        (cClass == CreatureClass::CLERIC && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= PINKISH)
-    )
-        alg = 1;
-
-    if(cClass != CreatureClass::LICH)  // Balances mages with liches for luck.
-        con = constitution.getCur()/10;
+    // The piety and intelligence stats determine base luck modifier; Liches use constitution rather than piety
+    // The lower the scores, the less base luck the player is gonna have
+    if (cClass == CreatureClass::LICH)  
+        statBase = (intelligence.getCur()/10) + (constitution.getCur()/10);
     else
-        con = piety.getCur()/10;
+        statBase = (intelligence.getCur()/10) + (piety.getCur()/10);
 
-    smrt = intelligence.getCur()/10;
+    
+    luckNum = 100 * statBase;
+    alg = std::max(1,alg); // avoid possible division by zero on next line
+    luckNum /= alg;
 
-    num = 100*(smrt+con);
-    num /= alg;
+    // Add various luckMods starting here; Positive luckMod = bonus, negative luckMod = penalty
 
-    if(ready[HELD-1] && ready[HELD-1]->flagIsSet(O_LUCKY))
-        num += ready[HELD-1]->damage.getPlus();
-
-    // Carrying around alot of gold isn't very lucky!
+    // Carrying around a bunch of gold isn't very lucky! Put it in the bank!
     if(!isStaff())
-        num -= (coins[GOLD] / 20000);
+        luckMod -= (coins[GOLD] / 200000);
 
-    num = std::max(1, std::min(99, num));
+    // Holding an item flagged O_LUCKY adds luck based on its + adjustment
+    if(ready[HELD-1] && ready[HELD-1]->flagIsSet(O_LUCKY))
+        luckMod += ready[HELD-1]->damage.getPlus();
 
-    luck = num;
-    return(num);
+    // Being under bless effect increases luck; Higher the cast strength, the more the bonus
+    if (bless)
+        luckMod += bless->getStrength()/8;
+
+    // Outlaws get a luck penalty
+    if (flagIsSet(P_OUTLAW))
+        luckMod -= 30;
+
+    if (classAlignmentException)
+        luckNum = 99 + luckMod;
+    else
+        luckNum += luckMod;
+    
+    luckNum = std::max(1, std::min(99, luckNum));
+    luck = luckNum;
+    
+    return(luck);
 }
 
 //*********************************************************************

@@ -328,6 +328,7 @@ bool Config::initCommands() {
     staffCommands.emplace("*disconnect", 100, dmDisconnect, isCt, "Disconnect a player.");
     staffCommands.emplace("*take", 100, dmTake, isCt, "Take an item from a player.");
     staffCommands.emplace("*remove", 100, dmRemove, isCt, "Unequip and take an item from a player.");
+    staffCommands.emplace("*computeluck", 100, dmComputeLuck, isCt, "Re-compute a player's luck value.");
     staffCommands.emplace("*put", 100, dmPut, isCt, "Put an item into a player's inventory.");
     staffCommands.emplace("*move", 100, dmMove, isCt, "Move and offline player.");
     staffCommands.emplace("*word", 100, dmWordAll, isDm, "Send all players to their recall room.");
