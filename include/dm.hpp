@@ -174,6 +174,7 @@ int dmFinger(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmDisconnect(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmTake(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmRemove(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmComputeLuck(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmPut(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmMove(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmWordAll(const std::shared_ptr<Player>& player, cmd* cmnd);
