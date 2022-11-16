@@ -247,6 +247,7 @@ enum CustomColor {
     CUSTOM_COLOR_DAMAGE     = 14,
     CUSTOM_COLOR_SELF       = 15,
     CUSTOM_COLOR_GUILD      = 16,
+    CUSTOM_COLOR_SPORTS     = 17,
     MAX_CUSTOM_COLOR
 };
 

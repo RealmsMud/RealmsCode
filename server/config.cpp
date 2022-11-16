@@ -204,6 +204,7 @@ void Config::reset(bool reload) {
     customColors[CUSTOM_COLOR_DAMAGE] = 'm';
     customColors[CUSTOM_COLOR_SELF] = 'w';
     customColors[CUSTOM_COLOR_GUILD] = 'g';
+    customColors[CUSTOM_COLOR_SPORTS] = 'c';
 
     lotteryEnabled = true;
     lotteryTicketPrice = 100;

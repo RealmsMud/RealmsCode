@@ -118,6 +118,7 @@ channelInfo channelList[] = {
     { "broademote", true,  "*CC:BROADCAST*",    "*** *IC-NAME* *TEXT*.",                            2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_NO_BROADCASTS,        COM_EMOTE, IN_GAME_WEBHOOK, -1},
 
     { "gossip",     true,  "*CC:GOSSIP*",       "(Gossip) *IC-NAME* sent, \"*TEXT*\"",              2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_GOSSIP,        0, 886678176099627100, 886678132327862332},
+    { "sports",     true,  "*CC:SPORTS*",       "(Sports) *OOC-NAME* sent, \"*TEXT*\"",              2,  -1, false,  nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_SPORTS,        0, 1041878273816281150, 976930886559883264},
     { "ptest",      false,   "*CC:PTEST*",      "[P-Test] *IC-NAME* sent, \"*TEXT*\"",              -1, -1, false,  isPtester,         nullptr,            isPtester,         0,      0,              0, -1, -1},
     { "newbie",     false,   "*CC:NEWBIE*",     "[Newbie]: *** *OOC-NAME* just sent, \"*TEXT*\"",   1,   4, false,  nullptr,          canCommunicate,     nullptr,    0,      P_IGNORE_NEWBIE_SEND,   0, 886681403146788914, 886681367885279282},
 
@@ -1428,17 +1429,16 @@ bool canCommunicate(const std::shared_ptr<Player>& player) {
     if(!player->isStaff()) {
         if(!player->ableToDoCommand())
             return(false);
-        if(player->flagIsSet(P_CANT_BROADCAST)) {
-            player->print("Due to abuse, you no longer have that privilage.\n");
-            return(false);
-        }
         if(player->inJail()) {
-            player->print("People in jail do not have that privilage.\n");
+            player->print("Jailbirds cannot do that.\n");
             return(false);
         }
-
+        if(player->flagIsSet(P_CANT_BROADCAST)) {
+            player->print("Due to abuse, your ability to broadcast is currently disabled.\n");
+            return(false);
+        }
         if(player->flagIsSet(P_OUTLAW)) {
-            player->print("You're an outlaw, you don't have that privilage.\n");
+            player->print("Outlaws cannot do that.\n");
             return(false);
         }
         if(!player->canSpeak()) {
