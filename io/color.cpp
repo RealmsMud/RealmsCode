@@ -177,6 +177,7 @@ std::string Player::customColorize(const std::string&  pText, bool caret) const 
     boost::replace_all(text, "*CC:DAMAGE*", getCustomColor(CUSTOM_COLOR_DAMAGE, caret).c_str());
     boost::replace_all(text, "*CC:SELF*", getCustomColor(CUSTOM_COLOR_SELF, caret).c_str());
     boost::replace_all(text, "*CC:GUILD*", getCustomColor(CUSTOM_COLOR_GUILD, caret).c_str());
+    boost::replace_all(text, "*CC:SPORTS*", getCustomColor(CUSTOM_COLOR_SPORTS, caret).c_str());
     return(text);
 }
 
@@ -258,6 +259,8 @@ int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
             i = CUSTOM_COLOR_SELF;
         else if(type == "guild")
             i = CUSTOM_COLOR_GUILD;
+        else if(type == "sports")
+            i = CUSTOM_COLOR_SPORTS;
         else {
             player->print("Custom color type choice not understood.\n");
             return(0);
@@ -331,6 +334,7 @@ int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
         options["P-Test"] = player->customColorize("*CC:PTEST*");
     if(player->getGuild())
         options["Guild"] = player->customColorize("*CC:GUILD*");
+    options["Sports"] = player->customColorize("*CC:SPORTS*");
 
     for(it = options.begin() ; it != options.end() ; ) {
         for(int n=0; n<3; n++) {

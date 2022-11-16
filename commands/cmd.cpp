@@ -577,6 +577,7 @@ bool Config::initCommands() {
     playerCommands.emplace("newbie", 100, channel, nullptr, "Communicate via the newbie channel.");
     playerCommands.emplace("ptest", 100, channel, nullptr, "");
     playerCommands.emplace("gossip", 100, channel, nullptr, "Communicate via the gossip channel.");
+    playerCommands.emplace("sports", 100, channel, nullptr, "Communicate via the sports-talk channel.");
     playerCommands.emplace("adult", 100, channel, nullptr, "");
     playerCommands.emplace("broadcast", 80, channel, nullptr, "");
     playerCommands.emplace("gsend", 100, cmdGuildSend, nullptr, "Communicate via the guild channel.");

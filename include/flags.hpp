@@ -135,7 +135,7 @@
 #define P_HARDCORE                  2        // A hardcore character: death is permanent.
 #define P_NO_BROADCASTS             3        // Don't show broadcasts
 // free                             4
-// free                             5
+#define P_IGNORE_SPORTS             5        // ignore sports channel
 #define P_IGNORE_GOSSIP             6        // ignore gossip channel
 #define P_IGNORE_CLAN               7        // ignore clan channel
 #define P_PORTAL                    8        // portal
