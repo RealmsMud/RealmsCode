@@ -75,6 +75,7 @@ int cmdDeleteStatement(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // command2.c
+int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdLook(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdKnock(const std::shared_ptr<Creature>& player, cmd* cmnd);
 int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd);
@@ -258,6 +259,7 @@ int cmdHypnotize(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdMeditate(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdTouchOfDeath(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd);
+
 
 
 

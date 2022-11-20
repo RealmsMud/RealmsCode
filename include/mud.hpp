@@ -122,7 +122,7 @@
 // free             53
 // free             54
 // free             55
-// free             56
+#define LT_TRAFFIC  56
 #define LT_IDENTIFY     57
 #define LT_FOCUS        58
 #define LT_PLAYER_STUNNED   59
