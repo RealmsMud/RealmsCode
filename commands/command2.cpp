@@ -208,7 +208,7 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if (player->getRoomParent()->flagIsSet(R_FOREST_OR_JUNGLE))
             bonus += (player->getLevel()*5)/2;
          else
-            bonus += player->getLevel()/2; // Half-lves, like elves, are also more observant by nature, but less so
+            bonus += player->getLevel()/2; // Half-Elves, like elves, are also more observant by nature, but less so
     break;
     case DWARF:
     case DUERGAR:
@@ -257,9 +257,6 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if (player->isEffected("drunkenness"))
         chance = Random::get(1,10); 
 
-   // if (player->isStaff())
-     //   chance = 100;
-
     if (!player->isStaff()) {
         player->lasttime[LT_TRAFFIC].ltime = t;
         player->lasttime[LT_TRAFFIC].interval = 15L;
@@ -280,12 +277,11 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
         short roomTraffic = wander->getTraffic();
         long randomCount = wander->getRandomCount();
 
-        //traffic = player->getUniqueRoomParent()->wander.getTraffic();
-        oStr << "^g";
-        
-
         int traffic = (int)roomTraffic * (int)randomCount;
-        if(player->isStaff()) {
+
+        oStr << "^g";
+
+        if(player->isStaff() || player->flagIsSet(P_PTESTER)) {
             oStr << "Chance: " << chance << "%\n";
             oStr << "roomTraffic: " << roomTraffic << "%\n";
             oStr << "RandomCount = " << randomCount << "\n";
