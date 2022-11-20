@@ -138,10 +138,6 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->flagIsSet(P_STUNNED)) {
-        *player << "You can't check the room right now.\nYou can't move.\n";
-        return(0);
-    }
     if(player->inCombat()) {
         *player << "You can't check the room right now.\nYou're too busy trying not to die!\n";
         return(0);
@@ -159,6 +155,11 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(player->getRoomParent()->isEffected("dense-fog") &&
         !player->checkStaff("This room is filled with a dense fog.\nYou can't really make out any room traffic.\n")
+    )
+        return(0);
+    
+    if(player->isEffected("hold-person") &&
+        !player->checkStaff("You can't check the room right now.\nYou can't move!\n")
     )
         return(0);
 
@@ -262,7 +263,7 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->lasttime[LT_TRAFFIC].interval = 15L;
     }
 
-    *player << "You examine the area for foot traffic or disturbances.\n";
+    *player << ColorOn << "^gYou examine the area for foot traffic or disturbances.\n" << ColorOff;
     if(player->isStaff() && player->flagIsSet(P_DM_INVIS))
         broadcast(isStaff, player->getSock(), player->getRoomParent(), "%M examines the area for foot traffic or disturbances.", player.get());
     else
@@ -283,9 +284,7 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         if(player->isStaff() || player->flagIsSet(P_PTESTER)) {
             oStr << "Chance: " << chance << "%\n";
-            oStr << "roomTraffic: " << roomTraffic << "%\n";
-            oStr << "RandomCount = " << randomCount << "\n";
-            oStr << "Traffic Weight = " << traffic << "\n";
+            oStr << "Room Traffic Weight (0-1000): " << traffic << "\n";
         }
         if (traffic == 0) 
             oStr << (outputChoice == 1 ? "It looks like nothing has ever disturbed this place.":"You don't see any history of traffic whatsoever.");
@@ -296,7 +295,7 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
         else if (traffic < 100)
             oStr << (outputChoice == 1 ? "Foot traffic here looks rare, but it's definitely possible.":"It's not often anyone disturbs this place, but somebody definitely has.");
         else if (traffic < 150)
-            oStr << (outputChoice == 1 ? "The disturbances here look relatively uncommon, but steady.":"It looks like somebody might have been here recently.");
+            oStr << (outputChoice == 1 ? "The disturbances here look relatively uncommon, but steady.":"It looks like somebody might have been here a while back.");
         else if (traffic < 200)
             oStr << (outputChoice == 1 ? "This area looks to be disturbed on a somewhat regular basis.":"It looks like this area is disturbed a lot.");
         else if (traffic < 250)
@@ -326,7 +325,7 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
     else
     {
-        *player << "You were unable to determine anything concrete.\n";
+        *player << ColorOn << "^gYou were unable to determine anything concrete.\n" << ColorOff;
         broadcast(player->getSock(), player->getParent(), "%M was unable to determine anything concrete.", player.get());
     }
 
