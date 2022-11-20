@@ -57,7 +57,7 @@ bool canPost(std::shared_ptr<Player> player) {
     if(!player->isStaff()) {
         if( !player->getRoomParent()->flagIsSet(R_POST_OFFICE) &&
             !player->getRoomParent()->flagIsSet(R_LIMBO) &&
-            !(player->getRoomParent()->flagIsSet(R_FAST_HEAL) && player->getRoomParent()->flagIsSet(R_SAFE_ROOM))
+            !(player->getRoomParent()->flagIsSet(R_FAST_HEAL) && player->getRoomParent()->isPkSafe())
         ) {
             *player << "You cannot do that here.\nYou need to find a post office, or you need to be in a tick room that is pkill safe.\n";
             return(false);
