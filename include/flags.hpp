@@ -127,8 +127,9 @@
 #define R_ALWAYS_WINTER             97      // Treat this room as winter regardless of season
 #define R_CAN_ALWAYS_MIST           98      // Player may always turn to mist
 #define R_LIMBO                     99      // room is a Limbo room
-#define R_NO_SPRING_TRAP_ON_ENTER   100      // Do not spring trap when player enters the room
-#define MAX_ROOM_FLAGS              101      // Incriment when you add a room flag
+#define R_NO_SPRING_TRAP_ON_ENTER   100     // Do not spring trap when player enters the room
+#define R_NO_CHECK_TRAFFIC          101     // Player cannot check for traffic in this room
+#define MAX_ROOM_FLAGS              102     // Incriment when you add a room flag
 // Player flags
 // free                             0
 #define P_HIDDEN                    1        // Hidden

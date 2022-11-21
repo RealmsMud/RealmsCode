@@ -43,6 +43,7 @@
 #include "mudObjects/players.hpp"      // for Player
 #include "mudObjects/rooms.hpp"        // for BaseRoom
 #include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
+#include "mud.hpp"                     // for LT_TRAFFIC
 #include "paths.hpp"                   // for Sign
 #include "proto.hpp"                   // for broadcast, findExit, bonus
 #include "random.hpp"                  // for Random
@@ -117,6 +118,218 @@ void lookAtExit(const std::shared_ptr<Player>& player, const std::shared_ptr<Exi
         doScout(player, exit);
         return;
     }
+}
+
+//*********************************************************************
+//                      cmdTraffic
+//*********************************************************************
+// This command lets a player check for basic information about how much
+// mob traffic comes in a given room.
+
+int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
+
+    int     basechance=0, bonus=0, chance=0,outputChoice=0;
+    long    t=0, i=0;
+    bool    success=false;
+    std::ostringstream oStr;
+
+    player->clearFlag(P_AFK);
+
+    if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->inCombat()) {
+        *player << "You can't check the room right now.\nYou're too busy trying not to die!\n";
+        return(0);
+    }
+    if (player->isEffected("confusion")) {
+        *player << "You find the idea of doing that entirely too confusing right now.\n";
+        return(0);
+    }
+    if (player->isEffected("feeblemind")) {
+        *player << "You're too busy drooling all over yourself to do that right now.\n";
+        return(0);
+    }
+    if (!player->canSeeRoom(player->getRoomParent(),true))
+        return(0);
+
+    if(player->getRoomParent()->isEffected("dense-fog") &&
+        !player->checkStaff("This room is filled with a dense fog.\nYou can't really make out any room traffic.\n")
+    )
+        return(0);
+    
+    if(player->isEffected("hold-person") &&
+        !player->checkStaff("You can't check the room right now.\nYou can't move!\n")
+    )
+        return(0);
+
+    if(player->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE) &&
+        !player->checkStaff("Everything in the room seems to be constantly in motion.\nIt's impossible to tell how often this place is visited.\n")
+    )
+        return(0);
+
+    if (!player->isStaff() && player->getRoomParent()->flagIsSet(R_NO_CHECK_TRAFFIC)) {
+        *player << "You are unable to tell how often this place is disturbed.\n";
+        return(0);
+    }
+
+    i = player->lasttime[LT_TRAFFIC].ltime + player->lasttime[LT_TRAFFIC].interval;
+    t = time(nullptr);
+
+    if(!player->isStaff() && t < i) {
+        player->pleaseWait(i - t);
+        return(0);
+    }
+
+    // Since we won't need a skill for this, the base chance is level x 3
+    basechance = player->getLevel() * 3;
+
+    // Do bonuses now, starting with modifications for class and possible environment
+    switch(player->getClass()) {
+    // Rangers and druids are always better at this
+    case CreatureClass::RANGER:
+    case CreatureClass::DRUID: 
+        bonus += (player->getLevel()*5)/2; // level * 2.5
+        if (player->getRoomParent()->flagIsSet(R_FOREST_OR_JUNGLE))
+            bonus += (player->getLevel()*7)/2; // level * 3.5
+    break;
+    default:
+    break;
+    }
+
+    // Do bonuses for race and possible environment
+    switch(player->getRace()) {
+    case ELF:
+        if (player->getRoomParent()->flagIsSet(R_FOREST_OR_JUNGLE))
+            bonus += player->getLevel()*3;
+         else
+            bonus += player->getLevel(); // Elves are generally more observant by nature
+    break;
+    case HALFELF:
+        if (player->getRoomParent()->flagIsSet(R_FOREST_OR_JUNGLE))
+            bonus += (player->getLevel()*5)/2;
+         else
+            bonus += player->getLevel()/2; // Half-Elves, like elves, are also more observant by nature, but less so
+    break;
+    case DWARF:
+    case DUERGAR:
+        if (player->getRoomParent()->flagIsSet(R_UNDERGROUND))
+            bonus += (player->getLevel()*7)/2; // Nobody can notice signs of traffic underground better than a dwarf
+    break;
+    case MINOTAUR:
+    case GNOME:
+    case KOBOLD:
+        if (player->getRoomParent()->flagIsSet(R_UNDERGROUND))
+            bonus += player->getLevel()*3;
+    break;
+    case DARKELF:
+        if (player->getRoomParent()->flagIsSet(R_UNDERGROUND))
+            bonus += player->getLevel()*3;
+         else
+            bonus += player->getLevel(); // Dark Elves are also quite observant by nature (paranoia)
+    break;
+    default:
+    break;
+    }
+
+    // Modify bonus for misc other things here..i.e. intelligence, spell effects, etc..
+
+    // Exceptional intelligence gets a bonus, sub-par intelligence gets a penalty, average intelligence gets no bonus
+    if (player->intelligence.getCur() >= 150)
+        bonus += player->intelligence.getCur()/10;
+    if (player->intelligence.getCur() <= 80)
+        bonus -= player->intelligence.getCur()/10;
+
+    if (player->isEffected("insight"))
+        bonus += 20;
+
+    if (player->isEffected("true-sight"))
+        bonus = (bonus*3)/2; // being under true-sight effect increases bonus by +50%
+    
+    //TODO: Whenever we have area flags, like aflag for city, swamp, etc..other environmental flags,
+    //we can add more racial/class bonuses and penalties..i.e. thieves/assassins/rogues are better
+    //able to figure out these things in urban areas, and trolls are better in swamps. 
+    //Plenty of other possibilities here
+
+    //Always at least a 5% chance to fail
+    chance = std::max(1,(std::min(95,basechance+bonus)));
+
+    // Drunk people suck at examining their surroundings
+    if (player->isEffected("drunkenness"))
+        chance = Random::get(1,10); 
+
+    if (!player->isStaff()) {
+        player->lasttime[LT_TRAFFIC].ltime = t;
+        player->lasttime[LT_TRAFFIC].interval = 15L;
+    }
+
+    *player << ColorOn << "^gYou examine the area for foot traffic or disturbances.\n" << ColorOff;
+    if(player->isStaff() && player->flagIsSet(P_DM_INVIS))
+        broadcast(isStaff, player->getSock(), player->getRoomParent(), "%M examines the area for foot traffic or disturbances.", player.get());
+    else
+        broadcast(player->getSock(), player->getParent(), "%M examines the area for foot traffic or disturbances.", player.get());
+
+    success = (Random::get(1,100) <= chance);
+
+    if (success || player->isStaff()) {
+        outputChoice = Random::get(1,2);
+
+        WanderInfo* wander = player->getRoomParent()->getWanderInfo();
+        short roomTraffic = wander->getTraffic();
+        long randomCount = wander->getRandomCount();
+
+        int traffic = (int)roomTraffic * (int)randomCount;
+
+        oStr << "^g";
+
+        if(player->isStaff() || player->flagIsSet(P_PTESTER)) {
+            oStr << "Chance: " << chance << "%\n";
+            oStr << "Room Traffic Weight (0-1000): " << traffic << "\n";
+        }
+        if (traffic == 0) 
+            oStr << (outputChoice == 1 ? "It looks like nothing has ever disturbed this place.":"You don't see any history of traffic whatsoever.");
+        else if (traffic < 30)
+            oStr << (outputChoice == 1 ? "Nobody has disturbed this place in a VERY long time.":"Someone might have disturbed this place long ago.");
+        else if (traffic < 50)
+            oStr << (outputChoice == 1 ? "This place is rarely disturbed.":"It looks like barely anything ever disturbs this place.");
+        else if (traffic < 100)
+            oStr << (outputChoice == 1 ? "Foot traffic here looks rare, but it's definitely possible.":"It's not often anyone disturbs this place, but somebody definitely has.");
+        else if (traffic < 150)
+            oStr << (outputChoice == 1 ? "The disturbances here look relatively uncommon, but steady.":"It looks like somebody might have been here a while back.");
+        else if (traffic < 200)
+            oStr << (outputChoice == 1 ? "This area looks to be disturbed on a somewhat regular basis.":"It looks like this area is disturbed a lot.");
+        else if (traffic < 250)
+            oStr << (outputChoice == 1 ? "Traffic looks to be pretty common here.":"This place can get crowded sometimes.");
+        else if (traffic < 300)
+            oStr << (outputChoice == 1 ? "It looks like there's always somebody around here.":"This area looks like it's always busy.");
+        else if (traffic < 400)
+            oStr << (outputChoice == 1 ? "This area looks to be pretty crowded.":"The foot traffic here can be nuts.");
+        else if (traffic < 500)
+            oStr << (outputChoice == 1 ? "This area has a ton of foot traffic.":"It's hard not to be bumped into here.");
+        else if (traffic < 600)
+            oStr << (outputChoice == 1 ? "It's a wonder when somebody did NOT disturb this place.":"You can see somebody around here all the time.");
+        else if (traffic < 700)
+            oStr << (outputChoice == 1 ? "The foot traffic here is pretty stifling.":"You're practically in the middle of a crowd.");
+        else if (traffic < 800)
+            oStr << (outputChoice == 1 ? "The foot traffic here is unbelievably crazy.":"There's rarely anybody NOT here.");
+        else if (traffic < 900)
+            oStr << (outputChoice == 1 ? "You can hardly find anywhere to stand here without being in the way.":"It's so busy here that there's almost nowhere to stand.");
+        else if (traffic < 980)
+            oStr << (outputChoice == 1 ? "It's so crowded here that you can barely move.":"It's so busy that it's hard to move around.");
+        else if (traffic <=1000)
+            oStr << (outputChoice == 1 ? "The foot traffic here is absolutely and unbelievably insane.":"It's so busy here that you could get stampeded.");
+        else 
+            oStr << (outputChoice == 1 ? "Something is wrong. The room's traffic is negative.":"Well this is weird....the room traffic includes the 4th dimension.");
+
+        *player << ColorOn << oStr.str() << "\n" << ColorOff; 
+    }
+    else
+    {
+        *player << ColorOn << "^gYou were unable to determine anything concrete.\n" << ColorOff;
+        broadcast(player->getSock(), player->getParent(), "%M was unable to determine anything concrete.", player.get());
+    }
+
+    return(0);
 }
 
 //*********************************************************************

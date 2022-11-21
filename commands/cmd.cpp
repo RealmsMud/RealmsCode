@@ -502,6 +502,7 @@ bool Config::initCommands() {
     playerCommands.emplace("dream", 100, plyAction, nullptr, "");
     playerCommands.emplace("rollover", 100, plyAction, nullptr, "");
     playerCommands.emplace("where", 100, cmdLook, nullptr, "");
+    playerCommands.emplace("traffic", 100, cmdTraffic, nullptr, "");
     playerCommands.emplace("look", 10, cmdLook, nullptr, "");
     playerCommands.emplace("consider", 50, cmdLook, nullptr, "");
     playerCommands.emplace("examine", 100, cmdLook, nullptr, "");
