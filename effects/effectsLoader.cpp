@@ -371,7 +371,7 @@ bool Config::loadEffects() {
         .pulsed(false)
         .type("Positive")
         .selfAddStr("^mYou are now tethered in space and time.^x")
-        .roomAddStr("^m*ACTOR* just anchored *A-HIMHER*self in space and time.^x")
+        .roomAddStr("^m*ACTOR* is now tethered in space and time.^x")
         .selfDelStr("^mYou are no longer tethered in space and time.^x")
         .roomDelStr("^m*ACTOR* is no longer tethered in space and time.^x")
         .isSpellEffect(true),

@@ -487,7 +487,7 @@ bool Config::initCommands() {
     playerCommands.emplace("prepare", 100, cmdPrepare, nullptr, "Prepare for traps or prepare an item for crafting.");
     playerCommands.emplace("unprepare", 100, cmdUnprepareObject, nullptr, "Unprepare an item.");
     playerCommands.emplace("combine", 100, cmdCraft, nullptr, "Create new items.");
-
+    playerCommands.emplace("dispel", 100, cmdDispel, nullptr, "Dispel a positive effect.");
 
     // player functions
     playerCommands.emplace("forum", 100, cmdForum, nullptr, "Information on your forum account.");
@@ -774,6 +774,7 @@ bool Config::initCommands() {
 
     generalCommands.emplace("spells", 100, cmdSpells, nullptr, "Show what spells you know.");
     generalCommands.emplace("cast", 10, cmdCast, nullptr, "");
+   
 
     generalCommands.emplace("attack", 50, cmdAttack, nullptr, "");
     generalCommands.emplace("kill", 10, cmdAttack, nullptr, "");

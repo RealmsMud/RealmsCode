@@ -418,5 +418,6 @@ bool decEnchant(const std::shared_ptr<Player>& player, CastType how);
 int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength=-2, long duration=-2);
 
 bool checkRefusingMagic(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, bool healing=false, bool print=true);
+int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 #endif /*MAGIC_H_*/

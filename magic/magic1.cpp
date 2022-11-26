@@ -102,6 +102,53 @@ int Creature::doMpCheck(int splno) {
 }
 
 //*********************************************************************
+//                      cmdDispel
+//*********************************************************************
+// This command allows a player to dispel any given positive effect that
+// is currently on their person
+
+int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd) {
+
+    const Effect* effect=nullptr;
+
+    if (cmnd->num < 2) {
+        *player << "Dispel what effect?\n";
+        return(0);
+    }
+
+    std::string dispelStr = cmnd->str[1];
+    EffectInfo* toDispel = nullptr;
+
+    if((toDispel = player->getExactEffect(dispelStr))) {
+
+        if (toDispel->isPermanent()) {
+            *player << "You cannot dispel permanent effects.\n";
+            return(0);
+        }
+        if(toDispel->getApplier()) {
+            *player << "You cannot dispel effects confired by objects.\nRemove the object to dispel the effect.\n";
+            return(0);
+        }
+       
+        effect = toDispel->getEffect();
+        if(!effect->isSpell() || effect->getType() != "Positive") {
+            *player << "You can only dispel positive/beneficial spell effects.\n";
+            return(0);
+        }
+
+        *player << ColorOn << "Effect '" << toDispel->getDisplayName() << "' dispelled.\n" << ColorOff;
+        player->removeEffect(toDispel,true);
+    }
+    else
+    {
+        *player << "Effect not found (use full effect name.)\n";
+    }
+
+    return(0);
+}
+
+
+//*********************************************************************
 //                      cmdCast
 //*********************************************************************
 // wrapper for doCast because doCast returns more information than we want
@@ -115,7 +162,7 @@ int cmdCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creature>& target, std::string_view spell, int strength) {
     if(!caster || !target)
         return;
-    int c = 0, n = 0;
+    int c = 0,n = 0;
     SpellData data;
     bool found = false, offensive = false;
 
@@ -1190,6 +1237,9 @@ int Player::consume(const std::shared_ptr<Object>& object, cmd* cmnd) {
     }
 
     if(n || dimensionalFailure) {
+        if (dimensionalFailure) {
+            *this << ColorOn << "^mYour dimensional anchor caused nothing to happen.\n" << ColorOff;
+        }
         statistics.potion();
         if(object->use_output[0] && !dimensionalFailure)
             printColor("%s\n", object->use_output);
@@ -1384,11 +1434,14 @@ int cmdUseWand(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(n || dimensionalFailure) {
+        if (dimensionalFailure) {
+            *player << ColorOn << "^mYour dimensional anchor caused nothing to happen.\n" << ColorOff;
+        }
         if(object->use_output[0] && !dimensionalFailure)
             player->printColor("%s\n", object->use_output);
 
-        if(!object->flagIsSet(O_CAN_USE_FROM_FLOOR))
-            object->decShotsCur();
+        if(!object->flagIsSet(O_CAN_USE_FROM_FLOOR) && !dimensionalFailure)
+                object->decShotsCur();
 
         if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
             player->delObj(object, true);

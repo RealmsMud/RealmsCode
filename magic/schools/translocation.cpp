@@ -640,7 +640,7 @@ int splTeleport(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
     if(cmnd->num == 2) {
 
         // Porting self only uses a port 1/3 of the time. (Unless they have no ports left!
-        if( pPlayer && !pPlayer->isCt() &&
+        if( pPlayer && !pPlayer->isCt() && !pPlayer->flagIsSet(P_PTESTER) &&
             (pPlayer->daily[DL_TELEP].cur == 0 ||
             (Random::get(1,100) <= 33 &&
             !dec_daily(&pPlayer->daily[DL_TELEP])))
