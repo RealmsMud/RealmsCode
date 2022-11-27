@@ -126,13 +126,13 @@ int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
         if(toDispel->getApplier()) {
-            *player << "You cannot dispel effects confired by objects.\nRemove the object to dispel the effect.\n";
+            *player << "You cannot dispel effects conferred by objects.\nRemove the object to dispel the effect.\n";
             return(0);
         }
        
         effect = toDispel->getEffect();
         if(!effect->isSpell() || effect->getType() != "Positive") {
-            *player << "You can only dispel positive/beneficial spell effects.\n";
+            *player << "Only positive/beneficial spell effects may be dispelled.\n";
             return(0);
         }
 
