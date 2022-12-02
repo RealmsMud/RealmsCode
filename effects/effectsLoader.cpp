@@ -365,6 +365,20 @@ bool Config::loadEffects() {
     );
     addToSet(
       EffectBuilder()
+        .name("dimensional-anchor")
+        .display("^mDimensional-Anchor^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^mYou are now tethered in space and time.^x")
+        .roomAddStr("^m*ACTOR* is now tethered in space and time.^x")
+        .selfDelStr("^mYou are no longer tethered in space and time.^x")
+        .roomDelStr("^m*ACTOR* is no longer tethered in space and time.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
         .name("disease")
         .addBaseEffect("disease")
         .pulseDelay(20)
@@ -906,6 +920,21 @@ bool Config::loadEffects() {
         .selfDelStr("^mYou reform.^x")
         .roomDelStr("^m*ACTOR* reforms.^x")
         .type("Positive"),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("non-detection")
+        .addBaseEffect("non-detection")
+        .display("^DNon-Detection^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^DYou are now hidden from magical detection.^x")
+        .roomAddStr("^D*ACTOR*'s body seems to shimmer then reform.^x")
+        .selfDelStr("^DYou are no longer hidden from magical detection.^x")
+        .roomDelStr("^D*ACTOR*'s body seems to shimmer then reform.^x")
+        .isSpellEffect(true),
       effects
     );
     addToSet(

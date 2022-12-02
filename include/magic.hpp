@@ -261,9 +261,10 @@ std::string realmSkill(Realm realm);
 #define S_TOUCH_OF_KESH         162 // touch-of-kesh spell
 #define S_REGENERATION          163 // regeneration spell
 #define S_WELLOFMAGIC           164 // well-of-magic spell
+#define S_NONDETECTION          165 // non-detection spell
 
 
-#define MAXSPELL                165 // Increment when you add a spell
+#define MAXSPELL                166 // Increment when you add a spell
 
 
 #define SpellFn const std::shared_ptr<Creature>&, cmd*, SpellData*
@@ -348,6 +349,7 @@ int splPlaneShift(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 int splPortal(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splPrayer(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splProtection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splNondetection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splRadiation(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splReboundMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splReduce(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
@@ -416,5 +418,6 @@ bool decEnchant(const std::shared_ptr<Player>& player, CastType how);
 int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength=-2, long duration=-2);
 
 bool checkRefusingMagic(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, bool healing=false, bool print=true);
+int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 #endif /*MAGIC_H_*/

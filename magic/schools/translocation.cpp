@@ -272,7 +272,7 @@ int splDimensionalAnchor(const std::shared_ptr<Creature>& player, cmd* cmnd, Spe
             }
         }
 
-        return(splGeneric(player, cmnd, spellData, "an", "anchor", "anchor"));
+        return(splGeneric(player, cmnd, spellData, "an", "anchor", "dimensional-anchor"));
     }
     //
     // end dimensional-anchor effect
@@ -640,7 +640,7 @@ int splTeleport(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
     if(cmnd->num == 2) {
 
         // Porting self only uses a port 1/3 of the time. (Unless they have no ports left!
-        if( pPlayer && !pPlayer->isCt() &&
+        if( pPlayer && !pPlayer->isCt() && !pPlayer->flagIsSet(P_PTESTER) &&
             (pPlayer->daily[DL_TELEP].cur == 0 ||
             (Random::get(1,100) <= 33 &&
             !dec_daily(&pPlayer->daily[DL_TELEP])))
@@ -1189,7 +1189,7 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
     bool groupTrack = (pPlayer->getClass() == CreatureClass::RANGER || pPlayer->getClass() == CreatureClass::DRUID) && pPlayer->getLevel() >= 16;
 
     if(pPlayer->getClass() == CreatureClass::BUILDER) {
-        pPlayer->print("You cannot cast this spell.\n");
+        *pPlayer << "You cannot cast this spell.\n";
         return(0);
     }
 
@@ -1198,12 +1198,12 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
         !pPlayer->isCt() &&
         spellData->how == CastType::CAST
     ) {
-        pPlayer->print("Only druids and rangers may cast that spell.\n");
+        *pPlayer << "Only druids and rangers may cast that spell.\n";
         return(0);
     }
 
     if(cmnd->num == 2) {
-        pPlayer->print("You may not use that on yourself.\n");
+        *pPlayer << "You may not use that on yourself.\n";
         return(0);
     }
     
@@ -1214,7 +1214,7 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
         return(0);
 
     if(!pPlayer->isStaff() && pPlayer->checkDimensionalAnchor()) {
-        pPlayer->printColor("^yYour dimensional-anchor causes your spell to fizzle!^w\n");
+        *pPlayer << ColorOn << "^yYour dimensional-anchor causes your spell to fizzle!\n" << ColorOff;
         return(1);
     }
 
@@ -1223,12 +1223,18 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
     target = gServer->findPlayer(cmnd->str[2]);
 
     if(!target || target == pPlayer || !pPlayer->canSee(target)) {
-        pPlayer->print("That player is not playing (Use full names).\n");
+        *pPlayer << "That player is not playing (use full name.)\n";
         return(0);
     }
 
     if(target->isStaff() && target->getClass() > pPlayer->getClass()) {
-        pPlayer->print("The spell fizzles.\n");
+        *pPlayer << "The spell fizzles.\n";
+        return(0);
+    }
+
+    //Cannot track someone under "non-detection" effect
+    if(!pPlayer->isStaff() && target->isEffected("non-detection")) {
+        *pPlayer << ColorOn << "^D" << setf(CAP) << target << "'s magical obscurement prevents your track.\n" << ColorOff;
         return(0);
     }
 
@@ -1250,12 +1256,12 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
                 pPlayer->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE)
             )
         ) {
-            pPlayer->print("The spell fizzles.\n");
+            *pPlayer << "The spell fizzles.\n";
             return(0);
         }
 
         if(troom && !pPlayer->canEnter(troom)) {
-            pPlayer->print("The spell fizzles.\n");
+            *pPlayer << "The spell fizzles.\n";
             return(0);
         }
 
@@ -1264,12 +1270,12 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
             return(0);
 
         if(!dec_daily(&pPlayer->daily[DL_TRACK]) && spellData->how == CastType::CAST) {
-            pPlayer->print("You have tracked enough today.\n");
+            *pPlayer << "You have tracked enough today.\n";
             return(0);
         }
 
         if(target->flagIsSet(P_LINKDEAD)) {
-            pPlayer->print("The spell fizzles.\n");
+            *pPlayer << "The spell fizzles.\n";
             return(0);
         }
 
@@ -1279,17 +1285,18 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
             (target->isEffected("mist") && pPlayer->getLevel() <= target->getLevel()))
         {
 
-            chance = (50 + (((int)pPlayer->getLevel() - (int)target->getLevel())*10)
-                    + (bonus(pPlayer->intelligence.getCur()) - bonus(target->intelligence.getCur())));
+
+            chance = (500 + (((int)pPlayer->getLevel() - (int)target->getLevel())*100));
+            chance += (pPlayer->intelligence.getCur() - target->intelligence.getCur());
 
             if(target->isEffected("mist"))
-                chance -= 35;
+                chance -= 350;
 
-            if(Random::get(1,100) < chance) {
+            if(Random::get(1,1000) < chance) {
                 if(target->isEffected("mist"))
-                    pPlayer->print("%s's mist form eluded your magic.\n", target->getCName());
+                    *pPlayer << setf(CAP) << target << "'s mist form eluded your magic.\n";
                 else
-                    pPlayer->print("%s manages to elude your track.\n", target->getCName());
+                    *pPlayer << setf(CAP) << target << " manages to elude your track.\n";
                 return(0);
             }
         }
@@ -1304,7 +1311,7 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
             while(it != group->members.end()) {
                 if(auto crt = it->lock()) {
                     if(crt->pFlagIsSet(P_LINKDEAD) && pPlayer->inSameRoom(crt)) {
-                        pPlayer->print("%M's partial link with reality prevents you from tracking.\n", crt.get());
+                        *pPlayer << setf(CAP) << crt << "'s partial link with reality prevents you from tracking.\n";
                         return(0);
                     }
                 }
@@ -1313,8 +1320,8 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
         }
     }
 
-    pPlayer->print("You track %N.\n", target.get());
-    target->print("%M has tracked you.\n", pPlayer.get());
+    *pPlayer << "You track " << target << ".\n";
+    *target << setf(CAP) << pPlayer << " has tracked you.\n";
     broadcast(pPlayer->getSock(), target->getSock(), oldRoom, "%M tracks %N.", pPlayer.get(), target.get());
 
     pPlayer->deleteFromRoom();
@@ -1327,7 +1334,7 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
         pPlayer->lasttime[LT_HIDE].ltime = t;
         pPlayer->lasttime[LT_HIDE].interval = 2L;
 
-        pPlayer->printColor("^gYou are temporarily disoriented.\n");
+        *pPlayer << ColorOn << "^gYou are temporarily disoriented.\n" << ColorOff;
     }
     pPlayer->doPetFollow();
 
@@ -1355,7 +1362,7 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
                 if(!follower->flagIsSet(P_DM_INVIS)) {
                     broadcast(pPlayer->getSock(), follower->getSock(), oldRoom, "%N follows %N.", follower.get(), pPlayer.get());
 
-                    follower->printColor("^gYou are temporarily disoriented.\n");
+                    *follower << ColorOn << "^gYou are temporarily disoriented.\n" << ColorOff;
 
                     follower->updateAttackTimer(true, 20);
                     follower->lasttime[LT_SPELL].ltime = t;
@@ -1529,7 +1536,7 @@ int splPlaneShift(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 bool Creature::checkDimensionalAnchor() const {
     if(isMonster())
         return(false);
-    if(!isEffected("anchor"))
+    if(!isEffected("dimensional-anchor"))
         return(false);
 
     if(Random::get(1,10)>9)

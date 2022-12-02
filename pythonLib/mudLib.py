@@ -32,6 +32,7 @@ def doReplace(fmt, viewer, **args):
     toReturn = auxReplace(toReturn, viewer, 'applier', 'APPLIER', **args)
     toReturn = toReturn.replace("*A-HISHER*", args['actor'].hisHer())
     toReturn = toReturn.replace("*A-UPHISHER*", args['actor'].hisHer())
+    toReturn = toReturn.replace("*A-HIMHER*", args['actor'].himHer())
     return toReturn
 
 

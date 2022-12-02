@@ -81,6 +81,28 @@ int splProtection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
     return(splGeneric(player, cmnd, spellData, "a", "protection", "protection"));
 }
 
+//*********************************************************************
+//                      splNondetection
+//*********************************************************************
+// This function allows a spellcaster to cast a non-detection spell either
+// on themself or on another player, causing them to be resistant to detection
+// by divination detection spells or spells that need to find a player's location
+// to work...i.e. clairvoyance, track (summon has no-summon P_FLAG so we'll leave it out)
+
+int splNondetection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    if( spellData->how == CastType::CAST &&
+        player->getClass() !=  CreatureClass::MAGE &&
+        player->getClass() !=  CreatureClass::LICH &&
+        player->getClass() !=  CreatureClass::DRUID &&
+        player->getClass() !=  CreatureClass::CLERIC &&
+        !player->isCt()
+    ) {
+        player->print( "Only mages, liches, druids, and clerics may cast that spell.\n");
+        return(0);
+    }
+    return(splGeneric(player, cmnd, spellData, "a", "non-detection", "non-detection"));
+}
+
 
 //*********************************************************************
 //                      splUndeadWard
@@ -908,7 +930,7 @@ static const std::list<std::string> dispellableEffects = {
     "resist-electricity",
     "wind-protection",
     "static-field",
-
+    "non-detection"
     "illusion",
     "blur",
     "fire-shield",

@@ -221,6 +221,7 @@ struct {
     { "touch-of-kesh",      S_TOUCH_OF_KESH,        splNecroDrain,              -1,         NECROMANCY,         EVIL        },
     { "regeneration",       S_REGENERATION,         splRegeneration,            40,         SCHOOL_CANNOT_CAST, HEALING     },
     { "well-of-magic",      S_WELLOFMAGIC,          splWellOfMagic,             40,         TRANSMUTATION,      HEALING     },
+    { "non-detection",      S_NONDETECTION,         splNondetection,            30,         ABJURATION,         PROTECTION  },
     { "@",                  -1,                     nullptr,                          0,          NO_SCHOOL,          NO_DOMAIN   }
 };
 int spllist_size = sizeof(spllist)/sizeof(*spllist);
