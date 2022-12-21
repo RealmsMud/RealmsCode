@@ -333,6 +333,345 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
 }
 
 //*********************************************************************
+//                      cmdRoominfo
+//*********************************************************************
+// This command lets a player learn expanded info about any room they are in
+// based on the flags set in the room.
+
+int cmdRoominfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    int count=0;
+    std::ostringstream oStr;
+
+    player->clearFlag(P_AFK);
+
+    if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->inCombat()) {
+        *player << "You can't tell anything about the room right now.\nYou're too busy trying not to die!\n";
+        return(0);
+    }
+    if (player->isEffected("confusion")) {
+        *player << "You find the idea of doing that entirely too confusing right now.\n";
+        return(0);
+    }
+    if (player->isEffected("feeblemind")) {
+        *player << "You're too busy drooling all over yourself right now to check out the room.\n";
+        return(0);
+    }
+    if (!player->canSeeRoom(player->getRoomParent(),true))
+        return(0);
+
+    if(player->getRoomParent()->isEffected("dense-fog") &&
+        !player->checkStaff("This room is filled with a dense fog.\nYou can't really check out the room right now.\n")
+    )
+        return(0);
+
+    oStr << "Extended information about this room:\n\n";
+
+    if (player->getRoomParent()->flagIsSet(R_DUMP_ROOM)) {
+        count++;
+        oStr << "^wRecycling Room^x: Items dropped here will recycle for gold.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_DARK_ALWAYS)) {
+        count++;
+        oStr << "^DAlways Dark^x: This room is always naturally dark.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_POST_OFFICE)) {
+        count++;
+        oStr << "^wPost Office^x: This room functions as an offical post office.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_SAFE_ROOM)) {
+        count++;
+        oStr << "^yPkill Safe^x: No pkilling is allowed in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_TELEPORT)) {
+        count++;
+        oStr << "^mTeleport Blocking^x: Nobody can teleport into this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_FAST_HEAL)) {
+        count++;
+        oStr << "^yTick+ Room^x: This room increases recharge rate of HP and MP.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ONE_PERSON_ONLY)) {
+        count++;
+        oStr << "^wOne Person Only^x: This room only allows one person at a time.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_TWO_PEOPLE_ONLY)) {
+        count++;
+        oStr << "^wTwo People Only^x: This room only allows two people at a time.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_THREE_PEOPLE_ONLY)) {
+        count++;
+        oStr << "^wThree People Only^x: This room only allows three people at a time.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_MAGIC)) {
+        count++;
+        oStr << "^cNo Magic^x: No magic works in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_EARTH_BONUS)) {
+        count++;
+        oStr << "^yEarth Realm Room^x: This room has enhanced earth realm properties.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_AIR_BONUS)) {
+        count++;
+        oStr << "^wAir Realm Room^x: This room has enhanced air realm properties.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_FIRE_BONUS)) {
+        count++;
+        oStr << "^rFire Realm Room^x: This room has enhanced fire realm properties.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_WATER_BONUS)) {
+        count++;
+        oStr << "^bWater Realm Room^x: This room has enhanced water realm properties.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_PLAYER_DEPENDENT_WANDER)) {
+        count++;
+        oStr << "^wMob+ Room^x: The number of mobs arriving will scale to number of players in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_POISONS)) {
+        count++;
+        oStr << "^GPoisoning Room^x: This room will poison you.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_DRAIN_MANA)) {
+        count++;
+        oStr << "^BMana Sapping^x: This room will drain MP.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_STUN)) {
+        count++;
+        oStr << "^yStunning Room^x: This room will periodically confuse and stun you.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_SUMMON_OUT)) {
+        count++;
+        oStr << "^mNo Summoning Out^x: Nobody can be summoned out of this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_POTION)) {
+        count++;
+        oStr << "^wPotion Blocking^x: Potions will not work in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_MAGIC_BONUS)) {
+        count++;
+        oStr << "^MMagic+^x: This room will enhance all spells.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_VAMPIRE_COVEN)) {
+        count++;
+        oStr << "^DVampire Coven^x: This room is a vampire coven.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_CAST_TELEPORT)) {
+        count++;
+        oStr << "^mNo Teleport^x: The teleport spell cannot be cast in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_DESERT_HARM)) {
+        count++;
+        oStr << "^RDesert^x ^CExtremes^x: Fire damage during day, cold damage at night.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_CLAIR_ROOM)) {
+        count++;
+        oStr << "^mAnti-Scrying^x: Nobody can be seen by clairvoyance in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_FLEE)) {
+        count++;
+        oStr << "^wNo Fleeing^x: Nobody can flee from this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_DEADLY_VINES)) {
+        count++;
+        oStr << "^gVine Damage^x: Deadly vines will slowly kill you in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ETHEREAL_PLANE)) {
+        count++;
+        oStr << "^DEthereal Plane^x: This room is in the ethereal plane.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_OPPOSITE_REALM_BONUS)) {
+        count++;
+        oStr << "^wOpposing Realm Bonus^x: Opposing magic realm of the room gains magical enhancement.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_PAWN_SHOP)) {
+        count++;
+        oStr << "^wPawn Shop^x: This room is a pawn shop.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ICY_WATER)) {
+        count++;
+        oStr << "^CIcy Water Damage^x: Icy water in this room causes cold damage.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_TRACK_TO)) {
+        count++;
+        oStr << "^mNo Track Into^x: Nobody can use the track spell into this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_DESTROYS_ITEMS)) {
+        count++;
+        oStr << "^yItem Destruction^x: Dropped items in this room will be destroyed.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_SUMMON_TO)) {
+        count++;
+        oStr << "^mSummon Blocking^x: Nobody can be summoned to this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_TRACK_OUT)) {
+        count++;
+        oStr << "^mNo Outbound Track^x: Nobody can use the track spell to leave this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ROOM_REALM_BONUS)) {
+        count++;
+        oStr << "^MMagical Realm Bonus^x: Any magic linked with this room's elemental realm receives a bonus.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_OUTLAW_SAFE)) {
+        count++;
+        oStr << "^yOutlaw Haven^x: Players flagged as outlaws are safe in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_BANK)) {
+        count++;
+        oStr << "^wBank^x: This room allows access to banking commands.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_WORD_OF_RECALL)) {
+        count++;
+        oStr << "^yNo Recall^x: The word-of-recall spell (casted, wands, or potions) will not work in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_DIFFICULT_TO_MOVE)) {
+        count++;
+        oStr << "^rDifficult Terrain^x: It is hard to move from this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ELEC_BONUS)) {
+        count++;
+        oStr << "^cElectric Realm Room^x: This room has enhanced electric realm properties.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_COLD_BONUS)) {
+        count++;
+        oStr << "^WCold Realm Room^x: This room has enhanced cold realm properties.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_DIFFICULT_FLEE)) {
+        count++;
+        oStr << "^yHard to Flee^x: This room is hard to flee from.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_MIST)) {
+        count++;
+        oStr << "^DNo Misting^x: Nobody misted can enter this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_DISPERSE_MIST)) {
+        count++;
+        oStr << "^DDisperse Mist^x: Misted players entering this room will have mist dispersed.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_MAGIC_DARKNESS)) {
+        count++;
+        oStr << "^DMagically Dark^x: This room is magically dark.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_UNDER_WATER_BONUS)) {
+        count++;
+        oStr << "^BUnderwater Room^x: This room is underwater.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_DODGE)) {
+        count++;
+        oStr << "^yNo Dodging^x: Nobody can dodge in this room - usually because of limited space.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ARAMON)) {
+        count++;
+        oStr << "^rAramon Faith^x: This room is strong with the power of Aramon.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_CERIS)) {
+        count++;
+        oStr << "^cCeris Faith^x: This room is under Ceris' protection.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ENOCH)) {
+        count++;
+        oStr << "^WEnoch Faith^x: This room is strong with the strength of Enoch.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_GRADIUS)) {
+        count++;
+        oStr << "^yGradius Faith^x: This room is strongly bound to Gradius.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ARES)) {
+        count++;
+        oStr << "^RAres Faith^x: This room is strong with the bloodlust of Ares.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_KAMIRA)) {
+        count++;
+        oStr << "^bKamira Faith^x: This room is a sanctuary of Kamira. You feel lucky here.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_JAKAR)) {
+        count++;
+        oStr << "^YJakar Faith^x: This room is strong with the presence of Jakar. You feel greedy.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_LINOTHAN)) {
+        count++;
+        oStr << "^GLinothan Faith^x: This room is strong with the strength of Linothan.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_MARA)) {
+        count++;
+        oStr << "^gMara Faith^x: This room is heavily under the protection of Mara.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ARACHNUS)) {
+        count++;
+        oStr << "^DArachnus Faith^x: This room is absolutely polluted by the wickedness of Arachnus.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ARCHERS)) {
+        count++;
+        oStr << "^yArchers Attack^x: Arrows will periodically attack people in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_DEADLY_MOSS)) {
+        count++;
+        oStr << "^DDeadly Moss^x: Deadly moss will try to kill people in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_WINTER_COLD)) {
+        count++;
+        oStr << "^WDeadly Winter Cold^x: This room causes cold damage in the winter.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_ALWAYS_WINTER)) {
+        count++;
+        oStr << "^wAlways Winter^x: It is always considered winter in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_GOOD_DAMAGE)) {
+        count++;
+        oStr << "^cDamage to Evil^x: Evil aligned players receive good damage in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_EVIL_DAMAGE)) {
+        count++;
+        oStr << "^rDamage to Good^x: Good aligned players receive evil damage in this room.\n";
+    }
+     if (player->getRoomParent()->flagIsSet(R_BOULDERS)) {
+        count++;
+        oStr << "^yFlying Boulders^x: Boulders will fly at everyone in this room.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_PLAYER_HARM)) {
+        count++;
+        if (!(player->getRoomParent()->flagIsSet(R_EARTH_BONUS) ||
+                    player->getRoomParent()->flagIsSet(R_AIR_BONUS) ||
+                        player->getRoomParent()->flagIsSet(R_FIRE_BONUS) ||
+                            player->getRoomParent()->flagIsSet(R_WATER_BONUS) ||
+                                player->getRoomParent()->flagIsSet(R_ELEC_BONUS) ||
+                                    player->getRoomParent()->flagIsSet(R_COLD_BONUS))) {
+            oStr << "^DLifeforce sapping^x: This room will slowly sap peoples' lifeforce.\n";
+        }
+        if (player->getRoomParent()->flagIsSet(R_EARTH_BONUS)) {
+            oStr << "^yEarth Realm Damage^x: This room will cause earth realm damage.\n";
+        }
+        if (player->getRoomParent()->flagIsSet(R_AIR_BONUS)) {
+            oStr << "^WAir Realm Damage^x: This room will cause air realm damage.\n";
+        }
+        if (player->getRoomParent()->flagIsSet(R_FIRE_BONUS)) {
+            oStr << "^RFire Realm Damage^x: This room will cause fire realm damage.\n";
+        }
+        if (player->getRoomParent()->flagIsSet(R_WATER_BONUS)) {
+            oStr << "^BWater Realm Damage^x: This room will cause water realm damage.\n";
+        }
+        if (player->getRoomParent()->flagIsSet(R_ELEC_BONUS)) {
+            oStr << "^bElectric Realm Damage^x: This room will cause electric realm damage.\n";
+        }
+        if (player->getRoomParent()->flagIsSet(R_COLD_BONUS)) {
+            oStr << "^CCold Realm Damage^x: This room will cause cold realm damage.\n";
+        }
+    }
+
+    if (count < 1 || player->getRoomParent()->flagIsSet(R_NO_ROOMINFO)) {
+        *player << "There isn't anything extra special about this room.\n";
+    }
+    else
+        *player << ColorOn << oStr.str() << "\n" << ColorOff;
+
+    return(0);
+
+}
+
+
+
+//*********************************************************************
 //                      cmdLook
 //*********************************************************************
 

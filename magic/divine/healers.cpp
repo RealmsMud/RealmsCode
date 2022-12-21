@@ -1388,3 +1388,69 @@ int splUnhallow(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
     player->getRoomParent()->addEffect("unhallow", duration, strength, player, true, player);
     return(1);
 }
+
+int splBenediction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    if( spellData->how == CastType::CAST &&
+        player->getClass() !=  CreatureClass::CLERIC &&
+        player->getClass() !=  CreatureClass::PALADIN &&
+        player->getClass() !=  CreatureClass::DRUID &&
+        !player->isCt()) 
+    {
+        *player << "Only druids, paladins, and clerics of Ares, Ceris, Enoch, Gradius, Kamira, Linothan, or Mara may cast that spell.\n"; 
+        return(0);
+    }
+
+    if (!player->isCt() &&
+        player->getClass() != CreatureClass::DRUID &&
+        player->getDeity() != ARES && 
+        player->getDeity() != ENOCH &&
+        player->getDeity() != LINOTHAN &&
+        player->getDeity() != CERIS &&
+        player->getDeity() != MARA &&
+        player->getDeity() != GRADIUS &&
+        player->getDeity() != KAMIRA)
+    {
+        *player << gConfig->getDeity(player->getDeity())->getName().c_str() << 
+            ((player->getDeityAlignment() == BLOODRED) ? " is furious that you tried to cast that spell.\nYou should prostrate yourself immediately and beg for mercy.":" does not grant that spell to you.") << "\n";
+        return(0);
+    }
+
+    if (!player->isCt() && spellData->how == CastType::CAST && (player->getAdjustedAlignment() < NEUTRAL)) {
+        *player << "Your alignment must be neutral or good in order to cast a benediction spell.\n";
+        return(0);
+    }
+
+    return(splGeneric(player, cmnd, spellData, "a", "benediction", "benediction"));
+}
+
+int splMalediction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    if( spellData->how == CastType::CAST &&
+        player->getClass() !=  CreatureClass::CLERIC &&
+        player->getClass() !=  CreatureClass::DEATHKNIGHT &&
+        player->getClass() !=  CreatureClass::DRUID &&
+        !player->isCt()) 
+    {
+        *player << "Only death knights, druids, and clerics of Arachnus, Aramon, or Ares may cast that spell.\n";
+        return(0);
+    }
+
+    if (spellData->how == CastType::CAST &&
+        !player->isCt() &&
+        player->getClass() != CreatureClass::DRUID && 
+        player->getDeity() != ARACHNUS &&
+        player->getDeity() != ARES &&
+        player->getDeity() != ARAMON)
+    {
+        *player << gConfig->getDeity(player->getDeity())->getName().c_str() << 
+            ((player->getDeityAlignment() == ROYALBLUE) ? " is disappointed that you tried to cast that spell.":" does not grant that spell to you.") << "\n";
+        return(0);
+    }
+
+    if (!player->isCt() && spellData->how == CastType::CAST && (player->getAdjustedAlignment() > NEUTRAL)) {
+        *player << "Your alignment must be neutral or evil in order to cast a malediction spell.\n";
+        return(0);
+    }
+
+    return(splGeneric(player, cmnd, spellData, "a", "malediction", "malediction"));
+}
+

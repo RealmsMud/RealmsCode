@@ -81,7 +81,7 @@ void Player::teleportTrap() {
 
 void Player::rockSlide() {
     std::shared_ptr<Player> target;
-    int     dmg=0;
+    Damage dmg;
 
     auto room = getRoomParent();
     auto pIt = room->players.begin();
@@ -92,18 +92,20 @@ void Player::rockSlide() {
         if(!target)
             continue;
 
-        dmg = Random::get(10, 20);
+        dmg.set(Random::get(10, 20));
 
         if(target->getClass() == CreatureClass::LICH)
-            dmg *= 2;
+            dmg.set(dmg.get()*2);
 
         if(target->chkSave(LCK, target, 0))
-            dmg /=2;
+            dmg.set(dmg.get()/2);
 
-        target->printColor("Falling rocks crush you for %s%d^x damage.\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-        target->doDamage(target, dmg, NO_CHECK);
+        target->applyMagicalArmor(dmg,PHYSICAL_DMG);
+
+        *target << ColorOn << "Falling rocks crush you for " << target->customColorize("*CC:DAMAGE*").c_str() << dmg.get() << " ^xdamage.\n" << ColorOff;
+        target->doDamage(target, dmg.get(), NO_CHECK);
         if(target->hp.getCur() < 1) {
-            target->print("You are crushed to death by falling rocks.\n");
+            *target << "You are crushed to death by falling rocks.\n";
             target->die(ROCKS);
         }
 
@@ -132,7 +134,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
 
 
     if(isCt()) {
-        printColor("^mTrap passed.\n");
+        *pThis << ColorOn << "^MTrap passed.\n" << ColorOff;
         return(0);
     }
     if(isEffected("mist"))
@@ -143,7 +145,6 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         l.room = room->getTrapExit();
     else
         l = bound;
-
 
     switch(room->getTrap()) {
     case TRAP_PIT:
@@ -236,7 +237,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
             if(!newRoom)
                 return(0);
 
-            print("You fell into a pit trap!\n");
+            *pThis << "You fell into a pit trap!\n";
             broadcast(getSock(), getRoomParent(), "%M fell into a pit trap!", this);
 
             deleteFromRoom();
@@ -246,10 +247,11 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
             trapDamage.set(Random::get(1,15));
 
             if(chkSave(DEA, pThis, 0)) {
-                print("You managed to control your fall.\n");
+                *pThis << "You managed to control your fall.\n";
                 trapDamage.set(trapDamage.get() / 2);
             }
-            print("You lost %d hit points.\n", trapDamage.get());
+            applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+            *pThis << "You lost " << trapDamage.get() << " hit points.\n";
             hp.decrease(trapDamage.get());
 
             if(hp.getCur() < 1)
@@ -265,7 +267,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
             if(!newRoom)
                 return(0);
 
-            print("You tumble downward uncontrollably!\n");
+            *pThis << ColorOn << "^#You tumble downward uncontrollably!\n" << ColorOff;
             broadcast(getSock(), getRoomParent(), "%M tumbles downward uncontrollably!", this);
             deleteFromRoom();
             addToRoom(newRoom);
@@ -273,10 +275,11 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
             trapDamage.set(Random::get(1,20));
 
             if(chkSave(DEA, pThis, -25)) {
-                print("You manage slow your fall.\n");
+                *pThis << "You managed slow your fall.\n";
                 trapDamage.set(trapDamage.get() / 2);
             }
-            print("You lost %d hit points.\n", trapDamage.get());
+            applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+            *pThis << "You lost " << trapDamage.get() << " hit points.\n";
             hp.decrease(trapDamage.get());
             if(hp.getCur() < 1)
                 die(SPLAT);
@@ -294,7 +297,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
             return(0);
 
 
-        print("You are overcome by vertigo!\n");
+        *pThis << ColorOn << "^#You are overcome by vertigo!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "%M vanishes!", this);
         deleteFromRoom();
         addToRoom(newRoom);
@@ -307,7 +310,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         if(!newRoom)
             return(0);
 
-        print("You fall down a chute!\n");
+        *pThis << ColorOn << "^#You fall down a chute!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "%M fell down a chute!", this);
         deleteFromRoom();
         addToRoom(newRoom);
@@ -318,7 +321,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
 
     case TRAP_ROCKS:
         if(!isEffected("fly")) {
-            print("You have triggered a rock slide!\n");
+            *pThis << ColorOn << "^#You have triggered a rock slide!\n" << ColorOff;
             broadcast(getSock(), getRoomParent(), "%M triggers a rock slide!", this);
 
             rockSlide();
@@ -330,8 +333,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         if(!newRoom)
             return(0);
 
-        print("You have triggered an avalanche of bones!\n");
-        print("You are knocked down by its immense weight!\n");
+        *pThis << ColorOn << "^#You have triggered an avalanche of bones!\nYou are knocked down by its immense weight!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "%M was crushed by an avalanche of bones!", this);
         deleteFromRoom();
         addToRoom(newRoom);
@@ -339,10 +341,11 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         trapDamage.set(Random::get(hp.getMax() / 4, hp.getMax() / 2));
 
         if(chkSave(DEA, pThis, -15)) {
-            print("You manage to only be partially buried.\n");
+            *pThis << "You manage to only be partially buried.\n";
             trapDamage.set(trapDamage.get() / 2);
         }
-        print("You lost %d hit points.\n", trapDamage.get());
+        applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+        *pThis << "You lost " << trapDamage.get() << " hit points.\n";
         hp.decrease(trapDamage.get());
         if(hp.getCur() < 1)
             die(BONES);
@@ -357,22 +360,21 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
             if(!newRoom)
                 return(0);
 
-            print("You fell into a pit!\n");
-            print("You are impaled by spikes!\n");
-            broadcast(getSock(), getRoomParent(), "%M fell into a pit!", this);
-            broadcast(getSock(), getRoomParent(), "It has spikes at the bottom!");
+            *pThis << ColorOn << "^#You fell into a pit with spikes!" << ColorOff;
+            broadcast(getSock(), getRoomParent(), "%M fell into a pit!\nIt has spikes at the bottom!", this);
             deleteFromRoom();
             addToRoom(newRoom);
             doPetFollow();
             trapDamage.set(Random::get(15,30));
 
             if(chkSave(DEA,pThis,0)) {
-                print("The spikes barely graze you.\n");
+                *pThis << "The spikes barely graze you.\n";
                 trapDamage.set(trapDamage.get() / 2);
             }
             if(isBrittle())
                 trapDamage.set(trapDamage.get() * 3 / 2);
-            print("You lost %d hit points.\n", trapDamage.get());
+            applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+            *pThis << "You lost " << trapDamage.get() << " hit points.\n";
             hp.decrease(trapDamage.get());
             if(hp.getCur() < 1)
                 die(SPIKED_PIT);
@@ -382,15 +384,15 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         break;
 
     case TRAP_DART:
-        print("You triggered a hidden dart!\n");
+        *pThis << ColorOn << "^#You triggered a hidden dart!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "%M gets hit by a hidden poisoned dart!", this);
         trapDamage.set(Random::get(1,10));
         if(chkSave(DEA,pThis,-1)) {
-            print("The dart barely scratches you.\n");
+            *pThis << "The dart barely scratches you.\n";
             trapDamage.set(trapDamage.get() / 2);
         }
-
-        print("You lost %d hit points.\n", trapDamage.get());
+        applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+        *pThis << "You lost " << trapDamage.get() << " hit points.\n";
         if(!immuneToPoison() && !chkSave(POI, pThis, -1)) {
             num = room->getTrapStrength() ? room->getTrapStrength() : 2;
 
@@ -403,16 +405,16 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         break;
 
     case TRAP_ARROW:
-        print("You triggered an arrow trap!\n");
-        print("A flight of arrows peppers you!\n");
+        *pThis << ColorOn << "^#You triggered an arrow trap!\nA flight of arrows peppers you!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "%M gets hit by a flight of arrows!", this);
         trapDamage.set(Random::get(15,20));
 
         if(chkSave(DEA,pThis,0)) {
-            print("You manage to dive and take half damage.\n");
+            *pThis << "You avoided several of the arrows by dodging chaotically!\n";
             trapDamage.set(trapDamage.get() / 2);
         }
-        print("You lost %d hit points.\n", trapDamage.get());
+        applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+        *pThis << "You lost " << trapDamage.get() << " hit points.\n";
 
         hp.decrease(trapDamage.get());
 
@@ -421,16 +423,16 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         break;
 
     case TRAP_SPEAR:
-        print("You triggered a spear trap!\n");
-        print("A giant spear impales you!\n");
+        *pThis << ColorOn << "You triggered a spear trap!\nA giant spear flies towards you!" << ColorOff;
         broadcast(getSock(), getRoomParent(), "%M gets hit by a giant spear!", this);
         trapDamage.set(Random::get(10, 15));
 
         if(chkSave(DEA, pThis, 0)) {
-            print("The glances off of you.\n");
+            *pThis << "The glances off of you.\n";
             trapDamage.set(trapDamage.get() / 2);
         }
-        print("You lost %d hit points.\n", trapDamage.get());
+        applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+        *pThis << "You lost " << trapDamage.get() << " hit points.\n";
 
         hp.decrease(trapDamage.get());
 
@@ -439,25 +441,26 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         break;
 
     case TRAP_CROSSBOW:
-        print("You triggered a crossbow trap!\n");
-        print("A giant poisoned crossbow bolt hits you in the chest!\n");
+        *pThis << ColorOn << "^#You triggered a crossbow trap!\nA giant crossbow bolt hits you in the chest!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "%M gets hit by a giant crossbow bolt!", this);
         trapDamage.set(Random::get(20, 25));
 
         if(chkSave(DEA, pThis, 0)) {
-            print("The bolt barely scratches you.\n");
+            *pThis << "The bolt didn't penetrate too deeply.\n";
             trapDamage.set(trapDamage.get() / 2);
         }
+        // 50% chance the crossbow bolt is poisoned
+        if (Random::get(1,100) <= 50) {
+            *pThis << ColorOn << "^G^#The crossbow bolt is poisoned!\n" << ColorOff;
+            if(!immuneToPoison() && !chkSave(POI, pThis, 0)) {
+                num = room->getTrapStrength() ? room->getTrapStrength() : 7;
 
-
-        if(!immuneToPoison() && !chkSave(POI, pThis, 0)) {
-            num = room->getTrapStrength() ? room->getTrapStrength() : 7;
-
-            poison(nullptr, num, standardPoisonDuration(num, constitution.getCur()));
-            poisonedBy = "a poisoned crossbow bolt";
-        }
-
-        print("You lost %d hit points.\n", trapDamage.get());
+                poison(nullptr, num, standardPoisonDuration(num, constitution.getCur()));
+                poisonedBy = "a poisoned crossbow bolt";
+            }
+         }
+        applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+        *pThis << "You lost " << trapDamage.get() << " hit points.\n";
 
         hp.decrease(trapDamage.get());
 
@@ -466,55 +469,51 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         break;
 
     case TRAP_GASP:
-        print("You triggered a gas trap!\n");
-        print("Gas rapidly fills the room!\n");
+        *pThis << ColorOn << "^G^#You triggered a gas trap!\nGas rapidly fills the room!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "Gas rapidly fills the room!");
 
         if(!immuneToPoison()) {
             if(!chkSave(POI, pThis, -15)) {
-                print("The billowing green cloud surrounds you!\n");
-
+                *pThis << ColorOn << "^G^#The billowing poisonous green cloud surrounds you!\n" << ColorOff;
                 num = room->getTrapStrength() ? room->getTrapStrength() : 15;
-
                 poison(nullptr, num, standardPoisonDuration(num, constitution.getCur()));
                 poisonedBy = "poison gas";
             } else {
-                print("You managed to hold your breath.\n");
+                    *pThis << "You managed to hold your breath in time.\n";
             }
-        } else {
-            print("The billowing cloud of green gas has no effect on you.\n");
+        } 
+        else {
+            *pThis << "The billowing cloud of green gas has no effect on you.\n";
         }
 
         break;
 
     case TRAP_GASB:
-        print("You triggered a gas trap!\n");
-        print("Gas rapidly fills the room!\n");
-        broadcast(getSock(), getRoomParent(), "Gas rapidly fills the room!");
+        *pThis << ColorOn << "^rYou triggered a gas trap!\nReddish gas rapidly fills the room!\n" << ColorOff;
+        broadcast(getSock(), getRoomParent(), "Reddish gas rapidly fills the room!");
 
         if(!chkSave(DEA, pThis, 0)) {
-            print("The billowing red cloud blinds your eyes!\n");
+            *pThis << ColorOn << "^rThe billowing red cloud blinds your eyes!\n" << ColorOff;
             addEffect("blindness", 120 - (constitution.getCur()/10), 1);
         }
         break;
 
     case TRAP_GASS:
-        print("You triggered a gas trap!\n");
-        print("Gas rapidly fills the room!\n");
+        *pThis << ColorOn << "^#You triggered a gas trap!\nGas rapidly fills the room!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "Gas rapidly fills the room!");
 
         for(const auto& pIt : getRoomParent()->players) {
             if(auto fPly = pIt.lock()) {
                 if (!fPly->chkSave(DEA, fPly, 0)) {
                     if (!fPly->flagIsSet(P_RESIST_STUN)) {
-                        fPly->print("Billowing white clouds surrounds you!\n");
-                        fPly->print("You are stunned!\n");
+                        *fPly << "Billowing white clouds surrounds you!\n";
+                        *fPly << "You are stunned!\n";
                         fPly->stun(Random::get(10, 18));
                     } else {
-                        fPly->print("The billowing cloud of white gas has no effect on you.\n");
+                        *fPly << "The billowing cloud of white gas has no effect on you.\n";
                     }
                 } else
-                    fPly->print("The billowing cloud of white gas has no effect on you.\n");
+                    *fPly << "The billowing cloud of white gas has no effect on you.\n";
             }
         }
         break;
@@ -523,12 +522,10 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
     case TRAP_WEB:
 
         if(room->getTrap() == TRAP_MUD) {
-            print("You sink into chest high mud!\n");
-            print("You are stuck!\n");
+            *pThis << ColorOn << "^#You sink to your chest in stinking mud!\nYou are stuck!\n" << ColorOff;
             broadcast(getSock(), getRoomParent(), "%M sank chest deep into some mud!", this);
         } else if(room->getTrap() == TRAP_WEB) {
-            print("You brush against some large spider webs!\n");
-            print("You are stuck!\n");
+            *pThis << ColorOn << "^#You brush against some large spider webs!\nYou are stuck!\n" << ColorOff;
             broadcast(getSock(), getRoomParent(), "%M stuck to some large spider webs!", this);
         }
 
@@ -541,14 +538,13 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
     case TRAP_ETHEREAL_TRAVEL:
 
         if(checkDimensionalAnchor()) {
-            printColor("^yYour dimensional-anchor protects you from the ethereal-travel trap!^w\n");
+            *pThis << ColorOn << "^yYour dimensional-anchor protected you from an ethereal-travel trap!\n" << ColorOff;
         } else if(!chkSave(SPL, pThis, -25)) {
-            printColor("^BYou become tranlucent and fade away!\n");
-            printColor("You've been transported to the ethereal plane!\n");
+            *pThis << ColorOn << "^c^#You become tranlucent and fade away!\nYou've been transported to the ethereal plane!\n" << ColorOff;
             broadcast(getSock(), getRoomParent(), "^B%N becomes translucent and fades away!", this);
             etherealTravel();
         } else {
-            print("You feel a warm feeling all over.\n");
+            *pThis << ColorOn << "^cYou get a tingling warm feeling all over.\n" << ColorOff;
         }
         break;
 
@@ -569,7 +565,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
 
             trapDamage.reset();
             trapDamage.set(Random::get(target->hp.getMax()/20, target->hp.getMax()/10));
-            target->modifyDamage(nullptr, PHYSICAL, trapDamage);
+            target->modifyDamage(nullptr, PHYSICAL_DMG, trapDamage);
 
             toHit = 14 - (trapDamage.get()/10);
             if(target->isInvisible() && target->isPlayer())
@@ -578,11 +574,14 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
 
             if(roll >= toHit) {
                 broadcast(target->getSock(), room, "A living stalagtite falls upon %N from above!", target.get());
-                target->print("A living stalagtite falls on you from above!\n");
+                *target << "A living stalagtite falls on you from above!\n";
                 saved = chkSave(DEA, pThis, 0);
                 if(saved)
-                    target->print("It struck a glancing blow.\n");
-                target->printColor("You are hit for %s%d^x damage.\n", target->customColorize("*CC:DAMAGE*").c_str(), trapDamage.get());
+                    *target << "It struck a glancing blow.\n";
+
+                target->applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+                
+                *target << ColorOn << "You are hit for "<< target->customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " ^xdamage.\n" << ColorOff;
 
                 target->hp.decrease(trapDamage.get());
                 if(target->hp.getCur() < 1) {
@@ -601,7 +600,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
                 }
                 continue;
             } else {
-                target->print("A falling stalagtite almost hit you!\n");
+                *target << "A falling stalagtite almost hit you!\n";
                 broadcast(target->getSock(), room, "A falling stalagtite almost hits %N!", target.get());
                 continue;
             }
@@ -610,14 +609,17 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         break;
 
     case TRAP_FIRE:
-        print("You set off a fire trap!\n");
-        print("Flames engulf you!\n");
+        *pThis << ColorOn << "^R^#You set off a fire trap!\nFlames engulf you!\n" << ColorOff;
+        if (isEffected("immune-fire")) {
+            *pThis << "The flames do nothing to you.\n";
+            break;
+        }
         broadcast(getSock(), getRoomParent(), "%M is engulfed by flames!", this);
         trapDamage.set(Random::get(20,40));
 
         if(chkSave(BRE, pThis, 0)) {
             trapDamage.set(trapDamage.get() / 2);
-            print("You are only half hit by the explosion.\n");
+            *pThis << "You managed to partially escape the flames.\n";
         }
 
         if(isEffected("heat-protection") || isEffected("alwayswarm"))
@@ -625,7 +627,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         if(isEffected("resist-fire"))
             trapDamage.set(trapDamage.get() / 2);
 
-        printColor("You are burned for %s%d^x damage.\n", customColorize("*CC:DAMAGE*").c_str(), trapDamage.get());
+        *pThis << ColorOn << "You are burned for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " damage.\n" << ColorOff;
 
         hp.decrease(trapDamage.get());
 
@@ -634,14 +636,17 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         break;
 
     case TRAP_FROST:
-        print("You are hit by a blast of ice!\n");
-        print("Frost envelopes you!\n");
+        *pThis << ColorOn << "^C^#You are hit by a blast of ice!\nFrost envelopes you!\n" << ColorOff;
+        if (isEffected("immune-cold")) {
+            *pThis << "The frost does nothing to you.\n";
+            break;
+        }
         broadcast(getSock(), getRoomParent(), "%M is engulfed by a cloud of frost!", this);
         trapDamage.set(Random::get(20,40));
 
         if(chkSave(BRE, pThis, 0)) {
             trapDamage.set(trapDamage.get() / 2);
-            print("You are only partially frostbitten.\n");
+            *pThis << "You are only partially frostbitten.\n";
         }
 
         if(isEffected("warmth") || isEffected("alwayscold"))
@@ -649,7 +654,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         if(isEffected("resist-cold"))
             trapDamage.set(trapDamage.get() / 2);
 
-        printColor("You are frozen for %s%d^x damage.\n", customColorize("*CC:DAMAGE*").c_str(), trapDamage.get());
+        *pThis << ColorOn << "You are frozen for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " damage.\n" << ColorOff;
 
         hp.decrease(trapDamage.get());
 
@@ -658,20 +663,23 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         break;
 
     case TRAP_ELEC:
-        print("You are hit by a crackling blue bolt!\n");
-        print("Electricity pulses through your body!\n");
+        *pThis << ColorOn << "^B^#You are hit by a crackling blue bolt!\nElectricity pulses through your body!\n" << ColorOff;
+        if (isEffected("immune-electric")) {
+            *pThis << "The electrical bolt does nothing but tickle.\n";
+            break;
+        }
         broadcast(getSock(), getRoomParent(), "%M is surrounded by crackling blue arcs!", this);
         trapDamage.set(Random::get(20,40));
 
         if(chkSave(BRE, pThis, 0)) {
             trapDamage.set(trapDamage.get() / 2);
-            print("The electricity only half engulfed you.\n");
+            *pThis << "The electricity only half engulfed you.\n";
         }
 
         if(isEffected("resist-electric"))
             trapDamage.set(trapDamage.get() / 2);
 
-        printColor("You are electrocuted for %s%d^x damage.\n", customColorize("*CC:DAMAGE*").c_str(), trapDamage.get());
+        *pThis << ColorOn << "You are electrocuted for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " damage.\n" << ColorOff;
 
         hp.decrease(trapDamage.get());
 
@@ -680,100 +688,96 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         break;
 
     case TRAP_ACID:
-        print("You are blasted by a jet of acid!\n");
-        print("You are immersed in dissolving liquid.\n");
+        *pThis << ColorOn << "^g^#You are blasted by a jet of acid!\nYou are immersed in dissolving liquid.\n" << ColorOff;
+        
         broadcast(getSock(), getRoomParent(), "%M is immersed in acid!", this);
         trapDamage.set(Random::get(20,30));
 
 
         if(chkSave(DEA, pThis, 0)) {
             trapDamage.set(trapDamage.get() / 2);
-            print("The acid doesn't totally cover you.\n");
+            *pThis << "The acid only splashed you lightly.\n";
         } else {
-            print("Your skin dissolves to the bone.\n");
+            *pThis << "Your skin dissolves to the bone.\n";
             loseAcid();
         }
 
-
-        printColor("You are burned for %s%d^x damage.\n", customColorize("*CC:DAMAGE*").c_str(), trapDamage.get());
+        *pThis << ColorOn << "You are burned for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " damage.\n" << ColorOff;
 
         hp.decrease(trapDamage.get());
-
 
         if(hp.getCur() < 1)
             die(ACID);
         break;
 
     case TRAP_BLOCK:
-        print("You triggered a falling block!\n");
+        *pThis << ColorOn << "^W^#You triggered a falling block!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "A large block falls on %N.", this);
         trapDamage.set(hp.getMax() / 2);
 
         if(chkSave(DEA, pThis, -5)) {
             trapDamage.set(trapDamage.get() / 2);
-            print("The block hits you in a glancing blow\nas you quickly dive out of the way..\n");
+            *pThis << "The block hits you in a glancing blow\nas you quickly dive out of the way.\n";
         }
-        print("You lost %d hit points.\n", trapDamage.get());
+        applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+        *pThis << "You lost " << trapDamage.get() << " hit points.\n";
         hp.decrease(trapDamage.get());
         if(hp.getCur() < 1)
             die(BLOCK);
         break;
 
     case TRAP_ICE:
-        print("A giant icicle falls from above!\n");
+        *pThis << ColorOn << "^C^#A giant icicle falls from above!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "%N's vibrations caused a giant icicle to drop!", this);
         trapDamage.set(hp.getMax() / 2);
 
         if(chkSave(DEA, pThis, -5)) {
             trapDamage.set(trapDamage.get() / 2);
-            print("The icicle slashes you but doesn't impale you.\n");
+            *pThis << "The icicle slashes you but doesn't impale you.\n";
         } else {
-            print("You are impaled!\n");
+            *pThis << "You are impaled!\n";
             broadcast(getSock(), getRoomParent(), "%N is impaled by a huge icicle!", this);
         }
-        print("You lost %d hit points.\n", trapDamage.get());
+        applyMagicalArmor(trapDamage,PHYSICAL_DMG);
+        *pThis << "You lost " << trapDamage.get() << " hit points.\n";
         hp.decrease(trapDamage.get());
         if(hp.getCur() < 1)
             die(ICICLE_TRAP);
         break;
 
     case TRAP_MPDAM:
-
         if(mp.getCur() <= 0)
             break;
-
-        print("You feel an exploding force in your mind!\n");
+        *pThis << ColorOn << "^m^#You are hit by an explosive force of negative energy!\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "An energy bolt strikes %N.", this);
 
         if(chkSave(MEN, pThis,0)) {
             trapDamage.set(std::min(mp.getCur(),mp.getMax() / 2));
-            print("You lost %d magic points.\n", trapDamage.get());
+            *pThis << "You lost " << trapDamage.get() << " magic points.\n";
         } else {
             trapDamage.set(mp.getCur());
-            print("You feel the magical energy sucked from your mind.\n");
+            *pThis << "You feel the magical energy sucked away from you.\n";
         }
 
         mp.decrease(trapDamage.get());
         break;
 
     case TRAP_RMSPL:
-        print("A foul smelling charcoal cloud surrounds you.\n");
-
+        *pThis << ColorOn << "^D^#A foul smelling charcoal cloud surrounds you.\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "A charcoal cloud surrounds %N.", this);
         if(!chkSave(SPL, pThis,0)) {
             doDispelMagic();
-            print("Your magic begins to dissolve.\n");
+            *pThis << "Your magic begins to dissolve.\n";
         }
         break;
 
     case TRAP_NAKED:
-        printColor("^gYou are covered in oozing green slime.\n");
-
+        *pThis << ColorOn << "^g^#You are covered in oozing green slime.\n" << ColorOff;
         if(chkSave(DEA, pThis, 0)) {
             broadcast(getSock(), getRoomParent(), "^gA foul smelling and oozing green slime envelops %N.", this);
             stun(Random::get(1,10));
         } else {
-            print("Your possessions begin to dissolve!\n");
+            *pThis << "Your possessions begin to dissolve!\n";
             loseAll(false, "slime-trap");
             stun(Random::get(5,20));
         }
@@ -782,14 +786,13 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
     case TRAP_TPORT:
 
         if(checkDimensionalAnchor()) {
-            printColor("^yYour dimensional-anchor protects you from the teleportation trap!^w\n");
+            *pThis << ColorOn << "^yYour dimensional-anchor protected you from a teleportation trap!^w\n" << ColorOff;
         } else if(!chkSave(SPL, pThis, 0)) {
-            printColor("^yThe world changes rapidly around you!\n");
-            printColor("You've been teleported!\n");
+            *pThis << ColorOn << "^yThe world changes rapidly around you!\nYou've been teleported!\n" << ColorOff;
             broadcast(getSock(), getRoomParent(), "%N disappears!", this);
             teleportTrap();
         } else {
-            print("You feel a strange tingling all over.\n");
+            *pThis << ColorOn << "^yYou feel a warm tingling all over.\n" << ColorOff;
         }
         break;
 
@@ -798,9 +801,9 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
     case TRAP_WORD:
 
         if(checkDimensionalAnchor()) {
-            printColor("^yYour dimensional-anchor protects you from the word-of-recall trap!^w\n");
+            *pThis << ColorOn << "^yYour dimensional-anchor protected you from a word-of-recall trap!^w\n" << ColorOff;
         } else {
-            printColor("^cYou phase in and out of existence.\n");
+            *pThis << ColorOn << "^cYou phase in and out of existence.\n" << ColorOff;
             broadcast(getSock(), getRoomParent(), "%N disappears.", this);
 
             newRoom = getRecallRoom().loadRoom(pThis);
@@ -813,8 +816,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         }
 
     case TRAP_ALARM:
-        print("You set off an alarm!\n");
-        print("You hope there aren't any guards around.\n\n");
+        *pThis << ColorOn << "^W^#You set off an alarm!\n\n" << ColorOff;
         broadcast(getSock(), getRoomParent(), "%M sets off an alarm!\n", this);
 
         CatRef  acr;

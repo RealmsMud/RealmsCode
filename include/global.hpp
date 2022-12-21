@@ -224,7 +224,6 @@ enum Languages {
     LANGUAGE_COUNT = 25
 };
 
-
 // positions in the color array
 enum CustomColor {
     CUSTOM_COLOR_BROADCAST      = 0,
@@ -469,8 +468,12 @@ enum DeathType {
     PIERCER,
     ELVEN_ARCHERS,
     DEADLY_MOSS,
-    THORNS
+    THORNS,
+    GOOD_DAMAGE,
+    EVIL_DAMAGE,
+    FLYING_BOULDER
 };
+
 
 
 // Weather

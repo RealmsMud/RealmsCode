@@ -187,9 +187,10 @@ void Player::checkEffectsWearingOff() {
     if( t > LT(this, LT_MOB_JAILED) && inUniqueRoom() && getUniqueRoomParent()->flagIsSet(R_MOB_JAIL) && !staff) {
         printColor("A jailer just arrived.\n");
         printColor("The jailer says, \"You're free to go...get out!\"\n");
-        printColor("The jailer opens the cell door and shoves you out.\n");
-        printColor("The jailer goes back to napping.\n");
-
+        printColor("The jailer casts word-of-recall on you.\n");
+        broadcast(getSock(), getRoomParent(), "The jailer says to %s, \"You're free to go. Get out!\"", getCName());
+        broadcast(getSock(), getRoomParent(), "The jailer casts word-of-recall on %s.", getCName());
+        broadcast(getSock(), getRoomParent(), "The jailer eyes you suspiciously and leaves.");
         doRecall();
     }
 }

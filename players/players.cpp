@@ -185,6 +185,23 @@ void Player::pulseTick(long t) {
     // ****** Bad Tick ******
     // Poison and room harms and such
     if(badTick < t) {
+
+        // Chance to trash benediction or malediction effect if alignment stays too far evil/good
+        if( ((isEffected("benediction") && (getAlignment() <= -750)) ||
+            (isEffected("malediction") && (getAlignment() >= 750)))) {
+            int rollcheck = Random::get(1,100);
+            if (isCt() || flagIsSet(P_PTESTER)) 
+                *this << "Extreme alignment ("<< getAlignment() << ") drop " << (isEffected("benediction")?"benediction":"malediction") << " check for 40 or less on 1d100.\nRoll: " << rollcheck << "\n";
+            *this << ColorOn << (isEffected("benediction")?"^R":"^B"); 
+            if (rollcheck > 40) {  
+                *this << "Your " << (isEffected("benediction")?"corrupt and wicked":"righteousness and pure") << " actions are now quite extreme.\nThe gods are considering removing your " << (isEffected("benediction")?"benediction":"malediction") << ".\n";
+            }
+            else {
+                *this << "The extremely " << (isEffected("benediction")?"vile corruption":"angelic purity") << " of your soul has caused the gods to remove your " << (isEffected("benediction")?"benediction":"malediction") << ".\n" << ColorOff;
+                removeEffect((isEffected("benediction")?"benediction":"malediction"));
+            }
+        }
+
         // Handle DoT effects
         // a hardcore death will invalidate us
         if(doDoTs() && hardcore) {
@@ -197,6 +214,8 @@ void Player::pulseTick(long t) {
             //zero(this, sizeof(this));
             return;
         }
+
+        
 
         // Set bad tick timer here
         lasttime[LT_TICK_HARMFUL].ltime = t;
@@ -227,6 +246,7 @@ void Player::pulseTick(long t) {
         removeEffect("wounded");
         removeEffect("regeneration");
     }
+    
 }
 
 //*********************************************************************

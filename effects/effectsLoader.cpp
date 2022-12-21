@@ -1041,6 +1041,36 @@ bool Config::loadEffects() {
     );
     addToSet(
       EffectBuilder()
+        .name("benediction")
+        .addBaseEffect("benediction")
+        .display("^BBenediction^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^BYour soul is fortified with the protective power of good.^x")
+        .roomAddStr("^B*ACTOR* glows brightly with the protective power of good.^x")
+        .selfDelStr("^DYour soul is no longer fortified with the protective power of good.^x")
+        .roomDelStr("^D*ACTOR* no longer glows with the protective power of good.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("malediction")
+        .addBaseEffect("malediction")
+        .display("^RMalediction^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^RYour soul is fortified with the spiteful power of evil.^x")
+        .roomAddStr("^R*ACTOR* glows darkly with the spiteful power of evil.^x")
+        .selfDelStr("^DYour soul is no longer fortified with the spiteful power of evil.^x")
+        .roomDelStr("^D*ACTOR* no longer glows with the spiteful power of evil.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
         .name("reflect-magic")
         .addBaseEffect("reflect-magic")
         .display("^MReflect-Magic^x")
@@ -1292,10 +1322,10 @@ bool Config::loadEffects() {
         .display("^GStoneskin^x")
         .pulsed(false)
         .type("Positive")
-        .selfAddStr("^BYour skin hardens.^x")
-        .roomAddStr("^B*ACTOR*'s skin hardens.^x")
-        .selfDelStr("^BYour stoneskin dissipates.^x")
-        .roomDelStr("^B*ACTOR*'s stoneskin dissipates.^x")
+        .selfAddStr("^yYour skin hardens.^x")
+        .roomAddStr("^y*ACTOR*'s skin hardens.^x")
+        .selfDelStr("^yYour stoneskin dissipates.^x")
+        .roomDelStr("^y*ACTOR*'s stoneskin dissipates.^x")
         .isSpellEffect(true)
         .useStrength(true),
       effects

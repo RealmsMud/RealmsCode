@@ -1368,6 +1368,11 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         // in armor absorb, and the removal of multiplier for attackPower
         stabMod *= 2.0;
 
+        if (target->isPlayer() && target->isEffected("stoneskin")) {
+            stabMod /= 3.0;
+            *player << ColorOn << "^y" << setf(CAP) << target << "'s stoneskin spell reduced your backstab's effectiveness!\n" << ColorOff;
+            *target << ColorOn << "^yYour stoneskin spell reduced the effectiveness of " << player << "'s backstab.\n" << ColorOff;
+        }
 
         // Return of 1 means the weapon was shattered or otherwise rendered unsuable
         int drain = 0;

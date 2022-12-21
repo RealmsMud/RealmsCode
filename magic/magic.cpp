@@ -34,6 +34,7 @@
 #include "magic.hpp"                 // for splOffensive, EVOCATION, DESTRUC...
 #include "mudObjects/creatures.hpp"  // for Creature
 #include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/rooms.hpp"      // for BaseRoom, NUM_PER...
 #include "paths.hpp"                 // for BuilderHelp, DMHelp, Code, Help
 #include "proto.hpp"                 // for zero, getSpellMp, get_spell_list...
 #include "stats.hpp"                 // for Stat
@@ -222,6 +223,8 @@ struct {
     { "regeneration",       S_REGENERATION,         splRegeneration,            40,         SCHOOL_CANNOT_CAST, HEALING     },
     { "well-of-magic",      S_WELLOFMAGIC,          splWellOfMagic,             40,         TRANSMUTATION,      HEALING     },
     { "non-detection",      S_NONDETECTION,         splNondetection,            30,         ABJURATION,         PROTECTION  },
+    { "benediction",        S_BENEDICTION,          splBenediction,             20,         SCHOOL_CANNOT_CAST, PROTECTION        },
+    { "malediction",        S_MALEDICTION,          splMalediction,             20,         SCHOOL_CANNOT_CAST, PROTECTION        },
     { "@",                  -1,                     nullptr,                          0,          NO_SCHOOL,          NO_DOMAIN   }
 };
 int spllist_size = sizeof(spllist)/sizeof(*spllist);
@@ -573,6 +576,70 @@ bool checkRefusingMagic(const std::shared_ptr<Creature>& player, const std::shar
             player->print("%M is refusing your magical services.\n", target.get());
         return(true);
     }
+    return(false);
+}
+
+//*********************************************************************
+//                      replaceCancelingEffects
+//*********************************************************************
+// This function will check if one effect will cancel out the other, and
+// if so, will replace it with its opposite with the same duration and strength.
+
+bool replaceCancelingEffects(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, const std::string &effect) {
+
+    bool self = (player == target);
+    
+    // benediction vs malediction
+    if ((effect == "benediction" && target->isEffected("malediction")) ||
+        (effect == "malediction" && target->isEffected("benediction"))) {
+
+        EffectInfo* alignEffect=nullptr;
+        if (effect == "benediction")
+            alignEffect = target->getEffect("malediction");
+        else
+            alignEffect = target->getEffect("benediction");
+        
+        int duration = alignEffect->getDuration();
+        int strength = alignEffect->getStrength();
+
+        if(self) {
+            *player << "Your " << ((effect == "benediction") ? "malediction":"benediction") << " was canceled by your " << ((effect == "benediction") ? "benediction":"malediction") << " spell.\n";
+            broadcast(player->getSock(), player->getRoomParent(), "%M's %s spell has replaced %s %s.", player.get(), ((effect == "benediction") ? "malediction":"benediction"), player->hisHer(), ((effect == "benediction") ? "benediction":"malediction"));
+
+            player->removeEffect(((effect == "benediction") ? "malediction":"benediction"));
+            //If under one, it is replaced by the other with the existing same duration and strength
+            player->addEffect(((effect == "benediction") ? "benediction":"malediction"),duration,strength,player,true);
+            return(true);
+            }
+        else 
+        {
+            // Can't allow people to remove somebody's room damage protection in the middle of fighting...That's just not nice....
+            if (target->inCombat(true) && player->getRoomParent()->flagIsSet(((effect == "benediction") ? R_EVIL_DAMAGE:R_GOOD_DAMAGE))) {
+                *player << setf(CAP) << target << "'s erratic movements while fighting caused your spell to not take hold.\n";
+                return(true);   
+            }
+            // Will use level difference check for now. Will change when put in more effect strength functionality for all the generic spells
+            if (player->getLevel() < target->getLevel() && !player->isCt()) {
+                *player << ColorOn << "^yYou must at least the same level as " << target << " to replace " << target->hisHer() << " " << ((effect == "benediction") ? "malediction":"benediction") << ".\nYour spell did not take hold.\n" << ColorOff;
+                *target << setf(CAP) << player << "'s spell did not do anything to you.\n";
+                broadcast(player->getSock(), target->getSock(), player->getRoomParent(), "%M's spell did not do anything to %N.", player.get(), target.get());
+                return(true);
+            }
+
+            *player << "Your " << ((effect == "benediction") ? "benediction":"malediction") << " spell has replaced " << target << "'s " << ((effect == "benediction") ? "malediction":"benediction") << ".\n";
+            *target << setf(CAP) << player << "'s " << ((effect == "benediction") ? "benediction":"malediction") << " spell has replaced your " << ((effect == "benediction") ? "malediction":"benediction") << ".\n";
+            broadcast(player->getSock(), target->getSock(), player->getRoomParent(), "%M's %s spell has replaced %N's %s effect.",player.get(), 
+                                                ((effect == "benediction") ? "benediction":"malediction"), target.get(), ((effect == "benediction") ? "malediction":"benediction"));
+            target->removeEffect(((effect == "benediction") ? "malediction":"benediction"));
+            //If under one, it is replaced by the other with the existing same duration and strength
+            target->addEffect(((effect == "benediction") ? "benediction":"malediction"),duration,strength,player,true);
+            return(true);  
+        }
+
+    }
+
+    //TODO: Add other canceling effects that replace here if necessary
+
     return(false);
 }
 

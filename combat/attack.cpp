@@ -937,7 +937,6 @@ int Creature::castWeapon(const std::shared_ptr<Creature>& target, std::shared_pt
 void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType, Damage& attackDamage, Realm pRealm, const std::shared_ptr<Object>&  weapon, short saveBonus, short offguard, bool computingBonus) {
     std::shared_ptr<Player> player = getAsPlayer();
     const EffectInfo *effect = nullptr;
-    int     vHp = 0;
     dmgType = std::max(0, dmgType);
 
 // TODO: Dom: drain hp (dk)
@@ -1029,7 +1028,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         attackDamage.set(doResistMagic(attackDamage.get(), enemy));
     }
 
-    if(dmgType == PHYSICAL) {
+    if(dmgType == PHYSICAL_DMG) {
         //
         // Spells to damage attacker on physical attacks. The original damage is not changed.
         // Don't run when computing bonus damage
@@ -1129,52 +1128,13 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         if(immunePet)
             attackDamage.set(1);
     }
-
-    // armor spell
-    if(dmgType != MENTAL && isEffected("armor")) {
-        EffectInfo* armorEffect = getEffect("armor");
-        vHp = armorEffect->getStrength();
-
-      //  if(vHp <= 0 || attackDamage.get() <= 0)
-      //    vHp=0; //shouldn't happen, but check anyway.
-
-        vHp = std::max(0,vHp);
-
-        vHp -= (int)attackDamage.get();
-
-        if(vHp <= 0) {
-            removeEffect("armor");
-            if(player) {
-                printColor("^y^#Your magical armor has been dispelled.\n");
-                player->computeAC();
-            }
-            broadcast(getSock(), getRoomParent(), "%M's magical armor has been dispelled.", this);
-        } else {
-           // if ((int)attackDamage.get() > 0)    
-           //     printColor("^BYour magical armor has ^C%d^B strength remaining.\n", vHp);
-            armorEffect->setStrength(vHp);
-        }
-    }
-
-    // stoneskin spell
-    if(dmgType == PHYSICAL && isEffected("stoneskin")) {
-        EffectInfo* stoneskinEffect = getEffect("stoneskin");
-        vHp = stoneskinEffect->getStrength();
-
-        if(vHp <= 0 || attackDamage.get() <= 0)
-            vHp = 0; //shouldn't happen, but check anyway.
-
-        vHp--;
-        if(vHp <= 0) {
-            removeEffect("stoneskin");
-            printColor("^g^#Your stoneskinEffect has been dispelled.\n");
-            broadcast(getSock(), getRoomParent(), "%M's stoneskinEffect has been depleted.", this);
-        } else {
-            stoneskinEffect->setStrength(vHp);
-        }
-        // Stoneskin absorbs 50% damage.
-        attackDamage.set(attackDamage.get() / 2);
-    }
+    //Check for magical armor spell effects and update them...stoneskin, armor, etc..
+    //Updates damage too if necessary...
+    //Weird logic is in order to stop this from being called twice due to computing 
+    //bonus damage. Mob's don't pass computeBonus in their computeDamage() function
+    //call, whereas players do.
+    if (((player && computingBonus)) || ((enemy && enemy->isMonster())))  
+        applyMagicalArmor(attackDamage,dmgType);
 
     attackDamage.set(std::max<int>(0, attackDamage.get()));
 

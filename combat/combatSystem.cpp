@@ -1102,6 +1102,68 @@ bool Creature::canHit(const std::shared_ptr<Creature>& victim, std::shared_ptr<O
     return(true);
 }
 
+//*********************************************************************
+//                      applyMagicalArmor
+//*********************************************************************
+// This function will check for any magical armor effects and modify the
+// damage if warranted. 
+
+void Creature::applyMagicalArmor(Damage& dmg, int dmgType) {
+    int vHp=0;
+    EffectInfo* checkEffect=nullptr;
+
+    //No magical armor effects checked for monsters...yet
+    if (!isPlayer())
+        return;
+
+    if (dmg.get() <= 0)
+        return;
+
+    if (dmgType == DMG_NONE)
+        return;
+
+    if (isEffected("stoneskin") && dmgType == PHYSICAL_DMG) {
+        checkEffect = getEffect("stoneskin");
+        vHp = checkEffect->getStrength();
+        vHp = std::max(0,vHp);
+        vHp--;
+        if (vHp <= 0) {
+            *this << ColorOn << "^y^#Your stoneskin spell has been depleted.\n" << ColorOff;
+            broadcast(getSock(), getRoomParent(), "%M's stoneskin spell has been depleted.", this);
+            removeEffect("stoneskin");
+        }
+        else
+        {
+            checkEffect->setStrength(vHp);
+            dmg.set(dmg.get()/2); // stoneskin halves physical damage
+            return; // stoneskin will keep any follow on magical armor checks from happening, protecting those effects
+        }
+    }
+
+    if (isEffected("armor") && dmgType == PHYSICAL_DMG) {
+        checkEffect = getEffect("armor");       
+        vHp = checkEffect->getStrength();
+        vHp = std::max(0,vHp);
+
+        vHp -= dmg.get();
+
+        if (vHp <= 0) {
+            *this << ColorOn << "^y^#Your armor spell has been depleted.\n" << ColorOff;
+            broadcast(getSock(), getRoomParent(), "%M's armor spell has been depleted.", this);
+            removeEffect("armor");
+            getAsPlayer()->computeAC();        
+        }
+        else {
+            checkEffect->setStrength(vHp);
+        }
+    }
+
+    return;
+
+    //TODO: Put entries here for any future magical armor effects
+
+}
+
 //********************************************************************************
 //                      computeDamage
 //********************************************************************************
@@ -1308,6 +1370,8 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
 
     victim->modifyDamage(Containable::downcasted_shared_from_this<Player>(), PHYSICAL, attackDamage, NO_REALM, weapon, 0, computeBonus ? OFFGUARD_NOREMOVE : OFFGUARD_REMOVE);
 
+    
+
     // Don't forget to modify the bonus
     if(computeBonus) {
         // Make bonus proportional to weapon speed, otherwise it's too much with fast weapons, and
@@ -1318,10 +1382,16 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         attackDamage.setBonus(bonusDamage);
     }
 
+    
+
     if(retVal != 1) {
         // If we didn't shatter, minimum of 1 damage
         attackDamage.set(std::max<int>(attackDamage.get(), 1));
+
     }
+    
+    
+    
 
     return(retVal);
 }
@@ -1360,6 +1430,8 @@ int Monster::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obj
     victim->modifyDamage(Containable::downcasted_shared_from_this<Monster>(), PHYSICAL, attackDamage);
     victim->modifyDamage(Containable::downcasted_shared_from_this<Monster>(), PHYSICAL, bonusDamage);
     attackDamage.setBonus(bonusDamage);
+
+    
 
     attackDamage.set(std::max<int>(1, attackDamage.get()));
     return(0);

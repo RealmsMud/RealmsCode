@@ -862,7 +862,7 @@ std::string Effects::getEffectsString(const std::shared_ptr<Creature> & viewer) 
         else
             effStr << timeStr(effectInfo->duration);
 
-        if( !viewer->isStaff() && effectInfo->getName() == "armor") 
+        if( !viewer->isStaff() && (effectInfo->getName() == "armor" || effectInfo->getName() == "stoneskin")) 
             effStr << "  ^WStrength:^x " << effectInfo->getStrength();
     
 
