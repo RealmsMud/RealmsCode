@@ -627,7 +627,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         if(isEffected("resist-fire"))
             trapDamage.set(trapDamage.get() / 2);
 
-        *pThis << ColorOn << "You are burned for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " damage.\n" << ColorOff;
+        *pThis << ColorOn << "You are burned for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " ^xdamage.\n" << ColorOff;
 
         hp.decrease(trapDamage.get());
 
@@ -654,7 +654,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         if(isEffected("resist-cold"))
             trapDamage.set(trapDamage.get() / 2);
 
-        *pThis << ColorOn << "You are frozen for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " damage.\n" << ColorOff;
+        *pThis << ColorOn << "You are frozen for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " ^xdamage.\n" << ColorOff;
 
         hp.decrease(trapDamage.get());
 
@@ -679,7 +679,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         if(isEffected("resist-electric"))
             trapDamage.set(trapDamage.get() / 2);
 
-        *pThis << ColorOn << "You are electrocuted for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " damage.\n" << ColorOff;
+        *pThis << ColorOn << "You are electrocuted for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " ^xdamage.\n" << ColorOff;
 
         hp.decrease(trapDamage.get());
 
@@ -702,7 +702,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
             loseAcid();
         }
 
-        *pThis << ColorOn << "You are burned for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " damage.\n" << ColorOff;
+        *pThis << ColorOn << "You are burned for " << customColorize("*CC:DAMAGE*").c_str() << trapDamage.get() << " ^xdamage.\n" << ColorOff;
 
         hp.decrease(trapDamage.get());
 
