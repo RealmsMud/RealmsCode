@@ -1048,9 +1048,9 @@ bool Config::loadEffects() {
         .pulsed(false)
         .type("Positive")
         .selfAddStr("^BYour soul is fortified with the protective power of good.^x")
-        .roomAddStr("^B*ACTOR* glows brightly with the protective power of good.^x")
+        .roomAddStr("^B*ACTOR* glows brightly from the protective power of good.^x")
         .selfDelStr("^DYour soul is no longer fortified with the protective power of good.^x")
-        .roomDelStr("^D*ACTOR* no longer glows with the protective power of good.^x")
+        .roomDelStr("^D*ACTOR* no longer glows from the protective power of good.^x")
         .isSpellEffect(true),
       effects
     );
@@ -1063,9 +1063,9 @@ bool Config::loadEffects() {
         .pulsed(false)
         .type("Positive")
         .selfAddStr("^RYour soul is fortified with the spiteful power of evil.^x")
-        .roomAddStr("^R*ACTOR* glows darkly with the spiteful power of evil.^x")
+        .roomAddStr("^R*ACTOR* glows darkly from the spiteful power of evil.^x")
         .selfDelStr("^DYour soul is no longer fortified with the spiteful power of evil.^x")
-        .roomDelStr("^D*ACTOR* no longer glows with the spiteful power of evil.^x")
+        .roomDelStr("^D*ACTOR* no longer glows from the spiteful power of evil.^x")
         .isSpellEffect(true),
       effects
     );

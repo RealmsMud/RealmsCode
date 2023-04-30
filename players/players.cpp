@@ -197,7 +197,7 @@ void Player::pulseTick(long t) {
                 *this << "Your " << (isEffected("benediction")?"corrupt and wicked":"righteousness and pure") << " actions are now quite extreme.\nThe gods are considering removing your " << (isEffected("benediction")?"benediction":"malediction") << ".\n";
             }
             else {
-                *this << "The extremely " << (isEffected("benediction")?"vile corruption":"angelic purity") << " of your soul has caused the gods to remove your " << (isEffected("benediction")?"benediction":"malediction") << ".\n" << ColorOff;
+                *this << "The extreme " << (isEffected("benediction")?"vile corruption":"angelic purity") << " of your soul has caused the gods to remove your " << (isEffected("benediction")?"benediction":"malediction") << ".\n" << ColorOff;
                 removeEffect((isEffected("benediction")?"benediction":"malediction"));
             }
         }

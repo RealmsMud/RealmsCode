@@ -485,7 +485,7 @@ int cmdRoominfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
         count++;
         oStr << "^wOpposing Realm Bonus^x: Opposing magic realm of the room gains magical enhancement.\n";
     }
-    if (player->getRoomParent()->flagIsSet(R_PAWN_SHOP)) {
+    if (player->getRoomParent()->flagIsSet(R_PAWN_SHOP) || player->getRoomParent()->flagIsSet(R_SHOP)) {
         count++;
         oStr << "^wPawn Shop^x: This room is a pawn shop.\n";
     }
