@@ -262,9 +262,11 @@ std::string realmSkill(Realm realm);
 #define S_REGENERATION          163 // regeneration spell
 #define S_WELLOFMAGIC           164 // well-of-magic spell
 #define S_NONDETECTION          165 // non-detection spell
+#define S_BENEDICTION           166 // benediction spell
+#define S_MALEDICTION           167 // malediction spell
 
 
-#define MAXSPELL                166 // Increment when you add a spell
+#define MAXSPELL                168 // Increment when you add a spell
 
 
 #define SpellFn const std::shared_ptr<Creature>&, cmd*, SpellData*
@@ -326,6 +328,8 @@ int splFortune(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
 int splFreeAction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splGlobeOfSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splGreaterInvisibility(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splBenediction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splMalediction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splHallow(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splHarm(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splHaste(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
@@ -418,6 +422,7 @@ bool decEnchant(const std::shared_ptr<Player>& player, CastType how);
 int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength=-2, long duration=-2);
 
 bool checkRefusingMagic(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, bool healing=false, bool print=true);
+bool replaceCancelingEffects(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, const std::string &effect);
 int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 #endif /*MAGIC_H_*/

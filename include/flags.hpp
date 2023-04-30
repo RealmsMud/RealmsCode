@@ -129,7 +129,11 @@
 #define R_LIMBO                     99      // room is a Limbo room
 #define R_NO_SPRING_TRAP_ON_ENTER   100     // Do not spring trap when player enters the room
 #define R_NO_CHECK_TRAFFIC          101     // Player cannot check for traffic in this room
-#define MAX_ROOM_FLAGS              102     // Incriment when you add a room flag
+#define R_NO_ROOMINFO               102     // Roominfo command unavailable in this room
+#define R_GOOD_DAMAGE               103     // Evil players receive good damage in this room
+#define R_EVIL_DAMAGE               104     // Good players receive evil damage in this room
+#define R_BOULDERS                  105     // Deadly flying boulders - thrown by giants or otherwise
+#define MAX_ROOM_FLAGS              106     // Incriment when you add a room flag
 // Player flags
 // free                             0
 #define P_HIDDEN                    1        // Hidden

@@ -1632,6 +1632,7 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         if(check) return(true);
         player->hp.restore();
         player->mp.restore();
+        player->removeEffect("death-sickness");
         break;
     case S_HEAL:
         if(check) return(true);
@@ -1787,7 +1788,7 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         if(check) return(true);
         if(player->isEffected("haste") || player->isEffected("frenzy"))
             break;
-        player->addEffect("haste", 180, 30);
+        player->addEffect("haste", 180, MAXALVL);
         break;
     case S_SLOW:
         if(check) return(true);
@@ -1797,12 +1798,12 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         }
         if(player->isEffected("slow"))
             break;
-        player->addEffect("slow", 60, 30);
+        player->addEffect("slow", 60, MAXALVL);
         break;
     case S_STRENGTH:
         if(player->isEffected("strength") || player->isEffected("berserk") || (player->isEffected("dkpray")))
             break;
-        player->addEffect("strength", 180, 30);
+        player->addEffect("strength", 180, MAXALVL);
         break;
     case S_ENFEEBLEMENT:
         if(check) return(true);
@@ -1816,7 +1817,7 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         }
         if(player->isEffected("enfeeblement"))
             break;
-        player->addEffect("enfeeblement", 180, 30);
+        player->addEffect("enfeeblement", 180, MAXALVL);
         break;
     case S_INSIGHT:
         if(check) return(true);
@@ -1826,19 +1827,19 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         }
         if(player->isEffected("insight"))
             break;
-        player->addEffect("insight", 60, 30);
+        player->addEffect("insight", 60, MAXALVL);
         break;
     case S_FEEBLEMIND:
         if(check) return(true);
         if(player->isEffected("feeblemind"))
             break;
-        player->addEffect("feeblemind", 60, 30);
+        player->addEffect("feeblemind", 60, MAXALVL);
         break;
     case S_PRAYER:
         if(check) return(true);
         if(player->isEffected("prayer") || player->isEffected("pray"))
             break;
-        player->addEffect("prayer", 180, 30);
+        player->addEffect("prayer", 180, MAXALVL);
         break;
     case S_DAMNATION:
         if(check) return(true);
@@ -1848,7 +1849,7 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         }
         if(player->isEffected("damnation"))
             break;
-        player->addEffect("damnation", 60, 30);
+        player->addEffect("damnation", 60, MAXALVL);
         break;
     case S_FORTITUDE:
         if(check) return(true);
@@ -1856,7 +1857,7 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
             break;
         if(player->isEffected("fortitude") || player->isEffected("berserk"))
             break;
-        player->addEffect("fortitude", 180, 30);
+        player->addEffect("fortitude", 180, MAXALVL);
         break;
     case S_WEAKNESS:
         if(check) return(true);
@@ -1868,7 +1869,7 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         }
         if(player->isEffected("weakness"))
             break;
-        player->addEffect("weakness", 60, 30);
+        player->addEffect("weakness", 60, MAXALVL);
         break;
 
     case S_CURE_POISON:
@@ -1889,11 +1890,15 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         break;
     case S_REGENERATION:
         if(check) return(true);
-        player->addEffect("regeneration", 3000, 40);
+        player->addEffect("regeneration", 3000, MAXALVL);
         break;
     case S_WELLOFMAGIC:
         if(check) return(true);
-        player->addEffect("well-of-magic", 3000, 40);
+        player->addEffect("well-of-magic", 3000, MAXALVL);
+        break;
+    case S_NONDETECTION:
+        if(check) return(true);
+        player->addEffect("non-detection", 1800, MAXALVL);
         break;
     default:
         return(false);

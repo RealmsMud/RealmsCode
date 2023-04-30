@@ -240,6 +240,20 @@ void Player::init() {
     if((cClass == CreatureClass::RANGER || cClass == CreatureClass::DRUID) && level >= 10)
         learnSpell(S_TRACK);
 
+    // Druids and Clerics of Ares can cast both benediction and malediction. They get them both at level 7
+    if ((cClass == CreatureClass::DRUID || (cClass == CreatureClass::CLERIC && getDeity() == ARES)) && level >=7) {
+        learnSpell(S_BENEDICTION);
+        learnSpell(S_MALEDICTION);
+    }
+    // Paladins receive benediction spell at level 13. Clerics of good-aligned gods get it at level 7
+    if ((cClass == CreatureClass::PALADIN && level >= 13) || ((cClass == CreatureClass::CLERIC && getDeityAlignment() >= LIGHTBLUE) && level >=7)) {
+        learnSpell(S_BENEDICTION);
+    }
+    // Dknights receive malediction spell at level 13. Clerics of evil-aligned gods get it at level 7
+    if ((cClass == CreatureClass::DEATHKNIGHT && level >= 13) || ((cClass == CreatureClass::CLERIC && getDeityAlignment() <= PINKISH) && level >=7)) {
+        learnSpell(S_MALEDICTION);
+    }
+
     //  Werewolves get auto Detect-Invisibility at level 7
     if(isEffected("lycanthropy") && level >= 7)
         addPermEffect("detect-invisible");
@@ -867,6 +881,8 @@ int Player::getLight() const {
         return (i + 1);
     return(0);
 }
+
+
 
 //*********************************************************************
 //                      computeLuck

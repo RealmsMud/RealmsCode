@@ -70,6 +70,7 @@ int splStaticField(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
 }
 
 
+
 //*********************************************************************
 //                      splProtection
 //*********************************************************************

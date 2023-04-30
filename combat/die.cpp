@@ -1895,10 +1895,26 @@ void Player::die(DeathType dt) {
         sprintf(deathStr, "### Sadly, %s was shot to death by elven archers.", getCName());
         death = "elven archers";
         break;
+    case GOOD_DAMAGE:
+        logn("log.death", "%s's evil soul was smitten down by good.\n", getCName());
+        sprintf(deathStr, "### Sadly, %s died. %s corrupted soul was destroyed by good.", getCName(), upHisHer());
+        death = "an extreme aura of good";
+        break;
+    case EVIL_DAMAGE:
+        logn("log.death", "%s's pure soul was destroyed by evil.\n", getCName());
+        sprintf(deathStr, "### Sadly, %s died. %s pure soul was destroyed by evil.", getCName(), upHisHer());
+        death = "an extreme aura of evil";
+        break;
     case DEADLY_MOSS:
         logn("log.death", "%s was choked to death by deadly underdark moss.\n", getCName());
         sprintf(deathStr, "### Sadly, %s was choked to death by deadly underdark moss.", getCName());
         death = "deadly underdark moss";
+        break;
+    case FLYING_BOULDER:
+        logn("log.death", "%s was crushed to death by a flying boulder.\n", getCName());
+        sprintf(deathStr, "### Sadly, %s was crushed to death by a flying boulder.", getCName());
+        death = "a flying boulder";
+        break;
     case PIERCER:
         sprintf(deathStr, "### Sadly, %s was impaled to death by a piercer.", getCName());
         logn("log.death", "%s was killed by a piercer.\n", getCName());

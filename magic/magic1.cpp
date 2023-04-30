@@ -33,6 +33,7 @@
 #include "config.hpp"                // for Config, gConfig
 #include "craft.hpp"                 // for Recipe
 #include "delayedAction.hpp"         // for DelayedAction, ActionStudy
+#include "deityData.hpp"             // for DeityData
 #include "dice.hpp"                  // for Dice
 #include "flags.hpp"                 // for O_CAN_USE_FROM_FLOOR, O_EATABLE
 #include "global.hpp"                // for CreatureClass, CastType, CAST_RE...
@@ -131,8 +132,8 @@ int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
        
         effect = toDispel->getEffect();
-        if(!effect->isSpell() || effect->getType() != "Positive") {
-            *player << "Only positive/beneficial spell effects may be dispelled.\n";
+        if(effect->getType() != "Positive") {
+            *player << "Only positive/beneficial effects may be dispelled.\n";
             return(0);
         }
 
@@ -1632,6 +1633,10 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
             player->print("You cast %s %s spell.\n", article, spell);
             broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player.get(), article, spell);
         }
+
+        if (replaceCancelingEffects(player,target,effect))
+            return(0);
+
     } else {
         if(player->noPotion( spellData))
             return(0);
@@ -1652,6 +1657,32 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         if(checkRefusingMagic(player, target))
             return(0);
 
+
+        if (((effect == "benediction" && (target->isPlayer()?target->getAdjustedAlignment():target->getAsMonster()->getAdjustedAlignment()) < NEUTRAL) || 
+            (effect == "malediction" && (target->isPlayer()?target->getAdjustedAlignment():target->getAsMonster()->getAdjustedAlignment()) > NEUTRAL)) && !player->isCt()) {
+            *player << setf(CAP) << target << " must be of " << ((effect=="benediction")?"good":"evil") << " or neutral alignment in order to receive that spell.\n"; 
+            return(0);
+            
+        }
+        if ( !player->isCt() && ((effect == "benediction" && target->getDeityAlignment() <= PINKISH) ||
+              (effect == "malediction" && target->getDeityAlignment() >= LIGHTBLUE)) && target->getClass() != CreatureClass::NONE) {
+            *player << gConfig->getDeity(target->getDeity())->getName().c_str() << " blocked your casting of " << ((effect=="benediction")?"benediction":"malediction") << " on " << target << ".\nThe spell fizzled.\n";
+            if(target->isMonster() && target->getDeityAlignment() == BLOODRED) {
+                *player << "Your cast attempt made " << target << " extremely angry.\n";
+                target->getAsMonster()->addEnemy(player,true);
+            }
+            return(0);
+        }
+        if (!player->isCt() && effect == "benediction" && target->getClass() == CreatureClass::LICH) {
+            *player << ColorOn << "^R" << setf(CAP) << "'s corrupt soul rejects your benediction spell." << ColorOff;
+            if(target->isMonster()) {
+                *player << "Your cast attempt made " << target << " extremely angry.\n";
+                target->getAsMonster()->addEnemy(player,true);
+            }
+            return(0);
+        }
+
+
         if((effect == "drain-shield" || effect == "undead-ward") && target->isUndead()) {
             player->print("The spell fizzles.\n%M naturally resisted your spell.\n", target.get());
             return(0);
@@ -1660,6 +1691,8 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s %s spell on %N.", player.get(), article, spell, target.get());
         target->print("%M casts %s on you.\n", player.get(), spell);
         player->print("You cast %s %s spell on %N.\n", article, spell, target.get());
+
+       
     }
 
     if(target->inCombat(false))
@@ -1677,6 +1710,8 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
     if((effect == "drain-shield" || effect == "undead-ward") && target->isEffected("porphyria"))
         target->removeEffect("porphyria");
 
+     if (replaceCancelingEffects(player,target,effect))
+            return(0);
 
 
     if(spellData->how == CastType::CAST) {

@@ -1169,6 +1169,7 @@ int splRestore(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         logCast(player, target, "restore");
     }
     player->doHeal(target, dice(2, 10, 0));
+    player->removeEffect("death-sickness");
 
     if(Random::get<bool>(.34))
         target->mp.restore();

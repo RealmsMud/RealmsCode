@@ -588,6 +588,7 @@ public:
     int getSecondClassInt() const;
     unsigned short getLevel() const; // *
     short getAlignment() const; // *
+    int getDeityAlignment() const;
     int getArmor() const; // *
     unsigned long getExperience() const; // *
 
@@ -709,6 +710,7 @@ public:
     Location getLimboRoom() const;
     Location getRecallRoom() const;
     int deleteFromRoom(bool delPortal=true);
+    void applyMagicalArmor(Damage& dmg, int dmgType);
 protected:
     virtual int doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) = 0;
 public:

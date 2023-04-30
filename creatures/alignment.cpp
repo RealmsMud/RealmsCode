@@ -91,6 +91,37 @@ int Player::getAdjustedAlignment() const {
     return(NEUTRAL);
 }
 
+int Creature::getDeityAlignment() const {
+    if (!deity)
+        return(0);
+
+    switch(deity) {
+    case ENOCH:
+    case GRADIUS:
+    case CERIS:
+        return(ROYALBLUE);
+    break;
+    case LINOTHAN:
+    case MARA:
+        return(BLUISH);
+    break;
+    case KAMIRA:
+        return(LIGHTBLUE);
+    break;
+    case ARACHNUS:
+    case ARAMON:
+        return(BLOODRED);
+    break;
+    case ARES:
+    case JAKAR:
+        return(NEUTRAL);
+    break;
+    default:
+    break; 
+    }
+    return(NEUTRAL);
+}
+
 //***********************************************************************
 //                      alignColor
 //***********************************************************************
