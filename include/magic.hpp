@@ -203,10 +203,10 @@ std::string realmSkill(Realm realm);
 #define S_FREE_ACTION           107 // free-action spell
 #define S_REJUVENATE            108 // rejuvinate spell
 #define S_DISINTEGRATE          109 // disintegrate spell
-#define S_RESURRECT             110 // resurrect spell
+#define S_OLD_RESURRECT             110 // resurrect spell
 #define S_COURAGE               111 // courage spell
 
-#define S_BLOODFUSION           112 // bloodfusion spell
+#define S_OLD_BLOODFUSION           112 // bloodfusion spell
 #define S_MAGIC_MISSILE         113 // magic-missile spell
 #define S_KNOCK                 114 // knock spell
 #define S_BLINK                 115 // blink spell

@@ -386,21 +386,21 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
 
          if(isPlayer()) {
 
-            if(getVersion() < "2.52") {
+            if (getVersion() < "2.52") {
                 #define P_NO_LONG_DESCRIPTION_OLD      4
                 #define P_NO_SHORT_DESCRIPTION_OLD     5
                 clearFlag(P_NO_LONG_DESCRIPTION_OLD);
                 clearFlag(P_NO_SHORT_DESCRIPTION_OLD);
             }
-             if(getVersion() < "2.52b") {
+            if (getVersion() < "2.52b") {
                 #define P_CAN_PROXY_OLD 156
                 clearFlag(P_CAN_PROXY_OLD);
-             }
+            }
 
-             if(getVersion() < "2.52d") {
+            if (getVersion() < "2.52d") {
                 #define P_CAN_MUDMAIL_STAFF_OLD 161
                 clearFlag(P_CAN_MUDMAIL_STAFF_OLD);
-             }
+            }
 
              //reset all saves to max of 99
               if(getVersion() < "2.54c") {
@@ -422,6 +422,10 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                     addSkill("hands",(level*9));
                 }
              }
+             if (getVersion() < "2.60") {
+                forgetSpell(S_OLD_RESURRECT);
+                forgetSpell(S_OLD_BLOODFUSION);
+            }
         }
     }
 

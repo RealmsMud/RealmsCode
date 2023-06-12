@@ -313,15 +313,12 @@ bool Config::loadEffects() {
         .name("death-sickness")
         .addBaseEffect("death-sickness")
         .display("^#^DDeath Sickness!^x")
-        .computeScript("effectLib.computeDeathSickness(actor, effect, applier)")
-        .pulsed(true)
-        .pulseScript("effectLib.pulseDeathSickness(actor, effect)")
-        .pulseDelay(20)
+        .pulsed(false)
         .type("Negative")
         .selfAddStr("^DYou have become afflicted with death sickness.^x")
         .selfDelStr("^WYou recover from your death sickness.^x")
         .roomDelStr("^W*ACTOR* looks much better.^x")
-        .useStrength(true),
+        .useStrength(false),
       effects
     );
     addToSet(

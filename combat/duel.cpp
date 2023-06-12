@@ -67,7 +67,7 @@ int cmdDuel(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->getLevel() < 4 && !player->isCt() && !player->isHardcore()) {
+    if(player->getLevel() < 4 && !player->isCt() && !player->isPermaDeath()) {
         player->print("You must be level 4 or higher to be able to duel.\n");
         return(0);
     }

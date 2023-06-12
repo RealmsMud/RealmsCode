@@ -341,17 +341,6 @@ void Socket::finishLogin() {
         return;
     }
     player->setProxy(proxyName, proxyId);
-    if(player->flagIsSet(P_HARDCORE)) {
-        const StartLoc *location = gConfig->getStartLoc("highport");
-        player->bind(location);
-        // put them in the docks: hp.100
-        player->currentLocation.room.area = "hp";
-        player->currentLocation.room.id = 100;
-        // remove all their stuff
-        player->coins.zero();
-        player->objects.clear();
-
-    }
 
     setPlayer(player);
     player->fd = getFd();
@@ -361,23 +350,6 @@ void Socket::finishLogin() {
     registerPlayer();
     setState(CON_PLAYING);
 
-    if(player->flagIsSet(P_HARDCORE)) {
-        player->clearFlag(P_HARDCORE);
-        player->print("\n\n\n");
-        player->print("You wake up on the shores of Derlith, completely naked...\n");
-        player->print("\n\n");
-        player->print("You do not know how long you have been unconscious, or how long you have\n");
-        player->print("been floating at sea. The sounds of the ocean fill the air, interrupted by\n");
-        player->print("the bustling noise of a city street. An occasional bell rings and the\n");
-        player->print("sounds of horse-drawn carriages stumbling over cobblestone soon grow louder\n");
-        player->print("and louder. You look around to find yourself at the docks of Highport.\n");
-        player->print("People stare at you as they pass.\n");
-        player->print("\n\n");
-        player->print("You no longer feel hunted, as you did in Oceancrest. You feel the peaceful\n");
-        player->print("onset of immortality that comes with living in Derlith. You are now free to\n");
-        player->print("continue your adventures in this world...\n");
-        player->print("\n\n\n");
-    }
 }
 
 // Blah I know it's a big hack...fix it later if you don't like it

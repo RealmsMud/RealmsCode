@@ -232,10 +232,10 @@ void Player::init() {
         learnSpell(S_REJUVENATE);
 
     if(cClass == CreatureClass::CLERIC && deity == CERIS && level >= 19)
-        learnSpell(S_RESURRECT);
+        learnSpell(S_OLD_RESURRECT);
 
     if(cClass == CreatureClass::CLERIC && !hasSecondClass() && deity == ARAMON && level >= 22)
-        learnSpell(S_BLOODFUSION);
+        learnSpell(S_OLD_BLOODFUSION);
 
     if((cClass == CreatureClass::RANGER || cClass == CreatureClass::DRUID) && level >= 10)
         learnSpell(S_TRACK);
@@ -1548,7 +1548,7 @@ std::string Player::getWhoString(bool whois, bool color, bool ignoreIllusion) co
            << (color ? "^x] " : "] ");
     auto parentRoom = getConstRoomParent();
 
-    if(isHardcore())
+    if(isPermaDeath())
         whoStr << (color ? "^y" : "") << "H ";
     else if(flagIsSet(P_OUTLAW))
         whoStr << (color ? "^r" : "") << "O ";

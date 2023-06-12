@@ -55,10 +55,17 @@ public:
     void saveXml(xmlNodePtr curNode) const;
     void validateId() override;
     void upgradeStats() override;
-    void recordLevelInfo();
+    [[nodiscard]] GameMode getGameMode() const;
 
+    void recordLevelInfo();
 protected:
 // Data
+    GameMode gameMode;
+    long deathCost;
+public:
+    long getDeathCost() const;
+protected:
+    // Death might be expensive
 
     std::string proxyName;
     std::string proxyId;
@@ -118,7 +125,7 @@ protected:
 
 public:
     std::string getFlagList(std::string_view sep=", ") const override;
-    void hardcoreDeath();
+    void permaDeath();
     void deletePlayer();
 
 // Data
@@ -195,13 +202,13 @@ public:
     void gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount, bool groupExp = false) override;
     void disarmSelf();
     bool lagProtection();
-    
+
     void computeAC();
     void alignAdjustAcThaco();
     void checkOutlawAggro();
     std::string getUnarmedWeaponSkill() const;
     double winterProtection() const;
-    bool isHardcore() const;
+    bool isPermaDeath() const;
     bool canMistNow() const;
     bool autoAttackEnabled() const;
     bool isFleeing() const;

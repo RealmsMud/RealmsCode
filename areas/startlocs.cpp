@@ -61,12 +61,6 @@ void initialBind(std::shared_ptr<Player> player, const std::string &str) {
     }
     CatRef cr = location->getStartingGuide();
 
-    if(str == "oceancrest") {
-        player->setFlag(P_HARDCORE);
-        player->setFlag(P_CHAOTIC);
-        player->setFlag(P_CHOSEN_ALIGNMENT);
-    }
-
     player->bind(location);
     player->currentLocation.room = player->bound.room;
     player->currentLocation.room = player->getRecallRoom().room;

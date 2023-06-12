@@ -540,7 +540,7 @@ int cmdSuicide(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // Does a true delete of a player and their files
 
 void Player::deletePlayer() {
-    bool hardcore = isHardcore();
+    bool hardcore = isPermaDeath();
     // cache the name because we will be deleting the player object
     std::string name = getName();
 
@@ -1007,9 +1007,9 @@ int cmdTime(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
             *player << "NOTE: 0 Seconds means you're out any second.\n";
             *player << "Jailtime remaining(Approx): ";
-            if(i - t > 3600)    
+            if(i - t > 3600)
                 *player << ((i-t)/3600L) << ":" << (((i - t) % 3600L) / 60L) << ":" << ((i - t) % 60L) << " more hours.\n";
-            else if((i - t > 60) && (i - t < 3600))  
+            else if((i - t > 60) && (i - t < 3600))
                 *player << ((i - t) / 60L) << ":" << ((i - t) % 60L) << " more minutes.\n";
             else
                 *player << (std::max<int>((i - t),0)) << " more seconds.\n";

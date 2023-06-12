@@ -120,6 +120,8 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
     else if(NODE_NAME(curNode, "Statistics")) statistics.load(curNode);
 
     else if(NODE_NAME(curNode, "Bank")) bank.load(curNode);
+    else if(NODE_NAME(curNode, "GameMode")) gameMode = (GameMode)xml::toNum<int>(curNode);
+    else if(NODE_NAME(curNode, "DeathCost")) deathCost = xml::toNum<long>(curNode);
     else if(NODE_NAME(curNode, "Surname")) xml::copyToString(surname, curNode);
     else if(NODE_NAME(curNode, "Wrap")) xml::copyToNum(wrap, curNode);
     else if(NODE_NAME(curNode, "Forum")) xml::copyToString(forum, curNode);
@@ -403,6 +405,8 @@ void Player::saveXml(xmlNodePtr curNode) const {
     xml::saveNonNullString(curNode, "Surname", surname);
     xml::saveNonNullString(curNode, "Forum", forum);
     xml::newNumChild(curNode, "Wrap", wrap);
+    xml::newNumChild(curNode, "GameMode", gameMode);
+    xml::newNumChild(curNode, "DeathCost", deathCost);
     bound.save(curNode, "BoundRoom");
     previousRoom.save(curNode, "PreviousRoom"); // monster do not save PreviousRoom
     statistics.save(curNode, "Statistics");
