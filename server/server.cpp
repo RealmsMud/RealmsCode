@@ -112,29 +112,7 @@ void CleanupRoomFn::operator()(const std::shared_ptr<UniqueRoom>& r ) {
 	r->saveToFile(PERMONLY);
 }
 
-// Custom comparison operator to sort by the numeric id instead of standard string comparison
-bool idComp::operator() (const std::string& lhs, const std::string& rhs) const {
-    std::stringstream strL(lhs);
-    std::stringstream strR(rhs);
 
-    char charL, charR;
-    long longL, longR;
-
-    strL >> charL >> longL;
-    strR >> charR >> longR;
-
-    if(charL == charR) {
-        if(charL == 'R') {
-            // Rooms work a bit differently
-            return(lhs < rhs);
-        }
-        else
-            return(longL < longR);
-    } else {
-        return(charL < charR);
-    }
-    return(true);
-}
 //--------------------------------------------------------------------
 // Constructors, Destructors, etc
 

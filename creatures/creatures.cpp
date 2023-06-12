@@ -34,7 +34,7 @@
 #include "enums/loadType.hpp"          // for LoadType
 #include "flags.hpp"                   // for P_DM_INVIS, O_SMALL_SHIELD
 #include "global.hpp"                  // for HELD, WIELD, SHIELD, ISDM, MAX...
-#include "lasttime.hpp"                // for lasttime, crlasttime, operator<<
+#include "lasttime.hpp"                // for lasttime, CRLastTime, operator<<
 #include "location.hpp"                // for Location
 #include "money.hpp"                   // for GOLD, Money
 #include "mud.hpp"                     // for LT_AGE
@@ -1221,7 +1221,7 @@ void Creature::unApplyTongues() {
     }
 }
 
-std::ostream& operator<<(std::ostream& out, const crlasttime& crl) {
+std::ostream& operator<<(std::ostream& out, const CRLastTime& crl) {
     out << crl.cr.str() << "(" << crl.interval << ")";
     return out;
 }

@@ -437,8 +437,8 @@ int Monster::doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) {
 // permanent flag is set.
 
 void UniqueRoom::addPermCrt() {
-    std::map<int, crlasttime>::iterator it, nt;
-    crlasttime* crtm;
+    std::map<int, CRLastTime>::iterator it, nt;
+    CRLastTime* crtm;
     std::map<int, bool> checklist;
     std::shared_ptr<Monster> monster=nullptr;
     long    t = time(nullptr);
@@ -505,8 +505,8 @@ void UniqueRoom::addPermCrt() {
 // permanent flag is set.
 
 void UniqueRoom::addPermObj() {
-    std::map<int, crlasttime>::iterator it, nt;
-    crlasttime* crtm=nullptr;
+    std::map<int, CRLastTime>::iterator it, nt;
+    CRLastTime* crtm=nullptr;
     std::map<int, bool> checklist;
     std::shared_ptr<Object> object=nullptr;
     long    t = time(nullptr);
@@ -965,8 +965,8 @@ int createStorage(CatRef cr, const std::shared_ptr<Player>& player) {
 //*********************************************************************
 
 void UniqueRoom::validatePerms() {
-    std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=nullptr;
+    std::map<int, CRLastTime>::iterator it;
+    CRLastTime* crtm=nullptr;
     long    t = time(nullptr);
 
     for(it = permMonsters.begin(); it != permMonsters.end() ; it++) {

@@ -17,6 +17,7 @@
  */
 #ifndef MUD_H
 #define MUD_H
+class LastTime;
 
 // Other includes are at the end of the file to make sure all defines and such in this
 // file are visible
@@ -310,8 +311,8 @@ extern const int   GUILD_JOIN, GUILD_REMOVE, GUILD_LEVEL, GUILD_DIE;
 
 extern int      Tablesize;
 extern long     StartTime;
-extern struct lasttime  Shutdown;
-extern struct lasttime  Weather[5];
+extern LastTime  Shutdown;
+extern LastTime  Weather[5];
 
 
 extern char scrollDesc [][10][20];

@@ -1,6 +1,6 @@
 /*
- * Zones-json.cpp
- *   Zone json
+ *  MudObjects-json.cpp
+ *   MudObjects json
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -16,23 +16,28 @@
  *
  */
 
-#include <string>
 #include "json.hpp"
-#include "zone.hpp"
+#include "mudObjects/mudObject.hpp"
 
+void to_json(nlohmann::json &j, const MudObject &mo) {
+    to_json(j, mo, true);
+}
 
-void to_json(nlohmann::json &j, const Zone &zone) {
+void to_json(nlohmann::json &j, const MudObject &mo, bool saveId) {
     j = json{
-        {"name", zone.name},
-        {"display", zone.display},
-        {"flags", zone.flags},
+        {"name", mo.name},
     };
+    if (saveId) {
+        j["id"] = mo.id;
+    }
+    if (!mo.hooks.empty()) {
+        j["hooks"] = mo.hooks;
+    }
+    if (!mo.effects.effectList.empty()) {
+        j["effects"] = mo.effects;
+    }
 }
 
-void from_json(const nlohmann::json &j, Zone &zone) {
-    zone.name = j.at("name").get<std::string>();
-    zone.display = j.at("display").get<std::string>();
-    if (j.contains("flags")) zone.flags = j.at("flags");
+void from_json(const nlohmann::json &j, MudObject &mo) {
+
 }
-
-

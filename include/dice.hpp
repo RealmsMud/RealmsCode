@@ -20,6 +20,7 @@
 #define _DICE_H
 
 #include <libxml/parser.h>  // for xmlNodePtr
+#include "json.hpp"
 
 
 class Dice {
@@ -52,6 +53,10 @@ protected:
     unsigned short number{};
     unsigned short sides{};
     short plus{};
+
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Dice, mean, number, sides, plus);
+
 };
 
 

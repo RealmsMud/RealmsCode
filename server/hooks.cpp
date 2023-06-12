@@ -213,12 +213,16 @@ bool Hooks::executeWithReturn(const std::string &event, const std::shared_ptr<Mu
 // A trigger1 or trigger2 null value is valid, so handle appropriate
 bool Hooks::run(const std::shared_ptr<MudObject>& trigger1, const std::string &event1, const std::shared_ptr<MudObject>& trigger2, const std::string &event2, const std::string &param1, const std::string &param2, const std::string &param3) {
     // No hooks while crashing
-    if(Crash) return false;
+    if (Crash) return false;
 
-    bool ran=false;
-    if(trigger1 && trigger1->hooks.execute(event1, trigger2, param1, param2, param3))
+    bool ran = false;
+    if (trigger1 && trigger1->hooks.execute(event1, trigger2, param1, param2, param3))
         ran = true;
-    if(trigger2 && trigger2->hooks.execute(event2, trigger1, param1, param2, param3))
+    if (trigger2 && trigger2->hooks.execute(event2, trigger1, param1, param2, param3))
         ran = true;
-    return(ran);
+    return (ran);
+}
+
+bool Hooks::empty() const {
+    return hooks.empty();
 }

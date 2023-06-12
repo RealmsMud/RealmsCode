@@ -16,7 +16,6 @@
  *
  */
 
-#include <nlohmann/json.hpp>
 #include <libxml/parser.h>                     // for xmlDocGetRootElement
 #include <algorithm>                           // for copy, sort
 #include <boost/algorithm/string/replace.hpp>  // for replace_all, replace_a...
@@ -36,7 +35,8 @@
 #include "dice.hpp"                            // for Dice
 #include "effects.hpp"                         // for EffectList, operator<<
 #include "join.hpp"                            // for join, mjoin
-#include "lasttime.hpp"                        // for operator<<, crlasttime
+#include "json.hpp"                            // for json, operator<<, opera...
+#include "lasttime.hpp"                        // for operator<<, CRLastTime
 #include "money.hpp"                           // for GOLD, Money
 #include "mudObjects/monsters.hpp"             // for Monster
 #include "mudObjects/objects.hpp"              // for Object

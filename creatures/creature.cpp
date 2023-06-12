@@ -45,7 +45,7 @@
 #include "flags.hpp"                             // for M_DM_FOLLOW, M_SNEAKING
 #include "global.hpp"                            // for CreatureClass, BRE, DEA
 #include "group.hpp"                             // for Group
-#include "lasttime.hpp"                          // for lasttime, crlasttime
+#include "lasttime.hpp"                          // for lasttime, CRLastTime
 #include "location.hpp"                          // for Location
 #include "money.hpp"                             // for GOLD, Money
 #include "move.hpp"                              // for getRoom, getString
@@ -252,8 +252,8 @@ void Object::tempPerm() {
 // time field for that permanent monster is updated.
 
 void Monster::diePermCrt() {
-    std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm;
+    std::map<int, CRLastTime>::iterator it;
+    CRLastTime* crtm;
     std::shared_ptr<Monster> temp_mob=nullptr;
     std::shared_ptr<UniqueRoom> room;
     long    t = time(nullptr);

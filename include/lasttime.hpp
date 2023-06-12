@@ -20,24 +20,32 @@
 #define REALMSCODE_LASTTIME_H
 
 #include "catRef.hpp"
+#include "json.hpp"
 
 // Timed operation struct
-typedef struct lasttime {
+class LastTime {
 public:
-    lasttime() { interval = ltime = misc = 0; };
+    LastTime() { interval = ltime = misc = 0; };
     long        interval;
     long        ltime;
     short       misc;
-} lasttime;
 
-typedef struct crlasttime {
 public:
-    friend std::ostream& operator<<(std::ostream& out, const crlasttime& crl);
-    crlasttime() { interval = ltime = 0; };
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(LastTime, interval, ltime, misc);
+
+};
+
+class CRLastTime {
+public:
+    friend std::ostream& operator<<(std::ostream& out, const CRLastTime& crl);
+    CRLastTime() { interval = ltime = 0; };
     long        interval;
     long        ltime;
     CatRef      cr;
-} crlasttime;
+
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(CRLastTime, interval, ltime, cr);
+};
 
 
 #endif //REALMSCODE_LASTTIME_H

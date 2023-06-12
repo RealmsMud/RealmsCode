@@ -29,6 +29,7 @@
 #include "season.hpp"
 #include "track.hpp"
 #include "wanderInfo.hpp"
+#include "json.hpp"
 
 #define RADIAN 57.2957795
 
@@ -81,6 +82,8 @@ protected:
     short x{};
     short y{};
     short z{};
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(MapMarker, area, x, y, z);
 };
 
 

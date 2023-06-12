@@ -121,7 +121,7 @@ public:
     // loading of flags done
     boost::dynamic_bitset<> flags{128};
 
-    struct lasttime ltime; // Timed open/close
+    LastTime ltime; // Timed open/close
 
     char desc_key[3][EXIT_KEY_LENGTH]{}; // Exit keys
 

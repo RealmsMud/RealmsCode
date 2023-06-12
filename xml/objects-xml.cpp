@@ -54,28 +54,6 @@
 #include "xml.hpp"                                  // for saveNonZeroNum
 
 
-// Object flags to be saved for object refs
-int objRefSaveFlags[] =
-        {
-                O_PERM_ITEM,
-                O_HIDDEN,
-                O_CURSED,
-                O_WORN,
-                O_TEMP_ENCHANT,
-                O_WAS_SHOPLIFTED,
-                O_ENVENOMED,
-                O_JUST_BOUGHT,
-                O_NO_DROP,
-                O_BROKEN_BY_CMD,
-                O_BEING_PREPARED,
-                O_UNIQUE,
-                O_KEEP,
-                O_DARKNESS,
-                O_RECLAIMED,
-                -1
-        };
-
-
 //*********************************************************************
 //                      loadObject
 //*********************************************************************
@@ -689,10 +667,7 @@ int saveObjectsXml(xmlNodePtr parentNode, const ObjectSet &set, int permOnly) {
 
     for (it = set.begin(); it != set.end();) {
         const std::shared_ptr<Object>&obj = (*it++);
-        if (obj &&
-            (permOnly == ALLITEMS ||
-             (permOnly == PERMONLY && obj->flagIsSet(O_PERM_ITEM))
-            )) {
+        if (obj && (permOnly == ALLITEMS || (permOnly == PERMONLY && obj->flagIsSet(O_PERM_ITEM)))) {
             if (obj->flagIsSet(O_CUSTOM_OBJ) || obj->flagIsSet(O_SAVE_FULL) || !obj->info.id) {
                 // If it's a custom or has the save flag set, save the entire object
                 curNode = xml::newStringChild(parentNode, "Object");

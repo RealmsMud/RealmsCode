@@ -97,11 +97,11 @@ public:
 
     Track   track;
     WanderInfo wander;          // Random monster info
-    std::map<int, crlasttime> permMonsters; // Permanent/reappearing monsters
-    std::map<int, crlasttime> permObjects;  // Permanent/reappearing items
+    std::map<int, CRLastTime> permMonsters; // Permanent/reappearing monsters
+    std::map<int, CRLastTime> permObjects;  // Permanent/reappearing items
 
     char    last_mod[24]{};   // Last staff member to modify room.
-    struct lasttime lasttime[16];   // For timed room things, like darkness spells.
+    LastTime lasttime[16];   // For timed room things, like darkness spells.
 
     char    lastModTime[32]{}; // date created (first *saved)
 

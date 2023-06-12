@@ -17,13 +17,14 @@
  */
 
 #include <string>
-#include <nlohmann/json.hpp>
-
+#include "json.hpp"
 #include "catRef.hpp"
 
 void to_json(nlohmann::json &j, const CatRef &cr) {
-    j["area"] = cr.area;
-    j["id"] = cr.id;
+    j = json{{
+        {"area", cr.area},
+        {"id", cr.id},
+    }};
 }
 
 void from_json(const nlohmann::json &j, CatRef &cr) {
@@ -35,15 +36,16 @@ void from_json(const nlohmann::json &j, CatRef &cr) {
 
 void to_json(nlohmann::json &j, const QuestCatRef &cr) {
     // Call the super to_json first
-    to_json(j, (CatRef&)cr);
-
-    j["curNum"] = cr.curNum;
-    j["reqNum"] = cr.reqNum;
+    to_json(j, static_cast<const CatRef&>(cr));
+    j.update({
+        {"curNum", cr.curNum},
+        {"reqNum", cr.reqNum},
+    });
 }
 
 void from_json(const nlohmann::json &j, QuestCatRef &cr) {
     // Call the super from_json first
-    from_json(j, (CatRef&)cr);
+    from_json(j, static_cast<CatRef&>(cr));
 
     cr.curNum = j.at("curNum").get<int>();
     cr.reqNum = j.at("reqNum").get<int>();

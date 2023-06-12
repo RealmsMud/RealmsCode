@@ -37,15 +37,15 @@ class UniqueRoom;
 
 class cmd;
 
-struct PlayerPtrLess : public std::binary_function<const std::weak_ptr<Player>, const std::weak_ptr<Player>, bool> {
+struct PlayerPtrLess {
     bool operator()(const std::weak_ptr<Player>& lhs, const std::weak_ptr<Player>& rhs) const;
 };
 
-struct MonsterPtrLess : public std::binary_function<const std::shared_ptr<Monster> , const std::shared_ptr<Monster> , bool> {
+struct MonsterPtrLess {
     bool operator()(const std::shared_ptr<Monster>&  lhs, const std::shared_ptr<Monster>&  rhs) const;
 };
 
-struct ObjectPtrLess : public std::binary_function<const std::shared_ptr<Object> , const std::shared_ptr<Object> , bool> {
+struct ObjectPtrLess  {
     bool operator()(const std::shared_ptr<Object>&  lhs, const std::shared_ptr<Object>&  rhs) const;
 };
 

@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include <list>
 #include <map>
 #include <memory>
@@ -44,15 +45,32 @@ private:
     std::string name;
 
 public:
+    Effects effects;
+    std::string id;     // Unique identifier
+    Hooks hooks;
+
+protected:
+    bool registered{};
+    std::list<DelayedAction*> delayedActionQueue;
+
+public:
+    friend void to_json(nlohmann::json &j, const MudObject &mo);
+    friend void to_json(nlohmann::json &j, const MudObject &mo, bool saveId);
+    friend void from_json(const nlohmann::json &j, MudObject &mo);
+
+public:
+    MudObject();
+    MudObject(MudObject& mo);
+    MudObject(const MudObject& mo);
+    virtual ~MudObject();
+    void moReset();
+
     void setName(std::string_view newName);
     [[nodiscard]] const std::string & getName() const;
     [[nodiscard]] const char* getCName() const;
 
-protected:
-    virtual void removeFromSet();
-    virtual void addToSet();
+    void moCopy(const MudObject& mo);
 
-public:
     bool isRegistered();
     void setRegistered();
     void setUnRegistered();
@@ -62,24 +80,6 @@ public:
 
     virtual void registerContainedItems();
     virtual void unRegisterContainedItems();
-
-protected:
-    bool registered;
-
-
-public:
-    //char name[80];
-    std::string id;     // Unique identifier
-    Hooks hooks;
-    void moCopy(const MudObject& mo);
-
-
-public:
-    MudObject();
-    MudObject(MudObject& mo);
-    MudObject(const MudObject& mo);
-    virtual ~MudObject();
-    void moReset();
 
     void setId(std::string_view newId, bool handleParentSet = true);
 
@@ -114,11 +114,7 @@ public:
     [[nodiscard]] const std::string & getId() const;
 
     virtual void validateId() {};
-    Effects effects;
-
     virtual std::string getFlagList(std::string_view sep=", ") const;
-
-
 
 // Effects
     [[nodiscard]] bool isEffected(const std::string &effect, bool exactMatch = false) const;
@@ -140,13 +136,15 @@ public:
     void readObjects(xmlNodePtr curNode, bool offline=false);
 
 // Delayed Actions
-protected:
-    std::list<DelayedAction*> delayedActionQueue;
-public:
     void interruptDelayedActions();
     void removeDelayedAction(DelayedAction* action);
     void addDelayedAction(DelayedAction* action);
     void clearDelayedActions();
+
+protected:
+    virtual void removeFromSet();
+    virtual void addToSet();
+
 };
 
 

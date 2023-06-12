@@ -334,8 +334,8 @@ int dmReloadRoom(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // This function allows a staff to reset perm timeouts in the room
 
 int dmResetPerms(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=nullptr;
+    std::map<int, CRLastTime>::iterator it;
+    CRLastTime* crtm=nullptr;
     std::map<int, long> tempMonsters;
     std::map<int, long> tempObjects;
     std::shared_ptr<UniqueRoom> room = player->getUniqueRoomParent();
@@ -795,8 +795,8 @@ void validateShop(const std::shared_ptr<Player>& player, const std::shared_ptr<U
 //*********************************************************************
 
 int stat_rom(const std::shared_ptr<Player>& player, const std::shared_ptr<UniqueRoom>& room) {
-    std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=nullptr;
+    std::map<int, CRLastTime>::iterator it;
+    CRLastTime* crtm=nullptr;
     CatRef  cr;
     std::shared_ptr<Monster>  monster=nullptr;
     std::shared_ptr<Object>  object=nullptr;
