@@ -79,12 +79,12 @@ bool Player::isPermaDeath() const {
 }
 
 //********************************************************************
-//                      hardcoreDeath
+//                      permaDeath
 //********************************************************************
 bool canDrop(const std::shared_ptr<Player>& player, const std::shared_ptr<Object>&  object, const Property* p);
 bool delete_drop_obj(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Object>&  object, bool factionCanRecycle);
 
-void Player::hardcoreDeath() {
+void Player::permaDeath() {
     if(!isPermaDeath())
         return;
     auto pThis = Containable::downcasted_shared_from_this<Player>();
@@ -1204,7 +1204,7 @@ void Player::resetPlayer(const std::shared_ptr<Creature>& killer) {
         pKiller->delDueling(getName());
         delDueling(killer->getName());
     } else if(isPermaDeath() && !killer->isStaff()) {
-        hardcoreDeath();
+        permaDeath();
         // the player is invalid after this
         return;
     } else {
@@ -1597,7 +1597,7 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
     } // 26+ = 10%
     else
         multiplier = 0.10;
-    switch(getGameMode()) {
+    switch(player->getGameMode()) {
         case GameMode::HardMode:
         case GameMode::PermaDeathMode:
             multiplier *= 2;
@@ -2125,7 +2125,7 @@ void Player::die(DeathType dt) {
         curePoison();
 
     // only drop all if killed by player
-    dropEquipment(killedByPlayer && (!killer || !killer->isStaff()), killer ? killer->getSock() : nullptr);
+    dropEquipment(killedByPlayer && (!killer || !killer->isStaff()), killer);
 
     checkDarkness();
     computeAC();
@@ -2174,10 +2174,10 @@ void Player::die(DeathType dt) {
     broadcast(::isCt, "^rOld Exp: %u Lost Exp: %d, Old Lvl: %u, Lvl: %u, Room: %s",
         oldxp, xploss, oldlvl, level, getRoomParent()->fullName().c_str());
 
-    if(isHardcore()) {
-        hardcoreDeath(this);
-    // if you die in jail, you stay in jail
+    if(isPermaDeath()) {
+        permaDeath();
     } else if(!inJail()) {
+        // if you die in jail, you stay in jail
         std::shared_ptr<BaseRoom> newRoom = getLimboRoom().loadRoom(Containable::downcasted_shared_from_this<Player>());
         if(newRoom) {
             deleteFromRoom();

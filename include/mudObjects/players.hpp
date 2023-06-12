@@ -125,7 +125,7 @@ protected:
 
 public:
     std::string getFlagList(std::string_view sep=", ") const override;
-    void hardcoreDeath();
+    void permaDeath();
     void deletePlayer();
 
 // Data
