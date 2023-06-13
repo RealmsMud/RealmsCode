@@ -192,6 +192,11 @@ int cmdBribe(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // Code for people to gamble money
 
 int cmdGamble(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    if(!player->flagIsSet(P_PTESTER) && !player->isCt()) {
+        player->printColor("Gambling currently enabled for testers only.\n");
+        return(0);
+    }
+
     if(!player->getRoomParent()->flagIsSet(R_CASINO) && !player->isCt()) {
         player->printColor("You can't gamble here.\n");
         return(0);
