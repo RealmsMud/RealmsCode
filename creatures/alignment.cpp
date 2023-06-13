@@ -346,7 +346,7 @@ bool Player::alignInOrder() const {
     case CreatureClass::DEATHKNIGHT:
         return(getAdjustedAlignment() < BLUISH);
     case CreatureClass::DRUID:
-        return(getAdjustedAlignment() > REDDISH && getAdjustedAlignment() < BLUISH);
+        return(getAdjustedAlignment() > RED && getAdjustedAlignment() < BLUE);
     case CreatureClass::RANGER:
         return(getAdjustedAlignment() > BLOODRED);
     case CreatureClass::CLERIC:
@@ -357,13 +357,13 @@ bool Player::alignInOrder() const {
         case KAMIRA:
         case MARA:
         case LINOTHAN:
-            return(getAdjustedAlignment() > BLOODRED);
+            return(getAdjustedAlignment() > RED);
         case ENOCH:
             return(getAdjustedAlignment() > REDDISH);
         case JAKAR:
             return(getAdjustedAlignment() > BLOODRED && getAdjustedAlignment() < ROYALBLUE);
         case ARES:
-            return(getAdjustedAlignment() > REDDISH && getAdjustedAlignment() < BLUISH);
+            return(getAdjustedAlignment() > RED && getAdjustedAlignment() < BLUE);
         case ARAMON:
         case ARACHNUS:
             return(getAdjustedAlignment() < BLUISH);
