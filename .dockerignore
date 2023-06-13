@@ -3,9 +3,11 @@ docker/
 build/
 build2/
 _deps/
+iwyu/
 cmake-build-debug/
 RealmsCode
 List
+.git
 
 
 # User-specific stuff:
@@ -25,6 +27,7 @@ tags
 *.slo
 *.o
 *.obj
+*.d
 
 # Precompiled Headers
 *.gch
@@ -32,6 +35,7 @@ tags
 
 # Compiled Dynamic libraries
 *.so
+
 
 # Libraries
 *.lib

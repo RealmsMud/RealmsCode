@@ -17,8 +17,6 @@
  */
 
 #include <string>
-#include <nlohmann/json.hpp>
-
 #include "json.hpp"
 #include "quests.hpp"
 
@@ -26,20 +24,22 @@ using json = nlohmann::json;
 
 
 void to_json(nlohmann::json &j, const QuestInfo &quest) {
-    j["id"] = quest.questId;
-    j["name"] = quest.name;
-    j["description"] = quest.description;
-    j["receiveString"] = quest.receiveString;
-    j["completionString"] = quest.completionString;
-    j["revision"] = quest.revision;
+    j = json{
+        {"id", quest.questId},
+        {"name", quest.name},
+        {"description", quest.description},
+        {"description", quest.description},
+        { "receiveString", quest.receiveString },
+        { "completionString", quest.completionString },
+        { "revision", quest.revision },
+        { "repeatFrequency", quest.repeatFrequency },
+        { "timesRepeatable", quest.timesRepeatable },
+        { "sharable", quest.sharable },
+        { "minLevel", quest.minLevel },
+        { "minFaction", quest.minFaction },
+        { "level", quest.level },
 
-    j["repeatFrequency"] = quest.repeatFrequency;
-    j["timesRepeatable"] = quest.timesRepeatable;
-
-    j["sharable"] = quest.sharable;
-    j["minLevel"] = quest.minLevel;
-    j["minFaction"] = quest.minFaction;
-    j["level"] = quest.level;
+    };
 
     if(!quest.preRequisites.empty()) j["preRequisites"] = quest.preRequisites;
 

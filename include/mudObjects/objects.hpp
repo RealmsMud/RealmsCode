@@ -29,6 +29,7 @@
 #include "dice.hpp"
 #include "global.hpp"
 #include "lasttime.hpp"
+#include "json.hpp"
 #include "enums/loadType.hpp"
 #include "money.hpp"
 #include "range.hpp"
@@ -109,21 +110,34 @@ public:
     void clear();
     void save(xmlNodePtr rootNode) const;
     void load(xmlNodePtr rootNode);
+
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(DroppedBy, name, index, id, type);
 };
 
 struct CustomItemLabel {
     std::string playerId;
     std::string label;
+
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(CustomItemLabel, playerId, label);
 };
 
 typedef std::map<int, AlchemyEffect> AlchemyEffectMap;
 
 class Object: public Container, public Containable {
-    // Static class functions
+// Static class functions
 public:
     static std::shared_ptr<Object>  getNewPotion();  // Creates a new blank potion object
     static const std::map<ObjectType, std::string> objTypeToString;
     static const std::map<Material, std::string> materialToString;
+    static const boost::dynamic_bitset<> objRefFlagsSet;  // Flags to Save for a ref
+    static const boost::dynamic_bitset<> objRefFlagsMask; // Inverse mask to 0 out ref flags before applying
+
+public:
+    friend void to_json(nlohmann::json &j, const Object &obj);
+    friend void to_json(nlohmann::json &j, const Object &obj, bool permOnly, LoadType saveType, int quantity, bool saveId, const std::list<std::string> *idList);
+    friend void from_json(const nlohmann::json &j, Object &obj);
 
 public:
     Object();
@@ -206,7 +220,7 @@ public:
 
     CatRef in_bag[3];   // items preloaded inside bags
 
-    struct lasttime lasttime[4];// Last-time-used variables - Used for envenom and enchant right now
+    LastTime lasttime[4];// Last-time-used variables - Used for envenom and enchant right now
 
     Range deed;
     Money value;        // coin value
@@ -216,23 +230,24 @@ public:
     Money refund;
     MapMarker *compass = nullptr; // for compass objects
     std::string plural;
-
-    // List of effects that are conferred by this item.  Name, duration, and strength.
-    //  std::list<ConferredEffect*> conferredEffects;
-
-    inline bool pulseEffects(long t) override { return (false); };
-
     std::list<CatRef> randomObjects;
-
-    bool isAlchemyPotion();
-    bool consumeAlchemyPotion(const std::shared_ptr<Creature>& consumer);
-    bool addAlchemyEffect(int num, const AlchemyEffect &ae);
 
     // Map of effects that are on this item for alchemy purposes, used for herbs and potions objects
     AlchemyEffectMap alchemyEffects;
 
     // Allows players to define a custom label on items they carry
     CustomItemLabel label;
+
+
+    // List of effects that are conferred by this item.  Name, duration, and strength.
+    //  std::list<ConferredEffect*> conferredEffects;
+
+public:
+    inline bool pulseEffects(long t) override { return (false); };
+
+    bool isAlchemyPotion();
+    bool consumeAlchemyPotion(const std::shared_ptr<Creature>& consumer);
+    bool addAlchemyEffect(int num, const AlchemyEffect &ae);
 
 // Functions
 public:
@@ -425,5 +440,6 @@ public:
 
 };
 
+extern int objRefSaveFlags[];
 
 #endif /*OBJECTS_H_*/

@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.15...3.19)
+cmake_minimum_required(VERSION 3.15...3.26)
 
 project(RealmsCode)
 include(FetchContent)
 
-#set(CMAKE_C_COMPILER "/usr/bin/gcc")
-#set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+set(CMAKE_C_COMPILER "/usr/bin/clang")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -50,10 +50,10 @@ ENDIF()
 
 message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
 
-FetchContent_Declare(json        URL https://github.com/nlohmann/json/releases/download/v3.10.5/json.tar.xz       )
-FetchContent_Declare(pybind11    GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v2.9.2         )
-FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.0+1         )
-FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.0.9        )
+FetchContent_Declare(json        URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz       )
+FetchContent_Declare(pybind11    GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v2.10.4        )
+FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.0+5         )
+FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.0.23       )
 FetchContent_Declare(jwt-cpp     GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git  GIT_TAG v0.6.0         )
 FetchContent_Declare(googletest  GIT_REPOSITORY https://github.com/google/googletest.git   GIT_TAG release-1.11.0 )
 
@@ -70,7 +70,7 @@ SET(REALMS_SOURCE_FILES
 
 set(LIST_SOURCE_FILES
     main/list.cpp
-    )
+)
 
 set(UPDATER_SOURCE_FILES
     main/updater.cpp
@@ -373,7 +373,12 @@ set(COMMON_SOURCE_FILES
     server/sql.cpp
     server/swap.cpp
     server/update.cpp
+
     server/web.cpp
+    server/httpServer.cpp
+    server/http/zones-http.cpp
+    server/http/auth-http.cpp
+
 
     skills/skillCommand.cpp
     skills/skillGain.cpp
@@ -399,8 +404,13 @@ set(COMMON_SOURCE_FILES
     util/timer.cpp
 
     json/catref-json.cpp
+    json/effects-json.cpp
+    json/hooks-json.cpp
     json/money-json.cpp
+    json/mudObject-json.cpp
+    json/objects-json.cpp
     json/quests-json.cpp
+    json/realms-json.cpp
     json/zones-json.cpp
 
     xml/alchemy-xml.cpp
@@ -447,7 +457,7 @@ set(COMMON_SOURCE_FILES
     python/mudStat.cpp
 
     wip/fighters.cpp
-    server/httpServer.cpp)
+        )
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 

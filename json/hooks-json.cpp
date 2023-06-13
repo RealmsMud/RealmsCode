@@ -1,6 +1,6 @@
 /*
- * Money-json.cpp
- *   Money json
+ *  Hooks-json.cpp
+ *   Hooks json
  *   ____            _
  *  |  _ \ ___  __ _| |_ __ ___  ___
  *  | |_) / _ \/ _` | | '_ ` _ \/ __|
@@ -17,21 +17,12 @@
  */
 
 #include "json.hpp"
-#include "money.hpp"
+#include "hooks.hpp"
 
-void to_json(nlohmann::json &j, const Money &money) {
-    to_json("coins", j, money);
+void to_json(nlohmann::json &j, const Hooks &h) {
+    j = json {h.hooks};
 }
 
-void to_json(const char* name, nlohmann::json &j, const Money &money) {
-    j[name] = money.m;
-}
+void from_json(const nlohmann::json &j, Hooks &h) {
 
-void from_json(const nlohmann::json &j, Money &money) {
-    from_json("coins", j, money);
 }
-
-void from_json(const char* name, const nlohmann::json &j, Money &money) {
-    j.at(name).get_to(money.m);
-}
-

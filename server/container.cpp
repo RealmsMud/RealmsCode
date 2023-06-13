@@ -62,7 +62,7 @@ bool Container::purge(bool includePets) {
 bool Container::purgeMonsters(bool includePets) {
     bool purgedAll = true;
     MonsterSet::iterator mIt, prevIt;
-    std::shared_ptr<Monster> mons = nullptr;
+    std::shared_ptr<Monster> mons;
     for(mIt = monsters.begin() ; mIt != monsters.end() ; ) {
         prevIt = mIt;
         mons = (*mIt++);

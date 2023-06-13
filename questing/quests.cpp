@@ -71,7 +71,7 @@
 #include "structs.hpp"                              // for ttag
 #include "toNum.hpp"                                // for toNum
 #include "xml.hpp"                                  // for loadObject, loadM...
-#include <nlohmann/json.hpp>
+#include "json.hpp"
 
 CatRef QuestInfo::getQuestId(xmlNodePtr curNode) {
     CatRef toReturn;

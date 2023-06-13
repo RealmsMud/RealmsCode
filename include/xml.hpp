@@ -37,16 +37,18 @@ using boost::lexical_cast;
 using boost::bad_lexical_cast;
 
 class Anchor;
-class Guild;
 class Ban;
-class GuildCreation;
-class Monster;
-class Player;
 class BaseRoom;
-class Stat;
-class Object;
-class Room;
 class Creature;
+class CRLastTime;
+class Guild;
+class GuildCreation;
+class LastTime;
+class Monster;
+class Object;
+class Player;
+class Room;
+class Stat;
 
 //**********************
 //  Defines Section
@@ -227,10 +229,10 @@ void loadStringArray(xmlNodePtr curNode, void* array, int size, const char* name
 void loadBitset(xmlNodePtr curNode, boost::dynamic_bitset<>& bits);
 void loadDaily(xmlNodePtr curNode, struct daily* pDaily);
 void loadDailys(xmlNodePtr curNode, struct daily* pDailys);
-void loadCrLastTime(xmlNodePtr curNode, struct crlasttime* pCrLastTime);
-void loadCrLastTimes(xmlNodePtr curNode, std::map<int, crlasttime>& pCrLastTimes);
-void loadLastTime(xmlNodePtr curNode, struct lasttime* pLastTime);
-void loadLastTimes(xmlNodePtr curNode, struct lasttime* pLastTimes);
+void loadCrLastTime(xmlNodePtr curNode, CRLastTime* pCrLastTime);
+void loadCrLastTimes(xmlNodePtr curNode, std::map<int, CRLastTime>& pCrLastTimes);
+void loadLastTime(xmlNodePtr curNode, LastTime* pLastTime);
+void loadLastTimes(xmlNodePtr curNode, LastTime* pLastTimes);
 void loadSavingThrow(xmlNodePtr curNode, struct saves* pSavingThrow);
 void loadSavingThrows(xmlNodePtr curNode, struct saves* pSavingThrows);
 void loadRanges(xmlNodePtr curNode, Player* player);
@@ -245,8 +247,8 @@ int saveCreaturesXml(xmlNodePtr parentNode, const MonsterSet& set, int permOnly)
 GuildCreation* parseGuildCreation(xmlNodePtr cur);
 
 xmlNodePtr saveDaily(xmlNodePtr parentNode, int i, struct daily pDaily);
-xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, const struct crlasttime& pCrLastTime);
-xmlNodePtr saveLastTime(xmlNodePtr parentNode, int i, struct lasttime pLastTime);
+xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, const CRLastTime& pCrLastTime);
+xmlNodePtr saveLastTime(xmlNodePtr parentNode, int i, LastTime pLastTime);
 xmlNodePtr saveSavingThrow(xmlNodePtr parentNode, int i, struct saves pSavingThrow);
 xmlNodePtr saveBitset(xmlNodePtr parentNode, const char* name, int maxBit, const boost::dynamic_bitset<>& bits);
 xmlNodePtr saveBit(xmlNodePtr parentNode, int bit);

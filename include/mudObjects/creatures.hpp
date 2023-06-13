@@ -310,7 +310,7 @@ public:
     Stat pp; // psi points for psionicists
     Stat rp; // recovery points for weaponless classes
     struct daily daily[20]; // added more daily limits
-    struct lasttime lasttime[128]; // added more timers
+    LastTime lasttime[128]; // added more timers
 
     // future new tic amount code
     struct tic hpTic;

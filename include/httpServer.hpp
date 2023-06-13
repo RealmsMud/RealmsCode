@@ -70,4 +70,8 @@ private:
     int port;
     bool appRunning = false;
     std::future<void> appFuture;
+    crow::Blueprint zoneBlueprint = crow::Blueprint("zones");
+
+    void registerAuth();
+    void registerZones();
 };

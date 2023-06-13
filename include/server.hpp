@@ -83,14 +83,33 @@ enum GoldLog {
 };
 
 // Custom comparison operator to sort by the numeric id instead of standard string comparison
-struct idComp : public std::binary_function<const std::string&, const std::string&, bool> {
-    bool operator() (const std::string& lhs, const std::string& rhs) const;
-};
+auto idComp = [](const std::string& lhs, const std::string& rhs) {
+    std::stringstream strL(lhs);
+    std::stringstream strR(rhs);
 
+    char charL, charR;
+    long longL, longR;
+
+    strL >> charL >> longL;
+    strR >> charR >> longR;
+
+    if(charL == charR) {
+        if(charL == 'R') {
+            // Rooms work a bit differently
+            return(lhs < rhs);
+        }
+        else {
+            return (longL < longR);
+        }
+    } else {
+        return(charL < charR);
+    }
+    return(true);
+};
 
 #include "async.hpp"
 
-typedef std::map<std::string, std::weak_ptr<MudObject>,idComp> IdMap;
+typedef std::map<std::string, std::weak_ptr<MudObject>, decltype(idComp)> IdMap;
 using WeakMonsterList = std::list<std::weak_ptr<Monster> >;
 using MonsterList = std::list<std::shared_ptr<Monster> >;
 using GroupList = std::list<Group*>;

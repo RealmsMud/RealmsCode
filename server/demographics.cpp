@@ -80,7 +80,7 @@ void doDemographics() {
     long money[5], cgold, t = 0;
     std::map<std::string, Highest> highest;
     struct dirent *dirp;
-    struct lasttime lasttime[128];
+    LastTime lasttime[128];
     xmlDocPtr xmlDoc;
     xmlNodePtr rootNode, curNode, childNode;
 

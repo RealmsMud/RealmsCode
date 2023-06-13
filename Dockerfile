@@ -103,7 +103,7 @@ COPY --from=BUILD /build/Updater .
 
 # Temporary Workaround
 COPY --from=BUILD /build/libRealmsLib.so .
-COPY --from=build /build/_deps/dpp-build/libdpp.so.2.9.2 .
+COPY --from=build /build/_deps/dpp-build/library/libdpp.so.2.10.4 .
 COPY --from=BUILD /build/MyLSan.supp .
 
 ENV LC_ALL en_US.UTF-8

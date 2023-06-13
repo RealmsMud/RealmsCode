@@ -25,6 +25,8 @@
 #include <list>
 #include <memory>
 
+#include "json.hpp"
+
 
 typedef struct _xmlNode xmlNode;
 typedef xmlNode *xmlNodePtr;
@@ -34,37 +36,7 @@ class MudObject;
 class EffectBuilder;
 
 class Effect {
-public:
-    friend class EffectBuilder; // The builder can access the internals
-
-    [[nodiscard]] const std::string & getPulseScript() const;
-    [[nodiscard]] const std::string & getUnApplyScript() const;
-    [[nodiscard]] const std::string & getApplyScript() const;
-    [[nodiscard]] const std::string & getPreApplyScript() const;
-    [[nodiscard]] const std::string & getPostApplyScript() const;
-    [[nodiscard]] const std::string & getComputeScript() const;
-    [[nodiscard]] const std::string & getType() const;
-    [[nodiscard]] const std::string & getRoomDelStr() const;
-    [[nodiscard]] const std::string & getRoomAddStr() const;
-    [[nodiscard]] const std::string & getSelfDelStr() const;
-    [[nodiscard]] const std::string & getSelfAddStr() const;
-    [[nodiscard]] const std::string & getOppositeEffect() const;
-    [[nodiscard]] const std::string & getDisplay() const;
-    [[nodiscard]] const std::string & getName() const;
-    [[nodiscard]] bool hasBaseEffect(std::string_view effect) const;
-    [[nodiscard]] int getPulseDelay() const;
-    [[nodiscard]] bool isPulsed() const;
-    [[nodiscard]] bool isSpell() const;
-    [[nodiscard]] bool usesStrength() const;
-
-    // Base effect(s) - for multiple effects that confer the same type of effect (fly, etc)
-    const std::list<std::string> &getBaseEffects();
-    static bool objectCanBestowEffect(std::string_view effect);
-
-    Effect(const Effect&) = delete;  // No Copies
-    Effect(Effect&&) = default;      // Only Moves
 private:
-    Effect() = default;
     std::string name;
     std::list<std::string> baseEffects;  // For multiple effects that confer the same type of effect, ie: Fly
 
@@ -95,6 +67,39 @@ private:
     float potionMultiplyer{}; // Multiplier of duration for potion
     int magicRoomBonus{};     // Bonus in +magic room
 
+private:
+    Effect() = default;
+
+public:
+    friend class EffectBuilder; // The builder can access the internals
+
+    [[nodiscard]] const std::string & getPulseScript() const;
+    [[nodiscard]] const std::string & getUnApplyScript() const;
+    [[nodiscard]] const std::string & getApplyScript() const;
+    [[nodiscard]] const std::string & getPreApplyScript() const;
+    [[nodiscard]] const std::string & getPostApplyScript() const;
+    [[nodiscard]] const std::string & getComputeScript() const;
+    [[nodiscard]] const std::string & getType() const;
+    [[nodiscard]] const std::string & getRoomDelStr() const;
+    [[nodiscard]] const std::string & getRoomAddStr() const;
+    [[nodiscard]] const std::string & getSelfDelStr() const;
+    [[nodiscard]] const std::string & getSelfAddStr() const;
+    [[nodiscard]] const std::string & getOppositeEffect() const;
+    [[nodiscard]] const std::string & getDisplay() const;
+    [[nodiscard]] const std::string & getName() const;
+    [[nodiscard]] bool hasBaseEffect(std::string_view effect) const;
+    [[nodiscard]] int getPulseDelay() const;
+    [[nodiscard]] bool isPulsed() const;
+    [[nodiscard]] bool isSpell() const;
+    [[nodiscard]] bool usesStrength() const;
+
+    // Base effect(s) - for multiple effects that confer the same type of effect (fly, etc)
+    const std::list<std::string> &getBaseEffects();
+    static bool objectCanBestowEffect(std::string_view effect);
+
+    Effect(const Effect&) = delete;  // No Copies
+    Effect(Effect&&) = default;      // Only Moves
+
 };
 
 
@@ -122,8 +127,12 @@ class Creature;
 
 // Information about an effect on a creature
 class EffectInfo {
-
     friend class Effects;
+
+public:
+    friend void to_json(nlohmann::json &j, const EffectInfo &e);
+    friend void to_json(nlohmann::json &j, const EffectInfo *e);
+    friend void from_json(const nlohmann::json &j, EffectInfo &e);
 
 public:
     EffectInfo(const std::string &pName, time_t pLastMod, long pDuration, int pStrength, MudObject* pParent = nullptr, const std::shared_ptr<Creature> &owner = nullptr);
@@ -202,6 +211,10 @@ typedef std::list<EffectInfo *> EffectList;
 // this class holds effect information and makes effects portable
 // across multiple objects
 class Effects {
+public:
+    friend void to_json(nlohmann::json &j, const Effects &e);
+    friend void from_json(const nlohmann::json &j, Effects &e);
+
 public:
     void load(xmlNodePtr rootNode, const std::shared_ptr<MudObject>&pParent = nullptr);
     void save(xmlNodePtr rootNode, const char *name) const;

@@ -58,6 +58,31 @@
 #include "xml.hpp"                     // for loadObject, loadRoom
 
 
+// Object flags to be saved for object refs
+int objRefSaveFlags[] =
+    {
+        O_PERM_ITEM,
+        O_HIDDEN,
+        O_CURSED,
+        O_WORN,
+        O_TEMP_ENCHANT,
+        O_WAS_SHOPLIFTED,
+        O_ENVENOMED,
+        O_JUST_BOUGHT,
+        O_NO_DROP,
+        O_BROKEN_BY_CMD,
+        O_BEING_PREPARED,
+        O_UNIQUE,
+        O_KEEP,
+        O_DARKNESS,
+        O_RECLAIMED,
+        -1
+    };
+
+const int objRefFlags = std::reduce(std::begin(objRefSaveFlags), std::end(objRefSaveFlags), 0, std::bit_or<>());
+const boost::dynamic_bitset<> Object::objRefFlagsSet = boost::dynamic_bitset<>(256, objRefFlags);
+const boost::dynamic_bitset<> Object::objRefFlagsMask = ~Object::objRefFlagsSet;
+
 bool Object::operator< (const Object& t) const {
     return(getCompareStr().compare(t.getCompareStr()) < 0);
 }

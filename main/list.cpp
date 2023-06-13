@@ -34,7 +34,7 @@
 #include "dice.hpp"                            // for Dice
 #include "effects.hpp"                         // for EffectList, operator<<
 #include "join.hpp"                            // for join, mjoin
-#include "lasttime.hpp"                        // for operator<<, crlasttime
+#include "lasttime.hpp"                        // for operator<<, CRLastTime
 #include "money.hpp"                           // for GOLD, Money
 #include "mudObjects/monsters.hpp"             // for Monster
 #include "mudObjects/objects.hpp"              // for Object

@@ -547,7 +547,7 @@ void MudObject::readCreatures(xmlNodePtr curNode, bool offline) {
 //*********************************************************************
 // Loads a single crlasttime into the given lasttime
 
-void loadCrLastTime(xmlNodePtr curNode, struct crlasttime* pCrLastTime) {
+void loadCrLastTime(xmlNodePtr curNode, CRLastTime* pCrLastTime) {
     xmlNodePtr childNode = curNode->children;
 
     while(childNode) {
@@ -996,7 +996,7 @@ xmlNodePtr saveDaily(xmlNodePtr parentNode, int i, struct daily pDaily) {
 //                      saveCrLastTime
 //*********************************************************************
 
-xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, const struct crlasttime& pCrLastTime) {
+xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, const CRLastTime& pCrLastTime) {
     // Avoid writing un-used last times
     if(!pCrLastTime.interval && !pCrLastTime.ltime && !pCrLastTime.cr.id)
         return(nullptr);

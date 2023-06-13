@@ -828,7 +828,7 @@ int dmResave(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // floor into a permanent object.
 
 int dmPerm(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    std::map<int, crlasttime>::iterator it;
+    std::map<int, CRLastTime>::iterator it;
     std::shared_ptr<Monster>  target=nullptr;
     std::shared_ptr<Object> object=nullptr;
     int     x=0;

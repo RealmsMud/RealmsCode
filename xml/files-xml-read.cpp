@@ -137,7 +137,7 @@ void loadBitset(xmlNodePtr curNode, boost::dynamic_bitset<>& bits) {
 //*********************************************************************
 // This function will load all lasttimer into the given lasttime array
 
-void loadLastTimes(xmlNodePtr curNode, struct lasttime* pLastTimes) {
+void loadLastTimes(xmlNodePtr curNode, LastTime* pLastTimes) {
     xmlNodePtr childNode = curNode->children;
     int i=0;
 
@@ -156,7 +156,7 @@ void loadLastTimes(xmlNodePtr curNode, struct lasttime* pLastTimes) {
 //*********************************************************************
 // Loads a single lasttime into the given lasttime
 
-void loadLastTime(xmlNodePtr curNode, struct lasttime* pLastTime) {
+void loadLastTime(xmlNodePtr curNode, LastTime* pLastTime) {
     xmlNodePtr childNode = curNode->children;
 
     while(childNode) {

@@ -26,6 +26,7 @@
 #include <string_view>
 
 #include "catRef.hpp"       // for CatRef
+#include "json.hpp"
 
 
 class Range {
@@ -43,6 +44,8 @@ public:
 
     CatRef  low;
     short   high;
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Range, low, high);
 };
 
 

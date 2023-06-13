@@ -19,3 +19,11 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include <boost/dynamic_bitset.hpp>
+
+using json = nlohmann::json;
+
+namespace boost {
+    void to_json(nlohmann::json &j, const boost::dynamic_bitset<> &b);
+    void from_json(const nlohmann::json &j, boost::dynamic_bitset<> &b);
+}

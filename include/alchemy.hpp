@@ -25,6 +25,7 @@
 #include <string>           // for string, operator<=>, basic_string
 #include <string_view>      // for string_view
 #include <vector>           // for vector
+#include "json.hpp"
 
 class Creature;
 class Object;
@@ -113,6 +114,9 @@ public:
     [[nodiscard]] short getQuality() const;
 
     void setDuration(long newDuration);
+
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(AlchemyEffect, effect, quality, duration, strength);
 
 };
 

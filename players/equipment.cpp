@@ -40,7 +40,7 @@
 #include "flags.hpp"                           // for P_AFK, O_WORN, O_NO_DROP
 #include "global.hpp"                          // for HELD, WIELD, CreatureC...
 #include "group.hpp"                           // for GROUP_SPLIT_GOLD, Group
-#include "lasttime.hpp"                        // for lasttime, crlasttime
+#include "lasttime.hpp"                        // for lasttime, CRLastTime
 #include "money.hpp"                           // for Money, GOLD
 #include "mud.hpp"                             // for LT_KICK, LT_MIST, LT_PEEK
 #include "mudObjects/areaRooms.hpp"            // for AreaRoom
@@ -941,8 +941,8 @@ bool storageProperty(const std::shared_ptr<Player>& player, const std::shared_pt
 // time for that item is updated.
 
 void getPermObj(const std::shared_ptr<Object>&  object) {
-    std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=nullptr;
+    std::map<int, CRLastTime>::iterator it;
+    CRLastTime* crtm=nullptr;
     std::shared_ptr<Object> temp_obj;
     std::shared_ptr<UniqueRoom> room=nullptr;
     long    t = time(nullptr);
