@@ -397,6 +397,7 @@ public:
     std::string statCrt(int statFlags);
     int displayFlags() const;
     std::string alignColor() const;
+    std::string alignString() const;
     std::string fullName() const;
     const char *hisHer() const;
     const char *himHer() const;
@@ -537,6 +538,7 @@ public:
 
     bool isPureCaster() const;
     bool isHybridCaster() const;
+    bool hatesEnemy(std::shared_ptr<Creature> enemy) const;
 
 // Equipment / Inventory
     void addObj(const std::shared_ptr<Object>&  object);
@@ -618,6 +620,8 @@ public:
     void setLevel(unsigned short l, bool isDm=false);
     void setAlignment(short a);
     void subAlignment(unsigned short a); // *
+    void shiftAlignment(short shift, bool silent=false);
+    void setOppositeAlignment(bool silent=false);
     void setArmor(int a);
     void setAttackPower(int a);
     void setDeity(unsigned short d);

@@ -105,7 +105,7 @@ enum NpcTrades {
     NOTRADE = 0,
     SMITHY = 1,
     BANKER = 2,
-    ARMOROR = 3,
+    ARMORER = 3,
     WEAPONSMITH = 4,
     MERCHANT = 5,
     TRAINING_PERM = 6,
@@ -149,14 +149,56 @@ const int MAX_SAVE_COLOR = 11;
 
 // Alignments
 enum Alignments {
-    BLOODRED = -3,
+    BLOODRED = -4,
+    RED = -3,
     REDDISH = -2,
     PINKISH = -1,
     NEUTRAL = 0,
     LIGHTBLUE = 1,
     BLUISH = 2,
-    ROYALBLUE = 3
+    BLUE = 3,
+    ROYALBLUE = 4
 };
+
+#define P_TOP_ROYALBLUE  1000
+#define P_BOTTOM_ROYALBLUE  856
+#define P_TOP_BLUE  855
+#define P_BOTTOM_BLUE  399 
+#define P_TOP_BLUISH  398
+#define P_BOTTOM_BLUISH  200
+#define P_TOP_LIGHTBLUE  199
+#define P_BOTTOM_LIGHTBLUE  119
+#define P_TOP_NEUTRAL  118
+#define P_BOTTOM_NEUTRAL  -118
+#define P_TOP_PINKISH  -119
+#define P_BOTTOM_PINKISH  -199
+#define P_TOP_REDDISH  -200
+#define P_BOTTOM_REDDISH  -398
+#define P_TOP_RED  -399
+#define P_BOTTOM_RED  -855
+#define P_TOP_BLOODRED  -856
+#define P_BOTTOM_BLOODRED  -1000
+
+#define M_TOP_ROYALBLUE  1000
+#define M_BOTTOM_ROYALBLUE  558
+#define M_TOP_BLUE  557
+#define M_BOTTOM_BLUE  299 
+#define M_TOP_BLUISH  298
+#define M_BOTTOM_BLUISH  118
+#define M_TOP_LIGHTBLUE  117
+#define M_BOTTOM_LIGHTBLUE  1
+#define M_TOP_NEUTRAL  0
+#define M_BOTTOM_NEUTRAL  0
+#define M_TOP_PINKISH  -1
+#define M_BOTTOM_PINKISH  -117
+#define M_TOP_REDDISH  -118
+#define M_BOTTOM_REDDISH  -298
+#define M_TOP_RED  -299
+#define M_BOTTOM_RED  -557
+#define M_TOP_BLOODRED  -558
+#define M_BOTTOM_BLOODRED  -1000
+
+
 // Attack types
 enum AttackTypes {
     PHYSICAL = 1,
@@ -220,8 +262,19 @@ enum Languages {
     LABYSSAL = 22,
     LTIEFLING = 23,
     LKENKU = 24,
+    LFEY = 25,
+    LLIZARDMAN = 26,
+    LCENTAUR = 27,
+    LDUERGAR = 28,
+    LGNOLL = 29,
+    LBUGBEAR = 30,
+    LHOBGOBLIN = 31,
+    LBROWNIE = 32,
+    LFIRBOLG = 33,
+    LSATYR = 34,
+    LQUICKLING = 35,
 
-    LANGUAGE_COUNT = 25
+    LANGUAGE_COUNT = 36
 };
 
 // positions in the color array

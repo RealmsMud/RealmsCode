@@ -159,7 +159,7 @@
 // free             90
 #define LT_ENLARGE_REDUCE   91
 #define LT_ANCHOR       92
-// free             93
+#define LT_STARSTRIKE       93
 // free             94
 // free             95
 // free             96

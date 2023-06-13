@@ -143,6 +143,7 @@ void dmSaveMob(const std::shared_ptr<Player>& player, cmd* cmnd, const CatRef& c
 int dmAddMob(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmForceWander(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmBalance(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmAlignment(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // dmobj.c

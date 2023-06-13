@@ -216,8 +216,9 @@ void showGuildsNeedingApproval(std::shared_ptr<Player> viewer);
 bool canRemovePlyFromGuild(std::shared_ptr<Player> player);
 
 
-// healers.cpp
+// alignment.cpp
 bool antiGradius(int race);
+
 
 
 

@@ -277,6 +277,7 @@ int cmdRegenerate(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdCreepingDoom(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdPoison(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdEarthSmother(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdDrainLife(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdFocus(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdBarkskin(const std::shared_ptr<Player>& player, cmd* cmnd);

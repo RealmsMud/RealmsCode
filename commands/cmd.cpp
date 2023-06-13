@@ -302,7 +302,10 @@ bool Config::initCommands() {
     staffCommands.emplace("*enemy", 100, dmListEnemy, isCt, "Show the enemies of a monster.");
     staffCommands.emplace("*charm", 100, dmListCharm, isCt, "Show the charm list of a player.");
     staffCommands.emplace("*wander", 100, dmForceWander, builderMob, "Force a monster to wander away.");
+    staffCommands.emplace("*alignment", 100, dmAlignment, isCt, "Manipulate a mob or player's alignment.");
     staffCommands.emplace("*balance", 95, dmBalance, builderMob, "Balance a monster to a certain level.");
+
+
 
 
     // dmobj.c
@@ -637,6 +640,7 @@ bool Config::initCommands() {
     playerCommands.emplace("shoplift", 100, cmdShoplift, nullptr, "");
     playerCommands.emplace("sell", 100, cmdSell, nullptr, "Sell an item.");
     playerCommands.emplace("value", 100, cmdValue, nullptr, "Check the value of an item.");
+    playerCommands.emplace("appraise", 100, cmdValue, nullptr, "Check the value of an item.");
     playerCommands.emplace("cost", 100, cmdCost, nullptr, "");
     playerCommands.emplace("purchase", 90, cmdPurchase, nullptr, "");
     playerCommands.emplace("selection", 100, cmdSelection, nullptr, "");
@@ -665,6 +669,8 @@ bool Config::initCommands() {
     playerCommands.emplace("creep", 100, cmdCreepingDoom, nullptr, "");
     playerCommands.emplace("poison", 100, cmdPoison, nullptr, "");
     playerCommands.emplace("smother", 100, cmdEarthSmother, nullptr, "");
+    playerCommands.emplace("starstrike", 100, cmdStarstrike, nullptr, "");
+    playerCommands.emplace("ss", 100, cmdStarstrike, nullptr, "");
     playerCommands.emplace("bribe", 100, cmdBribe, nullptr, "Bribe a monster to leave the room.");
     playerCommands.emplace("frenzy", 100, cmdFrenzy, nullptr, "");
     playerCommands.emplace("pray", 100, cmdPray, nullptr, "");

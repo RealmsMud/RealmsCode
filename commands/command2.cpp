@@ -340,6 +340,7 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdRoominfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int count=0;
+    std::shared_ptr<Monster> npctrader=nullptr;
     std::ostringstream oStr;
 
     player->clearFlag(P_AFK);
@@ -484,6 +485,10 @@ int cmdRoominfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if (player->getRoomParent()->flagIsSet(R_OPPOSITE_REALM_BONUS)) {
         count++;
         oStr << "^wOpposing Realm Bonus^x: Opposing magic realm of the room gains magical enhancement.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_SHOP)) {
+        count++;
+        oStr << "^yShop^x: This room is a shop. Use the 'list' command to see what you can buy.\n";
     }
     if (player->getRoomParent()->flagIsSet(R_PAWN_SHOP) || player->getRoomParent()->flagIsSet(R_SHOP)) {
         count++;
@@ -652,12 +657,43 @@ int cmdRoominfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
             oStr << "^BWater Realm Damage^x: This room will cause water realm damage.\n";
         }
         if (player->getRoomParent()->flagIsSet(R_ELEC_BONUS)) {
-            oStr << "^bElectric Realm Damage^x: This room will cause electric realm damage.\n";
+            oStr << "^cElectric Realm Damage^x: This room will cause electric realm damage.\n";
         }
         if (player->getRoomParent()->flagIsSet(R_COLD_BONUS)) {
             oStr << "^CCold Realm Damage^x: This room will cause cold realm damage.\n";
         }
     }
+
+    // Search for NPC perms with professions
+    for (short npcprof=SMITHY; npcprof != MOBTRADE_COUNT; npcprof++) {
+        npctrader = player->getRoomParent()->findNpcTrader(player, npcprof);
+        if (npctrader) {
+                count++;
+                switch (npcprof) {
+                case SMITHY:
+                    oStr << "^RSmithy^x: This room has one or more smiths that can fix your weapons and armor.\n";
+                    continue;
+                case BANKER:
+                    oStr << "^YBank^x: This room is a bank. You can use banking commands here.\n";
+                    continue;
+                case ARMORER:
+                    oStr << "^WArmorer^x: This room has one or more armorers that can make armor for you.\n";
+                    continue;
+                case WEAPONSMITH:
+                    oStr << "^wWeaponsmith^x: This room has one or more weaponsmiths that can smith weapons for you.\n";
+                    continue;
+                case MERCHANT:
+                    oStr << "^wMerchant^x: This room has at least one merchant which buys/sells items.\n";
+                    continue;
+                case TRAINING_PERM:
+                    oStr << "^GTrainer^x: This room has one or more NPC trainers. Players can train up skills here.\n";
+                    continue;
+                default:
+                    continue;
+                }
+        }
+    }
+
 
     if (count < 1 || player->getRoomParent()->flagIsSet(R_NO_ROOMINFO)) {
         *player << "There isn't anything extra special about this room.\n";

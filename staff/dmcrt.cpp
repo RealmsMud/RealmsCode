@@ -32,6 +32,7 @@
 #include <set>                                 // for set
 #include <sstream>                             // for operator<<, basic_ostream
 #include <string>                              // for string, operator<<
+#include <regex>
 #include <string_view>                         // for operator<<
 
 #include "calendar.hpp"                        // for cDay
@@ -670,6 +671,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     i=0, num=0, test=0, a=0, sp=0,  rnum=0, f=0;
     std::shared_ptr<Object> object=nullptr;
     bool    ctModBuilder=false;
+    std::string intText="", objText="";
 
     if(player->getClass() == CreatureClass::BUILDER) {
         if(!player->canBuildMonsters())
@@ -796,9 +798,42 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         } else if(!strcmp(cmnd->str[3], "al")) {
 
+            std::string align_txt = cmnd->str[4];
+
+            if (!align_txt.empty()) {
+                bool al_match=true;
+
+                if (align_txt == "bloodred")
+                    target->setAlignment((short)(target->isPlayer()?((P_TOP_BLOODRED+P_BOTTOM_BLOODRED)/2):((M_TOP_BLOODRED+M_BOTTOM_BLOODRED)/2)));
+                else if (align_txt == "red")
+                    target->setAlignment((short)(target->isPlayer()?((P_TOP_RED+P_BOTTOM_RED)/2):((M_TOP_RED+M_BOTTOM_RED)/2)));
+                else if (align_txt == "reddish")
+                    target->setAlignment((short)(target->isPlayer()?((P_TOP_REDDISH+P_BOTTOM_REDDISH)/2):((M_TOP_REDDISH+M_BOTTOM_REDDISH)/2)));
+                else if (align_txt == "pinkish")
+                     target->setAlignment((short)(target->isPlayer()?((P_TOP_PINKISH+P_BOTTOM_PINKISH)/2):((M_TOP_PINKISH+M_BOTTOM_PINKISH)/2)));
+                else if (align_txt == "neutral")
+                     target->setAlignment(0);
+                else if (align_txt == "lightblue")
+                     target->setAlignment((short)(target->isPlayer()?((P_TOP_LIGHTBLUE+P_BOTTOM_LIGHTBLUE)/2):((M_TOP_LIGHTBLUE+M_BOTTOM_LIGHTBLUE)/2)));
+                else if (align_txt == "bluish")
+                    target->setAlignment((short)(target->isPlayer()?((P_TOP_BLUISH+P_BOTTOM_BLUISH)/2):((M_TOP_BLUISH+M_BOTTOM_BLUISH)/2)));
+                else if (align_txt == "blue")
+                    target->setAlignment((short)(target->isPlayer()?((P_TOP_BLUE+P_BOTTOM_BLUE)/2):((M_TOP_BLUE+M_BOTTOM_BLUE)/2)));
+                else if (align_txt == "royalblue")
+                    target->setAlignment((short)(target->isPlayer()?((P_TOP_ROYALBLUE+P_BOTTOM_ROYALBLUE)/2):((M_TOP_ROYALBLUE+M_BOTTOM_ROYALBLUE)/2)));
+                else {
+                    al_match=false;
+                    *player << ColorOn << "^yInvalid alignment: '" << align_txt << "'\nEnter in alignment name or number. i.e. name: bloodred, red, royalblue, etc.. or number (-1000 to 1000)\nNOTE: 'royal blue' or 'blood red' will not work. Use no spaces.\n" << ColorOff;
+                    break;
+                }
+            if (al_match)
+                *player << ColorOn << setf(CAP) << target << "'s alignment value is now set to median " << target->alignColor() << target->alignString() << "^x. (" << target->getAlignment() << ") [" << (target->isPlayer()?"Player":"Monster") << "]\n" << ColorOff; 
+            break;
+            }
+
             target->setAlignment((short)cmnd->val[3]);
 
-            player->print("Alignment set.\n");
+            *player << ColorOn << setf(CAP) << target << "'s alignment value is now set to " << target->getAlignment() << ". " << target->alignColor() << "(" << target->alignString() << ")\n" << ColorOff;
             log_immort(true, player, "%s set %s %s's alignment to %d.\n",
                 player->getCName(), PLYCRT(target), target->getCName(), target->getAlignment());
             break;
@@ -1383,7 +1418,15 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             char action=0;
 
             if(!txt.empty()) {
-                inv = toNum<int>(txt);
+               //inv = cmnd->val[3];
+                boost::trim(txt);
+                //inv = toNum<int>(txt);
+                intText = std::regex_replace(txt, std::regex(R"([\D])"), "");
+                objText = std::regex_replace(txt, std::regex(R"([0-9])"), "");
+                objText.erase(remove_if(objText.begin(), objText.end(), isspace), objText.end());
+                inv = toNum<int>(intText);
+
+
                 if(!inv) {
                     action = txt.at(0);
                 } else {
@@ -1425,7 +1468,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     player->getCName(), mTarget->getCName());
                 break;
             }
-            object = player->findObject(player, cmnd->str[4], 1);
+            object = player->findObject(player, objText, 1);
             if(!object) {
                 player->print("You are not carrying that.\n");
                 return(0);
@@ -2844,3 +2887,137 @@ int dmBalance(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     return(0);
 }
+
+//****************************************************************************
+//                      dmAlignment
+//****************************************************************************
+// This function allows a CT or DM to manipulate a mob or player's alignment.
+
+int dmAlignment(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::string operation_text="",alignName="";
+    short operation=0,alignValue=0,alignShiftValue=0;
+
+    if (cmnd->num < 2) {
+        *player << "View of manipulate alignment on which player or mob?\n";
+        return(0);
+    }
+
+    //Look for monsters in same room first
+    creature = player->getParent()->findMonster(player, cmnd);
+    //Look for players if no monster found
+    if (!creature) {
+        lowercize(cmnd->str[1], 1);
+        creature = gServer->findPlayer(cmnd->str[1]);
+        if(!creature || !player->canSee(creature)) {
+                *player << "Monster not found or player not online.\n";
+                return(0);
+            }
+    }
+
+    if (!creature) {
+        *player << "ERROR: something went terribly wrong. Aborting.\n";
+        return(0);
+    }
+    
+
+    if (cmnd->num < 3) {
+        *player << "Syntax: *align player|mob show\n";
+        *player << "        *align player|mob set (alignment_name|#)\n";
+        *player << "        *align player|mob shift (-8 to 8) - not 0\n";
+        *player << "        *align player|mob opposite\n";
+
+        return(0);
+    }
+
+
+    operation_text = cmnd->str[2];
+    if (operation_text == "set")
+        operation = 1;
+    else if (operation_text == "shift")
+        operation = 2;
+    else if (operation_text == "show")
+        operation = 3;
+    else if (operation_text == "opposite")
+        operation = 4;
+    else {
+        *player << "Syntax: *align player|mob show\n";
+        *player << "        *align player|mob set (alignment_name|#)\n";
+        *player << "        *align player|mob shift (-8 to 8) - not 0\n";
+        *player << "        *align player|mob opposite\n";
+        return(0);
+    }
+
+    switch(operation) {
+    case 1: // set alignment
+        alignName = cmnd->str[3];
+        if (!alignName.empty()) {
+                if (alignName == "bloodred")
+                    creature->setAlignment((short)(creature->isPlayer()?((P_TOP_BLOODRED+P_BOTTOM_BLOODRED)/2):((M_TOP_BLOODRED+M_BOTTOM_BLOODRED)/2)));
+                else if (alignName == "red")
+                    creature->setAlignment((short)(creature->isPlayer()?((P_TOP_RED+P_BOTTOM_RED)/2):((M_TOP_RED+M_BOTTOM_RED)/2)));
+                else if (alignName == "reddish")
+                    creature->setAlignment((short)(creature->isPlayer()?((P_TOP_REDDISH+P_BOTTOM_REDDISH)/2):((M_TOP_REDDISH+M_BOTTOM_REDDISH)/2)));
+                else if (alignName == "pinkish")
+                     creature->setAlignment((short)(creature->isPlayer()?((P_TOP_PINKISH+P_BOTTOM_PINKISH)/2):((M_TOP_PINKISH+M_BOTTOM_PINKISH)/2)));
+                else if (alignName == "neutral")
+                     creature->setAlignment(0);
+                else if (alignName == "lightblue")
+                     creature->setAlignment((short)(creature->isPlayer()?((P_TOP_LIGHTBLUE+P_BOTTOM_LIGHTBLUE)/2):((M_TOP_LIGHTBLUE+M_BOTTOM_LIGHTBLUE)/2)));
+                else if (alignName == "bluish")
+                    creature->setAlignment((short)(creature->isPlayer()?((P_TOP_BLUISH+P_BOTTOM_BLUISH)/2):((M_TOP_BLUISH+M_BOTTOM_BLUISH)/2)));
+                else if (alignName == "blue")
+                    creature->setAlignment((short)(creature->isPlayer()?((P_TOP_BLUE+P_BOTTOM_BLUE)/2):((M_TOP_BLUE+M_BOTTOM_BLUE)/2)));
+                else if (alignName == "royalblue")
+                    creature->setAlignment((short)(creature->isPlayer()?((P_TOP_ROYALBLUE+P_BOTTOM_ROYALBLUE)/2):((M_TOP_ROYALBLUE+M_BOTTOM_ROYALBLUE)/2)));
+                else {
+                    *player << ColorOn << "^yInvalid alignment: '" << alignName << "'\nEnter in alignment name or a number. i.e. name: bloodred, red, royalblue, etc.. or number (-1000 to 1000)\nNOTE: 'royal blue' or 'blood red' will not work. Use no spaces.\n" << ColorOff;
+                    return(0);
+                }
+            *player << ColorOn << setf(CAP) << creature << "'s alignment value is now set to median " << creature->alignColor() << creature->alignString() << "^x. (" << creature->getAlignment() << ") [" << (creature->isPlayer()?"Player":"Monster") << "]\n" << ColorOff; 
+            break;
+            }
+        alignValue = (short)cmnd->val[2];
+        alignValue = std::max<short>(-1000,std::min<short>(1000,alignValue));
+
+        creature->setAlignment((short)alignValue);
+
+        *player << ColorOn << setf(CAP) << creature << "'s alignment value is now set to " << creature->getAlignment() << ". " << creature->alignColor() << "(" << creature->alignString() << ")\n" << ColorOff;
+        log_immort(true, player, "%s set %s %s's alignment to %d(%s).\n",
+                        player->getCName(), PLYCRT(creature), creature->getCName(), creature->getAlignment(), creature->alignString().c_str());
+
+        break;
+    case 2: // shift alignment
+        alignShiftValue = cmnd->val[2];
+        if (alignShiftValue == 0 || alignShiftValue < -8 || alignShiftValue > 8) {
+            *player << setf(CAP) << creature << "'s alignment remains unshifted. Please enter a non-zero value between -8 and 8.\n";
+            return(0);
+        }
+        *player << ColorOn << setf(CAP) << creature << "'s alignment has been shifted " << intToText(abs(alignShiftValue),false) << " tier" << (abs(alignShiftValue)>1?"s":"") << " from " << creature->alignColor() << creature->alignString() << "(" << creature->getAlignment() << ")";
+        creature->shiftAlignment(alignShiftValue,true);
+        *player << "^x to median " << creature->alignColor() << creature->alignString() << "(" << creature->getAlignment() << ")\n" << ColorOff;
+        break;
+    case 3: // show alignment
+        *player << ColorOn << setf(CAP) << creature << "'s current alignment is " << creature->getAlignment() << ". (" << creature->alignColor() << creature->alignString() << "^x) [" << (creature->isPlayer()?"Player":"Monster") << "]\n" << ColorOff;
+        return(0); // so player doesn't save
+    case 4: // set opposite alignment
+        if (creature->getAdjustedAlignment() == NEUTRAL) {
+            *player << setf(CAP) << creature << "'s alignment is currently neutral! There is no opposite.\n";
+            return(0);
+        }
+        *player << ColorOn << setf(CAP) << creature << "'s alignment has been shifted from " << creature->alignColor() << creature->alignString() << "(" << creature->getAlignment() << ")";
+        creature->setOppositeAlignment(true);
+        *player << "^x to median " << creature->alignColor() << creature->alignString() << "(" << creature->getAlignment() << ")\n" << ColorOff;
+
+    break;
+    default:
+        break;
+
+    }
+
+    if (creature->isPlayer())
+            creature->getAsPlayer()->save(true);
+
+    return(0);
+}
+

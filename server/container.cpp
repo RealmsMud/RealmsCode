@@ -389,6 +389,20 @@ std::shared_ptr<Monster>  Container::findMonster(const std::shared_ptr<const Cre
         return(target);
     }
 }
+
+std::shared_ptr<Monster>  Container::findNpcTrader(const std::shared_ptr<const Creature>& searcher, const short profession) const {
+    std::shared_ptr<Monster> target=nullptr;
+    for(const auto& mons : searcher->getParent()->monsters) {
+        if (mons->getMobTrade() == profession) {
+            target = mons;
+            break;
+        }
+
+    }
+
+    return(target);
+}
+
 std::shared_ptr<Player> Container::findPlayer(const std::shared_ptr<const Creature>& searcher, cmd* cmnd, int num) const {
     return(findPlayer(searcher, cmnd->str[num], cmnd->val[num]));
 }
