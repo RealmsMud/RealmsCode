@@ -118,8 +118,9 @@ private:
     // Completion Info
     CatRef turnInMob;                           // Monster that we turn this quest into for completion
     Money cashReward;                           // Coin Reward
-    long expReward{};                             // Exp reward
-    short alignmentChange{};			            // Amount alignment changes upon quest completion
+    long expReward{};                           // Exp reward
+    short alignmentChange{};			        // Amount alignment changes by this amount upon quest completion
+    short alignmentShift{};                     // Alignment will shift this many tiers upon quest completion
     std::list<QuestCatRef> itemRewards;         // Items rewarded on completion
     std::map<std::string, long> factionRewards; // Factions to be modified
 

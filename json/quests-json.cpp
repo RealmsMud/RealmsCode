@@ -55,6 +55,7 @@ void to_json(nlohmann::json &j, const QuestInfo &quest) {
     to_json("cashReward", rewards, quest.cashReward);
     rewards["expReward"] = quest.expReward;
     rewards["alignmentChange"] = quest.alignmentChange;
+    rewards["alignmentShift"] = quest.alignmentShift;
     if(!quest.itemRewards.empty()) rewards["itemRewards"] = quest.itemRewards;
     if(!quest.factionRewards.empty()) rewards["factionRewards"] = quest.factionRewards;
 
@@ -90,6 +91,7 @@ void from_json(const nlohmann::json &j, QuestInfo &quest) {
     from_json("cashReward", rewards, quest.cashReward);
     quest.expReward = rewards.at("expReward").get<long>();
     quest.alignmentChange = rewards.at("alignmentChange").get<short>();
+    quest.alignmentShift = rewards.at("alignmentShift").get<short>();
     if(req.contains("itemRewards")) rewards.at("itemRewards").get_to(quest.itemRewards);
     if(req.contains("factionRewards")) rewards.at("factionRewards").get_to(quest.factionRewards);
 

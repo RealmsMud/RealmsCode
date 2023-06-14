@@ -1021,6 +1021,18 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
         myPlayer->setAlignment(std::max<short>(-1000, std::min<short>(1000,(myPlayer->getAlignment()+parentQuest->alignmentChange))));
         myPlayer->alignAdjustAcThaco();
     }
+    if(parentQuest->alignmentShift) {
+        std::ostringstream oStr;
+
+        if (myPlayer->isStaff())
+            oStr << "AlignShift: " << parentQuest->alignmentShift << "\n";
+        oStr << (parentQuest->alignmentShift > 0?"^b":"^r") << "You have done quite " << (parentQuest->alignmentShift > 0?"a good":"an evil") << " deed.";
+        *myPlayer << ColorOn << oStr.str() << ColorOff << "\n";
+
+        // No need to add to oStr: The shiftAlignment() function handles alignment shift output to the player so long as false is passed to it
+        myPlayer->shiftAlignment(parentQuest->alignmentShift, false);
+        myPlayer->alignAdjustAcThaco();
+    }
     if(!parentQuest->factionRewards.empty())
         myPlayer->adjustFactionStanding(parentQuest->factionRewards);
 
