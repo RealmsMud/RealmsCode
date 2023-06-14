@@ -749,7 +749,6 @@ std::string QuestCompletion::getStatusDisplay() {
     else
         displayStr << "^y";
     displayStr << parentQuest->name << "^x\n";
-    //displayStr << parentQuest->name << "^x";
     displayStr << "Frequency:" << "^x";
     if(parentQuest->timesRepeatable)
         displayStr << " ^G*Repeatable Limited*^x";
@@ -763,19 +762,6 @@ std::string QuestCompletion::getStatusDisplay() {
     }
     else
         displayStr << " ^G*Offered Once*^x";
-
-/*
-    if(parentQuest->alignmentChange != 0) {
-        displayStr << (parentQuest->alignmentChange<0?"^R":"^B") << " *Alignment --> " << (parentQuest->alignmentChange<0?"evil":"good") << "*^x";
-    }
-
-    if(parentQuest->alignmentShift > 0 || parentQuest->alignmentShift < 0) {
-        displayStr << (parentQuest->alignmentShift<0?"^R":"^B") << " *Alignment --> " << (parentQuest->alignmentShift<0?"evil":"good") << 
-                                                                    " (" << intToText(abs(parentQuest->alignmentShift),false) << " tier" << (abs(parentQuest->alignmentShift)>1?"s":"") << ")*^x";
-    }
-*/
-
-
 
     displayStr << std::endl;
 
