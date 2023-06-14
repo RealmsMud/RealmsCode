@@ -186,8 +186,8 @@ void Creature::shiftAlignment(short shift, bool silent) {
     
 
     if (cPlayer && !silent) {
-        *this << ColorOn << ((shift<0)?"^r":"^b") << "Your alignment has been shifted " << intToText(abs(shift),false) << " tier" << (abs(shift)>1?"s":"") << " in the direction of " << ((shift<0)?"evil":"good") << ".\n" << ColorOff;
-        *this << ColorOn << ((shift<0)?"^r":"^b") << "Your alignment is now " << alignColor() << alignString() << ((shift<0)?"^r":"^b") << ".\n" << ColorOff;
+        *this << ColorOn << "Your alignment has been shifted " << intToText(abs(shift),false) << " tier" << (abs(shift)>1?"s":"") << " in the direction of " << ((shift<0)?"^R":"^B") << ((shift<0)?"evil":"good") << "^x." << ColorOff;
+        *this << ColorOn << " It is now " << alignColor() << alignString() << ((shift<0)?"^r":"^b") << "^x.\n" << ColorOff;
     }
     
     return;
