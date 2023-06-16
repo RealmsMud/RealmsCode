@@ -353,8 +353,6 @@ int list_players() {
     std::string pass, lastLoginString;
     long lastLogin=0;
     
-    std::copy(player_start, player_end, std::back_inserter(player));
-    std::sort(player.begin(), player.end());
     for (const fs::path& ply : player) {
         if (fs::is_regular_file(ply)) {
             auto lPlayer = std::make_shared<Player>();
