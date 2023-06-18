@@ -652,7 +652,6 @@ void Player::plyReset() {
         delete (*qIt).second;
     }
     questsCompleted.clear();
-    gamblingState = {};
 }
 
 //*********************************************************************
