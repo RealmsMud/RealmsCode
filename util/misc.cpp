@@ -875,12 +875,8 @@ std::string progressBar(int barLength, float percentFull, const std::string &tex
 
 std::vector<std::string> splitString(std::string s, std::string delimiter)
 {
-    if (s.length() > 0) {
-        std::vector<std::string> result;
-        return boost::split(result, s, boost::is_any_of(delimiter));
-    } else {
-        return {};
-    }
+    std::vector<std::string> result;
+    return boost::split(result, s, boost::is_any_of(delimiter));
 }
 
 //*********************************************************************
