@@ -116,6 +116,7 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
                 if(NODE_NAME(childNode, "Coins")) cashReward.load(childNode);
                 else if(NODE_NAME(childNode, "Experience")) xml::copyToNum(expReward, childNode);
                 else if(NODE_NAME(childNode, "AlignmentChange")) xml::copyToNum(alignmentChange, childNode);
+                else if(NODE_NAME(childNode, "AlignmentShift")) xml::copyToNum(alignmentShift, childNode);
                 else if(NODE_NAME(childNode, "Object")) itemRewards.emplace_back(childNode);
                 else if(NODE_NAME(childNode, "Faction")) {
                     xml::copyPropToString(faction, childNode, "id");

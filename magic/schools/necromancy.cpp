@@ -69,6 +69,7 @@ int splHarm(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
     case ARES:
     case KAMIRA:
     case LINOTHAN:
+    case MARA:
         wrongdiety = 1;
         break;
     }

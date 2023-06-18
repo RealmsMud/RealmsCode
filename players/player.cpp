@@ -1130,12 +1130,11 @@ void Player::initLanguages() {
             break;
         case ELF:
             learnLanguage(LELVEN);
-            learnLanguage(LGNOMISH);
+            learnLanguage(LGOBLINOID);
             learnLanguage(LORCISH);
             break;
         case HALFELF:
             learnLanguage(LELVEN);
-            learnLanguage(LHALFLING);
             break;
         case HALFLING:
             learnLanguage(LHALFLING);
@@ -1216,9 +1215,7 @@ void Player::initLanguages() {
             learnLanguage(LKATARAN);
             break;
         case TIEFLING:
-            learnLanguage(LHALFLING);
             learnLanguage(LINFERNAL);
-            learnLanguage(LABYSSAL);
             learnLanguage(LORCISH);
             learnLanguage(LGOBLINOID);
             learnLanguage(LTIEFLING);
@@ -1233,6 +1230,9 @@ void Player::initLanguages() {
             learnLanguage(LTHIEFCANT);
             break;
         case CreatureClass::DRUID:
+            learnLanguage(LDRUIDIC);
+            learnLanguage(LFEY);
+            break;
         case CreatureClass::RANGER:
             learnLanguage(LDRUIDIC);
             break;
@@ -1243,10 +1243,33 @@ void Player::initLanguages() {
         case CreatureClass::LICH:
             learnLanguage(LARCANIC);
             break;
+        case CreatureClass::PALADIN:
+            switch(deity) {
+            case LINOTHAN:
+                learnLanguage(LFEY);
+                learnLanguage(LDRUIDIC);
+                break;
+            case ENOCH:
+                learnLanguage(LCELESTIAL);
+                break;
+            }
+            break;
+        case CreatureClass::DEATHKNIGHT:
+            switch(deity) {
+            case ARAMON:
+                learnLanguage(LINFERNAL);
+                learnLanguage(LABYSSAL);
+                break;
+            case ARACHNUS:
+                learnLanguage(LABYSSAL);
+                break;
+            }
+            break;
         case CreatureClass::CLERIC:
             switch(deity) {
             case ARAMON:
                 learnLanguage(LINFERNAL);
+                learnLanguage(LABYSSAL);
                 break;
             case ENOCH:
                 learnLanguage(LCELESTIAL);
@@ -1257,11 +1280,16 @@ void Player::initLanguages() {
             case KAMIRA:
                 learnLanguage(LTHIEFCANT);
                 break;
+            case MARA:
+            case LINOTHAN:
+                learnLanguage(LFEY);
+                learnLanguage(LDRUIDIC);
+                break;
             }
             break;
         default:
             break;
-    }
+        }
     }
 
 //*********************************************************************

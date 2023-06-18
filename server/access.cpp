@@ -77,9 +77,9 @@ char lang_color[LANGUAGE_COUNT][3] = {
     "^m",                       // Dark-Elven (Drow)
     "^g",                       // Goblinoid
     "^y",                       // Minotaur
-    "^b",                       // Celestial
+    "^B",                       // Celestial
     "^c",                       // Kobold
-    "^r",                       // Infernal
+    "^R",                       // Infernal
     "^y",                       // Schnai
     "^r",                       // Kataran
     "^g",                       // Druidic
@@ -89,11 +89,24 @@ char lang_color[LANGUAGE_COUNT][3] = {
     "^m",                       // Abyssal
     "^r",                       // Tiefling
     "^y",                       // Kenku
+    "^M",                       // Fey
+    "^g",                       // Lizardman
+    "^y",                       // Centaur
+    "^D",                       // Duergar
+    "^Y",                       // Gnoll
+    "^y",                       // Bugbear
+    "^G",                       // Hobgoblin
+    "^c",                       // Brownie
+    "^Y",                       // Firbolg
+    "^r",                       // Satyr
+    "^m",                       // Quickling
+
 };
 
 char language_adj[][32] = { "an alien language", "dwarven", "elven", "halfling", "common", "orcish", "giantkin",
         "gnomish", "trollish", "ogrish", "darkelf", "goblinoid", "minotaur", "celestial", "kobold", "infernal",
-        "barbarian", "kataran", "druidic", "wolfen", "thieves' cant", "arcanic", "abyssal", "tiefling", "kenku" };
+        "barbarian", "kataran", "druidic", "wolfen", "thieves' cant", "arcanic", "abyssal", "tiefling", "kenku",
+        "fey", "lizardman", "centaur", "duergar", "gnoll", "bugbear", "hobgoblin", "brownie", "firbolg", "satyr", "quickling"};
 
 char language_verb[][3][24] = {
     // Unknown (alien)
@@ -101,15 +114,15 @@ char language_verb[][3][24] = {
     // Dwarven
     {"mutter", "utter", "grumble"},
     // Elven
-    {"say", "speak", "eloquently say"},
+    {"say", "speak", "lecture"},
     // Halfling
     {"say", "speak", "utter"},
     // Common
-    {"say", "speak", "say"},
+    {"say", "speak", "chat"},
     // Orcish
     {"grunt", "squeal", "snort"},
     // Giantkin
-    {"boom", "speak", "say"},
+    {"boom", "speak", "bellow"},
     // Gnomish
     {"say", "speak", "utter"},
     // Trollish*/
@@ -117,7 +130,7 @@ char language_verb[][3][24] = {
     // Ogrish
     {"grunt", "snarl", "boom"},
     // Dark elven
-    {"snide", "sneer", "rapidly speak"},
+    {"scoff", "sneer", "preen"},
     // Goblinoid
     {"sputter", "snort", "cough"},
     // Minotaur
@@ -145,7 +158,30 @@ char language_verb[][3][24] = {
     // Tiefling
     {"jabber", "spit", "snarl"},
     //Kenku
-     {"squawk", "cluck", "chirp"}
+    {"squawk", "cluck", "screech"},
+    //Fey
+    {"sing", "whistle", "buzz"},
+    //Lizardman
+    {"hiss", "spit", "whisper"},
+    //Centaur
+    {"bray", "boom", "whinny"},
+    //Duergar
+    {"growl", "spit", "grumble"},
+    //Gnoll
+    {"yip", "bark", "growl"},
+    //Bugbear
+    {"gnarl", "grunt", "snarl"},
+    //Hobgoblin
+    {"snort", "stutter", "cough"},
+    //Brownie
+    {"squeak", "scritch", "shrill"},
+    //Firbolg
+    {"grunt", "bellow", "heavily cough"},
+    //Satyr
+    {"groan", "gutterly growl", "grunt"},
+    //Quickling
+    {"sputter", "rapidly squeak", "jabber"}
+
 };
 
 

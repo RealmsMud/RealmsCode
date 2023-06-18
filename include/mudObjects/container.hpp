@@ -99,6 +99,7 @@ public:
     std::shared_ptr<Monster>  findMonster(std::shared_ptr<const Creature> searcher,  cmd* cmnd, int num=1) const;
     std::shared_ptr<Monster>  findMonster(std::shared_ptr<const Creature> searcher, const std::string& name, int num, bool firstAggro = false, bool exactMatch = false) const;
     std::shared_ptr<Monster>  findMonster(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool firstAggro, bool exactMatch, int& match) const;
+    std::shared_ptr<Monster>  findNpcTrader(const std::shared_ptr<const Creature>& searcher, const short profession) const;
     std::shared_ptr<Player> findPlayer(const std::shared_ptr<const Creature>& searcher, cmd* cmnd, int num= 1) const;
     std::shared_ptr<Player> findPlayer(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch = false) const;
     std::shared_ptr<Player> findPlayer(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch, int& match) const;

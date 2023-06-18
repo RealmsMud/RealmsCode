@@ -407,10 +407,8 @@ int splCourage(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
             switch(player->getDeity()) {
             case CERIS:
             case ARAMON:
-            case GRADIUS:
             case ARACHNUS:
             case JAKAR:
-            case MARA:
                 noCast=1;
             break;
             }

@@ -1156,17 +1156,40 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
         break;
     case 'b':
-        lang = LBARBARIAN;
+        switch (cmnd->str[1][1]) {
+        case 'a':
+            lang = LBARBARIAN;
+            break;
+        case 'r':
+            lang = LBROWNIE;
+            break;
+        case 'u':
+            lang = LBUGBEAR;
+            break;
+        default:
+            player->print("You do not know that language.\n");
+            return(0);
+            break;
+        }
         break;
-
     case 'c':
         switch (cmnd->str[1][1]) {
         case 'a':
             lang = LINFERNAL;
             break;
         case 'e':
-            lang = LCELESTIAL;
-            break;
+            switch (cmnd->str[1][2]) {
+            case 'l':
+                lang = LCELESTIAL;
+                break;
+            case 'n':
+                lang = LCENTAUR;
+                break;
+            default:
+                player->print("You do not know that language.\n");
+                return(0);
+                break;        
+            }
         case 'o':
             lang = LCOMMON;
             break;
@@ -1184,6 +1207,9 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
         case 'r':
             lang = LDRUIDIC;
             break;
+        case 'u':
+            lang = LDUERGAR;
+            break;
         case 'w':
             lang = LDWARVEN;
             break;
@@ -1196,14 +1222,44 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
     case 'e':
         lang = LELVEN;
         break;
+    case 'f':
+        switch (cmnd->str[1][1]) {
+        case 'e':
+            lang = LFEY;
+            break;
+        case 'i':
+            lang = LFIRBOLG;
+        default:
+            player->print("You do not know that language.\n");
+            return(0);
+            break;
+        }
+        break;
     case 'g':
         switch (cmnd->str[1][1]) {
         case 'i':
             lang = LGIANTKIN;
             break;
         case 'n':
-            lang = LGNOMISH;
-            break;
+            switch (cmnd->str[1][2]) {
+            case 'o':
+                switch (cmnd->str[1][3]) {
+                case 'l':
+                    lang = LGNOLL;
+                    break;
+                case 'm':
+                    lang = LGNOMISH;
+                    break;
+                default:
+                    player->print("You do not know that language.\n");
+                    return(0);
+                    break;
+                }
+            default:
+                player->print("You do not know that language.\n");
+                return(0);
+                break;
+            }
         case 'o':
             lang = LGOBLINOID;
             break;
@@ -1215,6 +1271,9 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
         break;
     case 'h':
         switch (cmnd->str[1][1]) {
+        case 'o':
+            lang = LHOBGOBLIN;
+            break;
         case 'u':
             lang = LCOMMON;
             break;
@@ -1241,7 +1300,6 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
                 break;
             }
-            break;
         }
         break;
     case 'i':
@@ -1264,6 +1322,9 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
         }
         break;
+    case 'l':
+        lang = LLIZARDMAN;
+        break;
     case 'm':
         lang = LMINOTAUR;
         break;
@@ -1281,8 +1342,14 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
         }
         break;
+    case 'q':
+        lang = LQUICKLING;
+        break;
     case 's':
         switch (cmnd->str[1][1]) {
+        case 'a':
+            lang = LSATYR;
+            break;
         case 'e':
             lang = LCELESTIAL;
             break;

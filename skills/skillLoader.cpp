@@ -401,6 +401,11 @@ bool Config::loadSkills() {
         .gainType(SkillGainType::MEDIUM)
     , skills);
     addToMap(SkillInfoBuilder()
+        .name("starstrike").displayName("Starstrike")
+        .group("offensive")
+        .gainType(SkillGainType::MEDIUM)
+    , skills);
+    addToMap(SkillInfoBuilder()
         .name("backstab").displayName("Backstab")
         .group("offensive")
     , skills);
