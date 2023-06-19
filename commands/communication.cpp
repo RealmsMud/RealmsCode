@@ -1181,7 +1181,6 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
             switch (cmnd->str[1][2]) {
             case 'l':
                 lang = LCELESTIAL;
-                *player << "lang = " << lang << "\n";
                 break;
             case 'n':
                 lang = LCENTAUR;
