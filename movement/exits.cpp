@@ -455,7 +455,13 @@ bool Player::showExit(const std::shared_ptr<Exit>& exit, int magicShowHidden) co
 void Exit::addEffectReturnExit(const std::string &effect, long duration, int strength, const std::shared_ptr<Creature> & owner) {
     std::shared_ptr<BaseRoom> targetRoom=nullptr;
 
-    addEffect(effect, duration, strength, nullptr, true, owner);
+
+    addEffect(effect, duration, strength, nullptr, true, owner); 
+
+    targetRoom = target.loadRoom();
+    if (!targetRoom)
+        return;
+    
     // switch the meaning of exit
     std::shared_ptr<Exit> exit = getReturnExit(owner->getConstRoomParent(), targetRoom);
     if(exit)
@@ -472,6 +478,10 @@ void Exit::removeEffectReturnExit(const std::string &effect, const std::shared_p
     std::shared_ptr<BaseRoom> targetRoom=nullptr;
 
     removeEffect(effect, true, false);
+    targetRoom = target.loadRoom();
+    if (!targetRoom)
+        return;
+    
     // switch the meaning of exit
     std::shared_ptr<Exit> exit = getReturnExit(rParent, targetRoom);
     if(exit)

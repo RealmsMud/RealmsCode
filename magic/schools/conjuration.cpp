@@ -983,11 +983,11 @@ int splWallOfFire(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 
     if(!player->isCt()) {
         if(player->getRoomParent()->isPkSafe()) {
-            player->print("That spell is not allowed here.\n");
+            *player << "That spell is not allowed here.\n";
             return(0);
         }
         if(player->getRoomParent()->isUnderwater()) {
-            player->print("Water currents prevent you from casting that spell.\n");
+            *player << "Water currents prevent you from casting that spell.\n";
             return(0);
         }
     }
@@ -995,22 +995,26 @@ int splWallOfFire(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
     if(cmnd->num > 2)
         exit = findExit(player, cmnd, 2);
     if(!exit) {
-        player->print("Cast a wall of fire on which exit?\n");
+        *player << "Cast a wall of fire on which exit?\n";
         return(0);
     }
 
-    player->printColor("You cast a wall of fire spell on the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M casts a wall of fire spell on the %s^x.", player.get(), exit->getCName());
+    *player << ColorOn << "^RYou cast a wall of fire in front of the " << exit->getCName() << " exit.\n" << ColorOff;
+    
+
+    broadcast(player->getSock(), player->getParent(), "%M casts a wall of fire spell in front of the '%s' exit.", player.get(), exit->getCName());
 
     if(exit->hasPermEffect("wall-of-fire")) {
-        player->print("The spell didn't take hold.\n");
+        *player << "The spell didn't take hold.\n";
         return(0);
     }
+
 
     if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
-            player->print("The room's magical properties increase the power of your spell.\n");
+            *player << "The room's magical properties increase the power of your spell.\n";
     }
+
 
     exit->addEffectReturnExit("wall-of-fire", duration, strength, player);
     return(1);
@@ -1031,21 +1035,21 @@ int splWallOfForce(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
     if(cmnd->num > 2)
         exit = findExit(player, cmnd, 2);
     if(!exit) {
-        player->print("Cast a wall of force on which exit?\n");
+        *player << "Cast a wall of force on which exit?\n";
         return(0);
     }
 
-    player->printColor("You cast a wall of force spell on the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M casts a wall of force spell on the %s^x.", player.get(), exit->getCName());
+    *player << ColorOn << "^MYou cast a wall of force spell in front of the '" << exit->getCName() << "' exit.\n" << ColorOff;
+    broadcast(player->getSock(), player->getParent(), "%M casts a wall of force spell in front of the '%s' exit.", player.get(), exit->getCName());
 
     if(exit->hasPermEffect("wall-of-force")) {
-        player->print("The spell didn't take hold.\n");
+        *player << "The spell didn't take hold.\n";
         return(0);
     }
 
     if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
-            player->print("The room's magical properties increase the power of your spell.\n");
+            *player << "The room's magical properties increase the power of your spell.\n";
     }
 
     exit->addEffectReturnExit("wall-of-force", duration, strength, player);
@@ -1065,28 +1069,28 @@ int splWallOfThorns(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
         return(0);
 
     if(player->getRoomParent()->isPkSafe() && !player->isCt()) {
-        player->print("That spell is not allowed here.\n");
+        *player << "That spell is not allowed here.\n";
         return(0);
     }
 
     if(cmnd->num > 2)
         exit = findExit(player, cmnd, 2);
     if(!exit) {
-        player->print("Cast a wall of thorns on which exit?\n");
+        *player << "Cast a wall of thorns on which exit?\n";
         return(0);
     }
 
-    player->printColor("You cast a wall of thorns spell on the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M casts a wall of thorns spell on the %s^x.", player.get(), exit->getCName());
+    *player << ColorOn << "^yYou cast a wall of thorns spell in front of the '" << exit->getCName() << "' exit.\n" << ColorOff;
+    broadcast(player->getSock(), player->getParent(), "%M casts a wall of thorns spell in front of the '%s' exit.", player.get(), exit->getCName());
 
     if(exit->hasPermEffect("wall-of-thorns")) {
-        player->print("The spell didn't take hold.\n");
+        *player << "The spell didn't take hold.\n";
         return(0);
     }
 
     if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
-            player->print("The room's magical properties increase the power of your spell.\n");
+            *player << "The room's magical properties increase the power of your spell.\n";
     }
 
     exit->addEffectReturnExit("wall-of-thorns", duration, strength, player);
