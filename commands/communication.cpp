@@ -1190,6 +1190,7 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
                 break;        
             }
+        break;
         case 'o':
             lang = LCOMMON;
             break;
@@ -1229,6 +1230,7 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
         case 'i':
             lang = LFIRBOLG;
+            break;
         default:
             player->print("You do not know that language.\n");
             return(0);
@@ -1255,11 +1257,13 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     return(0);
                     break;
                 }
+            break;
             default:
                 player->print("You do not know that language.\n");
                 return(0);
                 break;
             }
+        break;
         case 'o':
             lang = LGOBLINOID;
             break;
@@ -1300,6 +1304,7 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 return(0);
                 break;
             }
+            break;
         }
         break;
     case 'i':
@@ -1384,7 +1389,6 @@ int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
         break;
     }
-
 
     if(lang == player->current_language) {
         player->print("You're already speaking %s!\n", get_language_adj(lang));
