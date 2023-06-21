@@ -2075,6 +2075,16 @@ void Player::die(DeathType dt) {
         logn("log.death", "%s was disintegrated by sunlight.\n", getCName());
         death = "sunlight";
         break;
+    case ELECTROCUTED:
+        sprintf(deathStr, "### Sadly, %s was electrocuted to death by a wall-of-lightning.", getCName());
+        logn("log.death", "%s was electrocuted to death by by a wall-of-lightning.\n", getCName());
+        death = "a wall of lightning";
+        break;
+    case FROZEN_CUT:
+        sprintf(deathStr, "### Sadly, %s was frozen and sliced to pieces by a wall-of-sleet.", getCName());
+        logn("log.death", "%s was frozen and sliced to pieces by a wall-of-sleet.\n", getCName());
+        death = "a wall of sleet";
+        break;
     default:
         sprintf(deathStr, "### Sadly, %s died.", getCName());
         logn("log.death", "%s was killed by %s.\n", getCName(), getCName());

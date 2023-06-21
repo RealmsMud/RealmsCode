@@ -264,9 +264,10 @@ std::string realmSkill(Realm realm);
 #define S_NONDETECTION          165 // non-detection spell
 #define S_BENEDICTION           166 // benediction spell
 #define S_MALEDICTION           167 // malediction spell
+#define S_WALL_OF_LIGHTNING     168 // wall-of-lightning spell
+#define S_WALL_OF_SLEET         169 // wall-of-sleet spell
 
-
-#define MAXSPELL                168 // Increment when you add a spell
+#define MAXSPELL                170 // Increment when you add a spell
 
 
 #define SpellFn const std::shared_ptr<Creature>&, cmd*, SpellData*
@@ -395,6 +396,10 @@ int splVigor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
 int splWallOfFire(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splWallOfForce(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splWallOfThorns(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splWallOfLightning(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splWallOfSleet(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int doWallSpell(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, int strength, long duration);
+
 int splWarmth(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splWindProtection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splWeakness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);

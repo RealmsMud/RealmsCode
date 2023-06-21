@@ -41,6 +41,7 @@
 #include "mudObjects/uniqueRooms.hpp"            // for UniqueRoom
 #include "proto.hpp"                             // for zero, broadcast, fin...
 #include "size.hpp"                              // for NO_SIZE, Size
+#include "mud.hpp"                               // for LT_SPELL
 
 //*********************************************************************
 //                      Exit
@@ -455,13 +456,12 @@ bool Player::showExit(const std::shared_ptr<Exit>& exit, int magicShowHidden) co
 void Exit::addEffectReturnExit(const std::string &effect, long duration, int strength, const std::shared_ptr<Creature> & owner) {
     std::shared_ptr<BaseRoom> targetRoom=nullptr;
 
-
-    addEffect(effect, duration, strength, nullptr, true, owner); 
+    addEffect(effect, duration, strength, nullptr, true, owner);
 
     targetRoom = target.loadRoom();
-    if (!targetRoom)
+    if (!targetRoom) 
         return;
-    
+
     // switch the meaning of exit
     std::shared_ptr<Exit> exit = getReturnExit(owner->getConstRoomParent(), targetRoom);
     if(exit)
@@ -481,7 +481,7 @@ void Exit::removeEffectReturnExit(const std::string &effect, const std::shared_p
     targetRoom = target.loadRoom();
     if (!targetRoom)
         return;
-    
+
     // switch the meaning of exit
     std::shared_ptr<Exit> exit = getReturnExit(rParent, targetRoom);
     if(exit)
@@ -596,4 +596,44 @@ std::string getDirName(Direction dir) {
     default:
         return("none");
     }
+}
+
+//*********************************************************************
+//                      hisHer
+//*********************************************************************
+
+const char *Exit::hisHer() const {
+    return("it");
+}
+
+//*********************************************************************
+//                      himHer
+//*********************************************************************
+
+const char *Exit::himHer() const {
+    return("it");
+}
+
+//*********************************************************************
+//                      heShe
+//*********************************************************************
+
+const char *Exit::heShe() const {
+    return("it");
+}
+
+//*********************************************************************
+//                      upHisHer
+//*********************************************************************
+
+const char *Exit::upHisHer() const {
+    return("It");
+}
+
+//*********************************************************************
+//                      upHeShe
+//*********************************************************************
+
+const char *Exit::upHeShe() const {
+    return("It");
 }

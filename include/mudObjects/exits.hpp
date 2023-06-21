@@ -142,6 +142,11 @@ public:
     bool classRestrict(const std::shared_ptr<const Creature> &creature) const;
     bool clanRestrict(const std::shared_ptr<const Creature> &creature) const;
     bool alignRestrict(const std::shared_ptr<const Creature> &creature) const;
+    const char *hisHer() const;
+    const char *himHer() const;
+    const char *heShe() const;
+    const char *upHisHer() const;
+    const char *upHeShe() const; 
 };
 
 

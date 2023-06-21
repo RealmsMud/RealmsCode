@@ -492,6 +492,8 @@ enum DeathType {
     WOUNDED,
     CREEPING_DOOM,
     SUNLIGHT,
+    ELECTROCUTED,
+    FROZEN_CUT,
 
     // Trap death types
     PIT,

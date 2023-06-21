@@ -604,7 +604,7 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
     int flags = (player->displayFlags() | QUEST);
     std::ostringstream oStr;
     std::string str;
-    bool    wallOfFire=false, wallOfThorns=false, canSee=false;
+    bool    wallOfFire=false, wallOfThorns=false, wallOfLightning=false, wallOfSleet=false, canSee=false;
 
     const std::shared_ptr<const UniqueRoom> uRoom = room->getAsConstUniqueRoom();
     const std::shared_ptr<const AreaRoom> aRoom = room->getAsConstAreaRoom();
@@ -655,6 +655,8 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
     for(const auto& ext : room->exits) {
         wallOfFire = ext->isWall("wall-of-fire");
         wallOfThorns = ext->isWall("wall-of-thorns");
+        wallOfLightning = ext->isWall("wall-of-lightning");
+        wallOfSleet = ext->isWall("wall-of-sleet");
 
         canSee = player->showExit(ext, magicShowHidden);
         if(canSee) {
@@ -669,7 +671,11 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
             if(wallOfFire) {
                 oStr << "R";
             } else if(wallOfThorns) {
-                oStr << "o";
+                oStr << "y";
+            } else if(wallOfLightning) {
+                oStr << "c";
+            } else if(wallOfSleet) {
+                oStr << "C";
             } else if(  !player->flagIsSet(P_NO_EXTRA_COLOR) &&
                 (   !player->canEnter(ext) || (
                         ext->target.room.id && (
@@ -726,11 +732,15 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
         }
 
         if(wallOfFire)
-            str += ext->blockedByStr('R', "wall of fire", "wall-of-fire", flags & MAG, canSee);
+            str += ext->blockedByStr('R', "wall-of-fire", "wall-of-fire", flags & MAG, canSee);
         if(ext->isWall("wall-of-force"))
-            str += ext->blockedByStr('s', "wall of force", "wall-of-force", flags & MAG, canSee);
+            str += ext->blockedByStr('M', "wall-of-force", "wall-of-force", flags & MAG, canSee);
         if(wallOfThorns)
-            str += ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", flags & MAG, canSee);
+            str += ext->blockedByStr('y', "wall-of-thorns", "wall-of-thorns", flags & MAG, canSee);
+        if(wallOfLightning)
+            str += ext->blockedByStr('c', "wall-of-lightning", "wall-of-lightning", flags & MAG, canSee);
+        if(wallOfSleet)
+            str += ext->blockedByStr('C', "wall-of-sleet", "wall-of-sleet", flags & MAG, canSee);
 
     }
 

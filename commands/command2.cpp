@@ -99,11 +99,15 @@ void lookAtExit(const std::shared_ptr<Player>& player, const std::shared_ptr<Exi
     if(exit->flagIsSet(X_LOCKED))
         player->print("It is locked.\n");
     if(exit->isWall("wall-of-fire"))
-        player->print("It is blocked by a wall of fire.\n");
+        player->print("It is blocked by a wall-of-fire.\n");
     if(exit->isWall("wall-of-force"))
-        player->print("It is blocked by a wall of force.\n");
+        player->print("It is blocked by a wall-of-force.\n");
     if(exit->isWall("wall-of-thorns"))
-        player->print("It is blocked by a wall of thorns.\n");
+        player->print("It is blocked by a wall-of-thorns.\n");
+    if(exit->isWall("wall-of-lightning"))
+        player->print("It is blocked by a wall-of-lightning.\n");
+    if(exit->isWall("wall-of-sleet"))
+        player->print("It is blocked by a wall-of-sleet.\n");
 
     const std::shared_ptr<Monster>  guard = player->getRoomParent()->getGuardingExit(exit, player);
     if(guard && !player->checkStaff("%M %s.\n", guard.get(), guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you look there" : "won't let you look there"))

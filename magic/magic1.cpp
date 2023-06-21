@@ -113,16 +113,55 @@ int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd) {
     const Effect* effect=nullptr;
 
     if (cmnd->num < 2) {
-        *player << "Dispel what effect?\n";
+        *player << "Dispel what effect on yourself, or what effect on what exit?\n";
+        *player << "Ex: dispel dimensional-anchor\n";
+        *player << "    dispel wall-of-fire door\n";
         return(0);
     }
 
     std::string dispelStr = cmnd->str[1];
     EffectInfo* toDispel = nullptr;
 
+    if (cmnd->num == 3) {
+        std::shared_ptr<Exit> exit = findExit(player, cmnd, 2);
+        if (exit) {
+            if ((toDispel = exit->getExactEffect(dispelStr))) {
+                if (toDispel->isPermanent() && !player->isStaff()) {
+                    *player << "You cannot dispel permanent effects.\n";
+                    return(0);
+                }
+                if(!toDispel->isOwner(player) && !player->isCt()) {
+                    *player << "You didn't create that effect. Only the initial caster may dispel it.\n";
+                    return(0);
+                }
+
+                *player << ColorOn << "Effect '" << toDispel->getDisplayName() << "' dispelled from the '" << exit->getCName() << "' exit.\n" << ColorOff;
+                if (exit->isWall(toDispel->getName())) {
+                    bringDownTheWall(toDispel, player->getRoomParent(), exit);
+                    return(0);
+                }
+                else
+                    exit->removeEffect(toDispel, true);
+            }
+            else
+            {
+                *player << "Effect '" << dispelStr << "' not found on exit '" << exit->getCName() << "'\n";
+                return(0);
+            }
+            
+        }
+        else
+        {
+            *player << "I don't see that exit here.\n";
+            return(0);
+        }
+
+        return(0);   
+    }
+
     if((toDispel = player->getExactEffect(dispelStr))) {
 
-        if (toDispel->isPermanent()) {
+        if (toDispel->isPermanent() && !player->isStaff()) {
             *player << "You cannot dispel permanent effects.\n";
             return(0);
         }
@@ -133,17 +172,33 @@ int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd) {
        
         effect = toDispel->getEffect();
         if(effect->getType() != "Positive") {
-            *player << "Only positive/beneficial effects may be dispelled.\n";
+            *player << "On your person, only positive/beneficial effects may be dispelled.\n";
             return(0);
         }
 
         *player << ColorOn << "Effect '" << toDispel->getDisplayName() << "' dispelled.\n" << ColorOff;
         player->removeEffect(toDispel,true);
     }
+    else if ((toDispel = player->getRoomParent()->getExactEffect(dispelStr))) {
+        if (toDispel->isPermanent()) {
+            *player << "You cannot dispel permanent effects.\n";
+            return(0);
+        }
+        if(!toDispel->isOwner(player) && !player->isCt()) {
+            *player << "You didn't create that effect. Only the initial caster may dispel it.\n";
+            return(0);
+        }
+
+        *player << ColorOn << "Effect '" << toDispel->getDisplayName() << "' dispelled.\n" << ColorOff;
+        player->getRoomParent()->removeEffect(toDispel, true);
+
+    }
     else
     {
         *player << "Effect not found (use full effect name.)\n";
     }
+
+    
 
     return(0);
 }
@@ -163,7 +218,7 @@ int cmdCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creature>& target, std::string_view spell, int strength) {
     if(!caster || !target)
         return;
-    int c = 0,n = 0;
+    int c = 0, n = 0;
     SpellData data;
     bool found = false, offensive = false;
 
@@ -199,6 +254,7 @@ void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creat
     offensive = (int(*)(SpellFn, const char*, osp_t*))fn == splOffensive ||
         (int(*)(SpellFn, const char*, osp_t*))fn == splMultiOffensive;
 
+    
     if(offensive) {
         for(c=0; ospell[c].splno != get_spell_num(data.splno); c++)
             if(ospell[c].splno == -1)
