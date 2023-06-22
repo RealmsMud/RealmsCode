@@ -1248,6 +1248,7 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
     short eAlign = enemy->getAlignment();
     int eMtype = enemy->getType();
 
+   
     //check hatreds using caller's race first
     switch(getRace()) {
     case DWARF:
@@ -1257,6 +1258,7 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
             return(true);
         if (eMtype == GIANTKIN || eMtype == GOBLINOID)
             return(true);
+        break;
     case ELF:
     case GREYELF:
     case WILDELF:
@@ -1265,6 +1267,7 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
         //Elves hate evil fey
         if (eMtype == FAERIE && eAlign < 0)
             return(true);
+        break;
     case ORC:
         if(eRace==DWARF || eRace==ELF || eRace==BUGBEAR || 
            eRace==HALFELF || eRace==GNOME || eRace==HALFLING)
@@ -1272,15 +1275,18 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
         //Orcs hate good fey
         if (eMtype == FAERIE && eAlign > 0)
             return(true);
+        break;
     case GNOME:
         if(eRace==GOBLIN || eRace==ORC || eRace==KOBOLD)
             return(true);
     case TROLL:
         if(eRace==DWARF || eRace==MINOTAUR || eRace==KATARAN)
             return(true);
+        break;
     case OGRE:
         if(eRace==DWARF || eRace==ELF)
             return(true);
+        break;
     case DARKELF:
         //Darkelves in general consider themselves superior to all other races, but they truely despise elves
         if(eRace==ELF || eRace==WILDELF || eRace==GREYELF)
@@ -1288,6 +1294,7 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
         //Darkelves hate good fey
         if (eMtype == FAERIE && eAlign > 0)
             return(true);
+        break;
     case GOBLIN: 
         //A lot of the evil humanoid races tend to torture goblins and/or enslave them...
         //Plus, they're generally just hateful little bastards
@@ -1297,36 +1304,46 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
         //Goblins hate good fey
         if (eMtype == FAERIE && eAlign > 0)
             return(true);
+        break;
     case HALFLING:
         if (eRace==ORC || eRace==GOBLIN || eRace==KOBOLD)
             return(true);
+        break;
     case MINOTAUR:
         //Minotaurs hate trolls because they have ancient grudges about prefering similar territory
         if(eRace==TROLL)
             return(true);
+        break;
     case KOBOLD:
         if(eRace==OGRE || eRace==GNOME || eRace==HALFLING)
             return(true);
+        break;
     case KATARAN:
         if(eRace==TROLL)
             return(true);
+        break;
     case CAMBION:
         if(eRace==SERAPH)
             return(true);
+        break;
     case DUERGAR:
         if(eRace==DWARF)
             return(true);
+        break;
     //Gnolls and barbarians hate one another because they often violently compete for the same terrtories
     case GNOLL:
         if(eRace==BARBARIAN)
             return(true);
+        break;
     case BARBARIAN:
         if(eRace==GNOLL)
             return(true);
+        break;
     case KENKU:
         //Kenku are bird people and hate katarans because they are cat people and often eat them
         if(eRace==KATARAN)
             return(true);
+        break;
     default:
         break; 
     }//End race check
@@ -1336,15 +1353,17 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
     switch(getDeity()) {
     case ARAMON: 
         //Aramon hates all good gods
-        if (enemy->getDeityAlignment() > NEUTRAL)
+        if (enemy->getDeityAlignment() > NEUTRAL) 
             return(true);
         //Aramon hates devas (angels) and considers seraphs to be unclean
-        if (eMtype == DEVA || eRace==SERAPH)
+        if (eMtype == DEVA || eRace==SERAPH) 
             return(true);
+        break;
     case CERIS: 
         //Ceris ia a hippie...She doesn't hate on anything - except for undead!
         if(enemy->isUndead())
             return(true);
+        break;
     case ENOCH: 
         //Enoch hates Aramon and Arachnus, wants to erradicate Ceris, and considers all cambions and undead unclean
         if (eDeity==ARAMON || eDeity==CERIS || eDeity==ARACHNUS || eRace==CAMBION)
@@ -1353,17 +1372,21 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
             return(true);
         if(enemy->isUndead())
             return(true);
+        break;
     case GRADIUS:
         if (eRace==ORC || eRace==GOBLIN || eRace==OGRE || eRace==TROLL || eRace==KOBOLD || eDeity==ARACHNUS || eDeity==ARAMON)
             return(true);
+        break;
     case ARES: 
         //Ares considers Ceris to be a cowardly pacifist whore...more importantly, she refuses to have sex with him :P
         if (eDeity==CERIS)
             return(true);
+        break;
     case KAMIRA: 
         //Kamira despises Jakar..because of his greed, and also because he's a stuck up tightwad that hates theiving
         if (eDeity==JAKAR || eDeity==ARAMON || eDeity==ARACHNUS)
             return(true);
+        break;
     case MARA:
     case LINOTHAN: 
         // Linothan and Mara hate Arachnus and Aramon, and also drow, orcs, goblins
@@ -1375,6 +1398,7 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
         //Both despise undead as abominations
         if(enemy->isUndead())
             return(true);
+        break;
     case ARACHNUS: 
         //Arachnus hates all good-aligned gods
         //And he of course hates all elves
@@ -1382,6 +1406,7 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
             return(true);
         if (eRace==ELF || eRace==WILDELF || eRace==GREYELF)
             return(true);
+        break;
     case JAKAR: 
         //Jakar has strong hatred for Kamira's thieving chaotic ways and always schemes to kill her or banish her to celestial jail
         //He hates tieflings because they are wired to be chaotic...and of course he also hates thieves
@@ -1393,6 +1418,7 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
         //Jakar cannot stand demons because they are 100% the definition of chaos..no god is more OCD than Jakar
         if (eMtype == DEMON) 
             return(true);
+        break;
     default:
         break;
     }// End Deity check
@@ -1407,67 +1433,79 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
         //Druids also consider undead an abomination to nature
         if (enemy->isUndead())
             return(true);
+        break;
     case CreatureClass::RANGER:
         //Rangers hate undead as much as druids do
         if (enemy->isUndead())
             return(true);
         //TODO: If we ever add in ranger hated enemies...put check here
-
+        break;
     //TODO: Will remove the below 2 checks when afflictions are done and working. For now, keeping it simple
     case CreatureClass::PUREBLOOD:
         if (eClass == CreatureClass::WEREWOLF)
             return(true);
+        break;
     case CreatureClass::WEREWOLF:
         if (eClass == CreatureClass::PUREBLOOD)
             return(true);
+        break;
     default:
         break;
     }//end class checks
 
     // Finally we if we're a monster, we check our mtype for specific hatreds in case not caught by the above
-    // If we're a player, getType() will return PLAYER(0)..if we're an undefined mtype mob, it'll return MONSTER(1)
-    switch(getType()) {
-    case GIANTKIN:
-        // Giants hate dwarves
-        if (eRace == DWARF)
-            return(true);
-    case GOBLINOID:
-        // Pretty much all goblinoid races hate dwarves and elves
-        if (eRace==DWARF || eRace==ELF)
-            return(true);
-    case FAERIE:
-        // Evil fey hate elves
-        if (getAlignment() < 0 && (eRace==ELF || eRace==WILDELF || eRace==GREYELF))
-            return(true);
-        // Good fey hate drow, orcs, goblins
-        if (getAlignment() > 0 && (eRace==DARKELF || eRace==ORC || eRace==GOBLIN))
-            return(true);
-        // Extremely evil fey hate druids
-        if (getAdjustedAlignment() == BLOODRED && eClass == CreatureClass::DRUID)
-            return(true);
-        // Good and evil fey hate one another
-        if (eMtype == FAERIE && ((getAlignment() > 0 && eAlign < 0) || (getAlignment() < 0 && eAlign > 0)))
-            return(true);
-    case DEMON: // Demons hate devils and anything good aligned, as well as each another
-        if (eMtype == DEVIL || eMtype == DEMON)
-            return(true);
-        if (eAlign > 0)
-            return(true);
-    case DEVIL: // Devils hate demons and anything good aligned
-        if (eMtype == DEMON)
-            return(true);
-        if (eAlign > 0)
-            return(true);
-    case DEVA: // Devas (angels) hate devils and demons
-        if (eMtype == DEVIL || eMtype == DEMON)
-            return(true);
-    case UNDEAD: 
-        // Evil intelligent undead (only intelligent undead mobs are supposed to be mtype UNDEAD) hate CERIS, LINOTHAN, and ENOCH clerics/paladins
-        if (getAlignment() < 0 && (eDeity==CERIS || eDeity==LINOTHAN || eDeity==ENOCH))
-            return(true);
-    default:
-        break;
-    } // End check mtype
+    if (isMonster()) {
+        switch(getType()) {
+        case GIANTKIN:
+            // Giants hate dwarves
+            if (eRace == DWARF)
+                return(true);
+            break;
+        case GOBLINOID:
+            // Pretty much all goblinoid races hate dwarves and elves
+            if (eRace==DWARF || eRace==ELF)
+                return(true);
+            break;
+        case FAERIE:
+            // Evil fey hate elves
+            if (getAlignment() < 0 && (eRace==ELF || eRace==WILDELF || eRace==GREYELF))
+                return(true);
+            // Good fey hate drow, orcs, goblins
+            if (getAlignment() > 0 && (eRace==DARKELF || eRace==ORC || eRace==GOBLIN))
+                return(true);
+            // Extremely evil fey hate druids
+            if (getAdjustedAlignment() == BLOODRED && eClass == CreatureClass::DRUID)
+                return(true);
+            // Good and evil fey hate one another
+            if (eMtype == FAERIE && ((getAlignment() > 0 && eAlign < 0) || (getAlignment() < 0 && eAlign > 0)))
+                return(true);
+            break;
+        case DEMON: // Demons hate devils and anything good aligned, as well as each another
+            if (eMtype == DEVIL || eMtype == DEMON)
+                return(true);
+            if (eAlign > 0)
+                return(true);
+            break;
+        case DEVIL: // Devils hate demons and anything good aligned
+            if (eMtype == DEMON)
+                return(true);
+            if (eAlign > 0)
+                return(true);
+            break;
+        case DEVA: // Devas (angels) hate devils and demons
+            if (eMtype == DEVIL || eMtype == DEMON)
+                return(true);
+            break;
+        case UNDEAD: 
+            // Evil intelligent undead (only intelligent undead mobs are supposed to be mtype UNDEAD) hate CERIS, LINOTHAN, and ENOCH clerics/paladins
+            if (getAlignment() < 0 && (eDeity==CERIS || eDeity==LINOTHAN || eDeity==ENOCH))
+                return(true);
+            break;
+        default:
+            break;
+        } // End check mtype
+
+    }
     
 
     //Other checks...for effects..etc...
