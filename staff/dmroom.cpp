@@ -1185,10 +1185,10 @@ int dmSetRoom(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
             std::string txt = getFullstrText(cmnd->fullstr, 4);
             if(!txt.empty())
-                duration = toNum<long>(txt);
+                duration = (long)std::stoi(txt);
             txt = getFullstrText(cmnd->fullstr, 5);
             if(!txt.empty())
-                strength = toNum<int>(txt);
+                strength = std::stoi(txt);
 
             if(duration > EFFECT_MAX_DURATION || duration < -1) {
                 player->print("Duration must be between -1 and %d.\n", EFFECT_MAX_DURATION);
@@ -1625,10 +1625,11 @@ int dmSetExit(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
                 std::string txt = getFullstrText(cmnd->fullstr, 4);
                 if(!txt.empty())
-                    duration = toNum<long>(txt);
+                    duration = (long)std::stoi(txt);
+                
                 txt = getFullstrText(cmnd->fullstr, 5);
                 if(!txt.empty())
-                    strength = toNum<int>(txt);
+                    strength = std::stoi(txt);
 
                 if(duration > EFFECT_MAX_DURATION || duration < -1) {
                     player->print("Duration must be between -1 and %d.\n", EFFECT_MAX_DURATION);

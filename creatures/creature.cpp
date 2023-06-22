@@ -423,7 +423,9 @@ bool mobileEnter(const std::shared_ptr<Exit>& exit) {
         !exit->flagIsSet(X_DESCRIPTION_ONLY) &&
         !exit->isWall("wall-of-fire") &&
         !exit->isWall("wall-of-force") &&
-        !exit->isWall("wall-of-thorns")
+        !exit->isWall("wall-of-thorns") &&
+        !exit->isWall("wall-of-lightning") &&
+        !exit->isWall("wall-of-sleet")
     );
 }
 

@@ -99,11 +99,15 @@ void lookAtExit(const std::shared_ptr<Player>& player, const std::shared_ptr<Exi
     if(exit->flagIsSet(X_LOCKED))
         player->print("It is locked.\n");
     if(exit->isWall("wall-of-fire"))
-        player->print("It is blocked by a wall of fire.\n");
+        player->print("It is blocked by a wall-of-fire.\n");
     if(exit->isWall("wall-of-force"))
-        player->print("It is blocked by a wall of force.\n");
+        player->print("It is blocked by a wall-of-force.\n");
     if(exit->isWall("wall-of-thorns"))
-        player->print("It is blocked by a wall of thorns.\n");
+        player->print("It is blocked by a wall-of-thorns.\n");
+    if(exit->isWall("wall-of-lightning"))
+        player->print("It is blocked by a wall-of-lightning.\n");
+    if(exit->isWall("wall-of-sleet"))
+        player->print("It is blocked by a wall-of-sleet.\n");
 
     const std::shared_ptr<Monster>  guard = player->getRoomParent()->getGuardingExit(exit, player);
     if(guard && !player->checkStaff("%M %s.\n", guard.get(), guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you look there" : "won't let you look there"))
@@ -966,32 +970,37 @@ int cmdKnock(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     std::shared_ptr<Exit> exit=nullptr;
 
     if(cmnd->num < 2) {
-        creature->print("Knock on what exit?\n");
+        *creature << "Knock on what exit?\n";
         return(0);
     }
 
     lowercize(cmnd->str[1], 0);
     exit = findExit(creature, cmnd);
     if(!exit) {
-        creature->print("Knock on what exit?\n");
+        *creature << "You don't see that exit here.\n";
         return(0);
     }
 
     if(!exit->flagIsSet(X_CLOSED)) {
-        creature->print("That exit is not closed!\n");
+        *creature << "You can't knock on that. It's not closed!\n";
         return(0);
     }
 
     creature->getParent()->wake("You awaken suddenly!", true);
-    creature->printColor("You knock on the %s^x.\n", exit->getCName());
-    broadcast(creature->getSock(), creature->getRoomParent(), "%M knocks on the %s^x.", creature.get(), exit->getCName());
+    
+    *creature << "You knock on the '" << exit->getCName() << "' exit.\n";
+    broadcast(creature->getSock(), creature->getRoomParent(), "%M knocks on the '%s' exit.", creature.get(), exit->getCName());
 
+    targetRoom = exit->target.loadRoom();
+    if (!targetRoom) 
+        return(0);
+    
     // change the meaning of exit
     exit = exit->getReturnExit(creature->getRoomParent(), targetRoom);
     targetRoom->wake("You awaken suddenly!", true);
 
     if(exit)
-        broadcast((std::shared_ptr<Socket> )nullptr, targetRoom, "You hear someone knocking on the %s.", exit.get());
+        broadcast((std::shared_ptr<Socket> )nullptr, targetRoom, "You hear someone knocking on the %s exit.", exit->getCName());
     else
         broadcast((std::shared_ptr<Socket> )nullptr, targetRoom, "You hear the sound of someone knocking.");
     return(0);

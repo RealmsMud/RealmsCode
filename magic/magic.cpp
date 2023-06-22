@@ -225,6 +225,8 @@ struct {
     { "non-detection",      S_NONDETECTION,         splNondetection,            30,         ABJURATION,         PROTECTION  },
     { "benediction",        S_BENEDICTION,          splBenediction,             20,         SCHOOL_CANNOT_CAST, PROTECTION        },
     { "malediction",        S_MALEDICTION,          splMalediction,             20,         SCHOOL_CANNOT_CAST, PROTECTION        },
+    { "wall-of-lightning",  S_WALL_OF_LIGHTNING,    splWallOfLightning,         30,         CONJURATION,        CREATION    },
+    { "wall-of-sleet",      S_WALL_OF_SLEET,        splWallOfSleet,             30,         CONJURATION,        CREATION    },
     { "@",                  -1,                     nullptr,                          0,          NO_SCHOOL,          NO_DOMAIN   }
 };
 int spllist_size = sizeof(spllist)/sizeof(*spllist);

@@ -1564,8 +1564,30 @@ bool Config::loadEffects() {
       EffectBuilder()
         .name("wall-of-fire")
         .display("^rWall of Fire^x")
-        .roomAddStr("^RA wall of fire ignites and blocks passage to the *LOW-ACTOR*.^x")
-        .roomDelStr("^WThe wall of fire blocking the *LOW-ACTOR* dies down.^x")
+        .roomAddStr("^RA magical wall-of-fire ignites and blocks passage to the '*LOW-ACTOR*' exit.^x")
+        .roomDelStr("^WThe magical wall-of-fire blocking the '*LOW-ACTOR*' exit abruptly extinquishes.^x")
+        .pulsed(true)
+        .pulseScript("effectLib.pulseWall(actor, effect)")
+        .useStrength(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("wall-of-lightning")
+        .display("^cWall of Lightning^x")
+        .roomAddStr("^cA magical wall-of-lightning forms and blocks passage to the '*LOW-ACTOR*' exit.^x")
+        .roomDelStr("^WThe magical wall-of-lightning blocking the '*LOW-ACTOR*' exit has dissipated.^x")
+        .pulsed(true)
+        .pulseScript("effectLib.pulseWall(actor, effect)")
+        .useStrength(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("wall-of-sleet")
+        .display("^CWall of Sleet^x")
+        .roomAddStr("^CA magical wall-of-sleet forms and blocks passage to the '*LOW-ACTOR*' exit.^x")
+        .roomDelStr("^CThe magical wall-of-sleet blocking the '*LOW-ACTOR*' exit has faded away.^x")
         .pulsed(true)
         .pulseScript("effectLib.pulseWall(actor, effect)")
         .useStrength(true),
@@ -1574,9 +1596,9 @@ bool Config::loadEffects() {
     addToSet(
       EffectBuilder()
         .name("wall-of-force")
-        .display("^sWall of Force^x")
-        .roomAddStr("^sA wall of force appears and blocks passage to the *LOW-ACTOR*.^x")
-        .roomDelStr("^WThe wall of force blocking the *LOW-ACTOR* vanishes.^x")
+        .display("^MWall of Force^x")
+        .roomAddStr("^MA magical wall-of-force appears and blocks passage to the '*LOW-ACTOR*' exit.^x")
+        .roomDelStr("^WThe magical wall-of-force blocking the '*LOW-ACTOR*' exit abruptly vanishes.^x")
         .pulsed(true)
         .pulseScript("effectLib.pulseWall(actor, effect)"),
       effects

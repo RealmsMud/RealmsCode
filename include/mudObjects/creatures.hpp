@@ -513,6 +513,10 @@ public:
     bool doesntBreathe() const;
     bool immuneCriticals() const; // *
     bool isUndead() const; // *
+    bool isPureArcaneCaster() const;
+    bool isPureDivineCaster() const;
+    bool isHybridArcaneCaster() const;
+    bool isHybridDivineCaster() const;
     bool hasMp();
     bool isAntiGradius() const;
     bool countForWeightTrap() const;

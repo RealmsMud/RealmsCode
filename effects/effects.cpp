@@ -881,7 +881,9 @@ std::string Effects::getEffectsString(const std::shared_ptr<Creature> & viewer) 
                 } else if(  (effectInfo->getDuration() == -1) && (
                     effectInfo->getName() == "wall-of-force" ||
                     effectInfo->getName() == "wall-of-fire" ||
-                    effectInfo->getName() == "wall-of-thorns"
+                    effectInfo->getName() == "wall-of-thorns" ||
+                    effectInfo->getName() == "wall-of-lightning" ||
+                    effectInfo->getName() == "wall-of-sleet"
                 ) ) {
                     // permanent walls are only down for a little bit
                     effStr << " (# pulses until reinstantiate)";
@@ -990,20 +992,40 @@ bool Exit::doEffectDamage(const std::shared_ptr<Creature>& pTarget) {
     if( exitEffectDamage(
             getEffect("wall-of-fire"),
             pTarget, owner, FIRE, BURNED,
-            "The wall of fire burns you for %s%d^x damage.\n",
+            "^RThe wall-of-fire burns you for %s%d^x ^Rdamage.^x\n",
             "You are burned to death!\n",
-            "%1M is engulfed by the wall of fire.\n%M burns to death!",
-            "%M is engulfed by your wall of fire and is incinerated!\n"
+            "%1M is engulfed by the wall-of-fire.\n%M burns to death!",
+            "%M is engulfed by your wall-of-fire and is incinerated!\n"
     ) )
         return(true);
 
     if( exitEffectDamage(
             getEffect("wall-of-thorns"),
             pTarget, owner, EARTH, THORNS,
-            "The wall of thorns stabs you for %s%d^x damage.\n",
+            "^yThe wall-of-thorns stabs you for %s%d^x ^ydamage.^x\n",
             "You are stabbed to death!\n",
-            "%1M is engulfed by a wall of thorns.\n%M is stabbed to death!",
-            "%M is engulfed by your wall of thorns and is stabbed to death!\n"
+            "%1M is engulfed by a wall-of-thorns.\n%M is stabbed to death!",
+            "%M is engulfed by your wall-of-thorns and is stabbed to death!\n"
+    ) )
+        return(true);
+
+    if( exitEffectDamage(
+            getEffect("wall-of-lightning"),
+            pTarget, owner, ELEC, ELECTROCUTED,
+            "^cThe wall-of-lightning zaps you for %s%d^x ^cdamage.^x\n",
+            "You are electrocuted to death!\n",
+            "%1M is burned to a blackened husk by the wall-of-lightning.\n%M dies as a smoking corpse!",
+            "%M is burned to a blackened husk by your wall-of-lightning and dies as a smoking corpse!\n"
+    ) )
+        return(true);
+
+    if( exitEffectDamage(
+            getEffect("wall-of-sleet"),
+            pTarget, owner, COLD, FROZEN_CUT,
+            "^CThe wall-of-sleet slices and freezes you for %s%d^x ^Cdamage.^x\n",
+            "You are cut to pieces by razory shards of ice! You died!\n",
+            "%1M is sliced to pieces and frozen by the wall-of-sleet.\n%M dies a frozen bloody mess!",
+            "%M is sliced to pieces and frozen by your wall-of-sleet and dies a frozen bloody mess!\n"
     ) )
         return(true);
 
