@@ -1435,8 +1435,8 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
             return(true);
         break;
     case CreatureClass::RANGER:
-        //Rangers hate undead as much as druids do
-        if (enemy->isUndead())
+        //Rangers hate undead as much as druids do, but they have a little moral wiggle room for recently turned undead
+        if (enemy->isUndead() && enemy->getAdjustedAlignment()<BLUISH)
             return(true);
         //TODO: If we ever add in ranger hated enemies...put check here
         break;
