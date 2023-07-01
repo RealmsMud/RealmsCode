@@ -116,6 +116,7 @@ void getDestination(const std::string &str, Location& l, const std::shared_ptr<C
 void getDestination(std::string str, MapMarker& mapmarker, CatRef& cr, const std::shared_ptr<Creature> & target);
 
 void spawnObjects(const std::string &room, const std::string &objects);
+void spawnMonsters(const std::string &roomId, const std::list<std::string> &monsters);
 
 
 

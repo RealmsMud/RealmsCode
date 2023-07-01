@@ -1239,3 +1239,24 @@ int Monster::grabCoins(const std::shared_ptr<Player>& player) {
     }
 }
 
+void spawnMonsters(const std::string &roomId, const std::list<std::string> &monsters) {
+    std::shared_ptr<UniqueRoom> room = nullptr;
+    std::shared_ptr<Monster>  monster = nullptr;
+    CatRef  cr;
+
+    getCatRef(roomId, cr, nullptr);
+    if(!loadRoom(cr, room)) {
+        broadcast(isDm, "Error loading room %s", roomId.c_str());
+        return;
+    }
+
+    for(const auto & mId : monsters) {
+        getCatRef(mId, cr, nullptr);
+        if(!loadMonster(cr, monster)) {
+            broadcast(isDm, "Error loading monster %s in room %s", mId.c_str(), roomId.c_str());
+            continue;
+        }
+        broadcast(isDm, "Spawned monster %s in room %s", mId.c_str(), roomId.c_str());
+        monster->addToRoom(room);
+    }
+}
