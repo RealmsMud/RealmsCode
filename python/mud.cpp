@@ -18,6 +18,7 @@
 
 
 #include <pybind11/pybind11.h>       // for enum_, module, class_
+#include <pybind11/stl.h>
 #include <memory>                    // for unique_ptr
 
 #include "commands.hpp"              // for doCastPython, isBadSocial, isGoo...
@@ -190,6 +191,7 @@ void init_module_mud(py::module &m) {
     m.def("dice", &::dice);
     m.def("rand", &::pythonRand);
     m.def("spawnObjects", &::spawnObjects);
+    m.def("spawnMonsters", &::spawnMonsters);
     m.def("isBadSocial", &::isBadSocial);
     m.def("isSemiBadSocial", &::isSemiBadSocial);
     m.def("isGoodSocial", &::isGoodSocial);

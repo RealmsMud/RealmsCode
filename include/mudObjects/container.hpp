@@ -125,6 +125,7 @@ public:
     void setParent(const std::shared_ptr<Container>& container);
 
     std::shared_ptr<Container> getParent() const;
+    std::string getParentId();
 
 
     // What type of parent are we contained in?

@@ -76,6 +76,7 @@ void init_module_mudObject(py::module &m) {
     py::class_<Containable, MudObject, std::shared_ptr<Containable> >( m, "Containable")
         .def("getParent", &Containable::getParent, py::return_value_policy::reference)
         .def("addTo", &Containable::addTo)
+        .def("getParentId", &Containable::getParentId)
         ;
 
     py::class_<BaseRoom, Container, std::shared_ptr<BaseRoom> >( m, "BaseRoom")

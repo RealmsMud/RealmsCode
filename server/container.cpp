@@ -625,3 +625,12 @@ std::shared_ptr<const Creature> Containable::getConstCreatureParent() const {
     }
     return nullptr;
 }
+
+std::string Containable::getParentId() {
+    // Only works for unique room parents, for now at least
+    if(!inUniqueRoom())
+        return "";
+
+    auto room = getUniqueRoomParent();
+    return room->info.str();
+}
