@@ -227,7 +227,7 @@ std::shared_ptr<AreaRoom> Move::recycle(std::shared_ptr<AreaRoom> room, const st
 // updates some settings on the character once they move
 
 void Move::update(const std::shared_ptr<Player>& player) {
-    if( player->getRoomParent()->isUnderwater() && !player->flagIsSet(P_FREE_ACTION)) {
+    if( player->getRoomParent()->isUnderwater() && !player->isEffected("free-action")) {
         player->lasttime[LT_MOVED].ltime = time(nullptr);
         player->lasttime[LT_MOVED].interval = 2L;
     }
@@ -469,8 +469,7 @@ bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isStaff())
         return(true);
 
-    if(player->isEffected("hold-person")) {
-        player->print("You are unable to move right now.\n");
+    if(player->isMagicallyHeld(true)) {
         return(false);
     }
 
@@ -517,7 +516,7 @@ bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    u = LT(player, LT_MOVED);
 
 
-    if(u - t > 0 && player->getRoomParent()->isUnderwater() && !player->flagIsSet(P_FREE_ACTION)) {
+    if(u - t > 0 && player->getRoomParent()->isUnderwater() && !player->isEffected("free-action")) {
         player->pleaseWait(u - t);
         return(false);
     }
@@ -540,7 +539,7 @@ bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if( player->getRoomParent()->flagIsSet(R_DIFFICULT_TO_MOVE) &&
             !player->isEffected("fly") &&
             !player->isEffected("mist") &&
-            !player->flagIsSet(P_FREE_ACTION)
+            !player->isEffected("free-action")
         )
             moves = 1;
         else
@@ -552,7 +551,7 @@ bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if( player->lasttime[LT_MOVED].ltime == t || (
                 player->getRoomParent()->flagIsSet(R_DIFFICULT_TO_MOVE) &&
                 !player->isEffected("fly") &&
-                !player->flagIsSet(P_FREE_ACTION) &&
+                !player->isEffected("free-action") &&
                 !player->isEffected("mist") &&
                 Random::get(1,100) > chance
             ))

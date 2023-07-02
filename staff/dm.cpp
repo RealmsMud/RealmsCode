@@ -1772,9 +1772,7 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         break;
     case S_FREE_ACTION:
         if(check) return(true);
-        player->lasttime[LT_FREE_ACTION].interval = 3600;
-        player->lasttime[LT_FREE_ACTION].ltime = t;
-        player->setFlag(P_FREE_ACTION);
+        player->addEffect("free-action", 3600, 1);
         break;
     case S_COURAGE:
         if(check) return(true);

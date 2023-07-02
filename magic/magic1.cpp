@@ -1690,8 +1690,8 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
             broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player.get(), article, spell);
         }
 
-        if (replaceCancelingEffects(player,target,effect))
-            return(0);
+       // if (replaceCancelingEffects(player,target,effect))
+        //    return(0);
 
     } else {
         if(player->noPotion( spellData))
@@ -1773,11 +1773,14 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
     if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
-        if(!target->addEffect(effect, duration, strength, player, true))
+        if(!target->addEffect(effect, duration, strength, player, true)) 
             return(0);
     } else {
         target->addEffect(effect, duration, strength, nullptr, true);
     }
+
+    if (effect == "free-action") 
+        target->doFreeAction();
 
     return(1);
 }
@@ -2278,6 +2281,35 @@ bool Creature::isMageLich() {
         return(false);
     }
     return(true);
+}
+
+//*********************************************************************
+//                      doFreeAction
+//*********************************************************************
+// Clears all hold/movement hindering effects
+void Creature::doFreeAction() {
+    if (isEffected("slow"))
+        removeEffect("slow");
+    if (isEffected("hold-person"))
+        removeEffect("hold-person");
+    //if (isEffected("hold-monster"))
+      //  removeEffect("hold-monster");
+    //if (isEffected("hold-undead"))
+     //   removeEffect("hold-undead");
+    if (isEffected("entangled"))
+        removeEffect("entangled");
+
+    if (isPlayer()) {
+        if (flagIsSet(P_STUNNED))
+            clearFlag(P_STUNNED);
+        getAsPlayer()->computeAC();
+        getAsPlayer()->computeAttackPower();
+    }
+
+    setAttackDelay(0);
+    lasttime[LT_SPELL].ltime = time(0);
+
+    return;
 }
 
 //*********************************************************************

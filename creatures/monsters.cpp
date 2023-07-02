@@ -446,9 +446,9 @@ bool Monster::possibleEnemy() {
             possible = true;
         if(flagIsSet(M_STEAL_ALWAYS))
             possible = true;
-        if(flagIsSet(M_AGGRESSIVE_GOOD) && ply->getAlignment() > 99)
+        if(flagIsSet(M_AGGRESSIVE_GOOD) && ply->getAdjustedAlignment() > NEUTRAL)
             possible = true;
-        if(flagIsSet(M_AGGRESSIVE_EVIL) && ply->getAlignment() < -99)
+        if(flagIsSet(M_AGGRESSIVE_EVIL) && ply->getAdjustedAlignment() < NEUTRAL)
             possible = true;
 
         if(ply->flagIsSet(P_HIDDEN))
@@ -858,6 +858,9 @@ void Monster::checkScavange(long t) {
     if(room->flagIsSet(R_SHOP_STORAGE))
         return;
 
+    if(getAsCreature()->isMagicallyHeld())
+        return;
+
     if(flagIsSet(M_SCAVANGER)) {
         i = lasttime[LT_MON_SCAVANGE].ltime;
         if( t - i > 20 &&
@@ -1062,7 +1065,9 @@ int Monster::checkWander(long t) {
         // if fast wander, wander even if perm.
         (!flagIsSet(M_PERMENANT_MONSTER) || flagIsSet(M_FAST_WANDER)) &&
         // pets and other followers don't wander
-        !isPet() && !flagIsSet(M_DM_FOLLOW)))
+        !isPet() && !flagIsSet(M_DM_FOLLOW)) &&
+        // will not wander if magically held - since they can't move
+        (!getAsCreature()->isMagicallyHeld()))
     {
         if( // If it's time to wander, and we have no enemey
             (t - i > 60 && (inUniqueRoom() && Random::get(1, 100) <= getUniqueRoomParent()->wander.getTraffic()) && !hasEnemy()) ||
