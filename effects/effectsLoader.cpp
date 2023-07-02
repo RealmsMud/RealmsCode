@@ -123,6 +123,21 @@ bool Config::loadEffects() {
     );
     addToSet(
       EffectBuilder()
+        .name("free-action")
+        .addBaseEffect("free-action")
+        .display("^gFree-Action^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^GYou are now free from magical and difficult movement.^x")
+        .roomAddStr("^G*ACTOR* is now free from magical and difficult movement.^x")
+        .selfDelStr("^gYour freedom from magical and difficult movement has ended.^x")
+        .roomDelStr("^g*ACTOR*'s freedom from magical and difficult movement has ended.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
         .name("blindness")
         .addBaseEffect("blindness")
         .display("^YBlinded!^x")

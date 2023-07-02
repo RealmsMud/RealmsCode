@@ -201,77 +201,20 @@ int splResistMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
     return(splGeneric(player, cmnd, spellData, "a", "resist-magic", "resist-magic", strength));
 }
 
-
 //*********************************************************************
 //                      splFreeAction
 //*********************************************************************
+// This spell allows a player to remove magical hinderances, such as slow
+// or hold-person or stun from themselves or their target
 
 int splFreeAction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
-    std::shared_ptr<Creature> target=nullptr;
-    std::shared_ptr<Player> pTarget=nullptr;
-    long    t = time(nullptr);
 
     if(spellData->how != CastType::POTION && !player->isCt() && player->getClass() !=  CreatureClass::DRUID && player->getClass() !=  CreatureClass::CLERIC) {
-        player->print("Your class is unable to cast that spell.\n");
+        *player << "Only clerics and druids are able to cast that spell.\n";
         return(0);
     }
 
-
-    if(cmnd->num == 2) {
-        target = player;
-
-        if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("Free-action spell cast.\nYou can now move freely.\n");
-            broadcast(player->getSock(), player->getParent(), "%M casts a free-action spell on %sself.", player.get(), player->himHer());
-        } else if(spellData->how == CastType::POTION)
-            player->print("You can now move freely.\n");
-
-    } else {
-        if(player->noPotion( spellData))
-            return(0);
-
-        cmnd->str[2][0] = up(cmnd->str[2][0]);
-
-        target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
-
-        if(!target || (target && target->isMonster())) {
-            player->print("You don't see that person here.\n");
-            return(0);
-        }
-
-        if(checkRefusingMagic(player, target))
-            return(0);
-
-        player->print("Free-action cast on %s.\n", target->getCName());
-        target->print("%M casts a free-action spell on you.\n%s", player.get(), "You can now move freely.\n");
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a free-action spell on %N.",player.get(), target.get());
-    }
-
-    pTarget = target->getAsPlayer();
-
-    if(pTarget) {
-        pTarget->setFlag(P_FREE_ACTION);
-
-        pTarget->lasttime[LT_FREE_ACTION].ltime = t;
-        if(spellData->how == CastType::CAST) {
-            pTarget->lasttime[LT_FREE_ACTION].interval = std::max(300, 900 +
-                                                                  bonus(player->intelligence.getCur()) * 300);
-
-            if(player->getRoomParent()->magicBonus()) {
-                pTarget->print("The room's magical properties increase the power of your spell.\n");
-                pTarget->lasttime[LT_FREE_ACTION].interval += 300L;
-            }
-        } else
-            pTarget->lasttime[LT_FREE_ACTION].interval = 600;
-
-        pTarget->clearFlag(P_STUNNED);
-        pTarget->removeEffect("hold-person");
-        pTarget->removeEffect("slow");
-
-        pTarget->computeAC();
-        pTarget->computeAttackPower();
-    }
-    return(1);
+    return(splGeneric(player, cmnd, spellData, "a", "free-action", "free-action"));
 }
 
 //*********************************************************************
@@ -799,7 +742,7 @@ int doDispelMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
                     //TODO: Determine if we want to check for matching effect on other side, and check against its strength also,
                     //      as it's technically possible to have matching effects with differing strengths on either side...
                     //      i.e. if a builder puts permanent walls of the same type but differing strengths on both sides
-                    
+
                     *player << ColorOn << "You successfully removed the " << dispelStr << " spell from the '" << exit->getCName() << "' exit.\n" << ColorOff;
                     broadcast(player->getSock(), player->getParent(), "%M successfully removed the %s spell from the '%s' exit.", player.get(), dispelStr.c_str(), exit->getCName());
 
@@ -834,7 +777,7 @@ int doDispelMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
             if(!player->canAttack(target))
                 return(0);
         } else {
-            *player << "You cast a " << spell << " spell on " << target.get() << ".\n" << target->upHisHer() << " body returns to flesh.\n";
+            *player << "You cast a " << spell << " spell on " << target << ".\n" << target->upHisHer() << " body returns to flesh.\n";
             if(Random::get(1,100) < 50) {
                 *target << setf(CAP) << player << " casts a " << spell << " on you.\nYour body returns to flesh.\n";
 
@@ -851,46 +794,43 @@ int doDispelMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
         }
 
 
-        chance = 50 - (10*(bonus(player->intelligence.getCur()) -
-                           bonus(target->intelligence.getCur())));
+        chance = 500 - (target->intelligence.getCur() - player->intelligence.getCur());
 
-        chance += (spellData->level - target->getLevel())*10;
+        chance += (spellData->level - target->getLevel())*50;
 
-        chance = std::min(chance, 90);
+        chance = std::min(chance, 950);
 
-        if((target->isEffected("resist-magic")) && target->isPlayer())
-            chance /=2;
+        if(target->isPlayer() && target->isEffected("resist-magic"))
+            chance /=10;
 
 
 
 
         if( player->isCt() ||
-            (Random::get(1,100) <= chance && !target->chkSave(SPL, player, 0)))
+            (Random::get(1,1000) <= chance && !target->chkSave(SPL, player, 0)))
         {
-            player->print("You cast a %s spell on %N.\n", spell, target.get());
+            *player << ColorOn << "You cast a " << spell << " spell on " << target << ".\n" << ColorOff;
 
             logCast(player, target, spell);
 
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.", player.get(), spell, target.get());
-            target->print("%M casts a %s spell on you.\n", player.get(), spell);
-            target->print("Your spells begin to dissolve away.\n");
-
+            *target << ColorOn << setf(CAP) << player << " casts a " << spell << " spell on you.\nYour spells begin to dissolve away.\n" << ColorOff;
 
             target->doDispelMagic(numDispel);
 
             for(const auto& pet : target->pets) {
                 if(pet) {
                     if(player->isCt() || !pet->chkSave(SPL, player, 0)) {
-                        player->print("Your spell bansished %N's %s!\n", target.get(), pet->getCName());
-                        target->print("%M's spell banished your %s!\n%M fades away.\n", player.get(), pet->getCName(), pet.get());
+                        *player << ColorOn << "Your spell banished " << target << "'s " << pet << "!\n" << ColorOff;
+                        *target << ColorOn << setf(CAP) << player << "'s spell banished your " << pet << "!\n" << pet << " fades away.\n" << ColorOff;
                         gServer->delActive(pet.get());
                         pet->die(pet->getMaster());
                     }
                 }
             }
         } else {
-            player->printColor("^yYour spell fails against %N.\n", target.get());
-            target->print("%M tried to cast a dispel-magic spell on you.\n", player.get());
+            *player << ColorOn << "^yYour spell fails against " << target << ".\n" << ColorOff;
+            *target << ColorOn << setf(CAP) << player << " tried to cast a dispel-magic spell on you.\n" << ColorOff;
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a dispel-magic spell on %N.", player.get(), target.get());
             return(0);
         }
@@ -922,6 +862,8 @@ int splAnnulMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 static const std::list<std::string> dispellableEffects = {
     "anchor",
     "hold-person",
+    "hold-monster",
+    "hold-undead",
     "strength",
     "haste",
     "fortitude",
@@ -968,17 +910,18 @@ static const std::list<std::string> dispellableEffects = {
     "resist-electricity",
     "wind-protection",
     "static-field",
-    "non-detection"
+    "non-detection",
     "illusion",
     "blur",
     "fire-shield",
     "greater-invisibility",
+    "malediction",
+    "benediction",
 
 };
 
 void Creature::doDispelMagic(int num) {
     EffectInfo* effect=nullptr;
-    std::list<std::string>::const_iterator it;
 
     // create a list of possible effects
 
@@ -1013,7 +956,7 @@ void Creature::doDispelMagic(int num) {
             if(effect && !effect->isPermanent()) {
                 numEffects++;
                 if(choice == numEffects) {
-                    removeEffect(*it, true, false);
+                    removeEffect(effectName, true, false);
                     // stop the loop!
                     choice = 0;
                     break;

@@ -58,6 +58,7 @@ int splEntangle(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
     int     bns=0, nohold=0, dur=0, statmod=0;
     std::shared_ptr<Creature> target=nullptr;
 
+
     if( player->getClass() !=  CreatureClass::DRUID &&
         player->getClass() !=  CreatureClass::RANGER &&
         !player->isCt() && spellData->how == CastType::CAST
@@ -88,7 +89,7 @@ int splEntangle(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
             broadcast(player->getSock(), player->getParent(), "%M becomes entangled by vines and weeds!", player.get());
 
             player->unhide();
-            player->addEffect("hold-person", 0, 0, player, true, player);
+            player->addEffect("entangled", 0, 0, player, true, player);
             return(1);
         }
 

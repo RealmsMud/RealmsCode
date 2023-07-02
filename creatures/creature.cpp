@@ -1032,9 +1032,7 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
         if(flagIsSet(P_SITTING))
             stand();
 
-        if(isEffected("hold-person")) {
-            if(displayFail)
-                print("You are unable to move right now.\n");
+        if(isMagicallyHeld(displayFail)) {
             return(false);
         }
 

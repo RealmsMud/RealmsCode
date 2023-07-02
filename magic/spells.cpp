@@ -457,11 +457,8 @@ void spellsUnder(const std::shared_ptr<Player>& viewer, const std::shared_ptr<Cr
     }
 
     // we want some flags to show up, too
-    if(player) {
-        if(player->flagIsSet(P_FREE_ACTION))
-            spells.emplace_back("free-action");
-        if(player->flagIsSet(P_STUNNED))
-            spells.emplace_back("stun");
+    if(player && player->flagIsSet(P_STUNNED)) {
+        spells.emplace_back("stun");
     }
 
 

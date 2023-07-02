@@ -20,8 +20,11 @@ def computeBeneficial(actor: MudObject, effect: EffectInfo, applier: Optional[Mu
 		duration = 1200
 		bonus = max(60, min(3000, ((applier.intelligence.getCur()-140) * 18)))
 
-		if applier.getClass() == mud.crtClasses.CLERIC or applier.getClass() == mud.crtClasses.PALADIN:
-			bonus += 60 * applier.getLevel()
+		if (effect.getName() == "free-action" and applier.getClass() == mud.crtClasses.DRUID):
+				bonus += 60 * applier.getLevel()
+
+		if (applier.getClass() == mud.crtClasses.CLERIC or applier.getClass() == mud.crtClasses.PALADIN):
+				bonus += 60 * applier.getLevel()
 
 		duration += bonus
 

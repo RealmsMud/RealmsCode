@@ -194,6 +194,8 @@ public:
                       int &drain, float multiplier = 1.0) override;
     int packBonus();
     int getWeaponSkill(std::shared_ptr<Object>  weapon = nullptr) const override;
+    int getClassWeaponskillBonus(const std::shared_ptr<Object>  weapon) const;
+    int getRacialWeaponskillBonus(const std::shared_ptr<Object>  weapon) const;
     int getDefenseSkill() const override;
     void damageArmor(int dmg);
     void checkArmor(int wear);

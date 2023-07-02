@@ -98,6 +98,9 @@ int cmdAttack(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     if(!creature->ableToDoCommand())
         return(0);
 
+    if (creature->isMagicallyHeld(true))
+        return(0);
+
     pPlayer = creature->getAsPlayer();
     std::shared_ptr<Monster>  pet = creature->getAsMonster();
     if(pet) {
@@ -171,6 +174,9 @@ bool Creature::canAttack(const std::shared_ptr<Creature>& target, bool stealing)
     }
 
     clearFlag(P_AFK);
+
+    if (isMagicallyHeld(true))
+        return(false);
 
     if( target->isPet() && target->getMaster().get() == this &&
         !checkStaff("You cannot %s your pet.\n", verb.c_str()) )
@@ -292,8 +298,8 @@ bool Creature::canAttack(const std::shared_ptr<Creature>& target, bool stealing)
                 holy_war =
                     ((pCheck->getClass() == CreatureClass::DEATHKNIGHT && cClass == CreatureClass::PALADIN) ||
                     (cClass == CreatureClass::DEATHKNIGHT && pCheck->getClass() == CreatureClass::PALADIN) ||
-                    (deity == LINOTHAN && pCheck->getDeity() == ARACHNUS) ||
-                    (deity == ARACHNUS && pCheck->getDeity() == LINOTHAN) ||
+                    ((deity == LINOTHAN || deity == MARA) && pCheck->getDeity() == ARACHNUS) ||
+                    (deity == ARACHNUS && (pCheck->getDeity() == LINOTHAN || pCheck->getDeity() == MARA)) ||
                     (deity == ENOCH && pCheck->getDeity() == ARAMON) ||
                     (deity == ARAMON && pCheck->getDeity() == ENOCH) );
 
