@@ -1257,6 +1257,8 @@ void spawnMonsters(const std::string &roomId, const std::list<std::string> &mons
             continue;
         }
         broadcast(isDm, "Spawned monster %s in room %s", mId.c_str(), roomId.c_str());
+        monster->initMonster(false, false);
         monster->addToRoom(room);
+        gServer->addActive(monster);
     }
 }
