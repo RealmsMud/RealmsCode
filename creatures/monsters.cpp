@@ -1257,7 +1257,7 @@ void spawnMonsters(const std::string &roomId, const std::list<std::string> &mons
             continue;
         }
 
-        if ( ((room->countCrt()+1) > MAX_MOBS_IN_ROOM) || (room->getMaxMobs()>0 && ((room->countCrt()+1) > room->getMaxMobs())) ) {
+        if ( ((room->countCrt()+1) > (room->getMaxMobs()>0?room->getMaxMobs():MAX_MOBS_IN_ROOM)) ) {
             broadcast(isDm, "^GHooK:spawnMonsters: ^gtried to exceed room maxMobs (%d)\n--Room: %s(%s^g), Monster: %s(%s^g)^x", 
                                                     (room->getMaxMobs()>0?room->getMaxMobs():MAX_MOBS_IN_ROOM), roomId.c_str(), 
                                                                             room->getName().c_str(), mId.c_str(), monster->getCName());
