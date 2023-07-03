@@ -113,7 +113,7 @@ bool Monster::updateCombat() {
         return(false);
 
     // Stop fighting if it's a no exp loss monster
-    if( pTarget && flagIsSet(M_NO_EXP_LOSS) && !isPet() && target->inCombat(Containable::downcasted_shared_from_this<Monster>()))
+    if( pTarget && flagIsSet(M_NO_EXP_LOSS) && !nearEnmPly() && !isPet() && target->inCombat(Containable::downcasted_shared_from_this<Monster>()))
         return(false);
 
     monstervmonster = (!pTarget && !target->isPet() && isMonster() && !isPet());
