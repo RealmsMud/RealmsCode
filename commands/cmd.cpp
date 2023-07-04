@@ -53,6 +53,7 @@
 #include "songs.hpp"                             // for Song
 #include "structs.hpp"                           // for Command, Spell, PlyC...
 
+
 class MudObject;
 
 
@@ -228,6 +229,7 @@ void writeCommandFile(CreatureClass cls, const char* path, const char* tpl) {
 
 bool isCt(const std::shared_ptr<Creature> & player);
 bool isDm(const std::shared_ptr<Creature> & player);
+bool noHold(const std::shared_ptr<Creature> & player);
 
 //**********************************************************************
 //                      initCommands

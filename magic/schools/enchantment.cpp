@@ -185,6 +185,9 @@ int splHoldPerson(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 
                 dur = std::max(3, std::min(30,dur));
 
+                if(player->isDm())
+                    dur *=10;
+
                 if (player->isCt())
                     *player << ColorOn << "^D*Staff* " << dur << " seconds.\n" << ColorOff;
 
@@ -840,6 +843,9 @@ int cmdEnchant(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     dur;
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(!player->knowsSkill("enchant") || player->hasSecondClass()) {

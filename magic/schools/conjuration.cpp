@@ -344,6 +344,10 @@ int conjureCmd(const std::shared_ptr<Player>& player, cmd* cmnd) {
     data.set(CastType::SKILL, CONJURATION, NO_DOMAIN, nullptr, player);
     if(!data.check(player))
         return(0);
+
+    if(player->isMagicallyHeld(true))
+        return(0);
+    
     return(conjure(player, cmnd, &data));
 }
 

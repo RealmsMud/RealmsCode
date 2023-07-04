@@ -260,6 +260,9 @@ void handleObject(const std::shared_ptr<Player>& player, cmd* cmnd, HandleObject
     long t = time(0);
     std::shared_ptr<MudObject> target;
 
+    if(player->isMagicallyHeld(true))
+        return;
+
     std::string action;
     std::string action2;
     switch(type) {
@@ -458,6 +461,9 @@ int cmdPayToll(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<BaseRoom>   newRoom=nullptr;
     std::shared_ptr<Exit> exit=nullptr;
     unsigned long tc=0, amt=0;
+
+    if(player->isMagicallyHeld(true))
+        return(0);
 
     if(cmnd->num < 4) {
         player->print("Pay what to whom to get in where?\n");

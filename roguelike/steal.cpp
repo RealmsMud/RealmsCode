@@ -371,6 +371,9 @@ int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(!player->knowsSkill("steal")) {
         player->print("You lack the skills to steal from someone without being caught.\n");
         return(0);

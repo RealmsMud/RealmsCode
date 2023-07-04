@@ -921,7 +921,7 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
         oStr << "\n" << target->getHpDurabilityStr();
         if ((mTarget && mTarget->isEnemy(this)) || (pTarget && pTarget->hp.getCur() < pTarget->hp.getMax()))
             oStr << "\n" << target->getHpProgressBar() << "^x\n\n";
-        else 
+        else
             oStr << "^x\n";
     }
 
@@ -1029,12 +1029,15 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
         if(!ableToDoCommand())
             return(false);
 
-        if(flagIsSet(P_SITTING))
-            stand();
-
         if(isMagicallyHeld(displayFail)) {
             return(false);
         }
+
+        if(flagIsSet(P_SITTING))
+            stand();
+
+
+
 
         if(checkTimer && !isEffected("fear") && !isStaff()) {
             t = time(nullptr);
