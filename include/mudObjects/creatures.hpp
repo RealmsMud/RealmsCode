@@ -430,7 +430,7 @@ public:
     void die(const std::shared_ptr<Creature>&killer, bool &freeTarget); // *
     void clearAsPetEnemy();
     virtual void gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount, bool groupExp = false) {} ;
-    void adjustExperience(const std::shared_ptr<Monster>&  victim, int& expAmount, int& holidayExp);
+    void adjustExperience(const std::shared_ptr<Monster>&  victim, int& expAmount, int& holidayExp, int& bonusExp);
     int doWeaponResist(int dmg, const std::string &weaponCategory) const;
     int doDamage(std::shared_ptr<Creature> target, int dmg, DeathCheck shouldCheckDie = CHECK_DIE, DamageType dmgType = PHYSICAL_DMG);
     int doDamage(const std::shared_ptr<Creature>& target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget);

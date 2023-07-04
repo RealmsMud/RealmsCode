@@ -170,6 +170,7 @@ void Config::reset(bool reload) {
     logDeath = true;
     autoShutdown = false;
     doAprilFools = false;
+    doBonusXP = false;
     charCreationDisabled = false;
     lessExpLoss = false;
     pkillInCombatDisabled = false;
@@ -355,6 +356,7 @@ unsigned long Config::expNeeded(int level) {
 
 bool Config::isAprilFools() const { return(doAprilFools && getMonthDay() == "Apr  1"); }
 bool Config::willAprilFools() const { return(doAprilFools); }
+bool Config::bonusXpActive() const { return(doBonusXP); }
 int Config::getFlashPolicyPort() const { return(flashPolicyPort); }
 
 bool Config::sendTxtOnCrash() const { return(txtOnCrash); }

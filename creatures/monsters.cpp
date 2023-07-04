@@ -1244,3 +1244,49 @@ int Monster::grabCoins(const std::shared_ptr<Player>& player) {
     }
 }
 
+void spawnMonsters(const std::string &roomId, const std::list<std::string> &monsters) {
+    std::shared_ptr<UniqueRoom> room = nullptr;
+    std::shared_ptr<Monster>  monster = nullptr;
+    CatRef  cr;
+
+    getCatRef(roomId, cr, nullptr);
+    if(!loadRoom(cr, room)) {
+        broadcast(isDm, "Error loading room %s", roomId.c_str());
+        return;
+    }
+
+    for(const auto & mId : monsters) {
+        getCatRef(mId, cr, nullptr);
+        if(!loadMonster(cr, monster)) {
+            broadcast(isDm, "^GError loading monster %s in room %s^x", mId.c_str(), roomId.c_str());
+            continue;
+        }
+
+        if ( ((room->countCrt()+1) > (room->getMaxMobs()>0?room->getMaxMobs():MAX_MOBS_IN_ROOM)) ) {
+            broadcast(isDm, "^GHooK:spawnMonsters: ^gtried to exceed room maxMobs (%d)\n--Room: %s(%s^g), Monster: %s(%s^g)^x", 
+                                                    (room->getMaxMobs()>0?room->getMaxMobs():MAX_MOBS_IN_ROOM), roomId.c_str(), 
+                                                                            room->getName().c_str(), mId.c_str(), monster->getCName());
+            continue;
+        }
+        
+        if (monster->flagIsSet(M_PERMENANT_MONSTER)) {
+            broadcast(isDm, "^GHook:spawnMonsters: ^gtried to spawn PERM monster\n--Monster: %s(%s^g), Room: %s(%s^g)^x", 
+                                        mId.c_str(), monster->getCName(), roomId.c_str(), room->getName().c_str());
+            continue;
+        }
+
+        monster->initMonster();
+
+        if (!monster->flagIsSet(M_CUSTOM))
+            monster->validateAc();
+
+        if (!monster->flagIsSet(M_NO_ADJUST))
+            monster->adjust(-1);
+
+        broadcast(isDm, "^GHook:spawnMonsters: ^gspawned monster %s(%s^g) in room %s(%s^g)^x", 
+                                            mId.c_str(), monster->getCName(), roomId.c_str(), room->getName().c_str());
+        monster->addToRoom(room);
+        gServer->addActive(monster);
+
+    }
+}
