@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _TRAPS_H
-#define _TRAPS_H
+#pragma once
 
 //Trap types
 #define TRAP_PIT        1   // Pit trap
@@ -50,6 +49,3 @@
 #define TRAP_PIERCER        28  // Piercer trap
 #define TRAP_ETHEREAL_TRAVEL    29  // Ethereal travel trap
 #define TRAP_WEB        30  // sticky spider web trap
-
-#endif  /* _TRAPS_H */
-

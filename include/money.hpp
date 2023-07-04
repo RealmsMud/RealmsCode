@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _MONEY_H
-#define _MONEY_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <nlohmann/json.hpp>
@@ -72,5 +71,4 @@ public:
 };
 
 
-#endif  /* _MONEY_H */
 

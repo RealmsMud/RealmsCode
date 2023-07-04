@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef PROPERTY_H_
-#define PROPERTY_H_
+#pragma once
 
 #include <boost/dynamic_bitset.hpp>
 #include <list>
@@ -166,5 +165,3 @@ protected:
     boost::dynamic_bitset<> flags{32};
 };
 
-
-#endif /*PROPERTY_H_*/

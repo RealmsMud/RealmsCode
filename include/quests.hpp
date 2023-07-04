@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef QUESTS_H_
-#define QUESTS_H_
+#pragma once
 
 #include <list>
 #include <map>
@@ -205,5 +204,4 @@ private:
 time_t getDailyReset();
 time_t getWeeklyReset();
 
-#endif /*QUESTS_H_*/
 

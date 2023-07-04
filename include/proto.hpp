@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef PROTO_H
-#define PROTO_H
+
+#pragma once
 
 #include <cstdarg>
 #include <filesystem>
@@ -425,5 +425,3 @@ bool watchingSuperEaves(std::shared_ptr<Socket> sock);
 
 
 AlcoholState getAlcoholState(const EffectInfo* effect);
-
-#endif

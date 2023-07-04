@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef GLOBAL_H_
-#define GLOBAL_H_
+#pragma once
 
 #include "enums/bits.hpp"
 
@@ -652,5 +651,3 @@ enum CastResult {
     CAST_RESULT_SUCCESS
 };
 
-
-#endif /* GLOBAL_H_ */

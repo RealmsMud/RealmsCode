@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _BANK_H
-#define _BANK_H
+#pragma once
 
 #include <memory>
 
@@ -47,5 +46,4 @@ namespace Bank {
     void guildLog(int guild, const char *fmt,...);
 };
 
-#endif  /* _BANK_H */
 

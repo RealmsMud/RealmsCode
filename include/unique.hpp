@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef UNIQUE_H_
-#define UNIQUE_H_
+#pragma once
 
 #include <list>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -156,6 +155,3 @@ namespace Limited {
     bool deleteOwner(const std::shared_ptr<Player>& player, const std::shared_ptr<const Object> & object, bool save=true, bool lore=true);
     void transferOwner(std::shared_ptr<Player> owner, const std::shared_ptr<Player>& target, const std::shared_ptr<const Object> & object);
 }
-
-
-#endif /*UNIQUE_H_*/

@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef BANS_H_
-#define BANS_H_
+
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 
@@ -40,5 +40,3 @@ public: // for now
     bool        isSuffix{};
 };
 
-
-#endif /*BANS_H_*/

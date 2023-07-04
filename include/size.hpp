@@ -15,8 +15,9 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef SIZE_H_
-#define SIZE_H_
+
+#pragma once
+
 #include <string>
 
 enum Size {
@@ -39,4 +40,3 @@ const std::string & getSizeName(Size size);
 int searchMod(Size size);
 Size whatSize(int i);
 
-#endif /*SIZE_H_*/

@@ -33,8 +33,8 @@
 
 //---------------------------------------------------------------------- 
 //include protection
-#ifndef MD5_H
-#define MD5_H
+
+#pragma once
 
 #include <string>
 
@@ -116,10 +116,6 @@ class md5wrapper
          */ 
         std::string getHashFromFile(std::string filename);
 };
-
-//---------------------------------------------------------------------- 
-//End of include protection
-#endif
 
 /*
  * EOF

@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef _HOOKS_H
-#define _HOOKS_H
+
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <map>
@@ -66,6 +66,4 @@ public:
     [[nodiscard]] bool swapIsInteresting(const Swap& s) const;
 
 };
-
-#endif  /* _HOOKS_H */
 

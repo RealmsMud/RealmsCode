@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef SOCKET_H_
-#define SOCKET_H_
+#pragma once
 
 // C Includes
 #include <zlib.h>
@@ -385,6 +384,3 @@ private:
 
 // Other socket related prototypes
 int nonBlock(int pFd);
-
-
-#endif /*SOCKET_H_*/

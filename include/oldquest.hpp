@@ -2,8 +2,7 @@
 // Created by jason on 12/11/16.
 //
 
-#ifndef REALMSCODE_OLDQUEST_H
-#define REALMSCODE_OLDQUEST_H
+#pragma once
 
 class Player;
 class Object;
@@ -22,5 +21,3 @@ void fulfillQuest(std::shared_ptr<Player> player, std::shared_ptr<Object>  objec
 
 extern int numQuests;
 
-
-#endif //REALMSCODE_OLDQUEST_H

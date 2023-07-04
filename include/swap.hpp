@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _SWAP_H
-#define _SWAP_H
+#pragma once
 
 #include "catRef.hpp"
 
@@ -41,7 +40,4 @@ public:
     CatRef origin;
     CatRef target;
 };
-
-
-#endif  /* _SWAP_H */
 

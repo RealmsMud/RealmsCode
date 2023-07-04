@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef COMM_H
-#define COMM_H
+
+#pragma once
 
 #include "commands.hpp"
 #include "flags.hpp"
@@ -103,5 +103,3 @@ void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &tex
 channelPtr getChannelByName(const std::shared_ptr<Player>& player, const std::string &chanStr);
 channelPtr getChannelByDiscordChannel(unsigned long discordChannelID);
 
-
-#endif

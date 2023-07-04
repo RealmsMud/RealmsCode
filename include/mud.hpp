@@ -15,8 +15,9 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef MUD_H
-#define MUD_H
+
+#pragma once
+
 class LastTime;
 
 // Other includes are at the end of the file to make sure all defines and such in this
@@ -331,8 +332,5 @@ extern int SUPPORT_REQUIRED;
 extern unsigned short Port;
 
 extern struct osong_t osong[];
-
-#endif
-
 
 #endif

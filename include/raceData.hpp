@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _RACEDATA_H
-#define _RACEDATA_H
+#pragma once
 
 #include <list>
 #include <map>
@@ -97,7 +96,3 @@ public:
 
     std::list<std::string> effects;
 };
-
-
-#endif  /* _RACEDATA_H */
-

@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _CATREFINFO_H
-#define _CATREFINFO_H
+#pragma once
 
 #include <map>
 
@@ -76,7 +75,3 @@ protected:
     int     teleportZone{};
     int     trackZone{};
 };
-
-
-#endif  /* _CATREFINFO_H */
-

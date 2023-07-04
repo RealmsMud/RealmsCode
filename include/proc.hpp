@@ -2,8 +2,7 @@
 // Created by jason on 12/11/16.
 //
 
-#ifndef REALMSCODE_PROC_H
-#define REALMSCODE_PROC_H
+#pragma once
 
 #include <string>
 
@@ -37,5 +36,3 @@ struct childProcess {
         extra = e;
     }
 };
-
-#endif //REALMSCODE_PROC_H

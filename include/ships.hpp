@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef SHIPS_H_
-#define SHIPS_H_
+
+#pragma once
 
 #include <list>
 #include <boost/dynamic_bitset.hpp>
@@ -176,5 +176,3 @@ void shipBroadcastRange(const Ship &ship, ShipStop *stop, const std::string& mes
 int cmdQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd);
 int shipSetExits(Ship &ship, ShipStop *stop);
 int shipDeleteExits(Ship &ship, ShipStop *stop);
-
-#endif /*SHIPS_H_*/

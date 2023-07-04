@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef MAGIC_H_
-#define MAGIC_H_
+
+#pragma once
 
 #include <list>
 
@@ -430,4 +430,3 @@ bool checkRefusingMagic(const std::shared_ptr<Creature>& player, const std::shar
 bool replaceCancelingEffects(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, const std::string &effect);
 int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-#endif /*MAGIC_H_*/

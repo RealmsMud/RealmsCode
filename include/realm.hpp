@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef REALMSCODE_REALM_H
-#define REALMSCODE_REALM_H
+#pragma once
 
 enum Realm {
     NO_REALM =  0,
@@ -31,6 +30,3 @@ enum Realm {
 
     MAX_REALM
 };
-
-
-#endif //REALMSCODE_REALM_H
