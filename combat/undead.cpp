@@ -194,6 +194,9 @@ int cmdMist(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if((!player->knowsSkill("mist") || !player->isEffected("vampirism")) && !player->isStaff()) {
         player->print("You are unable to turn to mist.\n");
         return(0);

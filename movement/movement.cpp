@@ -1307,6 +1307,9 @@ int cmdOpen(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(player->flagIsSet(P_SITTING)) {
         player->print("You have to stand up first.\n");
         return(0);
@@ -1393,6 +1396,9 @@ int cmdClose(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(cmnd->num < 2) {
         player->print("Close what?\n");
         return(0);
@@ -1468,6 +1474,8 @@ int cmdUnlock(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
 
 
     if(player->flagIsSet(P_SITTING)) {
@@ -1597,6 +1605,9 @@ int cmdLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(cmnd->num < 2) {

@@ -112,6 +112,9 @@ int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     const Effect* effect=nullptr;
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if (cmnd->num < 2) {
         *player << "Dispel what effect on yourself, or what effect on what exit?\n";
         *player << "Ex: dispel dimensional-anchor\n";
@@ -285,6 +288,8 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         player->clearFlag(P_AFK);
         player->interruptDelayedActions();
         if(!player->ableToDoCommand())
+            return(CAST_RESULT_FAILURE);
+        if(player->isMagicallyHeld(true))
             return(CAST_RESULT_FAILURE);
     }
 
@@ -578,6 +583,9 @@ int cmdTeach(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string skill = "";
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(cmnd->num < 3) {
@@ -1314,6 +1322,9 @@ int cmdConsume(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(cmnd->num < 2) {
         if(strcmp(cmnd->str[0], "eat") != 0) {
             player->print("Drink what?\n");
@@ -1517,8 +1528,11 @@ int cmdUseWand(const std::shared_ptr<Player>& player, cmd* cmnd) {
 int cmdRecall(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if((player->getLevel() <= 7 && !player->inCombat()) || player->isStaff())
         player->doRecall();
+    else if(player->isMagicallyHeld(true)) 
+        return(0);
     else
         player->useRecallPotion(1, 0);
+    
 
     return(0);
 }

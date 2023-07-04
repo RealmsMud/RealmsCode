@@ -171,6 +171,9 @@ int cmdUse(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(cmnd->num < 2) {
         player->print("Use what?\n");
         return(0);
@@ -256,6 +259,10 @@ bool doWear(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->ableToDoCommand())
         return(false);
+
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(player->flagIsSet(P_SITTING)) {
         player->print("You must stand to do that.\n");
         return(false);
@@ -432,6 +439,9 @@ bool doRemoveObj(const std::shared_ptr<Player>& player, cmd* cmnd ) {
 
     if(!player->ableToDoCommand())
         return(false);
+
+    if(player->isMagicallyHeld(true))
+        return(0);
 
     if(cmnd && cmnd->num < 2) {
         player->print("Remove what?\n");
@@ -691,6 +701,9 @@ bool doWield(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(false);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     player->unhide();
 
     if(!cmnd || cmnd->num > 1) {
@@ -749,6 +762,9 @@ int cmdHold(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(cmnd->num < 2) {
@@ -1268,6 +1284,9 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     }
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     player->clearFlag(P_AFK);
@@ -2081,10 +2100,15 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         return(0);
     }
 
+    player->clearFlag(P_AFK);
+
     if(!player->ableToDoCommand())
         return(0);
 
-    player->clearFlag(P_AFK);
+    if(player->isMagicallyHeld(true))
+        return(0);
+
+    
 
 
     if(cmnd->num < 2) {
@@ -2541,6 +2565,9 @@ int cmdGive(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(cmnd->num < 3) {
         player->print("Give what to whom?\n");
         return(0);
@@ -2921,6 +2948,9 @@ int cmdRepair(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     /*if((player->getClass() == CreatureClass::CLERIC && player->getDeity() == JAKAR))

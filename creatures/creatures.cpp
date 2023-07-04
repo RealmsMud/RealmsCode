@@ -1268,7 +1268,7 @@ bool Creature::isMagicallyHeld(bool print) const {
 
     if (isEffected("hold-person") || isEffected("hold-monster") || isEffected("hold-undead")) {
         if (isPlayer() && print)
-            printColor("^yYou can't do that! You're magically held and can't move!^x\n");
+            printColor("^yYou can't do that! You're magically held!^x\n");
         return(true);
         }
     return(false);
@@ -1347,6 +1347,7 @@ bool Creature::ableToDoCommand( cmd* cmnd) const {
         print("You are brain-dead. You can't do that.\n");
         return(false);
     }
+
 
     // unconscious has some special rules
     if(flagIsSet(P_UNCONSCIOUS)) {

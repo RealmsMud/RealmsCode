@@ -73,6 +73,10 @@ int cmdPrepareForTraps(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
+
     if(player->flagIsSet(P_PREPARED)) {
         *player << "You've already prepared.\n";
         return(0);
@@ -118,6 +122,9 @@ int cmdBribe(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(player->getClass() == CreatureClass::BUILDER) {
@@ -204,6 +211,9 @@ int cmdGamble(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 bool canSearch(const std::shared_ptr<Player> player) {
     if(!player->ableToDoCommand())
+        return(false);
+
+    if(player->isMagicallyHeld(true))
         return(false);
 
     if(player->isBlind()) {
@@ -471,6 +481,9 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(!player->knowsSkill("hide")) {
         *player << "You don't really know how to hide effectively.\n";
         return(0);
@@ -717,6 +730,9 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(!player->isStaff() && !player->knowsSkill("scout")) {
         *player << "You lack the training to properly scout exits.\n";
         return(0);
@@ -854,6 +870,9 @@ int cmdEnvenom(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(!player->knowsSkill("envenom")) {
         *player << "You lack the training to envenom your weapons.\n";
         return(0);
@@ -949,6 +968,9 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(!needUniqueRoom(player))
@@ -1229,6 +1251,7 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->ableToDoCommand())
         return(0);
+
 
     if(!player->knowsSkill("backstab")) {
         *player << "You don't know how to backstab.\n";
@@ -1729,6 +1752,9 @@ int cmdPickLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(!player->knowsSkill("pick")) {
         *player << "You don't know how to pick locks.\n";
         return(0);
@@ -1857,6 +1883,9 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(!player->isStaff() && !player->knowsSkill("peek")) {

@@ -52,6 +52,9 @@ int cmdFollow(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(cmnd->num < 2) {
         *player << "Follow whom?\n";
         return(0);
@@ -204,6 +207,9 @@ int cmdLose(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(cmnd->num == 1) {

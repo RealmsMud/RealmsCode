@@ -104,7 +104,7 @@ int cmdDisarm(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(!player->knowsSkill("disarm")) {
-        player->print("You are not skilled in the art of disarming your opponents.\n");
+        *player <<"You are not skilled in the art of disarming your opponents.\n";
         return(0);
     }
 
@@ -112,7 +112,7 @@ int cmdDisarm(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(creature)
         pCreature = creature->getAsPlayer();
     if(!creature || creature == player || (pCreature && strlen(cmnd->str[1]) < 3)) {
-        player->print("They aren't here.\n");
+        *player << "They aren't here.\n";
         return(0);
     }
 
@@ -120,12 +120,12 @@ int cmdDisarm(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
     if(player->isBlind()) {
-        player->printColor("^CYou're blind!\n");
+        *player << ColorOn << "^CYou're blind!\n" << ColorOff;
         return(0);
     }
 
     if(!creature->ready[WIELD-1]) {
-        player->print("%s isn't wielding anything to disarm!\n", creature->upHeShe());
+        *player << setf(CAP) << creature << " isn't wielding anything to disarm!\n";
         return(0);
     }
 
@@ -318,6 +318,9 @@ int cmdSecond(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(!player->knowsSkill("dual")) {
@@ -667,7 +670,6 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-
     if(!player->knowsSkill("bash")) {
         player->print("You lack the skills to effectively bash anything!\n");
         return(0);
@@ -963,6 +965,9 @@ int cmdTrack(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i, t;
 
     player->clearFlag(P_AFK);
+
+    if(player->isMagicallyHeld(true))
+        return(0);
     
     if(!player->canTrack())
         return(0);
@@ -1136,6 +1141,9 @@ int cmdBloodsacrifice(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(!player->knowsSkill("bloodsac")) {

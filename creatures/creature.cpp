@@ -1047,15 +1047,17 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
         if(!ableToDoCommand())
             return(false);
 
+        if(isMagicallyHeld(displayFail)) {
+            return(false);
+        }
+        
         if(flagIsSet(P_SITTING)) {
             if(displayFail)
                 print("You have to stand up first.\n");
             return(false);
         }
 
-        if(isMagicallyHeld(displayFail)) {
-            return(false);
-        }
+        
 
         if(checkTimer && !isEffected("fear") && !isStaff()) {
             t = time(nullptr);
