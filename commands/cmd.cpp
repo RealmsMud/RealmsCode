@@ -18,7 +18,6 @@
 
 #include <fmt/format.h>                          // for format
 #include <strings.h>                             // for strncasecmp
-#include <iostream>
 #include <unistd.h>                              // for link
 #include <boost/algorithm/string/predicate.hpp>  // for iequals
 #include <boost/iterator/iterator_facade.hpp>    // for operator!=, iterator...
@@ -243,7 +242,7 @@ bool Config::initCommands() {
     staffCommands.emplace("*cache", 100, dmCache, isDm, "Show DNS cache");
     staffCommands.emplace("*test", 100, dmTest, isDm, "");
     staffCommands.emplace("pcast", 100, pcast, isDm, "");
-    
+
     // channels
     staffCommands.emplace("*send", 10, channel, isCt, "");
     staffCommands.emplace("dm", 100, channel, isDm, "Use DM channel");
