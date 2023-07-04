@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _SKILLGAIN_H
-#define _SKILLGAIN_H
+#pragma once
 
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -39,7 +38,4 @@ protected:
 
     std::map<int, bool> deities;
 };
-
-
-#endif  /* _SKILLGAIN_H */
 

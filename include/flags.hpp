@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef FLAGS_H_
-#define FLAGS_H_
+
+#pragma once
 
 // partial owner flags
 #define PROP_STOR_VIEW_LOG          0      // view log
@@ -869,5 +869,4 @@
 #define X_SEL_KENKU                 97      // race selective: kenku
 #define X_NO_REMEMBER               98      // Unable to remember this exit
 #define MAX_EXIT_FLAGS              99      // Incriment when adding... check structs.h for max
-#endif /*FLAGS_H_*/
 

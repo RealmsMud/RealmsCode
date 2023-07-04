@@ -3,8 +3,7 @@
 #include <vector>
 #include <sstream>
 
-#ifndef JOIN_HPP
-#define JOIN_HPP
+#pragma once
 
 template <typename T>
 std::string join(const T& v, const std::string& delim) {
@@ -42,6 +41,3 @@ std::string mjoin(const T& v, const std::string& delim) {
     return s.str();
 }
 
-
-
-#endif

@@ -15,9 +15,7 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef VPRINT_H_
-#define VPRINT_H_
-
+#pragma once
 #include <cstdio>
 #include <cstdlib>
 
@@ -25,4 +23,3 @@
 // Function prototypes
 int print_arginfo (const struct printf_info *info, size_t n, int *argtypes);
 
-#endif /*VPRINT_H_*/

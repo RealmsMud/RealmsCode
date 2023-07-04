@@ -2,8 +2,7 @@
 // Created by jason on 4/8/20.
 //
 
-#ifndef REALMSCODE_LOADTYPE_HPP
-#define REALMSCODE_LOADTYPE_HPP
+#pragma once
 
 // Enums
 enum class LoadType {
@@ -16,5 +15,3 @@ enum class LoadType {
     LS_REF
 };
 
-
-#endif //REALMSCODE_LOADTYPE_HPP

@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _DICE_H
-#define _DICE_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include "json.hpp"
@@ -58,7 +57,4 @@ public:
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Dice, mean, number, sides, plus);
 
 };
-
-
-#endif  /* _DICE_H */
 

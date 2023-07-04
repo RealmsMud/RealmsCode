@@ -16,10 +16,7 @@
  *
  */
 
-
-
-#ifndef _PYTHONHANDLER_H
-#define _PYTHONHANDLER_H
+#pragma once
 
 // C++ Includes
 #include <Python.h>
@@ -51,6 +48,4 @@ public:
 
 
 };
-
-#endif  /* _PYTHONHANDLER_H */
 

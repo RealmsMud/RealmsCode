@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _WANDERINFO_H
-#define _WANDERINFO_H
+#pragma once
 
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -41,6 +40,3 @@ public:
 protected:
     short   traffic;
 };
-
-#endif  /* _WANDERINFO_H */
-

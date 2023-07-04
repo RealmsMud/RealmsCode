@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef STAT_H_
-#define STAT_H_
+
+#pragma once
 
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -122,4 +122,3 @@ protected:
     Stat* influencedBy;
 };
 
-#endif /*STAT_H_*/

@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef XML_H_
-#define XML_H_
+#pragma once
 
 #include <map>
 #include <filesystem>
@@ -263,8 +262,4 @@ xmlNodePtr saveShortIntArray(xmlNodePtr parentNode, const char* rootName, const 
 // xml.cpp
 int toBoolean(char *fromStr);
 char *iToYesNo(int fromInt);
-
-#endif /*XML_H_*/
-
-
 

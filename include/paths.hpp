@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef PATHS_H_
-#define PATHS_H_
+
+#pragma once
 
 #include <filesystem>
 
@@ -77,7 +77,4 @@ struct Path {
     static fs::path roomPath(const CatRef& cr);
     static fs::path roomBackupPath(const CatRef& cr);
 };
-
-
-#endif /*PATHS_H_*/
 

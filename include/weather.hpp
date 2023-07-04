@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef REALMSCODE_WEATHER_H
-#define REALMSCODE_WEATHER_H
+#pragma once
 
 enum WeatherString {
     WEATHER_SUNRISE,
@@ -52,8 +51,3 @@ enum WeatherString {
     WEATHER_WAXING_MOON,
     WEATHER_FULL_MOON
 };
-
-
-
-
-#endif //REALMSCODE_WEATHER_H

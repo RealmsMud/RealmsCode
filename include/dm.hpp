@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef DMH_H
-#define DMH_H
+
+#pragma once
 
 #include "catRef.hpp"
 #include "range.hpp"
@@ -240,6 +240,3 @@ int dmRoomSwap(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmObjSwap(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmMobSwap(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-
-
-#endif

@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _DEITYDATA_H
-#define _DEITYDATA_H
+#pragma once
 
 #include <map>
 
@@ -37,7 +36,4 @@ public:
     [[nodiscard]] std::string getName() const;
     [[nodiscard]] std::string getTitle(int lvl, bool male, bool ignoreCustom=true) const;
 };
-
-
-#endif  /* _DEITYDATA_H */
 

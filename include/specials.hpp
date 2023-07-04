@@ -27,8 +27,7 @@
  *      editor! Either edit the PHP yourself or tell Dominus to make the changes.
  */
 
-#ifndef SPECIALS_H_
-#define SPECIALS_H_
+#pragma once
 
 #include <boost/dynamic_bitset.hpp>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -214,6 +213,3 @@ public:
 
 };
 
-
-
-#endif /*SPECIALS_H_*/

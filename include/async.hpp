@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _ASYNCH_H
-#define _ASYNCH_H
+#pragma once
 
 #include <memory>
 #include "proc.hpp"
@@ -37,7 +36,4 @@ public:
     Async();
     AsyncResult branch(const std::shared_ptr<const Player>& player, ChildType type);
 };
-
-
-#endif  /* _ASYNCH_H */
 

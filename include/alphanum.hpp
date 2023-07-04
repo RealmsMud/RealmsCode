@@ -1,6 +1,4 @@
-#ifndef ALPHANUM__HPP
-#define ALPHANUM__HPP
-
+#pragma once
 /*
  The Alphanum Algorithm is an improved sorting algorithm for strings
  containing numbers.  Instead of sorting numbers in ASCII order like a
@@ -127,4 +125,3 @@ struct alphanum_less {
     }
 };
 
-#endif

@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef IMPORT_H_
-#define IMPORT_H_
+
+#pragma once
 
 class cmd;
 class Player;
@@ -25,4 +25,3 @@ class Player;
 int lookup(const std::shared_ptr<Player>& player, cmd* cmnd);
 int restore(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-#endif /*IMPORT_H_*/

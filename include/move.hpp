@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef REALMS_MOVE_H
-#define REALMS_MOVE_H
+#pragma once
 
 #include <list>
 
@@ -62,4 +61,3 @@ namespace Move {
     bool deletePortal(const std::shared_ptr<BaseRoom>& room, const std::string &name, const std::shared_ptr<Creature> & leader=0, std::list<std::shared_ptr<Creature>> *followers=0, bool initial=true);
 }
 
-#endif

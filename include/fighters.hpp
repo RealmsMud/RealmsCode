@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef FIGHTERS_H
-#define FIGHTERS_H
+#pragma once
 
 // What sort of action is being passed to increaseFocus
 enum FocusAction {
@@ -34,5 +33,3 @@ enum FocusAction {
     LAST_FOCUS
 };
 
-
-#endif //FIGHTERS_H

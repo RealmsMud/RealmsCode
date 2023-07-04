@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef CONFIG_H
-#define CONFIG_H
+
+#pragma once
 
 #include <list>
 #include <map>
@@ -686,4 +686,3 @@ public:
 
 extern Config *gConfig;
 
-#endif

@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef GUILDS_H_
-#define GUILDS_H_
+
+#pragma once
 
 #include <map>
 #include <list>
@@ -121,5 +121,3 @@ protected:
 };
 
 
-
-#endif /*GUILDS_H_*/

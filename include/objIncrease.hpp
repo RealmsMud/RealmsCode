@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _OBJINCREASE_H
-#define _OBJINCREASE_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include "json.hpp"
@@ -49,6 +48,4 @@ public:
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(ObjIncrease, type, increase, amount, onlyOnce, canAddIfNotKnown);
 };
 
-
-#endif  /* _OBJINCREASE_H */
 
