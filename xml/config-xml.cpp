@@ -100,6 +100,7 @@ void Config::loadGeneral(xmlNodePtr rootNode) {
     while(curNode) {
         if(NODE_NAME(curNode, "AutoShutdown")) xml::copyToBool(autoShutdown, curNode);
         else if(NODE_NAME(curNode, "AprilFools")) xml::copyToBool(doAprilFools, curNode);
+        else if(NODE_NAME(curNode, "BonusXP")) xml::copyToBool(doBonusXP, curNode);
         else if(NODE_NAME(curNode, "FlashPolicyPort")) xml::copyToNum(flashPolicyPort, curNode);
         else if(NODE_NAME(curNode, "CharCreationDisabled")) xml::copyToBool(charCreationDisabled, curNode);
         else if(NODE_NAME(curNode, "CheckDouble")) xml::copyToBool(checkDouble, curNode);
@@ -225,6 +226,7 @@ bool Config::saveConfig() const {
     xml::newStringChild(curNode, "LogDatabaseDatabase", logDbDatabase);
 
     xml::newBoolChild(curNode, "AprilFools", doAprilFools);
+    xml::newBoolChild(curNode, "BonusXP", doBonusXP);
     xml::saveNonZeroNum(curNode, "FlashPolicyPort", flashPolicyPort);
     xml::newBoolChild(curNode, "AutoShutdown", autoShutdown);
     xml::newBoolChild(curNode, "CharCreationDisabled", charCreationDisabled);
