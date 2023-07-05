@@ -616,6 +616,7 @@ public:
     std::string getPoisonedBy() const;
     unsigned short getDisplayRace() const;
     bool inJail() const;
+    int getWillpower();
 
 // Set
     void setClass(CreatureClass c); // *
@@ -688,7 +689,7 @@ public:
     bool changeSize(int oldStrength, int newStrength, bool enlarge);
     bool checkResistEnchantments(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
     bool isMagicallyHeld(bool print=false) const;
-    void doCheckBreakMagicalHolds(const std::shared_ptr<Creature>& attacker);
+    void doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker);
 
     bool addStatModifier(std::string_view statName, std::string_view modifierName, int modAmt, ModifierType modType);
     bool addStatModifier(std::string_view statName, StatModifier* statModifier);

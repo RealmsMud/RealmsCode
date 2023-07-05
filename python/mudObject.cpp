@@ -57,6 +57,11 @@ void init_module_mudObject(py::module &m) {
         .def("addEffect", (EffectInfo* (::MudObject::*) (const std::string &, long int, int, const std::shared_ptr<MudObject>&, bool, const std::shared_ptr<Creature> &, bool))&MudObject::addEffect,
              "effect"_a, "duration"_a=-2, "strength"_a=-2, "applier"_a=nullptr, "show"_a=(bool)(true),
              "owner"_a=py::none(), "keepApplier"_a=(bool)(false))
+
+        // Can put this back in later when work out how not to crash the game when removing a pulsed effect from within the python :P
+        //.def("removeEffect", (bool (::MudObject::*) (const std::string &, bool, bool, const std::shared_ptr<MudObject>&))&MudObject::removeEffect,
+        //   "effect"_a, "show"_a=(bool)(true), "remPerm"_a=(bool)(false),"fromAapplier"_a=nullptr)
+
         .def("pulseEffects", &MudObject::pulseEffects)
         .def("removeOppositeEffect", &::MudObject::removeOppositeEffect)
         .def("getPlayer",&MudObject::getAsPlayer, py::return_value_policy::reference)
@@ -128,6 +133,7 @@ void init_module_mudObject(py::module &m) {
         .def("getRace", &Creature::getRace)
         .def("getSize", &Creature::getSize)
         .def("getAttackPower", &Creature::getAttackPower)
+        .def("getWillpower", &Creature::getWillpower)
         .def("getDescription", &Creature::getDescription)
         .def("checkMp", &Creature::checkMp)
         .def("subMp", &Creature::subMp)

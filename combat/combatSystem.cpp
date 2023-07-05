@@ -719,6 +719,7 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
 
     int randNum = Random::get(0, 10000);
 
+    /*
     if (isPlayer() && (isCt() || flagIsSet(P_PTESTER))) {
         *this << "missChance = " << missChance << ".\n";
         *this << "missModifier = " << missModifier << ".\n";
@@ -738,6 +739,7 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
 
         *this << "\nAttack roll = " << randNum << "\n";
     }
+    */
 
 
     AttackResult result;

@@ -1002,7 +1002,7 @@ bool Creature::checkResistEnchantments(const std::shared_ptr<Creature>& caster, 
             resist=true;
         }  
 
-        if(flagIsSet(M_DM_FOLLOW) || flagIsSet(M_PERMENANT_MONSTER) || isEffected("reflect-magic") || isEffected("fire-sheld")) {
+        if(flagIsSet(M_DM_FOLLOW) || isEffected("reflect-magic") || isEffected("fire-sheld")) {
             if (output) {
                 *this << ColorOn << "^y" << setf(CAP) << caster << "'s spell dissipated.\n" << ColorOff;
                 *caster << ColorOn << "^yYour spell dissipated.\n" << ColorOff;
@@ -1280,39 +1280,46 @@ bool Creature::isMagicallyHeld(bool print) const {
 // This is called when a player or mob is attacked to determine whether
 // that action is enough to break any magical hold spells they are under
 
-void Creature::doCheckBreakMagicalHolds(const std::shared_ptr<Creature>& attacker) {
-    double percentDamageTaken=0, saveMod=0, base=0, chanceToBreak=0;
-    
+void Creature::doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker) {
+    int hitsToBreak=0;
+    EffectInfo* holdEffect = nullptr;
+
     if (!attacker)
         return;
 
+    
     if (!isMagicallyHeld())
         return;
 
-    base = (double)((intelligence.getCur()+piety.getCur())/40);
-    percentDamageTaken = (100 - ((hp.getCur()/hp.getMax())*100));
-    saveMod = percentDamageTaken/2;
+    if (isEffected("hold-person"))
+        holdEffect = getEffect("hold-person");
+    else if (isEffected("hold-monster"))
+        holdEffect = getEffect("hold-monster");
+    else holdEffect = getEffect("hold-undead");
 
-    chanceToBreak = base + saveMod;
+    if(!holdEffect)
+        return;
+
+
+    hitsToBreak = holdEffect->getExtra();
+
+
     if (hatesEnemy(attacker))
-        chanceToBreak += ((chanceToBreak*3)/10); // If hates the enemy smacking on them, +30% to break out of hold
+        hitsToBreak-=2;
+    else
+        hitsToBreak--;
 
-    if (isEffected("berserk"))
-        chanceToBreak += 25; // +25% chance to break hold if somehow berserked
+    holdEffect->setExtra(hitsToBreak);
 
-    int roll = Random::get(1,100);
+    if (attacker->isCt() || (attacker->isPlayer() && attacker->flagIsSet(P_PTESTER))) {
+        *attacker << ColorOn << "Hits before " << this << "'s " << holdEffect->getName() << " breaks: ^Y" << hitsToBreak << "\n" << ColorOff;
+    }
 
-    if ((double)roll <= chanceToBreak) {
+    if (hitsToBreak <= 0) {
         if (isPlayer()) {
-            *this << ColorOn << "^GThe hold magic on you has been interrupted!" << ColorOff;
-            *attacker << ColorOn << "^GThe hold magic on " << this << " has been interrupted!" << ColorOff;
-            broadcast((attacker->isPlayer()?attacker->getSock():nullptr), attacker->getParent(),"^GThe hold magic on %M has been interrupted!^x",this);
-            if (isEffected("hold-person")) 
-                removeEffect("hold-person");
-            if (isEffected("hold-monster")) 
-                removeEffect("hold-monster");
-            if (isEffected("hold-undead")) 
-                removeEffect("hold-undead");   
+            *this << ColorOn << "^YThe hold magic on you has been broken!\n" << ColorOff;
+            *attacker << ColorOn << "^YThe hold magic on " << this << " has been broken!\n" << ColorOff;
+            broadcast(getSock(), attacker->getSock(), attacker->getParent(),"^GThe hold magic on %M has been broken!^x",this);
             getAsPlayer()->computeAC();
             getAsPlayer()->computeAttackPower();
     
@@ -1320,13 +1327,16 @@ void Creature::doCheckBreakMagicalHolds(const std::shared_ptr<Creature>& attacke
 
         if (isMonster()) {
             if (attacker->isPlayer())
-                *attacker << ColorOn << "^GThe hold magic on " << this << " has been interrupted!" << ColorOff;
-            broadcast((attacker->isPlayer()?attacker->getSock():nullptr), attacker->getParent(), "^GThe hold magic on %M has been interrupted!^x", this);
+                *attacker << ColorOn << "^YThe hold magic on " << this << " has been broken!\n" << ColorOff;
+            broadcast(attacker->getSock(), attacker->getParent(), "^YThe hold magic on %M has been broken!^x", this);
             
         }
 
+        removeEffect(holdEffect->getName());
         lasttime[LT_SPELL].ltime = time(nullptr);
         setAttackDelay(0);
+
+
     }
 
     return;
@@ -1559,6 +1569,58 @@ std::string Creature::getCrtStr(const std::shared_ptr<const Creature> & viewer, 
     }
 
     return(toReturn);
+}
+
+//********************************************************************
+//                    getWillpower()
+//********************************************************************
+int Creature::getWillpower() {
+
+    int willpower=0, race=0;
+
+    //Base Willpower stat is avg of int, con, and str
+    willpower = (intelligence.getCur() + this->constitution.getCur() + this->strength.getCur()) / 3;
+    race = getRace();
+
+    if (isEffected("berserk"))
+        willpower += ((willpower*3)/2);
+
+    // Certain races are very natually stubborn!
+    if (race == DWARF || race == HILLDWARF || race == DUERGAR || 
+            race == BARBARIAN || race == MINOTAUR || race == SERAPH || 
+                race == OGRE || race == LIZARDMAN || race == CENTAUR || race == ORC)    
+        willpower += (willpower/10);
+    // As are Paladins, Deathknights, and Clerics of Ares
+    if  (getClass() == CreatureClass::PALADIN || 
+             getClass() == CreatureClass::DEATHKNIGHT ||
+                (getClass() == CreatureClass::CLERIC && getDeity() == ARES)) 
+        if (!isPlayer() || (isPlayer() && getAsPlayer()->alignInOrder()))
+            willpower += (willpower/10);
+
+    if (isMonster()) {
+
+        if (isPet()) 
+            willpower += (willpower/5); 
+
+        switch(getType()) {
+        case DRAGON:
+        case DEMON:
+        case DEVIL:
+        case FAERIE:
+            willpower += ((willpower*3)/2);
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (isEffected("courage"))
+        willpower += (willpower/5);
+
+    if (isEffected("fear"))
+        willpower -= (willpower/5);
+
+    return(willpower);
 }
 
 

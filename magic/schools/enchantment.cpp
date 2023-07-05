@@ -163,7 +163,10 @@ int splHoldPerson(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
                     target->getAsMonster()->addEnemy(player);
                 
                 //target->stun(dur);
-                target->addEffect("hold-person", long(dur), spellData->level, player, true, player);
+                target->addEffect("hold-person", long(dur), strength, player, true, player);
+                effect = target->getEffect("hold-person");
+                if(effect) 
+                    effect->setExtra(strength/2);
 
 
             } else {
@@ -191,7 +194,10 @@ int splHoldPerson(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
                 if (player->isCt())
                     *player << ColorOn << "^D*Staff* " << dur << " seconds.\n" << ColorOff;
 
-                target->addEffect("hold-person", long(dur), spellData->level, player, true, player);
+                target->addEffect("hold-person", long(dur), strength, player, true, player);
+                effect = target->getEffect("hold-person");
+                if(effect) 
+                    effect->setExtra(strength/2);
 
             } else {
                 *player << ColorOn << "^y" << setf(CAP) << target << " resisted your spell through sheer will.\n" << ColorOff;
