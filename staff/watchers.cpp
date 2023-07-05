@@ -187,6 +187,9 @@ int reportBug(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!needUniqueRoom(player))
         return(0);
 
+    if(player->checkForSpam())
+        return(0);
+
 
     player->printColor("^YBug reported in this room!\n");
 
