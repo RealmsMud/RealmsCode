@@ -536,10 +536,31 @@ def pulseWall(actor: MudObject, effect: EffectInfo) -> bool:
 
 	return True
 
-
 def pulseCamouflage(actor: MudObject, effect: EffectInfo) -> bool:
-	if effect.getDuration() <= 60 and actor.getClass() == mud.crtClasses.DRUID and actor.getRoom().isForest():
+	# Camouflage won't ever wear off as long as a Druid is in a Forest flagged room
+	if effect.getDuration() <= 15 and actor.getClass() == mud.crtClasses.DRUID and actor.getRoom().isForest():
+		actor.send("^gYou continue to blend into the forest around you.\n")
 		effect.setDuration(60)
+	return True
+
+def pulseHoldSpells(actor: MudObject, effect: EffectInfo) -> bool:
+	strength = effect.getStrength()
+
+	willpower = actor.getWillpower()/10
+
+	roll = mud.rand(1,100)
+
+	actor.send("willpower = " + str(willpower) + "\n")
+	actor.send("roll = " + str(roll) + "\n")
+
+	if (roll <= willpower):
+		actor.send("^yYou break out of the " + effect.getName() + " spell out of sheer will!\n")
+		mudLib.broadcastRoom(actor.getRoom(), "^Y*ACTOR* breaks out of *A-HISHER* magical hold out of sheer will!", actor=actor, ignore=actor)
+		effect.setDuration(0);
+	else:
+		actor.send("yYou are held and unable to move.\n")
+		mudLib.broadcastRoom(actor.getRoom(), "^Y*ACTOR* is trying to break out of *A-HISHER* magical hold.", actor=actor, ignore=actor)
+
 	return True
 
 def computeRegen(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:

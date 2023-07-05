@@ -1173,7 +1173,8 @@ int Creature::doDamage(const std::shared_ptr<Creature>& target, int dmg, DeathCh
     std::shared_ptr<Monster>  mTarget = target->getAsMonster();
     std::shared_ptr<Player> pThis = getAsPlayer();
     std::shared_ptr<Monster>  mThis = getAsMonster();
-
+    std::shared_ptr<Creature>  cThis = getAsCreature();
+    
     int m = std::min(target->hp.getCur(), dmg);
 
     target->hp.decrease(dmg);
@@ -1198,6 +1199,10 @@ int Creature::doDamage(const std::shared_ptr<Creature>& target, int dmg, DeathCh
             pTarget->increaseFocus(FOCUS_DAMAGE_IN, dmg);
         }
     }
+
+    
+    target->doCheckBreakMagicalHolds(cThis);
+
 
     if(shouldCheckDie == CHECK_DIE)
         return(target->checkDie(Containable::downcasted_shared_from_this<Creature>(), freeTarget));
