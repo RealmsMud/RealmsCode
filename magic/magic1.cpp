@@ -298,11 +298,14 @@ void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creat
     }
 }
 //*********************************************************************
-//                      cmdCast
+//                      doCast
 //*********************************************************************
-// This function allows a creature to cast a magical spell. It looks at
-// the second parsed word to find out if the spell-name is valid, and
-// then calls the appropriate spell function.
+// This function does the work of a mob/player casting a magical spell. 
+// It looks at the second parsed word to find out if the spell-name is valid, 
+// and then calls the appropriate spell function. The CastResult return is used
+// only when doCast() is called under specific situations (such as when a player 
+// asks a mob to cast a spell on them) or otherwise more specific info about the 
+// success or failure of the cast is needed on the other end.
 
 CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     long    i=0, t=0;
@@ -1718,6 +1721,11 @@ bool noCastUndead(std::string_view effect) {
 
 int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength, long duration) {
     std::shared_ptr<Creature> target=nullptr;
+
+    if (spellData->object) 
+        strength = (spellData->object->getLevel()>0?spellData->object->getLevel():10);
+    else
+        strength = spellData->level;
 
     if(cmnd->num == 2) {
         target = player;

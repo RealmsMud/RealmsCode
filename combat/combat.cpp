@@ -116,6 +116,9 @@ bool Monster::updateCombat() {
     if( pTarget && flagIsSet(M_NO_EXP_LOSS) && !nearEnmPly() && !isPet() && target->inCombat(Containable::downcasted_shared_from_this<Monster>()))
         return(false);
 
+    if (getAsCreature()->isMagicallyHeld(false))
+        return(false);
+
     monstervmonster = (!pTarget && !target->isPet() && isMonster() && !isPet());
 
     room->wake("Loud noises disturb your sleep.", true);
@@ -1201,13 +1204,15 @@ int Creature::doDamage(const std::shared_ptr<Creature>& target, int dmg, DeathCh
     }
 
     
-    target->doCheckBreakMagicalHolds(cThis);
-
+    if(target->hp.getCur()>0)
+        target->doCheckBreakMagicalHolds(cThis, dmg);
 
     if(shouldCheckDie == CHECK_DIE)
         return(target->checkDie(Containable::downcasted_shared_from_this<Creature>(), freeTarget));
     else if(shouldCheckDie == CHECK_DIE_ROB)
         return(target->checkDieRobJail(mThis, freeTarget));
+    
+    
 
     freeTarget = false;
     return(0);

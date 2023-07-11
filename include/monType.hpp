@@ -68,6 +68,14 @@ namespace monType {
     char *getName(mType type);
     int getHitdice(mType type);
     bool isUndead(mType type);
+    bool isPlant(mType type);
+    bool isElemental(mType type);
+    bool isFey(mType type);
+    bool isAnimal(mType type);
+    bool isInsectLike(mType type);
+    bool isHumanoidLike(mType type);
+    bool isExtraplanar(mType type);
+    bool isMindless(mType type);
     Size size(mType type);
     bool immuneCriticals(mType type);
     bool noLivingVulnerabilities(mType type);

@@ -562,7 +562,12 @@ int Monster::castSpell(const std::shared_ptr<Creature>&target) {
         splNo == S_SIPHON_LIFE ||
         splNo == S_SPIRIT_STRIKE ||
         splNo == S_SOULSTEAL ||
-        splNo == S_TOUCH_OF_KESH
+        splNo == S_TOUCH_OF_KESH ||
+        (splNo == S_HOLD_PERSON && ((!target->isUndead() && target->isPlayer()) ||
+                                   (!target->isUndead() && target->isMonster() && 
+                                            (target->getType() == HUMANOID || target->getType() == GOBLINOID || target->getType() == INSECTOID))) ) ||
+        (splNo == S_HOLD_MONSTER && !target->isUndead()) ||
+        (splNo == S_HOLD_UNDEAD && target->isUndead())
     ) {
         // we have the exact pointer
         enemy = target->getName();
