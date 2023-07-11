@@ -811,7 +811,12 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
 
     auto pThis = Containable::downcasted_shared_from_this<Player>();
     if(mTarget) {
-        oStr << "You see " << mTarget->getCrtStr(pThis, flags, 1) << ".\n";
+        oStr << "You see " << mTarget->getCrtStr(pThis, flags, 1);
+        if (mTarget->getType()>=HUMANOID) {
+            oStr << "^D (" << monType::getName(mTarget->getType()) << ")^x\n";
+        }
+        else
+            oStr << ".\n";
         if(!mTarget->getDescription().empty())
             oStr << mTarget->getDescription() << "\n";
         else
@@ -911,7 +916,7 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
         if(space)
             oStr << " ";
         space = true;
-        oStr << target->upHeShe() << " is ^W" << getSizeName(target->getSize()) << "^x.";
+        oStr << target->upHeShe() << " is size ^W" << getSizeName(target->getSize()) << "^x.";
     }
 
     if(space)

@@ -544,22 +544,23 @@ def pulseCamouflage(actor: MudObject, effect: EffectInfo) -> bool:
 	return True
 
 def pulseHoldSpells(actor: MudObject, effect: EffectInfo) -> bool:
-	strength = effect.getStrength()
 
-	willpower = actor.getWillpower()/10
+	toBreak = int(actor.getWillpower()/15)
+	toBreak = max(3,toBreak)
 
 	roll = mud.rand(1,100)
 
-	actor.send("willpower = " + str(willpower) + "\n")
-	actor.send("roll = " + str(roll) + "\n")
+	if (actor.isPlayer() and actor.flagIsSet(95)):
+		actor.send("toBreakHold: <= " + str(toBreak) + "\n")
+		actor.send("roll (d100): " + str(roll) + "\n")
 
-	if (roll <= willpower):
-		actor.send("^yYou break out of the " + effect.getName() + " spell out of sheer will!\n")
-		mudLib.broadcastRoom(actor.getRoom(), "^Y*ACTOR* breaks out of *A-HISHER* magical hold out of sheer will!", actor=actor, ignore=actor)
+	if (roll <= toBreak):
+		actor.send("^YYou forced your way out of the " + effect.getName() + " spell!\n")
+		mudLib.broadcastRoom(actor.getRoom(), "^Y*ACTOR* manages to break out of *A-HISHER* magical hold!", actor=actor, ignore=actor)
 		effect.setDuration(0);
 	else:
-		actor.send("yYou are held and unable to move.\n")
-		mudLib.broadcastRoom(actor.getRoom(), "^Y*ACTOR* is trying to break out of *A-HISHER* magical hold.", actor=actor, ignore=actor)
+		actor.send("^yYou are held frozen and unable to move.\n")
+		mudLib.broadcastRoom(actor.getRoom(), "^y*ACTOR* tried to break out of *A-HISHER* magical hold.", actor=actor, ignore=actor)
 
 	return True
 

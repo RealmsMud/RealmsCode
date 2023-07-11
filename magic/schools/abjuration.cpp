@@ -209,7 +209,7 @@ int splResistMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
 
 int splFreeAction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
 
-    if(spellData->how != CastType::POTION && !player->isCt() && player->getClass() !=  CreatureClass::DRUID && player->getClass() !=  CreatureClass::CLERIC) {
+    if(spellData->how != CastType::POTION && !player->isCt() && !player->isPureArcaneCaster() && !player->isPureDivineCaster()) {
         *player << "Only clerics and druids are able to cast that spell.\n";
         return(0);
     }

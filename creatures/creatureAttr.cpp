@@ -1431,6 +1431,24 @@ bool Creature::isBrittle() const {
 }
 
 //********************************************************************
+//                      isHumanoidLike
+//********************************************************************
+// Used to check for humanoid-like non-undead target...not to check
+// for HUMANOID mtype
+bool Creature::isHumanoidLike() const {
+    if (isUndead())
+        return(false);
+
+    if (isMonster()) {
+        if (getType() == HUMANOID || getType() == GOBLINOID || 
+            getType() == INSECTOID || getType() == MONSTROUSHUM)
+            return(true);
+    }
+
+    return(false);
+}
+
+//********************************************************************
 //                      isUndead
 //********************************************************************
 
@@ -1447,6 +1465,19 @@ bool Creature::isUndead() const {
             return(true);
     }
     return(false);
+}
+
+//********************************************************************
+//                      isArcaneCaster
+//********************************************************************
+bool Creature::isArcaneCaster() const {
+    return (isPureArcaneCaster() || isHybridArcaneCaster());
+}
+//********************************************************************
+//                      isDivineCaster
+//********************************************************************
+bool Creature::isDivineCaster() const {
+    return (isPureDivineCaster() || isHybridDivineCaster());
 }
 
 //********************************************************************

@@ -419,7 +419,7 @@ public:
     std::string customColorize(const std::string& text, bool caret=true) const override;
     void resetCustomColors();
 
-// Misellaneous
+// Misc
     bool swap(const Swap& s);
     bool swapIsInteresting(const Swap& s) const;
 
@@ -460,6 +460,7 @@ public:
     int getVision() const;
     bool halftolevel() const;
     bool canWear(const std::shared_ptr<Object>&  object, bool all=false) const;
+    bool canUseWands(bool print=false);
     bool canUse(const std::shared_ptr<Object>&  object, bool all=false);
     void checkInventory();
     void checkTempEnchant(const std::shared_ptr<Object>&  object);

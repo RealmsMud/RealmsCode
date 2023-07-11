@@ -516,6 +516,9 @@ public:
     bool doesntBreathe() const;
     bool immuneCriticals() const; // *
     bool isUndead() const; // *
+    bool isHumanoidLike() const;
+    bool isArcaneCaster() const;
+    bool isDivineCaster() const;
     bool isPureArcaneCaster() const;
     bool isPureDivineCaster() const;
     bool isHybridArcaneCaster() const;
@@ -617,6 +620,9 @@ public:
     unsigned short getDisplayRace() const;
     bool inJail() const;
     int getWillpower();
+    int getWisdom();
+    int getAgility();
+    int getElusiveness();
 
 // Set
     void setClass(CreatureClass c); // *
@@ -689,7 +695,7 @@ public:
     bool changeSize(int oldStrength, int newStrength, bool enlarge);
     bool checkResistEnchantments(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
     bool isMagicallyHeld(bool print=false) const;
-    void doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker);
+    void doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker, int dmg);
 
     bool addStatModifier(std::string_view statName, std::string_view modifierName, int modAmt, ModifierType modType);
     bool addStatModifier(std::string_view statName, StatModifier* statModifier);

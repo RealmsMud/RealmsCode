@@ -82,6 +82,58 @@ bool monType::isUndead(mType type) {
 }
 
 //*********************************************************************
+//                      isPlant
+//*********************************************************************
+bool monType::isPlant(mType type) {
+    return(type == PLANT);
+}
+//*********************************************************************
+//                      isElemental
+//*********************************************************************
+bool monType::isElemental(mType type) {
+    return(type == ELEMENTAL);
+}
+//*********************************************************************
+//                      isFey
+//*********************************************************************
+bool monType::isFey(mType type) {
+    return(type == FAERIE);
+}
+//*********************************************************************
+//                      isAnimal
+//*********************************************************************
+bool monType::isAnimal(mType type) {
+    return(type == ANIMAL || type == DIREANIMAL || type == FISH ||
+           type == AVIAN || type == REPTILE || type == DINOSAUR);
+}
+//*********************************************************************
+//                      isInsectLike
+//*********************************************************************
+bool monType::isInsectLike(mType type) {
+    return(type == INSECT || type == ARACHNID);
+}
+//*********************************************************************
+//                      isHumanoidLike
+//*********************************************************************
+bool monType::isHumanoidLike(mType type) {
+    return(type == HUMANOID || type == GOBLINOID || type == INSECTOID || type == MONSTROUSHUM);
+}
+//*********************************************************************
+//                      isExtraplanar
+//*********************************************************************
+bool monType::isExtraplanar(mType type) {
+    return(type == ASTRAL || type == ETHEREAL || type == DEVA || type == DEMON || type == DEVIL);
+}
+//*********************************************************************
+//                      isMindless
+//*********************************************************************
+bool monType::isMindless(mType type) {
+    return(type == INSECT || type == GOLEM || type == AUTOMATON);
+}
+
+
+
+//*********************************************************************
 //                      size
 //*********************************************************************
 // can we assume they are a certain size based on their type?

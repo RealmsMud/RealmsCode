@@ -42,172 +42,361 @@
 #include "structs.hpp"                 // for daily, saves
 #include "wanderInfo.hpp"              // for WanderInfo
 
-
 //*********************************************************************
 //                      splHoldPerson
 //*********************************************************************
+int splHoldPerson(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* spellData) {
 
-int splHoldPerson(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
-    int  bns=0, dur=0, strength=0; 
-    bool noHold=false;
-    std::shared_ptr<Creature> target=nullptr;
-
-    if (spellData->object) 
-        strength = (spellData->object->getLevel()?spellData->object->getLevel():10);
-    else
-        strength = spellData->level;
-
-    
-
-    if( !player->isPureArcaneCaster() && !player->isHybridArcaneCaster() &&
-        !player->isPureDivineCaster() && !player->isHybridArcaneCaster() &&
-        !player->isCt() && spellData->how == CastType::CAST) {
-        *player << "Your class is unable to comprehend the subtle nuances of that spell.\n";
+    if(spellData->how == CastType::CAST && !caster->isCt() &&
+        !caster->isArcaneCaster() && !caster->isDivineCaster())
+    {
+        *caster << "You are unable to comprehend the subtle nuances of that spell.\n";
         return(0);
     }
 
+    if (spellData->how == CastType::CAST && caster->getClass() == CreatureClass::RANGER) {
+        *caster << "The complexity of this type of enchantment/trickery magic eludes you.\n";
+        return(0);
+    }
+
+    return(doHoldSpells(caster, cmnd, spellData, "hold-person"));
+
+}
+
+//*********************************************************************
+//                      splHoldMonster
+//*********************************************************************
+int splHoldMonster(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* spellData) {
+
+
+    if(spellData->how == CastType::CAST && !caster->isCt() &&
+        !caster->isArcaneCaster() && !caster->isDivineCaster())
+    {
+        *caster << "You are unable to comprehend the subtle nuances of that spell.\n";
+        return(0);
+    }
+
+    if (spellData->how == CastType::CAST && caster->getClass() == CreatureClass::RANGER) {
+        *caster << "The complexity of this type of enchantment/trickery magic eludes you.\n";
+        return(0);
+    }
+
+    return(doHoldSpells(caster, cmnd, spellData, "hold-monster"));
+
+}
+
+//*********************************************************************
+//                      splHoldUndead
+//*********************************************************************
+int splHoldUndead(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* spellData) {
+
+    if(spellData->how == CastType::CAST && !caster->isCt() &&
+        !caster->isPureArcaneCaster() && !caster->isPureDivineCaster())
+    {
+        *caster << "You are unable to comprehend the subtle nuances of that spell.\n";
+        return(0);
+    }
+
+    return(doHoldSpells(caster, cmnd, spellData, "hold-undead"));
+
+}
+
+//*********************************************************************
+//                      splHoldAnimal
+//*********************************************************************
+int splHoldAnimal(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* spellData) {
+
+    if(spellData->how == CastType::CAST && !caster->isCt() &&
+                        caster->getClass() != CreatureClass::DRUID &&
+                             caster->getClass() != CreatureClass::RANGER &&
+                                    caster->getClass() != CreatureClass::CLERIC) 
+    {
+        *caster << "You are not enough in tune with nature to understand that spell.\n";
+        return(0);
+    }
+
+    if (spellData->how == CastType::CAST && 
+                caster->getClass() == CreatureClass::CLERIC && 
+                         caster->getDeity() != LINOTHAN &&
+                                caster->getDeity() != MARA) 
+    {
+        *caster << gConfig->getDeity(caster->getDeity())->getName() << "does not grant the ability to cast that spell. Only Mara and Linothan do.\n";
+        return(0);
+
+    }
+
+    return(doHoldSpells(caster, cmnd, spellData, "hold-animal"));
+
+}
+
+//*********************************************************************
+//                      splHoldPlant
+//*********************************************************************
+int splHoldPlant(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* spellData) {
+
+    if(spellData->how == CastType::CAST && !caster->isCt() &&
+                        caster->getClass() != CreatureClass::DRUID &&
+                             caster->getClass() != CreatureClass::RANGER &&
+                                    caster->getClass() != CreatureClass::CLERIC) 
+    {
+        *caster << "You are not enough in tune with nature to understand that spell.\n";
+        return(0);
+    }
+
+    if (spellData->how == CastType::CAST && 
+                caster->getClass() == CreatureClass::CLERIC && 
+                        caster->getDeity() != LINOTHAN &&
+                                    caster->getDeity() != MARA) 
+    {
+        *caster << gConfig->getDeity(caster->getDeity())->getName() << "does not grant the ability to cast that spell. Only Mara and Linothan do.\n";
+        return(0);
+
+    }
+
+    return(doHoldSpells(caster, cmnd, spellData, "hold-plant"));
+
+}
+
+//*********************************************************************
+//                      splHoldElemental
+//*********************************************************************
+int splHoldElemental(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* spellData) {
+
+    if(spellData->how == CastType::CAST && !caster->isCt() &&
+        !caster->isPureArcaneCaster() && caster->getClass() != CreatureClass::DRUID)
+    {
+        *caster << "You are unable to comprehend the subtle arcane and natural nuances of such a powerful spell.\n";
+        return(0);
+    }
+
+    return(doHoldSpells(caster, cmnd, spellData, "hold-elemental"));
+
+}
+
+//*********************************************************************
+//                      splHoldFey
+//*********************************************************************
+int splHoldFey(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* spellData) {
+
+    if(spellData->how == CastType::CAST && !caster->isCt() &&
+       caster->getClass() != CreatureClass::DRUID && caster->getClass() != CreatureClass::CLERIC)
+    {
+        *caster << "You are unable to comprehend such powerful natural magic.\n";
+        return(0);
+    }
+
+    if (spellData->how == CastType::CAST && caster->getClass() == CreatureClass::CLERIC && caster->getDeity() != MARA && caster->getDeity() != LINOTHAN) {
+        *caster << gConfig->getDeity(caster->getDeity())->getName() << "does not grant the ability to cast that spell. Only Mara and Linothan do.\n";
+        return(0);
+    }
+
+    return(doHoldSpells(caster, cmnd, spellData, "hold-fey"));
+
+}
+
+//*********************************************************************
+//                      doHoldSpells
+//*********************************************************************
+
+int doHoldSpells(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* spellData, const char* spell) {
+    int  dur=0, strength=0, chance=0, dmgToBreak=0;
+    bool burnThrough = false, prepared = false, noSkill=false;
+    std::shared_ptr<Creature> target=nullptr;
+    std::string magicSkill = "";
+    EffectInfo* holdEffect = nullptr;
+
+    // If using a wand, use the wand's object->getLevel() or default 10 if it's not set
+    // Otherwise use spellData->level (based on enchantment magic skill)
+    if (spellData->object) 
+        strength = (spellData->object->getLevel()>0?spellData->object->getLevel():10);
+    else
+        strength = spellData->level;
+
+    if (caster->isArcaneCaster())
+        magicSkill = "enchantment";
+    else if (caster->isDivineCaster())
+        magicSkill = "trickery";
+    else
+    {
+        noSkill = true;
+    }
+
+    if(caster->isPlayer())
+        dmgToBreak = (noSkill?((strength*5)/2):caster->getSkillGained(magicSkill)/2);
+    else
+        dmgToBreak = (noSkill?((strength*5)/2):((strength*5)/2));
+
+    dmgToBreak = std::max(40,dmgToBreak);
+
     if(cmnd->num == 2) {
         if (spellData->how != CastType::POTION) {
-            *player << "On what target?\n";
+            *caster << "On what target?\n";
             return(0);
         }
-        // Check resistances if we drank a hold-person potion....
-        else if (player->getAsCreature()->checkResistEnchantments(player,"hold-person")) {
-            *player << ColorOn << "^yYou resisted being magically held.\n" << ColorOff;
-            return(0);
+        // Check resistances since we drank a potion with a hold spell....
+        else if (caster->isEffected("free-action") || caster->checkResistEnchantments(caster,spell,false)) {
+            *caster << ColorOn << "^yYou resisted being magically held.\n" << ColorOff;
+            return(1);
         }
         else {
 
-            *player << ColorOn << "^yYou are magically held! You are unable to move!\n" << ColorOff;
-            broadcast(player->getSock(), player->getParent(), "^y%M is magically held!", player.get());
+            *caster << ColorOn << "^YYou are magically held!\n" << ColorOff;
+            broadcast(caster->getSock(), caster->getParent(), "^Y%M is magically held!", caster.get());
 
-            dur = Random::get(10,15);
+            dur = Random::get(25,30) - (caster->getWillpower()/10);
         
-            player->unhide();
-            player->addEffect("hold-person", (long)dur, strength, player, true, player);
+            caster->unhide();
+            caster->addEffect(spell, (long)dur, strength, caster, true, caster);
+            holdEffect = caster->getEffect(spell);
+            if(holdEffect)
+                holdEffect->setExtra(Random::get(dmgToBreak/2,dmgToBreak));
 
+            return(1);
         }
 
     } else {
-        if (player->noPotion( spellData))
+        if (caster->noPotion(spellData))
             return(0);
 
         cmnd->str[2][0] = up(cmnd->str[2][0]);
-
-        target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], true, true);
+        target = caster->getParent()->findCreature(caster, cmnd->str[2], cmnd->val[2], true, true);
         if (!target) {
-            *player << "Cannot find that target.\n";
+            *caster << "Cannot find that target.\n";
             return(0);
         }
 
-
-        if (player->isPlayer() && target->isPlayer() && target->inCombat(false) && !target->flagIsSet(P_OUTLAW)) {
-            *player << "Not in the middle of combat.\n";
+        if (target == caster) {
+            *caster << ColorOn << "^cThat would be a pretty stupid thing to do, don't you think?\n" << ColorOff;
             return(0);
         }
 
-        if (player->isPlayer() && player->getRoomParent()->isPkSafe() && (target->isPlayer() || target->isPet())) {
-            *player << "You can't do that in here. That'd be annoying.\n";
+        if (caster->isPlayer() && target->isPlayer() && target->inCombat(false)) {
+            *caster << "Not in the middle of combat.\n";
             return(0);
         }
 
+        if (caster->isPlayer() && caster->getRoomParent()->isPkSafe() && (target->isPlayer() || target->isPet())) {
+            *caster << "You can't do that in here. That'd be annoying.\n";
+            return(0);
+        }
+
+        caster->smashInvis();
+        caster->unhide();
 
         if (target->isStaff()) {
-            *player << ColorOn << "^yYour spell failed.\n" << ColorOff;
+            *caster << ColorOn << "^yYour spell failed.\n" << ColorOff;
             return(0);
         }
 
-        *player << ColorOn << "^yYou cast a hold-person spell on " << target << ".\n" << ColorOff;
-        *target << ColorOn << "^y" << player << " casts a hold-person spell on you.\n" << ColorOff;
-        broadcast(player->getSock(), target->getSock(), player->getParent(), "^y%M casts a hold-person spell on %N.^x", player.get(), target.get());
+        *caster << "You cast a " << spell << " spell on " << target << ".\n";
+        *target << setf(CAP) << caster << " casts a " << spell << " spell on you.\n";
+        broadcast(caster->getSock(), target->getSock(), caster->getParent(), "%M casts a %s spell on %N.", caster.get(), spell, target.get());
 
-        // Check for an already stronger hold-person effect
-        EffectInfo* effect = target->getEffect("hold-person");
-        if (effect) {
-            if (strength < effect->getStrength()) {
-                *player << ColorOn << "^y" << setf(CAP) << target << " is already is under a more powerful hold-person spell. Your spell had no effect.\n" << ColorOff;
-                *target << ColorOn << "^y" << setf(CAP) << player << "'s spell had no effect.\n" << ColorOff;
-                broadcast(player->getSock(), target->getSock(), player->getParent(), "^y%M's spell had no effect.^x", player.get());
+        // Targets cannot have any hold spell cast on them when they are already under one
+        if (target->isMagicallyHeld()) {
+            *caster << ColorOn << "^y" << setf(CAP) << target << " is already affected by holding magic. Your spell had no effect.\n" << ColorOff;
+            *target << ColorOn << "^y" << setf(CAP) << caster << "'s spell had no effect.\n" << ColorOff;
+            broadcast(caster->getSock(), target->getSock(), caster->getParent(), "^y%M's spell had no effect.^x", caster.get());
+            return(1);
+            }
+
+        EffectInfo* freeActionEffect = nullptr;
+        if ((freeActionEffect = target->getEffect("free-action"))) {
+
+            //If hold spell strength == free-action effect strength, 25% chance to burn through free-action
+            if ((freeActionEffect->getStrength() == strength) && (Random::get(1,100) <= 25))
+                burnThrough = true;
+
+            //Permanent free-action cannot be burned through; We'll be nice and not make the caster use MP
+            if (freeActionEffect->isPermanent()) {
+                *caster << ColorOn << "^g" << "The free-action effect on " << target << " is permanent!\nYour spell dissipates.\n" << ColorOff;
+                *target << ColorOn << "^g" << "Your free-action effect protected you from " << caster << "'s holding magic.\n" << ColorOff;
+                broadcast(caster->getSock(), target->getSock(), caster->getParent(), "^g%M's spell dissipated.^x", caster.get());
                 return(0);
+            }
+            else if (((freeActionEffect->getStrength() > strength) && !burnThrough && !caster->isCt())) {
+                *caster << ColorOn << "^g" << "The free-action effect on " << target << 
+                                                (burnThrough?" managed to deflect your spell.":" is currently too powerful for you.") << "\nYour spell dissipates.\n" << ColorOff;
+                *target << ColorOn << "^g" << "Your free-action effect protected you from " << caster << "'s holding magic.\n" << ColorOff;
+                broadcast(caster->getSock(), target->getSock(), caster->getParent(), "^g%M's spell dissipated.^x", target.get());
+                return(1);
+            }
+            else {
+                target->removeEffect("free-action");
+                burnThrough = true;
             }
          }
 
-        if (target->checkResistEnchantments(player, "hold-person", true)) {
-            return(0);
+        if (target->checkResistEnchantments(caster, spell, true)) 
+            return(1);
+
+        chance = 500 + (25*(strength - target->getLevel())) + (3*(caster->getWillpower() - target->getWillpower()));
+
+        //If a target monster is smart enough, it might be prepared for another hold spell
+        if(target->isMonster() && target->getAsMonster()->isEnemy(caster) &&
+                            target->intelligence.getCur() >= 130 && Random::get(1,100) <= 50) {
+            *caster << ColorOn << "^r" << setf(CAP) << target << " was prepared for your spell!\n" << ColorOff;
+            broadcast(caster->getSock(), caster->getParent(), "^r%M was prepared for %N's spell!^x", target.get(), caster.get());
+            prepared = true;
+            chance /= 2;
         }
 
-        if (spellData->how == CastType::CAST)
-            bns = 5*(strength - target->getLevel());
+        int roll = Random::get(1,1000);
+        if (caster->isCt() || (caster->isPlayer() && caster->flagIsSet(P_PTESTER))) {
+            *caster << ColorOn << "^D*Staff*\n";
+            *caster << "strength = " << strength << "\n";
+            *caster << "target->getLevel() = " << target->getLevel() << "\n";
+            *caster << "caster->getWillpower() = " << caster->getWillpower() << "\n";
+            *caster << "target->getWillpower() = " << target->getWillpower() << "\n\n";
+            *caster << "Chance = 500 + " << (25*(strength - target->getLevel())) << " + " << 
+                            (3*(caster->getWillpower() - target->getWillpower())) << " = " << chance << (chance<50?" (50)":"") << "\n";  
+            *caster << "Roll = " << roll << "\n" << ColorOff;
+        }
 
-        // For now we'll leave this in. Later on, it'll be going away when stun dynamics do
-        if (target->isMonster() && target->flagIsSet(M_RESIST_STUN_SPELL))
-            noHold = true;
+        chance = std::max(50,chance);
 
-        if (target->isMonster()) {
-            player->smashInvis();
-            if ((!target->chkSave(SPL, player, bns) && !noHold) || player->isCt()) {
+        if ((roll <= chance) || caster->isCt()) {
+            dur = Random::get(25,30) + ((caster->getWillpower()/20) - (target->getWillpower()/20));
+            dur += (strength - target->getLevel())/3;
+            if (prepared) // Duration 25% less if monster prepared for the spell
+                dur -= (dur/4);
+            dur = std::max(6, std::min(60,dur));   
 
-                dur = Random::get(4,7) + (((player->intelligence.getCur()+player->piety.getCur())/20) - ((target->intelligence.getCur()+target->piety.getCur())/20));
-                dur += (strength - target->getLevel())/3;
-                dur = std::max(3, std::min(30,dur));
+            if (target->isMonster())
+                target->getAsMonster()->addEnemy(caster, true);
 
-                
+            if (burnThrough) {
+                *caster << ColorOn << "^GYour spell burned through " << target << "'s free-action effect!\n" << ColorOff;
+                *target << ColorOn << "^G" << setf(CAP) << caster << "'s spell burned through your free-action effect!\n" << ColorOff;
+                broadcast(caster->getSock(), target->getSock(), caster->getParent(), "^G%M's spell burned through %N's free-action effect!^x", caster.get(), target.get());
+            }             
 
-                *player << ColorOn << "^Y" << setf(CAP) << target << " is magically held in place!\n" << ColorOff;
-                broadcast(player->getSock(), player->getParent(), "^Y%M's spell holds %N in place!^x", player.get(), target.get());
+            *caster << ColorOn << "^Y" << setf(CAP) << target << " is magically held in place!\n" << ColorOff;
+            *target << ColorOn << "^YYou are magically held in place!\n" << ColorOff;
+            broadcast(caster->getSock(), target->getSock(), caster->getParent(), "^Y%N is magically held in place!^x", caster.get(), target.get());
+            
+            
+            
+            target->addEffect(spell, long(dur), strength, caster, true, caster);
 
-                if (player->isCt())
-                    *player << ColorOn << "^D*Staff* " << dur << " seconds\n" << ColorOff;
+            holdEffect = target->getEffect(spell);
+            if(holdEffect)
+                holdEffect->setExtra(Random::get(dmgToBreak/2,dmgToBreak));
 
-                if (target->isMonster())
-                    target->getAsMonster()->addEnemy(player);
-                
-                //target->stun(dur);
-                target->addEffect("hold-person", long(dur), strength, player, true, player);
-                effect = target->getEffect("hold-person");
-                if(effect) 
-                    effect->setExtra(strength/2);
-
-
-            } else {
-                *player << ColorOn << "^y" << setf(CAP) << target << " resisted your spell.\n" << ColorOff;
-                broadcast(player->getSock(), player->getParent(), "^y%M resisted %N's hold-person spell.^x",target.get(), player.get());
-                target->getAsMonster()->addEnemy(player);
-            }
-
+            if (caster->isCt() || caster->flagIsSet(P_PTESTER))
+                *caster << ColorOn << "^D*Staff*\nduration = " << dur << " sec\nDmg to break = " << holdEffect->getExtra() << "\n" << ColorOff;
+            
         } else {
-            player->smashInvis();
-            if (!target->chkSave(SPL, player, bns) || player->isCt()) {
-
-                if (spellData->how != CastType::CAST)
-                    dur = Random::get(10,15);
-                else {
-                    dur = Random::get(1,3) + (((player->intelligence.getCur()+player->piety.getCur())/8) - ((target->intelligence.getCur()+target->piety.getCur())/8));
-                    dur += (spellData->level - target->getLevel())/2;
-                }
-
-                dur = std::max(3, std::min(30,dur));
-
-                if(player->isDm())
-                    dur *=10;
-
-                if (player->isCt())
-                    *player << ColorOn << "^D*Staff* " << dur << " seconds.\n" << ColorOff;
-
-                target->addEffect("hold-person", long(dur), strength, player, true, player);
-                effect = target->getEffect("hold-person");
-                if(effect) 
-                    effect->setExtra(strength/2);
-
-            } else {
-                *player << ColorOn << "^y" << setf(CAP) << target << " resisted your spell through sheer will.\n" << ColorOff;
-                broadcast(player->getSock(), target->getSock(), target->getRoomParent(), "%M resisted %N's hold-person spell.",target.get(), player.get());
-                *target << ColorOn << "^yYou feel a strong tingling sensation, but " << setf(CAP) << player << "'s spell failed to take hold.\n" << ColorOff;
-            }
+            *caster << ColorOn << "^y" << setf(CAP) << target << " resisted your spell.\n" << ColorOff;
+            *target << ColorOn << "^yYou resisted " << caster << "'s spell.\n" << ColorOff;
+            broadcast(caster->getSock(), target->getSock(), caster->getParent(), "^y%M resisted %N's spell.^x",target.get(), caster.get());
         }
+
+
     }
     return(1);
 }
+
 
 //*********************************************************************
 //                      splScare

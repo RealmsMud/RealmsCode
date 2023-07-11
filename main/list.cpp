@@ -47,7 +47,28 @@
 #include "wanderInfo.hpp"                      // for WanderInfo
 #include "xml.hpp"                             // for loadFile
 #include "proto.hpp"
+#include "global.hpp"
 
+
+const char *raceName[] = {
+    "None", "Dwarf", "Elf", "Half-Elf", "Halfling", 
+    "Human", "Orc", "Half-Giant", "Gnome", "Troll", "Half-Orc",
+    "Ogre", "Dark-Elf", "Goblin", "Minotaur", "Seraph",
+    "Kobold", "Cambion", "Barbarian", "Kataran", "Tiefling", "Kenku", 
+    "undefined(22)", "undefined(23)", "undefined(24)", "undefined(25)",
+    "undefined(26)", "undefined(27)", "undefined(28)", "undefined(29)",
+    "undefined(30)", "undefined(31)", "undefined(32)",
+    "Lizardman", "Centaur", "Half-Frostgiant", "Half-Firegiant",
+    "Grey Elf", "Wild Elf", "Aquatic Elf", "Duergar", "Hill Dwarf",
+    "Gnoll", "Bugbear", "Hobgoblin", "Wemic", "Hybsil", "Rakshasa",
+    "Brownie", "Firbolg", "Satyr", nullptr
+};
+
+const char *deityName[] = {
+    "None", "Aramon", "Ceris", "Enoch",
+    "Gradius", "Ares", "Kamira", "Linothan",
+    "Arachnus", "Mara", "Jakar", nullptr
+};
 
 
 int list_rooms() {
@@ -236,8 +257,14 @@ int list_monsters() {
 
     std::cout << "Monster" << ","
               << "Name" << ","
+              << "TypeNum" << ","
+              << "Type" << ","
               << "Level" << ","
+              << "RaceNum" << ","
+              << "Race" << ","
               << "Class" << ","
+              << "DeityNum" << ","
+              << "Deity" << ","
               << "Toughness" << ","
               << "Experience" << ","
               << "Gold" << ","
@@ -284,8 +311,14 @@ int list_monsters() {
 
                     std::cout << lMonster->info.str() << ","
                               << "\"" << lMonster->getName() << "\"" << ","
+                              << lMonster->getType() << ","
+                              << (lMonster->getType()>=HUMANOID?monType::getName(lMonster->getType()):"MONSTER") << ","
                               << lMonster->getLevel() << ","
+                              << lMonster->getRace() << ","
+                              << raceName[lMonster->getRace()] << ","
                               << lMonster->getClassString() << ","
+                              << lMonster->getDeity() << ","
+                              << deityName[lMonster->getDeity()] << ","
                               << Statistics::calcToughness(lMonster) << ","
 
                               << lMonster->getExperience() << ","
@@ -387,9 +420,9 @@ int list_players() {
             
             std::cout << "\"" << lPlayer->getName() << "\"" << ","
                       << lPlayer->getLevel() << ","
-                      << lPlayer->getRace() << ","
+                      << raceName[lPlayer->getRace()] << ","
                       << lPlayer->getClassString() << ","
-                      << lPlayer->getDeity() << ","
+                      << deityName[lPlayer->getDeity()] << ","
                       << lPlayer->getExperience() << ","
                       << lPlayer->coins[GOLD] << ","
                       << lPlayer->bank[GOLD] << ","
