@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _RANGE_H
-#define _RANGE_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <string>           // for string
@@ -26,6 +25,7 @@
 #include <string_view>
 
 #include "catRef.hpp"       // for CatRef
+#include "json.hpp"
 
 
 class Range {
@@ -43,8 +43,7 @@ public:
 
     CatRef  low;
     short   high;
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Range, low, high);
 };
-
-
-#endif  /* _RANGE_H */
 

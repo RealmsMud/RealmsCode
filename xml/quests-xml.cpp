@@ -83,7 +83,11 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
             while(childNode) {
                 if(NODE_NAME(childNode, "Prerequisite")) {
                     preReq = QuestInfo::getQuestId(childNode);
-                    preRequisites.push_back(preReq);
+                    if(preReq.id != 0) {
+                        preRequisites.push_back(preReq);
+                    } else {
+                        std::clog << "Skipping invalid pre-requisite for quest " << name << std::endl;
+                    }
                 }
                 childNode = childNode->next;
             }
@@ -112,6 +116,7 @@ QuestInfo::QuestInfo(xmlNodePtr rootNode) {
                 if(NODE_NAME(childNode, "Coins")) cashReward.load(childNode);
                 else if(NODE_NAME(childNode, "Experience")) xml::copyToNum(expReward, childNode);
                 else if(NODE_NAME(childNode, "AlignmentChange")) xml::copyToNum(alignmentChange, childNode);
+                else if(NODE_NAME(childNode, "AlignmentShift")) xml::copyToNum(alignmentShift, childNode);
                 else if(NODE_NAME(childNode, "Object")) itemRewards.emplace_back(childNode);
                 else if(NODE_NAME(childNode, "Faction")) {
                     xml::copyPropToString(faction, childNode, "id");

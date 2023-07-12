@@ -372,12 +372,10 @@ std::string Object::statObj(int statFlags) {
 
     if(!randomObjects.empty()) {
         objStr << "^WRandomObjects:^x this item will turn into these random objects:\n";
-        std::list<CatRef>::const_iterator it;
-        for(it = randomObjects.begin(); it != randomObjects.end(); it++) {
+        for(auto it = randomObjects.cbegin(); it != randomObjects.cend(); it++) {
             loadObject(*it, object);
 
-            objStr << "    " << std::setw(14) << (*it).displayStr("", 'y') << " ^y::^x "
-                   << (object ? object->getCName() : "") << "\n";
+            objStr << "    " << std::setw(14) << (*it).displayStr("", 'y') << " ^y::^x " << (object ? object->getName() : "") << "\n";
 
             if(object) {
                 object = nullptr;
@@ -1308,10 +1306,11 @@ int dmObjName(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     i=0, num=0;
     char    which=0;
     std::string text = "";
+    std::string numStr = "";
 
     if(cmnd->num < 2) {
-        player->print("\nRename what object to what?\n");
-        player->print("*oname <object> [#] [-adok] <name>\n");
+        *player << "\nRename object to what?\n";
+        *player << "*oname <object> [#] [-adok] <name>\n";
         return(PROMPT);
     }
 
@@ -1340,7 +1339,7 @@ int dmObjName(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!object)
         object = player->getRoomParent()->findObject(player, cmnd, 1);
     if(!object) {
-        player->print("Item not found.\n");
+        *player << "Item not found.\n";
         return(0);
     }
 
@@ -1363,7 +1362,9 @@ int dmObjName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         } else if(cmnd->fullstr[i+1] == 'k') {
             i += 2;
             which = 4;
-            num = toNum<int>(&cmnd->fullstr[i]);
+            numStr=cmnd->fullstr[i];
+            boost::trim(numStr);
+            num = toNum<int>(numStr);
             if(num <1 || num > 3)
                 num = 0;
             while(isdigit(cmnd->fullstr[i]))
@@ -1373,6 +1374,7 @@ int dmObjName(const std::shared_ptr<Player>& player, cmd* cmnd) {
             i++;
     }
 
+   
     // no description given
     if(cmnd->fullstr[i] == 0)
         return(PROMPT);
@@ -1385,70 +1387,70 @@ int dmObjName(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(text.length() > 79)
             text = text.substr(0, 79);
         if(Pueblo::is(text)) {
-            player->print("That object name is not allowed.\n");
+            *player << "That object name is not allowed.\n";
             return(0);
         }
         object->setName( text.c_str());
-        player->print("\nName ");
+        *player << "\nName ";
         break;
     case 1:
         if(text == "0" && !object->description.empty()) {
             object->description = "";
-            player->print("Item description cleared.\n");
+            *player << "Item description cleared.\n";
             return(0);
         } else if(Pueblo::is(text)) {
-            player->print("That object description is not allowed.\n");
+            *player << "That object description is not allowed.\n";
             return(0);
         } else {
             object->description = text;
             boost::replace_all(object->description, "*CR*", "\n");
         }
-        player->print("\nDescription ");
+        *player << "\nDescription ";
         break;
     case 2:
         if(text == "0" && object->use_output[0]) {
             zero(object->use_output, sizeof(object->use_output));
-            player->print("Item output string cleared.\n");
+            *player << "Item output string cleared.\n";
             return(0);
         } else if(Pueblo::is(text)) {
-            player->print("That object output string is not allowed.\n");
+            *player << "That object output string is not allowed.\n";
             return(0);
         } else {
             if(text.length() > 79)
                 text = text.substr(0, 79);
             strcpy(object->use_output, text.c_str());
-            player->print("\nOutput String ");
+            *player << "\nOutput String ";
         }
         break;
     case 3:
         if(text == "0" && object->use_attack[0]) {
             zero(object->use_attack, sizeof(object->use_attack));
-            player->print("Item attack string cleared.\n");
+            *player << "Item attack string cleared.\n";
             return(0);
         } else {
             if(text.length() > 49)
                 text = text.substr(0, 49);
             strcpy(object->use_attack, text.c_str());
-            player->print("\nAttack String ");
+            *player << "\nAttack String ";
         }
         break;
     case 4:
         if(num) {
             if(text == "0" && object->key[num-1][0]) {
                 zero(object->key[num-1], sizeof(object->key[num-1]));
-                player->print("Key #%d string cleared.\n", num);
+                *player << "Key #" << num << " string cleared.\n";
                 return(0);
             } else {
                 if(text.length() > OBJ_KEY_LENGTH-1)
                     text = text.substr(0, OBJ_KEY_LENGTH-1);
                 strcpy(object->key[num-1], text.c_str());
-                player->print("\nKey ");
+                *player << "\nKey ";
             }
         }
         break;
     }
     object->escapeText();
-    player->print("done.\n");
+    *player << "done.\n";
     return(0);
 }
 

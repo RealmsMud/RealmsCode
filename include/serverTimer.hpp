@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef SERVERTIMER_H_
-#define SERVERTIMER_H_
+#pragma once
 
 #include <ctime>    // timeval
 
@@ -33,6 +32,3 @@ public:
     void end();
     void sleep();
 };
-
-
-#endif /*SERVERTIMER_H_*/

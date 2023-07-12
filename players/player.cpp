@@ -154,17 +154,17 @@ void Player::init() {
         else
             daily[DL_TELEP].max = 3;
 
-        // Mages and liches get more ports than other classes; dependent on translocation magic skill
+        // Mages and liches get more default ports than other classes under level 15; more dependent on translocation magic skill
         if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
-            daily[DL_TELEP].max = std::min(10, (int)getSkillLevel("translocation")/5);
+            daily[DL_TELEP].max = std::max(3,std::min(10, (int)getSkillLevel("translocation")/5));
 
         daily[DL_RCHRG].max = std::max(7, level / 2);
-        daily[DL_HANDS].max = 3;
+        daily[DL_HANDS].max = 5;
 
         daily[DL_RESURRECT].max = 1;
         daily[DL_SILENCE].max = 3;
         daily[DL_HARM].max = 2;
-        daily[DL_SCARES].max = 3;
+        daily[DL_SCARES].max = 5;
     } else {
         daily[DL_DEFEC].max = 100;
     }
@@ -239,6 +239,20 @@ void Player::init() {
 
     if((cClass == CreatureClass::RANGER || cClass == CreatureClass::DRUID) && level >= 10)
         learnSpell(S_TRACK);
+
+    // Druids and Clerics of Ares can cast both benediction and malediction. They get them both at level 7
+    if ((cClass == CreatureClass::DRUID || (cClass == CreatureClass::CLERIC && getDeity() == ARES)) && level >=7) {
+        learnSpell(S_BENEDICTION);
+        learnSpell(S_MALEDICTION);
+    }
+    // Paladins receive benediction spell at level 13. Clerics of good-aligned gods get it at level 7
+    if ((cClass == CreatureClass::PALADIN && level >= 13) || ((cClass == CreatureClass::CLERIC && getDeityAlignment() >= LIGHTBLUE) && level >=7)) {
+        learnSpell(S_BENEDICTION);
+    }
+    // Dknights receive malediction spell at level 13. Clerics of evil-aligned gods get it at level 7
+    if ((cClass == CreatureClass::DEATHKNIGHT && level >= 13) || ((cClass == CreatureClass::CLERIC && getDeityAlignment() <= PINKISH) && level >=7)) {
+        learnSpell(S_MALEDICTION);
+    }
 
     //  Werewolves get auto Detect-Invisibility at level 7
     if(isEffected("lycanthropy") && level >= 7)
@@ -868,55 +882,70 @@ int Player::getLight() const {
     return(0);
 }
 
+
+
 //*********************************************************************
 //                      computeLuck
 //*********************************************************************
 // This sets the luck value for a given player
 
 int Player::computeLuck() {
-    int     num=0, alg=0, con=0, smrt=0;
+    int alg=0,luckNum=0,statBase=0,luckMod=0;
+    bool classAlignmentException=false;
+    EffectInfo *bless = getEffect("bless");
 
-    alg = abs(alignment);
-    alg = alg + 1;
-
+    alg=abs(alignment);
     alg /= 10;
 
+    if ((cClass == CreatureClass::PALADIN && (deity == ENOCH || deity == LINOTHAN) && getAdjustedAlignment() >= PINKISH) ||
+        (cClass == CreatureClass::DEATHKNIGHT && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= LIGHTBLUE) ||
+         (cClass == CreatureClass::PALADIN && deity == GRADIUS && (getAdjustedAlignment() < ROYALBLUE && getAdjustedAlignment() > BLOODRED)) ||
+             (cClass == CreatureClass::CLERIC && (deity == ENOCH || deity == LINOTHAN || deity == MARA || deity == KAMIRA) && getAdjustedAlignment() >= LIGHTBLUE) ||
+                (cClass == CreatureClass::CLERIC && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= PINKISH) ||
+                    (cClass == CreatureClass::CLERIC && (deity == GRADIUS || deity == CERIS || deity == ARES) && (getAdjustedAlignment() < ROYALBLUE && getAdjustedAlignment() > BLOODRED)) ||
+                        (cClass == CreatureClass::LICH && getAdjustedAlignment() <= PINKISH) ) {
+        classAlignmentException = true;
+    }
 
-    // alignment only matters for these classes
-    if(cClass != CreatureClass::PALADIN && cClass != CreatureClass::CLERIC && cClass != CreatureClass::DEATHKNIGHT && cClass != CreatureClass::LICH)
-        alg = 0;
-
-
-    if( !alg ||
-        (cClass == CreatureClass::PALADIN && deity != GRADIUS && getAdjustedAlignment() > NEUTRAL) ||
-        (cClass == CreatureClass::DEATHKNIGHT && getAdjustedAlignment() < NEUTRAL) ||
-        (cClass == CreatureClass::LICH && alignment <= -500) ||
-        (cClass == CreatureClass::CLERIC && (deity == ENOCH || deity == LINOTHAN || deity == KAMIRA) && getAdjustedAlignment() >= LIGHTBLUE) ||
-        (cClass == CreatureClass::CLERIC && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= PINKISH)
-    )
-        alg = 1;
-
-    if(cClass != CreatureClass::LICH)  // Balances mages with liches for luck.
-        con = constitution.getCur()/10;
+    // The piety and intelligence stats determine base luck modifier; Liches use constitution rather than piety
+    // The lower the scores, the less base luck the player is gonna have
+    if (cClass == CreatureClass::LICH)  
+        statBase = (intelligence.getCur()/10) + (constitution.getCur()/10);
     else
-        con = piety.getCur()/10;
+        statBase = (intelligence.getCur()/10) + (piety.getCur()/10);
 
-    smrt = intelligence.getCur()/10;
+    
+    luckNum = 100 * statBase;
+    alg = std::max(1,alg); // avoid possible division by zero on next line
+    luckNum /= alg;
 
-    num = 100*(smrt+con);
-    num /= alg;
+    // Add various luckMods starting here; Positive luckMod = bonus, negative luckMod = penalty
 
-    if(ready[HELD-1] && ready[HELD-1]->flagIsSet(O_LUCKY))
-        num += ready[HELD-1]->damage.getPlus();
-
-    // Carrying around alot of gold isn't very lucky!
+    // Carrying around a bunch of gold isn't very lucky! Put it in the bank!
     if(!isStaff())
-        num -= (coins[GOLD] / 20000);
+        luckMod -= (coins[GOLD] / 200000);
 
-    num = std::max(1, std::min(99, num));
+    // Holding an item flagged O_LUCKY adds luck based on its + adjustment
+    if(ready[HELD-1] && ready[HELD-1]->flagIsSet(O_LUCKY))
+        luckMod += ready[HELD-1]->damage.getPlus();
 
-    luck = num;
-    return(num);
+    // Being under bless effect increases luck; Higher the cast strength, the more the bonus
+    if (bless)
+        luckMod += bless->getStrength()/8;
+
+    // Outlaws get a luck penalty
+    if (flagIsSet(P_OUTLAW))
+        luckMod -= 30;
+
+    if (classAlignmentException)
+        luckNum = 99 + luckMod;
+    else
+        luckNum += luckMod;
+    
+    luckNum = std::max(1, std::min(99, luckNum));
+    luck = luckNum;
+    
+    return(luck);
 }
 
 //*********************************************************************
@@ -1101,12 +1130,11 @@ void Player::initLanguages() {
             break;
         case ELF:
             learnLanguage(LELVEN);
-            learnLanguage(LGNOMISH);
+            learnLanguage(LGOBLINOID);
             learnLanguage(LORCISH);
             break;
         case HALFELF:
             learnLanguage(LELVEN);
-            learnLanguage(LHALFLING);
             break;
         case HALFLING:
             learnLanguage(LHALFLING);
@@ -1187,9 +1215,7 @@ void Player::initLanguages() {
             learnLanguage(LKATARAN);
             break;
         case TIEFLING:
-            learnLanguage(LHALFLING);
             learnLanguage(LINFERNAL);
-            learnLanguage(LABYSSAL);
             learnLanguage(LORCISH);
             learnLanguage(LGOBLINOID);
             learnLanguage(LTIEFLING);
@@ -1204,6 +1230,9 @@ void Player::initLanguages() {
             learnLanguage(LTHIEFCANT);
             break;
         case CreatureClass::DRUID:
+            learnLanguage(LDRUIDIC);
+            learnLanguage(LFEY);
+            break;
         case CreatureClass::RANGER:
             learnLanguage(LDRUIDIC);
             break;
@@ -1214,10 +1243,33 @@ void Player::initLanguages() {
         case CreatureClass::LICH:
             learnLanguage(LARCANIC);
             break;
+        case CreatureClass::PALADIN:
+            switch(deity) {
+            case LINOTHAN:
+                learnLanguage(LFEY);
+                learnLanguage(LDRUIDIC);
+                break;
+            case ENOCH:
+                learnLanguage(LCELESTIAL);
+                break;
+            }
+            break;
+        case CreatureClass::DEATHKNIGHT:
+            switch(deity) {
+            case ARAMON:
+                learnLanguage(LINFERNAL);
+                learnLanguage(LABYSSAL);
+                break;
+            case ARACHNUS:
+                learnLanguage(LABYSSAL);
+                break;
+            }
+            break;
         case CreatureClass::CLERIC:
             switch(deity) {
             case ARAMON:
                 learnLanguage(LINFERNAL);
+                learnLanguage(LABYSSAL);
                 break;
             case ENOCH:
                 learnLanguage(LCELESTIAL);
@@ -1228,11 +1280,16 @@ void Player::initLanguages() {
             case KAMIRA:
                 learnLanguage(LTHIEFCANT);
                 break;
+            case MARA:
+            case LINOTHAN:
+                learnLanguage(LFEY);
+                learnLanguage(LDRUIDIC);
+                break;
             }
             break;
         default:
             break;
-    }
+        }
     }
 
 //*********************************************************************
@@ -1517,13 +1574,14 @@ std::string Player::getWhoString(bool whois, bool color, bool ignoreIllusion) co
     whoStr << (color ? "^x[^c" : "[") << std::setw(2) << level
            << ":" << std::setw(4) << getShortClassName(Containable::downcasted_shared_from_this<Player>()).substr(0, 4)
            << (color ? "^x] " : "] ");
+    auto parentRoom = getConstRoomParent();
 
     if(isHardcore())
         whoStr << (color ? "^y" : "") << "H ";
     else if(flagIsSet(P_OUTLAW))
         whoStr << (color ? "^r" : "") << "O ";
     else if( (flagIsSet(P_NO_PKILL) || flagIsSet(P_DIED_IN_DUEL) ||
-            getConstRoomParent()->isPkSafe()) &&
+            (parentRoom && parentRoom->isPkSafe())) &&
             (flagIsSet(P_CHAOTIC) || clan || cClass == CreatureClass::CLERIC) )
         whoStr << (color ? "^y" : "") << "N ";
     else if(flagIsSet(P_CHAOTIC)) // Chaotic

@@ -1,6 +1,4 @@
-#ifndef ALPHANUM__HPP
-#define ALPHANUM__HPP
-
+#pragma once
 /*
  The Alphanum Algorithm is an improved sorting algorithm for strings
  containing numbers.  Instead of sorting numbers in ASCII order like a
@@ -121,10 +119,9 @@ int alphanum_comp(const char* l, const std::string& r);
  implement "std::ostream operator<< (std::ostream&, const Ty&)".
  */
 template<class Ty>
-struct alphanum_less: public std::binary_function<Ty, Ty, bool> {
+struct alphanum_less {
     bool operator()(const Ty& left, const Ty& right) const {
         return alphanum_comp(left, right) < 0;
     }
 };
 
-#endif

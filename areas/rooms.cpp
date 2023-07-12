@@ -38,7 +38,7 @@
 #include "flags.hpp"                   // for R_LIMBO, R_VAMPIRE_COVEN, R_DA...
 #include "global.hpp"                  // for HELD, ARACHNUS, ARAMON, ARES
 #include "hooks.hpp"                   // for Hooks
-#include "lasttime.hpp"                // for lasttime, crlasttime
+#include "lasttime.hpp"                // for lasttime, CRLastTime
 #include "location.hpp"                // for Location
 #include "move.hpp"                    // for deletePortal
 #include "mud.hpp"                     // for MAX_MOBS_IN_ROOM

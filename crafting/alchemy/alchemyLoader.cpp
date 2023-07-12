@@ -274,6 +274,12 @@ bool Config::loadAlchemy() {
         .throwable(false), alchemy
     );
     addToMap(AlchemyBuilder()
+        .name("non-detection")
+        .positive(true)
+        .action("effect")
+        .throwable(false), alchemy
+    );
+    addToMap(AlchemyBuilder()
         .name("resist-fire")
         .positive(true)
         .action("effect")

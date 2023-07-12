@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef CRAFT_H_
-#define CRAFT_H_
+#pragma once
 
 #include <list>
 
@@ -82,5 +81,3 @@ protected:
     int minSkill;
 };
 
-
-#endif /*CRAFT_H_*/

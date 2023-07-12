@@ -200,6 +200,7 @@ public:
     void gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount, bool groupExp = false) override;
     void disarmSelf();
     bool lagProtection();
+    
     void computeAC();
     void alignAdjustAcThaco();
     void checkOutlawAggro();
@@ -460,7 +461,6 @@ public:
     int getSneakChance();
     int getLight() const;
     int getVision() const;
-
     bool halftolevel() const;
     bool canWear(const std::shared_ptr<Object>&  object, bool all=false) const;
     bool canUse(const std::shared_ptr<Object>&  object, bool all=false);

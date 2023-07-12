@@ -476,7 +476,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 
 
         if(deathSickness && Random::get(1,100) < deathSickness->getStrength()) {
-            printColor("^DYou cough heavily as you attack.\n");
+            *this << ColorOn << "^yYou cough heavily as you attack.\n" << ColorOff;
             modifyAttackDelay(10);
         }
 
@@ -503,7 +503,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
             setFlag(P_LAG_PROTECTION_ACTIVE);
 
         if(mVictim->addEnemy(Containable::downcasted_shared_from_this<Player>()) && attackType == ATTACK_NORMAL) {
-            print("You attack %N.\n", mVictim.get());
+            *this << "You attack " << mVictim.get() << ".\n";
             broadcast(getSock(), getRoomParent(), "%M attacks %N.", this, mVictim.get());
         }
 
@@ -512,7 +512,8 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
             return(0);
         }
     } else if(pVictim && attackType == ATTACK_NORMAL) {
-        pVictim->print("%M attacked you!\n", this);
+        *pVictim << this << " attacked you!\n";
+
         broadcast(getSock(), pVictim->getSock(), getRoomParent(), "%M attacked %N!", this, pVictim.get());
     }
 
@@ -633,8 +634,8 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 
 
                 if(result == ATTACK_BLOCK) {
-                    printColor("^C%M partially blocked your attack!\n", victim.get());
-                    victim->printColor("^CYou manage to partially block %N's attack!\n", this);
+                    *this << ColorOn << "^C" << victim.get() << " partially blocked your attack!\n" << ColorOff;
+                    *victim << ColorOn << "^CYou manage to partially block " << this << "'s attack!\n" << ColorOff;
                 }
 
                 if(result == ATTACK_CRITICAL)
@@ -671,8 +672,8 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 if(showToRoom)
                     broadcast(getSock(), getRoomParent(), "%M %s %N.", this, atk.c_str(), victim.get());
                 log_immort(false, Containable::downcasted_shared_from_this<Player>(), "%s %s %s for %d damage.\n", getCName(), atk.c_str(), victim->getCName(), attackDamage.get());
-                printColor("You %s %N for %s%d^x damage.\n", atk.c_str(), victim.get(), customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
-                victim->printColor("%M %s you%s for %s%d^x damage!\n", this, atk.c_str(), victim->isBrittle() ? "r brittle body" : "", victim->customColorize("*CC:DAMAGE*").c_str(), attackDamage.get());
+                *this << ColorOn << "You " << atk.c_str() << " " << victim.get() << " for " << customColorize("*CC:DAMAGE*").c_str() << attackDamage.get() << " ^xdamage.\n" << ColorOff;
+                *victim << ColorOn << this << " " << atk.c_str() << " " << "you" << (victim->isBrittle() ? "r brittle body":"") << " for " << victim->customColorize("*CC:DAMAGE*").c_str() << attackDamage.get() << " ^xdamage!\n" << ColorOff;
 
 
 
@@ -697,9 +698,8 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 if(!meKilled && drain && victim->hp.getCur() > attackDamage.get()) {
 
                     drain = std::min<int>(victim->hp.getCur() - attackDamage.get(), drain);
-                    printColor("Your aura of evil drains %s%ud^x hit point%s from your opponent.\n",
-                        customColorize("*CC:DAMAGE*").c_str(), drain, drain == 1 ? "" : "s");
-                    victim->printColor("^r%M drains %s%d^r hit points from you!\n", this, victim->customColorize("*CC:DAMAGE*").c_str(), drain);
+                    *this << ColorOn << "Your aura of evil drained an extra " << customColorize("*CC:DAMAGE*").c_str() << drain << " ^xhit point" << (drain == 1 ? "" : "s") << " of damage!\n" << ColorOff; 
+                    *victim << ColorOn << "^r" << this << "'s aura of evil drained " << victim->customColorize("*CC:DAMAGE*").c_str() << drain << " ^rhit point" << (drain == 1 ? "" : "s") << " from you.\n" << ColorOff;
                     attackDamage.add(drain);
                     if(!pVictim)
                         hp.increase(drain);
@@ -756,33 +756,33 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 if(attackType == ATTACK_AMBUSH && attacked == 1) {
                     // If we miss on the first attack, no more attacks because ambush was detected
                     attacked = attacks;
-                    print("Your ambush failed!\n");
+                    *this << "Your ambush failed!\n";
                     checkImprove("ambush", false);
                     broadcast(getSock(), getRoomParent(), "%s ambush was detected.", upHisHer());
                     setAttackDelay(getAttackDelay() * 2);
                     break;
                 } else if(attackType == ATTACK_BASH) {
-                    print("Your bash failed.\n");
+                    *this << "Your bash failed.\n";
                     checkImprove("bash", false);
-                    victim->print("%M tried to bash you.\n", this);
+                    *victim << this << " tried to bash you.\n";
                     broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to bash %N.", this, victim.get());
                     break;
                 } else if(attackType == ATTACK_KICK) {
-                    print("Your kick was ineffective.\n");
+                    *this << "Your kick was ineffective.\n";
                     checkImprove("kick", false);
-                    victim->print("%M tried to kick you.\n", this);
+                    *victim << this << " tried to kick you.\n";
                     broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to kick %N.", this, victim.get());
                     break;
                 } else if(attackType == ATTACK_MAUL) {
-                    print("You failed to maul %N.\n", victim.get());
+                    *this << "You failed to maul " << victim.get() << "\n.";
                     checkImprove("maul", false);
-                    victim->print("%M tried to maul you.\n", this);
+                    *victim << this << " tried to maul you.\n";
                     broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to maul %N.", this, victim.get());
                     break;
                 }
 
-                printColor("^cYou missed.\n");
-                victim->printColor("^c%M missed.\n", this);
+                *this << ColorOn << "^cYou missed.\n" << ColorOff;
+                *victim << ColorOn << "^c" << this << " missed.\n" << ColorOff;
                 if(!pVictim)
                     broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "^c%M missed %N.", this, victim.get());
 
@@ -809,13 +809,13 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 }
             } else if(result == ATTACK_FUMBLE) {
                 statistics.fumble();
-                printColor("^gYou FUMBLED your weapon.\n");
+                *this << ColorOn << "^gYou FUMBLED your weapon.\n" << ColorOff;
                 broadcast(getSock(), getRoomParent(), "^g%M fumbled %s weapon.", this, hisHer());
 
                 checkWeapon(Containable::downcasted_shared_from_this<Player>(), weapon, true, &loc, &attacks, &wielding, multiWeapon);
 
             }  else {
-                printColor("^RError!!! Unhandled attack result: %d\n", result);
+                *this << ColorOn << "^RError!!! Unhandled attack result: " << result << "\n" << ColorOff;
             }
 
         } while(false); // End DO
@@ -937,7 +937,6 @@ int Creature::castWeapon(const std::shared_ptr<Creature>& target, std::shared_pt
 void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType, Damage& attackDamage, Realm pRealm, const std::shared_ptr<Object>&  weapon, short saveBonus, short offguard, bool computingBonus) {
     std::shared_ptr<Player> player = getAsPlayer();
     const EffectInfo *effect = nullptr;
-    int     vHp = 0;
     dmgType = std::max(0, dmgType);
 
 // TODO: Dom: drain hp (dk)
@@ -1029,7 +1028,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         attackDamage.set(doResistMagic(attackDamage.get(), enemy));
     }
 
-    if(dmgType == PHYSICAL) {
+    if(dmgType == PHYSICAL_DMG) {
         //
         // Spells to damage attacker on physical attacks. The original damage is not changed.
         // Don't run when computing bonus damage
@@ -1129,52 +1128,13 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         if(immunePet)
             attackDamage.set(1);
     }
-
-    // armor spell
-    if(dmgType != MENTAL && isEffected("armor")) {
-        EffectInfo* armorEffect = getEffect("armor");
-        vHp = armorEffect->getStrength();
-
-      //  if(vHp <= 0 || attackDamage.get() <= 0)
-      //    vHp=0; //shouldn't happen, but check anyway.
-
-        vHp = std::max(0,vHp);
-
-        vHp -= (int)attackDamage.get();
-
-        if(vHp <= 0) {
-            removeEffect("armor");
-            if(player) {
-                printColor("^y^#Your magical armor has been dispelled.\n");
-                player->computeAC();
-            }
-            broadcast(getSock(), getRoomParent(), "%M's magical armor has been dispelled.", this);
-        } else {
-           // if ((int)attackDamage.get() > 0)    
-           //     printColor("^BYour magical armor has ^C%d^B strength remaining.\n", vHp);
-            armorEffect->setStrength(vHp);
-        }
-    }
-
-    // stoneskin spell
-    if(dmgType == PHYSICAL && isEffected("stoneskin")) {
-        EffectInfo* stoneskinEffect = getEffect("stoneskin");
-        vHp = stoneskinEffect->getStrength();
-
-        if(vHp <= 0 || attackDamage.get() <= 0)
-            vHp = 0; //shouldn't happen, but check anyway.
-
-        vHp--;
-        if(vHp <= 0) {
-            removeEffect("stoneskin");
-            printColor("^g^#Your stoneskinEffect has been dispelled.\n");
-            broadcast(getSock(), getRoomParent(), "%M's stoneskinEffect has been depleted.", this);
-        } else {
-            stoneskinEffect->setStrength(vHp);
-        }
-        // Stoneskin absorbs 50% damage.
-        attackDamage.set(attackDamage.get() / 2);
-    }
+    //Check for magical armor spell effects and update them...stoneskin, armor, etc..
+    //Updates damage too if necessary...
+    //Weird logic is in order to stop this from being called twice due to computing 
+    //bonus damage. Mob's don't pass computeBonus in their computeDamage() function
+    //call, whereas players do.
+    if (((player && computingBonus)) || ((enemy && enemy->isMonster())))  
+        applyMagicalArmor(attackDamage,dmgType);
 
     attackDamage.set(std::max<int>(0, attackDamage.get()));
 

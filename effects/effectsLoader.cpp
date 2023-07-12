@@ -365,6 +365,20 @@ bool Config::loadEffects() {
     );
     addToSet(
       EffectBuilder()
+        .name("dimensional-anchor")
+        .display("^mDimensional-Anchor^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^mYou are now tethered in space and time.^x")
+        .roomAddStr("^m*ACTOR* is now tethered in space and time.^x")
+        .selfDelStr("^mYou are no longer tethered in space and time.^x")
+        .roomDelStr("^m*ACTOR* is no longer tethered in space and time.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
         .name("disease")
         .addBaseEffect("disease")
         .pulseDelay(20)
@@ -910,6 +924,21 @@ bool Config::loadEffects() {
     );
     addToSet(
       EffectBuilder()
+        .name("non-detection")
+        .addBaseEffect("non-detection")
+        .display("^DNon-Detection^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^DYou are now hidden from magical detection.^x")
+        .roomAddStr("^D*ACTOR*'s body seems to shimmer then reform.^x")
+        .selfDelStr("^DYou are no longer hidden from magical detection.^x")
+        .roomDelStr("^D*ACTOR*'s body seems to shimmer then reform.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
         .name("pass-without-trace")
         .display("^GPass-without-trace^x")
         .computeScript("effectLib.computeVisibility(actor, effect, applier)")
@@ -1007,6 +1036,36 @@ bool Config::loadEffects() {
         .roomAddStr("^W*ACTOR* is surrounded by a faint magical aura.^x")
         .selfDelStr("^yYour aura of protection fades.^x")
         .roomDelStr("^y*ACTOR* is no longer protected.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("benediction")
+        .addBaseEffect("benediction")
+        .display("^BBenediction^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^BYour soul is fortified with the protective power of good.^x")
+        .roomAddStr("^B*ACTOR* glows brightly from the protective power of good.^x")
+        .selfDelStr("^DYour soul is no longer fortified with the protective power of good.^x")
+        .roomDelStr("^D*ACTOR* no longer glows from the protective power of good.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("malediction")
+        .addBaseEffect("malediction")
+        .display("^RMalediction^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^RYour soul is fortified with the spiteful power of evil.^x")
+        .roomAddStr("^R*ACTOR* glows darkly from the spiteful power of evil.^x")
+        .selfDelStr("^DYour soul is no longer fortified with the spiteful power of evil.^x")
+        .roomDelStr("^D*ACTOR* no longer glows from the spiteful power of evil.^x")
         .isSpellEffect(true),
       effects
     );
@@ -1263,10 +1322,10 @@ bool Config::loadEffects() {
         .display("^GStoneskin^x")
         .pulsed(false)
         .type("Positive")
-        .selfAddStr("^BYour skin hardens.^x")
-        .roomAddStr("^B*ACTOR*'s skin hardens.^x")
-        .selfDelStr("^BYour stoneskin dissipates.^x")
-        .roomDelStr("^B*ACTOR*'s stoneskin dissipates.^x")
+        .selfAddStr("^yYour skin hardens.^x")
+        .roomAddStr("^y*ACTOR*'s skin hardens.^x")
+        .selfDelStr("^yYour stoneskin dissipates.^x")
+        .roomDelStr("^y*ACTOR*'s stoneskin dissipates.^x")
         .isSpellEffect(true)
         .useStrength(true),
       effects
@@ -1505,8 +1564,30 @@ bool Config::loadEffects() {
       EffectBuilder()
         .name("wall-of-fire")
         .display("^rWall of Fire^x")
-        .roomAddStr("^RA wall of fire ignites and blocks passage to the *LOW-ACTOR*.^x")
-        .roomDelStr("^WThe wall of fire blocking the *LOW-ACTOR* dies down.^x")
+        .roomAddStr("^RA magical wall-of-fire ignites and blocks passage to the '*LOW-ACTOR*' exit.^x")
+        .roomDelStr("^WThe magical wall-of-fire blocking the '*LOW-ACTOR*' exit abruptly extinquishes.^x")
+        .pulsed(true)
+        .pulseScript("effectLib.pulseWall(actor, effect)")
+        .useStrength(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("wall-of-lightning")
+        .display("^cWall of Lightning^x")
+        .roomAddStr("^cA magical wall-of-lightning forms and blocks passage to the '*LOW-ACTOR*' exit.^x")
+        .roomDelStr("^WThe magical wall-of-lightning blocking the '*LOW-ACTOR*' exit has dissipated.^x")
+        .pulsed(true)
+        .pulseScript("effectLib.pulseWall(actor, effect)")
+        .useStrength(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("wall-of-sleet")
+        .display("^CWall of Sleet^x")
+        .roomAddStr("^CA magical wall-of-sleet forms and blocks passage to the '*LOW-ACTOR*' exit.^x")
+        .roomDelStr("^CThe magical wall-of-sleet blocking the '*LOW-ACTOR*' exit has faded away.^x")
         .pulsed(true)
         .pulseScript("effectLib.pulseWall(actor, effect)")
         .useStrength(true),
@@ -1515,9 +1596,9 @@ bool Config::loadEffects() {
     addToSet(
       EffectBuilder()
         .name("wall-of-force")
-        .display("^sWall of Force^x")
-        .roomAddStr("^sA wall of force appears and blocks passage to the *LOW-ACTOR*.^x")
-        .roomDelStr("^WThe wall of force blocking the *LOW-ACTOR* vanishes.^x")
+        .display("^MWall of Force^x")
+        .roomAddStr("^MA magical wall-of-force appears and blocks passage to the '*LOW-ACTOR*' exit.^x")
+        .roomDelStr("^WThe magical wall-of-force blocking the '*LOW-ACTOR*' exit abruptly vanishes.^x")
         .pulsed(true)
         .pulseScript("effectLib.pulseWall(actor, effect)"),
       effects

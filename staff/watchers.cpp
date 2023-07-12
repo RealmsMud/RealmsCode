@@ -178,3 +178,26 @@ int reportTypo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
     return(0);
 }
+
+//*********************************************************************
+//                      reportBug
+//*********************************************************************
+
+int reportBug(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    if(!needUniqueRoom(player))
+        return(0);
+
+    if(player->checkForSpam())
+        return(0);
+
+
+    player->printColor("^YBug reported in this room!\n");
+
+    auto bugInfo = cmnd->fullstr.length() > 3 ? cmnd->fullstr.substr(4) : "<no details>";
+    std::string text = fmt::format("*** {} reported a bug `{}` in room `{}`.", player->getName(), bugInfo, player->getRoomParent()->fullName());
+    broadcast(isCt, "^Y%s", text.c_str());
+    // Staff Channel
+    gServer->sendDiscordWebhook(886677295312568440, 0, "BugReport", text);
+
+    return(0);
+}

@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef CONFIG_H
-#define CONFIG_H
+
+#pragma once
 
 #include <list>
 #include <map>
@@ -397,6 +397,7 @@ public:
     [[nodiscard]] std::string getMonthDay() const;
     [[nodiscard]] bool isAprilFools() const;
     [[nodiscard]] bool willAprilFools() const;
+    [[nodiscard]] bool bonusXpActive() const;
     [[nodiscard]] int getFlashPolicyPort() const;
     [[nodiscard]] bool sendTxtOnCrash() const;
     void toggleTxtOnCrash();
@@ -557,6 +558,7 @@ private:
     bool    roomSearchFailure{};
     char    customColors[CUSTOM_COLOR_SIZE]{};
     bool    doAprilFools{};
+    bool    doBonusXP{};
     bool    txtOnCrash{};
     int     flashPolicyPort{};
     int     shopNumObjects{};
@@ -684,4 +686,3 @@ public:
 
 extern Config *gConfig;
 
-#endif

@@ -170,6 +170,7 @@ void Config::reset(bool reload) {
     logDeath = true;
     autoShutdown = false;
     doAprilFools = false;
+    doBonusXP = false;
     charCreationDisabled = false;
     lessExpLoss = false;
     pkillInCombatDisabled = false;
@@ -204,6 +205,7 @@ void Config::reset(bool reload) {
     customColors[CUSTOM_COLOR_DAMAGE] = 'm';
     customColors[CUSTOM_COLOR_SELF] = 'w';
     customColors[CUSTOM_COLOR_GUILD] = 'g';
+    customColors[CUSTOM_COLOR_SPORTS] = 'c';
 
     lotteryEnabled = true;
     lotteryTicketPrice = 100;
@@ -261,8 +263,9 @@ bool Config::loadBeforePython() {
     std::clog << "Initializing MSDP..." << (initMsdp() ? "done" : "*** FAILED ***") << std::endl;
 
     std::clog << "Loading Config..." << (loadConfig() ? "done" : "*** FAILED ***")<< std::endl;
-    std::clog << "Loading Discord Config..." << (loadDiscordConfig() ? "done" : "*** FAILED ***")<< std::endl;
-
+    if(!isListing()) {
+        std::clog << "Loading Discord Config..." << (loadDiscordConfig() ? "done" : "*** FAILED ***") << std::endl;
+    }
     std::clog << "Loading Zones..." << (loadZones() ? "done" : "*** FAILED ***") << std::endl;
     std::clog << "Loading Socials..." << (loadSocials() ? "done" : "*** FAILED ***") << std::endl;
     
@@ -353,6 +356,7 @@ unsigned long Config::expNeeded(int level) {
 
 bool Config::isAprilFools() const { return(doAprilFools && getMonthDay() == "Apr  1"); }
 bool Config::willAprilFools() const { return(doAprilFools); }
+bool Config::bonusXpActive() const { return(doBonusXP); }
 int Config::getFlashPolicyPort() const { return(flashPolicyPort); }
 
 bool Config::sendTxtOnCrash() const { return(txtOnCrash); }

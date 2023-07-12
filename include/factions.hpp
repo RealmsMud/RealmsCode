@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef FACTION_H_
-#define FACTION_H_
+
+#pragma once
 
 // adjusted faction = base + gained
 // We have to make this distinction: if the max you can gain is 1k (numerical limit),
@@ -147,5 +147,3 @@ protected:
     bool is_parent;
 };
 
-
-#endif /*FACTION_H_*/

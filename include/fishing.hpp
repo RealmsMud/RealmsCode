@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _FISHING_H
-#define _FISHING_H
+#pragma once
 
 #include <list>
 
@@ -59,7 +58,4 @@ public:
     std::string id;
     std::list<FishingItem> items;
 };
-
-
-#endif  /* _FISHING_H */
 

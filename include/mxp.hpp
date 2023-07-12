@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef MXP_H
-#define MXP_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 
@@ -48,5 +47,3 @@ protected:
     std::string color;
 };
 
-
-#endif// MXP_H

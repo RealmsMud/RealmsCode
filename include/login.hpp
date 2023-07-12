@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef LOGIN_H
-#define LOGIN_H
+
+#pragma once
 
 class Player;
 class Socket;
@@ -180,5 +180,3 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr);
 void createPlayer(std::shared_ptr<Socket> sock, const std::string& str);
 void doSurname(std::shared_ptr<Socket> sock, const std::string& str);
 void doTitle(std::shared_ptr<Socket> sock, const std::string& str);
-
-#endif

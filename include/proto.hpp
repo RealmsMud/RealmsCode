@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef PROTO_H
-#define PROTO_H
+
+#pragma once
 
 #include <cstdarg>
 #include <filesystem>
@@ -116,6 +116,7 @@ void getDestination(const std::string &str, Location& l, const std::shared_ptr<C
 void getDestination(std::string str, MapMarker& mapmarker, CatRef& cr, const std::shared_ptr<Creature> & target);
 
 void spawnObjects(const std::string &room, const std::string &objects);
+void spawnMonsters(const std::string &roomId, const std::list<std::string> &monsters);
 
 
 
@@ -216,8 +217,9 @@ void showGuildsNeedingApproval(std::shared_ptr<Player> viewer);
 bool canRemovePlyFromGuild(std::shared_ptr<Player> player);
 
 
-// healers.cpp
+// alignment.cpp
 bool antiGradius(int race);
+
 
 
 
@@ -423,5 +425,3 @@ bool watchingSuperEaves(std::shared_ptr<Socket> sock);
 
 
 AlcoholState getAlcoholState(const EffectInfo* effect);
-
-#endif

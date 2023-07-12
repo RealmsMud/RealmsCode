@@ -972,6 +972,38 @@ int dmRemove(const std::shared_ptr<Player>& player, cmd* cmnd) {
 }
 
 //*********************************************************************
+//                     dmComputeLuck
+//*********************************************************************
+// This command allows a CT or DM to re-compute a player's luck value
+
+int dmComputeLuck(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> target=nullptr;
+
+    if(cmnd->num < 2) {
+        *player << "Re-compute which player's luck?\n";
+        return(0);
+    }
+
+    cmnd->str[1][0] = up(cmnd->str[1][0]);
+    target = gServer->findPlayer(cmnd->str[1]);
+
+    if(!target || !player->canSee(target)) {
+        *player << "That player is not logged on.\n";
+        return(0);
+    }
+    else
+    {
+        *player << "Current luck for " << target << ": " << target->getLuck() << ".\n";
+        target->computeLuck();
+        *player << "Re-computed luck for " << target << ": " << target->getLuck() << ".\n";
+    }
+
+    target->save(true);
+    return(0);
+
+}
+
+//*********************************************************************
 //                      dmPut
 //*********************************************************************
 // This function allows a CT or DM to remotely add items to a player.

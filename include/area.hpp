@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef AREA_H
-#define AREA_H
+
+#pragma once
 
 #include <boost/dynamic_bitset.hpp>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -29,6 +29,7 @@
 #include "season.hpp"
 #include "track.hpp"
 #include "wanderInfo.hpp"
+#include "json.hpp"
 
 #define RADIAN 57.2957795
 
@@ -81,6 +82,8 @@ protected:
     short x{};
     short y{};
     short z{};
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(MapMarker, area, x, y, z);
 };
 
 
@@ -292,5 +295,3 @@ protected:
     int minDepth;
 };
 
-
-#endif

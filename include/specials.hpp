@@ -27,8 +27,7 @@
  *      editor! Either edit the PHP yourself or tell Dominus to make the changes.
  */
 
-#ifndef SPECIALS_H_
-#define SPECIALS_H_
+#pragma once
 
 #include <boost/dynamic_bitset.hpp>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -168,7 +167,7 @@ private:
 
     int chance{};         // Chance 1-100 that this attack will be executed
     int delay{};          // Delay between uses
-    lasttime ltime;     // When we last used it, when we can use it again, etc
+    LastTime ltime;     // When we last used it, when we can use it again, etc
     int stunLength{};
     SpecialType type;   // Fire, water, general breath, weapon attack, etc
     boost::dynamic_bitset<> flags{64};
@@ -214,6 +213,3 @@ public:
 
 };
 
-
-
-#endif /*SPECIALS_H_*/

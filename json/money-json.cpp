@@ -16,8 +16,7 @@
  *
  */
 
-#include <nlohmann/json.hpp>
-
+#include "json.hpp"
 #include "money.hpp"
 
 void to_json(nlohmann::json &j, const Money &money) {

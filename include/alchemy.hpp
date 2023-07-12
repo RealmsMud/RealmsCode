@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _ALCHEMY_H
-#define _ALCHEMY_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <iosfwd>           // for ostream
@@ -25,6 +24,7 @@
 #include <string>           // for string, operator<=>, basic_string
 #include <string_view>      // for string_view
 #include <vector>           // for vector
+#include "json.hpp"
 
 class Creature;
 class Object;
@@ -114,9 +114,8 @@ public:
 
     void setDuration(long newDuration);
 
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(AlchemyEffect, effect, quality, duration, strength);
+
 };
-
-
-#endif  /* _ALCHEMY_H */
-
 

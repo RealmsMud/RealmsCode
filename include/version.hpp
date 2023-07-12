@@ -15,15 +15,11 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef VERSION_H
-#define VERSION_H
+#pragma once
 
 #define VERSION_MAJOR "2"
 #define VERSION_MINOR "5"
 
-#define VERSION_SUB "6a"
+#define VERSION_SUB "8a"
 
 #define VERSION VERSION_MAJOR "." VERSION_MINOR VERSION_SUB
-
-#endif
-

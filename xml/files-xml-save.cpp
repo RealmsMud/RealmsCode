@@ -47,7 +47,7 @@
 //                      saveLastTime
 //*********************************************************************
 
-xmlNodePtr saveLastTime(xmlNodePtr parentNode, int i, struct lasttime pLastTime) {
+xmlNodePtr saveLastTime(xmlNodePtr parentNode, int i, LastTime pLastTime) {
     // Avoid writing un-used last times
     if(!pLastTime.interval && !pLastTime.ltime && !pLastTime.misc)
         return(nullptr);

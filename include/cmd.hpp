@@ -2,9 +2,7 @@
 // Created by jason on 12/11/16.
 //
 
-#ifndef REALMSCODE_CMD_H
-#define REALMSCODE_CMD_H
-
+#pragma once
 
 #include <cstring>  // memset
 #include <string>
@@ -43,5 +41,3 @@ public:
     const Command *myCommand;
 };
 
-
-#endif //REALMSCODE_CMD_H

@@ -33,3 +33,16 @@ Type toNum(const std::string &fromStr) {
 
     return (toReturn);
 }
+
+template <class Type>
+Type toNumSV(const std::string_view &fromStr) {
+    Type toReturn = static_cast<Type>(0);
+
+    try {
+        toReturn = boost::lexical_cast<Type>(fromStr);
+    } catch (boost::bad_lexical_cast &) {
+        // And do nothing
+    }
+
+    return (toReturn);
+}

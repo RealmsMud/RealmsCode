@@ -304,11 +304,15 @@ void doSearch(std::shared_ptr<Player> player, bool immediate) {
                 player->printColor("You found an exit: %s^x.\n", ext->getCName());
 
                 if(ext->isWall("wall-of-fire"))
-                    player->printColor("%s", ext->blockedByStr('R', "wall of fire", "wall-of-fire", detectMagic, true).c_str());
+                    player->printColor("%s", ext->blockedByStr('R', "wall-of-fire", "wall-of-fire", detectMagic, true).c_str());
                 if(ext->isWall("wall-of-force"))
-                    player->printColor("%s", ext->blockedByStr('s', "wall of force", "wall-of-force", detectMagic, true).c_str());
+                    player->printColor("%s", ext->blockedByStr('M', "wall-of-force", "wall-of-force", detectMagic, true).c_str());
                 if(ext->isWall("wall-of-thorns"))
-                    player->printColor("%s", ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", detectMagic, true).c_str());
+                    player->printColor("%s", ext->blockedByStr('y', "wall-of-thorns", "wall-of-thorns", detectMagic, true).c_str());
+                if(ext->isWall("wall-of-lightning"))
+                    player->printColor("%s", ext->blockedByStr('c', "wall-of-lightning", "wall-of-lightning", detectMagic, true).c_str());
+                if(ext->isWall("wall-of-sleet"))
+                    player->printColor("%s", ext->blockedByStr('C', "wall-of-sleet", "wall-of-sleet", detectMagic, true).c_str());
             }
         }
     }
@@ -799,6 +803,10 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(exit->isEffected("wall-of-fire"))
             chance -= 15;
         if(exit->isEffected("wall-of-thorns"))
+            chance -= 15;
+        if(exit->isEffected("wall-of-lightning"))
+            chance -= 15;
+        if(exit->isEffected("wall-of-sleet"))
             chance -= 15;
 
         chance = std::min(85, chance);
@@ -1398,6 +1406,11 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         // in armor absorb, and the removal of multiplier for attackPower
         stabMod *= 2.0;
 
+        if (target->isPlayer() && target->isEffected("stoneskin")) {
+            stabMod /= 3.0;
+            *player << ColorOn << "^y" << setf(CAP) << target << "'s stoneskin spell reduced your backstab's effectiveness!\n" << ColorOff;
+            *target << ColorOn << "^yYour stoneskin spell reduced the effectiveness of " << player << "'s backstab.\n" << ColorOff;
+        }
 
         // Return of 1 means the weapon was shattered or otherwise rendered unsuable
         int drain = 0;

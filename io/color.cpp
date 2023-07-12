@@ -177,6 +177,7 @@ std::string Player::customColorize(const std::string&  pText, bool caret) const 
     boost::replace_all(text, "*CC:DAMAGE*", getCustomColor(CUSTOM_COLOR_DAMAGE, caret).c_str());
     boost::replace_all(text, "*CC:SELF*", getCustomColor(CUSTOM_COLOR_SELF, caret).c_str());
     boost::replace_all(text, "*CC:GUILD*", getCustomColor(CUSTOM_COLOR_GUILD, caret).c_str());
+    boost::replace_all(text, "*CC:SPORTS*", getCustomColor(CUSTOM_COLOR_SPORTS, caret).c_str());
     return(text);
 }
 
@@ -215,8 +216,8 @@ const char* colorSection(bool staff, const char* color, char colorChar = 0) {
 int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
     bool staff = player->isStaff();
 
-    if(!strcmp(cmnd->str[1], "plyReset")) {
-        player->print("Custom colors have been plyReset to defaults.\n");
+    if(!strcmp(cmnd->str[1], "defaults")) {
+        player->print("Custom colors have been reset to defaults.\n");
         player->resetCustomColors();
         return(0);
     } else if(cmnd->num > 2) {
@@ -258,6 +259,8 @@ int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
             i = CUSTOM_COLOR_SELF;
         else if(type == "guild")
             i = CUSTOM_COLOR_GUILD;
+        else if(type == "sports")
+            i = CUSTOM_COLOR_SPORTS;
         else {
             player->print("Custom color type choice not understood.\n");
             return(0);
@@ -303,7 +306,7 @@ int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("\n");
     player->printColor("Custom Colors:  type [color ^W<type> <color>^x]\n");
     player->printColor("                Choose ^Wtype^x from below, ^Wcolor^x from above.\n");
-    player->printColor("                Type ^Wcolor plyReset^x to return to default colors.\n\n");
+    player->printColor("                Type ^Wcolor defaults^x to return to default colors.\n\n");
 
     std::map<std::string,std::string> options;
     std::map<std::string,std::string>::iterator it;
@@ -331,6 +334,7 @@ int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd) {
         options["P-Test"] = player->customColorize("*CC:PTEST*");
     if(player->getGuild())
         options["Guild"] = player->customColorize("*CC:GUILD*");
+    options["Sports"] = player->customColorize("*CC:SPORTS*");
 
     for(it = options.begin() ; it != options.end() ; ) {
         for(int n=0; n<3; n++) {

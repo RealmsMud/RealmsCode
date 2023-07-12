@@ -40,8 +40,8 @@ int SUPPORT_REQUIRED = 2;
 
 int     Tablesize;
 long    StartTime;
-struct  lasttime    Shutdown;
-struct  lasttime    Weather[5];
+LastTime    Shutdown;
+LastTime    Weather[5];
 
 const char *dmname[] = {
     "Bane", "Dominus", "Ocelot", "Kriona", "Nikola", nullptr

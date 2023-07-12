@@ -16,10 +16,10 @@
  *
  */
 
-#ifndef _OBJINCREASE_H
-#define _OBJINCREASE_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
+#include "json.hpp"
 
 enum IncreaseType {
     UnknownIncrease =     0,
@@ -29,6 +29,14 @@ enum IncreaseType {
 
 class ObjIncrease {
 public:
+    IncreaseType type;
+    std::string increase;
+    int amount{};
+    bool onlyOnce{};
+    bool canAddIfNotKnown{};
+
+
+public:
     ObjIncrease();
     void reset();
     bool isValid() const;
@@ -36,13 +44,8 @@ public:
     void    save(xmlNodePtr curNode) const;
     void    load(xmlNodePtr curNode);
 
-    IncreaseType type;
-    std::string increase;
-    int amount{};
-    bool onlyOnce{};
-    bool canAddIfNotKnown{};
+public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(ObjIncrease, type, increase, amount, onlyOnce, canAddIfNotKnown);
 };
 
-
-#endif  /* _OBJINCREASE_H */
 

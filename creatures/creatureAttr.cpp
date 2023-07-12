@@ -1450,6 +1450,101 @@ bool Creature::isUndead() const {
     return(false);
 }
 
+//********************************************************************
+//                      isPureArcaneCaster
+//********************************************************************
+bool Creature::isPureArcaneCaster() const {
+    switch (getClass()) {
+    case CreatureClass::MAGE:
+    case CreatureClass::LICH:
+        return(true);
+        break;
+    default:
+        return(false);
+    }
+
+    if (isMonster()) {
+        switch (getType()) {
+        case DRAGON:
+        case DEMON:
+        case DEVIL:
+        case DEVA:
+            return(true);
+            break;
+        default:
+            return(false);
+            break;
+        }
+    }
+    return(false);
+}
+//********************************************************************
+//                      isHybridArcaneCaster
+//********************************************************************
+bool Creature::isHybridArcaneCaster() const {
+    if (isPlayer()) {
+        if (getAsConstPlayer()->getSecondClass() == CreatureClass::MAGE)
+            return(true);
+    }
+    switch (getClass()) {
+    case CreatureClass::BARD:
+    case CreatureClass::PUREBLOOD:
+        return(true);
+        break;
+    default:
+        return(false);
+    }
+    return(false);
+}
+//********************************************************************
+//                      isPureDivineCaster
+//********************************************************************
+bool Creature::isPureDivineCaster() const {
+    switch (getClass()) {
+    case CreatureClass::CLERIC:
+    case CreatureClass::DRUID:
+        return(true);
+        break;
+    default:
+        return(false);
+    }
+
+    if (isMonster()) {
+        switch (getType()) {
+        case DEMON:
+        case DEVIL:
+        case DEVA:
+        case FAERIE:
+        case ELEMENTAL:
+            return(true);
+            break;
+        default:
+            return(false);
+            break;
+        }
+    }
+    return(false);
+}
+
+//********************************************************************
+//                      isHybridDivineCaster
+//********************************************************************
+bool Creature::isHybridDivineCaster() const {
+    if (isPlayer()) {
+        if (getAsConstPlayer()->getSecondClass() == CreatureClass::CLERIC)
+        return(true);
+    }
+    switch (getClass()) {
+    case CreatureClass::PALADIN:
+    case CreatureClass::DEATHKNIGHT:
+    case CreatureClass::RANGER:
+        return(true);
+        break;
+    default:
+        return(false);
+    }
+    return(false);
+}
 //*********************************************************************
 //                      isUnconscious
 //*********************************************************************

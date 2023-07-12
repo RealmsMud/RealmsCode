@@ -76,6 +76,7 @@ prefInfo prefList[] =
     { "broad",      P_NO_BROADCASTS,        nullptr,      "broadcast channel",        true },
     { "newbie",     P_IGNORE_NEWBIE_SEND,   nullptr,      "newbie channel",           true },
     { "gossip",     P_IGNORE_GOSSIP,        nullptr,      "gossip channel",           true },
+    { "sports",     P_IGNORE_SPORTS,        nullptr,      "sports-talk channel",      true },
     { "clan",       P_IGNORE_CLAN,          nullptr,      "clan channel",             true },
     { "tells",      P_NO_TELLS,             nullptr,      "send/tell/whisper/sign",   true },
     { "sms",        P_IGNORE_SMS,           nullptr,      "receive text messages",    true },

@@ -71,7 +71,7 @@
 #include "structs.hpp"                              // for ttag
 #include "toNum.hpp"                                // for toNum
 #include "xml.hpp"                                  // for loadObject, loadM...
-#include <nlohmann/json.hpp>
+#include "json.hpp"
 
 CatRef QuestInfo::getQuestId(xmlNodePtr curNode) {
     CatRef toReturn;
@@ -749,8 +749,7 @@ std::string QuestCompletion::getStatusDisplay() {
     else
         displayStr << "^y";
     displayStr << parentQuest->name << "^x\n";
-    displayStr << parentQuest->name << "^x";
-    
+    displayStr << "Frequency:" << "^x";
     if(parentQuest->timesRepeatable)
         displayStr << " ^G*Repeatable Limited*^x";
     if (parentQuest->isRepeatable()) {
@@ -761,17 +760,17 @@ std::string QuestCompletion::getStatusDisplay() {
         else if (parentQuest->repeatFrequency == QuestRepeatFrequency::REPEAT_UNLIMITED)
             displayStr << " ^G*Offered Always*^x";
     }
-
-
+    else
+        displayStr << " ^G*Offered Once*^x";
 
     displayStr << std::endl;
 
     displayStr << "^WDescription: ^w" << parentQuest->description << "^x\n";
 
     std::shared_ptr<Monster>  endMonster = nullptr;
-    displayStr << "^RWhen finished, return to: ^x";
+    displayStr << std::endl << "^RWhen finished, turn in quest to: ^x";
     if(loadMonster(parentQuest->turnInMob, endMonster)) {
-         displayStr << endMonster->getName();
+         displayStr << endMonster->getName() << std::endl;
          endMonster.reset();
     } else {
         displayStr << "ERROR: Monster doesn't exit!";
@@ -784,7 +783,7 @@ std::string QuestCompletion::getStatusDisplay() {
             displayStr << "^Y*";
         else
             displayStr << "^y";
-        displayStr << "Monsters to Kill.^x\n";
+        displayStr << "Monsters to Kill:^x\n";
         std::shared_ptr<Monster>  monster;
         i = 1;
         for(QuestCatRef & mob : mobsKilled) {
@@ -812,7 +811,7 @@ std::string QuestCompletion::getStatusDisplay() {
         else
             displayStr << "^y";
 
-        displayStr << "Objects to Get.^x\n";
+        displayStr << "Objects to Get:^x\n";
         std::shared_ptr<Object>  object;
         i = 1;
         for(QuestCatRef & obj : parentQuest->itemsToGet) {
@@ -841,7 +840,7 @@ std::string QuestCompletion::getStatusDisplay() {
         else
             displayStr << "^y";
 
-        displayStr << "Rooms to Visit.^x\n";
+        displayStr << "Rooms to Visit:^x\n";
         std::shared_ptr<UniqueRoom> room;
         i = 1;
         for(QuestCatRef & rom : roomsVisited) {
@@ -883,6 +882,17 @@ std::string QuestCompletion::getStatusDisplay() {
             if(obj.reqNum > 1)
                 displayStr << "(" << obj.reqNum << ")";
             displayStr << std::endl;
+        }
+    }
+
+    if ((parentQuest->alignmentChange) !=0 || (parentQuest->alignmentShift > 0 || parentQuest->alignmentShift < 0)) {
+        displayStr << "     ^WAlignment:^x ";
+        if(parentQuest->alignmentChange != 0) {
+            displayStr << (parentQuest->alignmentChange<0?"^R":"^B") << (parentQuest->alignmentChange<0?"evil":"good") << "^x" << std::endl;
+        }
+        else if (parentQuest->alignmentShift > 0 || parentQuest->alignmentShift < 0) {
+            displayStr << (parentQuest->alignmentShift<0?"^R":"^B") << (parentQuest->alignmentShift<0?"evil":"good") << 
+                                                                        " (+" << abs(parentQuest->alignmentShift) << " tier" << (abs(parentQuest->alignmentShift)>1?"s":"") << ")^x" << std::endl;
         }
     }
 
@@ -1013,12 +1023,21 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
     }
     if(parentQuest->alignmentChange) {
         std::ostringstream oStr;
-        oStr << (parentQuest->alignmentChange < 0 ? "^r" : "^b") << "Your alignment has shifted towards " << (parentQuest->alignmentChange < 0 ? "^Revil" : "^Bgood") << ".";
+        oStr << (parentQuest->alignmentChange < 0 ? "^R" : "^B") << "Your alignment has shifted towards " << (parentQuest->alignmentChange < 0 ? "^Revil" : "^Bgood") << ".";
         if (myPlayer->isStaff())
             oStr << " (" << parentQuest->alignmentChange << ")";
         *myPlayer << ColorOn << oStr.str() << ColorOff << "\n";
 
         myPlayer->setAlignment(std::max<short>(-1000, std::min<short>(1000,(myPlayer->getAlignment()+parentQuest->alignmentChange))));
+        myPlayer->alignAdjustAcThaco();
+    }
+    if(!parentQuest->alignmentChange && parentQuest->alignmentShift) {
+        std::ostringstream oStr;
+        oStr << "You have done quite " << (parentQuest->alignmentShift > 0?"a good":"an evil") << " deed!";
+        *myPlayer << ColorOn << oStr.str() << ColorOff << "\n";
+
+        // No need to add to oStr: The shiftAlignment() function handles alignment shift output to the player so long as false is passed to it
+        myPlayer->shiftAlignment(parentQuest->alignmentShift, false);
         myPlayer->alignAdjustAcThaco();
     }
     if(!parentQuest->factionRewards.empty())
@@ -1480,9 +1499,10 @@ bool QuestInfo::canGetQuest(const std::shared_ptr<const Player> &player, const s
 
     if(eligibility == QuestEligibility::INELIGIBLE_UNCOMPLETED_PREREQUISITES) {
         for(const CatRef & preReq : preRequisites) {
-            if(!player->hasDoneQuest(preReq) &&
+            auto q = gConfig->getQuest(preReq);
+            if(q && !player->hasDoneQuest(preReq) &&
                 !player->checkStaff("^m%M says, \"You're not ready for that information yet! Return when you have finished ^W%s^m.\"\n",
-                    giver.get(), gConfig->getQuest(preReq)->getName().c_str())
+                    giver.get(), q->getName().c_str())
             ) {
                 return(false);
             }
@@ -1611,7 +1631,7 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     // No name was specified, so continue to next quest and try to complete that
                     if(questName.empty()) continue;
 
-                    *player << ColorOn <<"But you haven't met all of the requirements for ^W" << quest->getParentQuest()->getName() << "^x yet!\n" << ColorOff;
+                    *player << ColorOn <<"You have not yet met all of the requirements for quest: ^W" << quest->getParentQuest()->getName() << "^x\n" << ColorOff;
                     return(0);
                 }
 
@@ -1621,19 +1641,19 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     if( mons->info == quest->getParentQuest()->getTurnInMob() ) {
                         // We have a turn in monster, lets complete the quest
                         if(mons->isEnemy(player)) {
-                            *player << setf(CAP) << mons << " refuses to deal with you right now!\n";
+                            *player << setf(CAP) << mons << " is trying to kill you right now!\n";
                             return(0);
                         }
 
                         std::string name = quest->getParentQuest()->getName();
-                        *player << ColorOn << "Completing quest ^W" << name << "^x." << ColorOff;
+                        *player << ColorOn << "Completing quest: ^W" << name << "^x\n" << ColorOff;
 
                         // NOTE: After quest->complete, quest is INVALID, do not attempt to access it
                         if(quest->complete(mons)) {
-                            broadcast(player->getSock(), player->getParent(), "%M just completed ^W%s^x.", player.get(), name.c_str());
+                            broadcast(player->getSock(), player->getParent(), "%M just completed quest: ^W%s^x", player.get(), name.c_str());
                         } else {
                             //player->print("Quest completion failed.\n");
-                            broadcast(player->getSock(), player->getParent(), "%M tried to complete ^W%s^x.", player.get(), name.c_str());
+                            broadcast(player->getSock(), player->getParent(), "%M tried to complete quest: ^W%s^x", player.get(), name.c_str());
                         }
 
                         return(0);
@@ -1643,13 +1663,13 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
                 if(!questName.empty()) {
                     // Name was specified, so stop
-                    *player << "Could not find a turn in monster!\n";
+                    *player << "There's nobody here right now that can complete your quest.\n";
                     return(0);
                 }
                 // No name was specified, so continue to next quest and try to complete that
             }
         }
-        *player <<"No quests were found that could be completed right now.\n";
+        *player <<"No quests found on you that can be completed right now, or if a quest was specified, invalid quest name.\n";
         return(0);
     } else if(cmnd->num > 1 && (!strncmp(cmnd->str[1], "quit", strlen(cmnd->str[1])) ||
              !strncmp(cmnd->str[1], "abandon", strlen(cmnd->str[1]))) )
@@ -1665,13 +1685,13 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
         for(std::pair<CatRef, QuestCompletion*> p : player->questsInProgress) {
             quest = p.second;
             if(!strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())) {
-                *player << ColorOn << "Abandoning ^W" << quest->getParentQuest()->getName() << "^x." << ColorOff;
+                *player << ColorOn << "Abandoning quest: ^W" << quest->getParentQuest()->getName() << "^x\n" << ColorOff;
                 player->questsInProgress.erase(quest->getParentQuest()->getId());
                 delete quest;
                 return(0);
             }
         }
-        *player << "Could not find any quests that matched the name ^W" << questName << "^x.\n";
+        *player << "Could not find any quests that matched the name: ^W" << questName << "^x.\n";
         return(0);
     }  else if(cmnd->num > 1 &&
                 (!strncmp(cmnd->str[1], "view", strlen(cmnd->str[1])) ||
@@ -1685,7 +1705,7 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
 
-        *player << "Quests matching the name ^W" << questName << "^x:\n";
+        *player << "Quests matching the name: ^W" << questName << "^x:\n";
         *player << PagerOn;
 
         i = 1;

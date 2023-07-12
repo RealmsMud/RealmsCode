@@ -112,29 +112,7 @@ void CleanupRoomFn::operator()(const std::shared_ptr<UniqueRoom>& r ) {
 	r->saveToFile(PERMONLY);
 }
 
-// Custom comparison operator to sort by the numeric id instead of standard string comparison
-bool idComp::operator() (const std::string& lhs, const std::string& rhs) const {
-    std::stringstream strL(lhs);
-    std::stringstream strR(rhs);
 
-    char charL, charR;
-    long longL, longR;
-
-    strL >> charL >> longL;
-    strR >> charR >> longR;
-
-    if(charL == charR) {
-        if(charL == 'R') {
-            // Rooms work a bit differently
-            return(lhs < rhs);
-        }
-        else
-            return(longL < longR);
-    } else {
-        return(charL < charR);
-    }
-    return(true);
-}
 //--------------------------------------------------------------------
 // Constructors, Destructors, etc
 
@@ -236,15 +214,16 @@ bool Server::init() {
     else
         std::clog << "failed." << std::endl;
 
-    initWebInterface();
+    if(!gConfig->isListing()) {
+        initWebInterface();
 
-    std::clog <<  "Initializing Spell List...";
-    initSpellList();
-    std::clog << "done." << std::endl;
-
+        std::clog << "Initializing Spell List...";
+        initSpellList();
+        std::clog << "done." << std::endl;
+    }
     // Python
-    std::clog <<  "Initializing Python...";
-    if(!PythonHandler::initPython()) {
+    std::clog << "Initializing Python...";
+    if (!PythonHandler::initPython()) {
         std::clog << "failed!" << std::endl;
         exit(-1);
     }
@@ -252,8 +231,10 @@ bool Server::init() {
     std::clog << "Loading Areas..." << (loadAreas() ? "done" : "*** FAILED ***") << std::endl;
     gConfig->loadAfterPython();
 
-    initHttpServer();
-    initDiscordBot();
+    if(!gConfig->isListing()) {
+        initHttpServer();
+        initDiscordBot();
+    }
 
 
 
@@ -1241,7 +1222,7 @@ int Server::reapChildren() {
             fds[i].fd = c.fd;
             fds[i++].events = POLLHUP;
         }
-        int ret = ::poll(fds, i, -1);
+        int ret = ::poll(fds, i, 0);
         if (ret <= 0) break;
 
         std::list<childProcess>::const_iterator it, oldIt;
@@ -1592,13 +1573,14 @@ bool Server::startReboot(bool resetShips) {
         std::shared_ptr<Player> player = sock->getPlayer();
         if(player && player->fd > -1 ) {
             // End the compression, we'll try to restart it after the reboot
+            auto playerName = player->getName();
             if(sock->mccpEnabled()) {
                 sock->endCompress();
             }
             player->save(true);
             player->uninit();
             player = nullptr;
-            players[player->getName()] = nullptr;
+            players[playerName] = nullptr;
             sock->clearPlayer();
         } else {
             sock->write("\n\r\n\r\n\rSorry, we are rebooting. You may reconnect in a few seconds.\n\r");

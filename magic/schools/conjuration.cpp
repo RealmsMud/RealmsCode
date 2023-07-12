@@ -23,6 +23,7 @@
 #include <type_traits>               // for enable_if<>::type
 
 #include "cmd.hpp"                   // for cmd
+#include "color.hpp"                 // for stripColor
 #include "dice.hpp"                  // for Dice
 #include "effects.hpp"               // for EffectInfo, Effect
 #include "flags.hpp"                 // for M_PLUS_TWO, M_ENCHANTED_WEAPONS_...
@@ -943,11 +944,11 @@ int splToxicCloud(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 
     if(!player->isCt()) {
         if(player->getRoomParent()->isPkSafe()) {
-            player->print("That spell is not allowed here.\n");
+            player->print("This is a safe room. That spell is not allowed here.\n");
             return(0);
         }
         if(player->getRoomParent()->isUnderwater()) {
-            player->print("Water currents prevent you from casting that spell.\n");
+            player->print("Strong water currents prevent you from casting that spell.\n");
             return(0);
         }
     }
@@ -969,87 +970,182 @@ int splToxicCloud(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
     return(1);
 }
 
+//******************************************************************************************************
+//                      doWallSpell
+//******************************************************************************************************
+int doWallSpell(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char * wallSpell, int strength, long duration) {
+    std::shared_ptr<Exit> exit=nullptr;
+    std::shared_ptr<BaseRoom> targetRoom=nullptr;
+
+    if(player->noPotion(spellData))
+        return(0);
+
+    if(player->getRoomParent()->isPkSafe() && !player->isCt()) {
+            *player << "This is a safe room. That spell is not allowed here.\n";
+            return(0);
+        }
+
+    if(cmnd->num > 2)
+        exit = findExit(player, cmnd, 2);
+    if(!exit) {
+        *player << ColorOn << "Cast "<< wallSpell << " on which exit?\n" << ColorOff;
+        return(0);
+    }
+
+    targetRoom = exit->target.loadRoom();
+    if (!targetRoom) {
+        *player << "Your spell fizzled.\n";
+        return(0);
+    }
+    if (targetRoom->isPkSafe()) {
+        *player << "That spell is not allowed here. The room beyond the '" << exit->getCName() << "' exit is a safe room.\n";
+        return(0);
+    }
+
+    bool wallReplace=false;
+    if (exit->isEffected(stripColor(wallSpell))) {
+       auto* effInfo = exit->getEffect(stripColor(wallSpell));
+
+        if (!player->isCt() && ((effInfo->getStrength() > strength) || (exit->hasPermEffect(stripColor(wallSpell))))) {
+            *player << ColorOn << "The existing " << wallSpell << " on the '" << exit->getCName() << "' exit is too strong for you to replace.\nYour spell fizzled.\n" << ColorOff;
+            broadcast(player->getSock(), player->getParent(), "%M tried to cast a %s spell in front of the '%s' exit. %s spell fizzled.^x", player.get(), wallSpell, exit->getCName(), player->upHisHer());
+            return(0);
+       }
+       else 
+            wallReplace=true;      
+    }
+    if (wallReplace) {
+        *player << "You cast a new " << wallSpell << " to replace the one in front of the '" << exit->getCName() << "' exit.\n";
+        broadcast(player->getSock(), player->getParent(), "%M casts a new %s spell to replace the one in front of the '%s' exit.^x", player.get(), wallSpell, exit->getCName());
+    }
+    else 
+    {
+        *player << "You cast a " << wallSpell << " in front of the '" << exit->getCName() << "' exit.\n";
+        broadcast(player->getSock(), player->getParent(), "%M casts a %s spell in front of the '%s' exit.^x", player.get(), wallSpell, exit->getCName());
+    }
+    
+    if(spellData->how == CastType::CAST) {
+        if(player->getRoomParent()->magicBonus())
+            *player << "The room's magical properties increase the power of your spell.\n";
+    }
+
+    if (wallReplace)
+        exit->removeEffectReturnExit(stripColor(wallSpell), player->getRoomParent());
+
+    exit->addEffectReturnExit(stripColor(wallSpell), duration, strength, player);
+    return(1);
+
+}
+
 //*********************************************************************
 //                      splWallOfFire
 //*********************************************************************
 
 int splWallOfFire(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
-    std::shared_ptr<Exit> exit=nullptr;
     int strength = spellData->level;
-    long duration = 300;
-
-    if(player->noPotion( spellData))
-        return(0);
+    long duration = (long)strength * 15;
 
     if(!player->isCt()) {
-        if(player->getRoomParent()->isPkSafe()) {
-            player->print("That spell is not allowed here.\n");
+        if (!player->isPureArcaneCaster() && !player->isPureDivineCaster()) {
+            *player << "You lack the arcane or divine fundamentals to cast that spell.\n";
             return(0);
         }
         if(player->getRoomParent()->isUnderwater()) {
-            player->print("Water currents prevent you from casting that spell.\n");
+            *player << "Being underwater prevents you from casting that spell here.\n";
+            return(0);
+        }
+
+    }
+    if (player->getRoomParent()->flagIsSet(R_COLD_BONUS) || player->getRoomParent()->flagIsSet(R_WINTER_COLD))
+        duration = (duration*2)/3;
+    if (player->getRoomParent()->flagIsSet(R_WATER_BONUS))
+        duration /= 2;
+    if (player->getRoomParent()->flagIsSet(R_FIRE_BONUS))
+        duration *= 2;
+
+    if (player->getClass() == CreatureClass::DRUID)
+        duration = (duration*3)/2;
+
+    return(doWallSpell(player, cmnd, spellData, "^Rwall-of-fire^x", strength, duration));
+}
+
+//*********************************************************************
+//                      splWallOfSleet
+//*********************************************************************
+
+int splWallOfSleet(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    int strength = spellData->level;
+    long duration = (long)strength * 15;
+
+    if(!player->isCt()) {
+        if (!player->isPureArcaneCaster() && !player->isPureDivineCaster()) {
+            *player << "You lack the arcane or divine fundamentals to cast that spell.\n";
+            return(0);
+        }
+        if(player->getRoomParent()->isUnderwater()) {
+            *player << "Being underwater prevents you from casting that spell here.\n";
+            return(0);
+        }
+
+    }
+    if (player->getRoomParent()->flagIsSet(R_FIRE_BONUS) && player->getRoomParent()->flagIsSet(R_PLAYER_HARM))
+        duration = (duration*2)/3;
+    if (player->getRoomParent()->flagIsSet(R_FIRE_BONUS) || (player->getRoomParent()->flagIsSet(R_DESERT_HARM) && isDay()))
+        duration /= 2;
+    if (player->getRoomParent()->flagIsSet(R_COLD_BONUS))
+        duration *= 2;
+
+    if (player->getClass() == CreatureClass::DRUID)
+        duration = (duration*3)/2;
+
+    return(doWallSpell(player, cmnd, spellData, "^Cwall-of-sleet^x", strength, duration));
+}
+
+//*********************************************************************
+//                      splWallOfLightning
+//*********************************************************************
+
+int splWallOfLightning(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    int strength = spellData->level;
+    long duration = (long)strength * 15;
+
+    if(!player->isCt()) {
+        if (!player->isPureArcaneCaster() && !player->isPureDivineCaster()) {
+            *player << "You lack the arcane or divine fundamentals to cast that spell.\n";
+            return(0);
+        }
+        if(player->getRoomParent()->isUnderwater()) {
+            *player << ColorOn << "^#^cThe massive amount of water surrounding you diffuses the electricity with a loud BANG!\n" << ColorOff;
+            broadcast(player->getSock(), player->getParent(), "^#^c%M tried to cast a ^cwall-of-lightning^x spell. The surrounding water diffused it with a loud BANG!^x", player.get());
             return(0);
         }
     }
 
-    if(cmnd->num > 2)
-        exit = findExit(player, cmnd, 2);
-    if(!exit) {
-        player->print("Cast a wall of fire on which exit?\n");
-        return(0);
-    }
+    if (player->getRoomParent()->flagIsSet(R_WATER_BONUS))
+        duration /= 2;
+    if (player->getRoomParent()->flagIsSet(R_ELEC_BONUS))
+        duration *= 2;
+    if (player->getClass() == CreatureClass::DRUID)
+        duration = (duration*3)/2;
 
-    player->printColor("You cast a wall of fire spell on the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M casts a wall of fire spell on the %s^x.", player.get(), exit->getCName());
-
-    if(exit->hasPermEffect("wall-of-fire")) {
-        player->print("The spell didn't take hold.\n");
-        return(0);
-    }
-
-    if(spellData->how == CastType::CAST) {
-        if(player->getRoomParent()->magicBonus())
-            player->print("The room's magical properties increase the power of your spell.\n");
-    }
-
-    exit->addEffectReturnExit("wall-of-fire", duration, strength, player);
-    return(1);
+    return(doWallSpell(player, cmnd, spellData, "^cwall-of-lightning^x", strength, duration));
 }
 
 //*********************************************************************
 //                      splWallOfForce
 //*********************************************************************
-
 int splWallOfForce(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
-    std::shared_ptr<Exit> exit=nullptr;
     int strength = spellData->level;
-    long duration = 300;
+    long duration = (long)strength * 15;
 
-    if(player->noPotion( spellData))
-        return(0);
 
-    if(cmnd->num > 2)
-        exit = findExit(player, cmnd, 2);
-    if(!exit) {
-        player->print("Cast a wall of force on which exit?\n");
+    if(!player->isCt() && !player->isPureArcaneCaster()) {
+        *player << "You lack the arcane fundamentals to cast that spell.\n";
         return(0);
     }
 
-    player->printColor("You cast a wall of force spell on the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M casts a wall of force spell on the %s^x.", player.get(), exit->getCName());
 
-    if(exit->hasPermEffect("wall-of-force")) {
-        player->print("The spell didn't take hold.\n");
-        return(0);
-    }
-
-    if(spellData->how == CastType::CAST) {
-        if(player->getRoomParent()->magicBonus())
-            player->print("The room's magical properties increase the power of your spell.\n");
-    }
-
-    exit->addEffectReturnExit("wall-of-force", duration, strength, player);
-    return(1);
+    return(doWallSpell(player, cmnd, spellData, "^Mwall-of-force^x", strength, duration));
 }
 
 //*********************************************************************
@@ -1057,40 +1153,19 @@ int splWallOfForce(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
 //*********************************************************************
 
 int splWallOfThorns(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
-    std::shared_ptr<Exit> exit=nullptr;
     int strength = spellData->level;
-    long duration = 300;
+    long duration = (long)strength * 15;
 
-    if(player->noPotion( spellData))
-        return(0);
-
-    if(player->getRoomParent()->isPkSafe() && !player->isCt()) {
-        player->print("That spell is not allowed here.\n");
-        return(0);
+     if(!player->isCt()) {
+        if (player->getClass() != CreatureClass::DRUID && player->getClass() != CreatureClass::RANGER &&
+            !(player->getClass() == CreatureClass::CLERIC && (player->getDeity() == LINOTHAN || player->getDeity() == MARA))) {
+            *player << "Only druids, rangers, and clerics of Linothan or Mara can cast that spell.\n";
+            return(0);
+        }
     }
 
-    if(cmnd->num > 2)
-        exit = findExit(player, cmnd, 2);
-    if(!exit) {
-        player->print("Cast a wall of thorns on which exit?\n");
-        return(0);
-    }
-
-    player->printColor("You cast a wall of thorns spell on the %s^x.\n", exit->getCName());
-    broadcast(player->getSock(), player->getParent(), "%M casts a wall of thorns spell on the %s^x.", player.get(), exit->getCName());
-
-    if(exit->hasPermEffect("wall-of-thorns")) {
-        player->print("The spell didn't take hold.\n");
-        return(0);
-    }
-
-    if(spellData->how == CastType::CAST) {
-        if(player->getRoomParent()->magicBonus())
-            player->print("The room's magical properties increase the power of your spell.\n");
-    }
-
-    exit->addEffectReturnExit("wall-of-thorns", duration, strength, player);
-    return(1);
+    
+    return(doWallSpell(player, cmnd, spellData, "^ywall-of-thorns^x", strength, duration));
 }
 
 //*********************************************************************
@@ -1104,18 +1179,23 @@ void bringDownTheWall(EffectInfo* effect, const std::shared_ptr<BaseRoom>& room,
     std::shared_ptr<BaseRoom> targetRoom=nullptr;
     std::string name = effect->getName();
 
+    targetRoom = exit->target.loadRoom();
+    if (!targetRoom)
+        return;
+
     if(effect->isPermanent()) {
         // fake being removed
         auto* ef = effect->getEffect();
-        room->effectEcho(ef->getRoomAddStr(), exit);
+        room->effectEcho(ef->getRoomDelStr(), exit);
 
         // extra of 2 means a 2 pulse (21-40 seconds) duration
         effect->setExtra(2);
+
         exit = exit->getReturnExit(room, targetRoom);
         if(exit) {
             effect = exit->getEffect(name);
             if(effect) {
-                targetRoom->effectEcho(ef->getRoomAddStr(), exit);
+                targetRoom->effectEcho(ef->getRoomDelStr(), exit);
                 effect->setExtra(2);
             }
         }

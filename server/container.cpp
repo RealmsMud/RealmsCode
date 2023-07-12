@@ -62,7 +62,7 @@ bool Container::purge(bool includePets) {
 bool Container::purgeMonsters(bool includePets) {
     bool purgedAll = true;
     MonsterSet::iterator mIt, prevIt;
-    std::shared_ptr<Monster> mons = nullptr;
+    std::shared_ptr<Monster> mons;
     for(mIt = monsters.begin() ; mIt != monsters.end() ; ) {
         prevIt = mIt;
         mons = (*mIt++);
@@ -389,6 +389,20 @@ std::shared_ptr<Monster>  Container::findMonster(const std::shared_ptr<const Cre
         return(target);
     }
 }
+
+std::shared_ptr<Monster>  Container::findNpcTrader(const std::shared_ptr<const Creature>& searcher, const short profession) const {
+    std::shared_ptr<Monster> target=nullptr;
+    for(const auto& mons : searcher->getParent()->monsters) {
+        if (mons->getMobTrade() == profession) {
+            target = mons;
+            break;
+        }
+
+    }
+
+    return(target);
+}
+
 std::shared_ptr<Player> Container::findPlayer(const std::shared_ptr<const Creature>& searcher, cmd* cmnd, int num) const {
     return(findPlayer(searcher, cmnd->str[num], cmnd->val[num]));
 }
@@ -610,4 +624,13 @@ std::shared_ptr<const Creature> Containable::getConstCreatureParent() const {
         return myParent->getAsConstCreature();
     }
     return nullptr;
+}
+
+std::string Containable::getParentId() {
+    // Only works for unique room parents, for now at least
+    if(!inUniqueRoom())
+        return "";
+
+    auto room = getUniqueRoomParent();
+    return room->info.str();
 }

@@ -267,6 +267,146 @@ int cmdEarthSmother(const std::shared_ptr<Player>& player, cmd* cmnd) {
 }
 
 //*********************************************************************
+//                      cmdStarstrike
+//*********************************************************************
+// This command allows clerics of Mara to call a starstrike on their enemies
+
+int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature=nullptr;
+    std::shared_ptr<Player> pCreature=nullptr;
+    std::shared_ptr<Monster> mCreature=nullptr;
+    long    i=0, t=0;
+    int     chance=0, dmg=0, roll=0;
+    bool    noHighLevelDiff=false;
+
+    player->clearFlag(P_AFK);
+    if(!player->ableToDoCommand())
+        return(0);
+
+    if(!player->isCt()) {
+        if(!player->knowsSkill("starstrike")) {
+            *player << "You do not have the ability to call a starstrike.\n";
+            return(0);
+        }
+        if(player->getDeity() != MARA || player->getClass() != CreatureClass::CLERIC) {
+            *player << "Only clerics of Mara have the ability to call a starstrike.\n";
+            return(0);
+        }
+        if (isDay()) {
+            *player << "You may only call a starstrike at night.\n";
+            return(0);
+        }
+        if(!player->alignInOrder()) {
+            *player << "Your alignment must be at least light blue to do that.\n";
+            return(0);
+        }
+    }
+    if(!(creature = player->findVictim(cmnd, 1, true, false, "Starstrike whom?\n", "You don't see that here.\n")))
+        return(0);
+
+    pCreature = creature->getAsPlayer();
+    mCreature = creature->getAsMonster();
+
+    player->smashInvis();
+    player->interruptDelayedActions();
+
+    if(!player->canAttack(creature))
+        return(0);
+
+    double level = player->getSkillLevel("starstrike");
+
+    i = LT(player, LT_STARSTRIKE);
+    t = time(nullptr);
+    if(i > t && !player->isCt()) {
+        player->pleaseWait(i-t);
+        return(0);
+    }
+
+    player->lasttime[LT_STARSTRIKE].ltime = t;
+    player->updateAttackTimer();
+
+    // Time between uses scales less with higher skill level
+    if (level >= 40.0)
+        player->lasttime[LT_STARSTRIKE].interval = 60L;
+    else if (level >=31.0)
+        player->lasttime[LT_STARSTRIKE].interval = 75L;
+    else if (level >=25.0)
+        player->lasttime[LT_STARSTRIKE].interval = 90L;
+    else if (level >=19.0)
+        player->lasttime[LT_STARSTRIKE].interval = 105L;
+    else if (level >=13.0)
+        player->lasttime[LT_STARSTRIKE].interval = 120L;
+    else 
+        player->lasttime[LT_STARSTRIKE].interval = 135L;
+
+    //chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
+    chance = 450 + player->piety.getCur() + ((((int)level-creature->getLevel())*100)/2);
+    chance = std::min(chance, 950);
+
+    noHighLevelDiff = ((int)level - creature->getLevel()) < 10;
+
+    //resist-magic effect reduces chance unless player is 10+ levels higher than target
+    if(creature->isEffected("resist-magic") && noHighLevelDiff)
+        chance /= 2;
+    
+    dmg = Random::get((int)(level*4), (int)(level*5)/4) + Random::get(1,10);
+    
+    if(player->getRoomParent()->flagIsSet(R_MAGIC_BONUS))
+        dmg = dmg*3/2;
+    if(creature->isUndead())
+        dmg = dmg*3/2;
+
+    //resist-magic effect overrides all above damage calculations, unless player is 10+ levels higher than target
+    if(creature->isEffected("resist-magic") && noHighLevelDiff)
+        dmg = Random::get(1, (int)level);
+
+    if(mCreature) {
+        mCreature->addEnemy(player);
+        //Mobs' innate magic resistance can make them immune to starstrike
+        if(Random::get(1,100) <= mCreature->getMagicResistance()) {
+            *player << ColorOn << "^MYour starstrike had no effect on " << mCreature << ".\n" << ColorOff;
+            return(0);
+        }
+        
+    }
+
+    roll = Random::get(1, 1000);
+   /* if (player->isCt() || player->flagIsSet(P_PTESTER)) {
+        *player << "Chance: " << chance << "%\n";
+        *player << "Roll: " << roll << "\n";
+    }
+    */
+
+    //if(!player->isCt()) {
+        if( roll > chance) {
+            *player << "Your starstrike missed " << creature << ".\n";
+            broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M's starstrike missed %N!", player.get(), creature.get());
+            *creature << setf(CAP) << player << " tried to starstrike you!\n";
+            player->checkImprove("starstrike", false);
+            return(0);
+        }
+        if(creature->chkSave(SPL, player, 0)) {
+            *player << ColorOn << "^WYour starstrike was only partially effective.\n" << ColorOff;
+            *creature << "You partially avoided " << player << "'s starstrike.\n";
+            dmg /= 2;
+        }
+    //}
+
+    *player << ColorOn << "^WYour starstrike hit " << creature << " for " << player->customColorize("*CC:DAMAGE*") << dmg << " ^Wdamage!\n" << ColorOff;
+    player->checkImprove("starstrike", true);
+    player->statistics.attackDamage(dmg, "starstrike");
+
+    if(creature->isEffected("resist-magic") && noHighLevelDiff)
+        *player << setf(CAP) << creature << "'s resist-magic dammpened your starstrike!\n";
+
+    *creature << ColorOn << "^W" << setf(CAP) << player << "'s starstrike hit you for " << creature->customColorize("*CC:DAMAGE*") << dmg << " ^Wdamage!\n" << ColorOff;
+    broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M hit %N with a starstrike!", player.get(), creature.get());
+
+    player->doDamage(creature, dmg, CHECK_DIE);
+    return(0);
+}
+
+//*********************************************************************
 //                      cmdLayHands
 //*********************************************************************
 // This will allow paladins to lay on hands
@@ -569,7 +709,7 @@ int Creature::getTurnChance(const std::shared_ptr<Creature>& target) {
 
     switch (getDeity()) {
     case CERIS:
-        if(getAdjustedAlignment() == NEUTRAL)
+        if(getAdjustedAlignment() >= BLUISH)
             adjLevel+=2;
         if(getAdjustedAlignment() == ROYALBLUE || getAdjustedAlignment() == BLOODRED)
             adjLevel-=2;
@@ -1388,3 +1528,69 @@ int splUnhallow(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
     player->getRoomParent()->addEffect("unhallow", duration, strength, player, true, player);
     return(1);
 }
+
+int splBenediction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    if( spellData->how == CastType::CAST &&
+        player->getClass() !=  CreatureClass::CLERIC &&
+        player->getClass() !=  CreatureClass::PALADIN &&
+        player->getClass() !=  CreatureClass::DRUID &&
+        !player->isCt()) 
+    {
+        *player << "Only druids, paladins, and clerics of Ares, Ceris, Enoch, Gradius, Kamira, Linothan, or Mara may cast that spell.\n"; 
+        return(0);
+    }
+
+    if (!player->isCt() &&
+        player->getClass() != CreatureClass::DRUID &&
+        player->getDeity() != ARES && 
+        player->getDeity() != ENOCH &&
+        player->getDeity() != LINOTHAN &&
+        player->getDeity() != CERIS &&
+        player->getDeity() != MARA &&
+        player->getDeity() != GRADIUS &&
+        player->getDeity() != KAMIRA)
+    {
+        *player << gConfig->getDeity(player->getDeity())->getName().c_str() << 
+            ((player->getDeityAlignment() == BLOODRED) ? " is furious that you tried to cast that spell.\nYou should prostrate yourself immediately and beg for mercy.":" does not grant that spell to you.") << "\n";
+        return(0);
+    }
+
+    if (!player->isCt() && spellData->how == CastType::CAST && (player->getAdjustedAlignment() < NEUTRAL)) {
+        *player << "Your alignment must be neutral or good in order to cast a benediction spell.\n";
+        return(0);
+    }
+
+    return(splGeneric(player, cmnd, spellData, "a", "benediction", "benediction"));
+}
+
+int splMalediction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    if( spellData->how == CastType::CAST &&
+        player->getClass() !=  CreatureClass::CLERIC &&
+        player->getClass() !=  CreatureClass::DEATHKNIGHT &&
+        player->getClass() !=  CreatureClass::DRUID &&
+        !player->isCt()) 
+    {
+        *player << "Only death knights, druids, and clerics of Arachnus, Aramon, or Ares may cast that spell.\n";
+        return(0);
+    }
+
+    if (spellData->how == CastType::CAST &&
+        !player->isCt() &&
+        player->getClass() != CreatureClass::DRUID && 
+        player->getDeity() != ARACHNUS &&
+        player->getDeity() != ARES &&
+        player->getDeity() != ARAMON)
+    {
+        *player << gConfig->getDeity(player->getDeity())->getName().c_str() << 
+            ((player->getDeityAlignment() == ROYALBLUE) ? " is disappointed that you tried to cast that spell.":" does not grant that spell to you.") << "\n";
+        return(0);
+    }
+
+    if (!player->isCt() && spellData->how == CastType::CAST && (player->getAdjustedAlignment() > NEUTRAL)) {
+        *player << "Your alignment must be neutral or evil in order to cast a malediction spell.\n";
+        return(0);
+    }
+
+    return(splGeneric(player, cmnd, spellData, "a", "malediction", "malediction"));
+}
+

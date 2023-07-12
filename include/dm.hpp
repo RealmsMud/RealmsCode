@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef DMH_H
-#define DMH_H
+
+#pragma once
 
 #include "catRef.hpp"
 #include "range.hpp"
@@ -143,6 +143,7 @@ void dmSaveMob(const std::shared_ptr<Player>& player, cmd* cmnd, const CatRef& c
 int dmAddMob(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmForceWander(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmBalance(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmAlignment(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // dmobj.c
@@ -174,6 +175,7 @@ int dmFinger(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmDisconnect(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmTake(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmRemove(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmComputeLuck(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmPut(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmMove(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmWordAll(const std::shared_ptr<Player>& player, cmd* cmnd);
@@ -229,6 +231,7 @@ int dmCheckStats(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmLocatePlayer(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmWatcherBroad(const std::shared_ptr<Player>& admin, cmd* cmnd);
 int reportTypo(const std::shared_ptr<Player>& player, cmd* cmnd);
+int reportBug(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 // swap.cpp
@@ -237,6 +240,3 @@ int dmRoomSwap(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmObjSwap(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmMobSwap(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-
-
-#endif

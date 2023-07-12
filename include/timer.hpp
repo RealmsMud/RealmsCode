@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef TIMER_H_
-#define TIMER_H_
+#pragma once
 
 #include <sys/time.h>   // for timeval
 #include <sys/types.h>  // for time_t
@@ -38,5 +37,3 @@ public:
     int getDelay() const;
     time_t getLT() const;
 };
-
-#endif /*TIMER_H_*/

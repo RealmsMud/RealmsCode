@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _MONTYPE_H
-#define _MONTYPE_H
+#pragma once
 
 #include "size.hpp"
 
@@ -74,6 +73,4 @@ namespace monType {
     bool noLivingVulnerabilities(mType type);
 }
 
-
-#endif  /* _MONTYPE_H */
 

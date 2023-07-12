@@ -34,7 +34,7 @@
 #include "dice.hpp"                            // for Dice
 #include "effects.hpp"                         // for EffectList, operator<<
 #include "join.hpp"                            // for join, mjoin
-#include "lasttime.hpp"                        // for operator<<, crlasttime
+#include "lasttime.hpp"                        // for operator<<, CRLastTime
 #include "money.hpp"                           // for GOLD, Money
 #include "mudObjects/monsters.hpp"             // for Monster
 #include "mudObjects/objects.hpp"              // for Object
@@ -46,6 +46,7 @@
 #include "stats.hpp"                           // for Stat
 #include "wanderInfo.hpp"                      // for WanderInfo
 #include "xml.hpp"                             // for loadFile
+#include "proto.hpp"
 
 
 
@@ -76,7 +77,7 @@ int list_rooms() {
             std::sort(rooms.begin(), rooms.end());
             for (const fs::path& room : rooms) {
                 if (fs::is_regular_file(room)) {
-                    auto *lRoom = new UniqueRoom();
+                    auto lRoom = std::make_shared<UniqueRoom>();
                     if((xmlDoc = xml::loadFile(room.c_str(), "Room")) == nullptr) {
                         std::cout << "Error loading: " << room.string() << "\n";
                         continue;
@@ -126,7 +127,7 @@ int list_objects() {
               << "ReqSkill" << ","
               << "NumAttks" << ","
               << "Delay" << ","
-
+              << "Armor" << ","
               << "ShotsCur" << ","
               << "ShotsMax" << ","
 
@@ -161,7 +162,7 @@ int list_objects() {
             std::sort(objects.begin(), objects.end());
             for (const fs::path& object : objects) {
                 if (fs::is_regular_file(object)) {
-                    auto *lObject = new Object();
+                    auto lObject = std::make_shared<Object>();
                     if((xmlDoc = xml::loadFile(object.c_str(), "Object")) == nullptr) {
                         std::cout << "Error loading: " << object.string() << "\n";
                         continue;
@@ -190,7 +191,7 @@ int list_objects() {
                               << lObject->getRequiredSkill() << ","
                               << lObject->getNumAttacks() << ","
                               << (lObject->getDelay()/10.0) << ","
-
+                              << lObject->getArmor() << ","
                               << lObject->getShotsCur() << ","
                               << lObject->getShotsMax() << ","
 
@@ -321,8 +322,94 @@ int list_monsters() {
 
 
 int list_players() {
+    xmlDocPtr   xmlDoc;
+    xmlNodePtr  rootNode;
+
+    std::vector<fs::path> player;
+    fs::directory_iterator player_end, player_start(Path::Player);
+    std::copy(player_start, player_end, std::back_inserter(player));
+    std::sort(player.begin(), player.end());
+
+    std::cout << "Name" << ","
+              << "Level" << ","
+              << "Race" << ","
+              << "Class" << ","
+              << "Deity" << ","
+              << "Experience" << ","
+              << "Gold" << ","
+              << "Bank" << ","
+              << "HpMax" << ","
+              << "MpMax" << ","
+              << "Str" << ","
+              << "Dex" << ","
+              << "Con" << ","
+              << "Int" << ","
+              << "Pie" << ","
+             // << "Password" << ","
+              << "Last Login" << ","
+              << "" << std::endl;
+
+
+    std::string pass, lastLoginString;
+    long lastLogin=0;
+    
+    for (const fs::path& ply : player) {
+        if (fs::is_regular_file(ply)) {
+            auto lPlayer = std::make_shared<Player>();
+            
+            if((xmlDoc = xml::loadFile(ply.c_str(), "Player")) == nullptr) {
+                std::cout << "Error loading: " << ply.string() << "\n";
+                continue;
+            }
+
+            //ignore any .bak files in player path
+            std::size_t found_bak = ply.string().find(".bak");
+            if (found_bak!=std::string::npos) {
+                continue;
+            }
+
+            rootNode = xmlDocGetRootElement(xmlDoc);
+            lPlayer->readFromXml(rootNode, true);
+            (lPlayer)->setName(xml::getProp(rootNode, "Name"));
+            
+          //  xml::copyPropToString(pass, rootNode, "Password");
+          //  (lPlayer)->setPassword(pass);
+            (lPlayer)->setLastLogin(xml::getIntProp(rootNode, "LastLogin"));
+            lastLogin = lPlayer->getLastLogin();
+            lastLoginString = ctime(&lastLogin);
+
+            //ctime() adds an annoying \n, so we're going to strip it
+            lastLoginString.erase(std::remove(lastLoginString.begin(), lastLoginString.end(), '\n'), lastLoginString.cend());
+
+            xmlFreeDoc(xmlDoc);
+           
+
+            
+            std::cout << "\"" << lPlayer->getName() << "\"" << ","
+                      << lPlayer->getLevel() << ","
+                      << lPlayer->getRace() << ","
+                      << lPlayer->getClassString() << ","
+                      << lPlayer->getDeity() << ","
+                      << lPlayer->getExperience() << ","
+                      << lPlayer->coins[GOLD] << ","
+                      << lPlayer->bank[GOLD] << ","
+                      << lPlayer->hp.getMax() << ","
+                      << lPlayer->mp.getMax() << ","
+                      << lPlayer->strength.getMax() << ","
+                      << lPlayer->dexterity.getMax() << ","
+                      << lPlayer->constitution.getMax() << ","
+                      << lPlayer->intelligence.getMax() << ","
+                      << lPlayer->piety.getMax() << ","
+                    //  << "\"" << lPlayer->getPassword() << "\"" << ","
+                      << "\"" << lastLoginString << "\"" << ","
+                      << std::endl;
+        }
+    }
+
     return 1;
 }
+   
+
 
 int main(int argc, char *argv[]) {
     gConfig = Config::getInstance();
@@ -341,9 +428,13 @@ int main(int argc, char *argv[]) {
         case 'r':
             list_rooms();
             break;
+        case 'p':
+            list_players();
+            break;
         case 'a':
             list_objects();
             list_monsters();
+            list_players();
             list_rooms();
             break;
         default:

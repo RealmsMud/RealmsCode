@@ -16,9 +16,7 @@
  *
  */
 
-#ifndef WEB_H_
-#define WEB_H_
-
+#pragma once
 
 std::string webwho();
 void updateRecentActivity();
@@ -66,4 +64,3 @@ public:
     void recreateFifos();
 
 };
-#endif /*WEB_H_*/

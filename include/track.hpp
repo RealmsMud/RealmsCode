@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef _TRACK_H
-#define _TRACK_H
+
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 
@@ -40,7 +40,4 @@ protected:
     Size    size;
     std::string direction;
 };
-
-
-#endif  /* _TRACK_H */
 

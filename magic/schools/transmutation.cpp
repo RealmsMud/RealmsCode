@@ -475,32 +475,29 @@ int splDisintegrate(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
     int saved=0, bns=0;
 
     if(spellData->how == CastType::CAST && !player->isMageLich()) {
-        player->print("The arcane nature of that spell eludes you.\n");
+        *player << "The arcane nature of that spell eludes you.\n";
         return(0);
     }
 
     if(player->getLevel() < 13) {
-        player->print("You are not powerful enough to cast that spell.\n");
+        *player <<"You are not powerful enough to cast that spell.\n";
         return(0);
     }
 
 
     if(cmnd->num < 2) {
         if(spellData->how == CastType::CAST) {
-            player->print("Casting a disintegrate spell on yourself would not be very smart.\n");
+            *player << "Casting a disintegrate spell on yourself would not be very smart.\n";
             return(0);
         } else if(spellData->how == CastType::WAND) {
-            player->print("Nothing happens.\n");
+            *player << "Nothing happens.\n";
             return(0);
         } else {
             if(!player->chkSave(DEA, player, 30+(50-player->getLevel()))) {
-                player->printColor("^GYou are engulfed in an eerie green light.\n");
-                player->printColor("You've been disintegrated!\n");
-                //  die(player, DISINTEGRATED);
+                *player << ColorOn << "^GYou are engulfed in an eerie green light.\nYou've been disintegrated!\n" << ColorOff;
                 return(0);
             } else {
-                player->print("Ewww! That tastes HORRIBLE.\n");
-                player->print("You vomit uncontrollabley.\n");
+                *player << "Ewww! That tastes HORRIBLE.\nYou vomit uncontrollably.";
                 player->stun(Random::get(20,30));
                 return(0);
             }
@@ -520,33 +517,37 @@ int splDisintegrate(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
 
             if(exit) {
                 effect = exit->getEffect("wall-of-force");
-                
-                if( (effect && !effect->getExtra()) ||
-                    exit->flagIsSet(X_PORTAL)
-                ) {
-                    player->printColor("You cast a disintegration spell on the %s^x.\n", exit->getCName());
-                    broadcast(player->getSock(), player->getParent(), "%M casts a disintegration spell on the %s^x.", player.get(), exit->getCName());
+                *player << ColorOn << "You cast a ^Gdisintegration^x spell on the '" << exit->getCName() << "' exit^x.\n" << ColorOff;
+                broadcast(player->getSock(), player->getParent(), "%M casts a ^Gdisintegration^x spell on the '%s' exit^x.", player.get(), exit->getCName());
 
-                    if(exit->flagIsSet(X_PORTAL)) {
-                        broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the %s^x!", exit->getCName());
-                        Move::deletePortal(player->getRoomParent(), exit);
-                    } else {
-                        broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the wall of force blocking the %s^x!", exit->getCName());
-                        bringDownTheWall(effect, player->getRoomParent(), exit);
-                    }
+                if (exit->flagIsSet(X_PORTAL)) {
+                    broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the '%s' exit^x!", exit->getCName());
+                    Move::deletePortal(player->getRoomParent(), exit);
                     return(0);
+                }
+                else {
+                    if ( effect && !effect->getExtra()) {
+                        if (effect->getStrength() > player->getLevel() && !player->isCt()) {
+                            *player << ColorOn << "Your ^Gdisintegrate^x spell is not powerful enough yet to remove the wall-of-force on the '" << exit->getCName() << "' exit.\n" << ColorOff;
+                            broadcast(player->getSock(), player->getParent(), "%M's ^Gdisintegration^x spell failed to remove the wall-of-force on the '%s' exit.^x", player.get(), exit->getCName());
+                            return(0);
+                        }
+                        broadcast((std::shared_ptr<Socket> )nullptr, player->getRoomParent(), "^GAn eerie green light engulfs the wall-of-force blocking the '%s' exit!^x", exit->getCName());
+                        bringDownTheWall(effect, player->getRoomParent(), exit);
+                        return(0);
+                    }
                 }
             }
 
-            player->print("You don't see that here.\n");
+            *player << "You don't see that here.\n";
             return(0);
         }
 
         if(!player->canAttack(target))
             return(0);
 
-        player->printColor("^GYou cast a disintegration spell on %N.\n", target.get());
-        target->printColor("^G%M casts a disintegration spell on you.\n", player.get());
+        *player << ColorOn << "^GYou cast a disintegration spell on " << target << ".\n" << ColorOff;
+        *target << ColorOn << "^G" << player << " casts a disintegration spell on you.\n" << ColorOff;
         broadcast(player->getSock(), target->getSock(), player->getParent(), "^G%M casts a disintegration spell on %N.", player.get(), target.get());
 
         bns = ((int)target->getLevel() - (int)player->getLevel())  * 25;
@@ -564,14 +565,13 @@ int splDisintegrate(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
 
         if(saved) {
             player->doDamage(target, target->hp.getCur()/2);
-            target->print("Negative energy rips through your body.\n");
+            *target << "Negative energy rips through your body.\n";
             target->stun(Random::get(10,15));
-            player->print("%M avoided disintegration.\n", target.get());
+            *player << setf(CAP) << target << " avoided disintegration.\n";
         } else {
-            target->printColor("^GYou are engulfed in an eerie green light.\n");
-            target->printColor("You've been disintegrated!^x\n");
+            *target << ColorOn << "^GYou are engulfed in an eerie green light.\nYou've been disintegrated!\n" << ColorOff;
             broadcast(target->getSock(), player->getRoomParent(),
-                "^G%M is engulfed in an eerie green light\n%M was disintegrated!", target.get(), target.get());
+                "^G%M is engulfed in an eerie green light!\n%M was disintegrated!", target.get(), target.get());
 
             target->hp.setCur(1);
             target->mp.setCur(1);

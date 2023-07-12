@@ -147,8 +147,8 @@ std::string isHoliday() {
     std::string str = gConfig->getMonthDay();
 
     // see if today is a holiday
-    if(str == "Oct 31")
-        return("Happy Halloween!");
+    if(str == "Oct 31" || str == "Nov  1" || str == "Nov  2" || str == "Nov  3" || str == "Nov  4" || str == "Nov  5" || str == "Nov  6")
+        return("Happy Halloween Week!");
 
     if(str == "Dec 24" || str == "Dec 25")
         return("Merry Christmas!");
@@ -1534,7 +1534,7 @@ void Monster::distributeExperience(const std::shared_ptr<Creature>&killer) {
 //                      adjustExperience
 //********************************************************************
 
-void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& expAmount, int& holidayExp) {
+void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& expAmount, int& holidayExp, int& bonusExp) {
     std::shared_ptr<Player> player;
     if(isPet())
         player = getMaster()->getAsPlayer();
@@ -1544,6 +1544,7 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
     if(player->halftolevel()) {
         expAmount = 0;
         holidayExp = 0;
+        bonusExp = 0;
         return;
     }
 
@@ -1593,8 +1594,13 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
     if(!holidayStr.empty())
         holidayExp = std::max(1, (int)(expAmount * 0.5));
 
-    if(victim->flagIsSet(M_PERMENANT_MONSTER))
+    if (gConfig->bonusXpActive())
+        bonusExp = std::max(1,(int)(expAmount * 0.1));
+
+    if(victim->flagIsSet(M_PERMENANT_MONSTER)) {
         holidayExp = 0;
+        bonusExp = 0;
+    }
 }
 
 //********************************************************************
@@ -1602,8 +1608,8 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
 //********************************************************************
 
 void Player::gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount, bool groupExp) {
-    int holidayExp = 0;
-    adjustExperience(victim, expAmount, holidayExp);
+    int holidayExp = 0, bonusExp = 0;
+    adjustExperience(victim, expAmount, holidayExp, bonusExp);
     bool notlocal = false, af = gConfig->isAprilFools();
 
     if(!inSameRoom(victim))
@@ -1624,14 +1630,16 @@ void Player::gainExperience(const std::shared_ptr<Monster> &victim, const std::s
             print("%M %s you %d experience for the death of %N.\n", killer.get(), af ? "cost" : "gained", expAmount, victim.get());
     }
     if(holidayExp > 0)
-        printColor("%s You %s an extra ^y%d^x experience!\n", holidayStr.c_str(), af ? "lost" : "gained", holidayExp);
+        printColor("^g%s You %s an extra ^G%d^x ^gexperience!^x\n", holidayStr.c_str(), af ? "lost" : "gained", holidayExp);
+    if(bonusExp > 0)
+        printColor("^cBonus XP is active! You %s an extra ^C%d^x ^cexperience!^x\n", af ? "lost" : "gained", bonusExp);
 
     adjustFactionStanding(victim->factions);
     adjustAlignment(victim);
     updateMobKills(victim);
     statistics.experience(expAmount, victim->getName());
 
-    addExperience(expAmount + holidayExp);
+    addExperience(expAmount + holidayExp + bonusExp);
 
     if(victim->flagIsSet(M_WILL_BE_LOGGED))
         logn("log.mdeath", "%s was killed by %s, for %d experience.\n", victim->getCName(), getCName(), expAmount);
@@ -1652,15 +1660,18 @@ void Monster::gainExperience(const std::shared_ptr<Monster> &victim, const std::
     bool af = gConfig->isAprilFools();
 
     int holidayExp = 0;
-    adjustExperience(victim, expAmount, holidayExp);
+    int bonusExp = 0;
+    adjustExperience(victim, expAmount, holidayExp, bonusExp);
 
     master->printColor("Your %s %s you ^y%d^x experience for the death of %N.\n", this->getCName(), af ? "cost" : "earned", expAmount, victim.get());
 
     std::string holidayStr = isHoliday();
     if(holidayExp > 0)
         master->printColor("%s You %s an extra ^y%d^x experience!\n", holidayStr.c_str(), af ? "lost" : "gained", holidayExp);
+    if(bonusExp > 0)
+        master->printColor("Bonus XP is active! You %s an extra ^y%d^x experience!\n", af ? "lost" : "gained", bonusExp);
 
-    master->addExperience(expAmount + holidayExp);
+    master->addExperience(expAmount + holidayExp + bonusExp);
     clearEnemy(victim);
 }
 
@@ -1895,10 +1906,26 @@ void Player::die(DeathType dt) {
         sprintf(deathStr, "### Sadly, %s was shot to death by elven archers.", getCName());
         death = "elven archers";
         break;
+    case GOOD_DAMAGE:
+        logn("log.death", "%s's evil soul was smitten down by good.\n", getCName());
+        sprintf(deathStr, "### Sadly, %s died. %s corrupted soul was destroyed by good.", getCName(), upHisHer());
+        death = "an extreme aura of good";
+        break;
+    case EVIL_DAMAGE:
+        logn("log.death", "%s's pure soul was destroyed by evil.\n", getCName());
+        sprintf(deathStr, "### Sadly, %s died. %s pure soul was destroyed by evil.", getCName(), upHisHer());
+        death = "an extreme aura of evil";
+        break;
     case DEADLY_MOSS:
         logn("log.death", "%s was choked to death by deadly underdark moss.\n", getCName());
         sprintf(deathStr, "### Sadly, %s was choked to death by deadly underdark moss.", getCName());
         death = "deadly underdark moss";
+        break;
+    case FLYING_BOULDER:
+        logn("log.death", "%s was crushed to death by a flying boulder.\n", getCName());
+        sprintf(deathStr, "### Sadly, %s was crushed to death by a flying boulder.", getCName());
+        death = "a flying boulder";
+        break;
     case PIERCER:
         sprintf(deathStr, "### Sadly, %s was impaled to death by a piercer.", getCName());
         logn("log.death", "%s was killed by a piercer.\n", getCName());
@@ -2058,6 +2085,16 @@ void Player::die(DeathType dt) {
         sprintf(deathStr, "### Sadly, %s was disintegrated by sunlight.", getCName());
         logn("log.death", "%s was disintegrated by sunlight.\n", getCName());
         death = "sunlight";
+        break;
+    case ELECTROCUTED:
+        sprintf(deathStr, "### Sadly, %s was electrocuted to death by a wall-of-lightning.", getCName());
+        logn("log.death", "%s was electrocuted to death by by a wall-of-lightning.\n", getCName());
+        death = "a wall of lightning";
+        break;
+    case FROZEN_CUT:
+        sprintf(deathStr, "### Sadly, %s was frozen and sliced to pieces by a wall-of-sleet.", getCName());
+        logn("log.death", "%s was frozen and sliced to pieces by a wall-of-sleet.\n", getCName());
+        death = "a wall of sleet";
         break;
     default:
         sprintf(deathStr, "### Sadly, %s died.", getCName());

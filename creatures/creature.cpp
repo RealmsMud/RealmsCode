@@ -45,7 +45,7 @@
 #include "flags.hpp"                             // for M_DM_FOLLOW, M_SNEAKING
 #include "global.hpp"                            // for CreatureClass, BRE, DEA
 #include "group.hpp"                             // for Group
-#include "lasttime.hpp"                          // for lasttime, crlasttime
+#include "lasttime.hpp"                          // for lasttime, CRLastTime
 #include "location.hpp"                          // for Location
 #include "money.hpp"                             // for GOLD, Money
 #include "move.hpp"                              // for getRoom, getString
@@ -252,8 +252,8 @@ void Object::tempPerm() {
 // time field for that permanent monster is updated.
 
 void Monster::diePermCrt() {
-    std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm;
+    std::map<int, CRLastTime>::iterator it;
+    CRLastTime* crtm;
     std::shared_ptr<Monster> temp_mob=nullptr;
     std::shared_ptr<UniqueRoom> room;
     long    t = time(nullptr);
@@ -423,7 +423,9 @@ bool mobileEnter(const std::shared_ptr<Exit>& exit) {
         !exit->flagIsSet(X_DESCRIPTION_ONLY) &&
         !exit->isWall("wall-of-fire") &&
         !exit->isWall("wall-of-force") &&
-        !exit->isWall("wall-of-thorns")
+        !exit->isWall("wall-of-thorns") &&
+        !exit->isWall("wall-of-lightning") &&
+        !exit->isWall("wall-of-sleet")
     );
 }
 
@@ -799,7 +801,7 @@ int Creature::displayFlags() const {
 //*********************************************************************
 
 int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
-    int     percent=0, align=0, rank=0, chance=0;
+    int     percent=0, rank=0, chance=0;
     int flags = displayFlags();
     std::shared_ptr<Player> pTarget = target->getAsPlayer();
     std::shared_ptr<Monster> mTarget = target->getAsMonster();
@@ -894,35 +896,8 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
     if(isEffected("know-aura") || cClass==CreatureClass::PALADIN) {
         space = true;
         oStr << target->getCrtStr(pThis, flags | CAP, 0) << " ";
+        oStr << "has a " << target->alignColor() << target->alignString() << "^x aura.";
 
-        align = target->getAdjustedAlignment();
-
-        switch(align) {
-        case BLOODRED:
-            oStr << "has a blood red aura.";
-            break;
-        case REDDISH:
-            oStr << "has a reddish aura.";
-            break;
-        case PINKISH:
-            oStr << "has a pinkish aura.";
-            break;
-        case NEUTRAL:
-            oStr << "has a grey aura.";
-            break;
-        case LIGHTBLUE:
-            oStr << "has a light blue aura.";
-            break;
-        case BLUISH:
-            oStr << "has a bluish aura.";
-            break;
-        case ROYALBLUE:
-            oStr << "has a royal blue aura.";
-            break;
-        default:
-            oStr << "has a grey aura.";
-            break;
-        }
     }
 
     if(mTarget && mTarget->getRace()) {

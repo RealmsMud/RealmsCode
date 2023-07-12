@@ -121,7 +121,7 @@ public:
     // loading of flags done
     boost::dynamic_bitset<> flags{128};
 
-    struct lasttime ltime; // Timed open/close
+    LastTime ltime; // Timed open/close
 
     char desc_key[3][EXIT_KEY_LENGTH]{}; // Exit keys
 
@@ -142,6 +142,11 @@ public:
     bool classRestrict(const std::shared_ptr<const Creature> &creature) const;
     bool clanRestrict(const std::shared_ptr<const Creature> &creature) const;
     bool alignRestrict(const std::shared_ptr<const Creature> &creature) const;
+    const char *hisHer() const;
+    const char *himHer() const;
+    const char *heShe() const;
+    const char *upHisHer() const;
+    const char *upHeShe() const; 
 };
 
 

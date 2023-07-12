@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef REALMSCODE_COLOR_HPP
-#define REALMSCODE_COLOR_HPP
+
+#pragma once
 
 
 // color.cpp
@@ -24,5 +24,3 @@ std::string stripColor(std::string_view colored);
 std::string escapeColor(std::string_view colored);
 std::string padColor(const std::string &toPad, size_t pad);
 size_t lengthNoColor(std::string_view colored);
-
-#endif //REALMSCODE_COLOR_HPP

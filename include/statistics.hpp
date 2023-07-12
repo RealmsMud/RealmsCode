@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _STATISTICS_H
-#define _STATISTICS_H
+#pragma once
 
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -195,7 +194,4 @@ public:
 
     LevelInfo* getLevelInfo(int level);
 };
-
-
-#endif  /* _STATISTICS_H */
 

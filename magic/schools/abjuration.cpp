@@ -45,7 +45,6 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 
-
 //*********************************************************************
 //                      protection from room damage spells
 //*********************************************************************
@@ -70,6 +69,7 @@ int splStaticField(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
 }
 
 
+
 //*********************************************************************
 //                      splProtection
 //*********************************************************************
@@ -79,6 +79,28 @@ int splStaticField(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
 
 int splProtection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     return(splGeneric(player, cmnd, spellData, "a", "protection", "protection"));
+}
+
+//*********************************************************************
+//                      splNondetection
+//*********************************************************************
+// This function allows a spellcaster to cast a non-detection spell either
+// on themself or on another player, causing them to be resistant to detection
+// by divination detection spells or spells that need to find a player's location
+// to work...i.e. clairvoyance, track (summon has no-summon P_FLAG so we'll leave it out)
+
+int splNondetection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    if( spellData->how == CastType::CAST &&
+        player->getClass() !=  CreatureClass::MAGE &&
+        player->getClass() !=  CreatureClass::LICH &&
+        player->getClass() !=  CreatureClass::DRUID &&
+        player->getClass() !=  CreatureClass::CLERIC &&
+        !player->isCt()
+    ) {
+        player->print( "Only mages, liches, druids, and clerics may cast that spell.\n");
+        return(0);
+    }
+    return(splGeneric(player, cmnd, spellData, "a", "non-detection", "non-detection"));
 }
 
 
@@ -716,27 +738,21 @@ int splStoneskin(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
 
 int doDispelMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* spell, int numDispel) {
     std::shared_ptr<Creature> target=nullptr;
+    EffectInfo* toDispel = nullptr;
+
     int     chance=0;
 
-    if(spellData->how == CastType::CAST &&
-        player->getClass() !=  CreatureClass::MAGE &&
-        player->getClass() !=  CreatureClass::LICH &&
-        player->getClass() !=  CreatureClass::CLERIC &&
-        player->getClass() !=  CreatureClass::DRUID &&
-        !player->isStaff()
-    ) {
-        player->print("Only mages, liches, clerics, and druids may cast that spell.\n");
+    if (!player->isStaff() && spellData->how == CastType::CAST && !(player->isPureArcaneCaster() || player->isPureDivineCaster())) {
+        *player << "Only mages, liches, clerics, and druids may cast that spell.\n";
         return(0);
     }
 
     if(cmnd->num == 2) {
         target = player;
+        
         broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on %sself.", player.get(), spell, player->himHer());
-
-
-        player->print("You cast a %s spell on yourself.\n", spell);
-        player->print("Your spells begin to dissolve away.\n");
-
+        *player << "You cast a " << spell << " spell on yourself.\n";
+        *player << "Your spells begin to dissolve away.\n";
 
         player->doDispelMagic(numDispel);
     } else {
@@ -745,28 +761,72 @@ int doDispelMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 
         cmnd->str[2][0] = up(cmnd->str[2][0]);
         target = player->getParent()->findPlayer(player, cmnd, 2);
+
         if(!target) {
             // dispel-magic on an exit
             cmnd->str[2][0] = low(cmnd->str[2][0]);
             std::shared_ptr<Exit> exit = findExit(player, cmnd, 2);
-
             if(exit) {
-                player->printColor("You cast a %s spell on the %s^x.\n", spell, exit->getCName());
-                broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on the %s^x.", player.get(), spell, exit->getCName());
-
-                if(exit->flagIsSet(X_PORTAL))
+                // Remove player-cast portal
+                if(exit->flagIsSet(X_PORTAL)) {
                     Move::deletePortal(player->getRoomParent(), exit);
+                    return(0);
+                }
+                std::string dispelStr = cmnd->str[3];
+                if (dispelStr.empty()) {
+                    *player << "Syntax: cast " << spell << " (exit) (effect)\n";
+                    *player << "Ex: cast " << spell << " door wall-of-fire\n";
+                    return(0);
+                }
+                if (dispelStr == "wall-of-force" && exit->getExactEffect(dispelStr)) {
+                    *player << "The " << spell << " spell is ineffective against a wall-of-force. You must use disintegrate.\n";
+                    return(0);
+                }
+               
+                if (!(toDispel = exit->getExactEffect(dispelStr))) {
+                    *player << "Effect " << dispelStr << " was not found on exit: " << exit->getCName() << ".\n";
+                    return(0);
+                }
                 else
-                    exit->doDispelMagic(player->getRoomParent());
+                {
+                    *player << "You cast a " << spell << " spell on the '" << exit->getCName() << "' exit.\n";
+                    broadcast(player->getSock(), player->getParent(), "%M casts a %s spell on the '%s' exit.^x", player.get(), spell, exit->getCName());
+                    if ((!toDispel->isOwner(player) && player->getLevel() < toDispel->getStrength()) && !player->isStaff()) {
+                        *player << "The " << dispelStr << " spell on the '" << exit->getCName() << "' exit is currently too powerful for you to remove.\n";
+                        broadcast(player->getSock(), player->getParent(), "%M's attempt to remove the %s from the '%s' exit failed.", player.get(), dispelStr.c_str(), exit->getCName());
+                        return(0);
+                    }
+                    //TODO: Determine if we want to check for matching effect on other side, and check against its strength also,
+                    //      as it's technically possible to have matching effects with differing strengths on either side...
+                    //      i.e. if a builder puts permanent walls of the same type but differing strengths on both sides
+                    
+                    *player << ColorOn << "You successfully removed the " << dispelStr << " spell from the '" << exit->getCName() << "' exit.\n" << ColorOff;
+                    broadcast(player->getSock(), player->getParent(), "%M successfully removed the %s spell from the '%s' exit.", player.get(), dispelStr.c_str(), exit->getCName());
+
+                    if (exit->isWall(toDispel->getName())) {
+                        if (toDispel->isPermanent()) {
+                            *player << "The magical " << dispelStr << " was very strong. The removal will only be temporary!\n";
+                            broadcast(player->getSock(), player->getParent(), "The magical %s was very strong. The removal will only be temporary!", dispelStr.c_str());
+                        }
+                        bringDownTheWall(toDispel, player->getRoomParent(), exit);
+                        
+                        
+                        return(0);
+                    }
+                    else
+                        exit->removeEffect(toDispel, true);
+                    
+                }
+
                 return(0);
             }
 
-            player->print("You don't see that player here.\n");
+            *player << "You don't see that player here.\n";
             return(0);
         }
 
         if(player->isPlayer() && player->getRoomParent()->isPkSafe() && (!player->isCt()) && !target->flagIsSet(P_OUTLAW)) {
-            player->print("That spell is not allowed here.\n");
+            *player << "That spell is not allowed here.\n";
             return(0);
         }
 
@@ -774,15 +834,15 @@ int doDispelMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
             if(!player->canAttack(target))
                 return(0);
         } else {
-            player->print("You cast a %s spell on %N.\n%s body returns to flesh.\n", spell, target.get(), target->upHisHer());
+            *player << "You cast a " << spell << " spell on " << target.get() << ".\n" << target->upHisHer() << " body returns to flesh.\n";
             if(Random::get(1,100) < 50) {
+                *target << setf(CAP) << player << " casts a " << spell << " on you.\nYour body returns to flesh.\n";
 
-                target->print("%M casts a %s spell on you.\nYour body returns to flesh.\n", player.get(), spell);
                 broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a %s spell on %N.\n%s body returns to flesh.\n", player.get(), spell, target.get(), target->upHisHer());
                 target->removeEffect("petrification");
                 return(1);
             } else {
-                target->print("%M casts a dispel-magic spell on you.\n", player.get());
+                *target << setf(CAP) << player << " casts a dispel-magic spell on you.\n";
                 broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a dispel-magic spell on %N.\n",player.get(), target.get());
                 return(0);
             }
@@ -908,7 +968,7 @@ static const std::list<std::string> dispellableEffects = {
     "resist-electricity",
     "wind-protection",
     "static-field",
-
+    "non-detection"
     "illusion",
     "blur",
     "fire-shield",
@@ -970,8 +1030,11 @@ void Creature::doDispelMagic(int num) {
 //*********************************************************************
 
 void Exit::doDispelMagic(const std::shared_ptr<BaseRoom>& parent) {
+
     bringDownTheWall(getEffect("wall-of-fire"), parent, shared_from_this());
     bringDownTheWall(getEffect("wall-of-thorns"), parent, shared_from_this());
+    bringDownTheWall(getEffect("wall-of-lightning"), parent, shared_from_this());
+    bringDownTheWall(getEffect("wall-of-sleet"), parent, shared_from_this());
 
     // true we'll show, false don't remove perm effects
     removeEffect("concealed", true, false);

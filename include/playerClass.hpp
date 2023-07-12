@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _PLAYERCLASS_H
-#define _PLAYERCLASS_H
+#pragma once
 
 #include <list>
 #include <map>
@@ -78,6 +77,3 @@ protected:
     std::map<int, LevelGain*> levels;
     std::string unarmedWeaponSkill;
 };
-
-
-#endif  /* _PLAYERCLASS_H */

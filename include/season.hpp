@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef REALMSCODE_SEASON_H
-#define REALMSCODE_SEASON_H
+#pragma once
 
 // make sure these stay updated with calendar.xml!
 enum Season {
@@ -34,6 +33,3 @@ enum Season {
 //   autumn flag (4) = ?
 //   winter flag (8) = cold damage, no herbs
 
-
-
-#endif //REALMSCODE_SEASON_H

@@ -22,10 +22,6 @@
  *    https://github.com/goldsborough/lru-cache
  */
 
-#ifndef INCLUDE_LRU_LRU_HPP_
-#define INCLUDE_LRU_LRU_HPP_
+#pragma once
 
 #include "lru/lru-cache.hpp"
-
-
-#endif /* INCLUDE_LRU_LRU_HPP_ */

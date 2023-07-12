@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef QUESTS_H_
-#define QUESTS_H_
+#pragma once
 
 #include <list>
 #include <map>
@@ -118,8 +117,9 @@ private:
     // Completion Info
     CatRef turnInMob;                           // Monster that we turn this quest into for completion
     Money cashReward;                           // Coin Reward
-    long expReward{};                             // Exp reward
-    short alignmentChange{};			            // Amount alignment changes upon quest completion
+    long expReward{};                           // Exp reward
+    short alignmentChange{};			        // Amount alignment changes by this amount upon quest completion
+    short alignmentShift{};                     // Alignment will shift this many tiers upon quest completion
     std::list<QuestCatRef> itemRewards;         // Items rewarded on completion
     std::map<std::string, long> factionRewards; // Factions to be modified
 
@@ -204,5 +204,4 @@ private:
 time_t getDailyReset();
 time_t getWeeklyReset();
 
-#endif /*QUESTS_H_*/
 

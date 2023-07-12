@@ -75,6 +75,8 @@ int cmdDeleteStatement(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // command2.c
+int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdRoominfo(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdLook(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdKnock(const std::shared_ptr<Creature>& player, cmd* cmnd);
 int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd);
@@ -263,6 +265,7 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 
+
 int cmdBite(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdDisarm(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdCharm(const std::shared_ptr<Player>& player, cmd* cmnd);
@@ -274,6 +277,7 @@ int cmdRegenerate(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdCreepingDoom(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdPoison(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdEarthSmother(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdDrainLife(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdFocus(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdBarkskin(const std::shared_ptr<Player>& player, cmd* cmnd);

@@ -22,8 +22,7 @@
  *    https://github.com/goldsborough/lru-cache
  */
 
-#ifndef INCLUDE_LRU_CACHE_HPP_
-#define INCLUDE_LRU_CACHE_HPP_
+#pragma once
 
 #include <unordered_map>
 #include <list>
@@ -302,5 +301,3 @@ private:
 };
 
 } // Namespace LRU
-
-#endif /* INCLUDE_LRU_CACHE_HPP_ */

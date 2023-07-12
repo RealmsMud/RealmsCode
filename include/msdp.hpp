@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef MDSP_H_
-#define MDSP_H_
+#pragma once
 
 #include <functional>
 #include <ctime>
@@ -116,4 +115,3 @@ namespace msdp {
     std::string getTargetStrength(Socket &sock, const std::shared_ptr<Player>& player);
     std::string getRoom(Socket &sock, const std::shared_ptr<Player>& player);
 };
-#endif /* MDSP_H_ */

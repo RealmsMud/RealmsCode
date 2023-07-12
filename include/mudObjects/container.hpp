@@ -37,15 +37,15 @@ class UniqueRoom;
 
 class cmd;
 
-struct PlayerPtrLess : public std::binary_function<const std::weak_ptr<Player>, const std::weak_ptr<Player>, bool> {
+struct PlayerPtrLess {
     bool operator()(const std::weak_ptr<Player>& lhs, const std::weak_ptr<Player>& rhs) const;
 };
 
-struct MonsterPtrLess : public std::binary_function<const std::shared_ptr<Monster> , const std::shared_ptr<Monster> , bool> {
+struct MonsterPtrLess {
     bool operator()(const std::shared_ptr<Monster>&  lhs, const std::shared_ptr<Monster>&  rhs) const;
 };
 
-struct ObjectPtrLess : public std::binary_function<const std::shared_ptr<Object> , const std::shared_ptr<Object> , bool> {
+struct ObjectPtrLess  {
     bool operator()(const std::shared_ptr<Object>&  lhs, const std::shared_ptr<Object>&  rhs) const;
 };
 
@@ -99,6 +99,7 @@ public:
     std::shared_ptr<Monster>  findMonster(std::shared_ptr<const Creature> searcher,  cmd* cmnd, int num=1) const;
     std::shared_ptr<Monster>  findMonster(std::shared_ptr<const Creature> searcher, const std::string& name, int num, bool firstAggro = false, bool exactMatch = false) const;
     std::shared_ptr<Monster>  findMonster(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool firstAggro, bool exactMatch, int& match) const;
+    std::shared_ptr<Monster>  findNpcTrader(const std::shared_ptr<const Creature>& searcher, const short profession) const;
     std::shared_ptr<Player> findPlayer(const std::shared_ptr<const Creature>& searcher, cmd* cmnd, int num= 1) const;
     std::shared_ptr<Player> findPlayer(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch = false) const;
     std::shared_ptr<Player> findPlayer(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch, int& match) const;
@@ -124,6 +125,7 @@ public:
     void setParent(const std::shared_ptr<Container>& container);
 
     std::shared_ptr<Container> getParent() const;
+    std::string getParentId();
 
 
     // What type of parent are we contained in?

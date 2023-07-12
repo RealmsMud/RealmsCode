@@ -218,12 +218,12 @@ int splClairvoyance(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
     int     chance=0;
 
     if(pPlayer->getClass() == CreatureClass::BUILDER) {
-        pPlayer->print("You cannot cast this spell.\n");
+        *pPlayer << "You cannot cast this spell.\n";
         return(0);
     }
 
     if(cmnd->num < 3) {
-        pPlayer->print("Cast clairvoyance on whom?\n");
+        *pPlayer << "Cast clairvoyance on whom?\n";
         return(0);
     }
 
@@ -231,7 +231,7 @@ int splClairvoyance(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
     target = gServer->findPlayer(cmnd->str[2]);
 
     if(!target || pPlayer == target || !pPlayer->canSee(target)) {
-        pPlayer->print("That player is not logged on.\n");
+        *pPlayer << "That player is not logged on.\n";
         return(0);
     }
 
@@ -240,16 +240,28 @@ int splClairvoyance(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
 
     broadcast(pPlayer->getSock(), pPlayer->getRoomParent(), "%M casts clairvoyance.", pPlayer.get());
     if(spellData->how == CastType::CAST)
-        pPlayer->print("You attempt to focus on %N.\n", target.get());
+        *pPlayer << ColorOn << "^yYou attempt to scry " << target << "'s current location.\n" << ColorOff;
 
-    chance = 50 + (spellData->level - target->getLevel()) * 5 +
-             (bonus(pPlayer->intelligence.getCur()) - bonus(target->intelligence.getCur())) * 5;
+   //Compute chance of success
+    chance = 500 + (spellData->level - target->getLevel()) * 50;
+    chance += (pPlayer->intelligence.getCur() - target->intelligence.getCur()) * 3;
+    chance += ((pPlayer->getClass() == CreatureClass::MAGE) || (pPlayer->getClass() == CreatureClass::LICH)) ? 100 : 0;
+    //Chance of success is max 90%
+    chance = std::min(900, chance);
 
-    chance += (pPlayer->getClass() == CreatureClass::MAGE) ? 5 : 0;
-    chance = std::min(85, chance);
+    // The "non-detection" effect reduces chances of being scried on.
+    // TODO: put in difference calculations based on caster vs target's class and divination vs abjuration magical skill levels
+    // For now, chance is just reduced by 60%
+    // Only print output if not a staff member under DM_INVIS or incognito, otherwise could exploit to see if staff is on
+    if (target->isEffected("non-detection") && !(target->isStaff() && (target->flagIsSet(P_DM_INVIS) || target->isEffected("incognito")))) {
+        *pPlayer << ColorOn << "^y" << setf(CAP) << target << "'s shielding from divination magic is making it difficult.\n" << ColorOff;
+        chance = (chance*4)/10;
+    }
 
+    //Attempts to scry staff always fail
     if(target->isStaff())
         chance = 0;
+
     if( target->getRoomParent()->flagIsSet(R_NO_CLAIR_ROOM) ||
         target->getRoomParent()->flagIsSet(R_LIMBO) ||
         target->getRoomParent()->flagIsSet(R_VAMPIRE_COVEN) ||
@@ -258,42 +270,44 @@ int splClairvoyance(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
     )
         chance = 0;
 
-    if(pPlayer->isStaff() || Random::get(1, 100) < chance) {
 
-        chance = 60 + ((int)target->getLevel() - (int)spellData->level) * 5 +
-                 (bonus(target->intelligence.getCur()) - bonus(pPlayer->intelligence.getCur())) * 5;
-        chance += (target->getClass() == CreatureClass::MAGE) ? 5 : 0;
-        chance = std::min(85, chance);
+    if(pPlayer->isStaff() || Random::get(1, 1000) <= chance) {
+        //chance to detect the scrying
+        chance = 500 + (((int)target->getLevel() - (int)spellData->level) * 50);
+        chance += (target->intelligence.getCur() - pPlayer->intelligence.getCur()) * 3;
+        chance += ((target->getClass() == CreatureClass::MAGE) || (target->getClass() == CreatureClass::LICH)) ? 100 : 0;
+        chance = std::min(900, chance);
 
         if(!pPlayer->isStaff()) {
             if(!target->chkSave(MEN, pPlayer, 0)) {
                 display_rom(target, pPlayer);
-                if(Random::get(1, 100) < chance) {
+                if(Random::get(1, 1000) <= chance) {
                     // display a different string if the target can't see
                     if(target->flagIsSet(P_SLEEPING) || target->isBlind()) {
-                        target->print("%M temporarily sees your surroundings.\n", pPlayer.get());
+                        *target << ColorOn << "^y" << setf(CAP) << pPlayer << " temporarily sees your surroundings.\n" << ColorOff;
                     } else {
-                        target->print("%M temporarily sees through your eyes.\n", pPlayer.get());
+                        *target << ColorOn << "^y" << setf(CAP) << pPlayer << " temporarily sees through your eyes.\n" << ColorOff;
                     }
 
                 }
             } else {
-                pPlayer->print("You failed to locate %N.\n", target.get());
-                if(Random::get(1, 100) < chance)
-                    target->print("%M tried to connect to your mind.\n", pPlayer.get());
+                *pPlayer << ColorOn << "^yYou failed to scry " << target << "'s location.\n" << ColorOff;
+                if(Random::get(1, 1000) <= chance)
+                    *target << ColorOn << "^y" << setf(CAP) << pPlayer << " tried to scry your location.\n" << ColorOff;
             }
         } else {
             display_rom(target, pPlayer);
         }
 
     } else {
-        pPlayer->print("Your mind is unable to connect.\n");
+        *pPlayer << "Your scrying attempt failed.\n";
 
-        chance = 65 + ((int)target->getLevel() - (int)spellData->level) * 5 +
-                 (bonus(target->intelligence.getCur()) - bonus(pPlayer->intelligence.getCur())) * 5;
+        chance = 500 + ((int)target->getLevel() - (int)spellData->level) * 50;
+        chance += (target->intelligence.getCur() - pPlayer->intelligence.getCur()) * 3;
+        chance += ((target->getClass() == CreatureClass::MAGE) || (target->getClass() == CreatureClass::LICH)) ? 100 : 0;
 
-        if(!pPlayer->isStaff() && Random::get(1, 100) < chance)
-            target->print("%M attempts to connect to your mind.\n", pPlayer.get());
+        if(!pPlayer->isStaff() && Random::get(1, 1000) <= chance)
+            *target << ColorOn << "^y" << setf(CAP) << pPlayer << " attempts to scry your location.\n" << ColorOff;
     }
 
     return(1);
@@ -304,8 +318,14 @@ int splClairvoyance(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
 //*********************************************************************
 
 int splComprehendLanguages(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
-    if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::BARD && !player->isStaff()) {
-        player->print("Only mages and bards may cast that spell.\n");
+    if(spellData->how == CastType::CAST && !player->isStaff() && 
+                    player->getClass() != CreatureClass::MAGE && 
+                    player->getClass() != CreatureClass::LICH && 
+                    player->getClass() != CreatureClass::BARD &&
+                    player->getClass() != CreatureClass::DRUID &&
+                    player->getClass() != CreatureClass::CLERIC) 
+    {
+        player->print("Only bards, clerics, druids, liches, and mages may cast that spell.\n");
         return(0);
     }
 

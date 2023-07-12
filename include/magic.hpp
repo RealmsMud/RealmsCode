@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef MAGIC_H_
-#define MAGIC_H_
+
+#pragma once
 
 #include <list>
 
@@ -261,9 +261,13 @@ std::string realmSkill(Realm realm);
 #define S_TOUCH_OF_KESH         162 // touch-of-kesh spell
 #define S_REGENERATION          163 // regeneration spell
 #define S_WELLOFMAGIC           164 // well-of-magic spell
+#define S_NONDETECTION          165 // non-detection spell
+#define S_BENEDICTION           166 // benediction spell
+#define S_MALEDICTION           167 // malediction spell
+#define S_WALL_OF_LIGHTNING     168 // wall-of-lightning spell
+#define S_WALL_OF_SLEET         169 // wall-of-sleet spell
 
-
-#define MAXSPELL                165 // Increment when you add a spell
+#define MAXSPELL                170 // Increment when you add a spell
 
 
 #define SpellFn const std::shared_ptr<Creature>&, cmd*, SpellData*
@@ -325,6 +329,8 @@ int splFortune(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
 int splFreeAction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splGlobeOfSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splGreaterInvisibility(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splBenediction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splMalediction(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splHallow(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splHarm(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splHaste(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
@@ -348,6 +354,7 @@ int splPlaneShift(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 int splPortal(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splPrayer(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splProtection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splNondetection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splRadiation(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splReboundMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splReduce(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
@@ -389,6 +396,10 @@ int splVigor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
 int splWallOfFire(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splWallOfForce(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splWallOfThorns(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splWallOfLightning(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splWallOfSleet(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int doWallSpell(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, int strength, long duration);
+
 int splWarmth(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splWindProtection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splWeakness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
@@ -416,5 +427,6 @@ bool decEnchant(const std::shared_ptr<Player>& player, CastType how);
 int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength=-2, long duration=-2);
 
 bool checkRefusingMagic(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, bool healing=false, bool print=true);
+bool replaceCancelingEffects(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, const std::string &effect);
+int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-#endif /*MAGIC_H_*/

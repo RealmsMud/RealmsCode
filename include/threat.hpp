@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef THREAT_H_
-#define THREAT_H_
+#pragma once
 
 #include <functional>
 #include <map>
@@ -49,12 +48,12 @@ public:
     [[nodiscard]] const std::string & getUid() const;
 };
 
-struct ThreatPtrLess : public std::binary_function<const ThreatEntry*, const ThreatEntry*, bool> {
+struct ThreatPtrLess {
     bool operator()(const ThreatEntry* lhs, const ThreatEntry* rhs) const;
 };
 
 typedef std::map<std::string, ThreatEntry*> ThreatMap;
-typedef std::multiset<ThreatEntry*, ThreatPtrLess> ThreatSet;
+typedef std::multiset<ThreatEntry*> ThreatSet;
 
 
 class ThreatTable {
@@ -92,6 +91,3 @@ public:
     long totalThreat;
     Creature* myParent{};
 };
-
-
-#endif //THREAT_H

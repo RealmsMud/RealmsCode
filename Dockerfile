@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 as BUILD
+FROM ubuntu:22.04 as BUILD
 ENV TZ=US
 ENV CC=/usr/bin/clang
 ENV CXX=/usr/bin/clang++
@@ -9,12 +9,12 @@ RUN apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-certificates && \
-    # LLVM/Clang 10
-    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn apt-key add - && \
-    echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-12 main" | tee /etc/apt/sources.list.d/llvm.list && \
-    # CMake
-    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn apt-key add - && \
-    echo "deb https://apt.kitware.com/ubuntu/ focal main" | tee /etc/apt/sources.list.d/cmake.list && \
+#    # LLVM/Clang
+#    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn apt-key add - && \
+#    echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main" | tee /etc/apt/sources.list.d/llvm.list && \
+#    # CMake
+#    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn apt-key add - && \
+#    echo "deb https://apt.kitware.com/ubuntu/ focal main" | tee /etc/apt/sources.list.d/cmake.list && \
     # TZ Stupidity
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     apt-get update && apt-get install -y --no-install-recommends \
@@ -22,20 +22,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     cmake \
     make \
     git \
-    clang-12 \
-    lldb-12 \
-    lld-12 \
+    clang-14 \
+    lldb-14 \
+    lld-14 \
     gcc \
     g++ \
     gdb \
     libsodium23 \
     libopus0 \
     libxml2-dev \
+    libssl3 \
     libssl-dev \
-    libboost-python-dev \
     libboost-filesystem-dev \
     libboost-date-time-dev \
-    libpython3.8-dev \
+    libpython3.10 \
+    libpython3.10-dev \
     python3-dev \
     libaspell-dev \
     libpspell-dev  \
@@ -43,8 +44,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     aspell-en \
     zlib1g-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    ln -s /usr/bin/clang-12 /usr/bin/clang && \
-    ln -s /usr/bin/clang++-12 /usr/bin/clang++
+    ln -s /usr/bin/clang-14 /usr/bin/clang && \
+    ln -s /usr/bin/clang++-14 /usr/bin/clang++
 
 WORKDIR /build
 
@@ -55,7 +56,7 @@ ARG PARALLEL=12
 ARG LEAK
 RUN cmake . && make -j ${PARALLEL}
 
-FROM ubuntu:20.04 as RUN
+FROM ubuntu:22.04 as RUN
 
 # Update
 RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
@@ -64,11 +65,15 @@ RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" &&
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2 \
     python3 \
-    libpython3.8 \
-    libboost-python1.71.0 \
-    libboost-filesystem1.71.0 \
-    libboost-system1.71.0 \
-    libboost-date-time1.71.0 \
+    libssl3 \
+    clang-14 \
+    lldb-14 \
+    lld-14 \
+    libpython3.10 \
+    libboost-python1.74.0 \
+    libboost-filesystem1.74.0 \
+    libboost-system1.74.0 \
+    libboost-date-time1.74.0 \
     libsodium23 \
     libopus0 \
     aspell \
@@ -98,7 +103,7 @@ COPY --from=BUILD /build/Updater .
 
 # Temporary Workaround
 COPY --from=BUILD /build/libRealmsLib.so .
-COPY --from=build /build/_deps/dpp-build/libdpp.so.2.9.2 .
+COPY --from=build /build/_deps/dpp-build/library/libdpp.so.2.10.4 .
 COPY --from=BUILD /build/MyLSan.supp .
 
 ENV LC_ALL en_US.UTF-8

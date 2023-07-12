@@ -437,8 +437,8 @@ int Monster::doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) {
 // permanent flag is set.
 
 void UniqueRoom::addPermCrt() {
-    std::map<int, crlasttime>::iterator it, nt;
-    crlasttime* crtm;
+    std::map<int, CRLastTime>::iterator it, nt;
+    CRLastTime* crtm;
     std::map<int, bool> checklist;
     std::shared_ptr<Monster> monster=nullptr;
     long    t = time(nullptr);
@@ -505,8 +505,8 @@ void UniqueRoom::addPermCrt() {
 // permanent flag is set.
 
 void UniqueRoom::addPermObj() {
-    std::map<int, crlasttime>::iterator it, nt;
-    crlasttime* crtm=nullptr;
+    std::map<int, CRLastTime>::iterator it, nt;
+    CRLastTime* crtm=nullptr;
     std::map<int, bool> checklist;
     std::shared_ptr<Object> object=nullptr;
     long    t = time(nullptr);
@@ -604,7 +604,7 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
     int flags = (player->displayFlags() | QUEST);
     std::ostringstream oStr;
     std::string str;
-    bool    wallOfFire=false, wallOfThorns=false, canSee=false;
+    bool    wallOfFire=false, wallOfThorns=false, wallOfLightning=false, wallOfSleet=false, canSee=false;
 
     const std::shared_ptr<const UniqueRoom> uRoom = room->getAsConstUniqueRoom();
     const std::shared_ptr<const AreaRoom> aRoom = room->getAsConstAreaRoom();
@@ -655,6 +655,8 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
     for(const auto& ext : room->exits) {
         wallOfFire = ext->isWall("wall-of-fire");
         wallOfThorns = ext->isWall("wall-of-thorns");
+        wallOfLightning = ext->isWall("wall-of-lightning");
+        wallOfSleet = ext->isWall("wall-of-sleet");
 
         canSee = player->showExit(ext, magicShowHidden);
         if(canSee) {
@@ -669,7 +671,11 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
             if(wallOfFire) {
                 oStr << "R";
             } else if(wallOfThorns) {
-                oStr << "o";
+                oStr << "y";
+            } else if(wallOfLightning) {
+                oStr << "c";
+            } else if(wallOfSleet) {
+                oStr << "C";
             } else if(  !player->flagIsSet(P_NO_EXTRA_COLOR) &&
                 (   !player->canEnter(ext) || (
                         ext->target.room.id && (
@@ -726,11 +732,15 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
         }
 
         if(wallOfFire)
-            str += ext->blockedByStr('R', "wall of fire", "wall-of-fire", flags & MAG, canSee);
+            str += ext->blockedByStr('R', "wall-of-fire", "wall-of-fire", flags & MAG, canSee);
         if(ext->isWall("wall-of-force"))
-            str += ext->blockedByStr('s', "wall of force", "wall-of-force", flags & MAG, canSee);
+            str += ext->blockedByStr('M', "wall-of-force", "wall-of-force", flags & MAG, canSee);
         if(wallOfThorns)
-            str += ext->blockedByStr('o', "wall of thorns", "wall-of-thorns", flags & MAG, canSee);
+            str += ext->blockedByStr('y', "wall-of-thorns", "wall-of-thorns", flags & MAG, canSee);
+        if(wallOfLightning)
+            str += ext->blockedByStr('c', "wall-of-lightning", "wall-of-lightning", flags & MAG, canSee);
+        if(wallOfSleet)
+            str += ext->blockedByStr('C', "wall-of-sleet", "wall-of-sleet", flags & MAG, canSee);
 
     }
 
@@ -965,8 +975,8 @@ int createStorage(CatRef cr, const std::shared_ptr<Player>& player) {
 //*********************************************************************
 
 void UniqueRoom::validatePerms() {
-    std::map<int, crlasttime>::iterator it;
-    crlasttime* crtm=nullptr;
+    std::map<int, CRLastTime>::iterator it;
+    CRLastTime* crtm=nullptr;
     long    t = time(nullptr);
 
     for(it = permMonsters.begin(); it != permMonsters.end() ; it++) {
@@ -997,61 +1007,174 @@ void UniqueRoom::validatePerms() {
 //*********************************************************************
 
 void doRoomHarms(const std::shared_ptr<BaseRoom>& inRoom, const std::shared_ptr<Player>& target) {
-    int     roll=0, toHit=0, dmg=0;
+    int     roll=0, toHit=0;
+    Damage dmg;
 
     if(!inRoom || !target)
+        return;
+
+    if(target->flagIsSet(P_DM_INVIS))
         return;
 
     // elven archers
     if(inRoom->flagIsSet(R_ARCHERS)) {
         if( target->flagIsSet(P_HIDDEN) ||
             target->isInvisible() ||
-            target->isEffected("mist") ||
-            target->flagIsSet(P_DM_INVIS)
+            target->isEffected("mist")
         ) {
             return;
         }
 
-        roll = Random::get(1,20);
-        toHit = 10 - (int)target->getArmor()/10;
-        toHit = std::max(std::min(toHit,20), 1);
+        roll = Random::get(1,1000);
+        toHit = (4*target->dexterity.getCur()) + ((int)target->getArmor()/5);
 
 
         if(roll >= toHit) {
-            dmg = Random::get(1,8) + Random::get(1,2);
-            target->printColor("A deadly arrow strikes you from above for %s%d^x damage.\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
-            broadcast(target->getSock(), inRoom, "An arrow strikes %s from the trees above!", target->getCName());
+            dmg.set(Random::get(1,8) + Random::get(1,2));
+            *target << ColorOn << "An arrow strikes you for " << target->customColorize("*CC:DAMAGE*").c_str() << dmg.get() << " damage.\n" << ColorOff;
+            broadcast(target->getSock(), inRoom, "An arrow strikes %s!", target->getCName());
 
-            target->hp.decrease(dmg);
+            target->applyMagicalArmor(dmg,PHYSICAL_DMG);
+
+            target->hp.decrease(dmg.get());
             if(target->hp.getCur() < 1) {
-                target->print("The arrow killed you.\n");
+                *target << "The arrow killed you.\n";
                 broadcast(target->getSock(), inRoom, "The arrow killed %s!", target->getCName());
                 target->die(ELVEN_ARCHERS);
                 return;
             }
-        } else {
-            target->print("An arrow whizzes past you from above!\n");
-            broadcast(target->getSock(), inRoom, "An arrow whizzes past %s from above!", target->getCName());
+        } 
+        else 
+        {
+            *target << "An arrow whizzes past you!\n";
+            broadcast(target->getSock(), inRoom, "An arrow whizzes past %s!", target->getCName());
+        }
+    }
+    // flying boulders..i.e. like thrown by giants or avalanche
+    if(inRoom->flagIsSet(R_BOULDERS)) {
+        if( target->flagIsSet(P_HIDDEN) ||
+            target->isInvisible() ||
+            target->isEffected("mist")
+        ) {
+            return;
+        }
+
+        roll = Random::get(1,1000);
+        toHit = (4*target->dexterity.getCur()) + ((int)target->getArmor()/5);
+        
+        switch (target->getSize()) {
+        case SIZE_FINE:
+        case SIZE_DIMINUTIVE:
+            toHit += 800;
+            break;
+        case SIZE_TINY:
+            toHit += 400;
+            break;
+        case SIZE_SMALL:
+            toHit += 200;
+            break;
+        case SIZE_LARGE:
+            toHit -= 200;
+            break;
+        case SIZE_HUGE:
+        case SIZE_GARGANTUAN:
+            toHit -= 400;
+            break;
+        case SIZE_COLOSSAL:
+            toHit -= 800;
+            break;
+        default:
+            break;
+        }
+
+        if(roll >= toHit) {
+            dmg.set(Random::get(10,15) + Random::get(5,15));
+
+            if (target->getClass() == CreatureClass::LICH)
+                dmg.set(dmg.get() + (dmg.get()/4)); // Liches get smacked around for +25% damage
+
+            *target << ColorOn << "^yA flying boulder smashes into you for " << target->customColorize("*CC:DAMAGE*").c_str() << dmg.get() << " ^ydamage.\n" << ColorOff;   
+            broadcast(target->getSock(), inRoom, "A flying boulder smashes into %s!", target->getCName());
+
+            // 50% chance to stun if hits. We also check against constitution to avoid stun.
+            if ((Random::get(10,200) > target->constitution.getCur()) && Random::get(1,100) <= 50)  {
+                *target << ColorOn << "^yIt knocks you senseless!!\n" << ColorOff;
+                broadcast(target->getSock(), inRoom, "%s is knocked senseless!", target->getCName());
+                target->stun(Random::get(3,4));
+            }
+
+            target->applyMagicalArmor(dmg,PHYSICAL_DMG);
+
+            target->hp.decrease(dmg.get());
+            if(target->hp.getCur() < 1) {
+                *target << "The flying boulder killed you.\n";
+                broadcast(target->getSock(), inRoom, "The flying boulder killed %s!", target->getCName());
+                target->die(FLYING_BOULDER);
+                return;
+            }
+        } 
+        else 
+        {
+            *target << ColorOn << "^yA flying boulder whizzes by you and bounces away!\n" << ColorOff;
+            broadcast(target->getSock(), inRoom, "A flying boulder whizzes by %s and bounces away!", target->getCName());
         }
     }
 
 
     // deadly moss
     if(inRoom->flagIsSet(R_DEADLY_MOSS)) {
-        if(target->flagIsSet(P_DM_INVIS) || target->getClass() == CreatureClass::LICH)
+        if(target->getClass() == CreatureClass::LICH)
             return;
 
-        dmg = 15 - std::min(bonus((int)target->constitution.getCur()),2) + Random::get(1,3);
-        target->printColor("Deadly underdark moss spores envelope you for %s%d^x damage!\n", target->customColorize("*CC:DAMAGE*").c_str(), dmg);
+        dmg.set(15 - std::min(bonus((int)target->constitution.getCur()),2) + Random::get(1,3));
+        *target << ColorOn << "^DDeadly underdark moss spores envelope you for " << target->customColorize("*CC:DAMAGE*").c_str() << dmg.get() << " ^Ddamage!\n" << ColorOff;
         broadcast(target->getSock(), inRoom, "Spores from deadly underdark moss envelope %s!", target->getCName());
 
-        target->hp.decrease(dmg);
+        target->hp.decrease(dmg.get());
         if(target->hp.getCur() < 1) {
-            target->print("The spores killed you.\n");
+            *target << "The spores killed you.\n";
             broadcast(target->getSock(), inRoom, "The spores killed %s!", target->getCName());
             target->die(DEADLY_MOSS);
         }
     }
+
+    // Good Damage / Evil Damage
+    int align = target->getAdjustedAlignment();
+    
+    if (((align < 0 && inRoom->flagIsSet(R_GOOD_DAMAGE) && !target->isEffected("malediction")) || 
+        ((align > 0 && inRoom->flagIsSet(R_EVIL_DAMAGE) && !target->isEffected("benediction")))) && Random::get(1,100) <= 50 ) {
+        
+        switch (align) {
+        case PINKISH:
+        case LIGHTBLUE:
+            *target << ColorOn << ((align < 0) ? "^B":"^R") << "An extreme aura of " << ((align==PINKISH) ? "good":"evil") << " makes you nauseous.\n" << ColorOff;
+            break;
+        case REDDISH:
+        case BLUISH:
+            *target << ColorOn << ((align < 0) ? "^B":"^R") << "An extreme aura of " << ((align==REDDISH) ? "good":"evil") << " causes you to vomit.\n" << ColorOff;
+            broadcast(target->getSock(), inRoom, "%s vomits from nausea.", target->getCName());
+            if (Random::get(1,100) <=25)
+                target->stun(Random::get(3,5));
+            break;
+        case BLOODRED:
+        case ROYALBLUE:
+            dmg.set(std::max(1,((target->getLevel()/2) + Random::get(1,10))));
+            *target << ColorOn << ((align < 0) ? "^B":"^R") << "An extreme aura of " << ((align==ROYALBLUE) ? "evil":"good") << " rakes at the " << ((align==ROYALBLUE) ? "goodness":"evil") << 
+                                                            " in your soul.\nSoulraking pain causes you " << target->customColorize("*CC:DAMAGE*").c_str() << dmg.get() << ((align < 0) ? "^B":"^R") << " damage!\n" << ColorOff;
+            broadcast(target->getSock(), inRoom, "%s doubles over in soulraking pain!", target->getCName());
+            if (Random::get(1,100) <=25)
+                target->stun(Random::get(3,5));
+            target->hp.decrease(dmg.get());
+            if (target->hp.getCur() < 1) {
+                *target << "The extreme aura of " << ((align==ROYALBLUE) ? "evil":"good") << " in this room has killed you!\n";
+                target->die(((align==ROYALBLUE) ? EVIL_DAMAGE:GOOD_DAMAGE));
+            }
+            break;
+        default:
+            break;
+        }
+    }         
+
 }
 
 //*********************************************************************

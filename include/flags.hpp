@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef FLAGS_H_
-#define FLAGS_H_
+
+#pragma once
 
 // partial owner flags
 #define PROP_STOR_VIEW_LOG          0      // view log
@@ -127,15 +127,20 @@
 #define R_ALWAYS_WINTER             97      // Treat this room as winter regardless of season
 #define R_CAN_ALWAYS_MIST           98      // Player may always turn to mist
 #define R_LIMBO                     99      // room is a Limbo room
-#define R_NO_SPRING_TRAP_ON_ENTER   100      // Do not spring trap when player enters the room
-#define MAX_ROOM_FLAGS              101      // Incriment when you add a room flag
+#define R_NO_SPRING_TRAP_ON_ENTER   100     // Do not spring trap when player enters the room
+#define R_NO_CHECK_TRAFFIC          101     // Player cannot check for traffic in this room
+#define R_NO_ROOMINFO               102     // Roominfo command unavailable in this room
+#define R_GOOD_DAMAGE               103     // Evil players receive good damage in this room
+#define R_EVIL_DAMAGE               104     // Good players receive evil damage in this room
+#define R_BOULDERS                  105     // Deadly flying boulders - thrown by giants or otherwise
+#define MAX_ROOM_FLAGS              106     // Incriment when you add a room flag
 // Player flags
 // free                             0
 #define P_HIDDEN                    1        // Hidden
 #define P_HARDCORE                  2        // A hardcore character: death is permanent.
 #define P_NO_BROADCASTS             3        // Don't show broadcasts
 // free                             4
-// free                             5
+#define P_IGNORE_SPORTS             5        // ignore sports channel
 #define P_IGNORE_GOSSIP             6        // ignore gossip channel
 #define P_IGNORE_CLAN               7        // ignore clan channel
 #define P_PORTAL                    8        // portal
@@ -864,5 +869,4 @@
 #define X_SEL_KENKU                 97      // race selective: kenku
 #define X_NO_REMEMBER               98      // Unable to remember this exit
 #define MAX_EXIT_FLAGS              99      // Incriment when adding... check structs.h for max
-#endif /*FLAGS_H_*/
 

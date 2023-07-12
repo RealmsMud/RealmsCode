@@ -33,6 +33,7 @@
 #include "config.hpp"                // for Config, gConfig
 #include "craft.hpp"                 // for Recipe
 #include "delayedAction.hpp"         // for DelayedAction, ActionStudy
+#include "deityData.hpp"             // for DeityData
 #include "dice.hpp"                  // for Dice
 #include "flags.hpp"                 // for O_CAN_USE_FROM_FLOOR, O_EATABLE
 #include "global.hpp"                // for CreatureClass, CastType, CAST_RE...
@@ -102,6 +103,108 @@ int Creature::doMpCheck(int splno) {
 }
 
 //*********************************************************************
+//                      cmdDispel
+//*********************************************************************
+// This command allows a player to dispel any given positive effect that
+// is currently on their person
+
+int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd) {
+
+    const Effect* effect=nullptr;
+
+    if (cmnd->num < 2) {
+        *player << "Dispel what effect on yourself, or what effect on what exit?\n";
+        *player << "Ex: dispel dimensional-anchor\n";
+        *player << "    dispel wall-of-fire door\n";
+        return(0);
+    }
+
+    std::string dispelStr = cmnd->str[1];
+    EffectInfo* toDispel = nullptr;
+
+    if (cmnd->num == 3) {
+        std::shared_ptr<Exit> exit = findExit(player, cmnd, 2);
+        if (exit) {
+            if ((toDispel = exit->getExactEffect(dispelStr))) {
+                if (toDispel->isPermanent() && !player->isStaff()) {
+                    *player << "You cannot dispel permanent effects.\n";
+                    return(0);
+                }
+                if(!toDispel->isOwner(player) && !player->isCt()) {
+                    *player << "You didn't create that effect. Only the initial caster may dispel it.\n";
+                    return(0);
+                }
+
+                *player << ColorOn << "Effect '" << toDispel->getDisplayName() << "' dispelled from the '" << exit->getCName() << "' exit.\n" << ColorOff;
+                if (exit->isWall(toDispel->getName())) {
+                    bringDownTheWall(toDispel, player->getRoomParent(), exit);
+                    return(0);
+                }
+                else
+                    exit->removeEffect(toDispel, true);
+            }
+            else
+            {
+                *player << "Effect '" << dispelStr << "' not found on exit '" << exit->getCName() << "'\n";
+                return(0);
+            }
+            
+        }
+        else
+        {
+            *player << "I don't see that exit here.\n";
+            return(0);
+        }
+
+        return(0);   
+    }
+
+    if((toDispel = player->getExactEffect(dispelStr))) {
+
+        if (toDispel->isPermanent() && !player->isStaff()) {
+            *player << "You cannot dispel permanent effects.\n";
+            return(0);
+        }
+        if(toDispel->getApplier()) {
+            *player << "You cannot dispel effects conferred by objects.\nRemove the object to dispel the effect.\n";
+            return(0);
+        }
+       
+        effect = toDispel->getEffect();
+        if(effect->getType() != "Positive") {
+            *player << "On your person, only positive/beneficial effects may be dispelled.\n";
+            return(0);
+        }
+
+        *player << ColorOn << "Effect '" << toDispel->getDisplayName() << "' dispelled.\n" << ColorOff;
+        player->removeEffect(toDispel,true);
+    }
+    else if ((toDispel = player->getRoomParent()->getExactEffect(dispelStr))) {
+        if (toDispel->isPermanent()) {
+            *player << "You cannot dispel permanent effects.\n";
+            return(0);
+        }
+        if(!toDispel->isOwner(player) && !player->isCt()) {
+            *player << "You didn't create that effect. Only the initial caster may dispel it.\n";
+            return(0);
+        }
+
+        *player << ColorOn << "Effect '" << toDispel->getDisplayName() << "' dispelled.\n" << ColorOff;
+        player->getRoomParent()->removeEffect(toDispel, true);
+
+    }
+    else
+    {
+        *player << "Effect not found (use full effect name.)\n";
+    }
+
+    
+
+    return(0);
+}
+
+
+//*********************************************************************
 //                      cmdCast
 //*********************************************************************
 // wrapper for doCast because doCast returns more information than we want
@@ -151,6 +254,7 @@ void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creat
     offensive = (int(*)(SpellFn, const char*, osp_t*))fn == splOffensive ||
         (int(*)(SpellFn, const char*, osp_t*))fn == splMultiOffensive;
 
+    
     if(offensive) {
         for(c=0; ospell[c].splno != get_spell_num(data.splno); c++)
             if(ospell[c].splno == -1)
@@ -1190,6 +1294,9 @@ int Player::consume(const std::shared_ptr<Object>& object, cmd* cmnd) {
     }
 
     if(n || dimensionalFailure) {
+        if (dimensionalFailure) {
+            *this << ColorOn << "^mYour dimensional anchor caused nothing to happen.\n" << ColorOff;
+        }
         statistics.potion();
         if(object->use_output[0] && !dimensionalFailure)
             printColor("%s\n", object->use_output);
@@ -1384,11 +1491,14 @@ int cmdUseWand(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(n || dimensionalFailure) {
+        if (dimensionalFailure) {
+            *player << ColorOn << "^mYour dimensional anchor caused nothing to happen.\n" << ColorOff;
+        }
         if(object->use_output[0] && !dimensionalFailure)
             player->printColor("%s\n", object->use_output);
 
-        if(!object->flagIsSet(O_CAN_USE_FROM_FLOOR))
-            object->decShotsCur();
+        if(!object->flagIsSet(O_CAN_USE_FROM_FLOOR) && !dimensionalFailure)
+                object->decShotsCur();
 
         if(object->getShotsCur() < 1 && Unique::isUnique(object)) {
             player->delObj(object, true);
@@ -1579,6 +1689,10 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
             player->print("You cast %s %s spell.\n", article, spell);
             broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player.get(), article, spell);
         }
+
+        if (replaceCancelingEffects(player,target,effect))
+            return(0);
+
     } else {
         if(player->noPotion( spellData))
             return(0);
@@ -1599,6 +1713,32 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         if(checkRefusingMagic(player, target))
             return(0);
 
+
+        if (((effect == "benediction" && (target->isPlayer()?target->getAdjustedAlignment():target->getAsMonster()->getAdjustedAlignment()) < NEUTRAL) || 
+            (effect == "malediction" && (target->isPlayer()?target->getAdjustedAlignment():target->getAsMonster()->getAdjustedAlignment()) > NEUTRAL)) && !player->isCt()) {
+            *player << setf(CAP) << target << " must be of " << ((effect=="benediction")?"good":"evil") << " or neutral alignment in order to receive that spell.\n"; 
+            return(0);
+            
+        }
+        if ( !player->isCt() && ((effect == "benediction" && target->getDeityAlignment() <= PINKISH) ||
+              (effect == "malediction" && target->getDeityAlignment() >= LIGHTBLUE)) && target->getClass() != CreatureClass::NONE) {
+            *player << gConfig->getDeity(target->getDeity())->getName().c_str() << " blocked your casting of " << ((effect=="benediction")?"benediction":"malediction") << " on " << target << ".\nThe spell fizzled.\n";
+            if(target->isMonster() && target->getDeityAlignment() == BLOODRED) {
+                *player << "Your cast attempt made " << target << " extremely angry.\n";
+                target->getAsMonster()->addEnemy(player,true);
+            }
+            return(0);
+        }
+        if (!player->isCt() && effect == "benediction" && target->getClass() == CreatureClass::LICH) {
+            *player << ColorOn << "^R" << setf(CAP) << "'s corrupt soul rejects your benediction spell." << ColorOff;
+            if(target->isMonster()) {
+                *player << "Your cast attempt made " << target << " extremely angry.\n";
+                target->getAsMonster()->addEnemy(player,true);
+            }
+            return(0);
+        }
+
+
         if((effect == "drain-shield" || effect == "undead-ward") && target->isUndead()) {
             player->print("The spell fizzles.\n%M naturally resisted your spell.\n", target.get());
             return(0);
@@ -1607,6 +1747,8 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s %s spell on %N.", player.get(), article, spell, target.get());
         target->print("%M casts %s on you.\n", player.get(), spell);
         player->print("You cast %s %s spell on %N.\n", article, spell, target.get());
+
+       
     }
 
     if(target->inCombat(false))
@@ -1624,6 +1766,8 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
     if((effect == "drain-shield" || effect == "undead-ward") && target->isEffected("porphyria"))
         target->removeEffect("porphyria");
 
+     if (replaceCancelingEffects(player,target,effect))
+            return(0);
 
 
     if(spellData->how == CastType::CAST) {

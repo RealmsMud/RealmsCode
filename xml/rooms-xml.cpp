@@ -201,7 +201,7 @@ int UniqueRoom::readFromXml(xmlNodePtr rootNode, bool offline) {
 //*********************************************************************
 // This function will load all crlasttimer into the given crlasttime array
 
-void loadCrLastTimes(xmlNodePtr curNode, std::map<int, crlasttime>& pCrLastTimes) {
+void loadCrLastTimes(xmlNodePtr curNode, std::map<int, CRLastTime>& pCrLastTimes) {
     xmlNodePtr childNode = curNode->children;
     int i=0;
 
@@ -209,7 +209,7 @@ void loadCrLastTimes(xmlNodePtr curNode, std::map<int, crlasttime>& pCrLastTimes
         if(NODE_NAME(childNode, "LastTime")) {
             i = xml::getIntProp(childNode, "Num");
             if(i >= 0 && i < NUM_PERM_SLOTS) {
-                struct crlasttime cr;
+                CRLastTime cr;
                 loadCrLastTime(childNode, &cr);
                 if(cr.cr.id)
                     pCrLastTimes[i] = cr;
@@ -259,7 +259,7 @@ int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
 //*********************************************************************
 
 int UniqueRoom::saveToXml(xmlNodePtr rootNode, int permOnly) const {
-    std::map<int, crlasttime>::const_iterator it;
+    std::map<int, CRLastTime>::const_iterator it;
     xmlNodePtr      curNode;
     int i;
 

@@ -414,8 +414,13 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 else
                     daily[DL_TELEP].cur = 3;
                 if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
-                    daily[DL_TELEP].cur = std::min(10, (int)getSkillLevel("translocation")/5);
+                    daily[DL_TELEP].cur = std::max(3,std::min(10, (int)getSkillLevel("translocation")/5));
 
+             }
+             if(getVersion() < "2.56c") {
+                if (getClass() == CreatureClass::PALADIN && deity == LINOTHAN && level >=13) {
+                    addSkill("hands",(level*9));
+                }
              }
         }
     }
@@ -542,7 +547,7 @@ void MudObject::readCreatures(xmlNodePtr curNode, bool offline) {
 //*********************************************************************
 // Loads a single crlasttime into the given lasttime
 
-void loadCrLastTime(xmlNodePtr curNode, struct crlasttime* pCrLastTime) {
+void loadCrLastTime(xmlNodePtr curNode, CRLastTime* pCrLastTime) {
     xmlNodePtr childNode = curNode->children;
 
     while(childNode) {
@@ -991,7 +996,7 @@ xmlNodePtr saveDaily(xmlNodePtr parentNode, int i, struct daily pDaily) {
 //                      saveCrLastTime
 //*********************************************************************
 
-xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, const struct crlasttime& pCrLastTime) {
+xmlNodePtr saveCrLastTime(xmlNodePtr parentNode, int i, const CRLastTime& pCrLastTime) {
     // Avoid writing un-used last times
     if(!pCrLastTime.interval && !pCrLastTime.ltime && !pCrLastTime.cr.id)
         return(nullptr);

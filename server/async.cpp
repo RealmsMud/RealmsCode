@@ -95,7 +95,26 @@ AsyncResult Async::branch(const std::shared_ptr<const Player>& player, ChildType
 int Server::runList(std::shared_ptr<Socket> sock, cmd* cmnd) {
     Async async;
     if(async.branch(sock->getPlayer(), ChildType::LISTER) == AsyncExternal) {
-        std::string lister = "/mud/List";
+
+        // Code taken from: http://www.gamedev.net/community/forums/topic.asp?topic_id=459511
+        std::string path = "";
+        pid_t pid = getpid();
+        char buf[20] = {0};
+        sprintf(buf,"%d",pid);
+        std::string _link = "/proc/";
+        _link.append( buf );
+        _link.append( "/exe");
+        char proc[512];
+        auto ch = readlink(_link.c_str(),proc,512);
+        if (ch != -1) {
+            proc[ch] = 0;
+            path = proc;
+            std::string::size_type t = path.find_last_of('/');
+            path = path.substr(0,t);
+        }
+
+        std::string lister = path + std::string("/List");
+
         std::clog << "Running <" << lister << ">\n";
 
         execl(lister.c_str(), lister.c_str(), cmnd->str[1], cmnd->str[2], cmnd->str[3], cmnd->str[4], nullptr);

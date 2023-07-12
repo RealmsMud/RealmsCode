@@ -19,12 +19,12 @@
 #include <thread>
 
 #include <crow.h>
-#include <nlohmann/json.hpp>
 #include <fmt/format.h>
 #include <jwt-cpp/jwt.h>
 
 #include "config.hpp"
 #include "httpServer.hpp"
+#include "json.hpp"
 #include "server.hpp"
 #include "version.hpp"
 #include "quests.hpp"
@@ -59,68 +59,10 @@ HttpServer::HttpServer(int pPort) {
             return to_string(j);
         });
 
-    CROW_ROUTE(app, "/authtest").methods("GET"_method)
-    .CROW_MIDDLEWARES(app, AuthMiddleware)
-        ([this](const crow::request& req){
-            json j;
-            auto ctx = app.get_context<AuthMiddleware>(req);
-            j["userId"] = ctx.userId;
-            return crow::response(to_string(j));
-        });
 
-    CROW_ROUTE(app, "/login").methods("POST"_method)
-        ([](const crow::request& req){
-            json body = json::parse(req.body);
+    registerAuth();
+    registerZones();
 
-            std::string name = body["name"];
-            std::string pw = body["pw"];
-            lowercize(name, 1);
-            bool valid=false;
-
-            // TODO: Thread Saftey
-            std::shared_ptr<Player> player = gServer->findPlayer(name);
-            if(!player) {
-                if (!loadPlayer(name, player)) {
-                    return crow::response(crow::status::NOT_FOUND);
-                }
-            }
-
-            json j;
-            if (player->isPassword(pw)) {
-                valid = true;
-                j["token"] = jwt::create()
-                        .set_issuer("realms")
-                        .set_payload_claim("userId", jwt::claim(player->getId()))
-                        .sign(jwt::algorithm::hs256{"not a real secret, replace me"});
-                j["name"] = player->getName();
-            }
-
-
-            if(!valid)
-                return crow::response(crow::status::UNAUTHORIZED);
-
-            return crow::response(to_string(j));
-        });
-
-    CROW_ROUTE(app, "/zones/<string>/quests/<int>").methods("GET"_method)
-            ([](const crow::request& req, std::string zone, int Id){
-                auto questId = CatRef(zone, (short)Id);
-                auto quest = gConfig->getQuest(questId);
-                if(quest == nullptr) {
-                    json j;
-                    j["status"] = 404;
-                    j["message"] = "quest not found";
-                    return crow::response(to_string(j));
-                }
-
-                json questOverview = json(*quest);
-                return crow::response(to_string(questOverview));
-            });
-
-    CROW_ROUTE(app, "/zones/<string>/quests").methods("GET"_method)
-            ([](const crow::request& req, std::string zone){
-                return "not implemented";
-            });
 }
 
 HttpServer::~HttpServer() {

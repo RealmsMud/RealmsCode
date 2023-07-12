@@ -310,7 +310,7 @@ public:
     Stat pp; // psi points for psionicists
     Stat rp; // recovery points for weaponless classes
     struct daily daily[20]; // added more daily limits
-    struct lasttime lasttime[128]; // added more timers
+    LastTime lasttime[128]; // added more timers
 
     // future new tic amount code
     struct tic hpTic;
@@ -397,6 +397,7 @@ public:
     std::string statCrt(int statFlags);
     int displayFlags() const;
     std::string alignColor() const;
+    std::string alignString() const;
     std::string fullName() const;
     const char *hisHer() const;
     const char *himHer() const;
@@ -429,7 +430,7 @@ public:
     void die(const std::shared_ptr<Creature>&killer, bool &freeTarget); // *
     void clearAsPetEnemy();
     virtual void gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount, bool groupExp = false) {} ;
-    void adjustExperience(const std::shared_ptr<Monster>&  victim, int& expAmount, int& holidayExp);
+    void adjustExperience(const std::shared_ptr<Monster>&  victim, int& expAmount, int& holidayExp, int& bonusExp);
     int doWeaponResist(int dmg, const std::string &weaponCategory) const;
     int doDamage(std::shared_ptr<Creature> target, int dmg, DeathCheck shouldCheckDie = CHECK_DIE, DamageType dmgType = PHYSICAL_DMG);
     int doDamage(const std::shared_ptr<Creature>& target, int dmg, DeathCheck shouldCheckDie, DamageType dmgType, bool &freeTarget);
@@ -512,6 +513,10 @@ public:
     bool doesntBreathe() const;
     bool immuneCriticals() const; // *
     bool isUndead() const; // *
+    bool isPureArcaneCaster() const;
+    bool isPureDivineCaster() const;
+    bool isHybridArcaneCaster() const;
+    bool isHybridDivineCaster() const;
     bool hasMp();
     bool isAntiGradius() const;
     bool countForWeightTrap() const;
@@ -537,6 +542,7 @@ public:
 
     bool isPureCaster() const;
     bool isHybridCaster() const;
+    bool hatesEnemy(std::shared_ptr<Creature> enemy) const;
 
 // Equipment / Inventory
     void addObj(const std::shared_ptr<Object>&  object);
@@ -588,6 +594,7 @@ public:
     int getSecondClassInt() const;
     unsigned short getLevel() const; // *
     short getAlignment() const; // *
+    int getDeityAlignment() const;
     int getArmor() const; // *
     unsigned long getExperience() const; // *
 
@@ -617,6 +624,8 @@ public:
     void setLevel(unsigned short l, bool isDm=false);
     void setAlignment(short a);
     void subAlignment(unsigned short a); // *
+    void shiftAlignment(short shift, bool silent=false);
+    void setOppositeAlignment(bool silent=false);
     void setArmor(int a);
     void setAttackPower(int a);
     void setDeity(unsigned short d);
@@ -709,6 +718,7 @@ public:
     Location getLimboRoom() const;
     Location getRecallRoom() const;
     int deleteFromRoom(bool delPortal=true);
+    void applyMagicalArmor(Damage& dmg, int dmgType);
 protected:
     virtual int doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) = 0;
 public:

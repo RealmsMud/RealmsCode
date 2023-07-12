@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef SOCIAL_H_
-#define SOCIAL_H_
+#pragma once
 
 #include <list>
 #include <functional>
@@ -70,6 +69,3 @@ private:
 
 
 };
-
-
-#endif /* SOCIAL_H_ */

@@ -15,8 +15,10 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef MUD_H
-#define MUD_H
+
+#pragma once
+
+class LastTime;
 
 // Other includes are at the end of the file to make sure all defines and such in this
 // file are visible
@@ -122,7 +124,7 @@
 // free             53
 // free             54
 // free             55
-// free             56
+#define LT_TRAFFIC  56
 #define LT_IDENTIFY     57
 #define LT_FOCUS        58
 #define LT_PLAYER_STUNNED   59
@@ -159,7 +161,7 @@
 // free             90
 #define LT_ENLARGE_REDUCE   91
 #define LT_ANCHOR       92
-// free             93
+#define LT_STARSTRIKE       93
 // free             94
 // free             95
 // free             96
@@ -310,8 +312,8 @@ extern const int   GUILD_JOIN, GUILD_REMOVE, GUILD_LEVEL, GUILD_DIE;
 
 extern int      Tablesize;
 extern long     StartTime;
-extern struct lasttime  Shutdown;
-extern struct lasttime  Weather[5];
+extern LastTime  Shutdown;
+extern LastTime  Weather[5];
 
 
 extern char scrollDesc [][10][20];
@@ -330,8 +332,5 @@ extern int SUPPORT_REQUIRED;
 extern unsigned short Port;
 
 extern struct osong_t osong[];
-
-#endif
-
 
 #endif
