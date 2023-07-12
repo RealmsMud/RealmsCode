@@ -1363,7 +1363,6 @@ void Creature::doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker, int
     if (!attacker)
         return;
 
-    
     if (!isMagicallyHeld())
         return;
 
@@ -1371,24 +1370,30 @@ void Creature::doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker, int
         holdEffect = getEffect("hold-person");
     else if (isEffected("hold-monster"))
         holdEffect = getEffect("hold-monster");
-    else holdEffect = getEffect("hold-undead");
+    else if (isEffected("hold-undead"))
+        holdEffect = getEffect("hold-undead");
+    else if (isEffected("hold-animal"))
+        holdEffect = getEffect("hold-animal");
+    else if (isEffected("hold-plant"))
+        holdEffect = getEffect("hold-plant");
+    else if (isEffected("hold-elemental"))
+        holdEffect = getEffect("hold-elemental");
+    else if (isEffected("hold-fey"))
+        holdEffect = getEffect("hold-fey");
 
     if(!holdEffect)
         return;
 
-
     dmgToBreak = holdEffect->getExtra();
-
 
     if (hatesEnemy(attacker))
         dmgToBreak-=(dmg*2);
     else
         dmgToBreak-=dmg;
 
-
     holdEffect->setExtra(dmgToBreak);
 
-    if (attacker->isCt() || (attacker->isPlayer() && attacker->flagIsSet(P_PTESTER))) {
+    if (dmgToBreak > 0 && (attacker->isCt() || (attacker->isPlayer() && attacker->flagIsSet(P_PTESTER)))) {
         *attacker << ColorOn << "Dmg remaining before " << this << "'s " << holdEffect->getName() << " breaks: ^Y" << dmgToBreak << "\n" << ColorOff;
     }
 
@@ -1406,14 +1411,11 @@ void Creature::doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker, int
             if (attacker->isPlayer())
                 *attacker << ColorOn << "^YThe hold magic on " << this << " has been broken!\n" << ColorOff;
             broadcast(attacker->getSock(), attacker->getParent(), "^YThe hold magic on %M has been broken!^x", this);
-            
         }
 
         removeEffect(holdEffect->getName());
         lasttime[LT_SPELL].ltime = time(nullptr);
         setAttackDelay(0);
-
-
     }
 
     return;

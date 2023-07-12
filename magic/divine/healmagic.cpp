@@ -996,8 +996,9 @@ int doRes(const std::shared_ptr<Creature>& caster, cmd* cmnd, bool res) {
     
     target->removeEffect("hold-person");
     target->removeEffect("entangled");
-    //target->removeEffect("hold-monster");
-    //target->removeEffect("hold-undead");
+    target->removeEffect("hold-monster");
+    if (!res)
+        target->removeEffect("hold-undead");
     target->removeEffect("petrification");
     target->removeEffect("confusion");
     target->removeEffect("drunkenness");

@@ -59,6 +59,11 @@ int splHoldPerson(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData*
         return(0);
     }
 
+    if (!caster->getAsPlayer()->flagIsSet(P_PTESTER) && !caster->isCt()) {
+        *caster << ColorOn << "^cThe hold-person spell is temporarily disabled for ptesting.\n" << ColorOff;
+        return(0);
+    }
+
     return(doHoldSpells(caster, cmnd, spellData, "hold-person"));
 
 }
