@@ -251,10 +251,10 @@ std::ostream& operator<<(std::ostream& os, const Blackjack& game) {
   return os;
 }
 
-void playBlackjack(Socket* sock, const std::string& str) {
+void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
   std::ostringstream os;
   short decksInShoe = 6;
-  Player *player = sock->getPlayer();
+  std::shared_ptr<Player> player = sock->getPlayer();
   Blackjack *game = sock->getPlayer()->gamblingState.bjGame;
 
   if (strncasecmp(str.c_str(), "Q", 1) == 0) {
