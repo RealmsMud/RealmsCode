@@ -395,6 +395,7 @@ public:
     void setQuestOwner(const std::shared_ptr<Player> player);
     void setUniqueId(int id);
     void setLabel(const std::shared_ptr<Player>& player, std::string text);
+    void removeLabel();
 
     void clearEffect();
 

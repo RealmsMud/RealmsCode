@@ -407,8 +407,17 @@ int cmdLabel(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    object->setLabel(player, cmnd->str[2]);
+    if(!strcasecmp(cmnd->str[2], "-c")) {
+        if (object->isLabeledBy(player)) {
+            object->removeLabel();
+            player->printColor("Label cleared on %P.\n", object.get());
+        } else {
+            player->printColor("You have no label on %P.\n", object.get());
+        }
+        return(0);
+    }
 
+    object->setLabel(player, cmnd->str[2]);
     player->printColor("%P labeled as \"%s\".\n", object.get(), cmnd->str[2]);
     return(0);
 }

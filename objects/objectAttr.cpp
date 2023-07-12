@@ -88,6 +88,10 @@ void Object::setLabel(const std::shared_ptr<Player>& player, std::string text) {
     label.playerId = player->getId();
     label.label = text;
 }
+void Object::removeLabel() {
+    label.playerId = "";
+    label.label = "";
+}
 
 void Object::clearEffect() {
     setEffect("");
