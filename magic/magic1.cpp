@@ -2314,10 +2314,10 @@ void Creature::doFreeAction() {
         removeEffect("slow");
     if (isEffected("hold-person"))
         removeEffect("hold-person");
-    //if (isEffected("hold-monster"))
-      //  removeEffect("hold-monster");
-    //if (isEffected("hold-undead"))
-     //   removeEffect("hold-undead");
+    if (isEffected("hold-monster"))
+        removeEffect("hold-monster");
+    if (isEffected("hold-undead"))
+        removeEffect("hold-undead");
     if (isEffected("entangled"))
         removeEffect("entangled");
 

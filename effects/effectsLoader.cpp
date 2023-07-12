@@ -436,7 +436,7 @@ bool Config::loadEffects() {
       EffectBuilder()
         .name("drunkenness")
         .addBaseEffect("drunkenness")
-        .display("^o")
+        .display("^gDrunk^x")
         .computeScript("effectLib.computeDisable(actor, effect, applier)")
         .pulsed(false)
         .type("Negative")
