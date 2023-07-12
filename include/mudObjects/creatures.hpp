@@ -650,6 +650,10 @@ public:
 
 
 // Miscellaneous
+    float getPercentRemaining(int current, int maximum) const;
+    std::string getHpDurabilityStr();
+    std::string getHpProgressBar();
+
     bool pFlagIsSet(int flag) const;
     void pSetFlag(int flag);
     void pClearFlag(int flag);
@@ -719,6 +723,7 @@ public:
     Location getRecallRoom() const;
     int deleteFromRoom(bool delPortal=true);
     void applyMagicalArmor(Damage& dmg, int dmgType);
+
 protected:
     virtual int doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) = 0;
 public:

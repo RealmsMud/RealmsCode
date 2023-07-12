@@ -801,7 +801,7 @@ int Creature::displayFlags() const {
 //*********************************************************************
 
 int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
-    int     percent=0, rank=0, chance=0;
+    int     rank=0, chance=0;
     int flags = displayFlags();
     std::shared_ptr<Player> pTarget = target->getAsPlayer();
     std::shared_ptr<Monster> mTarget = target->getAsMonster();
@@ -917,32 +917,14 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
     if(space)
         oStr << "\n";
 
-    if(target->hp.getCur() > 0 && target->hp.getMax())
-        percent = (100 * (target->hp.getCur())) / (target->hp.getMax());
-    else
-        percent = -1;
-
     if(!(mTarget && mTarget->flagIsSet(M_UNKILLABLE))) {
-        oStr << target->upHeShe();
-        if(percent >= 100 || !target->hp.getMax())
-            oStr << " is in excellent condition.\n";
-        else if(percent >= 90)
-            oStr << " has a few scratches.\n";
-        else if(percent >= 75)
-            oStr << " has some small wounds and bruises.\n";
-        else if(percent >= 60)
-            oStr << " is wincing in pain.\n";
-        else if(percent >= 35)
-            oStr << " has quite a few wounds.\n";
-        else if(percent >= 20)
-            oStr << " has some big nasty wounds and scratches.\n";
-        else if(percent >= 10)
-            oStr << " is bleeding awfully from big wounds.\n";
-        else if(percent >= 5)
-            oStr << " is barely clinging to life.\n";
-        else if(percent >= 0)
-            oStr << " is nearly dead.\n";
+        oStr << "\n" << target->getHpDurabilityStr();
+        if ((mTarget && mTarget->isEnemy(this)) || (pTarget && pTarget->hp.getCur() < pTarget->hp.getMax()))
+            oStr << "\n" << target->getHpProgressBar() << "^x\n\n";
+        else 
+            oStr << "^x\n";
     }
+
 
     if(pTarget) {
         if(pTarget->isEffected("mist")) {

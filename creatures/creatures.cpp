@@ -1518,3 +1518,59 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
 
 }
 
+float Creature::getPercentRemaining(int current, int maximum) const {
+
+    if (current <= 0 || maximum <= 0)
+        return(0);
+
+    if (current > 0)
+        return (current / std::max<float>(maximum,1.0));
+    else
+        return (0);
+}
+
+
+std::string Creature::getHpDurabilityStr() {
+    std::ostringstream dStr;
+    float percent = 1.0;
+    int currentHp = hp.getCur(), maximumHp = hp.getMax();
+
+    if (maximumHp <= 0)
+        percent = 1.0;
+    else if (currentHp <= 0)
+        percent = 0.01;
+    else
+        percent = getPercentRemaining(currentHp, maximumHp);
+
+    if(percent >= 1.0){
+        dStr << "^W" << upHeShe() << " is in excellent condition.";
+    } else if(percent >= 0.90) {
+        dStr << "^W" << upHeShe() << " has a few scratches.";
+    } else if(percent >= 0.75) {
+        dStr << "^W" << upHeShe() << " has some small wounds.";
+    } else if(percent >= 0.60) {
+        dStr << "^Y" << upHeShe() << " is in obvious pain.";
+    } else if(percent >= 0.50) {
+        dStr << "^Y" << upHeShe() << " is starting to slow down.";
+    } else if(percent >= 0.35) {
+        dStr << "^Y" << upHeShe() << " looks beaten up pretty badly.";
+    } else if(percent >= 0.20) {
+        dStr << "^R" << upHeShe() << " has many big nasty wounds and scratches.";
+    } else if(percent >= 0.10) {
+        dStr << "^R" << upHeShe() << " is in pain and moving erratically.";
+    } else if(percent >= 0.05) {
+        dStr << "^r" << upHeShe() << " is barely clinging to life.";
+    } else if(currentHp) {
+        dStr << "^r" << upHeShe() << " is nearly dead.";
+    } 
+    else
+        dStr << "^D" << upHeShe() << " is dead.^x"; // should never get here
+        
+
+    return (dStr.str());
+}
+std::string Creature::getHpProgressBar() {
+    return (progressBar(60, getPercentRemaining(hp.getCur(), hp.getMax())));
+}
+
+
