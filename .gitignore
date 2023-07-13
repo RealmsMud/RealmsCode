@@ -32,6 +32,7 @@ Makefile
 /nbproject/
 .idea/*
 **/*.cbp
+.vscode/*
 
 # Compiled Object files
 *.slo

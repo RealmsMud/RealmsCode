@@ -392,12 +392,12 @@ int cmdUnkeep(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdLabel(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
-        player->print("Label what?\n");
+        player->print("Label what? Type \"help label\" for details.\n");
         return(0);
     }
 
     if(cmnd->num < 3) {
-        player->print("Label it as what?\n");
+        player->print("Label it as what? Type \"help label\" for details.\n");
         return(0);
     }
 
@@ -407,8 +407,17 @@ int cmdLabel(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    object->setLabel(player, cmnd->str[2]);
+    if(!strcasecmp(cmnd->str[2], "-c")) {
+        if (object->isLabeledBy(player)) {
+            object->removeLabel();
+            player->printColor("Label cleared on %P.\n", object.get());
+        } else {
+            player->printColor("You have no label on %P.\n", object.get());
+        }
+        return(0);
+    }
 
+    object->setLabel(player, cmnd->str[2]);
     player->printColor("%P labeled as \"%s\".\n", object.get(), cmnd->str[2]);
     return(0);
 }
