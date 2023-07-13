@@ -392,12 +392,12 @@ int cmdUnkeep(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdLabel(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
-        player->print("Label what?\n");
+        player->print("Label what? Type \"help label\" for details.\n");
         return(0);
     }
 
     if(cmnd->num < 3) {
-        player->print("Label it as what?\n");
+        player->print("Label it as what? Type \"help label\" for details.\n");
         return(0);
     }
 
