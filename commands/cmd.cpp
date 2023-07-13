@@ -507,6 +507,8 @@ bool Config::initCommands() {
     playerCommands.emplace("where", 100, cmdLook, nullptr, "");
     playerCommands.emplace("traffic", 100, cmdTraffic, nullptr, "");
     playerCommands.emplace("roominfo", 100, cmdRoominfo, nullptr, "");
+    playerCommands.emplace("condition", 10, cmdCondition, nullptr, "");
+    playerCommands.emplace("victim", 10, cmdCondition, nullptr, "");
     playerCommands.emplace("look", 10, cmdLook, nullptr, "");
     playerCommands.emplace("consider", 50, cmdLook, nullptr, "");
     playerCommands.emplace("examine", 100, cmdLook, nullptr, "");

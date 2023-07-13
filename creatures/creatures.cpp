@@ -1518,18 +1518,6 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
 
 }
 
-float Creature::getPercentRemaining(int current, int maximum) const {
-
-    if (current <= 0 || maximum <= 0)
-        return(0);
-
-    if (current > 0)
-        return (current / std::max<float>(maximum,1.0));
-    else
-        return (0);
-}
-
-
 std::string Creature::getHpDurabilityStr() {
     std::ostringstream dStr;
     float percent = 1.0;
@@ -1551,7 +1539,7 @@ std::string Creature::getHpDurabilityStr() {
     } else if(percent >= 0.60) {
         dStr << "^Y" << upHeShe() << " is in obvious pain.";
     } else if(percent >= 0.50) {
-        dStr << "^Y" << upHeShe() << " is starting to slow down.";
+        dStr << "^Y" << upHeShe() << " is moving very tentatively.";
     } else if(percent >= 0.35) {
         dStr << "^Y" << upHeShe() << " looks beaten up pretty badly.";
     } else if(percent >= 0.20) {
@@ -1570,7 +1558,7 @@ std::string Creature::getHpDurabilityStr() {
     return (dStr.str());
 }
 std::string Creature::getHpProgressBar() {
-    return (progressBar(60, getPercentRemaining(hp.getCur(), hp.getMax())));
+    return (progressBar(50, getPercentRemaining(hp.getCur(), hp.getMax())));
 }
 
 

@@ -869,6 +869,20 @@ std::string progressBar(int barLength, float percentFull, const std::string &tex
     return(str);
 }
 
+//****************************************************************
+//                 getPercentRemaining
+//****************************************************************
+float getPercentRemaining(int current, int maximum) {
+
+    if (current <= 0 || maximum <= 0)
+        return(0);
+
+    if (current > 0)
+        return (current / std::max<float>(maximum,1.0));
+    else
+        return (0);
+}
+
 //*********************************************************************
 //                      splitString
 //*********************************************************************

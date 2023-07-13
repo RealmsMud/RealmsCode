@@ -650,7 +650,6 @@ public:
 
 
 // Miscellaneous
-    float getPercentRemaining(int current, int maximum) const;
     std::string getHpDurabilityStr();
     std::string getHpProgressBar();
 
