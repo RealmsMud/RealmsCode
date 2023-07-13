@@ -21,6 +21,7 @@
 #include <list>                        // for list, operator==, list<>::cons...
 #include <set>                         // for operator==, _Rb_tree_const_ite...
 #include <string>                      // for allocator, string, operator==
+#include <strings.h>                   // for strncasecmp
 
 #include "area.hpp"                    // for Area, TileInfo, MapMarker
 #include "catRef.hpp"                  // for CatRef
@@ -55,6 +56,9 @@
 #include "statistics.hpp"              // for Statistics
 #include "stats.hpp"                   // for Stat
 #include "xml.hpp"                     // for loadObject, loadRoom
+#include "socket.hpp"                  // for Socket
+#include "login.hpp"                   // connection states
+#include "blackjack.hpp"               // for Blackjack
 
 
 //*********************************************************************
@@ -188,14 +192,40 @@ int cmdBribe(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // Code for people to gamble money
 
 int cmdGamble(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    if(!player->flagIsSet(P_PTESTER) && !player->isCt()) {
+        player->printColor("Gambling currently enabled for testers only.\n");
+        return(0);
+    }
+
     if(!player->getRoomParent()->flagIsSet(R_CASINO) && !player->isCt()) {
-        player->print("You can't gamble here.\n");
+        player->printColor("You can't gamble here.\n");
+        return(0);
+    }
+
+    if (cmnd->num < 2) {
+        player->printColor("Gamble how? (blackjack, war)\n");
+        return(0);
+    }
+
+    bool isBlackjack = keyTxtCompare("blackjack", cmnd->str[1], strlen(cmnd->str[1]));
+    bool isWar = keyTxtCompare("war", cmnd->str[1], strlen(cmnd->str[1]));
+
+    if (!isBlackjack && !isWar) {
+        player->printColor("You can't do that. Blackjack or war.\n");
         return(0);
     }
 
     player->unhide();
 
-    player->print("Not implemented yet.\n");
+    if (isBlackjack) {
+        player->printColor("Welcome to blackjack.\n");
+        player->getSock()->setState(BLACKJACK_START);
+    } else if (isWar) {
+        player->printColor("Not implemented yet.\n");
+        // player->printColor("Welcome to casino war.\n");
+        // player->getSock()->setState(CASINO_WAR_START);
+    }
+    player->printColor("Enter [Q] at any time to quit. Enter [R] at any time to view the rules.\nPress [enter] to continue.\n");
     return(0);
 }
 

@@ -22,6 +22,7 @@
 
 #include "mudObjects/creatures.hpp"
 
+class Blackjack;
 class Fishing;
 
 class Player : public Creature {
@@ -146,6 +147,10 @@ public:
     Statistics statistics;
     Range   bRange[MAX_BUILDER_RANGE];
 
+    struct GamblingState { // for interactive gambling games
+        Blackjack *bjGame{};
+    };
+    GamblingState gamblingState;
 
     bool checkProxyAccess(const std::shared_ptr<Player>& proxy);
 
