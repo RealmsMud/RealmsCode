@@ -827,21 +827,15 @@ short Object::getShotsMax() const { return(shotsMax); }
 short Object::getShotsCur() const { return(shotsCur); }
 short Object::getChargesMax() const { return(chargesMax); }
 short Object::getChargesCur() const { return(chargesCur); }
+
+
 float Object::getDurabilityPercent(bool charges) const {
-    if(charges) {
-        if(chargesCur > 0) {
-            return chargesCur / std::max<float>(chargesMax,1.0);
-        } else {
-            return 0;
-        }
-    } else {
-        if(shotsCur > 0) {
-            return shotsCur / std::max<float>(shotsMax,1.0);
-        } else {
-            return 0;
-        }
-    }
+    if(charges) 
+        return(getPercentRemaining(chargesCur,chargesMax));
+    else
+        return(getPercentRemaining(shotsCur,shotsMax));
 }
+
 std::string Object::getDurabilityStr(bool charges) const {
     std::string str = "";
     float percent = getDurabilityPercent();

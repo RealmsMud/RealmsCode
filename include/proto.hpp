@@ -48,6 +48,7 @@ class TileInfo;
 // Stats
 double getConBonusPercentage(int pCon);
 double getIntBonusPercentage(int pInt);
+float getPercentRemaining(int current, int maximum);
 
 // Container
 bool isMatch(const std::shared_ptr<const Creature>& searcher, const std::shared_ptr<MudObject>& target, const std::string& name, bool exactMatch, bool checkVisibility = false);

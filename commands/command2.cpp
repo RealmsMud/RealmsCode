@@ -709,6 +709,63 @@ int cmdRoominfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 }
 
+//*********************************************************************
+//                      cmdCondition
+//*********************************************************************
+// This function allows a player to look a target mob or player and get 
+// a quick idea of what condition it is in without having to see everything 
+// else like they would when using the look command.
+
+int cmdCondition(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<MudObject> target = nullptr;
+    std::shared_ptr<Player> pTarget = nullptr;
+    std::shared_ptr<Monster> mTarget = nullptr;
+
+    int flags = player->displayFlags();
+
+    if(!player->ableToDoCommand())
+        return(0);
+    if(player->isBlind()) {
+        player->printColor("^CYou're blind!\n");
+        return(0);
+    }
+
+    if (!cmnd || cmnd->num < 2) 
+        target = player->myTarget.lock();
+    else
+        target = player->findTarget(FIND_MON_ROOM | FIND_PLY_ROOM, flags, cmnd->str[1], cmnd->val[1]);
+
+    if (!target) {
+        *player << "Check the condition of who?\n";
+        return(0);
+    }
+
+    if (!player->canSee(target) && !player->isDm()) {
+        *player << "Check the condition of who?\n";
+        return(0);
+    }
+
+    if (player->getParent() != target->getAsCreature()->getParent()) {
+        *player << "Check the condition of who?\n";
+        return(0);
+    }
+    
+    pTarget = target->getAsPlayer();
+    mTarget = target->getAsMonster();
+
+    if (target == player->myTarget.lock() && (!cmnd || cmnd->num < 2))
+        *player << ColorOn << "Using your set target: " << target->getCName() << "\n" << ColorOff;
+    *player << ColorOn << setf(CAP) << target << "'s health status:\n\n";
+    *player << target->getAsCreature()->getHpDurabilityStr() << "\n";
+    if ((mTarget && mTarget->isEnemy(player)) || (pTarget && pTarget->hp.getCur() < pTarget->hp.getMax()))
+        *player << target->getAsCreature()->getHpProgressBar() << "\n" << ColorOff;
+    else
+        *player << "\n" << ColorOff;
+
+    return(0);
+}
+
+
 
 
 //*********************************************************************
