@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _SONGS_H
-#define _SONGS_H
+#pragma once
 
 #include <set>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -68,6 +67,4 @@ private:
     int duration{};
 
 };
-
-#endif  /* _SONGS_H */
 

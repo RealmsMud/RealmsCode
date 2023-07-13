@@ -16,9 +16,7 @@
  *
  */
 
-
-#ifndef CREATURE_STREAMS_H
-#define CREATURE_STREAMS_H
+#pragma once
 
 #include <map>
 
@@ -104,6 +102,3 @@ public:
 
 Streamable& operator<<(Streamable& out, setf flags);
 Streamable& operator<<(Streamable& out, setn num);
-
-
-#endif

@@ -16,13 +16,8 @@
  *
  */
 
-#ifndef HELP_H_
-#define HELP_H_
-
+#pragma once
 
 namespace Help {
      std::string loadHelpTemplate(const char* filename);
  }
-
-
-#endif /* HELP_H_ */

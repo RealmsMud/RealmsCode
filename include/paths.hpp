@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef PATHS_H_
-#define PATHS_H_
+
+#pragma once
 
 #include <filesystem>
 
@@ -44,7 +44,7 @@ struct Path {
 
     static inline const fs::path Code = Config / "code";
 // First check the docker install path; then the code directory, and finally fall back to the old place
-    static inline const fs::path Python = "/build/pythonLib/:/home/realms/realms/RealmsCode/pythonLib:/home/realms/realms/config/code/python/";
+    static inline const fs::path Python = "/build/pythonLib/:" / BasePath / "RealmsCode/pythonLib:" / BasePath / "config/code/python/";
     static inline const fs::path Game = Config / "game";
     static inline const fs::path AreaData = Game / "area";
     static inline const fs::path Talk = Game / "talk";
@@ -77,7 +77,4 @@ struct Path {
     static fs::path roomPath(const CatRef& cr);
     static fs::path roomBackupPath(const CatRef& cr);
 };
-
-
-#endif /*PATHS_H_*/
 

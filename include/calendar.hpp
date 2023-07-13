@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef CALENDAR_H_
-#define CALENDAR_H_
+
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <list>             // for list
@@ -197,6 +197,3 @@ public:
 
     [[nodiscard]] cSeason *getCurSeason() const;
 };
-
-
-#endif /*CALENDAR_H_*/

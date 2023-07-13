@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef SERVER_H_
-#define SERVER_H_
+#pragma once
 
 #ifdef SQL_LOGGER
 
@@ -460,5 +459,3 @@ public:
 };
 
 extern Server *gServer;
-
-#endif /*SERVER_H_*/

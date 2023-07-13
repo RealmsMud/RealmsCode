@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef REALMSCODE_LASTTIME_H
-#define REALMSCODE_LASTTIME_H
+#pragma once
 
 #include "catRef.hpp"
 #include "json.hpp"
@@ -47,5 +46,3 @@ public:
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(CRLastTime, interval, ltime, cr);
 };
 
-
-#endif //REALMSCODE_LASTTIME_H

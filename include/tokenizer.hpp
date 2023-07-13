@@ -15,10 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef TOKENIZER_H_
-#define TOKENIZER_H_
+
+#pragma once
 
 #include <boost/tokenizer.hpp>
 typedef boost::tokenizer< boost::char_separator<char> > charTokenizer;
-
-#endif

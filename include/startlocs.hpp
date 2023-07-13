@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _START_H
-#define _START_H
+#pragma once
 
 class Location;
 class CatRef;
@@ -47,7 +46,4 @@ protected:
     CatRef startingGuide;
     bool    primary;
 };
-
-
-#endif  /* _START_H */
 

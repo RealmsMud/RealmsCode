@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _DAMAGE_H
-#define _DAMAGE_H
+#pragma once
 
 enum ReflectedDamageType {
     REFLECTED_NONE =    0,
@@ -60,7 +59,4 @@ protected:
     int physicalBonusReflected{};
     ReflectedDamageType physicalReflectedType;
 };
-
-
-#endif  /* _DAMAGE_H */
 

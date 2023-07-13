@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _DELAYEDACTION_H
-#define _DELAYEDACTION_H
+#pragma once
 
 #include "cmd.hpp"
 
@@ -65,7 +64,3 @@ struct DelayedAction {
         this->script = script;
     }
 };
-
-
-#endif  /* _DELAYEDACTION_H */
-

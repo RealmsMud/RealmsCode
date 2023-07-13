@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef CLAN_H_
-#define CLAN_H_
+
+#pragma once
 
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -44,4 +44,4 @@ public:
     std::map<std::string, short> skillBonus;
 };
 
-#endif /*CLAN_H_*/
+

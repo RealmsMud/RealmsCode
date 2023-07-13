@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _PLAYERTITLE_H
-#define _PLAYERTITLE_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 
@@ -30,7 +29,3 @@ protected:
     std::string     male;
     std::string     female;
 };
-
-
-#endif  /* _PLAYERTITLE_H */
-

@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _ALCHEMY_H
-#define _ALCHEMY_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <iosfwd>           // for ostream
@@ -119,8 +118,4 @@ public:
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(AlchemyEffect, effect, quality, duration, strength);
 
 };
-
-
-#endif  /* _ALCHEMY_H */
-
 

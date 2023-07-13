@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef THREAT_H_
-#define THREAT_H_
+#pragma once
 
 #include <functional>
 #include <map>
@@ -92,6 +91,3 @@ public:
     long totalThreat;
     Creature* myParent{};
 };
-
-
-#endif //THREAT_H

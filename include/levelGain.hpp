@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef _LEVELGAIN_H
-#define _LEVELGAIN_H
+
+#pragma once
 
 #include <list>
 
@@ -49,7 +49,4 @@ public:
 
 
 };
-
-
-#endif  /* _LEVELGAIN_H */
 

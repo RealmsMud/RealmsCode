@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef PROXY_H_
-#define PROXY_H_
+#pragma once
 
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -67,5 +66,3 @@ public:
     [[nodiscard]] std::string getProxyName() const;
 };
 
-
-#endif /* PROXY_H_ */

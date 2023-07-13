@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _LOCATION_H
-#define _LOCATION_H
+#pragma once
 
 #include <libxml/parser.h>
 #include <string>
@@ -44,5 +43,4 @@ public:
 };
 
 
-#endif  /* _LOCATION_H */
 

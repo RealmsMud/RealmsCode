@@ -22,9 +22,7 @@
  *    https://github.com/goldsborough/lru-cache
  */
 
-
-#ifndef INCLUDE_LRU_STATISTICS_HPP_
-#define INCLUDE_LRU_STATISTICS_HPP_
+#pragma once
 
 #include <cstddef>
 #include <sstream>
@@ -99,5 +97,3 @@ private:
 
 
 } // Namespace LRU
-
-#endif /* INCLUDE_LRU_STATISTICS_HPP_ */

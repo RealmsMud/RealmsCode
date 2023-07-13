@@ -15,8 +15,8 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
-#ifndef AREA_H
-#define AREA_H
+
+#pragma once
 
 #include <boost/dynamic_bitset.hpp>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -295,5 +295,3 @@ protected:
     int minDepth;
 };
 
-
-#endif

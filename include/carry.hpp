@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _CARRY_H
-#define _CARRY_H
+#pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <string>           // for allocator, string
@@ -37,7 +36,4 @@ public:
     CatRef info;
     int numTrade;
 };
-
-
-#endif  /* _CARRY_H */
 

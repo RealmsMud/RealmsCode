@@ -57,7 +57,7 @@ int update_rooms() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
 
-    const char* room_path = "/home/realms/realms/rooms/";
+    const fs::path room_path = Path::UniqueRoom;
     std::vector<fs::path> areas;
     fs::directory_iterator areas_end, areas_start(room_path);
     std::copy(areas_start, areas_end, std::back_inserter(areas));
@@ -97,7 +97,7 @@ int update_objects() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
 
-    const char* objects_path = "/home/realms/realms/objects/";
+    const fs::path objects_path = Path::Object;
     std::vector<fs::path> areas;
     fs::directory_iterator areas_end, areas_start(objects_path);
     std::copy(areas_start, areas_end, std::back_inserter(areas));
@@ -138,7 +138,7 @@ int update_monsters() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
 
-    const char* monster_path = "/home/realms/realms/monsters/";
+    const fs::path monster_path = Path::Monster;
     std::vector<fs::path> areas;
     fs::directory_iterator areas_end, areas_start(monster_path);
     std::copy(areas_start, areas_end, std::back_inserter(areas));

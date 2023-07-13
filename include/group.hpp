@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef GROUP_H_
-#define GROUP_H_
+#pragma once
 
 #include <list>
 #include <memory>
@@ -126,5 +125,3 @@ private:
     GroupType groupType;
 };
 
-
-#endif /* GROUP_H_ */
