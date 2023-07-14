@@ -379,7 +379,7 @@ int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->isCt()) {
         // Cannot steal if sitting.
         if(player->flagIsSet(P_SITTING)) {
-            player->print("You have to stand up first.\n");
+            player->print("You have to stand up first to steal.\n");
             return(0);
         }
         if(player->isEffected("mist")) {

@@ -45,8 +45,11 @@ void Player::hasNewMudmail() const {
     if(!flagIsSet(P_UNREAD_MAIL))
         return;
 
-    if(fs::exists(Path::Post / getName() / ".txt"))
-        print("\n*** You have new mudmail in the post office.\n");
+    const auto filename = (Path::Post / getName()).replace_extension("txt");
+
+    if(fs::exists(filename)) 
+         printColor("\n^W*** You have new mudmail in the post office.^x\n");
+    
 }
 
 //*********************************************************************
@@ -59,7 +62,7 @@ bool canPost(std::shared_ptr<Player> player) {
             !player->getRoomParent()->flagIsSet(R_LIMBO) &&
             !(player->getRoomParent()->flagIsSet(R_FAST_HEAL) && player->getRoomParent()->isPkSafe())
         ) {
-            *player << "You cannot do that here.\nYou need to find a post office, or you need to be in a tick room that is pkill safe.\n";
+            *player << "You cannot do that here.\nYou must be in a post office or a tick room that is pkill safe.\n";
             return(false);
         }
     }
@@ -134,6 +137,8 @@ int cmdSendMail(const std::shared_ptr<Player>& player, cmd* cmnd) {
         broadcast(isDm, "^g### %s is sending mudmail to %s.", player->getCName(), target->getCName());
 
     target->setFlag(P_UNREAD_MAIL);
+    target->lasttime[LT_MAIL_ALERT].ltime = time(nullptr);
+    target->lasttime[LT_MAIL_ALERT].interval = 600L;
     target->save(online);
 
     player->print("Enter your message now. Type '.' or '*' on a line by itself to finish or '\\' to\ncancel. Each line should be NO LONGER THAN 80 CHARACTERS.\n-: ");

@@ -941,7 +941,8 @@ void Creature::stand() {
 
     print("You stand up.\n");
     if(getRoomParent()) {
-        broadcast(getSock(), getRoomParent(), "%M stands up.", this);
+        if (!(player && player->isStaff()))
+            broadcast(getSock(), getRoomParent(), "%M stands up.", this);
         socialHooks(Containable::downcasted_shared_from_this<Creature>(), "stand");
     }
 }

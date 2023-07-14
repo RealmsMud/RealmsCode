@@ -58,10 +58,8 @@ int cmdFollow(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
 
-    if(player->flagIsSet(P_SITTING)) {
-        *player << "You need to stand first.\n";
-        return(0);
-    }
+    if(player->flagIsSet(P_SITTING))
+        player->stand();
 
     player->unhide();
     lowercize(cmnd->str[1], 1);

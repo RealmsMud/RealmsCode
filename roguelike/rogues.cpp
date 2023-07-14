@@ -242,10 +242,8 @@ bool canSearch(const std::shared_ptr<Player> player) {
         return(false);
     }
 
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You must stand up first!\n");
-        return(false);
-    }
+    if(player->flagIsSet(P_SITTING)) 
+        player->stand();
 
     return(true);
 }
@@ -506,10 +504,8 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("You don't know how to hide effectively.\n");
         return(0);
     }
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You cannot do that while sitting down.\n");
-        return(0);
-    }
+    if(player->flagIsSet(P_SITTING))
+        player->stand();
 
     if(player->isEffected("mist")) {
         player->print("You are already hidden as a mist.\n");
@@ -972,10 +968,8 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!needUniqueRoom(player))
         return(0);
 
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You have to stand up first.\n");
-        return(0);
-    }
+    if(player->flagIsSet(P_SITTING)) 
+        player->stand();
 
     if(player->getClass() == CreatureClass::BUILDER)
         return(0);
@@ -1762,16 +1756,13 @@ int cmdPickLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("You don't know how to pick locks.\n");
         return(0);
     }
+ 
+    if(player->flagIsSet(P_SITTING))
+        player->stand();
 
-    if(!player->isCt()) {
-        if(player->flagIsSet(P_SITTING)) {
-            player->print("You have to stand up first.\n");
-            return(0);
-        }
-        if(player->isBlind()) {
-            player->printColor("^CHow can you pick a lock when blind?\n");
-            return(0);
-        }
+    if(!player->isCt() && player->isBlind()) {
+        player->printColor("^CHow can you pick a lock when blind?\n");
+        return(0);
     }
 
 
