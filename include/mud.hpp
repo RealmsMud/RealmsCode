@@ -83,7 +83,7 @@ class LastTime;
 #define LT_PEEK         10
 #define LT_SNEAK        11
 #define LT_READ_SCROLL      12
-// free             13
+#define LT_MAIL_ALERT   13
 #define LT_HIDE         14
 #define LT_TURN         15
 #define LT_FRENZY       16

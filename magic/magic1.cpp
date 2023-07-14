@@ -71,13 +71,43 @@ class UniqueRoom;
 void spellShortcut(char *spell) {
     if(!strcasecmp(spell, "m"))
         strcpy(spell, "mend");
-    if(!strcasecmp(spell, "v"))
+    else if(!strcasecmp(spell, "v"))
         strcpy(spell, "vigor");
-
-    if(!strcasecmp(spell, "d-i"))
+    else if(!strcasecmp(spell, "d-i"))
         strcpy(spell, "detect-invis");
-    if(!strcasecmp(spell, "d-m"))
+    else if(!strcasecmp(spell, "d-m"))
         strcpy(spell, "detect-magic");
+    else if(!strcasecmp(spell, "mm"))
+        strcpy(spell, "magic-missile");
+    else if(!strcasecmp(spell, "fb"))
+        strcpy(spell, "fireball");
+    else if(!strcasecmp(spell, "wb"))
+        strcpy(spell, "waterbolt");
+    else if(!strcasecmp(spell, "sb"))
+        strcpy(spell, "steamblast");
+    else if(!strcasecmp(spell, "ff"))
+        strcpy(spell, "flamefill");
+    else if(!strcasecmp(spell, "bb"))
+        strcpy(spell, "bloodboil");
+    else if(!strcasecmp(spell, "eg"))
+        strcpy(spell, "engulf");
+    else if(!strcasecmp(spell, "et"))
+        strcpy(spell, "earth-tremor");
+    else if(!strcasecmp(spell, "e-t"))
+        strcpy(spell, "ethereal-travel");
+    else if(!strcasecmp(spell, "cc"))
+        strcpy(spell, "cold-cone");
+    else if(!strcasecmp(spell, "cd"))
+        strcpy(spell, "cure-disease");
+    else if(!strcasecmp(spell, "sp"))
+        strcpy(spell, "slow-poison");
+    else if(!strcasecmp(spell, "cp"))
+        strcpy(spell, "cure-poison");
+    else if(!strcasecmp(spell, "cb"))
+        strcpy(spell, "cure-blindness");
+    else if(!strcasecmp(spell, "rc"))
+        strcpy(spell, "remove-curse");
+
 }
 
 //*********************************************************************
@@ -397,8 +427,7 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     if( player == creature && player->pFlagIsSet(P_SITTING) &&
         data.splno != S_VIGOR && data.splno != S_MEND_WOUNDS && data.splno != S_BLESS && data.splno != S_PROTECTION && data.splno != S_HEAL
     ) {
-        listen->print("You cannot cast that while sitting.\n");
-        return(CAST_RESULT_FAILURE);
+        listen->stand();
     }
 
 

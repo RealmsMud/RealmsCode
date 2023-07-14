@@ -512,9 +512,9 @@ bool Config::initCommands() {
     playerCommands.emplace("where", 100, cmdLook, nullptr, "");
     playerCommands.emplace("traffic", 100, cmdTraffic, nullptr, "");
     playerCommands.emplace("roominfo", 100, cmdRoominfo, nullptr, "");
-    playerCommands.emplace("condition", 10, cmdCondition, nullptr, "");
-    playerCommands.emplace("victim", 10, cmdCondition, nullptr, "");
-    playerCommands.emplace("look", 10, cmdLook, nullptr, "");
+    playerCommands.emplace("condition", 10, cmdCondition, nullptr, "Check the health status of a monster or player");
+    playerCommands.emplace("victim", 10, cmdCondition, nullptr, "Check the health status of a monster or player");
+    playerCommands.emplace("look", 10, cmdLook, nullptr, "Look in a room, or at an object, player, monster, or exit");
     playerCommands.emplace("consider", 50, cmdLook, nullptr, "");
     playerCommands.emplace("examine", 100, cmdLook, nullptr, "");
     playerCommands.emplace("reconnect", 100, cmdReconnect, nullptr, "Log in as another character");
@@ -547,14 +547,14 @@ bool Config::initCommands() {
     playerCommands.emplace("information", 50, cmdInfo, nullptr, "Show extended information about your character");
     playerCommands.emplace("attributes", 100, cmdInfo, nullptr, "Show extended information about your character");
     playerCommands.emplace("skills", 100, cmdSkills, nullptr, "Show what skills your character knows");
-    playerCommands.emplace("version", 100, cmdVersion, nullptr, "");
-    playerCommands.emplace("age", 100, cmdAge, nullptr, "Show your character's age and time played.");
-    playerCommands.emplace("birthday", 100, checkBirthdays, nullptr, "Show which players online have birthdays.");
-    playerCommands.emplace("colors", 100, cmdColors, nullptr, "Show colors and set custom colors.");
-    playerCommands.emplace("colours", 100, cmdColors, nullptr, "");
-    playerCommands.emplace("factions", 100, cmdFactions, nullptr, "Show your standing with various factions.");
-    playerCommands.emplace("recipes", 100, cmdRecipes, nullptr, "Show what recipes you know.");
-    playerCommands.emplace("gamble", 100, cmdGamble, nullptr, "Gamble.");
+    playerCommands.emplace("version", 100, cmdVersion, nullptr, "View RoH current version");
+    playerCommands.emplace("age", 100, cmdAge, nullptr, "Show your character's age and time played");
+    playerCommands.emplace("birthday", 100, checkBirthdays, nullptr, "Show which players online have birthdays");
+    playerCommands.emplace("colors", 100, cmdColors, nullptr, "Show colors and set custom colors");
+    playerCommands.emplace("colours", 100, cmdColors, nullptr, "Show colors and set custom colors");
+    playerCommands.emplace("factions", 100, cmdFactions, nullptr, "Show your standing with various factions");
+    playerCommands.emplace("recipes", 100, cmdRecipes, nullptr, "Show what recipes you know");
+    playerCommands.emplace("gamble", 100, cmdGamble, nullptr, "Gamble in a casino.");
 
     // player-only communication functions
     playerCommands.emplace("send", 100, communicateWith, nullptr, "Send a message to another player");

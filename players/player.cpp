@@ -407,9 +407,8 @@ void Player::init() {
 
 
     wearCursed();
-
     computeLuck();
-    update();
+    
 
     std::shared_ptr<Socket> sock = getSock();
 
@@ -431,6 +430,10 @@ void Player::init() {
         sock->viewFile(Path::Help / "latest_post.txt", false);
 
         hasNewMudmail();
+        if (flagIsSet(P_UNREAD_MAIL)) {
+            lasttime[LT_MAIL_ALERT].ltime = time(nullptr);
+            lasttime[LT_MAIL_ALERT].interval = 600L;
+        }
 
         printColor("^yWatchers currently online: ");
         std::list<std::string> watchers;
@@ -450,6 +453,8 @@ void Player::init() {
 
     if(isCt())
         showGuildsNeedingApproval(pThis);
+
+    update();
 
     if(hp.getCur() < 0)
         hp.setCur(1);
@@ -677,6 +682,7 @@ void Player::update() {
     }
 
 
+
     checkEffectsWearingOff();
 
     if(isDiseased() && immuneToDisease())
@@ -696,6 +702,12 @@ void Player::update() {
     if(t > LT(this, LT_PLAYER_SAVE)) {
         lasttime[LT_PLAYER_SAVE].ltime = t;
         cmdSave(pThis, nullptr);
+    }
+
+   if(flagIsSet(P_UNREAD_MAIL) && (t > LT(this, LT_MAIL_ALERT))) {
+        lasttime[LT_MAIL_ALERT].ltime = t;
+        lasttime[LT_MAIL_ALERT].interval = 600L;
+        *this << ColorOn << "\n^y" << "*** You have unread mudmail.\n" << ColorOff;
     }
 
     item = getLight();

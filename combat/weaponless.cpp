@@ -357,10 +357,8 @@ int cmdFrenzy(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("You're already in a frenzy.\n");
         return(0);
     }
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You have to be standing to frenzy.\n");
-        return(0);
-    }
+    if(player->flagIsSet(P_SITTING)) 
+        player->stand();
 
     if(player->isEffected("haste")) {
         player->print("Your magically enhanced speed prevents you from going into a frenzy.\n");

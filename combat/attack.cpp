@@ -194,8 +194,10 @@ bool Creature::canAttack(const std::shared_ptr<Creature>& target, bool stealing)
         return(false);
     }
 
-    if(isCt())
+    if(isCt()) {
+        stand();
         return(true);
+    }
 
     // this only happens on autoattack, otherwise the findCreature would prevent us from
     // getting to this message. for this reason, we don't need to print a message.
@@ -218,10 +220,8 @@ bool Creature::canAttack(const std::shared_ptr<Creature>& target, bool stealing)
         }
     }
 
-    if(flagIsSet(P_SITTING)) {
-        print("You can't do that when sitting. Stand up!\n");
-        return(false);
-    }
+    if(flagIsSet(P_SITTING))
+        stand();
 
 
     // we are attacking a player or a pet

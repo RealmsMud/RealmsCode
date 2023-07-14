@@ -256,15 +256,14 @@ bool doWear(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->ableToDoCommand())
         return(false);
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You must stand to do that.\n");
-        return(false);
-    }
 
     if(cmnd && cmnd->num < 2) {
         player->print("Wear what?\n");
         return(false);
     }
+
+    if(player->flagIsSet(P_SITTING))
+        player->stand();
 
     player->unhide();
 
@@ -367,10 +366,9 @@ void wearAll(const std::shared_ptr<Player>& player, bool login) {
     if(!login) {
         if(!player->ableToDoCommand()) return;
 
-        if(player->flagIsSet(P_SITTING)) {
-            player->print("You must stand to do that.\n");
-            return;
-        }
+        if(player->flagIsSet(P_SITTING))
+            player->stand();
+           
     }
     std::shared_ptr<Object> object=nullptr;
     ObjectSet::iterator it;
@@ -584,10 +582,8 @@ void remove_all(const std::shared_ptr<Player>& player) {
     if(!player->ableToDoCommand())
         return;
 
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You must stand to do that.\n");
-        return;
-    }
+    if(player->flagIsSet(P_SITTING))
+        player->stand();
 
     for(i=0; i<MAXWEAR; i++) {
         if(player->ready[i] && (!(player->ready[i]->flagIsSet(O_CURSED) && player->ready[i]->getShotsCur() > 0))) {

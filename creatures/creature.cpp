@@ -1029,11 +1029,8 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
         if(!ableToDoCommand())
             return(false);
 
-        if(flagIsSet(P_SITTING)) {
-            if(displayFail)
-                print("You have to stand up first.\n");
-            return(false);
-        }
+        if(flagIsSet(P_SITTING))
+            stand();
 
         if(isEffected("hold-person")) {
             if(displayFail)
