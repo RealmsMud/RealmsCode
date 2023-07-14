@@ -512,9 +512,9 @@ bool Config::initCommands() {
     playerCommands.emplace("where", 100, cmdLook, nullptr, "");
     playerCommands.emplace("traffic", 100, cmdTraffic, nullptr, "");
     playerCommands.emplace("roominfo", 100, cmdRoominfo, nullptr, "");
-    playerCommands.emplace("condition", 10, cmdCondition, nullptr, "");
-    playerCommands.emplace("victim", 10, cmdCondition, nullptr, "");
-    playerCommands.emplace("look", 10, cmdLook, nullptr, "");
+    playerCommands.emplace("condition", 10, cmdCondition, nullptr, "Check the health status of a monster or player");
+    playerCommands.emplace("victim", 10, cmdCondition, nullptr, "Check the health status of a monster or player");
+    playerCommands.emplace("look", 10, cmdLook, nullptr, "Look in a room, or at an object, player, monster, or exit");
     playerCommands.emplace("consider", 50, cmdLook, nullptr, "");
     playerCommands.emplace("examine", 100, cmdLook, nullptr, "");
     playerCommands.emplace("reconnect", 100, cmdReconnect, nullptr, "Log in as another character");

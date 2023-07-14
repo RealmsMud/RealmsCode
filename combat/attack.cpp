@@ -218,10 +218,8 @@ bool Creature::canAttack(const std::shared_ptr<Creature>& target, bool stealing)
         }
     }
 
-    if(flagIsSet(P_SITTING)) {
-        print("You can't do that when sitting. Stand up!\n");
-        return(false);
-    }
+    if(flagIsSet(P_SITTING))
+        stand();
 
 
     // we are attacking a player or a pet

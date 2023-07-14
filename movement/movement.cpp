@@ -505,7 +505,7 @@ bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(false);
         }
         if(player->flagIsSet(P_SITTING)) {
-            player->print("You have to stand up first.\n");
+            player->print("You have to stand up first to properly sneak.\n");
             return(false);
         }
     }
@@ -1308,15 +1308,15 @@ int cmdOpen(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You have to stand up first.\n");
-        return(0);
-    }
+    
 
     if(cmnd->num < 2) {
         player->print("Open what?\n");
         return(0);
     }
+
+    if(player->flagIsSet(P_SITTING))
+        player->stand();
 
     exit = findExit(player, cmnd);
 
@@ -1399,10 +1399,9 @@ int cmdClose(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You have to stand up first.\n");
-        return(0);
-    }
+    if(player->flagIsSet(P_SITTING)) 
+        player->stand();
+    
 
     exit = findExit(player, cmnd);
 
@@ -1470,16 +1469,14 @@ int cmdUnlock(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
 
-
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You have to stand up first.\n");
-        return(0);
-    }
-
     if(cmnd->num < 2) {
         player->print("Unlock what?\n");
         return(0);
     }
+
+    if(player->flagIsSet(P_SITTING)) 
+        player->stand();
+    
 
     exit = findExit(player, cmnd);
 
@@ -1605,17 +1602,17 @@ int cmdLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(player->flagIsSet(P_SITTING)) {
-        player->print("You have to stand up first.\n");
-        return(0);
-    }
-
+    
     exit = findExit(player, cmnd);
 
     if(!exit) {
         player->print("Lock what?\n");
         return(0);
     }
+
+    if(player->flagIsSet(P_SITTING))
+        player->stand();
+
 
     const std::shared_ptr<Monster>  guard = player->getRoomParent()->getGuardingExit(exit, player);
     if(guard && !player->checkStaff("%M %s.\n", guard.get(), guard->flagIsSet(M_FACTION_NO_GUARD) ? "doesn't like you enough to let you lock it" : "won't let you lock it"))

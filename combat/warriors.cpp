@@ -886,10 +886,8 @@ bool Player::canTrack() {
     if(checkHeavyRestrict("find tracks"))
         return(false);
 
-    if(flagIsSet(P_SITTING)) {
-        print("You must stand up first!\n");
-        return(false);
-    }
+    if(flagIsSet(P_SITTING)) 
+        stand();
 
     return(true);
 }
