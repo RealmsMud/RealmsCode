@@ -554,6 +554,7 @@ bool Config::initCommands() {
     playerCommands.emplace("colours", 100, cmdColors, nullptr, "Show colors and set custom colors");
     playerCommands.emplace("factions", 100, cmdFactions, nullptr, "Show your standing with various factions");
     playerCommands.emplace("recipes", 100, cmdRecipes, nullptr, "Show what recipes you know");
+    playerCommands.emplace("gamble", 100, cmdGamble, nullptr, "Gamble in a casino.");
 
     // player-only communication functions
     playerCommands.emplace("send", 100, communicateWith, nullptr, "Send a message to another player");
