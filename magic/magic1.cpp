@@ -71,43 +71,41 @@ class UniqueRoom;
 void spellShortcut(char *spell) {
     if(!strcasecmp(spell, "m"))
         strcpy(spell, "mend");
-    if(!strcasecmp(spell, "v"))
+    else if(!strcasecmp(spell, "v"))
         strcpy(spell, "vigor");
-
-    if(!strcasecmp(spell, "d-i"))
+    else if(!strcasecmp(spell, "d-i"))
         strcpy(spell, "detect-invis");
-    if(!strcasecmp(spell, "d-m"))
+    else if(!strcasecmp(spell, "d-m"))
         strcpy(spell, "detect-magic");
-
-    if(!strcasecmp(spell, "mm"))
+    else if(!strcasecmp(spell, "mm"))
         strcpy(spell, "magic-missile");
-    if(!strcasecmp(spell, "fb"))
+    else if(!strcasecmp(spell, "fb"))
         strcpy(spell, "fireball");
-    if(!strcasecmp(spell, "wb"))
+    else if(!strcasecmp(spell, "wb"))
         strcpy(spell, "waterbolt");
-    if(!strcasecmp(spell, "sb"))
+    else if(!strcasecmp(spell, "sb"))
         strcpy(spell, "steamblast");
-    if(!strcasecmp(spell, "ff"))
+    else if(!strcasecmp(spell, "ff"))
         strcpy(spell, "flamefill");
-    if(!strcasecmp(spell, "bb"))
+    else if(!strcasecmp(spell, "bb"))
         strcpy(spell, "bloodboil");
-    if(!strcasecmp(spell, "eg"))
+    else if(!strcasecmp(spell, "eg"))
         strcpy(spell, "engulf");
-    if(!strcasecmp(spell, "et"))
+    else if(!strcasecmp(spell, "et"))
         strcpy(spell, "earth-tremor");
-    if(!strcasecmp(spell, "e-t"))
+    else if(!strcasecmp(spell, "e-t"))
         strcpy(spell, "ethereal-travel");
-    if(!strcasecmp(spell, "cc"))
+    else if(!strcasecmp(spell, "cc"))
         strcpy(spell, "cold-cone");
-    if(!strcasecmp(spell, "cd"))
+    else if(!strcasecmp(spell, "cd"))
         strcpy(spell, "cure-disease");
-    if(!strcasecmp(spell, "sp"))
+    else if(!strcasecmp(spell, "sp"))
         strcpy(spell, "slow-poison");
-    if(!strcasecmp(spell, "cp"))
+    else if(!strcasecmp(spell, "cp"))
         strcpy(spell, "cure-poison");
-    if(!strcasecmp(spell, "cb"))
+    else if(!strcasecmp(spell, "cb"))
         strcpy(spell, "cure-blindness");
-    if(!strcasecmp(spell, "rc"))
+    else if(!strcasecmp(spell, "rc"))
         strcpy(spell, "remove-curse");
 
 }
