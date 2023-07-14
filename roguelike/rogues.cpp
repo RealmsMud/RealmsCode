@@ -220,12 +220,12 @@ int cmdGamble(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if (isBlackjack) {
         player->printColor("Welcome to blackjack.\n");
         player->getSock()->setState(BLACKJACK_START);
+        player->printColor("Enter [Q] at any time to quit. Enter [R] at any time to view the rules.\nPress [enter] to continue.\n");
     } else if (isWar) {
         player->printColor("Not implemented yet.\n");
         // player->printColor("Welcome to casino war.\n");
         // player->getSock()->setState(CASINO_WAR_START);
     }
-    player->printColor("Enter [Q] at any time to quit. Enter [R] at any time to view the rules.\nPress [enter] to continue.\n");
     return(0);
 }
 

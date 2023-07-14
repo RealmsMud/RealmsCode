@@ -238,7 +238,21 @@ std::ostream& operator<<(std::ostream& os, const Blackjack& game) {
     }
   }
   os << std::setw(handPadding) << " ";
-  os << "Sum: " + game.dealerHand.getStatusStr();
+  
+  // only display dealer's sum when all player hands are resolved
+  if (
+    std::all_of(
+    game->playerHands.begin(),
+    game->playerHands.end(),
+    [](Hand hand) {
+      return hand.isResolved();
+    })
+  ) {
+    os << game.dealerHand.getStatusStr();
+  } else {
+    os << "?";
+  }
+  
 
   os << "\n\nPlayer:\n";
   for (int i = 0; i < game.playerHands.size(); i++) {
