@@ -75,7 +75,7 @@ class Blackjack {
 
     void deal(std::vector<int> bets);
 
-    bool allPlayerHandsResolved();
+    const bool allPlayerHandsResolved() const;
 
     friend std::ostream& operator<<(std::ostream& os, const Blackjack& game);
 };

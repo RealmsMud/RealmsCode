@@ -180,7 +180,7 @@ void Blackjack::deal(std::vector<int> bets) {
   playerHands = hands;
 }
 
-bool Blackjack::allPlayerHandsResolved() {
+const bool Blackjack::allPlayerHandsResolved() const {
   return std::all_of(playerHands.begin(), playerHands.end(), [](Blackjack::Hand h){ return h.isResolved(); });
 }
 
@@ -240,19 +240,11 @@ std::ostream& operator<<(std::ostream& os, const Blackjack& game) {
   os << std::setw(handPadding) << " ";
   
   // only display dealer's sum when all player hands are resolved
-  if (
-    std::all_of(
-    game->playerHands.begin(),
-    game->playerHands.end(),
-    [](Hand hand) {
-      return hand.isResolved();
-    })
-  ) {
+  if (game.allPlayerHandsResolved()) {
     os << game.dealerHand.getStatusStr();
   } else {
     os << "?";
   }
-  
 
   os << "\n\nPlayer:\n";
   for (int i = 0; i < game.playerHands.size(); i++) {
