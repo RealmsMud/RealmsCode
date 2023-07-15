@@ -1059,7 +1059,7 @@ bool Creature::checkResistEnchantments(const std::shared_ptr<Creature>& caster, 
             }
             resist=true;
         }
-        if (holdElemental && !monType::isFey(getType())) {
+        if (holdFey && !monType::isFey(getType())) {
             if (output) {
                 *caster << ColorOn << "^yOnly fey creatures are affected by the hold-fey spell.\nYour spell dissipated.\n" << ColorOff;
                 broadcast(caster->getSock(), caster->getParent(), "^y%M's spell dissipated.^x", caster.get());
@@ -1139,6 +1139,7 @@ bool Creature::checkResistEnchantments(const std::shared_ptr<Creature>& caster, 
                 broadcast(caster->getSock(), caster->getParent(),"^y%M is unaffected by %N's mere mortal magic.^x", this, caster.get());
             }
             resist=true;
+            aggro=true;
             break;
         default:
             break;
@@ -1360,12 +1361,14 @@ void Creature::doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker, int
     int dmgToBreak=0;
     EffectInfo* holdEffect = nullptr;
 
-    if (!attacker)
+    //Sanity checks
+    if (!attacker || dmg <= 0)
         return;
 
     if (!isMagicallyHeld())
         return;
 
+    //This works because creatures can only be under one type of hold effect at a time
     if (isEffected("hold-person"))
         holdEffect = getEffect("hold-person");
     else if (isEffected("hold-monster"))
@@ -1392,12 +1395,14 @@ void Creature::doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker, int
         dmgToBreak-=dmg;
 
     holdEffect->setExtra(dmgToBreak);
-
+    int roll = Random::get(1,100);
     if (dmgToBreak > 0 && (attacker->isCt() || (attacker->isPlayer() && attacker->flagIsSet(P_PTESTER)))) {
-        *attacker << ColorOn << "Dmg remaining before " << this << "'s " << holdEffect->getName() << " breaks: ^Y" << dmgToBreak << "\n" << ColorOff;
+        *attacker << ColorOn << "\n^DChance hold randomly breaks: ^R" << (std::max(1,getWillpower()/60)) << "%^D\n" ;
+        *attacker << "Dmg remaining before forced breakout: ^R: " << dmgToBreak << "\n";
+        *attacker << "^DRoll % (d100): ^W" << roll << "\n" << ColorOff;
     }
 
-    if (dmgToBreak <= 0) {
+    if (dmgToBreak <= 0 || (roll <= (std::max(1,getWillpower()/80))) ) {
         if (isPlayer()) {
             *this << ColorOn << "^YThe hold magic on you has been broken!\n" << ColorOff;
             *attacker << ColorOn << "^YThe hold magic on " << this << " has been broken!\n" << ColorOff;
@@ -1410,7 +1415,7 @@ void Creature::doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker, int
         if (isMonster()) {
             if (attacker->isPlayer())
                 *attacker << ColorOn << "^YThe hold magic on " << this << " has been broken!\n" << ColorOff;
-            broadcast(attacker->getSock(), attacker->getParent(), "^YThe hold magic on %M has been broken!^x", this);
+            broadcast(attacker->getSock(), attacker->getParent(), "^YThe hold magic on %N has been broken!^x",this);
         }
 
         removeEffect(holdEffect->getName());

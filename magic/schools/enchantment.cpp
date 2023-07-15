@@ -378,7 +378,7 @@ int doHoldSpells(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* 
 
             *caster << ColorOn << "^Y" << setf(CAP) << target << " is magically held in place!\n" << ColorOff;
             *target << ColorOn << "^YYou are magically held in place!\n" << ColorOff;
-            broadcast(caster->getSock(), target->getSock(), caster->getParent(), "^Y%N is magically held in place!^x", caster.get(), target.get());
+            broadcast(caster->getSock(), target->getSock(), caster->getParent(), "^Y%M is magically held in place!^x", target.get());
             
             
             

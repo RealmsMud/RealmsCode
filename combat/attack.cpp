@@ -462,6 +462,9 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
     if(!ableToDoCommand())
         return(0);
 
+    if(isMagicallyHeld(false))
+        return(0);
+
     if(attackType != ATTACK_BASH && attackType != ATTACK_AMBUSH && attackType != ATTACK_MAUL && attackType != ATTACK_KICK) {
         if(!checkAttackTimer())
             return(0);

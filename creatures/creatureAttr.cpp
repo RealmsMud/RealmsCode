@@ -1440,11 +1440,11 @@ bool Creature::isHumanoidLike() const {
     if (isUndead())
         return(false);
 
-    if (isMonster()) {
-        if (getType() == HUMANOID || getType() == GOBLINOID || 
-            getType() == INSECTOID || getType() == MONSTROUSHUM)
-            return(true);
-    }
+    if (isMonster() && monType::isHumanoidLike(getType()))
+         return(true);
+    
+    if (isPlayer())
+        return(true);
 
     return(false);
 }

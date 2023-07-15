@@ -101,7 +101,7 @@ bool Monster::updateCombat() {
     // If we're fighting a pet, see if we'll ignore the pet and attack a player instead
     if(target->isPet() && target->getMaster()) {
         if(target->inSameRoom(target->getMaster())) {
-            if(Random::get(1,100) < 20 || target->intelligence.getCur() >= 150 || target->flagIsSet(M_KILL_MASTER_NOT_PET)) {
+            if(Random::get(1,100) <= 20 || this->intelligence.getCur() >= 150 || this->flagIsSet(M_KILL_MASTER_NOT_PET)) {
                 target = target->getMaster();
                 addEnemy(target);
             }

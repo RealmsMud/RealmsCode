@@ -467,6 +467,75 @@ bool Monster::possibleEnemy() {
 }
 
 //*********************************************************************
+//                      willCastHolds
+//*********************************************************************
+// This functions determine whether a monster that wants to cast a hold spell
+// will cast it or not
+bool Monster::willCastHolds(const std::shared_ptr<Creature>& target, int splNo) {
+
+    if (!target)
+        return(false);
+
+    if(target->isMagicallyHeld(false))
+        return(false);
+
+    if (target->isEffected("free-action")) {
+        if (intelligence.getCur() >= 160 && Random::get(1,100) > 20)
+            return(false);
+    }
+
+    if(intelligence.getCur() >= 200 && target->checkResistEnchantments(this->getAsCreature(), get_spell_name(splNo), false))
+        return(false);
+
+    // Players are all humanoids, so these spells are pointless
+    if(target->isPlayer() && 
+        (splNo == S_HOLD_ANIMAL || splNo == S_HOLD_PLANT ||
+            splNo == S_HOLD_ELEMENTAL || splNo == S_HOLD_FEY))
+        return(false);
+
+    if(splNo != S_HOLD_UNDEAD && target->isUndead())
+        return(false);
+
+    switch (splNo) {
+    case S_HOLD_PERSON:
+        if(target->isHumanoidLike()) 
+            return(true);
+        break;
+    case S_HOLD_MONSTER:
+        if(target->isMonster() && monType::isFey(target->getType()))
+            return(false);
+        else
+            return(true);
+        break;
+    case S_HOLD_UNDEAD:
+        if(target->isUndead())
+            return(true);
+        break;
+    case S_HOLD_ANIMAL:
+        if(monType::isAnimal(target->getType()))
+            return(true);
+        break;
+    case S_HOLD_PLANT:
+        if(monType::isPlant(target->getType()))
+            return(true);
+        break;
+    case S_HOLD_ELEMENTAL:
+        if(monType::isElemental(target->getType()))
+            return(true);
+        break;
+    case S_HOLD_FEY:
+        if(monType::isFey(target->getType()))
+            return(true);
+        break;
+    default:
+        break;
+    }
+
+    return(false);
+
+}
+
+//*********************************************************************
 //                      castSpell
 //*********************************************************************
 // This function allows monsters to cast spells at players.
@@ -563,11 +632,13 @@ int Monster::castSpell(const std::shared_ptr<Creature>&target) {
         splNo == S_SPIRIT_STRIKE ||
         splNo == S_SOULSTEAL ||
         splNo == S_TOUCH_OF_KESH ||
-        (splNo == S_HOLD_PERSON && ((!target->isUndead() && target->isPlayer()) ||
-                                   (!target->isUndead() && target->isMonster() && 
-                                            (target->getType() == HUMANOID || target->getType() == GOBLINOID || target->getType() == INSECTOID))) ) ||
-        (splNo == S_HOLD_MONSTER && !target->isUndead()) ||
-        (splNo == S_HOLD_UNDEAD && target->isUndead())
+        (splNo == S_HOLD_PERSON && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_MONSTER && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_UNDEAD && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_ANIMAL && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_PLANT && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_ELEMENTAL && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_FEY && willCastHolds(target, splNo))
     ) {
         // we have the exact pointer
         enemy = target->getName();

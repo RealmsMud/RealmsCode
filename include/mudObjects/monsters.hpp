@@ -220,6 +220,7 @@ public:
     void pulseTick(long t);
     void beneficialCaster();
     int initMonster(bool loadOriginal = false, bool prototype = false);
+    bool willCastHolds(const std::shared_ptr<Creature>& target, int splNo);
 
     int mobileCrt();
     void getMobSave();

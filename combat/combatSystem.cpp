@@ -917,6 +917,10 @@ double Creature::getParryChance(const std::shared_ptr<Creature>& attacker, const
 bool Creature::canParry(const std::shared_ptr<Creature>& attacker) {
     if(attacker->isDm())
         return(false);
+
+    if(isMagicallyHeld(false))
+        return(false);
+
     if(isMonster())
         return(true);
 
@@ -975,6 +979,10 @@ bool Creature::canParry(const std::shared_ptr<Creature>& attacker) {
 bool Creature::canDodge(const std::shared_ptr<Creature>& attacker) {
     if(attacker->isDm())
         return(false);
+
+    if(isMagicallyHeld(false))
+        return(false);
+
     if(attacker->isMonster()) {
         if(attacker->flagIsSet(M_UN_DODGEABLE))
             return(false);
