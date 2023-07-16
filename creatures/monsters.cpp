@@ -1048,7 +1048,7 @@ int Monster::checkWander(long t) {
         // can't wander if following someone
         !flagIsSet(M_DM_FOLLOW) && !getMaster() &&
         // or if they're set no wander
-        !flagIsSet(M_NO_WANDER))
+        !flagIsSet(M_NO_WANDER) && !isMagicallyHeld())
     {
         // Fast wander can wander once a second
         if((flagIsSet(M_FAST_WANDER) && t - i > 1) ||

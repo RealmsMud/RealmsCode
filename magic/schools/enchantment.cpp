@@ -491,39 +491,22 @@ int splScare(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a scare spell on %N.", player.get(), target.get());
 
 
-        if(target->getClass() == CreatureClass::PALADIN) {
-            *player << ColorOn << "^yPaladins are immune to magical fear.\n^yYour spell failed.\n" << ColorOff;
-            *target << ColorOn << setf(CAP) << player << "'s spell failed due to your immunity to fear.\n";
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's spell failed.'", player.get());
-            return(0);
-        }
-
-        if(target->isEffected("berserk") || target->isUnconscious() || target->isEffected("petrification")) {
-            *player << ColorOn << "^yYour spell had no effect on " << target << ".\n" << ColorOff;
-            if (!target->isUnconscious()) {
-
-                if(target->isEffected("berserk") )
-                    *target << ColorOn << "^rYou shrugged off " << player->hisHer() << " spell due to your rage.\n" << ColorOff;
-                else
-                     *target << setf(CAP) << player << "'s spell had no effect.\n";
-            }
-
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's spell had no effect.", player.get());
-            return(0);
+        if (target->checkResistEnchantments(player, "scare", true)) {
+            return(1);
         }
 
         if(target->isEffected("courage") && !player->isCt()) {
             *player << ColorOn << "^y" << setf(CAP) << target << "is too courageous for that to work right now.\n";
             *target << "You shrugged off " << player << "'s spell due to your magical courage.\n";
              broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's spell had no effect.", player.get());
-            return(0);
+            return(1);
         }
 
-        if(Random::get(1,100) <= 50 && target->isEffected("resist-magic") && !player->isCt()) {
-            *player << ColorOn << "^mYour spell had no effect.\n" << ColorOff;
-            *target << setf(CAP) << player << "'s spell failed due to your magical resistance.\n";
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's spell had no effect.", player.get());
-            return(0);
+        if(target->isMagicallyHeld()) {
+            *player << setf(CAP) << target << " is currently magically held! " << target->upHeShe() << " can't run anywhere!\n";
+            *target << "You are suddenly more terrified than ever right now, but you can't move to flee!\n";
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M looks really terrified, but %s can't move to flee!", target.get(), target->heShe());
+            return(1);
         }
 
         target->wake("Terrible nightmares disturb your sleep!");
@@ -716,37 +699,23 @@ int splFear(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
             return(0);
 
 
-        if( (target->mFlagIsSet(M_PERMENANT_MONSTER)) ||
-            (target->getClass() == CreatureClass::PALADIN && target->isMonster()) ) {
-            *player << setf(CAP) << target << " is immune to fear. Your spell had no effect.\n";
+        
+
+        
+        if( (target->mFlagIsSet(M_PERMENANT_MONSTER))) {
+            *player << setf(CAP) << target << " is too strong willed for that. Your spell had no effect.\n";
             broadcast(player->getSock(), target->getSock(), player->getParent(),
                              "%M casts a fear spell on %N.\n%M brushes it off and attacks %N.", player.get(), target.get(), target.get(), player.get());
          
-
             target->getAsMonster()->addEnemy(player, true);
             return(0);
         }
+        
 
         if (target->isEffected("resist-magic"))
             dur /= 2;
 
         player->smashInvis();
-       
-        if(target->isPlayer() && target->getClass() == CreatureClass::PALADIN) {
-            *player << setf(CAP) << target << " is immune to fear. Your spell had no effect.\n";
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a fear spell on %N.", player.get(), target.get());
-            *target << setf(CAP) << player << " casts a fear spell on you.\nIt has no apparent effect.\n";
-            return(0);
-        }
-
-        if(target->isEffected("berserk")) {
-            *player << setf(CAP) << target << "'s violent rage has made " << target->himHer() << " immune to fear!\n";
-            *target << setf(CAP) << player << " tried to cast a fear spell on you.\n";
-            *target << ColorOn << "^rYour violent rage has made you immune.\n" << ColorOff;
-            broadcast(player->getSock(), target->getSock(), player->getParent(), 
-                            "%M tried to cast a fear spell on %N.\n%M's violent rage has made %s immune!", player.get(), target.get(), target.get(), target->himHer());
-            return(0);
-        }
 
         target->wake("Terrible nightmares disturb your sleep!");
 
@@ -763,8 +732,10 @@ int splFear(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
             *target << setf(CAP) << player << " casts a fear spell on you.\n";
         }
 
-        if(target->isMonster())
-            target->getAsMonster()->addEnemy(player);
+        if (target->checkResistEnchantments(player, "fear", true))
+            return(1);
+
+        
     }
 
     target->addEffect("fear", dur, 1, player, true, player);

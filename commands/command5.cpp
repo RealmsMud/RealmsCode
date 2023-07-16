@@ -83,7 +83,6 @@ int cmdWho(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    //blah blah blah
 
     if(cmnd->num > 1) {
 

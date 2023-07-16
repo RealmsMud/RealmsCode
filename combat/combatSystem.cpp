@@ -719,29 +719,6 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
 
     int randNum = Random::get(0, 10000);
 
-    /*
-    if (isPlayer() && (isCt() || flagIsSet(P_PTESTER))) {
-        *this << "missChance = " << missChance << ".\n";
-        *this << "missModifier = " << missModifier << ".\n";
-        *this << "dodgeChance = " << dodgeChance << ".\n";
-        *this << "parryChance = " << parryChance << ".\n";
-        *this << "glancingChance = " << glancingChance << ".\n";
-        *this << "blockChance = " << blockChance << ".\n";
-        *this << "criticalChance = " << criticalChance << ".\n";
-        *this << "fumbleChance = " << glancingChance << ".\n\n";
-        *this << "missCutoff = " << missCutoff << ".\n";
-        *this << "dodgeCutoff = " << dodgeCutoff << ".\n";
-        *this << "parryCutoff = " << parryCutoff << ".\n";
-        *this << "glancingCutoff = " << glancingCutoff << ".\n";
-        *this << "blockCutoff = " << blockCutoff << ".\n";
-        *this << "criticalCutoff = " << criticalCutoff << ".\n";
-        *this << "fumbleCutoff = " << fumbleCutoff << ".\n";
-
-        *this << "\nAttack roll = " << randNum << "\n";
-    }
-    */
-
-
     AttackResult result;
 
     if(randNum < missCutoff)

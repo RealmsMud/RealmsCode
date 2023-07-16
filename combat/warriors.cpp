@@ -477,14 +477,13 @@ int cmdBerserk(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         if(player->isEffected("fear"))
             player->removeEffect("fear");
+
         if(player->isEffected("hold-person"))
             player->removeEffect("hold-person");
-       // if(player->isEffected("hold-monster"))
-         //   player->removeEffect("hold-monster");
-        //if(player->isEffected("hold-undead"))
-         //   player->removeEffect("hold-undead");
-        if(player->isEffected("entangled"))
-            player->removeEffect("entangled");
+        else if(player->isEffected("hold-monster"))
+            player->removeEffect("hold-monster");
+        else if(player->isEffected("hold-undead"))
+            player->removeEffect("hold-undead");
 
         if(player->flagIsSet(P_STUNNED)) {
             *player << ColorOn << "^yYou are no longer stunned.\n" << ColorOff;

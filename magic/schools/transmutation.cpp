@@ -89,7 +89,7 @@ int splEntangle(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
             broadcast(player->getSock(), player->getParent(), "%M becomes entangled by vines and weeds!", player.get());
 
             player->unhide();
-            player->addEffect("entangled", 0, 0, player, true, player);
+            player->addEffect("hold-person", 0, 0, player, true, player);
             return(1);
         }
 

@@ -995,7 +995,6 @@ int doRes(const std::shared_ptr<Creature>& caster, cmd* cmnd, bool res) {
     target->curePoison();
     
     target->removeEffect("hold-person");
-    target->removeEffect("entangled");
     target->removeEffect("hold-monster");
     if (!res)
         target->removeEffect("hold-undead");

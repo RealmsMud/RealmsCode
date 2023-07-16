@@ -1741,9 +1741,6 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
             broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player.get(), article, spell);
         }
 
-       // if (replaceCancelingEffects(player,target,effect))
-        //    return(0);
-
     } else {
         if(player->noPotion( spellData))
             return(0);
@@ -2341,14 +2338,22 @@ bool Creature::isMageLich() {
 void Creature::doFreeAction() {
     if (isEffected("slow"))
         removeEffect("slow");
+    
     if (isEffected("hold-person"))
         removeEffect("hold-person");
-    if (isEffected("hold-monster"))
+    else if (isEffected("hold-monster"))
         removeEffect("hold-monster");
-    if (isEffected("hold-undead"))
+    else if (isEffected("hold-undead"))
         removeEffect("hold-undead");
-    if (isEffected("entangled"))
-        removeEffect("entangled");
+    else if (isEffected("hold-animal"))
+        removeEffect("hold-animal");
+    else if (isEffected("hold-plant"))
+        removeEffect("hold-plant");
+    else if (isEffected("hold-elemental"))
+        removeEffect("hold-elemental");
+    else if (isEffected("hold-fey"))
+        removeEffect("hold-fey");
+
 
     if (isPlayer()) {
         if (flagIsSet(P_STUNNED))

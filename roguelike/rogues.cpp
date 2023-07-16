@@ -714,17 +714,9 @@ bool doScout(std::shared_ptr<Player> player, const std::shared_ptr<Exit> exit) {
         // There is no room, but we're going to pretend there is.
         *player << "\n";
         if(!area->name.empty())
-          //  player->printColor("%s%s^x\n\n",
-            //    (!player->flagIsSet(P_NO_EXTRA_COLOR) && area->isSunlight(exit->target.mapmarker) ? "^C" : "^c"),
-              //  area->name.c_str());
             *player << ColorOn << (!player->flagIsSet(P_NO_EXTRA_COLOR) && area->isSunlight(exit->target.mapmarker) ? "^C" : "^c") << area->name.c_str() << "^x\n\n" << ColorOff;
 
-        //player->printColor("%s", area->showGrid(player, exit->target.mapmarker, false).c_str());
-
         *player << ColorOn << area->showGrid(player, exit->target.mapmarker, false).c_str() << ColorOff;
-
-       // player->printColor("^g%s exits: north, east, south, west, northeast, northwest, southeast, southwest.^w\n\n",
-         //   player->isStaff() ? "All" : "Obvious");
 
         *player << ColorOn << "^g" << (player->isStaff() ? "All" : "Obvious") << " exits: north, east, south, west, northeast, northwest, southeast, southwest.^w\n\n" << ColorOff;
 
