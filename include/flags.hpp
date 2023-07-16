@@ -317,7 +317,6 @@
 // free                             178
 // free                             179
 // free                             180
-//#define P_FREE_ACTION               180      // Player under free-action spell
 #define P_NO_FLUSHCRTOBJ            181      // Builder doesn't have to *flushcrtobj
 #define P_NO_NUMBERS                182      // No Mob Numbers
 #define P_CAN_REBOOT                183      // Can use *reboot command

@@ -118,7 +118,6 @@ class LastTime;
 #define LT_DRAIN_LIFE       47
 #define LT_HYPNOTIZE        48
 #define LT_PLAYER_BITE      49
-//#define LT_FREE_ACTION      50
 // free                     50
 #define LT_PLAYER_SEND      51
 // free             52

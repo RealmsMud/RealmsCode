@@ -587,7 +587,7 @@ double Creature::getMisschanceModifier(const std::shared_ptr<Creature>& victim, 
         mod += victim->getEffect("blur")->getStrength();
 
     if (victim->isEffected("faerie-fire"))
-        mod += victim->getEffect("faerie-fire")->getStrength();
+        mod -= victim->getEffect("faerie-fire")->getStrength();
 
     if(victim->getRoomParent()->isEffected("dense-fog")) {
         effect = victim->getRoomParent()->getEffect("dense-fog");
