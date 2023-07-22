@@ -1527,7 +1527,7 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
             }
         }
 
-        if(weapon)
+        if(weapon && Random::get(0,1))
             weapon->decShotsCur();
         Creature::simultaneousDeath(player, target, false, false);
 

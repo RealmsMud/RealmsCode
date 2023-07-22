@@ -511,7 +511,7 @@
 // free                             152
 // free                             153
 // free                             154
-// free                             155
+#define M_NO_GORE                   155      // Monster unaffected by gore attacks
 #define M_NO_LEVEL_ONE              156      // Monster uneffected by level 1 spells
 #define M_NO_LEVEL_TWO              157      // Monster uneffected by level 2 spells or less
 #define M_NO_LEVEL_THREE            158      // Monster uneffected by level 3 spells or less

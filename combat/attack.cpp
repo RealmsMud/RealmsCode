@@ -200,7 +200,7 @@ bool Creature::canAttack(const std::shared_ptr<Creature>& target, bool stealing)
         return(false);
     }
 
-    if(isCt()) {
+    if(isCt() && flagIsSet(P_SITTING)) {
         stand();
         return(true);
     }
@@ -465,7 +465,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
     if(isMagicallyHeld(false))
         return(0);
 
-    if(attackType != ATTACK_BASH && attackType != ATTACK_AMBUSH && attackType != ATTACK_MAUL && attackType != ATTACK_KICK) {
+    if(attackType != ATTACK_BASH && attackType != ATTACK_AMBUSH && attackType != ATTACK_MAUL && attackType != ATTACK_KICK && attackType != ATTACK_GORE) {
         if(!checkAttackTimer())
             return(0);
 
@@ -526,7 +526,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
         broadcast(getSock(), pVictim->getSock(), getRoomParent(), "%M attacked %N!", this, pVictim.get());
     }
 
-    if(attackType != ATTACK_KICK && attackType != ATTACK_MAUL) {
+    if(attackType != ATTACK_KICK && attackType != ATTACK_MAUL && attackType != ATTACK_GORE) {
         // A monk that has no weapon, no holding item, but is wearing gloves gets to use the enchant off of them
         if (cClass == CreatureClass::MONK && !ready[WIELD - 1] && !ready[HELD - 1] && ready[HANDS - 1]) {
             //enchant = abs(ready[HANDS-1]->adjustment);
@@ -555,6 +555,14 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
             //enchant = abs(weapon->adjustment);
             duelWield = false;
             loc = FEET;
+        }
+    } else if(attackType == ATTACK_GORE) {
+        // kick
+        if(ready[HEAD-1]) {
+            weapon = ready[HEAD-1];
+            //enchant = abs(weapon->adjustment);
+            duelWield = false;
+            loc = HEAD;
         }
     }
 
@@ -595,6 +603,9 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
             } else if(attackType == ATTACK_MAUL) {
                 resultFlags |= NO_FUMBLE;
                 altSkillLevel = (int)getSkillGained("maul");
+            } else if(attackType == ATTACK_GORE) {
+                resultFlags |= NO_FUMBLE;
+                altSkillLevel = (int)getSkillGained("gore");
             }
 
             AttackResult result = getAttackResult(victim, weapon, resultFlags, altSkillLevel);
@@ -643,7 +654,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 
 
                 if(result == ATTACK_BLOCK) {
-                    *this << ColorOn << "^C" << victim.get() << " partially blocked your attack!\n" << ColorOff;
+                    *this << ColorOn << "^C" << setf(CAP) << victim.get() << " partially blocked your attack!\n" << ColorOff;
                     *victim << ColorOn << "^CYou manage to partially block " << this << "'s attack!\n" << ColorOff;
                 }
 
@@ -666,15 +677,19 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 bool wasKilled = false, freeTarget = false, meKilled;
 
                 if(attackType == ATTACK_BASH) {
-                    atk =" bashed";
+                    atk ="bashed";
                     showToRoom = true;
                 } else if(attackType == ATTACK_KICK) {
-                    atk =" kicked";
+                    atk ="kicked";
                     showToRoom = true;
                 } else if(attackType == ATTACK_MAUL) {
-                    atk =" mauled";
+                    atk ="mauled";
                     showToRoom = true;
-                } else {
+                } else if(attackType == ATTACK_GORE) {
+                    atk ="gored";
+                    showToRoom = true;
+                }
+                else {
                     atk = getDamageString(Containable::downcasted_shared_from_this<Player>(), weapon, result == ATTACK_CRITICAL ? true : false);
                 }
 
@@ -695,9 +710,12 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 
                 statistics.attackDamage(attackDamage.get()+drain, Statistics::damageWith(Containable::downcasted_shared_from_this<Player>(), weapon));
 
-                if(weapon && !Random::get(0, 3))
-                    weapon->decShotsCur();
-
+                if(weapon) {
+                    if(attackType == ATTACK_AMBUSH && Random::get(1,2) == 1) //50% chance to lose a shot, same as backstab
+                        weapon->decShotsCur();
+                    else if (Random::get(1,8) == 1) //12.5% chance to lose a shot (was previously 25% in stock mordor up to RoH v2.59)
+                        weapon->decShotsCur();
+                }
 
                 checkWeapon(Containable::downcasted_shared_from_this<Player>(), weapon, false, &loc, &attacks, &wielding, multiWeapon);
 
@@ -736,6 +754,8 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                     checkImprove("ambush", true);
                 } else if(attackType == ATTACK_KICK) {
                     checkImprove("kick", true);
+                } else if(attackType == ATTACK_GORE) {
+                    checkImprove("gore", true);
                 } else if(!pVictim && mVictim) {
                     std::string weaponSkill;
                     if(weapon)
@@ -781,6 +801,12 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                     checkImprove("kick", false);
                     *victim << this << " tried to kick you.\n";
                     broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to kick %N.", this, victim.get());
+                    break;
+                } else if(attackType == ATTACK_GORE) {
+                    *this << "Your gore attack was ineffective.\n";
+                    checkImprove("gore", false);
+                    *victim << this << " tried to gore you.\n";
+                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to gore %N.", this, victim.get());
                     break;
                 } else if(attackType == ATTACK_MAUL) {
                     *this << "You failed to maul " << victim.get() << "\n.";

@@ -664,7 +664,7 @@ int dmSpecials(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->print("     trample           poisonous-sting\n");
             player->print("     petrifying-gaze   petrifying-breath\n");
             player->print("     confusing-gaze    zap-mana\n");
-            player->print("     death-gaze\n");
+            player->print("     death-gaze        gore\n");
             return(0);
         } else {
             player->printColor("Added special ^W%s^x to ^W%M^x.\n", attack->getName().c_str(), target.get());
@@ -861,10 +861,29 @@ SpecialAttack* Creature::addSpecial(std::string_view specialName) {
         attack.damage.setSides(3);
         attack.damage.setPlus(bonus(strength.getCur()) + (cClass == CreatureClass::FIGHTER ? level / 4 : 0));
 
-//      if(flagIsSet(OLD_M_TRAMPLE)) {
-//          attack.dice[0] *= 2;
-//          attack.dice[2] *= 2;
-//      }
+        return &specials.emplace_back(attack);
+
+    } else if(specialName == "gore") {
+        SpecialAttack attack;
+        attack.name = "Gore";
+        attack.verb = "gored";
+
+        attack.type = SPECIAL_WEAPON;
+        attack.targetStr = "^R*ATTACKER* gores you for ^W*DAMAGE*^R damage.^x";
+        attack.roomStr = "^R*ATTACKER* gores *LOW-TARGET*.^x";
+        attack.targetSaveStr = attack.targetFailStr = "^R*ATTACKER* tried to gore you.^x";
+        attack.roomSaveStr = attack.roomFailStr = "^R*ATTACKER* tried to gore *LOW-TARGET*!^x";
+        attack.saveType = SAVE_DEXTERITY;
+        attack.chance = 101; // Always goes off
+        attack.delay = 20;
+
+        attack.setFlag(SA_SINGLE_TARGET);
+        attack.setFlag(SA_CHECK_DIE_ROB);
+        attack.setFlag(SA_UNDEAD_WARD_REDUCE);
+        attack.setFlag(SA_SAVE_NO_DAMAGE);
+        attack.damage.setNumber(4);
+        attack.damage.setSides(2);
+        attack.damage.setPlus((isMartial() ? ((strength.getCur()/25)+(level/4)) : level/5) + 1);
 
         return &specials.emplace_back(attack);
 

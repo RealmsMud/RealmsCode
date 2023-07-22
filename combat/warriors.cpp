@@ -707,6 +707,8 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->updateAttackTimer();
     player->lasttime[LT_KICK].ltime = t;
     player->lasttime[LT_KICK].interval = (player->getPrimaryDelay()/10);
+    player->lasttime[LT_GORE].ltime = t;
+    player->lasttime[LT_GORE].interval = (player->getPrimaryDelay()/10);
 
     if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARES) {
         player->lasttime[LT_SPELL].ltime = t;
@@ -766,6 +768,149 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 }
 
+//****************************************************************************
+//                      cmdGore
+//****************************************************************************
+// This command allows a player to use a gore attack on their opponents. 
+// The skill is originally designed for minotaurs and is set in the races.xml 
+// file in configs. No check for minotaur is made in this code, as there
+// might be future instances where we allow gore skill outside minotaurs.
+
+int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature;
+    long    i, j, t;
+    int     chance;
+
+
+    if(!player->ableToDoCommand())
+        return(0);
+
+    if(!player->isStaff()) {
+        if(!player->knowsSkill("gore")) {
+            *player << "You don't know how to gore your opponent.\n";
+            return(0);
+        }
+    }
+
+    if(!(creature = player->findVictim(cmnd, 1, true, false, "Gore whom?\n", "You don't see that here.\n")))
+        return(0);
+
+    if(!player->canAttack(creature))
+        return(0);
+
+
+    i = LT(player, LT_GORE);
+    t = time(nullptr);
+
+    if(i > t && !player->isDm()) {
+        player->pleaseWait(i-t);
+        return(0);
+    }
+
+    // Gore
+    long goreInterval = 0;
+    int goreSkill = player->getSkillLevel("gore");
+
+    // Time between use decreases with skill level
+    if (goreSkill >= 40)
+        goreInterval = 14;
+    else if (goreSkill >= 35)
+        goreInterval = 15;
+    else if (goreSkill >= 30)
+        goreInterval = 16;
+    else if (goreSkill >= 25)
+        goreInterval = 17;
+    else if (goreSkill >= 20)
+        goreInterval = 18;
+    else if (goreSkill >= 15)
+        goreInterval = 19;
+    else
+        goreInterval = 20;
+
+    player->lasttime[LT_GORE].ltime = t;
+    player->lasttime[LT_GORE].interval = goreInterval;
+
+    // No gore-cast. Not going to smash your head into something and then cast after. That'd just be dumb.
+    player->lasttime[LT_SPELL].ltime = t;
+
+    //For now, we're not going to be doing gore-kick combos
+    if(player->knowsSkill("kick")) {
+        j = LT(player, LT_KICK);
+        if (j<t) {
+            player->lasttime[LT_KICK].ltime = t;
+            player->lasttime[LT_KICK].interval = std::max<long>(j-t, 3); 
+        }
+    }
+
+    player->unhide();
+    player->smashInvis();
+    player->interruptDelayedActions();
+    
+    if(player->flagIsSet(P_LAG_PROTECTION_SET)) // Activates Lag protection.
+        player->setFlag(P_LAG_PROTECTION_ACTIVE);
+
+    if(creature->isMonster()) {
+        creature->getAsMonster()->addEnemy(player);
+    }
+
+    // Agility = avg of dex + con
+    chance = 400 + (5*((int)player->getSkillGained("gore") - creature->getLevel()*10)) + ((player->getAgility()*3) - (creature->getAgility()*2));
+
+    if(player->isBlind())
+        chance = std::min(50, chance);
+
+    if(creature->isMagicallyHeld())
+        chance *=2;
+
+    // For every size difference 2 and beyond, chance is roughly 20% less.
+    short sizeDiff = abs(player->getSize() - creature->getSize());
+    if (sizeDiff > 1)
+        chance -= sizeDiff*200;
+
+    chance = std::max(0, std::min(950, chance));
+
+    if (creature->isMonster()) {
+        switch(creature->getType()) {
+        case ETHEREAL:
+        case ENERGY:
+        case GASEOUS:
+        case INSECT:
+        case SLIME:
+        case PUDDING:
+        case UNDEAD: // NOTE: Only intelligent/powerful undead should be set to monType UNDEAD. 
+                     // Other undead, like zombies or skeletons, etc, should be HUMANOID or other and
+                     // have the M_UNDEAD mflag set. Those WOULD be affected by a gore attack.
+            *player << ColorOn << "^R" << setf(CAP) << creature << " is unaffected by gore attacks!\n" << ColorOff;
+            chance = 0;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if(creature->flagIsSet(M_NO_GORE))
+        chance = 0;
+
+    if(player->isCt())
+        chance = 1001;
+
+    if(Random::get(1,1000) <= chance) {
+        // Like bash, two checks, first is to see if the gore was sucessful, 2nd check
+        // is to see if we actually hit the target
+
+        player->attackCreature(creature, ATTACK_GORE);
+    }
+    else {
+        *player << ColorOn << "^RYour gore attack was ineffective.\n" << ColorOff;
+        player->checkImprove("gore", false);
+        *creature << ColorOn << "^R" << setf(CAP) << player << " tried to gore you!\n" << ColorOff;
+        broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(), "^R%M tried to gore %N!^x", player.get(), creature.get());
+    }
+
+    return(0);
+}
+
+
 //*********************************************************************
 //                      cmdKick
 //*********************************************************************
@@ -774,7 +919,7 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Creature> creature;
-    long    i, t;
+    long    i,j,t;
     int     chance;
 
 
@@ -807,14 +952,23 @@ int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
     // Kick
     player->lasttime[LT_KICK].ltime = t;
     if(player->getClass() == CreatureClass::FIGHTER || player->getClass() == CreatureClass::MONK)
-        player->lasttime[LT_KICK].interval = 12L;
+        player->lasttime[LT_KICK].interval = 9L;
     else
-        player->lasttime[LT_KICK].interval = 15L;
+        player->lasttime[LT_KICK].interval = 12L;
 
 
     if(player->getClass() !=  CreatureClass::MONK) {
         player->lasttime[LT_DISARM].ltime = t;
         player->lasttime[LT_DISARM].interval = 6;
+    }
+
+    //For now, we're not going to be doing kick-gore combos
+    if(player->knowsSkill("gore")) {
+        j = LT(player, LT_GORE);
+        if (j<t) {
+            player->lasttime[LT_GORE].ltime = t;
+            player->lasttime[LT_GORE].interval = std::max<long>(j-t, 3); 
+        }
     }
 
     player->unhide();

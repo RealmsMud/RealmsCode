@@ -1370,12 +1370,22 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         if((cClass == CreatureClass::FIGHTER || cClass == CreatureClass::MONK) && !hasSecondClass()) {
             attackDamage.add((int)(getSkillLevel("kick") / 4));
         }
+    } else if(attackType == ATTACK_GORE) {
+        if(computeBonus)
+            bonusDamage.set(getBaseDamage()/2);
+        attackDamage.set(Random::get(4,9));
+        if(getAsCreature()->isMartial())
+            attackDamage.add((strength.getCur() / 15) + (int)(getSkillLevel("gore") / 4));
+        else
+            attackDamage.add((int)(getSkillLevel("gore") / 5));
+
     } else if(attackType == ATTACK_MAUL) {
         if(computeBonus)
             bonusDamage.set(getBaseDamage()/2);
         attackDamage.set((Random::get(level / 2, level + 1) + (strength.getCur() / 10)));
         attackDamage.add(Random::get(2, 4));
-    } else {
+    } 
+    else {
         // Any non kick attack for now
         if(computeBonus)
             bonusDamage.set(getBaseDamage());
@@ -1514,6 +1524,9 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
             case ATTACK_KICK:
                 strcpy(atk, "kick");
                 break;
+            case ATTACK_GORE:
+                strcpy(atk, "gore");
+                break;
             default:
                 strcpy(atk, "hit");
                 break;
@@ -1530,7 +1543,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         if(computeBonus)
             bonusDamage.set(bonusDamage.get() * mult);
         broadcastGroup(false, victim, "^g%M made a critical %s!\n", this, atk);
-        if( attackType != ATTACK_KICK && weapon && !isDm() && weapon->flagIsSet(O_ALWAYS_CRITICAL) && !weapon->flagIsSet(O_NEVER_SHATTER)) {
+        if( attackType != ATTACK_KICK && attackType != ATTACK_GORE && weapon && !isDm() && weapon->flagIsSet(O_ALWAYS_CRITICAL) && !weapon->flagIsSet(O_NEVER_SHATTER)) {
             printColor("^YYour %s shatters.\n", weapon->getCName());
             broadcast(getSock(), getRoomParent(),"^Y%s %s shattered.", upHisHer(), weapon->getCName());
             retVal = 1;
@@ -1878,7 +1891,7 @@ int Creature::parry(const std::shared_ptr<Creature>& target) {
             break;
         }
         if(weapon) {
-            if(!Random::get(0, 3))
+            if(!Random::get(0, 7))
                 weapon->decShotsCur();
 
             // die check moved right before return.

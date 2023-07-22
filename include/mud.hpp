@@ -107,7 +107,7 @@ class LastTime;
 #define LT_CHARMED      36
 #define LT_MEDITATE     37
 #define LT_TOUCH_OF_DEATH   38
-// free             38
+#define LT_GORE             39
 #define LT_BLOOD_SACRIFICE  40
 #define LT_MOB_THIEF        41
 #define LT_INVOKE       42

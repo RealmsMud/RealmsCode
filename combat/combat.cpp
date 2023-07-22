@@ -1085,10 +1085,6 @@ void Creature::clearAsEnemy() {
 void Player::damageArmor(int dmg) {
     std::shared_ptr<Object> armor=nullptr;
 
-    // Damage armor 1/10th of the time
-    if(Random::get(1, 10) == 1)
-        return;
-
     int wear = chooseItem();
     if(!wear)
         return;
@@ -1105,13 +1101,23 @@ void Player::damageArmor(int dmg) {
         return;
 
     std::string armorType = armor->getArmorType();
+
+    // 30% of the time, avoid check for armor damage altogether
+    // But 5% of the time, also check for skill improve if not shield
+    int avoidRoll = Random::get(1,100);
+    if (avoidRoll <= 5 && armorType != "shield") {
+        checkImprove(armorType, true);
+        return;
+    }
+    else if (avoidRoll <= 30)
+        return;
+
     int armorSkill = (int)getSkillGained(armorType);
     int avoidChance = armorSkill / 4;
 
-
     // Make armor skill worth something, the higher the skill, the lower the chance it'll take damage
     if(Random::get(1,100) > avoidChance) {
-        printColor("Your ^W%s^x just got a little more scratched.\n", armor->getCName());
+        *this << ColorOn << "^DYour ^W" << armor->getCName() << "^D just got a little more scratched.\n" << ColorOff;
         armor->decShotsCur();
         if(armorType != "shield")
             checkImprove(armorType, true);

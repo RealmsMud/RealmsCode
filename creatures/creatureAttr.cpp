@@ -1468,6 +1468,58 @@ bool Creature::isUndead() const {
     return(false);
 }
 
+//************************************************************************************
+//                          isMartial
+//************************************************************************************
+// Martial = naturally fighting and/or fighting oriented/trained = prefers to smack 
+// on enemies rather than casting on them or using ambush tactics or other special 
+// abilities/attacks. Make sure it is thought through before you use this in code logic 
+// anywhere. Mobs should always have a class set if intended act in accordance to a class!
+
+bool Creature::isMartial() const {
+    switch(getClass()) {
+    case CreatureClass::CLERIC:
+        if (getDeity() == ENOCH || getDeity() == GRADIUS ||
+            getDeity() == LINOTHAN || getDeity() == ARES)
+            return(true);
+        if(isPlayer() && getAsConstPlayer()->getSecondClass() == CreatureClass::FIGHTER)
+            return(true);
+        break;
+    case CreatureClass::FIGHTER:
+    case CreatureClass::BERSERKER:
+    case CreatureClass::PALADIN:
+    case CreatureClass::DEATHKNIGHT:
+    case CreatureClass::RANGER:
+    case CreatureClass::MONK:
+    case CreatureClass::WEREWOLF:
+        return(true);
+        break;
+    default:
+        break;
+
+    }
+
+    if(isMonster()) {
+        switch(getType()) {
+        // These all need class set to be martial (or class+deity if cleric)
+        case MONSTER:
+        case HUMANOID:
+        case GOBLINOID:
+        case MONSTROUSHUM:
+        case INSECTOID:
+            if (getClass() == CreatureClass::NONE)
+                return(false);
+            break;
+        // The rest of the monTypes default to martial
+        default:
+            return(true);
+            break;
+        }
+    }
+
+    return(false);
+}
+
 //********************************************************************
 //                      isArcaneCaster
 //********************************************************************

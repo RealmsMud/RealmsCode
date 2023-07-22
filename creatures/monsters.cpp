@@ -476,6 +476,10 @@ bool Monster::willCastHolds(const std::shared_ptr<Creature>& target, int splNo) 
     if (!target)
         return(false);
 
+    //Mobs will only cast hold spells on ptesters and staff for now
+    if (target->isPlayer() && !target->flagIsSet(P_PTESTER) && !target->isStaff())
+        return(false);
+
     if(target->isMagicallyHeld(false))
         return(false);
 

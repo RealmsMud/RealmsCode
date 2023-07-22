@@ -638,6 +638,7 @@ bool Config::initCommands() {
     playerCommands.emplace("bash", 50, cmdBash, nullptr, "Bash an opponent");
     playerCommands.emplace("barkskin", 100, cmdBarkskin, nullptr, "Use barkskin ability");
     playerCommands.emplace("kick", 100, cmdKick, nullptr, "Kick an opponent");
+    playerCommands.emplace("gore", 100, cmdGore, nullptr, "Gore an opponent (Minotaur only)");
     playerCommands.emplace("gamestat", 100, infoGamestat, nullptr, "Game time statistics");
 
     playerCommands.emplace("list", 100, cmdList, nullptr, "Show items for sale");

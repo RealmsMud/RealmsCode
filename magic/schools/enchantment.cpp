@@ -59,11 +59,6 @@ int splHoldPerson(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData*
         return(0);
     }
 
-    if (!caster->getAsPlayer()->flagIsSet(P_PTESTER) && !caster->isCt()) {
-        *caster << ColorOn << "^cThe hold-person spell is temporarily disabled for ptesting.\n" << ColorOff;
-        return(0);
-    }
-
     return(doHoldSpells(caster, cmnd, spellData, "hold-person"));
 
 }
@@ -210,6 +205,16 @@ int doHoldSpells(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* 
     std::string magicSkill = "";
     EffectInfo* holdEffect = nullptr;
 
+
+    if (!caster->getAsPlayer()->flagIsSet(P_PTESTER) && !caster->isStaff()) {
+        if(spellData->how == CastType::CAST)
+            *caster << ColorOn << "^cAll hold spells are currently disabled except for p-testers and staff.\n" << ColorOff;
+        else
+            *caster << ColorOn << "^cNothing happens.\n" << ColorOff;
+
+        return(0);
+    }
+
     // If using a wand, use the wand's object->getLevel() or default 10 if it's not set
     // Otherwise use spellData->level (based on enchantment magic skill)
     if (spellData->object) 
@@ -225,6 +230,8 @@ int doHoldSpells(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* 
     {
         noSkill = true;
     }
+
+    
 
     if(caster->isPlayer())
         dmgToBreak = (noSkill?((strength*5)/2):caster->getSkillGained(magicSkill)/2);
@@ -272,6 +279,12 @@ int doHoldSpells(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* 
 
         if (target == caster) {
             *caster << ColorOn << "^cThat would be a pretty stupid thing to do, don't you think?\n" << ColorOff;
+            return(0);
+        }
+
+        if (caster->isPlayer() && target->isPlayer() && !target->flagIsSet(P_PTESTER)) {
+            *caster << setf(CAP) << target << " is not a p-tester.\n";
+            *caster << "Hold spells can only be cast on other p-testers right now.\n";
             return(0);
         }
 
@@ -697,9 +710,6 @@ int splFear(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
 
         if(!player->canAttack(target))
             return(0);
-
-
-        
 
         
         if( (target->mFlagIsSet(M_PERMENANT_MONSTER))) {

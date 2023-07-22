@@ -59,6 +59,7 @@ enum AttackType {
     ATTACK_BASH,
     ATTACK_MAUL,
     ATTACK_KICK,
+    ATTACK_GORE,
 
     ATTACK_TYPE_MAX
 };
@@ -517,6 +518,7 @@ public:
     bool immuneCriticals() const; // *
     bool isUndead() const; // *
     bool isHumanoidLike() const;
+    bool isMartial() const;
     bool isArcaneCaster() const;
     bool isDivineCaster() const;
     bool isPureArcaneCaster() const;
