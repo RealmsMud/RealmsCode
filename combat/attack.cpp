@@ -105,8 +105,13 @@ int cmdAttack(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     std::shared_ptr<Monster>  pet = creature->getAsMonster();
     if(pet) {
         if(cmnd->num < 2) {
-            pet->getMaster()->print("%M stops attacking.\n", pet.get());
-            pet->clearEnemyList();
+            if(pet->hasEnemy()) {
+                *pet->getMaster() << setf(CAP) << pet << " stops attacking.\n";
+                pet->clearEnemyList();
+            }
+            else
+                *pet->getMaster() << "Have " << pet << " attack what?\n";
+
             return(0);
         }
     }
