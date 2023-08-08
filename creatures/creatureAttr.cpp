@@ -517,10 +517,12 @@ void Creature::crtReset() {
     mp.setName("Mp");
 
     if(isPlayer()) {
-        auto* pThis = dynamic_cast<Player*>(this);
-        if (pThis) {
-            pThis->focus.setName("Focus");
-        }
+        // pThis evaluates to 0, and getAsPlayer() throws bad_weak_ptr
+        // TODO: fix this reference so that Player properties can be accessed here.
+        // auto* pThis = dynamic_cast<Player*>(this);
+        // if (pThis) {
+        //     pThis->focus.setName("Focus");
+        // }
 
         constitution.setInfluences(&hp);
         hp.setInfluencedBy(&constitution);
