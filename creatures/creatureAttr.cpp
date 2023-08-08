@@ -516,9 +516,11 @@ void Creature::crtReset() {
     hp.setName("Hp");
     mp.setName("Mp");
 
-    auto* pThis = dynamic_cast<Player*>(this);
-    if(pThis) {
-        pThis->focus.setName("Focus");
+    if(isPlayer()) {
+        auto* pThis = dynamic_cast<Player*>(this);
+        if (pThis) {
+            pThis->focus.setName("Focus");
+        }
 
         constitution.setInfluences(&hp);
         hp.setInfluencedBy(&constitution);
