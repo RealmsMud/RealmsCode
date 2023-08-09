@@ -1698,20 +1698,22 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 !strncmp(cmnd->str[1], "find", strlen(cmnd->str[1])) ||
                 !strncmp(cmnd->str[1], "search", strlen(cmnd->str[1]))) )
     {
-        std::string questName = getFullstrText(cmnd->fullstr, 2);
+        std::string term = getFullstrText(cmnd->fullstr, 2);
         // search for and display only quests matching keyword
-        if(questName.empty()) {
-            *player << "View which quest?\n";
+        if(term.empty()) {
+            *player << "Specify a search term.\n";
             return(0);
         }
 
-        *player << "Quests matching the name: ^W" << questName << "^x:\n";
+        *player << "Quests containing term: ^W" << term << "^x\n";
         *player << PagerOn;
 
         i = 1;
         for(const auto& [questId, quest] : player->questsInProgress) {
-            if(!strncasecmp(quest->getParentQuest()->getName().c_str(), questName.c_str(), questName.length())){
-                *player << i++ << ") " << ColorOn << quest->getStatusDisplay() << ColorOff;
+            std::string questStatusStr = quest->getStatusDisplay();
+            std::size_t found = questStatusStr.find(term);
+            if (found != std::string::npos) {
+                *player << i++ << ") " << ColorOn << questStatusStr << ColorOff << "\n";
             }
         }
 
