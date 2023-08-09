@@ -1713,7 +1713,7 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
             std::string questStatusStr = quest->getStatusDisplay();
             std::size_t found = questStatusStr.find(term);
             if (found != std::string::npos) {
-                *player << i++ << ") " << ColorOn << questStatusStr << ColorOff;
+                *player << i++ << ") " << ColorOn << questStatusStr << ColorOff << "\n";
             }
         }
 
