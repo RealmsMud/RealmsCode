@@ -180,7 +180,7 @@ void Blackjack::deal(std::vector<int> bets) {
   playerHands = hands;
 }
 
-bool Blackjack::allPlayerHandsResolved() {
+const bool Blackjack::allPlayerHandsResolved() const {
   return std::all_of(playerHands.begin(), playerHands.end(), [](Blackjack::Hand h){ return h.isResolved(); });
 }
 
@@ -238,7 +238,13 @@ std::ostream& operator<<(std::ostream& os, const Blackjack& game) {
     }
   }
   os << std::setw(handPadding) << " ";
-  os << "Sum: " + game.dealerHand.getStatusStr();
+  
+  // only display dealer's sum when all player hands are resolved
+  if (game.allPlayerHandsResolved()) {
+    os << game.dealerHand.getStatusStr();
+  } else {
+    os << "?";
+  }
 
   os << "\n\nPlayer:\n";
   for (int i = 0; i < game.playerHands.size(); i++) {
@@ -470,17 +476,17 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
 
         int sum = game->playerHands[i].getSum();
         int bet = game->playerHands[i].getBet();
-        if (sum > dealerSum) {
-          // player win
-          os << "Hand "+std::to_string(i+1)+" wins its bet of $"+std::to_string(bet)+"!\n";
-          player->coins.add(bet * 2, GOLD);
-        } else if (sum < dealerSum) {
-          // player lose
-          os << "Hand "+std::to_string(i+1)+" loses its bet of $"+std::to_string(bet)+"!\n";
-        } else if (sum == dealerSum) {
+        if (sum == dealerSum || (sum > 21 && dealerSum > 21)) {
           // push
           os << "Hand "+std::to_string(i+1)+" pushes! Its bet of $"+std::to_string(bet)+" has been refunded.\n";
           player->coins.add(bet, GOLD);
+        } else if (sum > dealerSum) {
+          // player win
+          os << "Hand "+std::to_string(i+1)+" wins its bet of $"+std::to_string(bet)+"!\n";
+          player->coins.add(bet * 2, GOLD);
+        } else {
+          // player lose
+          os << "Hand "+std::to_string(i+1)+" loses its bet of $"+std::to_string(bet)+"!\n";
         }
       }
 
