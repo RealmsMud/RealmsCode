@@ -1705,7 +1705,7 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
 
-        *player << "Quests containing term: ^W" << term << "^x:\n";
+        *player << "Quests containing term: ^W" << term << "^x\n";
         *player << PagerOn;
 
         i = 1;
@@ -1713,7 +1713,7 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
             std::string questStatusStr = quest->getStatusDisplay();
             std::size_t found = questStatusStr.find(term);
             if (found != std::string::npos) {
-                *player << i++ << ") " << ColorOn << quest->getStatusDisplay() << ColorOff;
+                *player << i++ << ") " << ColorOn << questStatusStr << ColorOff;
             }
         }
 
