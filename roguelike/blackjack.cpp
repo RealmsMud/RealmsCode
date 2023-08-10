@@ -367,7 +367,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
         }
       }
 
-      os << "All hands dealt! Press [enter] to continue.\n";
+      os << "All hands dealt!\n";
 
       if (dealerNatural) {
         // if dealer got a natural all hands should be resolved
@@ -401,9 +401,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
           os << "Hand "+handNumber+" hits!\n";
           Card card = game->shoe.takeCard();
           hand.addCard(card);
-          if (hand.getSum() > 21) {
-            hand.setStatus(Blackjack::Loss);
-          } else if (hand.getSum() == 21) {
+          if (hand.getSum() >= 21) {
             hand.setStatus(Blackjack::Standing);
           }
         } else if (strncasecmp(str.c_str(), "P", 1) == 0) {
@@ -411,6 +409,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
           if (hand.canSplit()) {
             os << "Hand "+handNumber+" splits!\n";
             // separate the pair into two hands with equal bet
+            player->coins.sub(hand.getBet(), GOLD);
             Blackjack::Hand newHand = Blackjack::Hand(hand.getBet());
             newHand.addCard(hand.popCard());
             game->playerHands.insert(game->playerHands.begin() + i + 1, newHand);
