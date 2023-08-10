@@ -230,16 +230,16 @@ std::ostream& operator<<(std::ostream& os, const Blackjack& game) {
 
   os << "\nDealer:\n   ";
   for (int i = 0; i < game.dealerHand.getCards().size(); i++) {
-    // dealer's 2nd card is face down
-    if (i == 1) {
+    // dealer's 2nd card is face down until hands are resolved
+    if (i == 1 && !game.allPlayerHandsResolved()) {
       os << " [] ";
     } else {
       os << game.dealerHand.getCards()[i] << " "; 
     }
   }
-  os << std::setw(handPadding) << " ";
+  os << std::setw(handPadding) << "Sum: ";
   
-  // only display dealer's sum when all player hands are resolved
+  // only display dealer's sum when all hands are resolved
   if (game.allPlayerHandsResolved()) {
     os << game.dealerHand.getStatusStr();
   } else {
