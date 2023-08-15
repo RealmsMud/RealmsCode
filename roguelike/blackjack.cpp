@@ -78,7 +78,7 @@ void Blackjack::Hand::setStatus(HandStatus state) {
   update();
 }
 
-int Blackjack::Hand::getSum() {
+int Blackjack::Hand::getSum() const {
   return sum;
 }
 
@@ -231,7 +231,7 @@ std::ostream& operator<<(std::ostream& os, const Blackjack& game) {
   os << "\nDealer:\n   ";
   for (int i = 0; i < game.dealerHand.getCards().size(); i++) {
     // dealer's 2nd card is face down until hands are resolved
-    if (i == 1 && !game.allPlayerHandsResolved()) {
+    if (i == 1 && !game.allPlayerHandsResolved() && game.dealerHand.getSum() != 21) {
       os << " [] ";
     } else {
       os << game.dealerHand.getCards()[i] << " "; 
@@ -367,10 +367,10 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
         }
       }
 
-      os << "All hands dealt!\n";
-
       if (dealerNatural) {
         // if dealer got a natural all hands should be resolved
+        os << "\nGood game! Would you like to play again?\n";
+        os << "[Y] Yes  [N] No\n";
         sock->setState(BLACKJACK_END);
       } else {
         os << "\nChoose action for hand "+std::to_string(firstHandIdx+1)+":\n" << game->playerHands[firstHandIdx] << " Sum: " + game->playerHands[firstHandIdx].getStatusStr() + "\n";
@@ -419,6 +419,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
           if (hand.canDoubleDown()) {
             os << "Hand "+handNumber+" doubles down!\n";
             // double the bet and receive only one more card
+            player->coins.sub(hand.getBet(), GOLD);
             int newBet = hand.getBet() * 2;
             hand.setBet(newBet);
             hand.addCard(game->shoe.takeCard());
