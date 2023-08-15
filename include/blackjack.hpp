@@ -48,7 +48,7 @@ class Blackjack {
         bool isResolved();
 
         void update();
-        int getSum();
+        int getSum() const;
         std::string getStatusStr() const;
 
         std::vector<Card> getCards() const;
