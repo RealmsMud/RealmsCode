@@ -162,7 +162,7 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
     )
         return(0);
     
-    if(player->getAsCreature()->isMagicallyHeld() &&
+    if(player->isMagicallyHeld() &&
         !player->checkStaff("You can't check the room right now.\nYou can't move!\n")
     )
         return(0);

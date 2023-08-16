@@ -938,7 +938,7 @@ void Monster::checkScavange(long t) {
     if(room->flagIsSet(R_SHOP_STORAGE))
         return;
 
-    if(getAsCreature()->isMagicallyHeld())
+    if(isMagicallyHeld())
         return;
 
     if(flagIsSet(M_SCAVANGER)) {
@@ -1147,7 +1147,7 @@ int Monster::checkWander(long t) {
         // pets and other followers don't wander
         !isPet() && !flagIsSet(M_DM_FOLLOW)) &&
         // will not wander if magically held - since they can't move
-        (!getAsCreature()->isMagicallyHeld()))
+        (!isMagicallyHeld()))
     {
         if( // If it's time to wander, and we have no enemey
             (t - i > 60 && (inUniqueRoom() && Random::get(1, 100) <= getUniqueRoomParent()->wander.getTraffic()) && !hasEnemy()) ||

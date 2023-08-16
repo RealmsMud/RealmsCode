@@ -658,20 +658,15 @@ bool Player::canUseWands(bool print) {
 
         break;
     }
-     //Just to remove annoying compiler warning..until we actually use this function
-    if(!useable)
-        useable = false;
 
-    //For now, everybody can still use wands....
-    return(true);
-
-    /*
+    // Temporarily put this here, ignoring above checks, until we eventually use this function, 
+    // since everybody can use wands right now.
+    useable = true;
+    
     if(!useable && print) {
-        *player << ColorOn << "^cYou do not comprehend the complex idiosyncracies of wand use.\n" << ColorOff;
+        *this << ColorOn << "^cYou do not comprehend the complex idiosyncracies of wand use.\n" << ColorOff;
     }
     return(useable);
-    */
-
 
 }
 //********************************************************************
@@ -1067,7 +1062,7 @@ bool Creature::checkResistEnchantments(const std::shared_ptr<Creature>& caster, 
             resist=true;
         }          
 
-        if(flagIsSet(M_DM_FOLLOW) || isEffected("reflect-magic") || isEffected("fire-sheld")) {
+        if(flagIsSet(M_DM_FOLLOW) || isEffected("reflect-magic") || isEffected("fire-shield")) {
             if (output) {
                 *this << ColorOn << "^y" << setf(CAP) << caster << "'s spell dissipated.\n" << ColorOff;
                 *caster << ColorOn << "^yYour spell dissipated.\n" << ColorOff;

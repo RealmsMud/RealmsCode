@@ -1723,7 +1723,7 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
     std::shared_ptr<Creature> target=nullptr;
 
     if (spellData->object) 
-        strength = (spellData->object->getLevel()>0?spellData->object->getLevel():10);
+        strength = (spellData->object->getLevel() > 0 ? spellData->object->getLevel():10);
     else
         strength = spellData->level;
 

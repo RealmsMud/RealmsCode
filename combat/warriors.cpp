@@ -778,7 +778,7 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Creature> creature;
-    long    i, j, t;
+    long    lt_gore, lt_kick, t;
     int     chance;
 
 
@@ -799,11 +799,11 @@ int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
 
-    i = LT(player, LT_GORE);
+    lt_gore = LT(player, LT_GORE);
     t = time(nullptr);
 
-    if(i > t && !player->isDm()) {
-        player->pleaseWait(i-t);
+    if(lt_gore > t && !player->isDm()) {
+        player->pleaseWait(lt_gore - t);
         return(0);
     }
 
@@ -835,10 +835,10 @@ int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     //For now, we're not going to be doing gore-kick combos
     if(player->knowsSkill("kick")) {
-        j = LT(player, LT_KICK);
-        if (j<t) {
+        lt_kick = LT(player, LT_KICK);
+        if (lt_kick < t) {
             player->lasttime[LT_KICK].ltime = t;
-            player->lasttime[LT_KICK].interval = std::max<long>(j-t, 3); 
+            player->lasttime[LT_KICK].interval = std::max<long>(lt_kick - t, 3); 
         }
     }
 
@@ -919,7 +919,7 @@ int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Creature> creature;
-    long    i,j,t;
+    long    lt_kick,lt_gore,t;
     int     chance;
 
 
@@ -941,11 +941,11 @@ int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
 
-    i = LT(player, LT_KICK);
+    lt_kick = LT(player, LT_KICK);
     t = time(nullptr);
 
-    if(i > t && !player->isDm()) {
-        player->pleaseWait(i-t);
+    if(lt_kick > t && !player->isDm()) {
+        player->pleaseWait(lt_kick - t);
         return(0);
     }
 
@@ -964,10 +964,10 @@ int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     //For now, we're not going to be doing kick-gore combos
     if(player->knowsSkill("gore")) {
-        j = LT(player, LT_GORE);
-        if (j<t) {
+        lt_gore = LT(player, LT_GORE);
+        if (lt_gore < t) {
             player->lasttime[LT_GORE].ltime = t;
-            player->lasttime[LT_GORE].interval = std::max<long>(j-t, 3); 
+            player->lasttime[LT_GORE].interval = std::max<long>(lt_gore - t, 3); 
         }
     }
 

@@ -101,7 +101,7 @@ bool Monster::updateCombat() {
     // If we're fighting a pet, see if we'll ignore the pet and attack a player instead
     if(target->isPet() && target->getMaster()) {
         if(target->inSameRoom(target->getMaster())) {
-            if(Random::get(1,100) <= 20 || this->intelligence.getCur() >= 150 || this->flagIsSet(M_KILL_MASTER_NOT_PET)) {
+            if(Random::get(1,100) <= 20 || this->intelligence.getCur() >= 220 || this->flagIsSet(M_KILL_MASTER_NOT_PET)) {
                 target = target->getMaster();
                 addEnemy(target);
             }
@@ -116,7 +116,7 @@ bool Monster::updateCombat() {
     if( pTarget && flagIsSet(M_NO_EXP_LOSS) && !nearEnmPly() && !isPet() && target->inCombat(Containable::downcasted_shared_from_this<Monster>()))
         return(false);
 
-    if (getAsCreature()->isMagicallyHeld(false))
+    if (isMagicallyHeld(false))
         return(false);
 
     monstervmonster = (!pTarget && !target->isPet() && isMonster() && !isPet());
@@ -1210,7 +1210,7 @@ int Creature::doDamage(const std::shared_ptr<Creature>& target, int dmg, DeathCh
     }
 
     
-    if(target->hp.getCur()>0)
+    if(target->hp.getCur() > 0)
         target->doCheckBreakMagicalHolds(cThis, dmg);
 
     if(shouldCheckDie == CHECK_DIE)
