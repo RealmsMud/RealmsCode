@@ -78,7 +78,7 @@ void Blackjack::Hand::setStatus(HandStatus state) {
   update();
 }
 
-int Blackjack::Hand::getSum() {
+int Blackjack::Hand::getSum() const {
   return sum;
 }
 
@@ -230,16 +230,16 @@ std::ostream& operator<<(std::ostream& os, const Blackjack& game) {
 
   os << "\nDealer:\n   ";
   for (int i = 0; i < game.dealerHand.getCards().size(); i++) {
-    // dealer's 2nd card is face down
-    if (i == 1) {
+    // dealer's 2nd card is face down until hands are resolved
+    if (i == 1 && !game.allPlayerHandsResolved() && game.dealerHand.getSum() != 21) {
       os << " [] ";
     } else {
       os << game.dealerHand.getCards()[i] << " "; 
     }
   }
-  os << std::setw(handPadding) << " ";
+  os << std::setw(handPadding) << "Sum: ";
   
-  // only display dealer's sum when all player hands are resolved
+  // only display dealer's sum when all hands are resolved
   if (game.allPlayerHandsResolved()) {
     os << game.dealerHand.getStatusStr();
   } else {
@@ -367,10 +367,10 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
         }
       }
 
-      os << "All hands dealt! Press [enter] to continue.\n";
-
       if (dealerNatural) {
         // if dealer got a natural all hands should be resolved
+        os << "\nGood game! Would you like to play again?\n";
+        os << "[Y] Yes  [N] No\n";
         sock->setState(BLACKJACK_END);
       } else {
         os << "\nChoose action for hand "+std::to_string(firstHandIdx+1)+":\n" << game->playerHands[firstHandIdx] << " Sum: " + game->playerHands[firstHandIdx].getStatusStr() + "\n";
@@ -401,9 +401,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
           os << "Hand "+handNumber+" hits!\n";
           Card card = game->shoe.takeCard();
           hand.addCard(card);
-          if (hand.getSum() > 21) {
-            hand.setStatus(Blackjack::Loss);
-          } else if (hand.getSum() == 21) {
+          if (hand.getSum() >= 21) {
             hand.setStatus(Blackjack::Standing);
           }
         } else if (strncasecmp(str.c_str(), "P", 1) == 0) {
@@ -411,6 +409,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
           if (hand.canSplit()) {
             os << "Hand "+handNumber+" splits!\n";
             // separate the pair into two hands with equal bet
+            player->coins.sub(hand.getBet(), GOLD);
             Blackjack::Hand newHand = Blackjack::Hand(hand.getBet());
             newHand.addCard(hand.popCard());
             game->playerHands.insert(game->playerHands.begin() + i + 1, newHand);
@@ -420,6 +419,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
           if (hand.canDoubleDown()) {
             os << "Hand "+handNumber+" doubles down!\n";
             // double the bet and receive only one more card
+            player->coins.sub(hand.getBet(), GOLD);
             int newBet = hand.getBet() * 2;
             hand.setBet(newBet);
             hand.addCard(game->shoe.takeCard());
@@ -466,7 +466,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
       }
 
       os << *game;
-      os << "Settling bets...\n";
+      os << "Settling remaining bets...\n";
 
       for (int i = 0; i < game->playerHands.size(); i++) {
         // only standing hands are unsettled at this point
@@ -478,12 +478,12 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
         int bet = game->playerHands[i].getBet();
         if (sum == dealerSum || (sum > 21 && dealerSum > 21)) {
           // push
-          os << "Hand "+std::to_string(i+1)+" pushes! Its bet of $"+std::to_string(bet)+" has been refunded.\n";
           player->coins.add(bet, GOLD);
-        } else if (sum > dealerSum) {
+          os << "Hand "+std::to_string(i+1)+" pushes! Its bet of $"+std::to_string(bet)+" has been refunded.\n";
+        } else if (sum <= 21 && (sum > dealerSum || dealerSum > 21)) {
           // player win
-          os << "Hand "+std::to_string(i+1)+" wins its bet of $"+std::to_string(bet)+"!\n";
           player->coins.add(bet * 2, GOLD);
+          os << "Hand "+std::to_string(i+1)+" wins its bet of $"+std::to_string(bet)+"!\n";
         } else {
           // player lose
           os << "Hand "+std::to_string(i+1)+" loses its bet of $"+std::to_string(bet)+"!\n";
