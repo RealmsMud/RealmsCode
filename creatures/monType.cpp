@@ -22,10 +22,10 @@
 char mobtype_name[MAX_MOB_TYPES][20] = { "Player", "Monster", "Humanoid", "Goblinoid", "Monstrous Humanoid",
         "Giantkin", "Animal", "Dire Animal", "Insect", "Insectoid", "Arachnid", "Reptile", "Dinosaur", "Automaton",
         "Avian", "Fish", "Plant", "Demon", "Devil", "Dragon", "Beast", "Magical Beast", "Golem", "Ethereal", "Astral",
-        "Gaseous", "Energy", "Faerie", "Deva", "Elemental", "Pudding", "Slime", "Undead" };
+        "Gaseous", "Energy", "Faerie", "Deva", "Elemental", "Pudding", "Slime", "Undead", "Ooze", "Modron", "Daemon" };
 
 int mob_hitdice[MAX_MOB_TYPES] = { 0, 10, 10, 8, 10, 16, 6, 10, 4, 10, 10, 8, 12, 12, 8, 8, 10, 18, 18, 24, 12, 16, 16,
-        12, 12, 10, 14, 8, 20, 14, 14, 10, 14 };
+        12, 12, 10, 14, 8, 20, 14, 14, 10, 14, 12, 14, 16 };
 
 //*********************************************************************
 //                      noLivingVulnerabilities
@@ -43,6 +43,7 @@ bool monType::noLivingVulnerabilities(mType type) {
     case PUDDING:
     case SLIME:
     case UNDEAD:
+    case OOZE:
         return(true);
 
     default:
@@ -66,6 +67,8 @@ bool monType::isIntelligent(mType type) {
     case GOBLINOID:
     case MONSTROUSHUM:
     case UNDEAD:
+    case MODRON:
+    case DAEMON:
         return(true);
 
     default:
@@ -122,13 +125,22 @@ bool monType::isHumanoidLike(mType type) {
 //                      isExtraplanar
 //*********************************************************************
 bool monType::isExtraplanar(mType type) {
-    return(type == ASTRAL || type == ETHEREAL || type == DEVA || type == DEMON || type == DEVIL);
+    return(type == ASTRAL || type == ETHEREAL || type == DEVA || 
+           type == DEMON || type == DEVIL || type == MODRON || type == DAEMON);
 }
 //*********************************************************************
 //                      isMindless
 //*********************************************************************
 bool monType::isMindless(mType type) {
     return(type == INSECT || type == GOLEM || type == AUTOMATON);
+}
+
+bool monType::isImmuneEnchantments(mType type) {
+
+    return(type == GASEOUS || type == ENERGY || type == ETHEREAL ||
+           type == ASTRAL || type == INSECT || type == SLIME ||
+           type == PUDDING || type == GOLEM || type == AUTOMATON ||
+           type == OOZE);
 }
 
 
@@ -177,10 +189,12 @@ Size monType::size(mType type) {
     case AUTOMATON:
     case DEMON:
     case DEVA:
+    case DAEMON:
     case DEVIL:
     case ELEMENTAL:
     case GIANTKIN:
     case GOLEM:
+    case MODRON:
         return(SIZE_LARGE);
 
     case DINOSAUR:
@@ -209,6 +223,7 @@ bool monType::immuneCriticals(mType type) {
     case ELEMENTAL:
     case PUDDING:
     case SLIME:
+    case OOZE:
         return(true);
 
     default:

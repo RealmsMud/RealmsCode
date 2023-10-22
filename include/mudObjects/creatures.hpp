@@ -698,6 +698,10 @@ public:
     void fixLts();
     void doDispelMagic(int num=-1);
     bool changeSize(int oldStrength, int newStrength, bool enlarge);
+    bool isVampire();
+    bool isUndeadImmuneEnchantments();
+    bool getClassEnchantmentResist(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
+    bool getRaceEnchantmentResist(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
     bool checkResistEnchantments(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
     bool isMagicallyHeld(bool print=false) const;
     void doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker, int dmg);

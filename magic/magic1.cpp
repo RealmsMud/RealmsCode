@@ -2336,24 +2336,15 @@ bool Creature::isMageLich() {
 //*********************************************************************
 // Clears all hold/movement hindering effects
 void Creature::doFreeAction() {
-    if (isEffected("slow"))
-        removeEffect("slow");
     
-    if (isEffected("hold-person"))
-        removeEffect("hold-person");
-    else if (isEffected("hold-monster"))
-        removeEffect("hold-monster");
-    else if (isEffected("hold-undead"))
-        removeEffect("hold-undead");
-    else if (isEffected("hold-animal"))
-        removeEffect("hold-animal");
-    else if (isEffected("hold-plant"))
-        removeEffect("hold-plant");
-    else if (isEffected("hold-elemental"))
-        removeEffect("hold-elemental");
-    else if (isEffected("hold-fey"))
-        removeEffect("hold-fey");
-
+    removeEffect("slow");
+    removeEffect("hold-person");
+    removeEffect("hold-monster");
+    removeEffect("hold-undead");
+    removeEffect("hold-animal");
+    removeEffect("hold-plant");
+    removeEffect("hold-elemental");
+    removeEffect("hold-fey");
 
     if (isPlayer()) {
         if (flagIsSet(P_STUNNED))

@@ -58,6 +58,9 @@ enum mType {
     PUDDING         = 30,
     SLIME           = 31,
     UNDEAD          = 32,
+    OOZE            = 33,
+    MODRON          = 34,
+    DAEMON          = 35,
 
     MAX_MOB_TYPES
 };
@@ -76,6 +79,7 @@ namespace monType {
     bool isHumanoidLike(mType type);
     bool isExtraplanar(mType type);
     bool isMindless(mType type);
+    bool isImmuneEnchantments(mType type);
     Size size(mType type);
     bool immuneCriticals(mType type);
     bool noLivingVulnerabilities(mType type);

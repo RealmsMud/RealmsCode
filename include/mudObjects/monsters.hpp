@@ -185,6 +185,9 @@ public:
     std::string getTalk() const;
     int getWeaponSkill(const std::shared_ptr<Object>  weapon = nullptr) const;
     int getDefenseSkill() const;
+    bool getEnchantmentImmunity(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
+    bool getEnchantmentVsMontype(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
+    void doCheckFailedCastAggro(const std::shared_ptr<Creature>& caster, bool willAggro, bool print);
 
 // Set
     void setMaxLevel(unsigned short l);

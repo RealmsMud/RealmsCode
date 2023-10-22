@@ -442,4 +442,5 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
 bool checkRefusingMagic(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, bool healing=false, bool print=true);
 bool replaceCancelingEffects(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, const std::string &effect);
 int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd);
+bool isResistableEnchantment(const std::string spell);
 

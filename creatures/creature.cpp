@@ -813,14 +813,14 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
     if(mTarget) {
         oStr << "You see " << mTarget->getCrtStr(pThis, flags, 1);
         if (mTarget->getType()>=HUMANOID) {
-            oStr << "^D (" << monType::getName(mTarget->getType()) << ")^x\n";
+            oStr << ". " << mTarget->upHeShe() << " is of creature type: ^D" << monType::getName(mTarget->getType()) << ((mTarget->isUndead() && mTarget->getType()!=UNDEAD)?"(Undead)":"") << "^x.\n";
         }
         else
             oStr << ".\n";
         if(!mTarget->getDescription().empty())
             oStr << mTarget->getDescription() << "\n";
         else
-            oStr << "There is nothing special about " << mTarget->getCrtStr(pThis, flags, 0) << ".\n";
+            oStr << "Nothing is especially descriptive about " << mTarget->getCrtStr(pThis, flags, 0) << ".\n";
 
         if(mTarget->getMobTrade()) {
             rank = mTarget->getSkillLevel()/10;

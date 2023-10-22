@@ -42,6 +42,19 @@
 #include "structs.hpp"                 // for daily, saves
 #include "wanderInfo.hpp"              // for WanderInfo
 
+
+//*********************************************************************
+//                     isResistableEnchantment 
+//*********************************************************************
+// This function determines which enchantment/trickery spells are currently checked by
+// Creature::checkResistEnchantments()...For class/race/mtypes...primarily 
+// used for hold spells, and fear/scare
+bool isResistableEnchantment(const std::string spell) {
+    return(spell == "hold-undead" || spell == "hold-animal" || spell == "hold-plant" || 
+                        spell == "hold-person" || spell == "hold-monster" || spell == "hold-elemental" || 
+                        spell == "hold-fey" || spell == "scare" || spell == "fear");
+}
+
 //*********************************************************************
 //                      splHoldPerson
 //*********************************************************************
@@ -55,7 +68,7 @@ int splHoldPerson(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData*
     }
 
     if (spellData->how == CastType::CAST && caster->getClass() == CreatureClass::RANGER) {
-        *caster << "The complexity of this type of enchantment/trickery magic eludes you.\n";
+        *caster << "The complexity of that type of enchantment/trickery magic eludes you.\n";
         return(0);
     }
 
@@ -77,7 +90,7 @@ int splHoldMonster(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData
     }
 
     if (spellData->how == CastType::CAST && caster->getClass() == CreatureClass::RANGER) {
-        *caster << "The complexity of this type of enchantment/trickery magic eludes you.\n";
+        *caster << "The complexity of that type of enchantment/trickery magic eludes you.\n";
         return(0);
     }
 
@@ -315,7 +328,7 @@ int doHoldSpells(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* 
             *caster << ColorOn << "^y" << setf(CAP) << target << " is already affected by holding magic. Your spell had no effect.\n" << ColorOff;
             *target << ColorOn << "^y" << setf(CAP) << caster << "'s spell had no effect.\n" << ColorOff;
             broadcast(caster->getSock(), target->getSock(), caster->getParent(), "^y%M's spell had no effect.^x", caster.get());
-            return(1);
+            return(0);
             }
 
         EffectInfo* freeActionEffect = nullptr;
@@ -345,12 +358,16 @@ int doHoldSpells(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* 
             }
          }
 
-        if (target->checkResistEnchantments(caster, spell, true)) 
-            return(1);
+        if (target->checkResistEnchantments(caster, spell, true)) {
+            if (target->isMonster() && target->getAsMonster()->getEnchantmentImmunity(caster, spell, false))
+                return(0);
+            else
+                return(1);
+        }
 
         chance = 500 + (25*(strength - target->getLevel())) + (3*(caster->getWillpower() - target->getWillpower()));
 
-        //If a target monster is smart enough, it might be prepared for another hold spell
+        //If a target monster is smart enough, it might be prepared for a hold spell if caster already is an enemy
         if(target->isMonster() && target->getAsMonster()->isEnemy(caster) &&
                             target->intelligence.getCur() >= 130 && Random::get(1,100) <= 50) {
             *caster << ColorOn << "^r" << setf(CAP) << target << " was prepared for your spell!\n" << ColorOff;
@@ -361,7 +378,7 @@ int doHoldSpells(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* 
 
         int roll = Random::get(1,1000);
         if (caster->isCt() || (caster->isPlayer() && caster->flagIsSet(P_PTESTER))) {
-            *caster << ColorOn << "^D*Staff*\n";
+            *caster << ColorOn << "^D*PTest*\n";
             *caster << "strength = " << strength << "\n";
             *caster << "target->getLevel() = " << target->getLevel() << "\n";
             *caster << "caster->getWillpower() = " << caster->getWillpower() << "\n";
