@@ -1019,19 +1019,6 @@ bool Monster::getEnchantmentImmunity(const std::shared_ptr<Creature>& caster, co
         }
         return(true);
     }
-
- /*
-    if ( (spell == "hold-person" && monType::isHumanoidLike(getType())) || spell == "hold-monster") {
-        if (getAsCreature()->isUndeadImmuneEnchantments()) {
-            if(print) {
-                *caster << ColorOn << "^y" << (getClass()==CreatureClass::LICH?"Liches":"Vampires") << " are immune to " << spell << " spells" << (getClass()==CreatureClass::LICH?".":" during the night.") << "\n";
-                *caster << "Your spell dissipated.\n" << ColorOff;
-                broadcast(caster->getSock(), caster->getParent(), "^y%M is immune to %s spells%s The spell dissipated.^x", this, spell.c_str(), (getClass()==CreatureClass::LICH?".":" during the night."));
-            }
-            return(true);
-        }
-    }
-*/
     
     if (spell == "hold-person" && !monType::isHumanoidLike(getType()) && getAsCreature()->isUndeadImmuneEnchantments())
         wrongMonType=true;
