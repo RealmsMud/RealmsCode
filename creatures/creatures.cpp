@@ -1020,6 +1020,7 @@ bool Monster::getEnchantmentImmunity(const std::shared_ptr<Creature>& caster, co
         return(true);
     }
     
+    
     if (spell == "hold-person" && !monType::isHumanoidLike(getType()) && getAsCreature()->isUndeadImmuneEnchantments())
         wrongMonType=true;
     else if (spell == "hold-monster" && getAsCreature()->isUndeadImmuneEnchantments()) // Undead are immune to hold-monster
