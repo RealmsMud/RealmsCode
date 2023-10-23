@@ -932,7 +932,8 @@ int Player::computeLuck() {
     luckNum /= alg;
 
     // Add various luckMods starting here; Positive luckMod = bonus, negative luckMod = penalty
-
+ 
+ 
     // Holding an item flagged O_LUCKY adds luck based on its + adjustment
     if(ready[HELD-1] && ready[HELD-1]->flagIsSet(O_LUCKY))
         luckMod += ready[HELD-1]->damage.getPlus();
