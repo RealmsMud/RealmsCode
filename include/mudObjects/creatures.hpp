@@ -59,6 +59,7 @@ enum AttackType {
     ATTACK_BASH,
     ATTACK_MAUL,
     ATTACK_KICK,
+    ATTACK_GORE,
 
     ATTACK_TYPE_MAX
 };
@@ -465,6 +466,7 @@ public:
     int getBaseDamage() const;
     float getDamageReduction(const std::shared_ptr<Creature> & target) const; // How much is our damage reduced attacking the target
     AttackResult getAttackResult(const std::shared_ptr<Creature>& victim, const std::shared_ptr<Object>&  weapon = nullptr, int resultFlags = 0, int altSkillLevel = -1);
+
     bool kamiraLuck(const std::shared_ptr<Creature>&attacker);
     virtual int computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Object>  weapon,
                               AttackType attackType, AttackResult& result, Damage& attackDamage,
@@ -480,6 +482,7 @@ public:
     double getGlancingBlowChance(const std::shared_ptr<Creature>& attacker, const int& difference) const;
     double getParryChance(const std::shared_ptr<Creature>& attacker, const int& difference);
     double getDodgeChance(const std::shared_ptr<Creature>& attacker, const int& difference);
+    double getMisschanceModifier(const std::shared_ptr<Creature>& victim, double& missChance);
     double getMissChance(const int& difference);
     virtual int getWeaponSkill(std::shared_ptr<Object>  weapon = nullptr) const = 0;
     virtual int getDefenseSkill() const = 0;
@@ -494,6 +497,7 @@ public:
 
     int spellFail(CastType how);
     bool isMageLich();
+    void doFreeAction();
     bool noPotion(SpellData* spellData) const;
     int doMpCheck(int splno);
     int getTurnChance(const std::shared_ptr<Creature>& target);
@@ -513,6 +517,10 @@ public:
     bool doesntBreathe() const;
     bool immuneCriticals() const; // *
     bool isUndead() const; // *
+    bool isHumanoidLike() const;
+    bool isMartial() const;
+    bool isArcaneCaster() const;
+    bool isDivineCaster() const;
     bool isPureArcaneCaster() const;
     bool isPureDivineCaster() const;
     bool isHybridArcaneCaster() const;
@@ -613,6 +621,10 @@ public:
     std::string getPoisonedBy() const;
     unsigned short getDisplayRace() const;
     bool inJail() const;
+    int getWillpower();
+    int getWisdom();
+    int getAgility();
+    int getElusiveness();
 
 // Set
     void setClass(CreatureClass c); // *
@@ -686,6 +698,13 @@ public:
     void fixLts();
     void doDispelMagic(int num=-1);
     bool changeSize(int oldStrength, int newStrength, bool enlarge);
+    bool isVampire();
+    bool isUndeadImmuneEnchantments();
+    bool getClassEnchantmentResist(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
+    bool getRaceEnchantmentResist(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
+    bool checkResistEnchantments(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
+    bool isMagicallyHeld(bool print=false) const;
+    void doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker, int dmg);
 
     bool addStatModifier(std::string_view statName, std::string_view modifierName, int modAmt, ModifierType modType);
     bool addStatModifier(std::string_view statName, StatModifier* statModifier);

@@ -648,6 +648,7 @@ bool Creature::pulseEffects(time_t t) {
     EffectInfo* effect=nullptr;
     EffectList::iterator eIt;
     deathtype = DT_NONE;
+
     for(eIt = effects.effectList.begin() ; eIt != effects.effectList.end() ;) {
         effect = (*eIt);
         // Pulse!

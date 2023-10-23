@@ -125,15 +125,40 @@ char bardConjureTitles[][10][35] = {
           "rampaging bass drum", "vorpal bunny" }
 };
 
+short bardConjureSex[][10] = {
+    {SEX_NONE, SEX_MALE, SEX_FEMALE, SEX_MALE, SEX_NONE, SEX_MALE, SEX_NONE, SEX_NONE, SEX_NONE, SEX_NONE},
+    {SEX_FEMALE, SEX_FEMALE, SEX_NONE, SEX_NONE, SEX_NONE, SEX_MALE, SEX_NONE, SEX_NONE, SEX_MALE, SEX_NONE},
+    {SEX_NONE, SEX_MALE, SEX_FEMALE, SEX_NONE, SEX_MALE, SEX_MALE, SEX_MALE, SEX_MALE, SEX_NONE, SEX_MALE}
+};
+
+short bardConjureMtypes[][10] = {
+    {AUTOMATON, ANIMAL, HUMANOID, ANIMAL, AUTOMATON, HUMANOID, AUTOMATON, AUTOMATON, AUTOMATON, AUTOMATON},
+    {ANIMAL, ANIMAL, AUTOMATON, AUTOMATON, ETHEREAL, DINOSAUR, DEMON, ETHEREAL, GIANTKIN, ENERGY},
+    {AUTOMATON, ANIMAL, HUMANOID, AUTOMATON, HUMANOID, HUMANOID, HUMANOID, DEMON, AUTOMATON, MAGICALBEAST}
+};
+
+
 char mageConjureTitles[][10][35] = {
-        { "large crow", "unseen servant", "jade rat", "guardian daemon", "marble owl",
-          "chasme demon", "bone devil", "balor", "devil princess", "daemon overlord" },
+        { "large raven", "jade steel rat", "starving red tarantula", "mischievous gremlin", "astral panther",
+          "chasme demon", "bone devil", "angry demonic nightmare", "rampaging balor", "greater djinn" },
 
-        { "large black beetle", "raven", "ebony cat", "quasit", "iron cobra", "shadow daemon", "succubus", "large blue demon",
-          "ultradaemon", "hellfire darklord" },
+        { "large black beetle", "ebony cat", "malicious unseen servant", "scheming quasit", "iron cobra", "menacing smoke demon", "sneering succubus", "annoyed shadow demon",
+          "duplicitous ultradaemon", "giant tentacled abomination" },
 
-        { "white shrew", "red-blue tarantula", "azurite hawk", "fiendish imp",
-          "pseudo dragon", "styx devil", "glabrezu demon", "pit fiend", "demon prince", "abyssal lord" }
+        { "fanged white shrew", "azurite hawk", "ethereal scorpion", "fiendish imp",
+          "pseudo dragon", "barbed devil", "glabrezu demon", "adolescent abyssal drake", "irate pit fiend", "huge demonic slime" }
+};
+
+short mageConjureSex[][10] = {
+    {SEX_MALE, SEX_MALE, SEX_FEMALE, SEX_MALE, SEX_NONE, SEX_NONE, SEX_MALE, SEX_MALE, SEX_MALE, SEX_FEMALE},
+    {SEX_FEMALE, SEX_MALE, SEX_NONE, SEX_MALE, SEX_NONE, SEX_NONE, SEX_FEMALE, SEX_NONE, SEX_MALE, SEX_NONE},
+    {SEX_FEMALE, SEX_NONE, SEX_NONE, SEX_MALE, SEX_MALE, SEX_MALE, SEX_MALE, SEX_MALE, SEX_MALE, SEX_NONE}
+};
+
+short mageConjureMtypes[][10] = {
+    {AVIAN, GOLEM, ARACHNID, MAGICALBEAST, ASTRAL, DEMON, DEVIL, DEMON, DEVIL, ELEMENTAL},
+    {DIREANIMAL, GOLEM, ETHEREAL, DEMON, GOLEM, DEMON, DEVIL, DEMON, DEMON, MAGICALBEAST},
+    {MAGICALBEAST, GOLEM, ETHEREAL, DEVIL, MAGICALBEAST, DEVIL, DEMON, DEMON, DEVIL, DEMON}
 };
 
 //typedef struct {
@@ -299,9 +324,9 @@ void petTalkDesc(const std::shared_ptr<Monster>&  pet, std::shared_ptr<Creature>
     if(owner->flagIsSet(P_DM_INVIS))
         name = "Someone";
 
-    desc = "It's wearing a tag that says, '";
+    desc = "It's wearing a tag that says: '";
     desc += name;
-    desc += "'s, hands off!'.";
+    desc += "'s! Hands off!'";
     pet->setDescription(desc);
 
     desc = "I serve only ";
@@ -344,6 +369,10 @@ int conjureCmd(const std::shared_ptr<Player>& player, cmd* cmnd) {
     data.set(CastType::SKILL, CONJURATION, NO_DOMAIN, nullptr, player);
     if(!data.check(player))
         return(0);
+
+    if(player->isMagicallyHeld(true))
+        return(0);
+    
     return(conjure(player, cmnd, &data));
 }
 
@@ -529,7 +558,28 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
     if (p)
         strncpy(target->key[2], p, 19);
 
-    target->setType(MONSTER);
+    short sex = SEX_FEMALE;
+    if (realm == CONJUREBARD) {
+        target->setType(bardConjureMtypes[buff][titleIdx-1]);
+        sex = bardConjureSex[buff][titleIdx-1];
+    }
+    else if (realm == CONJUREMAGE) {
+        target->setType(mageConjureMtypes[buff][titleIdx-1]);
+        sex = mageConjureSex[buff][titleIdx-1];
+    }
+    else {
+        target->setType(ELEMENTAL);
+        sex = SEX_NONE;
+    }
+
+    //All new mobs default to female, so only have to check
+    //for and set male and sexless
+    if (sex == SEX_MALE)
+        target->setFlag(M_MALE);
+    else if (sex == SEX_NONE)
+        target->setFlag(M_SEXLESS);
+
+
     bool combatPet = false;
 
     if (realm == CONJUREBARD) {
@@ -589,7 +639,6 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
             target->learnSpell(S_RESIST_MAGIC);
     }
 
-
     target->setLevel(std::min(level, skLevel + 1));
     level--;
     target->strength.setInitial(conjureStats[buff][level].str * 10);
@@ -604,7 +653,7 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
     target->intelligence.restore();
     target->piety.restore();
 
-    // This will be adjusted in 2.50, for now just str*2
+    // This will be adjusted later, but for now just str*2
     target->setAttackPower(target->strength.getCur() * 2);
 
     // There are as many variations of elementals on the elemental

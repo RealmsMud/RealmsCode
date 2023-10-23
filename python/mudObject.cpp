@@ -128,6 +128,7 @@ void init_module_mudObject(py::module &m) {
         .def("getRace", &Creature::getRace)
         .def("getSize", &Creature::getSize)
         .def("getAttackPower", &Creature::getAttackPower)
+        .def("getWillpower", &Creature::getWillpower)
         .def("getDescription", &Creature::getDescription)
         .def("checkMp", &Creature::checkMp)
         .def("subMp", &Creature::subMp)

@@ -273,8 +273,8 @@ int cmdEarthSmother(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Creature> creature=nullptr;
-    std::shared_ptr<Player> pCreature=nullptr;
-    std::shared_ptr<Monster> mCreature=nullptr;
+   std::shared_ptr<Player> pCreature=nullptr;
+   std::shared_ptr<Monster> mCreature=nullptr;
     long    i=0, t=0;
     int     chance=0, dmg=0, roll=0;
     bool    noHighLevelDiff=false;
@@ -418,6 +418,9 @@ int cmdLayHands(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->clearFlag(P_AFK);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(!player->knowsSkill("hands")) {
         *player << "You do not have the ability to heal with lay on hands.\n";
         return(0);
@@ -531,6 +534,9 @@ int cmdPray(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(!player->knowsSkill("pray")) {
@@ -1296,6 +1302,9 @@ int cmdBandage(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(player->inCombat()) {

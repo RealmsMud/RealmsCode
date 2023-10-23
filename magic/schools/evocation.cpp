@@ -389,7 +389,7 @@ int doOffensive(std::shared_ptr<Creature>caster, std::shared_ptr<Creature> targe
                     (target->flagIsSet(M_NO_LEVEL_TWO) && slvl <= 2) ||
                     (target->flagIsSet(M_NO_LEVEL_ONE) && slvl <= 1) ) {
                 caster->print("Your %s was not powerful enough to harm %N!!\n", get_spell_name(osp->splno), target.get());
-                caster->smashInvis();
+                caster->smashInvis(); 
                 return(1);
             }
         }
@@ -456,6 +456,9 @@ int doOffensive(std::shared_ptr<Creature>caster, std::shared_ptr<Creature> targe
 
         bool meKilled = caster->doReflectionDamage(damage, target);
         bool wasKilled = target->hp.getCur() < 1;
+
+        if (!wasKilled)
+            target->doCheckBreakMagicalHolds(caster, damage.get());
 
         if( (wasKilled && (
                 pCaster ||

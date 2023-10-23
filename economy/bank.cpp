@@ -285,6 +285,10 @@ void Bank::deposit(const std::shared_ptr<Player>& player, cmd* cmnd, bool isGuil
 //*********************************************************************
 
 int cmdDeposit(const std::shared_ptr<Player>& player, cmd* cmnd) {
+
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     Bank::deposit(player, cmnd);
     return(0);
 }
@@ -298,6 +302,9 @@ void Bank::withdraw(const std::shared_ptr<Player>& player, cmd* cmnd, bool isGui
     int i = (isGuild ? 2 : 1);
     unsigned long amt=0;
     Guild* guild=nullptr;
+
+    if(player->isMagicallyHeld(true))
+        return;
 
     // can they use the bank?
     if(!Bank::can(player, isGuild, &guild))

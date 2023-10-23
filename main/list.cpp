@@ -47,7 +47,28 @@
 #include "wanderInfo.hpp"                      // for WanderInfo
 #include "xml.hpp"                             // for loadFile
 #include "proto.hpp"
+#include "global.hpp"
 
+
+const char *raceName[] = {
+    "None", "Dwarf", "Elf", "Half-Elf", "Halfling", 
+    "Human", "Orc", "Half-Giant", "Gnome", "Troll", "Half-Orc",
+    "Ogre", "Dark-Elf", "Goblin", "Minotaur", "Seraph",
+    "Kobold", "Cambion", "Barbarian", "Kataran", "Tiefling", "Kenku", 
+    "undefined(22)", "undefined(23)", "undefined(24)", "undefined(25)",
+    "undefined(26)", "undefined(27)", "undefined(28)", "undefined(29)",
+    "undefined(30)", "undefined(31)", "undefined(32)",
+    "Lizardman", "Centaur", "Half-Frostgiant", "Half-Firegiant",
+    "Grey Elf", "Wild Elf", "Aquatic Elf", "Duergar", "Hill Dwarf",
+    "Gnoll", "Bugbear", "Hobgoblin", "Wemic", "Hybsil", "Rakshasa",
+    "Brownie", "Firbolg", "Satyr", nullptr
+};
+
+const char *deityName[] = {
+    "None", "Aramon", "Ceris", "Enoch",
+    "Gradius", "Ares", "Kamira", "Linothan",
+    "Arachnus", "Mara", "Jakar", nullptr
+};
 
 
 int list_rooms() {
@@ -106,13 +127,14 @@ int list_rooms() {
 int list_objects() {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
-
+    
     std::vector<fs::path> areas;
     fs::directory_iterator areas_end, areas_start(Path::Object);
     std::copy(areas_start, areas_end, std::back_inserter(areas));
     std::sort(areas.begin(), areas.end());
 
-    std::cout << "Object" << ","
+    std::cout << "Area" << ","
+              << "Id/Num" << ","
               << "LastMod" << ","
               << "Name" << ","
               << "Description" << ","
@@ -130,6 +152,8 @@ int list_objects() {
               << "Armor" << ","
               << "ShotsCur" << ","
               << "ShotsMax" << ","
+              << "ChargesCur" << ","
+              << "ChargesMax" << ","
 
               << "DiceNum" << ","
               << "DiceSides" << ","
@@ -149,6 +173,7 @@ int list_objects() {
 
               << "increase" << ","
               << "Bestows" << ","
+              << "BestowDur" << ","
               << "Effects" << ","
               << "Flags" << ","
               << "" << std::endl;
@@ -176,7 +201,8 @@ int list_objects() {
                     boost::replace_all(description, "\"", "\"\"");
 
 
-                    std::cout << lObject->info.str() << ","
+                    std::cout << lObject->info.area << ","
+                              << lObject->info.id << ","
                               << lObject->lastMod << ","
                               << "\"" << boost::replace_all_copy(lObject->getName(), "\n", "\\n") << "\"" << ","
                               << "\"" << description << "\"" << ","
@@ -194,7 +220,8 @@ int list_objects() {
                               << lObject->getArmor() << ","
                               << lObject->getShotsCur() << ","
                               << lObject->getShotsMax() << ","
-
+                              << lObject->getChargesCur() << ","
+                              << lObject->getChargesMax() << ","
                               << lObject->damage.getNumber() << ","
                               << lObject->damage.getSides() << ","
                               << lObject->damage.getPlus() << ","
@@ -213,6 +240,7 @@ int list_objects() {
 
                               << (lObject->increase ? lObject->increase->increase : "") << ","
                               << lObject->getEffect() << ","
+                              << lObject->getEffectDuration()  << ","
                               << join(lObject->effects.effectList, "|") << ","
                               << lObject->getFlagList("|") << ","
                               << std::endl;
@@ -234,10 +262,17 @@ int list_monsters() {
     std::copy(areas_start, areas_end, std::back_inserter(areas));
     std::sort(areas.begin(), areas.end());
 
-    std::cout << "Monster" << ","
+    std::cout << "Area" << ","
+              << "Id/Num" << ","
               << "Name" << ","
+              << "TypeNum" << ","
+              << "Type" << ","
               << "Level" << ","
+              << "RaceNum" << ","
+              << "Race" << ","
               << "Class" << ","
+              << "DeityNum" << ","
+              << "Deity" << ","
               << "Toughness" << ","
               << "Experience" << ","
               << "Gold" << ","
@@ -282,10 +317,17 @@ int list_monsters() {
                     lMonster->readFromXml(rootNode, true);
                     xmlFreeDoc(xmlDoc);
 
-                    std::cout << lMonster->info.str() << ","
+                    std::cout << lMonster->info.area << ","
+                              << lMonster->info.id << ","
                               << "\"" << lMonster->getName() << "\"" << ","
+                              << lMonster->getType() << ","
+                              << (lMonster->getType()>=HUMANOID?monType::getName(lMonster->getType()):"MONSTER") << ","
                               << lMonster->getLevel() << ","
+                              << lMonster->getRace() << ","
+                              << raceName[lMonster->getRace()] << ","
                               << lMonster->getClassString() << ","
+                              << lMonster->getDeity() << ","
+                              << deityName[lMonster->getDeity()] << ","
                               << Statistics::calcToughness(lMonster) << ","
 
                               << lMonster->getExperience() << ","
@@ -387,9 +429,9 @@ int list_players() {
             
             std::cout << "\"" << lPlayer->getName() << "\"" << ","
                       << lPlayer->getLevel() << ","
-                      << lPlayer->getRace() << ","
+                      << raceName[lPlayer->getRace()] << ","
                       << lPlayer->getClassString() << ","
-                      << lPlayer->getDeity() << ","
+                      << deityName[lPlayer->getDeity()] << ","
                       << lPlayer->getExperience() << ","
                       << lPlayer->coins[GOLD] << ","
                       << lPlayer->bank[GOLD] << ","

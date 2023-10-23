@@ -193,7 +193,7 @@ struct {
     { "detect-hidden",      S_DETECT_HIDDEN,        splDetectHidden,            5,          DIVINATION,         KNOWLEDGE   },
     { "illusion",           S_ILLUSION,             splIllusion,                25,         ILLUSION,           DOMAIN_CANNOT_CAST  },
     { "deafness",           S_DEAFNESS,             splDeafness,                30,         TRANSMUTATION,      TRICKERY    },
-    { "radiation",          S_RADIATION,            splRadiation,               6,          ABJURATION,         DOMAIN_CANNOT_CAST  },
+    { "radiation",          S_RADIATION,            splRadiation,               18,         ABJURATION,         DOMAIN_CANNOT_CAST  },
     { "fiery-retribution",  S_FIERY_RETRIBUTION,    splFieryRetribution,        12,         ABJURATION,         DOMAIN_CANNOT_CAST  },
     { "aura-of-flame",      S_AURA_OF_FLAME,        splAuraOfFlame,             18,         ABJURATION,         DOMAIN_CANNOT_CAST  },
     { "barrier-of-combustion",S_BARRIER_OF_COMBUSTION,splBarrierOfCombustion,   24,         ABJURATION,         DOMAIN_CANNOT_CAST  },
@@ -227,6 +227,12 @@ struct {
     { "malediction",        S_MALEDICTION,          splMalediction,             20,         SCHOOL_CANNOT_CAST, PROTECTION        },
     { "wall-of-lightning",  S_WALL_OF_LIGHTNING,    splWallOfLightning,         30,         CONJURATION,        CREATION    },
     { "wall-of-sleet",      S_WALL_OF_SLEET,        splWallOfSleet,             30,         CONJURATION,        CREATION    },
+    { "hold-monster",       S_HOLD_MONSTER,         splHoldMonster,             35,         ENCHANTMENT,        TRICKERY    },
+    { "hold-undead",        S_HOLD_UNDEAD,          splHoldUndead,              30,         ENCHANTMENT,        TRICKERY    },
+    { "hold-animal",        S_HOLD_ANIMAL,          splHoldAnimal,              15,         ENCHANTMENT,        TRICKERY    },
+    { "hold-plant",         S_HOLD_PLANT,           splHoldPlant,               15,         ENCHANTMENT,        TRICKERY    },
+    { "hold-elemental",     S_HOLD_ELEMENTAL,       splHoldElemental,           35,         ENCHANTMENT,        TRICKERY    },
+    { "hold-fey",           S_HOLD_FEY,             splHoldFey,                 30,         ENCHANTMENT,        TRICKERY    },
     { "@",                  -1,                     nullptr,                          0,          NO_SCHOOL,          NO_DOMAIN   }
 };
 int spllist_size = sizeof(spllist)/sizeof(*spllist);

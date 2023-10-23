@@ -427,6 +427,8 @@ int communicateWith(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->unhide();
 
     if(chan->type == COM_SIGN) {
+        if(player->isMagicallyHeld(true))
+            return(0);
         if(!target->isStaff()) {
             if(target->getRace() != DARKELF && target->getClass() < CreatureClass::BUILDER) {
                 player->print("%s doesn't understand dark elven sign language.\n", target->upHeShe());
