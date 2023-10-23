@@ -48,7 +48,7 @@ class Blackjack {
         bool isResolved();
 
         void update();
-        int getSum();
+        int getSum() const;
         std::string getStatusStr() const;
 
         std::vector<Card> getCards() const;
@@ -75,7 +75,7 @@ class Blackjack {
 
     void deal(std::vector<int> bets);
 
-    bool allPlayerHandsResolved();
+    const bool allPlayerHandsResolved() const;
 
     friend std::ostream& operator<<(std::ostream& os, const Blackjack& game);
 };
