@@ -932,11 +932,8 @@ int Player::computeLuck() {
     luckNum /= alg;
 
     // Add various luckMods starting here; Positive luckMod = bonus, negative luckMod = penalty
-
-    // Carrying around a bunch of gold isn't very lucky! Put it in the bank!
-    if(!isStaff())
-        luckMod -= (coins[GOLD] / 200000);
-
+ 
+ 
     // Holding an item flagged O_LUCKY adds luck based on its + adjustment
     if(ready[HELD-1] && ready[HELD-1]->flagIsSet(O_LUCKY))
         luckMod += ready[HELD-1]->damage.getPlus();
