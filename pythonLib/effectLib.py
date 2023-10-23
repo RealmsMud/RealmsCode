@@ -20,11 +20,8 @@ def computeBeneficial(actor: MudObject, effect: EffectInfo, applier: Optional[Mu
 		duration = 1200
 		bonus = max(60, min(3000, ((applier.intelligence.getCur()-140) * 18)))
 
-		if (effect.getName() == "free-action" and applier.getClass() == mud.crtClasses.DRUID):
-				bonus += 60 * applier.getLevel()
-
-		if (applier.getClass() == mud.crtClasses.CLERIC or applier.getClass() == mud.crtClasses.PALADIN):
-				bonus += 60 * applier.getLevel()
+		if applier.getClass() == mud.crtClasses.CLERIC or applier.getClass() == mud.crtClasses.PALADIN:
+			bonus += 60 * applier.getLevel()
 
 		duration += bonus
 
@@ -536,32 +533,10 @@ def pulseWall(actor: MudObject, effect: EffectInfo) -> bool:
 
 	return True
 
+
 def pulseCamouflage(actor: MudObject, effect: EffectInfo) -> bool:
-	# Camouflage won't ever wear off as long as a Druid is in a Forest flagged room
-	if effect.getDuration() <= 15 and actor.getClass() == mud.crtClasses.DRUID and actor.getRoom().isForest():
-		actor.send("^gYou continue to blend into the forest around you.\n")
+	if effect.getDuration() <= 60 and actor.getClass() == mud.crtClasses.DRUID and actor.getRoom().isForest():
 		effect.setDuration(60)
-	return True
-
-def pulseHoldSpells(actor: MudObject, effect: EffectInfo) -> bool:
-
-	toBreak = int(actor.getWillpower()/15)
-	toBreak = max(3,toBreak)
-
-	roll = mud.rand(1,100)
-
-	if (actor.isPlayer() and actor.flagIsSet(95)):
-		actor.send("toBreakHold: <= " + str(toBreak) + "\n")
-		actor.send("roll (d100): " + str(roll) + "\n")
-
-	if (roll <= toBreak):
-		actor.send("^YYou forced your way out of the " + effect.getName() + " spell!\n")
-		mudLib.broadcastRoom(actor.getRoom(), "^Y*ACTOR* manages to break out of *A-HISHER* magical hold!", actor=actor, ignore=actor)
-		effect.setDuration(0);
-	else:
-		actor.send("^yYou are held frozen and unable to move.\n")
-		mudLib.broadcastRoom(actor.getRoom(), "^y*ACTOR* tried to break out of *A-HISHER* magical hold.", actor=actor, ignore=actor)
-
 	return True
 
 def computeRegen(actor: MudObject, effect: EffectInfo, applier: Optional[MudObject]) -> bool:

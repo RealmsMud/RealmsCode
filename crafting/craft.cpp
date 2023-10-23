@@ -1143,9 +1143,6 @@ void Player::removeItems(const std::list<CatRef>* list, int numIngredients) {
 int cmdPrepareObject(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Object> object=nullptr;
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(cmnd->num < 2) {
         player->print("Prepare what?\n");
         return(0);
@@ -1180,10 +1177,6 @@ int cmdPrepareObject(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdUnprepareObject(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Object> object=nullptr;
-
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(cmnd->num < 2) {
         player->print("Unprepare what?\n");
         return(0);
@@ -1244,9 +1237,6 @@ int cmdCraft(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->isStaff()) {
         if(!player->ableToDoCommand())
             return(0);
-        if(player->isMagicallyHeld(true))
-            return(0);
-
         if(player->isBlind()) {
             player->printColor("^CYou can't do that! You're blind!\n");
             return(0);

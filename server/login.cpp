@@ -457,8 +457,6 @@ void setPlyDeity(const std::shared_ptr<Socket>& sock, int deity) {
         case ARES:
         case KAMIRA:
         case LINOTHAN:
-        case MARA:
-        case JAKAR:
         case ARACHNUS:
             break;
         default:
@@ -487,7 +485,7 @@ void doCreateHelp(const std::shared_ptr<Socket>& sock, std::string_view str) {
     }
 
     if(strchr(cmnd.str[1], '/')!=nullptr) {
-        sock->print("You may not use slashes or backslashes.\n");
+        sock->print("You may not use backslashes.\n");
         return;
     }
     helpfile = std::string(Path::CreateHelp) + "/" + cmnd.str[1] + ".txt";
@@ -1527,8 +1525,6 @@ bool Create::handleWeapon(const std::shared_ptr<Socket>& sock, int mode, char ch
                 && curSkill.getName() == "divine-weapon")
                     continue;
 
-            
-
             if(mode == Create::doPrint) {
                 if(n++%2==0)
                     sock->print("\n%5s", " ");
@@ -1803,11 +1799,6 @@ void Create::done(const std::shared_ptr<Socket>& sock, const std::string &str, i
                 player->addSkill("scale", 1);
                 player->addSkill("ring", 1);
             }
-            if (player->getDeity() == LINOTHAN || player->getDeity() == JAKAR || player->getDeity() == ARACHNUS) {
-                player->addSkill("chain", 1);
-                player->addSkill("scale", 1);
-                player->addSkill("ring", 1);
-            }
         }
 
         // TODO: Dom: make this mage only
@@ -1903,13 +1894,12 @@ void Creature::adjustStats() {
         switch(deity) {
         case ARAMON:
         case ARACHNUS:
-            alignment = (P_BOTTOM_REDDISH+P_TOP_REDDISH)/2;
+            alignment = -100;
             break;
         case ENOCH:
         case LINOTHAN:
-        case MARA:
         case KAMIRA:
-            alignment = (P_BOTTOM_BLUISH+P_TOP_BLUISH)/2;
+            alignment = 100;
             break;
         default:
             break;
@@ -1917,7 +1907,7 @@ void Creature::adjustStats() {
     }
 
     if(cClass == CreatureClass::LICH)
-        alignment = (P_BOTTOM_REDDISH+P_TOP_REDDISH)/2;
+        alignment = -100;
 }
 
 //*********************************************************************

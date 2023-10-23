@@ -90,6 +90,14 @@ void Player::checkEffectsWearingOff() {
             unhide(false);
         }
     }
+    if(flagIsSet(P_FREE_ACTION)) {
+        if(t > LT(this, LT_FREE_ACTION)) {
+            printColor("^c^#You no longer magically move freely.\n");
+            clearFlag(P_FREE_ACTION);
+            computeAC();
+            computeAttackPower();
+        }
+    }
 
     if(flagIsSet(P_NO_PKILL)) {
         if(t > LT(this, LT_NO_PKILL)) {

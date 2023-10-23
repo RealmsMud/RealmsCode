@@ -572,9 +572,6 @@ int cmdTrain(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(player->isBlind()) {
         player->printColor("^CYou can't do that! You're blind!\n");
         return(0);

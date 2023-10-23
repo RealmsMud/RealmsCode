@@ -21,6 +21,7 @@
 #include <list>                        // for list, operator==, list<>::cons...
 #include <set>                         // for operator==, _Rb_tree_const_ite...
 #include <string>                      // for allocator, string, operator==
+#include <strings.h>                   // for strncasecmp
 
 #include "area.hpp"                    // for Area, TileInfo, MapMarker
 #include "catRef.hpp"                  // for CatRef
@@ -76,18 +77,14 @@ int cmdPrepareForTraps(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
-
     if(player->flagIsSet(P_PREPARED)) {
-        *player << "You've already prepared.\n";
+        player->print("You've already prepared.\n");
         return(0);
     }
 
 
     if(player->inCombat()) {
-        *player << "You are too busy trying to keep from dying.\n";
+        player->print("You are too busy trying to keep from dying.\n");
         return(0);
     }
 
@@ -101,7 +98,7 @@ int cmdPrepareForTraps(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->lasttime[LT_PREPARE].ltime = t;
     player->lasttime[LT_PREPARE].interval = player->isDm() ? 0:15;
 
-    *player << "You prepare yourself for traps.\n";
+    player->print("You prepare yourself for traps.\n");
     broadcast(player->getSock(), player->getParent(), "%M prepares for traps.", player.get());
     player->setFlag(P_PREPARED);
     if(player->isBlind())
@@ -127,42 +124,40 @@ int cmdBribe(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(player->getClass() == CreatureClass::BUILDER) {
-        *player << "You cannot do that.\n";
+        player->print("You cannot do that.\n");
         return(0);
     }
     if(cmnd->num < 2) {
-        *player << "Bribe whom?\n";
+        player->print("Bribe whom?\n");
         return(0);
     }
     if(cmnd->num < 3 || cmnd->str[2][0] != '$') {
-        *player << "Syntax: bribe <monster> $<amount>\n";
+        player->print("Syntax: bribe <monster> $<amount>\n");
         return(0);
     }
 
     creature = player->getParent()->findMonster(player, cmnd);
     if(!creature) {
-        *player << "That is not here.\n";
+        player->print("That is not here.\n");
         return(0);
     }
 
     if(!Faction::willDoBusinessWith(player, creature->getPrimeFaction())) {
-        *player << setf(CAP) << creature << " refuses to do business with you.\n";
+        player->print("%M refuses to do business with you.\n", creature.get());
         return(0);
     }
 
     if(creature->isPet()) {
-        *player << setf(CAP) << creature << " is too loyal to " << creature->getMaster() << " to be bribed.\n";
+        player->print("%M is too loyal to %s for you to bribe %s.\n", creature.get(),
+            creature->getMaster()->getCName(), creature->himHer());
         creature->getMaster()->print("%M tried to bribe %N.\n", player.get(), creature.get());
         return(0);
     }
 
     amount = strtoul(&cmnd->str[2][1], nullptr, 0);
     if(amount < 1 || amount > player->coins[GOLD]) {
-        *player << "Please enter the amount of the bribe.\n";
+        player->print("Please enter the amount of the bribe.\n");
         return(0);
     }
 
@@ -174,11 +169,11 @@ int cmdBribe(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Server::logGold(GOLD_OUT, player, Money(amount, GOLD), creature, "Bribe");
 
     if(amount < cost[GOLD] || creature->flagIsSet(M_PERMENANT_MONSTER)) {
-        *player << setf(CAP) << creature << " takes your money, but stays.\n";
+        player->print("%M takes your money, but stays.\n", creature.get());
         broadcast(player->getSock(), player->getParent(), "%M tried to bribe %N.", player.get(), creature.get());
         creature->coins.add(amount, GOLD);
     } else {
-        *player << setf(CAP) << creature << " takes your money and leaves.\n";
+        player->print("%M takes your money and leaves.\n", creature.get());
         broadcast(player->getSock(), player->getParent(), "%M bribed %N.", player.get(), creature.get());
 
         log_immort(true, player, "%s bribed %s.\n", player->getCName(), creature->getCName());
@@ -242,15 +237,12 @@ bool canSearch(const std::shared_ptr<Player> player) {
     if(!player->ableToDoCommand())
         return(false);
 
-    if(player->isMagicallyHeld(true))
-        return(false);
-
     if(player->isBlind()) {
-        *player << "You're blind! How can you do that?\n";
+        player->print("You're blind! How can you do that?\n");
         return(false);
     }
 
-    if(player->flagIsSet(P_SITTING))
+    if(player->flagIsSet(P_SITTING)) 
         player->stand();
 
     return(true);
@@ -307,7 +299,7 @@ void doSearch(std::shared_ptr<Player> player, bool immediate) {
             // canSee doesnt handle DescOnly
             if(player->canSee(ext) && !ext->flagIsSet(X_DESCRIPTION_ONLY) && !ext->hasBeenUsedBy(player)) {
                 found = true;
-                *player << "You found an exit: " << ext->getCName() << "\n";
+                player->printColor("You found an exit: %s^x.\n", ext->getCName());
 
                 if(ext->isWall("wall-of-fire"))
                     player->printColor("%s", ext->blockedByStr('R', "wall-of-fire", "wall-of-fire", detectMagic, true).c_str());
@@ -337,7 +329,7 @@ void doSearch(std::shared_ptr<Player> player, bool immediate) {
         if(auto ply = pIt.lock()) {
             if (ply->flagIsSet(P_HIDDEN) && player->canSee(ply) && Random::get(1, 100) <= (chance + searchMod(ply->getSize()))) {
                 found = true;
-                *player << "You found " << ply << " hiding.\n";
+                player->print("You found %s hiding.\n", ply->getCName());
             }
         }
     }
@@ -348,7 +340,7 @@ void doSearch(std::shared_ptr<Player> player, bool immediate) {
             Random::get(1,100) <= (chance + searchMod(mons->getSize())))
         {
             found = true;
-            *player << ColorOn << "You found " << mons << " hiding.\n" << ColorOff;
+            player->print("You found %1N hiding.\n", mons.get());
         }
     }
 
@@ -361,7 +353,7 @@ void doSearch(std::shared_ptr<Player> player, bool immediate) {
 
     if(chance >= Random::get(1,100)) {
         if(player->inAreaRoom() && player->getAreaRoomParent()->spawnHerbs()) {
-            *player << "You found some herbs!\n";
+            player->print("You found some herbs!\n");
             found = true;
         }
     }
@@ -374,7 +366,7 @@ void doSearch(std::shared_ptr<Player> player, bool immediate) {
             broadcast(player->getSock(), room, "%M found something!", player.get());
         player->checkImprove("search", true);
     } else {
-        *player << "You didn't find anything.\n";
+        player->print("You didn't find anything.\n");
         player->checkImprove("search", false);
     }
 }
@@ -400,7 +392,7 @@ int cmdSearch(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!canSearch(player))
         return(0);
     if(gServer->hasAction(player, ActionSearch)) {
-        *player << "You are already searching!\n";
+        player->print("You are already searching!\n");
         return(0);
     }
 
@@ -430,7 +422,7 @@ int cmdSearch(const std::shared_ptr<Player>& player, cmd* cmnd) {
         // doSearch calls unhide, no need to do it twice
         player->unhide();
 
-        *player << "You begin searching.\n";
+        player->print("You begin searching.\n");
         gServer->addDelayedAction(doSearch, player, nullptr, ActionSearch, player->lasttime[LT_SEARCH].interval);
     } else {
         doSearch(player, true);
@@ -508,18 +500,15 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(!player->knowsSkill("hide")) {
-        *player << "You don't really know how to hide effectively.\n";
+        player->print("You don't know how to hide effectively.\n");
         return(0);
     }
     if(player->flagIsSet(P_SITTING))
         player->stand();
 
     if(player->isEffected("mist")) {
-        *player << "You are already hidden as a mist.\n";
+        player->print("You are already hidden as a mist.\n");
         return(0);
     }
 
@@ -609,12 +598,12 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(player->dexterity.getCur()/10 < 9 && !(player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA))
             chance -= 10*(9 - player->dexterity.getCur()/10); // Having less then average dex
 
-        *player << "You attempt to hide in the shadows.\n";
+        player->print("You attempt to hide in the shadows.\n");
 
         if((player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID) && !player->getRoomParent()->isOutdoors()) {
             chance /= 2;
             chance = std::max(25, chance);
-            *player << "You have trouble hiding while inside.\n";
+            player->print("You have trouble hiding while inside.\n");
         }
 
         if(player->inCombat())
@@ -625,7 +614,7 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         if(Random::get(1,100) <= chance || player->isEffected("mist")) {
             player->setFlag(P_HIDDEN);
-            *player << "You slip into the shadows unnoticed.\n";
+            player->print("You slip into the shadows unnoticed.\n");
             player->checkImprove("hide", true);
         } else {
             player->unhide();
@@ -639,7 +628,7 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
     object = player->getRoomParent()->findObject(player, cmnd, 1);
 
     if(!object) {
-        *player << "You don't see that here.\n";
+        player->print("You don't see that here.\n");
         return(0);
     }
 
@@ -662,12 +651,14 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
     else
         chance = std::min(90, 5 + 3*level + 3*bonus(player->dexterity.getCur()));
 
-    *player << "You attempt to hide it.\n";
+
+
+    player->print("You attempt to hide it.\n");
     broadcast(player->getSock(), player->getParent(), "%M attempts to hide %1P.", player.get(), object.get());
 
     if(Random::get(1, 100) <= chance) {
         object->setFlag(O_HIDDEN);
-        *player << ColorOn << "You tuck " << object << " into a corner.\n" << ColorOff;
+        player->printColor("You tuck %1P into a corner.\n", object.get());
         player->checkImprove("hide", true);
     } else {
         object->clearFlag(O_HIDDEN);
@@ -686,7 +677,7 @@ bool doScout(std::shared_ptr<Player> player, const std::shared_ptr<Exit> exit) {
 
 
     if(exit->flagIsSet(X_STAFF_ONLY) && !player->isStaff()) {
-        *player << "A magical force prevents you from seeing beyond that exit.\n";
+        player->print("A magical force prevents you from seeing into the room.\n");
         return(false);
     }
 
@@ -694,7 +685,7 @@ bool doScout(std::shared_ptr<Player> player, const std::shared_ptr<Exit> exit) {
     Move::getRoom(player, exit, room, true);
 
     if(player->getClass() == CreatureClass::BUILDER && room && !room->isConstruction()) {
-        *player << "A magical force prevents you from seeing beyond that exit.\n";
+        player->print("A magical force prevents you from seeing into the room.\n");
         return(false);
     }
 
@@ -706,26 +697,28 @@ bool doScout(std::shared_ptr<Player> player, const std::shared_ptr<Exit> exit) {
     if(!room && exit->target.mapmarker.getArea()) {
         std::shared_ptr<Area>  area = gServer->getArea(exit->target.mapmarker.getArea());
         if(!area) {
-            *player << "Off the map in that direction.\n";
+            player->print("Off the map in that direction.\n");
             if(player->isStaff())
-                *player << ColorOn << "^yArea does not exist.\n" << ColorOff;
+                player->printColor("^eArea does not exist.\n");
             return(false);
         }
         // There is no room, but we're going to pretend there is.
-        *player << "\n";
+        player->print("\n");
         if(!area->name.empty())
-            *player << ColorOn << (!player->flagIsSet(P_NO_EXTRA_COLOR) && area->isSunlight(exit->target.mapmarker) ? "^C" : "^c") << area->name.c_str() << "^x\n\n" << ColorOff;
+            player->printColor("%s%s^x\n\n",
+                (!player->flagIsSet(P_NO_EXTRA_COLOR) && area->isSunlight(exit->target.mapmarker) ? "^C" : "^c"),
+                area->name.c_str());
 
-        *player << ColorOn << area->showGrid(player, exit->target.mapmarker, false).c_str() << ColorOff;
-
-        *player << ColorOn << "^g" << (player->isStaff() ? "All" : "Obvious") << " exits: north, east, south, west, northeast, northwest, southeast, southwest.^w\n\n" << ColorOff;
+        player->printColor("%s", area->showGrid(player, exit->target.mapmarker, false).c_str());
+        player->printColor("^g%s exits: north, east, south, west, northeast, northwest, southeast, southwest.^w\n\n",
+            player->isStaff() ? "All" : "Obvious");
 
     } else if(room) {
         display_rom(player, room);
     } else {
-        *player << "Off the map in that direction.\n";
+        player->print("Off the map in that direction.\n");
         if(player->isStaff())
-            *player << ColorOn << "^yRoom does not exist.\n" << ColorOff;
+            player->printColor("^eRoom does not exist.\n");
         return(false);
     }
 
@@ -747,21 +740,13 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(!player->isStaff() && !player->knowsSkill("scout")) {
-        *player << "You lack the training to properly scout exits.\n";
+        player->print("You lack the training to properly scout exits.\n");
         return(0);
     }
 
     if(!player->isStaff() && player->isBlind()) {
-        *player << ColorOn << "^CYou're blind!\n" << ColorOff;
-        return(0);
-    }
-
-    if (!player->isStaff() && player->inCombat() ) {
-        *player << "You are fighting right now. How can you do that?\n";
+        player->printColor("^CYou're blind!\n");
         return(0);
     }
 
@@ -771,7 +756,7 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
     if(cmnd->num < 2) {
-        *player << "Scout where?\n";
+        player->print("Scout where?\n");
         return(0);
     }
 
@@ -787,7 +772,7 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     if(!exit) {
-        *player << "You don't see that exit.\n";
+        player->print("You don't see that exit.\n");
         player->lasttime[LT_SCOUT].ltime = t;
         player->lasttime[LT_SCOUT].interval = 10L;
         return(0);
@@ -809,11 +794,7 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->lasttime[LT_SCOUT].ltime = t;
         player->lasttime[LT_SCOUT].interval = 20L;
 
-        chance = 40 + (int)player->getSkillLevel("scout") * 3;
-        if (player->getClass() == CreatureClass::CLERIC && player->getDeity() == MARA)
-            chance += ((player->piety.getCur()+player->dexterity.getCur())/20);
-        else
-            chance += ((player->intelligence.getCur()+player->dexterity.getCur())/20);
+        chance = 40 + (bonus(player->dexterity.getCur()) + (int)player->getSkillLevel("scout")) * 4;
 
         if(exit->isEffected("wall-of-fire"))
             chance -= 15;
@@ -887,64 +868,61 @@ int cmdEnvenom(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(!player->knowsSkill("envenom")) {
-        *player << "You lack the training to envenom your weapons.\n";
+        player->print("You lack the training to envenom your weapons.\n");
         return(0);
     }
 
     if(player->isBlind()) {
-        *player << ColorOn << "^CYou can't do that! You're blind!\n" << ColorOff;
+        player->printColor("^CYou can't do that! You're blind!\n");
         return(0);
     }
 
     if(cmnd->num < 3) {
-        *player << "Syntax: envenom (weapon) (poison)\n";
+        player->print("Syntax: envenom (weapon) (poison)\n");
         return(0);
     }
 
     weapon = player->findObject(player, cmnd, 1);
 
     if(!weapon) {
-        *player << "You do not have that weapon in your inventory.\n";
+        player->print("You do not have that weapon in your inventory.\n");
         return(0);
     }
 
     if(weapon->flagIsSet(O_ENVENOMED)) {
-        *player << ColorOn << weapon << " is already envenomed.\n" << ColorOff;
+        player->printColor("%O is already envenomed.\n", weapon.get());
         return(0);
     }
 
     if(weapon->getShotsCur() < 1) {
-        *player << "Envenoming a broken weapon is kind of pointless.\n";
+        player->print("You cannot envenom a broken weapon.\n");
         return(0);
     }
 
     std::string category = weapon->getWeaponCategory();
-    if(category != "slashing" && category != "piercing" &&
+    if(category != "slashing" && category != "piercing"&&
         !player->checkStaff("You can only envenom slashing and piercing weapons.\n"))
         return(0);
 
     object = player->findObject(player, cmnd, 2);
 
     if(!object) {
-        *player << "You do not have that poison in your inventory.\n";
+        player->print("You do not have that poison in your inventory.\n");
         return(0);
     }
 
     if(object->getType() != ObjectType::POISON) {
-        *player << "That is not poison.\n";
+        player->print("That is not poison.\n");
         return(0);
     }
 
     if(object->getShotsCur() < 1) {
-        *player << ColorOn << object << " is all used up.\n" << ColorOff;
+        player->printColor("%O is all used up.\n", object.get());
         return(0);
     }
 
-    *player << ColorOn << "You envenom "<< weapon << " with " << object << "\n." << ColorOff;
+    player->printColor("You envenom %P with %P.\n", weapon.get(), object.get());
     player->checkImprove("envenom", true);
     broadcast(player->getSock(), player->getParent(), "%M envenoms %P with %P.", player.get(), weapon.get(), object.get());
 
@@ -961,7 +939,7 @@ int cmdEnvenom(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     // Did this because some poisons are better then others, and assassins
     // will be buying the poison. The more expensive, the better it is. Having
-    // them have to buy it makes it more of a pain for some anarchist to just run around
+    // them have to buy it makes it more of a pain for some idiot to go around
     // poisoning everyone with a small knife just for fun.
 
     weapon->lasttime[LT_ENVEN].ltime = time(nullptr);
@@ -987,13 +965,10 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(!needUniqueRoom(player))
         return(0);
 
-    if(player->flagIsSet(P_SITTING))
+    if(player->flagIsSet(P_SITTING)) 
         player->stand();
 
     if(player->getClass() == CreatureClass::BUILDER)
@@ -1001,43 +976,43 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     room = player->getUniqueRoomParent();
 
-    if(!player->isCt() && player->getLevel() < 10 && player->getClass() !=  CreatureClass::THIEF) {
-        *player << "You couldn't possibly succeed. Wait until level 7.\n";
+    if(!player->isCt() && player->getLevel() < 7 && player->getClass() !=  CreatureClass::THIEF) {
+        player->print("You couldn't possibly succeed. Wait until level 7.\n");
         return(0);
     }
 
     if(player->getClass() == CreatureClass::THIEF && player->getLevel() < 4) {
-        *player << "You couldn't possibly succeed. Wait until level 4.\n";
+        player->print("You couldn't possibly succeed. Wait until level 4.\n");
         return(0);
     }
 
     if(player->getClass() == CreatureClass::PALADIN) {
-        *player << "Paladins do not allow themselves to fall to the level of petty theft.\n";
+        player->print("Paladins do not allow themselves to fall to the level of petty theft.\n");
         return(0);
     }
 
     if(player->isEffected("berserk")) {
-        *player << "You can't shoplift while your going berserk! Go break something!\n";
+        player->print("You can't shoplift while your going berserk! Go break something!\n");
         return(0);
     }
 
     if(!room->flagIsSet(R_SHOP)) {
-        *player << "This is not a shop. There's nothing to shoplift here.\n";
+        player->print("This is not a shop; there's nothing to shoplift.\n");
         return(0);
     }
 
     if(!room->flagIsSet(R_CAN_SHOPLIFT)) {
-        *player << "Someone surely would see you if you tried that here.\n";
+        player->print("Someone surely would see you if you tried that here.\n");
         return(0);
     }
 
     if(player->inCombat()) {
-        *player << "You can't shoplift in the middle of combat!\n";
+        player->print("You can't shoplift in the middle of combat!\n");
         return(0);
     }
 
     if(player->isEffected("mist")) {
-        *player << "You can't shoplift while you are a mist.\n";
+        player->print("You can't shoplift while you are a mist.\n");
         return(0);
     }
 
@@ -1046,7 +1021,7 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
     loadRoom(shopStorageRoom(room), storage);
 
     if(!isValidShop(room, storage)) {
-        *player << "This is not a shop; there's nothing to shoplift.\n";
+        player->print("This is not a shop; there's nothing to shoplift.\n");
         return(0);
     }
 
@@ -1064,7 +1039,7 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
     // all they wanted from the shop all day long whenever they wanted to.
 
     if(guarded < 2) {
-        *player <<"Someone surely would see you if you tried that here.\n";
+        player->print("Someone surely would see you if you tried that here.\n");
         return(0);
     }
 
@@ -1072,42 +1047,46 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
     // The mobs will wander after a time.
     for(const auto& mons : room->monsters) {
         if(mons->flagIsSet(M_ATTACKING_SHOPLIFTER) && !player->isDm()) {
-            *player << "The shopkeep or shop's guards are too alert right now.\n";
+            player->print("The shopkeep or shop's guards are too alert right now.\n");
             return(0);
         }
     }
 
 
     if(cmnd->num < 2) {
-        *player << "Shoplift what?\n";
+        player->print("Shoplift what?\n");
         return(0);
     }
 
     object = storage->findObject(player, cmnd, 1);
 
     if(!object) {
-        *player << "That item isn't on display.\n";
+        player->print("That item isn't on display.\n");
         return(0);
     }
-
+    //  if(!strcmp(object->getCName(), "lottery ticket"))
+    //  {
+    //      player->print("Shoplifting a lottery ticket would bring down the wrath of the gods.\n");
+    //      return(0);
+    //  }
 
     if(object->getName() == "storage room") {
-        *player << "You can't shoplift that!\n";
+        player->print("You can't shoplift that!\n");
         return(0);
     }
 
     if(object->flagIsSet(O_NO_SHOPLIFT)) {
-        *player << "That item is too well guarded for you to shoplift.\n";
+        player->print("That item is too well guarded for you to shoplift.\n");
         return(0);
     }
 
     if(object->getActualWeight() > 50) {
-        *player << "That object is too heavy and bulky to shoplift.\n";
+        player->print("That object is too heavy and bulky to shoplift.\n");
         return(0);
     }
 
     if(player->getWeight() + object->getActualWeight() > player->maxWeight()) {
-        *player << "That would be too much for you to carry.\n";
+        player->print("That would be too much for you to carry.\n");
         return(0);
     }
 
@@ -1162,7 +1141,7 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(Random::get(1,100) > chance) {
         player->setFlag(P_CAUGHT_SHOPLIFTING);
-        *player << "You were caught!\n";
+        player->print("You were caught!\n");
         broadcast(player->getSock(), room, "%M tried to shoplift %1P.\n%M was seen!", player.get(), object.get(), player.get());
 
         player->smashInvis();
@@ -1238,7 +1217,7 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
         object2->setDroppedBy(room, "Shoplift");
 
         player->addObj(object2);
-        *player << ColorOn << "You manage to conceal " << object2 << " on your person.\n" << ColorOff;
+        player->printColor("You manage to conceal %1P on your person.\n", object2.get());
         broadcast(isCt, player->getSock(), player->getRoomParent(), "*DM* %M just shoplifted %1P.", player.get(), object2.get());
         player->statistics.steal();
     }
@@ -1266,15 +1245,14 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-
     if(!player->knowsSkill("backstab")) {
-        *player << "You don't know how to backstab.\n";
+        player->print("You don't know how to backstab.\n");
         return(0);
     }
 
 
     if(player->isBlind()) {
-        *player << "Backstab what?\n";
+        player->print("Backstab what?\n");
         return(0);
     }
 
@@ -1309,7 +1287,7 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         pTarget = target->getAsPlayer();
 
     if(!pTarget && target->getAsMonster()->isEnemy(player)) {
-        *player << "Not while you're already fighting " << target->himHer() << ".\n";
+        player->print("Not while you're already fighting %s.\n", target->himHer());
         return(0);
     }
     if(!player->canAttack(target))
@@ -1320,8 +1298,8 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->dexterity.getCur() > 180)
         player->modifyAttackDelay(-10);
 
-    *player << ColorOn << "You attempt to backstab " << target << ".\n" << ColorOff;
-    *target << setf(CAP) << player << " attempts to backstab you!\n";
+    player->print("You attempt to backstab %N.\n", target.get());
+    target->print("%M attempts to backstab you!\n", player.get());
     broadcast(player->getSock(), target->getSock(), player->getParent(), "%M attempts to backstab %N.", player.get(), target.get());
 
     if(target->isMonster())
@@ -1440,8 +1418,8 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         n = damage.get();
 
         if(result == ATTACK_BLOCK) {
-            *player << ColorOn << "^C" << setf(CAP) << target << "partially blocked your attack!\n" << ColorOff;
-            *target << ColorOn << "^CYou manage to partially block " << player << "'s attack!\n" << ColorOff;
+            player->printColor("^C%M partially blocked your attack!\n", target.get());
+            target->printColor("^CYou manage to partially block %N's attack!\n", player.get());
         }
 
 
@@ -1491,43 +1469,48 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(wasKilled && n > disembowel && Random::get(1,100) < 50) {
             switch(Random::get(1,4)) {
             case 1:
-                *player << ColorOn << "^cYou completely disemboweled " << target << "! " << target->upHeShe() << "'s dead!\n" << ColorOff;
+                player->printColor("^cYou completely disemboweled %N! %s's dead!\n", target.get(), target->upHeShe());
                 broadcast(player->getSock(), player->getParent(), "%M completely disembowels %N! %s's dead!",
                     player.get(), target.get(), target->upHeShe());
                 if(target->isPlayer())
-                    *target << ColorOn << "^c" << setf(CAP) << player << " completely disemboweled you! You're dead!\n" << ColorOff;
+                    target->print("%M completely disemboweled you! You're dead!\n", player.get());
 
                 break;
             case 2:
-                *player << ColorOn << "^cYou impaled " << target << " through " << target->hisHer() << " back! " << target->upHeShe() << "'s dead!\n";
+                player->printColor("^cYou impaled %N through %s back! %s's dead!\n",
+                    target.get(), target->hisHer(), target->upHeShe());
                 broadcast(player->getSock(), player->getParent(), "%M impales %N through %s back! %s's dead!",
                     player.get(), target.get(), target->hisHer(), target->upHeShe());
                 if(target->isPlayer())
-                    *target << ColorOn << "^c" << setf(CAP) << player << " impaled you through the back! You're dead!\n" << ColorOff;
+                    target->print("%M impaled you through the back! You're dead!\n", player.get());
 
                 break;
             case 3:
                 if(weapon) {
-                    *player << ColorOn << "^cThe " << weapon << " went completely through " << target << "! " << target->upHeShe() << "'s dead!\n" << ColorOff;
+                    player->printColor("^cThe %s went completely through %N! %s's dead!\n",
+                        weapon->getCName(), target.get(), target->upHeShe());
                     broadcast(player->getSock(), player->getParent(), "%M's %s goes completely through %N! %s's dead!",
                         player.get(), weapon->getCName(), target.get(), target->upHeShe());
 
                     if(target->isPlayer())
-                        *target << ColorOn << "^c" << setf(CAP) << player << "'s " << weapon << " sticks out of your chest! You're dead!\n" << ColorOff;
+                        target->print("%M's %s sticks out of your chest! You're dead!\n",
+                            player.get(), weapon->getCName());
                 }
 
                 break;
             case 4:
-                *player << ColorOn << "^cYou cut %N in half from behind! " << target->upHeShe() << "'s dead!\n" << ColorOff;
+                player->printColor("^cYou cut %N in half from behind! %s's dead!\n",
+                    target.get(), target->upHeShe());
                 broadcast(player->getSock(), player->getParent(), "%M cut %N in half from behind! %s's dead!",
                     player.get(), target.get(), target->upHeShe());
                 if(target->isPlayer())
-                    *target << ColorOn << "^c" << setf(CAP) << player << " cut you in half from behind! You're dead!\n" << ColorOff;
+                    target->print("%M cut you in half from behind! You're dead!\n", player.get());
+
                 break;
             }
         }
 
-        if(weapon && Random::get(0,1))
+        if(weapon)
             weapon->decShotsCur();
         Creature::simultaneousDeath(player, target, false, false);
 
@@ -1541,7 +1524,7 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->statistics.miss();
         if(target->isPlayer())
             target->getAsPlayer()->statistics.wasMissed();
-        *player << "You missed.\n";
+        player->print("You missed.\n");
         player->checkImprove("backstab", false);
         broadcast(player->getSock(), player->getParent(), "%s backstab failed.", player->upHisHer());
         player->setAttackDelay(Random::get(30,90));
@@ -1555,21 +1538,21 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
     } else if(result == ATTACK_FUMBLE) {
         player->statistics.fumble();
-        *player << ColorOn << "^gYou FUMBLED your weapon.\n" << ColorOff;
+        player->printColor("^gYou FUMBLED your weapon.\n");
         broadcast(player->getSock(), player->getParent(), "^g%M fumbled %s weapon.", player.get(), player->hisHer());
 
         if(weapon->flagIsSet(O_ENVENOMED)) {
             if(!player->immuneToPoison() &&
                 !player->chkSave(POI, player, -5) && !induel(player, target->getAsPlayer())
             ) {
-                *player << ColorOn << "^G^#You poisoned yourself!!\n" << ColorOff;
+                player->printColor("^G^#You poisoned yourself!!\n");
                 broadcast(player->getSock(), player->getParent(), "%M poisoned %sself!!",
                     player.get(), player->himHer());
 
                 if(weapon->getEffectStrength()) {
                     dmg = (Random::get(1,3) + (weapon->getEffectStrength()/10));
                     player->hp.decrease(dmg);
-                    *player << ColorOn << "^gYou take ^G" << dmg << "^g damage as the poison takes effect!\n" << ColorOff;
+                    player->print("You take %d damage as the poison takes effect!\n", dmg);
                 }
 
                 weapon->clearFlag(O_ENVENOMED);
@@ -1587,7 +1570,7 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 player->poison(player, weapon->getEffectStrength(), dur);
 
             } else {
-                *player << "You almost poisoned yourself!\n";
+                player->print("You almost poisoned yourself!\n");
                 broadcast(player->getSock(), player->getParent(), "%M almost poisoned %sself!", player.get(), player->himHer());
             }
         }
@@ -1599,7 +1582,7 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->computeAttackPower();
         player->computeAttackPower();
     } else {
-        *player << ColorOn << "^RError!!! Unhandled attack result: " << result << "\n" << ColorOff;
+        player->printColor("^RError!!! Unhandled attack result: %d\n", result);
     }
 
     return(0);
@@ -1649,16 +1632,16 @@ int Player::checkPoison(std::shared_ptr<Creature> target, std::shared_ptr<Object
         if(Random::get<bool>(0.75))
             weapon->clearFlag(O_ENVENOMED);
 
-        *this << ColorOn << "^gYou poisoned " << target << "!\n" << ColorOff;
-        *target << ColorOn << "^g^#" << setf(CAP) << this << " poisoned you!!\n" << ColorOff;
+        printColor("^gYou poisoned %N!\n", target.get());
+        target->printColor( "^g^#%M poisoned you!!\n", this);
         broadcast(getSock(), target->getSock(), target->getRoomParent(), "%M poisoned %N!", this, target.get());
 
         int dur = standardPoisonDuration(weapon->getEffectDuration(), target->constitution.getCur());
 
         if(weapon->getEffectStrength()) {
             dmg = (Random::get(1,3) + (weapon->getEffectStrength()/10));
-            *this << ColorOn << "^gThe poison did ^G" << dmg << "^g onset damage!\n" << ColorOff;
-            *target << ColorOn << "^gYou take ^G" << dmg << "^g damage as the poison takes effect!\n" << ColorOff;
+            printColor("^gThe poison did ^G%d^g onset damage!\n", dmg);
+            target->printColor("^gYou take ^G%d^g damage as the poison takes effect!\n", dmg);
         }
 
         target->poison(Containable::downcasted_shared_from_this<Player>(), weapon->getEffectStrength(), dur);
@@ -1669,7 +1652,7 @@ int Player::checkPoison(std::shared_ptr<Creature> target, std::shared_ptr<Object
 //*********************************************************************
 //                      cmdAmbush
 //*********************************************************************
-// This function allows rogues/rangers to ambush their opponents from
+// This function allows rogues to ambush their opponents from
 // hiding. It is similar to backstab, but somewhat weakened and
 // more limited. -- TC
 
@@ -1682,12 +1665,12 @@ int cmdAmbush(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
     if(!player->knowsSkill("ambush")) {
-        *player << "You are not trained in proper ambush techniques.\n";
+        player->print("You don't know how to ambush people!\n");
         return(0);
     }
 
     if(player->isBlind()) {
-        *player << "Ambush whom?\n";
+        player->print("Ambush whom?\n");
         return(0);
     }
 
@@ -1696,12 +1679,12 @@ int cmdAmbush(const std::shared_ptr<Player>& player, cmd* cmnd) {
             !player->ready[HELD-1] ||
             player->ready[HELD-1]->getType() != ObjectType::WEAPON
         ) {
-            *player << "You must have two weapons wielded to properly ambush.\n";
+            player->print("You must have two weapons wielded to properly ambush.\n");
             return(0);
         }
 
         if(!player->flagIsSet(P_HIDDEN) && !player->isEffected("mist") && !player->isCt()) {
-            *player << "How do you expect to ambush anything when you aren't hiding?\n";
+            player->print("How do you expect to ambush when you aren't hiding?\n");
             return(0);
         }
 
@@ -1720,7 +1703,8 @@ int cmdAmbush(const std::shared_ptr<Player>& player, cmd* cmnd) {
         pCreature = creature->getAsPlayer();
 
     if(!pCreature && creature->getAsMonster()->isEnemy(player) && !player->isCt()) {
-        *player << "Not while you're already fighting " << creature->himHer() << ".\n";
+        player->print("Not while you're already fighting %s.\n",
+              creature->himHer());
         return(0);
     }
 
@@ -1738,9 +1722,9 @@ int cmdAmbush(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->dexterity.getCur() > 180)
         player->modifyAttackDelay(-10);
 
-    *player << ColorOn << "You ambush " << creature << "!\n" << ColorOff;
+    player->print("You ambush %N!\n", creature.get());
     broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M ambushes %N!", player.get(), creature.get());
-    *creature << ColorOn << setf(CAP) << player << " ambushes you!\n" << ColorOff;
+    creature->print("%M ambushes you!\n", player.get());
 
     player->unhide();
 
@@ -1768,14 +1752,11 @@ int cmdPickLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(!player->knowsSkill("pick")) {
-        *player << "You don't know how to pick locks.\n";
+        player->print("You don't know how to pick locks.\n");
         return(0);
     }
-
+ 
     if(player->flagIsSet(P_SITTING))
         player->stand();
 
@@ -1786,13 +1767,13 @@ int cmdPickLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     if(cmnd->num < 2) {
-        *player << "Pick what?\n";
+        player->print("Pick what?\n");
         return(0);
     }
     exit = findExit(player, cmnd);
 
     if(!exit) {
-        *player << "You don't see that here.\n";
+        player->print("You don't see that here.\n");
         return(0);
     }
 
@@ -1802,12 +1783,12 @@ int cmdPickLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
     if(!exit->flagIsSet(X_LOCKED)) {
-        *player << "It's not locked.\n";
+        player->print("It's not locked.\n");
         return(0);
     }
 
     if(exit->isWall("wall-of-force")) {
-        *player << ColorOn << "The " << exit->getCName() << " is blocked by a ^Mwall-of-force.\n" << ColorOff;
+        player->printColor("The %s^x is blocked by a wall of force.\n", exit->getCName());
         return(0);
     }
     // were they killed by exit effect damage?
@@ -1845,7 +1826,7 @@ int cmdPickLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
         chance = 0;
 
     if((exit->getLevel() > level) && !player->isCt()) {
-        *player << "The lock's mechanism is currently beyond your experience.\n";
+        player->print("The lock's mechanism is currently beyond your experience.\n");
         chance = 0;
     }
 
@@ -1860,7 +1841,7 @@ int cmdPickLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
         log_immort(false, player, "%s picked the %s in room %s.\n", player->getCName(), exit->getCName(),
             player->getRoomParent()->fullName().c_str());
 
-        *player << "You successfully picked the lock.\n";
+        player->print("You successfully picked the lock.\n");
         player->checkImprove("pick", true);
         exit->clearFlag(X_LOCKED);
         broadcast(player->getSock(), player->getParent(), "%s succeeded.", player->upHeShe());
@@ -1868,7 +1849,7 @@ int cmdPickLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
         Hooks::run(player, "succeedPickExit", exit, "succeedPickByCreature");
 
     } else {
-        *player << "You failed.\n";
+        player->print("You failed.\n");
         player->checkImprove("pick", false);
 
         Hooks::run(player, "failPickExit", exit, "failPickByCreature");
@@ -1898,29 +1879,26 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(!player->isStaff() && !player->knowsSkill("peek")) {
-        *player << "You don't know how to peek at other people's inventories.\n";
+        player->print("You don't know how to peek at other people's inventories.\n");
         return(0);
     }
 
     if(cmnd->num < 2) {
-        *player << "Peek at who?\n";
+        player->print("Peek at who?\n");
         return(0);
     }
 
     int level = (int)player->getSkillLevel("peek");
 
     if(player->isBlind()) {
-        *player << ColorOn << "^CYou can't do that! You're blind!\n" << ColorOff;
+        player->printColor("^CYou can't do that! You're blind!\n");
         return(0);
     }
 
     creature = player->getParent()->findCreature(player, cmnd);
     if(!creature || creature == player) {
-        *player << "That person is not here.\n";
+        player->print("That person is not here.\n");
         return(0);
     }
     mCreature = creature->getAsMonster();
@@ -1928,17 +1906,17 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(player->getClass() == CreatureClass::BUILDER) {
         if(pCreature) {
-            *player << "You cannot peek players.\n";
+            player->print("You cannot peek players.\n");
             return(0);
         }
     if(!player->canBuildMonsters() && !player->canBuildObjects())
             return(cmdNoAuth(player));
         if(!player->checkBuilder(player->getUniqueRoomParent())) {
-            *player << ColorOn << "^yError: Room number not inside any of your alotted ranges.\n" << ColorOff;
+            player->print("Error: Room number not inside any of your alotted ranges.\n");
             return(0);
         }
         if(mCreature && mCreature->info.id && !player->checkBuilder(mCreature->info)) {
-            *player << ColorOn << "^yError: Monster not inside any of your alotted ranges.\n" << ColorOff;
+            player->print("Error: Monster not inside any of your alotted ranges.\n");
             return(0);
         }
     }
@@ -1948,7 +1926,7 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     if(pCreature && pCreature->isEffected("mist")) {
-        *player << "You cannot peek at the inventory of a mist.\n";
+        player->print("You cannot peek at the inventory of a mist.\n");
         return(0);
     }
 
@@ -1967,12 +1945,12 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->lasttime[LT_PEEK].interval = 5;
 
     if(!player->isCt() && creature->isStaff()) {
-        *player << "You failed.\n";
+        player->print("You failed.\n");
         return(0);
     }
 
     if(!pCreature && (creature->flagIsSet(M_CANT_BE_STOLEN_FROM) || creature->flagIsSet(M_TRADES) || creature->flagIsSet(M_CAN_PURCHASE_FROM)) && !player->isDm()) {
-        *player << setf(CAP) << creature << " manages to keep " << creature->hisHer() << " inventory hidden from you.\n";
+        player->print("%M manages to keep %s inventory hidden from you.\n", creature.get(), creature->hisHer());
         return(0);
     }
 
@@ -2005,20 +1983,21 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
     chance = std::min(90, (player->getClass() == CreatureClass::ASSASSIN ? (level*4):(15 + level*5)));
 
     if(Random::get(1,100) > chance && !player->isStaff()) {
-        *creature << setf(CAP) << player << " peeked at your inventory.\n";
+        creature->print("%M peeked at your inventory.\n", player.get());
         broadcast(player->getSock(), creature->getSock(), player->getRoomParent(),
             "%M peeked at %N's inventory.", player.get(), creature.get());
-        *player << creature->upHeShe() << " noticed!\n";
+        player->print("%s noticed!\n", creature->upHeShe());
     } else {
-        *player << creature->upHeShe() << "'s oblivious to your rummaging.\n";
+        player->print("%s's oblivious to your rummaging.\n",
+              creature->upHeShe());
     }
     player->checkImprove("peek", true);
 
     str = creature->listObjects(player, player->isStaff());
     if(!str.empty())
-        *player << ColorOn << creature->upHeShe() << " is carrying: " << str << ".\n" << ColorOff;
+        player->printColor("%s is carrying: %s.\n", creature->upHeShe(), str.c_str());
     else
-        *player << creature->upHeShe() << " isn't holding anything.\n";
+        player->print("%s isn't holding anything.\n", creature->upHeShe());
 
 
     goldchance = (5+(level*5)) - creature->getLevel();
@@ -2028,8 +2007,7 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
         goldchance = 101;
 
     if(Random::get(1,100) <= goldchance && !pCreature && !creature->flagIsSet(M_PERMENANT_MONSTER))
-        *player << ColorOn << creature->upHeShe() << " has ^y" << creature->coins[GOLD] << "^x gold coins.\n" << ColorOff;
-
+        player->print("%s has %ld gold coins.\n", creature->upHeShe(), creature->coins[GOLD]);
 
     return(0);
 }
@@ -2048,7 +2026,7 @@ int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd
         int level = (int)player->getSkillLevel("peek");
 
         if(level < 10) {
-            *player << "You are are not experienced enough at peeking to do that.\n";
+            player->print("You are are not experienced enough at peeking to do that.\n");
             return(0);
         }
 
@@ -2060,7 +2038,7 @@ int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd
             chance = 0;
 
         if(Random::get(1,100) > chance) {
-            *player << "You failed.\n";
+            player->print("You failed.\n");
             player->checkImprove("peek", false);
             return(0);
         }
@@ -2069,27 +2047,27 @@ int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd
     container = target->findObject(player, cmnd, 2);
 
     if(!container) {
-        *player << target->upHeShe() << " doesn't have that.\n";
+        player->print("%s doesn't have that.\n", target->upHeShe());
         return(0);
     }
 
     if(container->getType() != ObjectType::CONTAINER) {
-        *player << "That isn't a container.\n";
+        player->print("That isn't a container.\n");
         return(0);
     }
 
     if(!inv) {
         if(Random::get(1,100) > chance && !player->isStaff()) {
 
-            *player << ColorOn << "You manage to peek inside " << target << "'s " << container->getCName() << ".\n" << ColorOff;
-            *target << ColorOn << setf(CAP) << player << " managed to peek inside your " << container->getCName() << "!\n" << ColorOff;
+            player->print("You manage to peek inside %N's %s.\n", target.get(), container->getCName());
+            target->print("%M managed to peek in your %s!\n", player.get(), container->getCName());
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M peeked at %N's inventory.",
                 player.get(), target.get());
-            *player << ColorOn << target->upHeShe() << " noticed!\n" << ColorOff;
+            player->print("%s noticed!\n", target->upHeShe());
 
         } else {
-            *player << ColorOn << "You manage to peek inside " << target << "'s " << container->getCName() << ".\n" << ColorOff;
-            *player << target->upHeShe() << "'s oblivious to your rummaging.\n";
+            player->print("You manage to peek inside %N's %s.\n", target.get(), container->getCName());
+            player->print("%s's oblivious to your rummaging.\n", target->upHeShe());
         }
         player->checkImprove("peek", true);
     }
@@ -2097,9 +2075,9 @@ int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd
     if(container->getType() == ObjectType::CONTAINER) {
         str = container->listObjects(player, false);
         if(!str.empty())
-            *player << ColorOn << "It contains: " << str << ".\n" << ColorOff;
+            player->printColor("It contains: %s.\n", str.c_str());
         else
-            *player << "It is empty.\n";
+            player->print("It is empty.\n");
     }
 
     return(0);

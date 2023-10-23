@@ -239,7 +239,6 @@ int cmdRepair(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd);
-int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdMaul(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdTalk(const std::shared_ptr<Player>& player, cmd* cmnd);

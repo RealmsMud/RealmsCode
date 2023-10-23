@@ -339,10 +339,6 @@ std::ostream& operator<<(std::ostream& out, AlchemyEffect* effect) {
 //*********************************************************************
 
 int cmdBrew(const std::shared_ptr<Player>& player, cmd* cmnd) {
-
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(!player->knowsSkill("alchemy")) {
         player->print("You have no idea how to brew potions!\n");
         return(0);

@@ -329,7 +329,7 @@ int Creature::doHeal(const std::shared_ptr<Creature>& target, int amt, double th
                 // If we're not on the enemy list, put us on at the end
                 if(!mons->isEnemy(cThis)) {
                     mons->addEnemy(cThis);
-                    *this << ColorOn << "^R" << setf(CAP) << mons << " gets angry at you!^x\n" << ColorOff;
+                    *this << ColorOn << setf(CAP) << "^R " << mons << " gets angry at you!^x\n" << ColorOff;
                 }
                 // Add the amount of healing threat done to effort done
                 mons->adjustThreat(cThis, healed, threatFactor);

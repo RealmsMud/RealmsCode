@@ -587,7 +587,7 @@ int Server::updatePlayerCombat() {
                 } else if (player->autoAttackEnabled() && !player->isFleeing() && player->hasAttackableTarget() && player->isAttackingTarget()) {
                     if (!player->checkAttackTimer(false))
                         continue;
-                    
+
                     player->attackCreature(player->getTarget(), ATTACK_NORMAL);
                 }
             }
