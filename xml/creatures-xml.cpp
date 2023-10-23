@@ -422,17 +422,6 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                     addSkill("hands",(level*9));
                 }
              }
-
-             if (getVersion() < "2.59") { 
-                // Free-action was turned into an effect - clean up old flag
-                #define P_FREE_ACTION_OLD   180
-                clearFlag(P_FREE_ACTION_OLD);
-                // Gore skill added for Minotaurs - give existing Minotaurs 75% of max gained skill
-                if (getRace() == MINOTAUR)
-                    addSkill("gore",std::max<int>(1,(level*30)/4));
-
-            }
-            
         }
     }
 

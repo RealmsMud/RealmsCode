@@ -18,6 +18,7 @@
 
 #include <fmt/format.h>                          // for format
 #include <strings.h>                             // for strncasecmp
+#include <iostream>
 #include <unistd.h>                              // for link
 #include <boost/algorithm/string/predicate.hpp>  // for iequals
 #include <boost/iterator/iterator_facade.hpp>    // for operator!=, iterator...
@@ -52,7 +53,6 @@
 #include "socials.hpp"                           // for SocialCommand
 #include "songs.hpp"                             // for Song
 #include "structs.hpp"                           // for Command, Spell, PlyC...
-
 
 class MudObject;
 
@@ -243,7 +243,7 @@ bool Config::initCommands() {
     staffCommands.emplace("*cache", 100, dmCache, isDm, "Show DNS cache");
     staffCommands.emplace("*test", 100, dmTest, isDm, "");
     staffCommands.emplace("pcast", 100, pcast, isDm, "");
-
+    
     // channels
     staffCommands.emplace("*send", 10, channel, isCt, "");
     staffCommands.emplace("dm", 100, channel, isDm, "Use DM channel");
@@ -638,7 +638,6 @@ bool Config::initCommands() {
     playerCommands.emplace("bash", 50, cmdBash, nullptr, "Bash an opponent");
     playerCommands.emplace("barkskin", 100, cmdBarkskin, nullptr, "Use barkskin ability");
     playerCommands.emplace("kick", 100, cmdKick, nullptr, "Kick an opponent");
-    playerCommands.emplace("gore", 100, cmdGore, nullptr, "Gore an opponent (Minotaur only)");
     playerCommands.emplace("gamestat", 100, infoGamestat, nullptr, "Game time statistics");
 
     playerCommands.emplace("list", 100, cmdList, nullptr, "Show items for sale");

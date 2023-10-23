@@ -162,7 +162,7 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
     )
         return(0);
     
-    if(player->isMagicallyHeld() &&
+    if(player->isEffected("hold-person") &&
         !player->checkStaff("You can't check the room right now.\nYou can't move!\n")
     )
         return(0);
@@ -829,10 +829,6 @@ int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
     if(!creature->ableToDoCommand())
         return(0);
-
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(!creature->checkAttackTimer())
         return(0);
     if(creature->isBlind()) {
@@ -1030,9 +1026,6 @@ int cmdKnock(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     std::shared_ptr<BaseRoom> targetRoom=nullptr;
     std::shared_ptr<Exit> exit=nullptr;
 
-    if(creature->isMagicallyHeld(true))
-        return(0);
-
     if(cmnd->num < 2) {
         *creature << "Knock on what exit?\n";
         return(0);
@@ -1095,9 +1088,6 @@ int cmdBreak(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Object> object=nullptr;
 
     player->clearFlag(P_AFK);
-
-    if(player->isMagicallyHeld(true))
-        return(0);
 
     if(cmnd->num < 2) {
         player->print("Break what?\n");

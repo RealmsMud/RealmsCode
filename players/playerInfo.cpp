@@ -166,7 +166,7 @@ void Player::score(const std::shared_ptr<Player> viewer) {
         oStr << " ^g*Camouflaged*";
     if(isEffected("petrification"))
         oStr << " ^c*Petrified*";
-    if(isMagicallyHeld())
+    if(isEffected("hold-person"))
         oStr << " ^c*Magically Held*";
     if(isEffected("pray") || isEffected("dkpray"))
         oStr << " ^y*Prayed*";

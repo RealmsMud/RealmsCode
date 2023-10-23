@@ -227,7 +227,7 @@ std::shared_ptr<AreaRoom> Move::recycle(std::shared_ptr<AreaRoom> room, const st
 // updates some settings on the character once they move
 
 void Move::update(const std::shared_ptr<Player>& player) {
-    if( player->getRoomParent()->isUnderwater() && !player->isEffected("free-action")) {
+    if( player->getRoomParent()->isUnderwater() && !player->flagIsSet(P_FREE_ACTION)) {
         player->lasttime[LT_MOVED].ltime = time(nullptr);
         player->lasttime[LT_MOVED].interval = 2L;
     }
@@ -469,7 +469,8 @@ bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isStaff())
         return(true);
 
-    if(player->isMagicallyHeld(true)) {
+    if(player->isEffected("hold-person")) {
+        player->print("You are unable to move right now.\n");
         return(false);
     }
 
@@ -516,7 +517,7 @@ bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    u = LT(player, LT_MOVED);
 
 
-    if(u - t > 0 && player->getRoomParent()->isUnderwater() && !player->isEffected("free-action")) {
+    if(u - t > 0 && player->getRoomParent()->isUnderwater() && !player->flagIsSet(P_FREE_ACTION)) {
         player->pleaseWait(u - t);
         return(false);
     }
@@ -539,7 +540,7 @@ bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if( player->getRoomParent()->flagIsSet(R_DIFFICULT_TO_MOVE) &&
             !player->isEffected("fly") &&
             !player->isEffected("mist") &&
-            !player->isEffected("free-action")
+            !player->flagIsSet(P_FREE_ACTION)
         )
             moves = 1;
         else
@@ -551,7 +552,7 @@ bool Move::canMove(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if( player->lasttime[LT_MOVED].ltime == t || (
                 player->getRoomParent()->flagIsSet(R_DIFFICULT_TO_MOVE) &&
                 !player->isEffected("fly") &&
-                !player->isEffected("free-action") &&
+                !player->flagIsSet(P_FREE_ACTION) &&
                 !player->isEffected("mist") &&
                 Random::get(1,100) > chance
             ))
@@ -1307,8 +1308,7 @@ int cmdOpen(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
+    
 
     if(cmnd->num < 2) {
         player->print("Open what?\n");
@@ -1394,17 +1394,14 @@ int cmdClose(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(cmnd->num < 2) {
         player->print("Close what?\n");
         return(0);
     }
 
-    if(player->flagIsSet(P_SITTING))
+    if(player->flagIsSet(P_SITTING)) 
         player->stand();
-
+    
 
     exit = findExit(player, cmnd);
 
@@ -1467,20 +1464,19 @@ int cmdUnlock(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->clearFlag(P_AFK);
 
+
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
 
     if(cmnd->num < 2) {
         player->print("Unlock what?\n");
         return(0);
     }
 
-    if(player->flagIsSet(P_SITTING))
+    if(player->flagIsSet(P_SITTING)) 
         player->stand();
-
+    
 
     exit = findExit(player, cmnd);
 
@@ -1601,15 +1597,12 @@ int cmdLock(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(cmnd->num < 2) {
         player->print("Lock what?\n");
         return(0);
     }
 
-
+    
     exit = findExit(player, cmnd);
 
     if(!exit) {

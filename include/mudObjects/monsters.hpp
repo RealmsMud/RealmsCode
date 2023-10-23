@@ -185,9 +185,6 @@ public:
     std::string getTalk() const;
     int getWeaponSkill(const std::shared_ptr<Object>  weapon = nullptr) const;
     int getDefenseSkill() const;
-    bool getEnchantmentImmunity(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
-    bool getEnchantmentVsMontype(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
-    void doCheckFailedCastAggro(const std::shared_ptr<Creature>& caster, bool willAggro, bool print);
 
 // Set
     void setMaxLevel(unsigned short l);
@@ -223,7 +220,6 @@ public:
     void pulseTick(long t);
     void beneficialCaster();
     int initMonster(bool loadOriginal = false, bool prototype = false);
-    bool willCastHolds(const std::shared_ptr<Creature>& target, int splNo);
 
     int mobileCrt();
     void getMobSave();

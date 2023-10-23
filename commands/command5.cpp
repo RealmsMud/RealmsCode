@@ -497,9 +497,6 @@ int cmdSuicide(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(!player->getProxyName().empty()) {
         player->print("You are unable to suicide a proxied character.\n");
         return(0);

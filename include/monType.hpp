@@ -58,9 +58,6 @@ enum mType {
     PUDDING         = 30,
     SLIME           = 31,
     UNDEAD          = 32,
-    OOZE            = 33,
-    MODRON          = 34,
-    DAEMON          = 35,
 
     MAX_MOB_TYPES
 };
@@ -71,15 +68,6 @@ namespace monType {
     char *getName(mType type);
     int getHitdice(mType type);
     bool isUndead(mType type);
-    bool isPlant(mType type);
-    bool isElemental(mType type);
-    bool isFey(mType type);
-    bool isAnimal(mType type);
-    bool isInsectLike(mType type);
-    bool isHumanoidLike(mType type);
-    bool isExtraplanar(mType type);
-    bool isMindless(mType type);
-    bool isImmuneEnchantments(mType type);
     Size size(mType type);
     bool immuneCriticals(mType type);
     bool noLivingVulnerabilities(mType type);

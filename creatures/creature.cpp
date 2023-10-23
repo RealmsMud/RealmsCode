@@ -811,16 +811,11 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
 
     auto pThis = Containable::downcasted_shared_from_this<Player>();
     if(mTarget) {
-        oStr << "You see " << mTarget->getCrtStr(pThis, flags, 1);
-        if (mTarget->getType()>=HUMANOID) {
-            oStr << ". " << mTarget->upHeShe() << " is of creature type: ^D" << monType::getName(mTarget->getType()) << ((mTarget->isUndead() && mTarget->getType()!=UNDEAD)?"(Undead)":"") << "^x.\n";
-        }
-        else
-            oStr << ".\n";
+        oStr << "You see " << mTarget->getCrtStr(pThis, flags, 1) << ".\n";
         if(!mTarget->getDescription().empty())
             oStr << mTarget->getDescription() << "\n";
         else
-            oStr << "Nothing is especially descriptive about " << mTarget->getCrtStr(pThis, flags, 0) << ".\n";
+            oStr << "There is nothing special about " << mTarget->getCrtStr(pThis, flags, 0) << ".\n";
 
         if(mTarget->getMobTrade()) {
             rank = mTarget->getSkillLevel()/10;
@@ -916,7 +911,7 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
         if(space)
             oStr << " ";
         space = true;
-        oStr << target->upHeShe() << " is size ^W" << getSizeName(target->getSize()) << "^x.";
+        oStr << target->upHeShe() << " is ^W" << getSizeName(target->getSize()) << "^x.";
     }
 
     if(space)
@@ -926,7 +921,7 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
         oStr << "\n" << target->getHpDurabilityStr();
         if ((mTarget && mTarget->isEnemy(this)) || (pTarget && pTarget->hp.getCur() < pTarget->hp.getMax()))
             oStr << "\n" << target->getHpProgressBar() << "^x\n\n";
-        else
+        else 
             oStr << "^x\n";
     }
 
@@ -1034,15 +1029,14 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
         if(!ableToDoCommand())
             return(false);
 
-        if(isMagicallyHeld(displayFail)) {
-            return(false);
-        }
-
         if(flagIsSet(P_SITTING))
             stand();
 
-
-
+        if(isEffected("hold-person")) {
+            if(displayFail)
+                print("You are unable to move right now.\n");
+            return(false);
+        }
 
         if(checkTimer && !isEffected("fear") && !isStaff()) {
             t = time(nullptr);

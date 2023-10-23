@@ -288,10 +288,6 @@ int drain_exp(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spe
 // This function allows clerics of Aramon to invoke undead targets.
 
 int animateDeadCmd(const std::shared_ptr<Player>& player, cmd* cmnd) {
-
-    if(player->isMagicallyHeld(true))
-        return(0);
-    
     SpellData data;
     data.set(CastType::SKILL, NECROMANCY, EVIL, nullptr, player);
     if(!data.check(player))

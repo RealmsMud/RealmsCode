@@ -314,9 +314,6 @@ int cmdPurchase(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(cmnd->num < 2) {
         player->print("Syntax: purchase <item> <monster>\n");
         return(0);
@@ -554,10 +551,6 @@ int cmdBuy(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->ableToDoCommand())
         return(0);
-
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(player->getClass() == CreatureClass::BUILDER) {
         *player << "You may not buy things from shops.\n";
         return(0);
@@ -845,10 +838,6 @@ int cmdSell(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->ableToDoCommand())
         return(0);
-
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     auto room = player->getRoomParent();
     if(!room->flagIsSet(R_PAWN_SHOP) && !room->flagIsSet(R_SHOP)) {
         *player << "This is not a pawn shop.\n";
@@ -1008,9 +997,6 @@ int cmdRefund(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
     if(!player->ableToDoCommand())
-        return(0);
-
-    if(player->isMagicallyHeld(true))
         return(0);
 
     if(!player->getRoomParent()->flagIsSet(R_SHOP)) {
@@ -1202,9 +1188,6 @@ int cmdTrade(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->clearFlag(P_AFK);
     if(!player->ableToDoCommand())
-        return(0);
-
-    if(player->isMagicallyHeld(true))
         return(0);
 
     if(cmnd->num < 2) {

@@ -1181,8 +1181,6 @@ void Player::resetPlayer(const std::shared_ptr<Creature>& killer) {
     tickDmg = 0;
     removeCurse();
     removeEffect("hold-person");
-    removeEffect("hold-monster");
-    removeEffect("hold-undead");
     removeEffect("petrification");
     removeEffect("confusion");
     removeEffect("drunkenness");

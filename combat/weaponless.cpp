@@ -344,9 +344,6 @@ int cmdFrenzy(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isMagicallyHeld(true))
-        return(0);
-
     if(!player->knowsSkill("frenzy")) {
         player->print("You try to work yourself up into a frenzy but fail.\n");
         return(0);
