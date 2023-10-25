@@ -107,7 +107,7 @@ class LastTime;
 #define LT_CHARMED      36
 #define LT_MEDITATE     37
 #define LT_TOUCH_OF_DEATH   38
-// free             38
+#define LT_GORE             39
 #define LT_BLOOD_SACRIFICE  40
 #define LT_MOB_THIEF        41
 #define LT_INVOKE       42
@@ -118,7 +118,7 @@ class LastTime;
 #define LT_DRAIN_LIFE       47
 #define LT_HYPNOTIZE        48
 #define LT_PLAYER_BITE      49
-#define LT_FREE_ACTION      50
+// free                     50
 #define LT_PLAYER_SEND      51
 // free             52
 // free             53
@@ -207,7 +207,7 @@ class LastTime;
 #define LT_MOB_BREATH       LT_HYPNOTIZE
 #define LT_MOB_TRAMPLE      LT_ARMOR
 
-#define LT_ENDURANCE        LT_FREE_ACTION
+//#define LT_ENDURANCE        LT_FREE_ACTION
 #define LT_M_AURA_ATTACK    LT_NO_PKILL
 
 #define OLD_LT_STONESKIN    LT_MON_WANDER

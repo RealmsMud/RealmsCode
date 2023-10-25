@@ -123,6 +123,21 @@ bool Config::loadEffects() {
     );
     addToSet(
       EffectBuilder()
+        .name("free-action")
+        .addBaseEffect("free-action")
+        .display("^gFree-Action^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^GYou are now protected from hold magic and difficult movement.^x")
+        .roomAddStr("^G*ACTOR* is now protected from hold magic and difficult movement.^x")
+        .selfDelStr("^gYour protection from hold magic and difficult movement has ended.^x")
+        .roomDelStr("^g*ACTOR*'s protection from hold magic and difficult movement has ended.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
         .name("blindness")
         .addBaseEffect("blindness")
         .display("^YBlinded!^x")
@@ -421,7 +436,7 @@ bool Config::loadEffects() {
       EffectBuilder()
         .name("drunkenness")
         .addBaseEffect("drunkenness")
-        .display("^o")
+        .display("^gDrunk^x")
         .computeScript("effectLib.computeDisable(actor, effect, applier)")
         .pulsed(false)
         .type("Negative")
@@ -678,12 +693,116 @@ bool Config::loadEffects() {
         .addBaseEffect("hold-person")
         .display("^YMagically Held!^x")
         .computeScript("effectLib.computeDisable(actor, effect, applier)")
-        .pulsed(false)
+        .pulsed(true)
+        .pulseScript("effectLib.pulseHoldSpells(actor, effect)")
+        .pulseDelay(12)
         .type("Negative")
-        .selfAddStr("^cYou are unable to move.^x")
-        .roomAddStr("^c*ACTOR* is unable to move.^x")
-        .selfDelStr("^cYou are able to move again.^x")
-        .roomDelStr("^c*ACTOR* is able to move again.^x")
+        .selfAddStr("^yYou are frozen and unable to move.^x")
+        .roomAddStr("^y*ACTOR* is frozen and unable to move.^x")
+        .selfDelStr("^yYou are no longer magically held.^x")
+        .roomDelStr("^y*ACTOR* is no longer magically held.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("hold-monster")
+        .addBaseEffect("hold-monster")
+        .display("^cMagically Held!^x")
+        .computeScript("effectLib.computeDisable(actor, effect, applier)")
+        .pulsed(true)
+        .pulseScript("effectLib.pulseHoldSpells(actor, effect)")
+        .pulseDelay(12)
+        .type("Negative")
+        .selfAddStr("^cYou are frozen and unable to move.^x")
+        .roomAddStr("^c*ACTOR* is frozen and unable to move.^x")
+        .selfDelStr("^cYou are no longer magically held.^x")
+        .roomDelStr("^c*ACTOR* is no longer magically held.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("hold-undead")
+        .addBaseEffect("hold-undead")
+        .display("^DMagically Held!^x")
+        .computeScript("effectLib.computeDisable(actor, effect, applier)")
+        .pulsed(true)
+        .pulseScript("effectLib.pulseHoldSpells(actor, effect)")
+        .pulseDelay(15)
+        .type("Negative")
+        .selfAddStr("^DYou are frozen and unable to move.^x")
+        .roomAddStr("^D*ACTOR* is frozen and unable to move.^x")
+        .selfDelStr("^DYou are no longer magically held.^x")
+        .roomDelStr("^D*ACTOR* is no longer magically held.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("hold-animal")
+        .addBaseEffect("hold-animal")
+        .display("^gMagically Held!^x")
+        .computeScript("effectLib.computeDisable(actor, effect, applier)")
+        .pulsed(true)
+        .pulseScript("effectLib.pulseHoldSpells(actor, effect)")
+        .pulseDelay(12)
+        .type("Negative")
+        .selfAddStr("^gYou are frozen and unable to move.^x")
+        .roomAddStr("^g*ACTOR* is frozen and unable to move.^x")
+        .selfDelStr("^gYou are no longer magically held.^x")
+        .roomDelStr("^g*ACTOR* is no longer magically held.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("hold-plant")
+        .addBaseEffect("hold-plant")
+        .display("^GMagically Held!^x")
+        .computeScript("effectLib.computeDisable(actor, effect, applier)")
+        .pulsed(true)
+        .pulseScript("effectLib.pulseHoldSpells(actor, effect)")
+        .pulseDelay(12)
+        .type("Negative")
+        .selfAddStr("^GYou are frozen and unable to move.^x")
+        .roomAddStr("^G*ACTOR* is frozen and unable to move.^x")
+        .selfDelStr("^GYou are no longer magically held.^x")
+        .roomDelStr("^G*ACTOR* is no longer magically held.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("hold-elemental")
+        .addBaseEffect("hold-elemental")
+        .display("^rMagically Held!^x")
+        .computeScript("effectLib.computeDisable(actor, effect, applier)")
+        .pulsed(true)
+        .pulseScript("effectLib.pulseHoldSpells(actor, effect)")
+        .pulseDelay(15)
+        .type("Negative")
+        .selfAddStr("^rYou are frozen and unable to move.^x")
+        .roomAddStr("^r*ACTOR* is frozen and unable to move.^x")
+        .selfDelStr("^rYou are no longer magically held.^x")
+        .roomDelStr("^r*ACTOR* is no longer magically held.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("hold-fey")
+        .addBaseEffect("hold-fey")
+        .display("^MMagically Held!^x")
+        .computeScript("effectLib.computeDisable(actor, effect, applier)")
+        .pulsed(true)
+        .pulseScript("effectLib.pulseHoldSpells(actor, effect)")
+        .pulseDelay(15)
+        .type("Negative")
+        .selfAddStr("^MYou are frozen and unable to move.^x")
+        .roomAddStr("^M*ACTOR* is frozen and unable to move.^x")
+        .selfDelStr("^MYou are no longer magically held.^x")
+        .roomDelStr("^M*ACTOR* is no longer magically held.^x")
         .isSpellEffect(true),
       effects
     );

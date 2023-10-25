@@ -101,10 +101,15 @@ int Player::computeAttackPower() {
                 case CERIS:
                     attackPower += (level);
                     break;
+                case LINOTHAN:
+                    attackPower += (level * 4);
                 case ARES:
                     attackPower += (level * 8);
                     break;
                 case ENOCH:
+                case KAMIRA:
+                case JAKAR:
+                case MARA:
                 case GRADIUS:
                 case ARAMON:
                 case ARACHNUS:
@@ -301,10 +306,10 @@ bool Object::needsTwoHands() const {
 
     if (weaponType == "great-axe" || weaponType == "great-mace" ||
         weaponType == "great-hammer" || weaponType == "staff" ||
-        weaponType == "great-sword" || weaponType == "polearm")
+        weaponType == "great-sword" || weaponType == "polearm" || weaponType == "bow")
         return (true);
 
-    if ((weaponType == "bow" || weaponType == "crossbow") && !flagIsSet(O_SMALL_BOW))
+    if (weaponType == "crossbow" && !flagIsSet(O_SMALL_BOW))
         return (true);
 
     return (false);
@@ -374,16 +379,11 @@ int Monster::getWeaponSkill(const std::shared_ptr<Object>  weapon) const {
 }
 
 //**********************************************************************
-//                      getWeaponSkill
+//                      getClassWeaponskillBonus
 //**********************************************************************
 
-int Player::getWeaponSkill(const std::shared_ptr<Object>  weapon) const {
-    int bonus = 0;
-
-    // Bless improves your chance to hit
-    if(isEffected("bless"))
-        bonus += 10;
-
+int Player::getClassWeaponskillBonus(const std::shared_ptr<Object>  weapon) const {
+    int cBonus = 0;
 
     std::string weaponType;
     if(weapon)
@@ -394,6 +394,152 @@ int Player::getWeaponSkill(const std::shared_ptr<Object>  weapon) const {
     // we're very confused about what type of weapon this is
     if(weaponType.empty())
         weaponType = "bare-hand";
+
+    if (getClass() == CreatureClass::CLERIC) {
+        switch (getDeity()) {
+        case MARA:
+            if (weaponType == "bow")
+                cBonus = 10;
+            break;
+        case LINOTHAN:
+            if (weaponType == "great-sword")
+                cBonus = 20;
+            break;
+        case ARACHNUS:
+            if (weaponType == "whip")
+                cBonus = 20;
+            break;
+        default:
+            break;
+        }
+    }
+
+    return(cBonus);
+}
+
+//**********************************************************************
+//                      getRacialWeaponskillBonus
+//**********************************************************************
+
+int Player::getRacialWeaponskillBonus(const std::shared_ptr<Object>  weapon) const {
+    int rBonus = 0;
+
+    std::string weaponType;
+    if(weapon)
+        weaponType = weapon->getWeaponType();
+    else
+        weaponType = getUnarmedWeaponSkill();
+
+    // we're very confused about what type of weapon this is
+    if(weaponType.empty())
+        weaponType = "bare-hand";
+
+    // Go through races and add bonus for various weapon types:
+    switch (getRace()) {
+    case DWARF:
+    case HILLDWARF:
+    case DUERGAR:
+        if (weaponType=="axe" || weaponType=="hammer")
+            rBonus=10;
+        break;
+    case ELF:
+        if (weaponType=="sword" || weaponType=="bow")
+            rBonus=10;
+        break;
+    case GREYELF:
+        if (weaponType=="arcane-weapon" || weaponType=="bow")
+            rBonus=10;
+        break;
+    case WILDELF:
+        if (weaponType=="sword" || weaponType=="bow" || weaponType=="spear")
+            rBonus=10;
+        break;
+    case AQUATICELF:
+        if (weaponType=="polearm")
+            rBonus=10;
+        break;
+    case HALFLING:
+        if (weaponType=="sling")
+            rBonus=10;
+        break;
+    case ORC:
+        if (weaponType=="axe" || weaponType=="great-axe")
+            rBonus=10;
+        break;
+    case GNOME:
+        if (weaponType=="staff")
+            rBonus=10;
+        break;
+    case OGRE:
+        if (weaponType=="club")
+            rBonus=10;
+        break;
+    case DARKELF:
+        if ( !isPureArcaneCaster() && !isPureDivineCaster() && 
+            ((weaponType=="sword" || weaponType=="rapier") ||
+            (weaponType=="crossbow" && weapon->flagIsSet(O_SMALL_BOW))))
+            rBonus=10;
+        break;
+    case MINOTAUR:
+        if (weaponType=="great-axe" || weaponType=="great-hammer")
+            rBonus=10;
+        break;
+    case SERAPH:
+        if (weaponType=="divine-weapon")
+            rBonus=10;
+        break;
+    case KOBOLD:
+        if (weaponType=="thrown" || weaponType=="crossbow")
+            rBonus=10;
+        break;
+    case BARBARIAN:
+        if (weaponType=="spear")
+            rBonus=10;
+        break;
+    case HALFELF:
+    case HUMAN:
+    case HALFGIANT:
+    case HALFFROSTGIANT:
+    case HALFFIREGIANT:
+    case TROLL:
+    case HALFORC:
+    case GOBLIN:
+    case CAMBION:
+    case KATARAN:
+    case TIEFLING:
+    case KENKU:
+    default:
+        break;
+    }
+
+    return(rBonus);
+
+}
+
+//**********************************************************************
+//                      getWeaponSkill
+//**********************************************************************
+
+int Player::getWeaponSkill(const std::shared_ptr<Object>  weapon) const {
+    int bonus = 0;
+
+    // Bless improves your chance to hit
+    if(isEffected("bless"))
+        bonus += 10;
+
+    if (weapon)
+        bonus += (getClassWeaponskillBonus(weapon) + getRacialWeaponskillBonus(weapon));
+
+    std::string weaponType;
+    if(weapon)
+        weaponType = weapon->getWeaponType();
+    else
+        weaponType = getUnarmedWeaponSkill();
+
+    // we're very confused about what type of weapon this is
+    if(weaponType.empty())
+        weaponType = "bare-hand";
+
 
     Skill* weaponSkill = getSkill(weaponType);
     if(!weaponSkill)
@@ -426,6 +572,53 @@ int Player::getDefenseSkill() const {
         return(defenseSkill->getGained() + bonus);
 }
 
+double Creature::getMisschanceModifier(const std::shared_ptr<Creature>& victim, double& missChance) {
+    double mod = 0.0;
+    EffectInfo* effect=nullptr;
+    auto cThis = Containable::downcasted_shared_from_this<Creature>();
+
+    if (!victim)
+        return(mod);
+
+    if (isPlayer() && (isEffected("death-sickness") || isEffected("confusion")))
+        mod += (missChance/10);
+
+    if(victim->isEffected("blur") && !isEffected("true-sight"))
+        mod += victim->getEffect("blur")->getStrength();
+
+    if (victim->isEffected("faerie-fire"))
+        mod -= victim->getEffect("faerie-fire")->getStrength();
+
+    if(victim->getRoomParent()->isEffected("dense-fog")) {
+        effect = victim->getRoomParent()->getEffect("dense-fog");
+        if(!effect->isOwner(cThis))
+            mod += effect->getStrength();
+    }
+
+     //Clerics of Linothan miss undead 10% less often
+    if (getClass() == CreatureClass::CLERIC && getDeity() == LINOTHAN && victim->isUndead()) {
+        mod -= (missChance/10);
+    }
+
+    // Check for various racial quirks based around attacks
+    // Dwarves have specialized training for fighting giants. As such, they miss 10% less often
+    if (getRace() == DWARF && victim->isMonster() && victim->getType() == GIANTKIN)
+            mod -= (missChance/10.0); 
+
+    //Giants have trouble hitting these races due to their specialized training in using their size to avoid being hit
+    if (isMonster() && getType() == GIANTKIN && (victim->getRace() == DWARF || victim->getRace() == GOBLIN || 
+                                                 victim->getRace() == KOBOLD || victim->getRace() == GNOME ||
+                                                 victim->getRace() == HALFLING || victim->getRace() == HILLDWARF ||
+                                                 victim->getRace() == DUERGAR) )
+        mod -= (missChance/10.0);
+
+
+    //TODO: Add others as thought up
+
+
+    return(mod);
+}
+
 //**********************************************************************
 //                      AttackResult
 //**********************************************************************
@@ -434,13 +627,7 @@ int Player::getDefenseSkill() const {
 // 320 - 300 = 20 * .01% more chance to miss
 
 AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, const std::shared_ptr<Object>&  weapon, int resultFlags, int altSkillLevel) {
-    /*
-    int pFd;
-    if(isPlayer())
-        pFd = fd;
-    else
-        pFd = victim->getSock();
-    */
+    
     int mySkill=0;
     auto cThis = Containable::downcasted_shared_from_this<Creature>();
 
@@ -455,27 +642,21 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
 
 
     double missChance=0;
+    double missModifier=0;
     double dodgeChance=0;
     double parryChance=0;
     double glancingChance=0;
     double blockChance=0;
     double criticalChance=0;
     double fumbleChance=0;
-    //double hitChance=0;
-
-    EffectInfo* effect=nullptr;
+   
 
     missChance = victim->getMissChance(difference);
 
-    if(victim->isEffected("blur") && !isEffected("true-sight"))
-        missChance += victim->getEffect("blur")->getStrength();
+    missModifier = getMisschanceModifier(victim, missChance);
+    missChance += missModifier;
 
-    if(victim->getRoomParent()->isEffected("dense-fog")) {
-        effect = victim->getRoomParent()->getEffect("dense-fog");
-        if(!effect->isOwner(cThis))
-            missChance += effect->getStrength();
-    }
-
+    
     if(resultFlags & DOUBLE_MISS)
         missChance *= 2;
 
@@ -507,8 +688,16 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
 
     if((resultFlags & NO_CRITICAL) || victim->immuneCriticals())
         criticalChance = 0;
-    else
+    else {
         criticalChance = getCriticalChance(difference);
+        // Cleric of Mara has +10% to crit chance with bows at night
+        if (weapon && weapon->getWeaponType()=="bow" && !isDay() && getClass()==CreatureClass::CLERIC && getDeity()==MARA)
+            criticalChance += (criticalChance/10.0);
+        // Cleric of Linothan always has +5% crit chance vs undead enemies
+        if (getClass()==CreatureClass::CLERIC && getDeity()==LINOTHAN && victim->isUndead())
+            criticalChance += (criticalChance/20.0);
+    }
+
     int criticalCutoff = (int)(blockCutoff + (criticalChance * 100));
 
     if(resultFlags & NO_FUMBLE)
@@ -516,9 +705,6 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
     else
         fumbleChance = getFumbleChance(weapon);
     int fumbleCutoff = (int)(criticalCutoff + (fumbleChance * 100));
-
-    //hitChance = std::max(0, 100.0 - missChance - dodgeChance - parryChance - glancingChance - blockChance - criticalChance - fumbleChance);
-    //int hitCutoff = (int)(fumbleCutoff + (hitChance * 100));
 
     // Auto miss with an always crit weapon vs a no crit monster
     if(weapon && weapon->flagIsSet(O_ALWAYS_CRITICAL)) {
@@ -531,13 +717,8 @@ AttackResult Creature::getAttackResult(const std::shared_ptr<Creature>& victim, 
 
     }
 
-//  printColor("^y%d attack skill %d defense skill, %d difference.\n", mySkill, defense, difference);
-//  printColor("^cChances: ^C%f^c miss, ^C%f^c dodge, ^C%f^c parry, ^C%f^c glancing, ^C%f^c block, ^C%f^c critical, ^C%f^c fumble, ^C%f^c leftover\n",
-//          missChance, dodgeChance, parryChance, glancingChance, blockChance, criticalChance, fumbleChance, hitChance);
-//  printColor("^gCutoffs: ^G%d^g miss,  ^G%d^g dodge,  ^G%d^g parry,  ^G%d^g glancing,  ^G%d^g block, ^G%d^g critical ^G%d^g fumble ^G%d^g hit.\n",
-//          missCutoff, dodgeCutoff, parryCutoff, glancingCutoff, blockCutoff, criticalCutoff, fumbleCutoff, hitCutoff);
-//
     int randNum = Random::get(0, 10000);
+
     AttackResult result;
 
     if(randNum < missCutoff)
@@ -713,28 +894,29 @@ double Creature::getParryChance(const std::shared_ptr<Creature>& attacker, const
 bool Creature::canParry(const std::shared_ptr<Creature>& attacker) {
     if(attacker->isDm())
         return(false);
+
+    if(isMagicallyHeld(false))
+        return(false);
+
     if(isMonster())
         return(true);
 
     if(!ready[WIELD - 1])
-        return(false);          // must have a weapon wielded in order to riposte.
+        return(false);          // must have a weapon wielded in order to parry.
 
     std::string weaponCategory = getPrimaryWeaponCategory();
     std::string weaponType = ready[WIELD - 1]->getWeaponType();
-    if((weaponCategory != "piercing" && weaponCategory != "slashing") || weaponType == "polearm")
-        return(false);          // must use a piercing or slashing weapon to riposte
-
-    if(ready[WIELD-1]->needsTwoHands())
-        return(false);          // Cannot riposte with a two-handed weapon.
+    if(weaponCategory == "ranged")
+        return(false);          // Can't parry with a ranged weapon
 
     int combatPercent=0;
-//   If a this is overwhelmed by mass amounts of enemies, it is difficult if
-//   not impossible to find an opening to move enough to do a parry. The following
+//   If overwhelmed by mass amounts of enemies, it is difficult if
+//   not impossible to find time to pause and parry an attack. The following
 //   code will calculate the chance of failure into a "combat percent". If a check
-//   against this percent fails, the this did not find enough of an opening to
-//   try a parry, so parry returns 0 without going off. -TC
+//   against this percent fails, then there was not enough time to pause to
+//   try a parry, so parry returns 0 without going off.
 
-    // +3% fail for every monster mad at this besides the one he's currently hitting
+    // +3% fail for every monster mad at this besides the one we are currently fighting
     combatPercent = 3*(std::max<int>(0, numEnemyMonInRoom()-1));
     // Group members are assumed to fight together to help one another.
     // -2% fail for every member in the this's group besides themself in the same room
@@ -744,7 +926,7 @@ bool Creature::canParry(const std::shared_ptr<Creature>& attacker) {
     combatPercent = std::max(0,combatPercent);
 
     if(Random::get(1,100) <= combatPercent)
-        return(false); // Did not find a parry opening due to excessive combat. No parry.
+        return(false); // Did not find a moment to parry due to excessive combat. No parry.
 
     // Parry is not possible against some types of creatures
     if( attacker->type == INSECT || attacker->type == AVIAN ||
@@ -774,6 +956,10 @@ bool Creature::canParry(const std::shared_ptr<Creature>& attacker) {
 bool Creature::canDodge(const std::shared_ptr<Creature>& attacker) {
     if(attacker->isDm())
         return(false);
+
+    if(isMagicallyHeld(false))
+        return(false);
+
     if(attacker->isMonster()) {
         if(attacker->flagIsSet(M_UN_DODGEABLE))
             return(false);
@@ -784,7 +970,7 @@ bool Creature::canDodge(const std::shared_ptr<Creature>& attacker) {
         if(flagIsSet(P_UNCONSCIOUS)) // Can't dodge while unconscious
             return(false);
 
-        if(getRoomParent()->isUnderwater() && !flagIsSet(P_FREE_ACTION))
+        if(getRoomParent()->isUnderwater() && !isEffected("free-action"))
             return(false);
 
         if(getRoomParent()->flagIsSet(R_NO_DODGE))
@@ -817,9 +1003,6 @@ double Creature::getDodgeChance(const std::shared_ptr<Creature>& attacker, const
     if(!canDodge(attacker))
         return(false);
 
-//  if(!knowsSkill("dodge"))
-//      return(0);
-//
     double chance = 0.0;
     std::shared_ptr<Player> pPlayer = getAsPlayer();
 
@@ -841,7 +1024,7 @@ double Creature::getDodgeChance(const std::shared_ptr<Creature>& attacker, const
             case CreatureClass::FIGHTER:
             case CreatureClass::BERSERKER:
                 if(pPlayer->getSecondClass() == CreatureClass::THIEF || pPlayer->getSecondClass() == CreatureClass::ASSASSIN)
-                    chance += (dexterity.getCur() * .07);
+                    chance += (dexterity.getCur() * .055);
                 else
                     chance += (1.0 + (dexterity.getCur() * .045));
                 break;
@@ -850,23 +1033,28 @@ double Creature::getDodgeChance(const std::shared_ptr<Creature>& attacker, const
             case CreatureClass::DEATHKNIGHT:
             case CreatureClass::WEREWOLF:
             case CreatureClass::PUREBLOOD:
-            case CreatureClass::MONK:
                 chance += (2.0 + (dexterity.getCur() * .05));
+                break;
+            case CreatureClass::MONK:
+                chance += (2.0 + (dexterity.getCur() * .06));
                 break;
             case CreatureClass::CLERIC:
                 if(pPlayer->getSecondClass() == CreatureClass::ASSASSIN) {
-                    chance += (dexterity.getCur() * .06);
+                    chance += (dexterity.getCur() * .055);
                     break;
                 }
                 switch(deity) {
                     case KAMIRA:
                     case ARACHNUS:
-                        chance += (piety.getCur() * .05);
+                    case LINOTHAN:
+                        chance += (piety.getCur() * .07);
                         break;
                     case CERIS:
                     case ARES:
                     case ENOCH:
                     case GRADIUS:
+                    case MARA:
+                    case JAKAR:
                     default:
                         chance += (2.0 + dexterity.getCur() * .05);
                         break;
@@ -937,11 +1125,14 @@ double Creature::getMissChance(const int& difference) {
             case CreatureClass::CLERIC:
                 switch(deity) {
                     case ARES:
+                    case LINOTHAN:
+                    case ARACHNUS:
                         chance *= 0.8;
                         break;
-                    case ARACHNUS:
                     case KAMIRA:
                     case CERIS:
+                    case MARA:
+                    case JAKAR:
                     case ENOCH:
                     case GRADIUS:
                         chance *= 1.0;
@@ -952,9 +1143,6 @@ double Creature::getMissChance(const int& difference) {
                 break;
             case CreatureClass::LICH:
             case CreatureClass::MAGE:
-                if(pPlayer->getSecondClass() == CreatureClass::THIEF || pPlayer->getSecondClass() == CreatureClass::ASSASSIN)
-                    chance *= 0.8;
-                else
                     chance *= 1.0;
                 break;
             default:
@@ -1084,7 +1272,7 @@ bool Creature::canHit(const std::shared_ptr<Creature>& victim, std::shared_ptr<O
                     )
                 ) {
                     if(glow && weapon) {
-                        *this << ColorOn << "^WYour " << weapon << "^W glow" << (weapon->getType() == ObjectType::WEAPON ? "s" : "") << " with power against " << victim << ".\n" << ColorOff;
+                        *this << ColorOn << "^WYour " << weapon->getName() << "^W glow" << (weapon->getType() == ObjectType::WEAPON ? "s" : "") << " with power against " << victim << ".\n" << ColorOff;
                     }
                 } else if(isDm()) {
                     if(glow)
@@ -1182,12 +1370,22 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         if((cClass == CreatureClass::FIGHTER || cClass == CreatureClass::MONK) && !hasSecondClass()) {
             attackDamage.add((int)(getSkillLevel("kick") / 4));
         }
+    } else if(attackType == ATTACK_GORE) {
+        if(computeBonus)
+            bonusDamage.set(getBaseDamage()/2);
+        attackDamage.set(Random::get(4,9));
+        if(getAsCreature()->isMartial())
+            attackDamage.add((strength.getCur() / 15) + (int)(getSkillLevel("gore") / 4));
+        else
+            attackDamage.add((int)(getSkillLevel("gore") / 5));
+
     } else if(attackType == ATTACK_MAUL) {
         if(computeBonus)
             bonusDamage.set(getBaseDamage()/2);
         attackDamage.set((Random::get(level / 2, level + 1) + (strength.getCur() / 10)));
         attackDamage.add(Random::get(2, 4));
-    } else {
+    } 
+    else {
         // Any non kick attack for now
         if(computeBonus)
             bonusDamage.set(getBaseDamage());
@@ -1218,19 +1416,19 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
     // Damage reduction on every hit
     if(cClass == CreatureClass::PALADIN) {
         if(deity == GRADIUS) {
-            if(getAdjustedAlignment() < PINKISH || getAdjustedAlignment() > BLUISH) {
+            if(getAdjustedAlignment() < REDDISH || getAdjustedAlignment() > BLUISH) {
                 multiplier /= 2;
                 print("Your dissonance with earth reduces your damage.\n");
             }
         } else {
-            if(getAlignment() < 0) {
+            if(getAlignment() <= REDDISH) {
                 multiplier /= 2;
                 print("Your evilness reduces your damage.\n");
             }
         }
     }
     if(cClass == CreatureClass::DEATHKNIGHT) {
-        if(getAdjustedAlignment() > NEUTRAL) {
+        if(getAdjustedAlignment() >= BLUISH) {
             multiplier /= 2;
             print("Your goodness reduces your damage.\n");
         }
@@ -1246,7 +1444,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
                     print("Your attunement with earth increased your damage by %d.\n", goodDmg);
                 }
             } else {
-                if(getAdjustedAlignment() >= BLUISH && victim->getAlignment() <= 0) {
+                if(getAdjustedAlignment() >= BLUISH && victim->getAdjustedAlignment() <= PINKISH) {
                     bonusDamage.add(goodDmg);
                     print("Your goodness increased your damage by %d.\n", goodDmg);
                 }
@@ -1254,7 +1452,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         }
         if(cClass == CreatureClass::DEATHKNIGHT) {
             // Only drain on 1st attack if a multi weapon
-            if(getAdjustedAlignment() <= REDDISH && victim->getAdjustedAlignment() >= NEUTRAL)
+            if(getAdjustedAlignment() <= REDDISH && victim->getAdjustedAlignment() >= LIGHTBLUE)
                 drain = Random::get(1, 1 + level / 3);
         }
         if( (   cClass == CreatureClass::BERSERKER ||
@@ -1269,7 +1467,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         }
 
         if( (   (cClass == CreatureClass::DEATHKNIGHT && getAdjustedAlignment() <= REDDISH) ||
-                (cClass == CreatureClass::PALADIN && getAdjustedAlignment() == ROYALBLUE)
+                (cClass == CreatureClass::PALADIN && getAdjustedAlignment() >= BLUISH)
             ) &&
             (isEffected("pray") || isEffected("dkpray"))
         )
@@ -1326,6 +1524,9 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
             case ATTACK_KICK:
                 strcpy(atk, "kick");
                 break;
+            case ATTACK_GORE:
+                strcpy(atk, "gore");
+                break;
             default:
                 strcpy(atk, "hit");
                 break;
@@ -1342,7 +1543,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         if(computeBonus)
             bonusDamage.set(bonusDamage.get() * mult);
         broadcastGroup(false, victim, "^g%M made a critical %s!\n", this, atk);
-        if( attackType != ATTACK_KICK && weapon && !isDm() && weapon->flagIsSet(O_ALWAYS_CRITICAL) && !weapon->flagIsSet(O_NEVER_SHATTER)) {
+        if( attackType != ATTACK_KICK && attackType != ATTACK_GORE && weapon && !isDm() && weapon->flagIsSet(O_ALWAYS_CRITICAL) && !weapon->flagIsSet(O_NEVER_SHATTER)) {
             printColor("^YYour %s shatters.\n", weapon->getCName());
             broadcast(getSock(), getRoomParent(),"^Y%s %s shattered.", upHisHer(), weapon->getCName());
             retVal = 1;
@@ -1548,10 +1749,6 @@ bool Creature::canRiposte() const {
 //*********************************************************************
 //                      parry
 //*********************************************************************
-// This function allows a creature to either parry a blow, or to
-// strike back after parry. It was made for the Rogue class. -- TC
-// Returns 2 on death of person being reposited, returns 1 on non-death sucess
-// This is only called when success has already been determined
 
 int Creature::parry(const std::shared_ptr<Creature>& target) {
     long    t=0;
@@ -1564,7 +1761,6 @@ int Creature::parry(const std::shared_ptr<Creature>& target) {
     }
 
     t = time(nullptr);
-    //i = LT(this, LT_RIPOSTE);
 
     if(isPlayer()) {
         t=time(nullptr);
@@ -1695,7 +1891,7 @@ int Creature::parry(const std::shared_ptr<Creature>& target) {
             break;
         }
         if(weapon) {
-            if(!Random::get(0, 3))
+            if(!Random::get(0, 7))
                 weapon->decShotsCur();
 
             // die check moved right before return.

@@ -446,9 +446,9 @@ bool Monster::possibleEnemy() {
             possible = true;
         if(flagIsSet(M_STEAL_ALWAYS))
             possible = true;
-        if(flagIsSet(M_AGGRESSIVE_GOOD) && ply->getAlignment() > 99)
+        if(flagIsSet(M_AGGRESSIVE_GOOD) && ply->getAdjustedAlignment() > NEUTRAL)
             possible = true;
-        if(flagIsSet(M_AGGRESSIVE_EVIL) && ply->getAlignment() < -99)
+        if(flagIsSet(M_AGGRESSIVE_EVIL) && ply->getAdjustedAlignment() < NEUTRAL)
             possible = true;
 
         if(ply->flagIsSet(P_HIDDEN))
@@ -464,6 +464,79 @@ bool Monster::possibleEnemy() {
     }
 
     return(possible);
+}
+
+//*********************************************************************
+//                      willCastHolds
+//*********************************************************************
+// This functions determine whether a monster that wants to cast a hold spell
+// will cast it or not
+bool Monster::willCastHolds(const std::shared_ptr<Creature>& target, int splNo) {
+
+    if (!target)
+        return(false);
+
+    //Mobs will only cast hold spells on ptesters and staff for now
+    if (target->isPlayer() && !target->flagIsSet(P_PTESTER) && !target->isStaff())
+        return(false);
+
+    if(target->isMagicallyHeld(false))
+        return(false);
+
+    if (target->isEffected("free-action")) {
+        if (intelligence.getCur() >= 160 && Random::get(1,100) > 20)
+            return(false);
+    }
+
+    if(intelligence.getCur() >= 200 && target->checkResistEnchantments(this->getAsCreature(), get_spell_name(splNo), false))
+        return(false);
+
+    // Players are all humanoids, so these spells are pointless
+    if(target->isPlayer() && 
+        (splNo == S_HOLD_ANIMAL || splNo == S_HOLD_PLANT ||
+            splNo == S_HOLD_ELEMENTAL || splNo == S_HOLD_FEY))
+        return(false);
+
+    if(splNo != S_HOLD_UNDEAD && target->isUndead())
+        return(false);
+
+    switch (splNo) {
+    case S_HOLD_PERSON:
+        if(target->isHumanoidLike()) 
+            return(true);
+        break;
+    case S_HOLD_MONSTER:
+        if(target->isMonster() && monType::isFey(target->getType()))
+            return(false);
+        else
+            return(true);
+        break;
+    case S_HOLD_UNDEAD:
+        if(target->isUndead())
+            return(true);
+        break;
+    case S_HOLD_ANIMAL:
+        if(monType::isAnimal(target->getType()))
+            return(true);
+        break;
+    case S_HOLD_PLANT:
+        if(monType::isPlant(target->getType()))
+            return(true);
+        break;
+    case S_HOLD_ELEMENTAL:
+        if(monType::isElemental(target->getType()))
+            return(true);
+        break;
+    case S_HOLD_FEY:
+        if(monType::isFey(target->getType()))
+            return(true);
+        break;
+    default:
+        break;
+    }
+
+    return(false);
+
 }
 
 //*********************************************************************
@@ -562,7 +635,14 @@ int Monster::castSpell(const std::shared_ptr<Creature>&target) {
         splNo == S_SIPHON_LIFE ||
         splNo == S_SPIRIT_STRIKE ||
         splNo == S_SOULSTEAL ||
-        splNo == S_TOUCH_OF_KESH
+        splNo == S_TOUCH_OF_KESH ||
+        (splNo == S_HOLD_PERSON && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_MONSTER && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_UNDEAD && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_ANIMAL && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_PLANT && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_ELEMENTAL && willCastHolds(target, splNo)) ||
+        (splNo == S_HOLD_FEY && willCastHolds(target, splNo))
     ) {
         // we have the exact pointer
         enemy = target->getName();
@@ -858,6 +938,9 @@ void Monster::checkScavange(long t) {
     if(room->flagIsSet(R_SHOP_STORAGE))
         return;
 
+    if(isMagicallyHeld())
+        return;
+
     if(flagIsSet(M_SCAVANGER)) {
         i = lasttime[LT_MON_SCAVANGE].ltime;
         if( t - i > 20 &&
@@ -969,7 +1052,7 @@ int Monster::checkWander(long t) {
         // can't wander if following someone
         !flagIsSet(M_DM_FOLLOW) && !getMaster() &&
         // or if they're set no wander
-        !flagIsSet(M_NO_WANDER))
+        !flagIsSet(M_NO_WANDER) && !isMagicallyHeld())
     {
         // Fast wander can wander once a second
         if((flagIsSet(M_FAST_WANDER) && t - i > 1) ||
@@ -1062,7 +1145,9 @@ int Monster::checkWander(long t) {
         // if fast wander, wander even if perm.
         (!flagIsSet(M_PERMENANT_MONSTER) || flagIsSet(M_FAST_WANDER)) &&
         // pets and other followers don't wander
-        !isPet() && !flagIsSet(M_DM_FOLLOW)))
+        !isPet() && !flagIsSet(M_DM_FOLLOW)) &&
+        // will not wander if magically held - since they can't move
+        (!isMagicallyHeld()))
     {
         if( // If it's time to wander, and we have no enemey
             (t - i > 60 && (inUniqueRoom() && Random::get(1, 100) <= getUniqueRoomParent()->wander.getTraffic()) && !hasEnemy()) ||

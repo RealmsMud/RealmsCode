@@ -1615,8 +1615,6 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
     if(!player)
         return(false);
 
-    long    t = time(nullptr);
-
     switch(splno) {
     case S_VIGOR:
         if(check) return(true);
@@ -1646,10 +1644,6 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
     case S_PROTECTION:
         if(check) return(true);
         player->addEffect("protection", 3600, 1);
-        break;
-    case S_INVISIBILITY:
-        if(check) return(true);
-        player->addEffect("invisibility", 3600, 1);
         break;
     case S_DETECT_MAGIC:
         if(check) return(true);
@@ -1682,6 +1676,16 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
     case S_FLY:
         if(check) return(true);
         player->addEffect("fly", 3600, MAXALVL/3);
+        break;
+    case S_GREATER_INVIS:
+        if(check) return(true);
+        player->addEffect("greater-invisibility", 300, MAXALVL/3);
+        player->removeEffect("invisibility");
+        break;
+    case S_INVISIBILITY:
+        if(check) return(true);
+        player->addEffect("invisibility", 600, MAXALVL/3);
+        player->removeEffect("greater-invisibility");
         break;
     case S_INFRAVISION:
         if(check) return(true);
@@ -1772,9 +1776,8 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         break;
     case S_FREE_ACTION:
         if(check) return(true);
-        player->lasttime[LT_FREE_ACTION].interval = 3600;
-        player->lasttime[LT_FREE_ACTION].ltime = t;
-        player->setFlag(P_FREE_ACTION);
+        player->addEffect("free-action", 3600, MAXALVL);
+        player->doFreeAction();
         break;
     case S_COURAGE:
         if(check) return(true);
@@ -1886,7 +1889,7 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         break;
     case S_FARSIGHT:
         if(check) return(true);
-        player->addEffect("farsight", 180, 1);
+        player->addEffect("farsight", 180, MAXALVL);
         break;
     case S_REGENERATION:
         if(check) return(true);

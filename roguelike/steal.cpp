@@ -316,7 +316,7 @@ int get_steal_chance(std::shared_ptr<Player> player, std::shared_ptr<Creature> t
             chance += 50;
 
         // Niether is being held magically...
-        if(target->isEffected("hold-person"))
+        if(target->isMagicallyHeld())
             chance += 25;
 
         // ...or stunned...
@@ -371,10 +371,16 @@ int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(!player->knowsSkill("steal")) {
         player->print("You lack the skills to steal from someone without being caught.\n");
         return(0);
     }
+
+    if (player->getAsCreature()->isMagicallyHeld(true))
+        return(0);
 
     if(!player->isCt()) {
         // Cannot steal if sitting.

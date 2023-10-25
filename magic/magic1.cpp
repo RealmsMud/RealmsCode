@@ -142,6 +142,9 @@ int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     const Effect* effect=nullptr;
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if (cmnd->num < 2) {
         *player << "Dispel what effect on yourself, or what effect on what exit?\n";
         *player << "Ex: dispel dimensional-anchor\n";
@@ -295,11 +298,14 @@ void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creat
     }
 }
 //*********************************************************************
-//                      cmdCast
+//                      doCast
 //*********************************************************************
-// This function allows a creature to cast a magical spell. It looks at
-// the second parsed word to find out if the spell-name is valid, and
-// then calls the appropriate spell function.
+// This function does the work of a mob/player casting a magical spell. 
+// It looks at the second parsed word to find out if the spell-name is valid, 
+// and then calls the appropriate spell function. The CastResult return is used
+// only when doCast() is called under specific situations (such as when a player 
+// asks a mob to cast a spell on them) or otherwise more specific info about the 
+// success or failure of the cast is needed on the other end.
 
 CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     long    i=0, t=0;
@@ -315,6 +321,8 @@ CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         player->clearFlag(P_AFK);
         player->interruptDelayedActions();
         if(!player->ableToDoCommand())
+            return(CAST_RESULT_FAILURE);
+        if(player->isMagicallyHeld(true))
             return(CAST_RESULT_FAILURE);
     }
 
@@ -607,6 +615,9 @@ int cmdTeach(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::string skill = "";
 
     if(!player->ableToDoCommand())
+        return(0);
+
+    if(player->isMagicallyHeld(true))
         return(0);
 
     if(cmnd->num < 3) {
@@ -1343,6 +1354,9 @@ int cmdConsume(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->ableToDoCommand())
         return(0);
 
+    if(player->isMagicallyHeld(true))
+        return(0);
+
     if(cmnd->num < 2) {
         if(strcmp(cmnd->str[0], "eat") != 0) {
             player->print("Drink what?\n");
@@ -1546,8 +1560,11 @@ int cmdUseWand(const std::shared_ptr<Player>& player, cmd* cmnd) {
 int cmdRecall(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if((player->getLevel() <= 7 && !player->inCombat()) || player->isStaff())
         player->doRecall();
+    else if(player->isMagicallyHeld(true)) 
+        return(0);
     else
         player->useRecallPotion(1, 0);
+    
 
     return(0);
 }
@@ -1705,6 +1722,11 @@ bool noCastUndead(std::string_view effect) {
 int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength, long duration) {
     std::shared_ptr<Creature> target=nullptr;
 
+    if (spellData->object) 
+        strength = (spellData->object->getLevel() > 0 ? spellData->object->getLevel():10);
+    else
+        strength = spellData->level;
+
     if(cmnd->num == 2) {
         target = player;
 
@@ -1718,9 +1740,6 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
             player->print("You cast %s %s spell.\n", article, spell);
             broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player.get(), article, spell);
         }
-
-        if (replaceCancelingEffects(player,target,effect))
-            return(0);
 
     } else {
         if(player->noPotion( spellData))
@@ -1802,11 +1821,14 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
     if(spellData->how == CastType::CAST) {
         if(player->getRoomParent()->magicBonus())
             player->print("The room's magical properties increase the power of your spell.\n");
-        if(!target->addEffect(effect, duration, strength, player, true))
+        if(!target->addEffect(effect, duration, strength, player, true)) 
             return(0);
     } else {
         target->addEffect(effect, duration, strength, nullptr, true);
     }
+
+    if (effect == "free-action") 
+        target->doFreeAction();
 
     return(1);
 }
@@ -2307,6 +2329,34 @@ bool Creature::isMageLich() {
         return(false);
     }
     return(true);
+}
+
+//*********************************************************************
+//                      doFreeAction
+//*********************************************************************
+// Clears all hold/movement hindering effects
+void Creature::doFreeAction() {
+    
+    removeEffect("slow");
+    removeEffect("hold-person");
+    removeEffect("hold-monster");
+    removeEffect("hold-undead");
+    removeEffect("hold-animal");
+    removeEffect("hold-plant");
+    removeEffect("hold-elemental");
+    removeEffect("hold-fey");
+
+    if (isPlayer()) {
+        if (flagIsSet(P_STUNNED))
+            clearFlag(P_STUNNED);
+        getAsPlayer()->computeAC();
+        getAsPlayer()->computeAttackPower();
+    }
+
+    setAttackDelay(0);
+    lasttime[LT_SPELL].ltime = time(0);
+
+    return;
 }
 
 //*********************************************************************

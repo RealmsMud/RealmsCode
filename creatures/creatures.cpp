@@ -52,6 +52,7 @@
 #include "proto.hpp"                   // for isDay, int_to_text, getOrdinal
 #include "quests.hpp"                  // for QuestEligibility, QuestTurninS...
 #include "raceData.hpp"                // for RaceData
+#include "random.hpp"                  // For Random
 #include "realm.hpp"                   // for WATER
 #include "season.hpp"                  // for AUTUMN, SPRING, SUMMER, WINTER
 #include "server.hpp"                  // for Server, gServer
@@ -624,6 +625,51 @@ bool Player::canWear(const std::shared_ptr<Object>&  object, bool all) const {
 }
 
 //********************************************************************
+//                      canUseWands
+//********************************************************************
+bool Player::canUseWands(bool print) {
+    bool useable=false;
+
+    if(isStaff())
+        useable = true;
+
+    switch (getClass()) {
+    case CreatureClass::LICH:
+    case CreatureClass::DRUID:
+    case CreatureClass::CLERIC:        
+    case CreatureClass::MAGE:
+    case CreatureClass::BARD:
+        useable = true;
+        break;
+    case CreatureClass::THIEF:
+        if(getSecondClass() == CreatureClass::MAGE)
+            useable = true;
+        else if(getLevel() >= 10)
+            useable = true;
+        break;
+    case CreatureClass::FIGHTER:
+        if(getSecondClass() == CreatureClass::THIEF && getLevel()>=10)
+            useable = true;
+        if(getSecondClass() == CreatureClass::MAGE)
+            useable = true;
+        break;
+    default:
+        useable = false;
+
+        break;
+    }
+
+    // Temporarily put this here, ignoring above checks, until we eventually use this function, 
+    // since everybody can use wands right now.
+    useable = true;
+    
+    if(!useable && print) {
+        *this << ColorOn << "^cYou do not comprehend the complex idiosyncracies of wand use.\n" << ColorOff;
+    }
+    return(useable);
+
+}
+//********************************************************************
 //                      canUse
 //********************************************************************
 
@@ -930,12 +976,537 @@ int Player::save(bool updateTime, LoadType saveType) {
     return(0);
 }
 
+bool Creature::isVampire() {
+    return(getClass() == CreatureClass::PUREBLOOD || isEffected("vampirism"));
+}
+
+bool Creature::isUndeadImmuneEnchantments() {
+
+    //Vampire class or vampirism during day not immune to enchantments
+    if (isDay() && (isVampire()))
+        return(false);
+    //Lich class set always resists enchantments
+    else if (getClass() == CreatureClass::LICH)
+        return(true);
+    //Vampire class or vampirism at night always resists
+    else if (isVampire() && !isDay())
+        return(true);
+    //If is a monster with undead flag, or monType is UNDEAD, always resist enchantments
+    else if (isMonster() && (getAsMonster()->flagIsSet(M_UNDEAD) || getAsMonster()->getType() == UNDEAD))
+        return(true);
+    else
+        return(false);
+
+}
+
+// ********************************************************************************************************
+//                                  Monster::getEnchantmentImmunity
+// ********************************************************************************************************
+// This function checks a monster to determine if the monster is immune or not eligible for the enchantment
+// spell sent to it
+bool Monster::getEnchantmentImmunity(const std::shared_ptr<Creature>& caster, const std::string spell, bool print) {
+    bool wrongMonType=false, monsterImmune=false;
+
+    if (!isResistableEnchantment(spell))
+        return(false);
+
+
+    // ********************************************************************************************************
+    if (flagIsSet(M_DM_FOLLOW) || (isPet() && getMaster()->isStaff()) ) {
+        if(print) {
+            *caster << ColorOn << "Strangely, your spell dissipated.\n" << ColorOff;
+            broadcast(caster->getSock(), caster->getParent(), "^yStrangely, %M'spell dissipated.^x", caster.get());
+        }
+        return(true);
+    }
+    
+    
+    if (spell == "hold-person" && !monType::isHumanoidLike(getType()) && getAsCreature()->isUndeadImmuneEnchantments())
+        wrongMonType=true;
+    else if (spell == "hold-monster" && getAsCreature()->isUndeadImmuneEnchantments()) // Undead are immune to hold-monster
+        wrongMonType=true;
+    else if (spell == "hold-undead" && !isUndead()) // Only undead are affected by hold-undead, even vampires during daytime
+       wrongMonType=true;
+    else if (spell == "hold-plant" && !monType::isPlant(getType()))
+        wrongMonType=true;
+    else if (spell == "hold-animal" && !monType::isAnimal(getType()))
+        wrongMonType=true;
+    else if (spell == "hold-elemental" && !monType::isElemental(getType()))
+        wrongMonType=true;
+    else if (spell == "hold-fey" && !monType::isFey(getType()))
+        wrongMonType=true;
+    
+    if(monType::isImmuneEnchantments(getType())) 
+        monsterImmune=true;
+
+    if (spell != "hold-undead" && getAsCreature()->isUndeadImmuneEnchantments())
+        monsterImmune=true;
+
+    if (wrongMonType || monsterImmune) {
+        if(print) {
+            if (isUndead())
+                *caster << ColorOn << "^y" << ((getAsCreature()->isVampire() && !isDay())?"At night, vampiric creatures":"Undead creatures") << " are immune to the " << spell << " spell. Your spell fizzled out.\n" << ColorOff;
+            else
+                *caster << ColorOn << "^y" << "Creatures of type^D " << monType::getName(getType()) << "^y " 
+                        << (wrongMonType?"are unaffected by the ":"are immune to ") << (wrongMonType?spell:"") 
+                                            << (wrongMonType?" spell":" enchantment spells") << ". Your spell fizzled out.\n" << ColorOff; 
+            broadcast(caster->getSock(), caster->getParent(), "^yThe spell fizzled out.^x");
+        }
+
+        doCheckFailedCastAggro(caster, (Random::get(1,100)<=5?true:false), print);
+    }
+
+    return(wrongMonType || monsterImmune);
+
+}
+
+//************************************************************************************************************
+//                   Monster::getEnchantmentVsMontype
+//************************************************************************************************************
+// This checks against a monster's mtype for resistance to whatever eligible enchantment spell is cast on it
+
+bool Monster::getEnchantmentVsMontype(const std::shared_ptr<Creature>& caster, const std::string spell, bool print) {
+    bool resist = false;
+    bool willAggro = true; // default is mobs will go aggro on resist
+
+    if (!isResistableEnchantment(spell))
+        return(false);
+    
+    switch (getType()) {
+        case DEMON:
+            if (Random::get(1,100) <= 50) {
+                if (print) {
+                    *caster << ColorOn << "^y" << setf(CAP) << this << " was unaffected by your clownish " << spell << " spell. " << upHisHer() << " demonic origins shrugged it off.\n" << ColorOff;
+                    broadcast(caster->getSock(), caster->getParent(), "^y%M is unaffected by %N's clownish mortal magic.^x", this, caster.get());
+                }
+                resist=true;
+            }
+            break;
+        case DEVIL:
+            if (Random::get(1,100) <= 50) {
+                if (print) {
+                    *caster << ColorOn << "^y" << setf(CAP) << this << " was unaffected by your weakling mortal " << spell << " spell. " << upHisHer() << " diabolical origins shrugged it off.\n" << ColorOff;
+                    broadcast(caster->getSock(), caster->getParent(),"^y%M is unaffected by %N's weakling mortal magic.^x", this, caster.get());
+                }
+                resist=true;
+            }
+            break;
+        case DAEMON:
+            if (Random::get(1,100) <= 50) {
+                if (print) {
+                    *caster << ColorOn << "^y" << setf(CAP) << this << " was unaffected by your worthless mortal " << spell << " spell. "<< upHisHer() << " fiendish origins shrugged it off.\n" << ColorOff;
+                    broadcast(caster->getSock(), caster->getParent(),"^y%M is unaffected by %N's worthless mortal magic.^x", this, caster.get());
+                }
+                resist=true;
+            }
+            break;
+        case MODRON:
+            if (Random::get(1,100) <= 50) {
+                if (print) {
+                    *caster << ColorOn << "^y" << setf(CAP) << this << " was unaffected by your discordant mortal " << spell << " spell. " << upHisHer() << "  orderly nature shrugged it off.\n" << ColorOff;
+                    broadcast(caster->getSock(), caster->getParent(),"^y%M is unaffected by %N's discordant mortal magic.^x", this, caster.get());
+                }
+                resist=true;
+            }
+            break;
+        case DEVA:
+            if (Random::get(1,100) <= 98) {
+                if (print) {
+                    *caster << ColorOn << "^y" << setf(CAP) << this << " was unaffected by your adorable mortal " << spell << " spell. " << upHisHer() << " celestial origins shrugged it off.\n" << ColorOff;
+                    broadcast(caster->getSock(), caster->getParent(),"^y%M is unaffected by %N's adorable mortal magic.^x", this, caster.get());
+                }
+                resist=true;
+                if(caster->getAdjustedAlignment() >= REDDISH)    // Devas will not attack on failed attempts..Unless caster is very evil.
+                    willAggro = false;
+            }
+            break;
+        case DRAGON:
+            if (print) {
+                *caster << ColorOn << "^y" << setf(CAP) << this << " is a dragon! " << upHeShe() << " is unaffected by your puny mortal " << spell << " spell.\n" << ColorOff;
+                broadcast(caster->getSock(), caster->getParent(),"^y%M is unaffected by such puny mortal enchantment magic.^x", this);
+            }
+            resist=true;
+            break;
+        default:
+            resist=false;
+            break;
+        }
+
+    if (resist)
+        doCheckFailedCastAggro(caster, willAggro, print);
+    
+    return(resist);
+
+}
+
+//************************************************************************************************************
+//                   Creature::getClassEnchantmentResist
+//************************************************************************************************************
+// This checks against a creature's class for resistance to whatever eligible enchantment spell is cast on it
+bool Creature::getClassEnchantmentResist(const std::shared_ptr<Creature>& caster, const std::string spell, bool print) {
+    bool willAggro=true; // default is mobs will go aggro on resist
+    bool resist=false;
+
+    if (!isResistableEnchantment(spell))
+        return(false);
+    
+    // Check of class of player or mob for specific resistances to various spells
+    switch (getClass()) {
+    case CreatureClass::LICH:
+        if (spell != "hold-undead") {
+            if (print) {
+                *this << ColorOn << "^yYou feel a tingle from " << caster << "'s spell. Liches are immune to such worthless magic.\n" << ColorOff;
+                *caster << ColorOn << "^yLiches are immune to " << spell << " spells.\nYour spell dissipated.\n" << ColorOff;
+                broadcast(caster->getSock(), getSock(), caster->getParent(), "^y%N is immune to %s spells. %M's spell dissipated.^x", this, spell.c_str(), caster.get());
+            }
+            resist=true;
+        }
+        break;
+    case CreatureClass::PUREBLOOD:
+        if (!isDay() && spell != "hold-undead") {
+            if (print) {
+                *this << ColorOn << "^y" << setf(CAP) << caster << "'s spell dissipated. You are immune to " << spell << " spells at night.\n" << ColorOff;
+                *caster << ColorOn << "^yVampires are immune to " << spell << " spells during the night.\nYour spell dissipated.\n" << ColorOff;
+                broadcast(caster->getSock(), caster->getParent(), "^yVampires are immune to %s spells at night. %M's spell dissipated.^x", spell.c_str(), caster.get());
+            }
+            resist=true;
+        }    
+        break;
+    case CreatureClass::PALADIN:
+        if (spell == "fear" || spell == "scare") {
+            if (print) {
+                *this << ColorOn << "^y" << setf(CAP) << caster << "'s spell dissipated. Paladins are immune to such ridiculous fearmongering enchantments!\n" << ColorOff;
+                *caster << ColorOn << "^yPaladins are immune to " << spell << " spells. Your spell dissipated.\n" << ColorOff;
+                broadcast(caster->getSock(), caster->getParent(), "^yPaladins are immune to %s spells. %M's spell dissipated.^x", spell.c_str(), caster.get());
+            }
+            resist=true;
+            if (isMonster() && caster->getAdjustedAlignment() >= PINKISH) // Good paladin mobs will only attack failed casters if they are more evil than PINKISH
+                willAggro=false;
+        }
+        break;
+    default:
+        resist=false;
+        break;
+    }
+
+    // Check for just vampirism affliction rather than PUREBLOOD class
+    if (getClass() != CreatureClass::PUREBLOOD && isEffected("vampirism") && !isDay() && spell != "hold-undead") {
+        if (print) {
+            *this << ColorOn << "^y" << setf(CAP) << caster << "'s spell dissipated. You are immune to " << spell << " spells at night.\n" << ColorOff;
+            *caster << ColorOn << "^yVampires are immune to " << spell << " spells during the night.\nYour spell dissipated.\n" << ColorOff;
+            broadcast(caster->getSock(), getSock(), caster->getParent(), "^yVampires are immune to %s spells at night. %M's spell dissipated.^x", spell.c_str(), caster.get());
+        }
+        resist=true;
+    }
+
+    if (isMonster() && resist)
+        getAsMonster()->doCheckFailedCastAggro(caster, willAggro, print);
+
+    return(resist);
+
+}
+
+//************************************************************************************************************
+//                   Creature::getRaceEnchantmentResist
+//************************************************************************************************************
+// This checks against a creature's race for resistance to whatever eligible enchantment spell is cast on it
+bool Creature::getRaceEnchantmentResist(const std::shared_ptr<Creature>& caster, const std::string spell, bool print) {
+    bool willAggro=true; // default is will go aggro on casters for ineligible, immune, or failed enchantment spellcast attempts
+    bool resist=false;
+
+    if (!isResistableEnchantment(spell))
+        return(false);
+    
+    // Check natural resistances due to player race, or race set on mob
+    switch (getRace()) {
+    case ELF:
+    case GREYELF:
+    case WILDELF:
+    case DARKELF:
+    case HALFELF:
+        if (Random::get(1,100) <= (getRace()==HALFELF?30:90)) {
+            if (print) {
+                *this << ColorOn << "^yYour " << (getRace()==HALFELF?"Elven half":"Fey ancestry") << " protected you from " << caster << "'s spell.\n" << ColorOff;
+                *caster << ColorOn << "^y" << setf(CAP) << this << " resisted your spell due to " << hisHer() << (getRace()==HALFELF?" Elven half":" Fey origins") << ".\n" << ColorOff;
+                if(caster->isStaff())
+                    *caster << "Race Number = " << getRace() << "\n";
+                broadcast(caster->getSock(), getSock(), caster->getParent(), "^y%M resisted %N's spell due to %s %s!^x", 
+                                                                        this, caster.get(), hisHer(), (getRace()==HALFELF?"Elven half":"Fey ancestry"));
+            }
+            resist=true;
+        }
+        break;
+    case TIEFLING:
+        if (Random::get(1,100) <= 25) {
+            if (print) {
+                *this << ColorOn << "^yYour daibolical origins caused you to resist " << caster << "'s spell.\n" << ColorOff;
+                *caster << ColorOn << "^y" << this << " resisted the spell due to " << hisHer() << " diabolical ancestry.\n" << ColorOff;
+                broadcast(caster->getSock(), getSock(), caster->getParent(), 
+                                "^y%M resisted %N's spell due to %s diabolical ancestry!^x", this, caster.get(), hisHer());
+            }
+            resist=true;
+        }
+        break;
+    case CAMBION:
+        if (Random::get(1,100) <= 25) {
+            if (print) {
+                *this << ColorOn << "^yYour demonic origins shrugged off " << caster << "'s spell.\n" << ColorOff;
+                *caster << ColorOn << "^y" << this << " resisted the spell due to " << hisHer() << " demonic ancestry.\n" << ColorOff;
+                broadcast(caster->getSock(), getSock(), caster->getParent(), 
+                                "^y%M resisted %N's spell due to %s demonic ancestry!^x", this, caster.get(), hisHer());
+            }
+            resist=true;
+        }
+        break;
+    case SERAPH:
+        if (Random::get(1,100) <= 25) {
+            if (print) {
+                *this << ColorOn << "^yYour angelic ancestry protected you from " << caster << "'s spell.\n" << ColorOff;
+                *caster << ColorOn << "^y" << this << " resisted the spell due to " << hisHer() << " angelic ancestry.\n" << ColorOff;
+                broadcast(caster->getSock(), getSock(), caster->getParent(), 
+                                "^y%M resisted %N's spell due to %s angelic ancestry!^x", this, caster.get(), hisHer());
+            }
+            resist=true;
+            if (isMonster() && getAdjustedAlignment() >= NEUTRAL && caster->getAdjustedAlignment() >= PINKISH) // Non-evil Seraph mobs will only attack failed casters if they are more evil than PINKISH
+                willAggro=false;
+        }
+        break;
+    default:
+        resist=false;
+        break;
+    }
+
+    if (isMonster() && resist)
+        getAsMonster()->doCheckFailedCastAggro(caster, willAggro, print);
+
+    return(resist);
+
+}
+
+//*******************************************************************************************************************
+//                   Monster::doCheckFailedCastAggro
+//*******************************************************************************************************************
+// This function handles whether a mob decides or not to go aggro on somebody if they fail a spellcast on them
+void Monster::doCheckFailedCastAggro(const std::shared_ptr<Creature>& caster, bool willAggro, bool print) {
+
+    // Unless they are a guardian, good-aligned mobs will not be provoked by an ineligible, immune, or failed spellcast attempt
+    if (willAggro && !isEnemy(caster) && getAdjustedAlignment() > NEUTRAL && !flagIsSet(M_PASSIVE_EXIT_GUARD)) {
+        if (print && monType::isIntelligent(getType())) {
+            *caster << ColorOn << setf(CAP) << this << " eyes you suspiciously.\n" << ColorOff;
+            broadcast (caster->getSock(), caster->getParent(), "%M eyes %N suspiciously.", this, caster.get());
+        }
+
+        //Mob also checks against its wisdom...successful means aggro turns false and mob won't attack the caster
+        int checkroll = Random::get(1,30), wisdom = getWisdom()/10;
+        if (caster->isCt() || (caster->isPlayer() && caster->flagIsSet(P_PTESTER))) 
+            *caster << ColorOn << "^D*PTEST*\n" << setf(CAP) << this << "'s wisdom: " << wisdom << "\n" << setf(CAP) << this << "'s wisdom check roll (d30): " << checkroll << "\n" << ColorOff;
+        if (checkroll < wisdom)
+            willAggro = false;
+    }
+
+    if (willAggro && !isEnemy(caster) && 
+                    (monType::isIntelligent(getType()) || 
+                     intelligence.getCur() >= 130 ||
+                     flagIsSet(M_PASSIVE_EXIT_GUARD)) 
+    ) {
+        if(print) {
+            *caster << ColorOn << "^rYour bumbled casting has greatly upset " << this << "!\n" << ColorOff;
+            broadcast(caster->getSock(), caster->getParent(), "^r%M's bumbled casting has greatly upset %N!", caster.get(), this);
+        }
+        addEnemy(caster, true);
+    }
+
+    return;
+
+}
+
+//********************************************************************************************************
+//                                       Creature::checkResistEnchantments
+//********************************************************************************************************
+// This function can be called to check against any racial/class/other resistances to various enchantment
+// and hold spells and return true if the creature resists. Send false for output if do not want to print 
+// anything and are just checking resistances in any various logic
+
+bool Creature::checkResistEnchantments(const std::shared_ptr<Creature>& caster, const std::string spell, bool print) {
+    bool monsterImmune = false, montypeResist = false, classResist = false, raceResist = false, miscResist = false;
+    bool willAggro = true;
+    bool output = print;
+
+    if (!caster)
+        return(false);
+
+    //Staff always resists
+    if(isStaff())
+        return(true);
+
+    //TODO: After hold spell testing is finished, put a check right here for caster->isStaff() so staff-casted enchantments never are resisted
+
+    if (!isResistableEnchantment(spell))
+        return(false);
+    
+    // Shouldn't happen, but sanity check to prevent weird output
+    if (getCName() == caster->getCName())
+        output = false;
+
+    if(isPlayer() && (spell == "hold-animal" || spell == "hold-plant" || 
+                      spell == "hold-elemental" || spell == "hold-fey") ) { 
+        if (output) {
+            *this << ColorOn << "^yThe spell didn't do anything.\n" << ColorOff;
+            *caster << ColorOn << "^y" << "The " << spell << " spell does not work against players. Your magic dissipated.\n" << ColorOff;
+            broadcast(caster->getSock(), getSock(), caster->getParent(), "^y%M's spell has no effect.\n^x", caster.get());
+        }
+        return(true);
+    }
+
+    if (isMonster()) {
+        monsterImmune = getAsMonster()->getEnchantmentImmunity(caster, spell, output);
+        if (!monsterImmune)
+            montypeResist = getAsMonster()->getEnchantmentVsMontype(caster, spell, output);
+    }
+    if (!monsterImmune && !montypeResist)
+        classResist = getClassEnchantmentResist(caster, spell, output);
+    if (!monsterImmune && !montypeResist && !classResist && !isUndeadImmuneEnchantments()) // vampires at night, or liches, bypass race check
+        raceResist = getRaceEnchantmentResist(caster, spell, output);
+        
+    //Now we check for various effects or other misc things that may cause resistance
+    if (!monsterImmune && !montypeResist && !classResist && !raceResist) {
+        // Being berserk blocks pretty much all enchantments
+        if (isEffected("berserk")) {
+            if (output) {
+                *this << ColorOn << "^y" << setf(CAP) << caster << "'s spell had no effect. You brushed it off with your rage.\n" << ColorOff;
+                *caster << ColorOn << "^y" << setf(CAP) << this << " is currently berserk! Your spell had no effect.\n" << ColorOff;
+                broadcast(caster->getSock(), getSock(), caster->getParent(), "^y%M's spell has no effect. %N's rage makes %s immune.\n^x", caster.get(), this, himHer());
+            }
+            miscResist=true;
+        }
+
+        // Being unconcious or petrified causes enchantments to fail
+        if (isPlayer() && (flagIsSet(P_UNCONSCIOUS) || isEffected("petrification"))) {
+            if (output) {
+                *this << ColorOn << "^y" << setf(CAP) << caster << "'s spell dissipated.\n" << ColorOff;
+                *caster << ColorOn << "^yYour spell dissipated.\n" << ColorOff;
+                broadcast(caster->getSock(), getSock(), caster->getParent(), "^y%M's spell dissipated.^x", caster.get());
+            }
+            miscResist=true;
+        }
+
+        // Resist-magic effect and level >= than caster always gives target an 85% chance to avoid..Otherwise only 25% chance.
+        if (Random::get(1,100) <= ((caster->getLevel() < getLevel())?85:25) && isEffected("resist-magic")) {
+            if (output) {
+                *this << ColorOn << "^y" << "Your resist-magic dissipated " << caster << "'s spell.\n" << ColorOff;
+                *caster << ColorOn << "^yYour spell dissipated due to " << this << "'s resist-magic.\n" << ColorOff;
+                broadcast(caster->getSock(), getSock(), caster->getParent(), "^y%M's spell dissipated.^x", caster.get());
+            }
+            miscResist=true;
+        }
+    }
+
+    if(isMonster() && miscResist)
+        getAsMonster()->doCheckFailedCastAggro(caster, willAggro, output);
+
+    return(monsterImmune || montypeResist || classResist || raceResist || miscResist);
+}
+
+//***********************************************************************************
+//                             isMagicallyHeld
+//***********************************************************************************
+// This function will return true if a player is effected by hold magic of any kind,
+// preventing their actions. If just need to use it for logic around checking for 
+// hold magic, set print to false in order to not have any output
+bool Creature::isMagicallyHeld(bool print) const {
+
+    if (isEffected("hold-person") || isEffected("hold-monster") || 
+        isEffected("hold-undead") || isEffected("hold-animal") ||
+        isEffected("hold-plant") || isEffected("hold-elemental") || isEffected("hold-fey")) {
+        if (isPlayer() && print)
+            printColor("^yYou can't do that! You're magically held!^x\n");
+        return(true);
+        }
+    return(false);
+}
+
+//*********************************************************************
+//                      doCheckBreakMagicalHolds
+//*********************************************************************
+// This is called when a player or mob is attacked to determine whether
+// that action is enough to break any magical hold spells they are under
+
+void Creature::doCheckBreakMagicalHolds(std::shared_ptr<Creature>& attacker, int dmg) {
+    int dmgToBreak=0;
+    EffectInfo* holdEffect = nullptr;
+
+    //Sanity checks
+    if (!attacker || dmg <= 0)
+        return;
+
+    if (!isMagicallyHeld())
+        return;
+
+    //This works because creatures can only be under one type of hold effect at a time
+    if (isEffected("hold-person"))
+        holdEffect = getEffect("hold-person");
+    else if (isEffected("hold-monster"))
+        holdEffect = getEffect("hold-monster");
+    else if (isEffected("hold-undead"))
+        holdEffect = getEffect("hold-undead");
+    else if (isEffected("hold-animal"))
+        holdEffect = getEffect("hold-animal");
+    else if (isEffected("hold-plant"))
+        holdEffect = getEffect("hold-plant");
+    else if (isEffected("hold-elemental"))
+        holdEffect = getEffect("hold-elemental");
+    else if (isEffected("hold-fey"))
+        holdEffect = getEffect("hold-fey");
+
+    if(!holdEffect)
+        return;
+
+    dmgToBreak = holdEffect->getExtra();
+
+    if (hatesEnemy(attacker))
+        dmgToBreak-=(dmg*2);
+    else
+        dmgToBreak-=dmg;
+
+    holdEffect->setExtra(dmgToBreak);
+    int roll = Random::get(1,100);
+    if (dmgToBreak > 0 && (attacker->isCt() || (attacker->isPlayer() && attacker->flagIsSet(P_PTESTER)))) {
+        *attacker << ColorOn << "\n^DChance hold randomly breaks: ^R" << (std::max(1,getWillpower()/60)) << "%^D\n" ;
+        *attacker << "Dmg remaining before forced breakout: ^R: " << dmgToBreak << "\n";
+        *attacker << "^DRoll % (d100): ^W" << roll << "\n" << ColorOff;
+    }
+
+    if (dmgToBreak <= 0 || (roll <= (std::max(1,getWillpower()/80))) ) {
+        if (isPlayer()) {
+            *this << ColorOn << "^YThe hold magic on you has been broken!\n" << ColorOff;
+            *attacker << ColorOn << "^YThe hold magic on " << this << " has been broken!\n" << ColorOff;
+            broadcast(getSock(), attacker->getSock(), attacker->getParent(),"^GThe hold magic on %M has been broken!^x",this);
+            getAsPlayer()->computeAC();
+            getAsPlayer()->computeAttackPower();
+    
+        }
+
+        if (isMonster()) {
+            if (attacker->isPlayer())
+                *attacker << ColorOn << "^YThe hold magic on " << this << " has been broken!\n" << ColorOff;
+            broadcast(attacker->getSock(), attacker->getParent(), "^YThe hold magic on %N has been broken!^x",this);
+        }
+
+        removeEffect(holdEffect->getName());
+        lasttime[LT_SPELL].ltime = time(nullptr);
+        setAttackDelay(0);
+    }
+
+    return;
+}
+
 
 //*********************************************************************
 //                      ableToDoCommand
 //*********************************************************************
 
 bool Creature::ableToDoCommand( cmd* cmnd) const {
+
 
     if(isMonster())
         return(true);
@@ -944,6 +1515,7 @@ bool Creature::ableToDoCommand( cmd* cmnd) const {
         print("You are brain-dead. You can't do that.\n");
         return(false);
     }
+
 
     // unconscious has some special rules
     if(flagIsSet(P_UNCONSCIOUS)) {
@@ -1155,6 +1727,84 @@ std::string Creature::getCrtStr(const std::shared_ptr<const Creature> & viewer, 
     }
 
     return(toReturn);
+}
+
+//********************************************************************
+//                    getWisdom()
+//********************************************************************
+//Wisdom combo stat
+int Creature::getWisdom() {
+    return((intelligence.getCur() + piety.getCur())/2);
+}
+
+//********************************************************************
+//                    getAgility()
+//********************************************************************
+//Agility combo stat
+int Creature::getAgility() {
+
+    return((constitution.getCur() + dexterity.getCur())/2);
+}
+
+//********************************************************************
+//                    getElusivness()
+//********************************************************************
+//Elusiveness combo stat
+int Creature::getElusiveness() {
+    return((intelligence.getCur() + dexterity.getCur())/2);
+}
+
+//********************************************************************
+//                    getWillpower()
+//********************************************************************
+//Willpower stat
+int Creature::getWillpower() {
+
+    int willpower=0, race=0;
+
+    //Base Willpower stat is avg of int, str, and pie
+    willpower = (intelligence.getCur() + strength.getCur() + piety.getCur()) / 3;
+    race = getRace();
+
+    if (isEffected("berserk"))
+        willpower += ((willpower*3)/2);
+
+    // Certain races are very natually stubborn!
+    if (race == DWARF || race == HILLDWARF || race == DUERGAR || 
+            race == BARBARIAN || race == MINOTAUR || race == SERAPH || 
+                race == OGRE || race == LIZARDMAN || race == CENTAUR || race == ORC)    
+        willpower += (willpower/10);
+    // As are Paladins, Deathknights, and Clerics of Ares
+    if  (getClass() == CreatureClass::PALADIN || 
+             getClass() == CreatureClass::DEATHKNIGHT ||
+                (getClass() == CreatureClass::CLERIC && getDeity() == ARES)) 
+        if (!isPlayer() || (isPlayer() && getAsPlayer()->alignInOrder()))
+            willpower += (willpower/10);
+
+    if (isMonster()) {
+
+        if (isPet()) 
+            willpower += (willpower/5); 
+
+        switch(getType()) {
+        case DRAGON:
+        case DEMON:
+        case DEVIL:
+        case FAERIE:
+            willpower += ((willpower*3)/2);
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (isEffected("courage"))
+        willpower += (willpower/5);
+
+    if (isEffected("fear"))
+        willpower -= (willpower/5);
+
+    return(willpower);
 }
 
 

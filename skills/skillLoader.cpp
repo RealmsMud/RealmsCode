@@ -358,6 +358,10 @@ bool Config::loadSkills() {
         .group("offensive")
     , skills);
     addToMap(SkillInfoBuilder()
+        .name("gore").displayName("Gore")
+        .group("offensive")
+    , skills);
+    addToMap(SkillInfoBuilder()
         .name("disarm").displayName("Disarm")
         .group("offensive")
     , skills);

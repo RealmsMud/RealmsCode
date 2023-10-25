@@ -101,7 +101,7 @@ bool Monster::updateCombat() {
     // If we're fighting a pet, see if we'll ignore the pet and attack a player instead
     if(target->isPet() && target->getMaster()) {
         if(target->inSameRoom(target->getMaster())) {
-            if(Random::get(1,100) < 20 || target->intelligence.getCur() >= 150 || target->flagIsSet(M_KILL_MASTER_NOT_PET)) {
+            if(Random::get(1,100) <= 20 || this->intelligence.getCur() >= 220 || this->flagIsSet(M_KILL_MASTER_NOT_PET)) {
                 target = target->getMaster();
                 addEnemy(target);
             }
@@ -114,6 +114,9 @@ bool Monster::updateCombat() {
 
     // Stop fighting if it's a no exp loss monster
     if( pTarget && flagIsSet(M_NO_EXP_LOSS) && !nearEnmPly() && !isPet() && target->inCombat(Containable::downcasted_shared_from_this<Monster>()))
+        return(false);
+
+    if (isMagicallyHeld(false))
         return(false);
 
     monstervmonster = (!pTarget && !target->isPet() && isMonster() && !isPet());
@@ -1082,10 +1085,6 @@ void Creature::clearAsEnemy() {
 void Player::damageArmor(int dmg) {
     std::shared_ptr<Object> armor=nullptr;
 
-    // Damage armor 1/10th of the time
-    if(Random::get(1, 10) == 1)
-        return;
-
     int wear = chooseItem();
     if(!wear)
         return;
@@ -1102,13 +1101,23 @@ void Player::damageArmor(int dmg) {
         return;
 
     std::string armorType = armor->getArmorType();
+
+    // 30% of the time, avoid check for armor damage altogether
+    // But 5% of the time, also check for skill improve if not shield
+    int avoidRoll = Random::get(1,100);
+    if (avoidRoll <= 5 && armorType != "shield") {
+        checkImprove(armorType, true);
+        return;
+    }
+    else if (avoidRoll <= 30)
+        return;
+
     int armorSkill = (int)getSkillGained(armorType);
     int avoidChance = armorSkill / 4;
 
-
     // Make armor skill worth something, the higher the skill, the lower the chance it'll take damage
     if(Random::get(1,100) > avoidChance) {
-        printColor("Your ^W%s^x just got a little more scratched.\n", armor->getCName());
+        *this << ColorOn << "^DYour ^W" << armor->getCName() << "^D just got a little more scratched.\n" << ColorOff;
         armor->decShotsCur();
         if(armorType != "shield")
             checkImprove(armorType, true);
@@ -1173,7 +1182,8 @@ int Creature::doDamage(const std::shared_ptr<Creature>& target, int dmg, DeathCh
     std::shared_ptr<Monster>  mTarget = target->getAsMonster();
     std::shared_ptr<Player> pThis = getAsPlayer();
     std::shared_ptr<Monster>  mThis = getAsMonster();
-
+    std::shared_ptr<Creature>  cThis = getAsCreature();
+    
     int m = std::min(target->hp.getCur(), dmg);
 
     target->hp.decrease(dmg);
@@ -1199,10 +1209,16 @@ int Creature::doDamage(const std::shared_ptr<Creature>& target, int dmg, DeathCh
         }
     }
 
+    
+    if(target->hp.getCur() > 0)
+        target->doCheckBreakMagicalHolds(cThis, dmg);
+
     if(shouldCheckDie == CHECK_DIE)
         return(target->checkDie(Containable::downcasted_shared_from_this<Creature>(), freeTarget));
     else if(shouldCheckDie == CHECK_DIE_ROB)
         return(target->checkDieRobJail(mThis, freeTarget));
+    
+    
 
     freeTarget = false;
     return(0);

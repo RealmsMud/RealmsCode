@@ -316,7 +316,7 @@
 #define P_CREATING_GUILD            177      // Player is currently attempting to create a new guild
 // free                             178
 // free                             179
-#define P_FREE_ACTION               180      // Player under free-action spell
+// free                             180
 #define P_NO_FLUSHCRTOBJ            181      // Builder doesn't have to *flushcrtobj
 #define P_NO_NUMBERS                182      // No Mob Numbers
 #define P_CAN_REBOOT                183      // Can use *reboot command
@@ -511,7 +511,7 @@
 // free                             152
 // free                             153
 // free                             154
-// free                             155
+#define M_NO_GORE                   155      // Monster unaffected by gore attacks
 #define M_NO_LEVEL_ONE              156      // Monster uneffected by level 1 spells
 #define M_NO_LEVEL_TWO              157      // Monster uneffected by level 2 spells or less
 #define M_NO_LEVEL_THREE            158      // Monster uneffected by level 3 spells or less
