@@ -670,21 +670,23 @@
 #define O_CLAN_8                    68      // Clan 8 can use
 #define O_CLAN_9                    69      // Clan 9 can use
 #define O_CLAN_10                   70      // Clan 10 can use
-// free                             71
-// free                             72
-// free                             73
-// free                             74
-// free                             75
-// free                             76
-// free                             77
-// free                             78
-// free                             79
+#define O_DSEL_ARAMON               71
+#define O_DSEL_CERIS                72
+#define O_DSEL_ENOCH                73
+#define O_DSEL_GRADIUS              74
+#define O_DSEL_ARES                 75
+#define O_DSEL_KAMIRA               76
+#define O_DSEL_LINOTHAN             77
+#define O_DSEL_ARACHNUS             78
+#define O_DSEL_MARA                 79
+
+
 #define O_LOAD_ALL                  80      // When trading, load all RandomObjects, rather than a random one.
 #define O_RESIST_DISOLVE            81      // Object resists dissolve
 #define O_RECLAIMED                 82      // Object has been reclaimed at least once, no futher haggling allowed
-// free                             83
-// free                             84
-// free                             85
+#define O_DSEL_JAKAR                83
+#define O_DSEL_INVERT               84
+#define O_DSEL_REQUIRES_DEITY       85
 // free                             86
 // free                             87
 // free                             88
