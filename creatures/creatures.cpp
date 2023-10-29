@@ -2211,4 +2211,13 @@ std::string Creature::getHpProgressBar() {
     return (progressBar(50, getPercentRemaining(hp.getCur(), hp.getMax())));
 }
 
+bool Creature::isIndoors() {
+
+    std::shared_ptr<BaseRoom> room = this->getRoomParent();
+
+    if(!room)
+        return(false);
+
+    return (room->flagIsSet(R_INDOORS));
+}
 

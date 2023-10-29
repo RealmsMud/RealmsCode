@@ -242,9 +242,10 @@ int splPassWithoutTrace(const std::shared_ptr<Creature>& player, cmd* cmnd, Spel
         !player->isStaff() &&
         player->getClass() !=  CreatureClass::DRUID &&
         player->getClass() !=  CreatureClass::RANGER &&
-        player->getDeity() != LINOTHAN
+        player->getDeity() != LINOTHAN &&
+        player->getDeity() != MARA
     ) {
-        player->print("Only druids, rangers, and followers of Linothan may cast this spell.\n");
+        player->print("Only druids, rangers, and followers of Linothan or Mara may cast this spell.\n");
         return(0);
     }
 

@@ -386,6 +386,8 @@ public:
     void addSkill(const std::string& skillName, int gained); // *
     void remSkill(const std::string& skillName); // *
     void checkSkillsGain(const std::list<SkillGain*>::const_iterator& begin, const std::list<SkillGain*>::const_iterator& end, bool setToLevel = false);
+    void getInitialRaceWeaponSkills(const std::list<SkillGain*>::const_iterator& begin, const std::list<SkillGain*>::const_iterator& end, std::string & initSkillString, short & num);
+    void getInitialClassWeaponSkills(const std::list<SkillGain*>::const_iterator& begin, const std::list<SkillGain*>::const_iterator& end, std::string & initSkillString, short & num);
     void checkImprove(const std::string& skillName, bool success, int attribute = INT, int bns = 0); // *
     bool setSkill(const std::string& skill, int gained); // *
 
@@ -741,6 +743,7 @@ public:
     Location getRecallRoom() const;
     int deleteFromRoom(bool delPortal=true);
     void applyMagicalArmor(Damage& dmg, int dmgType);
+    bool isIndoors();
 
 protected:
     virtual int doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) = 0;

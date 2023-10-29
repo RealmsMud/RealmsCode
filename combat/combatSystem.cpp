@@ -47,6 +47,7 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "timer.hpp"                 // for Timer
+#include "deityData.hpp"             // for deity names
 
 
 const std::string NONE_STR = "none";
@@ -986,7 +987,7 @@ bool Creature::canDodge(const std::shared_ptr<Creature>& attacker) {
         if(!canSee(attacker))
             return(false);
 
-        // Players waiting and hiding will not dodge, now so they won't auto unhide themselves.
+        // Players waiting and hiding will not dodge so they won't auto unhide themselves.
         if(flagIsSet(P_HIDDEN))
             return(false);
 
@@ -1405,11 +1406,24 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         // TODO: Add in modifier based on weapon skill
     }
 
-    if(weapon)
+    if(weapon) {
         attackDamage.add(weapon->damage.roll() + weapon->getAdjustment());
+        // Linothan clerics do +5% damage with great-swords/two-handed swords
+        if (cClass == CreatureClass::CLERIC && getDeity() == LINOTHAN && (weapon->getWeaponType() == "great-sword" || (weapon->getWeaponType() == "sword" && weapon->flagIsSet(O_TWO_HANDED))))
+            attackDamage.set(attackDamage.get() + (attackDamage.get())/20);
+        // At night, clercis of Mara do +10% damage with bows
+        if (cClass == CreatureClass::CLERIC && getDeity() == MARA && !isDay() && weapon->getWeaponType() == "bow")
+            attackDamage.set(attackDamage.get() + (attackDamage.get())/10);
+    }
 
     if(isEffected("lycanthropy"))
         attackDamage.add(packBonus());
+
+    // Mara and Linothan clerics do +5% damage to targets they hate
+    if((cClass == CreatureClass::CLERIC && (getDeity() == LINOTHAN || getDeity() == MARA)) && alignInOrder() && hatesEnemy(victim)) {
+        attackDamage.set(attackDamage.get() + (attackDamage.get())/20);
+        *this << ColorOn << "^r" << gConfig->getDeity(getDeity())->getName() << "'s vicious hatred of " << victim << " increases your damage.\n" << ColorOff;
+    }
 
     attackDamage.set(std::max<int>(1, attackDamage.get()));
 
