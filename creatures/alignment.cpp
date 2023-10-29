@@ -332,6 +332,64 @@ void Player::alignAdjustAcThaco() {
 }
 
 
+bool Creature::mustRemainNeutral() {
+
+    switch(getClass()) {
+    case CreatureClass::DRUID:
+        return(true);
+        break;
+    case CreatureClass::CLERIC:
+        if (getDeity() == JAKAR || getDeity() == ARES)
+            return(true);
+        break;
+    default:
+        break;    
+    }
+    return(false);
+}
+
+bool Creature::mustRemainEvil() {
+
+    switch(getClass()) {
+    case CreatureClass::DEATHKNIGHT:
+    case CreatureClass::LICH:
+        return(true);
+        break;
+    case CreatureClass::CLERIC:
+        if (deity == ARAMON || deity == ARACHNUS)
+            return(true);
+        break;   
+    default:
+        break;
+    }
+    return(false);
+}
+
+bool Creature::mustRamainGood() {
+    switch(getClass()) {
+    case CreatureClass::PALADIN:
+    case CreatureClass::RANGER:
+        return(true);
+        break;
+    case CreatureClass::CLERIC:
+        if (deity == CERIS || deity == GRADIUS || deity == ENOCH ||
+            deity == MARA || deity == LINOTHAN || deity == KAMIRA)
+            return(true);
+        break;   
+    default:
+        break;
+    }
+    return(false);
+}
+
+bool Creature::isGood() {
+    return(getAdjustedAlignment() > NEUTRAL);
+}
+
+bool Creature::isEvil() {
+    return(getAdjustedAlignment() < NEUTRAL);
+}
+
 //*********************************************************************
 //                      alignInOrder
 //*********************************************************************
@@ -410,22 +468,16 @@ void Player::adjustAlignment(std::shared_ptr<Monster> victim) {
     if(victim->getAlignment() > 0 && victim->getAlignment() < 8)
         adjust = 1;
 
-    bool toNeutral = ((alignment > 0 && adjust > 0) ||
-                      (alignment < 0 && adjust < 0) );
+   // bool toNeutral = ((alignment > 0 && adjust > 0) ||
+   //                  (alignment < 0 && adjust < 0) );
 
-    // Examples of how the this code works:
-    // evil == for dwarf: alignment<0; for orc: adjust<0
-    // good == for dwarf: alignment>0; for orc: adjust>0
-    // dwarves hate orcs
-    // This also assumes race orc is properly set on the mob
-    // 1. evil dwarf player kills evil orc mob = alignment changes upwards (towards good)
-    // 2. good dwarf player kills evil orc mob = no further alignment change (won't get more good)
-    // 3. good dwarf player kills good orc mob = alignment changes downwards (towards evil)
-    // 4. evil dwarf player kills good orc mob = no further alignment change (won't get more evil)
-    // hatesEnemy() covers all the deities (which covers all paladins/clerics of diff types), races, etc..for the above result
-    // for neutral mobs (0 align set), they don't change alignment anyway and adjust will always just be 0
-    // respective race/class/deity/mtype need to be set on the mob for hatesEnemy() to work properly
-    if (!toNeutral && getAsCreature()->hatesEnemy(victim))
+    bool hates = getAsCreature()->hatesEnemy(victim);
+
+    if(hates && ((getAsCreature()->isGood() && victim->isGood()) ||
+                 (getAsCreature()->isEvil() && victim->isEvil())) )
+        hates=false;
+
+    if (getAsCreature()->mustRemainNeutral() && hates)
         adjust=0; // no alignment change
     
     alignment -= adjust;

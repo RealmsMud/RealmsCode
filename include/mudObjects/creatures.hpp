@@ -659,13 +659,15 @@ public:
     void addRealm(unsigned long num, Realm r);
     void subRealm(unsigned long num, Realm r);
 
-
-
-
-
 // Miscellaneous
     std::string getHpDurabilityStr();
     std::string getHpProgressBar();
+
+    bool mustRemainNeutral();
+    bool mustRemainEvil();
+    bool mustRamainGood();
+    bool isGood();
+    bool isEvil();
 
     bool pFlagIsSet(int flag) const;
     void pSetFlag(int flag);

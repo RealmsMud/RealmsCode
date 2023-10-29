@@ -1898,7 +1898,6 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
     short eAlign = enemy->getAlignment();
     int eMtype = enemy->getType();
 
-   
     //check hatreds using caller's race first
     switch(getRace()) {
     case DWARF:

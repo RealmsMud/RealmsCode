@@ -237,9 +237,9 @@ void Player::init() {
     if(cClass == CreatureClass::CLERIC && !hasSecondClass() && deity == ARAMON && level >= 22)
         learnSpell(S_BLOODFUSION);
 
-    if((cClass == CreatureClass::RANGER || 
-        cClass == CreatureClass::DRUID ||
-        cClass == CreatureClass::CLERIC && getDeity() == MARA) && level >= 10)
+    if(level >=10 && ((cClass == CreatureClass::RANGER || 
+                                 cClass == CreatureClass::DRUID ||
+                                             (cClass == CreatureClass::CLERIC && getDeity() == MARA))))
         learnSpell(S_TRACK);
 
     // Druids and Clerics of Ares can cast both benediction and malediction. They get them both at level 7
