@@ -18,10 +18,10 @@
 #pragma once
 
 #define VERSION_MAJOR "2"
-#define VERSION_MINOR "5"
+#define VERSION_MINOR "6"
 
 
-#define VERSION_SUB "9"
+#define VERSION_SUB "0"
 
 
 #define VERSION VERSION_MAJOR "." VERSION_MINOR VERSION_SUB
