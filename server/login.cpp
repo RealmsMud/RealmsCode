@@ -1183,6 +1183,13 @@ bool Create::getDeity(const std::shared_ptr<Socket>& sock, std::string str, int 
 
         for(l=1, k=0; l < static_cast<int>(CreatureClass::CLASS_COUNT)+4; l++) {
 
+            //Gender restrict for Mara, Arachnus, Linothan clerics
+                if( sock->getPlayer()->getClass() == CreatureClass::CLERIC &&
+                    ((sock->getPlayer()->flagIsSet(P_MALE) && l == MARA) ||
+                        (sock->getPlayer()->flagIsSet(P_MALE) && l == ARACHNUS) ||
+                            (!sock->getPlayer()->flagIsSet(P_MALE) && l == LINOTHAN)))
+                    continue;
+
             if(race->allowedDeity(sock->getPlayer()->getClass(),
                                   sock->getPlayer()->getSecondClass(), l)) {
                 k++;
