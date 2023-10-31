@@ -1427,42 +1427,18 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
 
     attackDamage.set(std::max<int>(1, attackDamage.get()));
 
-    // Damage reduction on every hit
-    if(cClass == CreatureClass::PALADIN) {
-        if(deity == GRADIUS) {
-            if(getAdjustedAlignment() < REDDISH || getAdjustedAlignment() > BLUISH) {
-                multiplier /= 2;
-                print("Your dissonance with earth reduces your damage.\n");
-            }
-        } else {
-            if(getAlignment() <= REDDISH) {
-                multiplier /= 2;
-                print("Your evilness reduces your damage.\n");
-            }
-        }
-    }
-    if(cClass == CreatureClass::DEATHKNIGHT) {
-        if(getAdjustedAlignment() >= BLUISH) {
-            multiplier /= 2;
-            print("Your goodness reduces your damage.\n");
-        }
+    if((cClass == CreatureClass::PALADIN && getAlignment() <= REDDISH) ||
+                (cClass == CreatureClass::DEATHKNIGHT && getAlignment() >= BLUISH)) {
+        *this << "Your " << (cClass==CreatureClass::DEATHKNIGHT?"goodness":"evilness") << " reduces your damage.\n";
+        multiplier /= 2;
     }
 
     // Bonus spread out over entire series of attack for multi attack weapons
     if(computeBonus) {
-        if(cClass == CreatureClass::PALADIN) {
+        if(cClass == CreatureClass::PALADIN && getAdjustedAlignment() >= BLUISH && victim->getAdjustedAlignment() <= REDDISH) {
             int goodDmg = Random::get(1, 1 + level / 3);
-            if(deity == GRADIUS) {
-                if(alignInOrder() && victim->getRace() != DWARF && victim->getDeity() != GRADIUS) {
-                    bonusDamage.add(goodDmg);
-                    print("Your attunement with earth increased your damage by %d.\n", goodDmg);
-                }
-            } else {
-                if(getAdjustedAlignment() >= BLUISH && victim->getAdjustedAlignment() <= PINKISH) {
-                    bonusDamage.add(goodDmg);
-                    print("Your goodness increased your damage by %d.\n", goodDmg);
-                }
-            }
+            *this << ColorOn << "^WYour purity of heart increased your damage by ^y%d^x.\n" << ColorOff;
+            bonusDamage.add(goodDmg);
         }
         if(cClass == CreatureClass::DEATHKNIGHT) {
             // Only drain on 1st attack if a multi weapon

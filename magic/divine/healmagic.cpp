@@ -1114,8 +1114,8 @@ int splResurrect(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
             player->print("You are not high enough level to cast that spell.\n");
             return(0);
         }
-        if(player->getAdjustedAlignment() != NEUTRAL) {
-            player->print("You must be neutral in order to cast that spell.\n");
+        if(player->getAdjustedAlignment() < NEUTRAL) {
+            player->print("The hatred in your heart right now prevents you from casting that spell.\n");
             return(0);
         }
     }

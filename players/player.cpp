@@ -911,12 +911,12 @@ int Player::computeLuck() {
     alg=abs(alignment);
     alg /= 10;
 
-    if ((cClass == CreatureClass::PALADIN && (deity == ENOCH || deity == LINOTHAN) && getAdjustedAlignment() >= PINKISH) ||
+    if ((cClass == CreatureClass::PALADIN && (deity == ENOCH || deity == LINOTHAN || deity == GRADIUS || deity == CERIS) && getAdjustedAlignment() >= PINKISH) ||
         (cClass == CreatureClass::DEATHKNIGHT && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= LIGHTBLUE) ||
-         (cClass == CreatureClass::PALADIN && deity == GRADIUS && (getAdjustedAlignment() < ROYALBLUE && getAdjustedAlignment() > BLOODRED)) ||
-             (cClass == CreatureClass::CLERIC && (deity == ENOCH || deity == LINOTHAN || deity == MARA || deity == KAMIRA) && getAdjustedAlignment() >= LIGHTBLUE) ||
+         (cClass == CreatureClass::PALADIN && deity == GRADIUS && (getAdjustedAlignment() >= REDDISH)) ||
+             (cClass == CreatureClass::CLERIC && (deity == ENOCH || deity == LINOTHAN || deity == MARA || deity == KAMIRA) && getAdjustedAlignment() >= PINKISH) ||
                 (cClass == CreatureClass::CLERIC && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= PINKISH) ||
-                    (cClass == CreatureClass::CLERIC && (deity == GRADIUS || deity == CERIS || deity == ARES) && (getAdjustedAlignment() < ROYALBLUE && getAdjustedAlignment() > BLOODRED)) ||
+                    (cClass == CreatureClass::CLERIC && (deity == ARES || deity == JAKAR) && (getAdjustedAlignment() < ROYALBLUE && getAdjustedAlignment() > BLOODRED)) ||
                         (cClass == CreatureClass::LICH && getAdjustedAlignment() <= PINKISH) ) {
         classAlignmentException = true;
     }
