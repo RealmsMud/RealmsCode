@@ -1437,7 +1437,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
     if(computeBonus) {
         if(cClass == CreatureClass::PALADIN && getAdjustedAlignment() >= BLUISH && victim->getAdjustedAlignment() <= REDDISH) {
             int goodDmg = Random::get(1, 1 + level / 3);
-            *this << ColorOn << "^WYour purity of heart increased your damage by ^y%d^x.\n" << ColorOff;
+            *this << ColorOn << "^WYour purity of heart increased your damage by ^y" << goodDmg << "^W.\n" << ColorOff;
             bonusDamage.add(goodDmg);
         }
         if(cClass == CreatureClass::DEATHKNIGHT) {
