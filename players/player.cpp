@@ -237,7 +237,9 @@ void Player::init() {
     if(cClass == CreatureClass::CLERIC && !hasSecondClass() && deity == ARAMON && level >= 22)
         learnSpell(S_BLOODFUSION);
 
-    if((cClass == CreatureClass::RANGER || cClass == CreatureClass::DRUID) && level >= 10)
+    if(level >=10 && ((cClass == CreatureClass::RANGER || 
+                                 cClass == CreatureClass::DRUID ||
+                                             (cClass == CreatureClass::CLERIC && getDeity() == MARA))))
         learnSpell(S_TRACK);
 
     // Druids and Clerics of Ares can cast both benediction and malediction. They get them both at level 7
@@ -909,12 +911,12 @@ int Player::computeLuck() {
     alg=abs(alignment);
     alg /= 10;
 
-    if ((cClass == CreatureClass::PALADIN && (deity == ENOCH || deity == LINOTHAN) && getAdjustedAlignment() >= PINKISH) ||
+    if ((cClass == CreatureClass::PALADIN && (deity == ENOCH || deity == LINOTHAN || deity == GRADIUS || deity == CERIS) && getAdjustedAlignment() >= PINKISH) ||
         (cClass == CreatureClass::DEATHKNIGHT && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= LIGHTBLUE) ||
-         (cClass == CreatureClass::PALADIN && deity == GRADIUS && (getAdjustedAlignment() < ROYALBLUE && getAdjustedAlignment() > BLOODRED)) ||
-             (cClass == CreatureClass::CLERIC && (deity == ENOCH || deity == LINOTHAN || deity == MARA || deity == KAMIRA) && getAdjustedAlignment() >= LIGHTBLUE) ||
+         (cClass == CreatureClass::PALADIN && deity == GRADIUS && (getAdjustedAlignment() >= REDDISH)) ||
+             (cClass == CreatureClass::CLERIC && (deity == ENOCH || deity == LINOTHAN || deity == MARA || deity == KAMIRA) && getAdjustedAlignment() >= PINKISH) ||
                 (cClass == CreatureClass::CLERIC && (deity == ARAMON || deity == ARACHNUS) && getAdjustedAlignment() <= PINKISH) ||
-                    (cClass == CreatureClass::CLERIC && (deity == GRADIUS || deity == CERIS || deity == ARES) && (getAdjustedAlignment() < ROYALBLUE && getAdjustedAlignment() > BLOODRED)) ||
+                    (cClass == CreatureClass::CLERIC && (deity == ARES || deity == JAKAR) && (getAdjustedAlignment() < ROYALBLUE && getAdjustedAlignment() > BLOODRED)) ||
                         (cClass == CreatureClass::LICH && getAdjustedAlignment() <= PINKISH) ) {
         classAlignmentException = true;
     }
@@ -1407,9 +1409,12 @@ int Player::getVision() const {
     if(isStaff())
         return(MAX_VISION);
 
-    int vision = 8;
-    if(race == ELF)
-        vision++;
+    int vision = 10;
+    if(race == ELF || race == GREYELF || race == WILDELF)
+        vision+=2;
+
+    if(race == AQUATICELF && getConstRoomParent()->isUnderwater())
+        vision+=4;
 
     if(race == DARKELF) {
         if(isDay())
@@ -1455,7 +1460,8 @@ int Player::getSneakChance()  {
             chance = std::min(90, 5 + 8 * std::max(1,sLvl-2) + 3 * bonus(dexterity.getCur()));
         else if(deity == KAMIRA || deity == ARACHNUS)
             chance = std::min(90, 5 + 8 * std::max(1,sLvl-2) + 3 * bonus(piety.getCur()));
-
+        else if(deity == MARA && !isDay() && alignInOrder() && !isIndoors())
+            chance = std::min(90, 5 + 8 * sLvl + 3 * bonus(piety.getCur()));
         break;
     case CreatureClass::FIGHTER:
         if(cClass2 == CreatureClass::THIEF)
@@ -1485,11 +1491,20 @@ int Player::getSneakChance()  {
         break;
     }
 
+    //Racial bonuses -------------------------
+    if(getRace() == ELF && getConstRoomParent()->isForest())
+        chance += chance/4;
+    if((getRace() == DARKELF && getConstRoomParent()->flagIsSet(R_UNDERGROUND)) || getRace()==KOBOLD)
+        chance += chance/10;
+    if(getRace() == HALFLING || getRace() == KENKU)
+        chance += chance/5;
+    //----------------------------------------
+
     if(isBlind())
         chance = std::min(20, chance);
 
     if(isEffected("camouflage")) {
-        if(getConstRoomParent()->isOutdoors())
+        if(!isIndoors())
             chance += 15;
         if(cClass == CreatureClass::DRUID && getConstRoomParent()->isForest())
             chance += 5;

@@ -47,6 +47,7 @@
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
 #include "timer.hpp"                 // for Timer
+#include "deityData.hpp"             // for deity names
 
 
 const std::string NONE_STR = "none";
@@ -986,7 +987,7 @@ bool Creature::canDodge(const std::shared_ptr<Creature>& attacker) {
         if(!canSee(attacker))
             return(false);
 
-        // Players waiting and hiding will not dodge, now so they won't auto unhide themselves.
+        // Players waiting and hiding will not dodge so they won't auto unhide themselves.
         if(flagIsSet(P_HIDDEN))
             return(false);
 
@@ -1405,50 +1406,39 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         // TODO: Add in modifier based on weapon skill
     }
 
-    if(weapon)
+    if(weapon) {
         attackDamage.add(weapon->damage.roll() + weapon->getAdjustment());
+        // Linothan clerics do +5% damage with great-swords/two-handed swords
+        if (cClass == CreatureClass::CLERIC && getDeity() == LINOTHAN && (weapon->getWeaponType() == "great-sword" || (weapon->getWeaponType() == "sword" && weapon->flagIsSet(O_TWO_HANDED))))
+            attackDamage.set(attackDamage.get() + (attackDamage.get())/20);
+        // At night, clercis of Mara do +10% damage with bows
+        if (cClass == CreatureClass::CLERIC && getDeity() == MARA && !isDay() && weapon->getWeaponType() == "bow")
+            attackDamage.set(attackDamage.get() + (attackDamage.get())/10);
+    }
 
     if(isEffected("lycanthropy"))
         attackDamage.add(packBonus());
 
+    // Mara and Linothan clerics do +5% damage to targets they hate
+    if((cClass == CreatureClass::CLERIC && (getDeity() == LINOTHAN || getDeity() == MARA)) && alignInOrder() && hatesEnemy(victim)) {
+        attackDamage.set(attackDamage.get() + (attackDamage.get())/20);
+        *this << ColorOn << "^r" << gConfig->getDeity(getDeity())->getName() << "'s vicious hatred of " << victim << " increases your damage.\n" << ColorOff;
+    }
+
     attackDamage.set(std::max<int>(1, attackDamage.get()));
 
-    // Damage reduction on every hit
-    if(cClass == CreatureClass::PALADIN) {
-        if(deity == GRADIUS) {
-            if(getAdjustedAlignment() < REDDISH || getAdjustedAlignment() > BLUISH) {
-                multiplier /= 2;
-                print("Your dissonance with earth reduces your damage.\n");
-            }
-        } else {
-            if(getAlignment() <= REDDISH) {
-                multiplier /= 2;
-                print("Your evilness reduces your damage.\n");
-            }
-        }
-    }
-    if(cClass == CreatureClass::DEATHKNIGHT) {
-        if(getAdjustedAlignment() >= BLUISH) {
-            multiplier /= 2;
-            print("Your goodness reduces your damage.\n");
-        }
+    if((cClass == CreatureClass::PALADIN && getAlignment() <= REDDISH) ||
+                (cClass == CreatureClass::DEATHKNIGHT && getAlignment() >= BLUISH)) {
+        *this << "Your " << (cClass==CreatureClass::DEATHKNIGHT?"goodness":"evilness") << " reduces your damage.\n";
+        multiplier /= 2;
     }
 
     // Bonus spread out over entire series of attack for multi attack weapons
     if(computeBonus) {
-        if(cClass == CreatureClass::PALADIN) {
+        if(cClass == CreatureClass::PALADIN && getAdjustedAlignment() >= BLUISH && victim->getAdjustedAlignment() <= REDDISH) {
             int goodDmg = Random::get(1, 1 + level / 3);
-            if(deity == GRADIUS) {
-                if(alignInOrder() && victim->getRace() != DWARF && victim->getDeity() != GRADIUS) {
-                    bonusDamage.add(goodDmg);
-                    print("Your attunement with earth increased your damage by %d.\n", goodDmg);
-                }
-            } else {
-                if(getAdjustedAlignment() >= BLUISH && victim->getAdjustedAlignment() <= PINKISH) {
-                    bonusDamage.add(goodDmg);
-                    print("Your goodness increased your damage by %d.\n", goodDmg);
-                }
-            }
+            *this << ColorOn << "^WYour purity of heart increased your damage by ^y" << goodDmg << "^W.\n" << ColorOff;
+            bonusDamage.add(goodDmg);
         }
         if(cClass == CreatureClass::DEATHKNIGHT) {
             // Only drain on 1st attack if a multi weapon

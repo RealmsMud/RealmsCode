@@ -532,15 +532,19 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if( player->getClass() == CreatureClass::THIEF ||
         player->getClass() == CreatureClass::ASSASSIN ||
         player->getClass() == CreatureClass::ROGUE ||
-        player->getClass() == CreatureClass::RANGER
+        player->getClass() == CreatureClass::RANGER ||
+        (player->getClass() == CreatureClass::CLERIC && player->getDeity() == MARA && !isDay()) ||
+        (player->getClass() == CreatureClass::CLERIC && player->getDeity() == LINOTHAN && !player->isIndoors()) ||
+        (player->getRace() == DARKELF && player->getRoomParent()->flagIsSet(R_UNDERGROUND)) ||
+        player->getRace() == HALFLING ||
+        player->getRace() == KENKU ||
+        player->getRace() == KOBOLD 
     )
         player->lasttime[LT_HIDE].interval = 5;
+    else if(player->getSecondClass() == CreatureClass::THIEF || player->getSecondClass() == CreatureClass::ASSASSIN || (player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA))
+        player->lasttime[LT_HIDE].interval = 6;
     else
         player->lasttime[LT_HIDE].interval = 15;
-
-
-    if(player->getSecondClass() == CreatureClass::THIEF || player->getSecondClass() == CreatureClass::ASSASSIN || (player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA))
-        player->lasttime[LT_HIDE].interval = 6L;
 
     int level = (int)player->getSkillLevel("hide");
     if(cmnd->num == 1) {
@@ -570,15 +574,16 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
                         3*bonus(player->dexterity.getCur()));
             break;
         case CreatureClass::CLERIC:
-            if(player->getSecondClass() == CreatureClass::ASSASSIN) {
+            if(player->getSecondClass() == CreatureClass::ASSASSIN) 
                 chance = std::min(90, 5 + 5*level + 3*bonus(player->dexterity.getCur()));
-            } else if( (player->getDeity() == KAMIRA && player->getAdjustedAlignment() >= NEUTRAL) ||
-                (player->getDeity() == ARACHNUS && player->alignInOrder())
-            ) {
+            else if ((player->getDeity() == KAMIRA || player->getDeity() == ARACHNUS) && player->alignInOrder())
                 chance = std::min(90, 5 + 4*level + 3*bonus(player->piety.getCur()));
-            } else
-                chance = std::min(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
-
+            else if (player->getDeity() == MARA && !isDay() && player->alignInOrder() && !player->isIndoors())
+                chance = std::min(90, 5 + 6*level + 3*bonus(player->piety.getCur()));
+            else if (player->getDeity() == LINOTHAN && player->alignInOrder() && !player->isIndoors())
+                chance = 5 + 10*level + 3*bonus(player->piety.getCur());
+            else
+               chance = std::min(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
             break;
         case CreatureClass::RANGER:
         case CreatureClass::DRUID:
@@ -592,10 +597,8 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
         }
 
-
         if(player->isStaff())
             chance = 101;
-
 
         if(player->isEffected("camouflage") && player->getRoomParent()->isOutdoors())
             chance += 20;
@@ -606,12 +609,24 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
         )
             chance += 10;
 
-        if(player->dexterity.getCur()/10 < 9 && !(player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA))
+        if(player->dexterity.getCur()/10 < 9 && !(player->getClass() == CreatureClass::CLERIC && (player->getDeity() == KAMIRA || player->getDeity() == MARA || 
+                                                                                                  player->getDeity() == LINOTHAN || player->getDeity() == ARACHNUS)))
             chance -= 10*(9 - player->dexterity.getCur()/10); // Having less then average dex
 
         *player << "You attempt to hide in the shadows.\n";
 
-        if((player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID) && !player->getRoomParent()->isOutdoors()) {
+        //Racial hide bonuses
+        if(player->getRace() == ELF && player->getRoomParent()->isForest())
+            chance += chance/4;
+        if(player->getRace() == HALFLING || player->getRace() == KENKU)
+            chance += chance/5;
+        if(player->getRace() == KOBOLD)
+            chance += chance/10;
+
+        if(player->isIndoors() && (player->getClass() == CreatureClass::RANGER || 
+                                   player->getClass() == CreatureClass::DRUID ||
+                                   (player->getClass() == CreatureClass::CLERIC && player->getDeity() == LINOTHAN))) 
+        {
             chance /= 2;
             chance = std::max(25, chance);
             *player << "You have trouble hiding while inside.\n";
@@ -761,7 +776,7 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if (!player->isStaff() && player->inCombat() ) {
-        *player << "You are fighting right now. How can you do that?\n";
+        *player << "You are fighting right now. You can't do that.\n";
         return(0);
     }
 
@@ -769,6 +784,11 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
         !player->checkStaff("This room is filled with a dense fog.\nYou cannot scout effectively.\n")
     )
         return(0);
+
+     if (player->getClass() == CreatureClass::CLERIC && (player->getDeity() == MARA || player->getDeity() == LINOTHAN) && player->isIndoors()) {
+        *player << "You are unable to scout effectively while indoors.\n";
+        return(0);
+    }
 
     if(cmnd->num < 2) {
         *player << "Scout where?\n";
@@ -810,7 +830,7 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->lasttime[LT_SCOUT].interval = 20L;
 
         chance = 40 + (int)player->getSkillLevel("scout") * 3;
-        if (player->getClass() == CreatureClass::CLERIC && player->getDeity() == MARA)
+        if (player->getClass() == CreatureClass::CLERIC && (player->getDeity() == MARA || player->getDeity() == LINOTHAN))
             chance += ((player->piety.getCur()+player->dexterity.getCur())/20);
         else
             chance += ((player->intelligence.getCur()+player->dexterity.getCur())/20);

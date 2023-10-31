@@ -19,6 +19,7 @@
 #include "config.hpp"                       // for Config, gConfig
 #include "mudObjects/creatures.hpp"         // for Creature, PetList
 #include "skillGain.hpp"                    // for SkillGain
+#include "login.hpp"                       // for addStartingWeapon
 
 //*********************************************************************
 //                      checkSkillsGain
@@ -42,5 +43,75 @@ void Creature::checkSkillsGain(const std::list<SkillGain*>::const_iterator& begi
             }
         }
     }
+}
+
+
+void Creature::getInitialRaceWeaponSkills(const std::list<SkillGain*>::const_iterator& begin, const std::list<SkillGain*>::const_iterator& end, std::string& initSkillString, short& num) {
+    SkillGain *sGain=nullptr;
+
+    std::ostringstream sStr;
+    std::list<SkillGain*>::const_iterator sgIt;
+    for(sgIt = begin ; sgIt != end ; sgIt++) {
+        sGain = (*sgIt);
+        if(sGain->getName().empty())
+            continue;
+      const SkillInfo* skill = gConfig->getSkill(sGain->getName());
+      if (!skill->getGroup().starts_with("weapons"))
+           continue;
+
+        num++;
+        if (num == 1)
+            sStr << skill->getDisplayName();
+        else if (num >=2)
+            sStr << ", " << skill->getDisplayName();
+
+        if(!knowsSkill(sGain->getName())) {
+            addSkill(sGain->getName(), sGain->getGained());
+            Create::addStartingWeapon(getAsPlayer(), skill->getName());
+        }
+    }
+
+    if(num>0)
+        sStr << ".";
+
+    initSkillString = sStr.str();
+    return;
+}
+
+void Creature::getInitialClassWeaponSkills(const std::list<SkillGain*>::const_iterator& begin, const std::list<SkillGain*>::const_iterator& end, std::string& initSkillString, short& num) {
+    SkillGain *sGain=nullptr;
+
+    std::ostringstream sStr;
+    std::list<SkillGain*>::const_iterator sgIt;
+    for(sgIt = begin ; sgIt != end ; sgIt++) {
+        sGain = (*sgIt);
+        if(sGain->getName().empty())
+            continue;
+        const SkillInfo* skill = gConfig->getSkill(sGain->getName());
+        if (!skill->getGroup().starts_with("weapons"))
+           continue;
+
+        if (knowsSkill(sGain->getName()) || (deity && !sGain->deityIsAllowed(deity)))
+            continue;
+
+        num++;
+        if (num == 1)
+            sStr << skill->getDisplayName();
+        else if (num >=2)
+            sStr << ", " << skill->getDisplayName();
+
+        if(!sGain->hasDeities() || sGain->deityIsAllowed(deity)) {
+            if(!knowsSkill(sGain->getName())) {
+                addSkill(sGain->getName(), sGain->getGained());
+                Create::addStartingWeapon(getAsPlayer(), skill->getName());
+            }
+        }
+    }
+
+    if(num>0)
+        sStr << ".";
+
+    initSkillString = sStr.str();
+    return;
 }
 

@@ -77,6 +77,8 @@ std::string getSexName(Sex sex);
 std::shared_ptr<Monster> getFirstAggro(std::shared_ptr<Monster>  creature, const std::shared_ptr<const Creature> & player);
 std::shared_ptr<Creature>enm_in_group(std::shared_ptr<Creature>target);
 
+// demographics.cpp
+std::string getFullClassName(CreatureClass cClass, CreatureClass secondClass);
 
 
 // dmroom.cpp

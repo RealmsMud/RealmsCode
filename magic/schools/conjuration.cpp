@@ -44,6 +44,7 @@
 #include "server.hpp"                // for Server, gServer
 #include "stats.hpp"                 // for Stat
 #include "structs.hpp"               // for creatureStats
+#include "deityData.hpp"             // for Deity names
 
 
 char conjureTitles[][3][10][30] = {
@@ -416,11 +417,8 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
 
     if (spellData->how == CastType::SKILL &&
         player->getClass() == CreatureClass::CLERIC &&
-        player->getDeity() == GRADIUS &&
-        (player->getAdjustedAlignment() == BLOODRED ||
-         player->getAdjustedAlignment() == ROYALBLUE
-        )) {
-        player->print("Your alignment is out of harmony.\n");
+        player->getDeity() == GRADIUS && player->getAdjustedAlignment() <= LIGHTBLUE) {
+        *player << ColorOn << "^yGradius does not believe you are pure enough of heart right now. Your summoning is ignored.\n" << ColorOff;
         return (0);
     }
 

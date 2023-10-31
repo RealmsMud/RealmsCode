@@ -987,6 +987,7 @@ int cmdTime(const std::shared_ptr<Player>& player, cmd* cmnd) {
             showAbility(player, "touch", "touch of death", LT_TOUCH_OF_DEATH, player->lasttime[LT_TOUCH_OF_DEATH].interval);
             showAbility(player, "turn", "turn undead", LT_TURN, player->lasttime[LT_TURN].interval);
             showAbility(player, "scout", "scout", LT_SCOUT, player->lasttime[LT_SCOUT].interval);
+            showAbility(player, "starstrike", "starstrike", LT_STARSTRIKE, player->lasttime[LT_STARSTRIKE].interval);
         }
 
         if(player->flagIsSet(P_OUTLAW)) {

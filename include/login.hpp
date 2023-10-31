@@ -138,6 +138,7 @@ typedef enum {
 namespace Create {
     const int doPrint=1;
     const int doWork=2;
+    bool addInitialClassRaceWeaponSkills(const std::shared_ptr<Socket>& sock);
     void addStartingItem(const std::shared_ptr<Player>& player, const std::string &area, int id, bool wear=true, bool skipUseCheck=false, int num=1);
     void addStartingWeapon(const std::shared_ptr<Player>& player, const std::string &weapon);
 

@@ -49,7 +49,7 @@
 
 #define MINIMUM_LEVEL   3
 
-std::string getFullClassName(CreatureClass cClass, CreatureClass secondClass);
+
 
 void printEnding(std::ofstream& out) {
     out << "    |                                      |\n";

@@ -1195,10 +1195,16 @@ int splTrack(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
 
     if( pPlayer->getClass() !=  CreatureClass::RANGER &&
         pPlayer->getClass() !=  CreatureClass::DRUID &&
+        !(pPlayer->getClass() == CreatureClass::CLERIC && pPlayer->getDeity() == MARA) &&
         !pPlayer->isCt() &&
         spellData->how == CastType::CAST
     ) {
-        *pPlayer << "Only druids and rangers may cast that spell.\n";
+        *pPlayer << "Only druids, rangers, and clerics of Mara may cast that spell.\n";
+        return(0);
+    }
+
+    if(pPlayer->getClass() == CreatureClass::CLERIC && pPlayer->getDeity() == MARA && isDay()) {
+        *pPlayer << "You are only able to cast that spell at night.\n";
         return(0);
     }
 

@@ -56,6 +56,7 @@
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for SEX_FEMALE, SEX_MALE, SEX_NONE
 #include "xml.hpp"                     // for loadObject, loadRoom
+#include "deityData.hpp"               // for deityRestrict output
 
 
 // Object flags to be saved for object refs
@@ -638,6 +639,66 @@ void Object::selectRandom() {
 }
 
 //*********************************************************************
+//                          deityRestrict
+//*********************************************************************
+
+bool Object::deityRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
+    if(deityRestrict(creature)) {
+
+        // Deity restrict does not apply to Athiests, unless object is flagged to require a deity
+        if(!creature->getDeity() && !flagIsSet(O_DSEL_REQUIRES_DEITY)) 
+            return(false);
+
+        if(p) {
+            if(creature->getDeity())    
+                creature->checkStaff("%s will not let you use %P.\n",(gConfig->getDeity(creature->getDeity())->getName().c_str()), this);
+            else
+                creature->checkStaff("Only those of faith are able to use %P.\n", this);
+        }
+
+        if(!creature->isStaff()) return(true);
+    }
+    return(false);
+}
+
+bool Object::deityRestrict(const std::shared_ptr<const Creature> & creature) const {
+    bool pass = false;
+
+    if( !flagIsSet(O_DSEL_ARAMON) &&
+        !flagIsSet(O_DSEL_CERIS) &&
+        !flagIsSet(O_DSEL_ENOCH) &&
+        !flagIsSet(O_DSEL_GRADIUS) &&
+        !flagIsSet(O_DSEL_ARES) &&
+        !flagIsSet(O_DSEL_KAMIRA) &&
+        !flagIsSet(O_DSEL_LINOTHAN) &&
+        !flagIsSet(O_DSEL_ARACHNUS) &&
+        !flagIsSet(O_DSEL_MARA) &&
+        !flagIsSet(O_DSEL_JAKAR) &&
+        !flagIsSet(O_DSEL_INVERT)
+        )
+        return(false);
+
+    pass = (
+        (flagIsSet(O_DSEL_ARAMON) && creature->getDeity() == ARAMON) ||
+        (flagIsSet(O_DSEL_CERIS) && creature->getDeity() == CERIS) ||
+        (flagIsSet(O_DSEL_ENOCH) && creature->getDeity() == ENOCH) ||
+        (flagIsSet(O_DSEL_GRADIUS) && creature->getDeity() == GRADIUS) ||
+        (flagIsSet(O_DSEL_ARES) && creature->getDeity() == ARES) ||
+        (flagIsSet(O_DSEL_KAMIRA) && creature->getDeity() == KAMIRA) ||
+        (flagIsSet(O_DSEL_LINOTHAN) && creature->getDeity() == LINOTHAN) ||
+        (flagIsSet(O_DSEL_ARACHNUS) && creature->getDeity() == ARACHNUS) ||
+        (flagIsSet(O_DSEL_MARA) && creature->getDeity() == MARA) ||
+        (flagIsSet(O_DSEL_JAKAR) && creature->getDeity() == JAKAR)
+    );
+
+    if(flagIsSet(O_DSEL_INVERT)) 
+        pass = !pass;
+
+    return(!pass);
+
+}
+
+//*********************************************************************
 //                          raceRestrict
 //*********************************************************************
 
@@ -648,6 +709,7 @@ bool Object::raceRestrict(const std::shared_ptr<Creature> & creature, bool p) co
     }
     return(false);
 }
+
 
 bool Object::raceRestrict(const std::shared_ptr<const Creature> & creature) const {
     bool pass = false;
@@ -703,7 +765,8 @@ bool Object::raceRestrict(const std::shared_ptr<const Creature> & creature) cons
         (flagIsSet(O_SEL_KENKU) && creature->isRace(KENKU))
     );
 
-    if(flagIsSet(O_RSEL_INVERT)) pass = !pass;
+    if(flagIsSet(O_RSEL_INVERT)) 
+        pass = !pass;
 
     return(!pass);
 }
@@ -976,7 +1039,7 @@ bool Object::lawchaoRestrict(const std::shared_ptr<Creature> & creature, bool p)
 
 bool Object::doRestrict(const std::shared_ptr<Creature> &creature, bool p) {
     if (clanRestrict(creature, p) || levelRestrict(creature, p) || skillRestrict(creature, p) || strRestrict(creature, p) || classRestrict(creature, p)
-     || raceRestrict(creature, p) || sexRestrict(creature, p) || clanRestrict(creature, p) || lawchaoRestrict(creature, p))
+     || raceRestrict(creature, p) || sexRestrict(creature, p) || clanRestrict(creature, p) || lawchaoRestrict(creature, p) || deityRestrict(creature, p))
         return (true);
     if (alignRestrict(creature, p)) {
         if (p && !creature->isStaff()) {

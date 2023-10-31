@@ -65,6 +65,7 @@
 #include "stats.hpp"                             // for Stat
 #include "structs.hpp"                           // for SEX_FEMALE, SEX_MALE
 #include "xml.hpp"                               // for loadPlayer, loadObject
+#include "deityData.hpp"                         // for Deity names
 
 class StartLoc;
 
@@ -748,6 +749,40 @@ void Create::addStartingItem(const std::shared_ptr<Player>& player, const std::s
     }
 }
 
+//****************************************************************************************************************
+//                      addInitialClassRaceWeaponSkills
+//****************************************************************************************************************
+// This function will initialize any weapon skills defined for races/classes in the races.xml or classes.xml files.
+// It will remove any it finds from the initial weapon choice menu on character creation.
+// It will also add starting weapons for any weapon skill it finds to the new player's inventory.
+
+bool Create::addInitialClassRaceWeaponSkills(const std::shared_ptr<Socket>& sock) {
+    std::string initialRaceWeaponsString = "", initialClassWeaponsString = "";
+    short foundRaceSkills=0, foundClassSkills=0;
+    std::string playerClassName = !sock->getPlayer()->hasSecondClass() ? get_class_string(static_cast<int>(sock->getPlayer()->getClass())) : 
+                                                                        getFullClassName(sock->getPlayer()->getClass(), sock->getPlayer()->getSecondClass());
+    
+    const RaceData* rData = gConfig->getRace(sock->getPlayer()->getRace());
+    PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
+
+    sock->getPlayer()->getAsCreature()->getInitialRaceWeaponSkills(rData->getSkillBegin(), rData->getSkillEnd(), initialRaceWeaponsString, foundRaceSkills);
+    if(foundRaceSkills > 0)
+        sock->printColor("^yAs race ^c%s^y, you already know the following initial weapon skill%s: ^W%s\n",
+                            gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(), foundRaceSkills>1?"s":"", initialRaceWeaponsString.c_str());
+
+    sock->getPlayer()->getAsCreature()->getInitialClassWeaponSkills(pClass->getSkillBegin(), pClass->getSkillEnd(), initialClassWeaponsString, foundClassSkills);
+    if(foundClassSkills > 0) {
+        if(sock->getPlayer()->getClass()==CreatureClass::CLERIC || sock->getPlayer()->getClass()==CreatureClass::PALADIN || sock->getPlayer()->getClass()==CreatureClass::DEATHKNIGHT)
+            sock->printColor("^yAs a ^c%s of %s^y, you already know the following initial weapon skill%s: ^W%s\n", playerClassName.c_str(), 
+                                                                    gConfig->getDeity(sock->getPlayer()->getDeity())->getName().c_str(), foundClassSkills>1?"s":"", initialClassWeaponsString.c_str());
+        else
+            sock->printColor("^yAs class ^c%s^y, you already know the following initial weapon skill%s: ^W%s\n", 
+                                            playerClassName.c_str(), foundClassSkills>1?"s":"", initialClassWeaponsString.c_str());
+    }
+
+    return(foundRaceSkills>0 || foundClassSkills>0);
+}
+
 //*********************************************************************
 //                      addStartingWeapon
 //*********************************************************************
@@ -806,6 +841,8 @@ void Create::addStartingWeapon(const std::shared_ptr<Player>& player, const std:
 //
 // work functions
 //
+
+
 
 
 //*********************************************************************
@@ -1112,10 +1149,21 @@ bool Create::getDeity(const std::shared_ptr<Socket>& sock, std::string str, int 
     const RaceData* race = gConfig->getRace(sock->getPlayer()->getRace());
     if(mode == Create::doPrint) {
 
+
+        if(sock->getPlayer()->getClass() == CreatureClass::CLERIC)
+            sock->print("Note: Clerics of Linothan must be male. Clerics of Mara must be female.\n\n");
         sock->print("Please choose a deity:\n");
 
         for(l=1, k=0 ; l<DEITY_COUNT ; l++) {
             if(race->allowedDeity(sock->getPlayer()->getClass(), sock->getPlayer()->getSecondClass(), l)) {
+                
+                //Gender restrict for Mara, Arachnus, Linothan clerics
+                if( sock->getPlayer()->getClass() == CreatureClass::CLERIC &&
+                    ((sock->getPlayer()->flagIsSet(P_MALE) && l == MARA) ||
+                        (sock->getPlayer()->flagIsSet(P_MALE) && l == ARACHNUS) ||
+                            (!sock->getPlayer()->flagIsSet(P_MALE) && l == LINOTHAN)))
+                    continue;
+
                 if(k%2==0)
                     sock->print("\n%20s", " ");
                 sock->printColor("[^W%1c^x] %-16s", ++k + 64, gConfig->getDeity(l)->getName().c_str());
@@ -1134,6 +1182,13 @@ bool Create::getDeity(const std::shared_ptr<Socket>& sock, std::string str, int 
             i = up(str[0]) - 64;
 
         for(l=1, k=0; l < static_cast<int>(CreatureClass::CLASS_COUNT)+4; l++) {
+
+            //Gender restrict for Mara, Arachnus, Linothan clerics
+                if( sock->getPlayer()->getClass() == CreatureClass::CLERIC &&
+                    ((sock->getPlayer()->flagIsSet(P_MALE) && l == MARA) ||
+                        (sock->getPlayer()->flagIsSet(P_MALE) && l == ARACHNUS) ||
+                            (!sock->getPlayer()->flagIsSet(P_MALE) && l == LINOTHAN)))
+                    continue;
 
             if(race->allowedDeity(sock->getPlayer()->getClass(),
                                   sock->getPlayer()->getSecondClass(), l)) {
@@ -1442,6 +1497,7 @@ bool Create::getPenaltyStat(const std::shared_ptr<Socket>& sock, std::string str
     return(true);
 }
 
+
 //*********************************************************************
 //                      handleWeapon
 //*********************************************************************
@@ -1612,11 +1668,16 @@ void convertNewWeaponSkills(std::shared_ptr<Socket> sock, const std::string& str
 
 bool Create::getProf(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
 
+    bool additionalWeapons=false;
+
     if(mode == Create::doPrint) {
+
+        additionalWeapons = Create::addInitialClassRaceWeaponSkills(sock);
+
         if(gConfig->classes[get_class_string(sock->getPlayer()->getClassInt())]->numProfs() > 1) {
-            sock->print("\nPick %d weapon skills:", gConfig->classes[get_class_string(sock->getPlayer()->getClassInt())]->numProfs());
+            sock->print("\nPick %d %sweapon skills:", gConfig->classes[get_class_string(sock->getPlayer()->getClassInt())]->numProfs(), additionalWeapons?"additional ":"");
         } else {
-            sock->print("\nChoose a weapon skill:");
+            sock->print("\nChoose %s weapon skill:",additionalWeapons?"an additional":"a");
         }
 
         Create::handleWeapon(sock, mode, str[0]);

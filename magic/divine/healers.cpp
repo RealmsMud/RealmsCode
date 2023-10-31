@@ -297,7 +297,7 @@ int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
         if(!player->alignInOrder()) {
-            *player << "Your alignment must be at least light blue to do that.\n";
+            *player << gConfig->getDeity(player->getDeity())->getName() << " refuses your starstrike. You need to cleanse your soul first.\n";
             return(0);
         }
     }
@@ -339,7 +339,6 @@ int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
     else 
         player->lasttime[LT_STARSTRIKE].interval = 135L;
 
-    //chance = ((int)(level - creature->getLevel()) * 20) + bonus(player->piety.getCur()) * 5 + 25;
     chance = 450 + player->piety.getCur() + ((((int)level-creature->getLevel())*100)/2);
     chance = std::min(chance, 950);
 
@@ -377,7 +376,7 @@ int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
     */
 
-    //if(!player->isCt()) {
+    if(!player->isCt()) {
         if( roll > chance) {
             *player << "Your starstrike missed " << creature << ".\n";
             broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M's starstrike missed %N!", player.get(), creature.get());
@@ -390,7 +389,7 @@ int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
             *creature << "You partially avoided " << player << "'s starstrike.\n";
             dmg /= 2;
         }
-    //}
+    }
 
     *player << ColorOn << "^WYour starstrike hit " << creature << " for " << player->customColorize("*CC:DAMAGE*") << dmg << " ^Wdamage!\n" << ColorOff;
     player->checkImprove("starstrike", true);
@@ -715,14 +714,20 @@ int Creature::getTurnChance(const std::shared_ptr<Creature>& target) {
 
     switch (getDeity()) {
     case CERIS:
-        if(getAdjustedAlignment() >= BLUISH)
-            adjLevel+=2;
-        if(getAdjustedAlignment() == ROYALBLUE || getAdjustedAlignment() == BLOODRED)
-            adjLevel-=2;
-        break;
     case LINOTHAN:
+        if(getAdjustedAlignment() <= (getDeity()==LINOTHAN ? RED:REDDISH))
+            adjLevel += (getDeity()==LINOTHAN && isDay() ? 1:2);
+        else
+            adjLevel -= (getDeity()==LINOTHAN ? 1:2);
+        break;
+    case MARA:
+        if(getAdjustedAlignment() <= RED && !isDay())
+            adjLevel += 1;
+        else
+            adjLevel -= 1;
+        break;
     case ENOCH:
-        if(getAdjustedAlignment() < NEUTRAL)
+        if(getAdjustedAlignment() <= REDDISH)
             adjLevel -=4;
         break;
     default:
@@ -735,8 +740,8 @@ int Creature::getTurnChance(const std::shared_ptr<Creature>& target) {
     bns = bonus(piety.getCur());
 
     chance = (int)((adjLevel - target->getLevel()) * 20) +
-            bns*5 + (getClass() == CreatureClass::PALADIN ? 15:25);
-    chance = std::min(chance, 80);
+            bns*5 + (getClass() == CreatureClass::PALADIN ? 15:35);
+    chance = std::min(chance, 85);
 
     if(target->isPlayer()) {
         if(isDm())
@@ -770,7 +775,10 @@ int cmdTurn(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
     if(!player->isCt() && !player->knowsSkill("turn")) {
-        player->print("You don't know how to turn undead.\n");
+        if(player->getClass() == CreatureClass::CLERIC)
+            *player << gConfig->getDeity(player->getDeity())->getName() << " does not grant you the power to turn undead.\n";
+        else
+            *player << "You do not have the ability to turn undead.\n";
         return(0);
     }
 
@@ -833,18 +841,20 @@ int cmdTurn(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     switch(player->getDeity()) {
     case CERIS:
-        if(player->getAdjustedAlignment() == NEUTRAL) {
-            dis = 10;
-            player->print("The power of Ceris flows through you.\n");
-        }
-        if(player->getAdjustedAlignment() == ROYALBLUE || player->getAdjustedAlignment() == BLOODRED) {
+    case LINOTHAN:
+        if(!player->alignInOrder()) {
             dis = -1;
             dmg /= 2;
         }
+        else
+        {
+            dis = (player->getDeity()==CERIS ? 10:7);
+            *player << "The power of " << gConfig->getDeity(player->getDeity())->getName() << " flows through you.\n";
+        }
         break;
-    case LINOTHAN:
+    case MARA:
     case ENOCH:
-        if(player->getAdjustedAlignment() < NEUTRAL) {
+        if(!player->alignInOrder()) {
             dis = -1;
             dmg /= 2;
         }
@@ -859,10 +869,10 @@ int cmdTurn(const std::shared_ptr<Player>& player, cmd* cmnd) {
     roll = Random::get(1,100);
 
     if(roll > chance && !player->isStaff()) {
-        player->print("You failed to turn %N.\n", target.get());
+        *player << "You failed to turn " << target << "\n", target.get();
         player->checkImprove("turn", false);
         if(target->mFlagIsSet(M_SPECIAL_UNDEAD))
-            player->print("%M greatly resisted your efforts to turn %s!\n", target.get(), target->himHer());
+            *player << ColorOn << "^y" << setf(CAP) << " greatly resisted your efforts to turn " << target->himHer() << ColorOff;
         broadcast(player->getSock(), player->getParent(), "%M failed to turn %N.", player.get(), target.get());
         return(0);
     }
@@ -870,8 +880,7 @@ int cmdTurn(const std::shared_ptr<Player>& player, cmd* cmnd) {
     disroll = Random::get(1,100);
 
     if((disroll < (dis + bns) && !target->flagIsSet(M_SPECIAL_UNDEAD)) || player->isDm()) {
-        player->printColor("^BYou disintegrated %N.\n", target.get());
-
+        *player << ColorOn << "^BYou disintegrated " << target << "!\n" << ColorOff;
         broadcast(player->getSock(), player->getParent(), "^B%M disintegrated %N.", player.get(), target.get());
         // TODO: SKILLS: add a bonus to this
         player->checkImprove("turn", true);
@@ -888,7 +897,7 @@ int cmdTurn(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(target->isMonster())
             target->getAsMonster()->adjustThreat(player, m);
 
-        player->printColor("^YYou turned %N for %d damage.\n", target.get(), dmg);
+        *player << ColorOn << "^YYou turned " << target << " for ^W" << dmg << "^Y damage.\n" << ColorOff;
         player->checkImprove("turn", true);
 
         broadcast(player->getSock(), player->getParent(), "^Y%M turned %N.", player.get(), target.get());

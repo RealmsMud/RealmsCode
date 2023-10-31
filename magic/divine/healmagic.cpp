@@ -127,17 +127,37 @@ int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> ta
 
         switch(healer->getDeity()) {
         case CERIS:
-            if(healer->getAdjustedAlignment() == BLOODRED || healer->getAdjustedAlignment() == ROYALBLUE) {
-                healer->print("Your healing is not as effective while so far out of natural balance.\n");
+            if(healer->getAdjustedAlignment() <= REDDISH) {
+                healer->print("Your healing is not as effective with such darkness in your heart.\n");
+                level /= 2;
+            }
+
+            mod = level / 2 + Random::get(1, 1 + level / 2);
+            if(healer->getAdjustedAlignment() == ROYALBLUE) {
+                if(spell != S_REJUVENATE)
+                    healer->print("Your peacful benevolence gains you power with Ceris.\n");
+                mod += Random::get(1,7);
+            }
+
+            if(spell == S_MEND_WOUNDS)
+                mod += level / 2;
+
+            if(spell == S_REJUVENATE)
+                mod = level / 3 + Random::get(1, 1 + level / 3);
+
+            break;
+        case MARA:
+            if(healer->getAdjustedAlignment() <= RED) {
+                healer->print("Your healing is not as effective with such darkness in your heart.\n");
                 level /= 2;
             }
 
 
-            mod = level / 2 + Random::get(1, 1 + level / 2);
-            if(healer->getAdjustedAlignment() == NEUTRAL) {
+            mod = level / 2 + Random::get(1, 1 + level / 3);
+            if(healer->getAdjustedAlignment() == ROYALBLUE) {
                 if(spell != S_REJUVENATE)
-                    healer->print("Your harmonial balance gains you power with Ceris.\n");
-                mod += Random::get(1,4);
+                    healer->print("The goodness in your heart gives your healing extra strength.\n");
+                mod += Random::get(1,3);
             }
 
             if(spell == S_MEND_WOUNDS)
@@ -150,7 +170,7 @@ int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> ta
         case ARES:
             level /= 2; // Ares clerics vig as if 1/2 their level
 
-            if(healer->getAdjustedAlignment() >= BLUISH || healer->getAdjustedAlignment() <= REDDISH) {
+            if(healer->getAdjustedAlignment() <= RED || healer->getAdjustedAlignment() >= BLUE) {
                 healer->print("Your soul is too far out of balance.\n");
                 level /= 2;
             }
@@ -163,7 +183,7 @@ int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> ta
             break;
         case KAMIRA:
             level = (level*3)/4;
-            if(healer->getAdjustedAlignment() < PINKISH) {
+            if(healer->getAdjustedAlignment() <= RED) {
                 healer->print("Being evil at heart is distorting your healing magic.\n");
                 level /= 2;
             }
@@ -173,8 +193,8 @@ int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> ta
                 mod += level / 2;
             break;
         case JAKAR:
-            if(healer->getAdjustedAlignment() != NEUTRAL) {
-                healer->print("Your soul is out of balance.\n");
+            if(healer->getAdjustedAlignment() == BLOODRED || healer->getAdjustedAlignment() == ROYALBLUE) {
+                healer->print("Your sense of balance is out of whack right now.\n");
                 level /= 2;
             }
 
@@ -239,7 +259,7 @@ int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> ta
         statBns = bonus(healer->piety.getCur());
 
         if(pHealer && !pHealer->alignInOrder()) {
-            healer->print("You are out of balance with the earth. Your healing is weakened.\n");
+            healer->print("There is too much wickedness in your soul. Your healing is weakened.\n");
             level /= 2;
         }
 
@@ -270,10 +290,17 @@ int getHeal(const std::shared_ptr<Creature>&healer, std::shared_ptr<Creature> ta
         }
 
         if(target && target->getAdjustedAlignment() < NEUTRAL && healer != target) {
-            healer->print("It concerns %s that you heal the unrighteous and impure of heart.\n", gConfig->getDeity(healer->getDeity())->getName().c_str());
+            healer->print("It concerns %s that you heal the impure of heart.\n", gConfig->getDeity(healer->getDeity())->getName().c_str());
             healer->subAlignment(1);
             mod /= 2;
         }
+
+        if(healer->getDeity() == LINOTHAN && target && target->getAdjustedAlignment() < NEUTRAL && healer != target && healer->hatesEnemy(target)) {
+            healer->print("It concerns %s that you would waste his healing talents on such trash!\n", gConfig->getDeity(healer->getDeity())->getName().c_str());
+            healer->subAlignment(1);
+            mod /= 2;
+        }
+
 
         if(healer->getClass() == CreatureClass::CLERIC) {
             mod = level / 2 + Random::get(1, 1 + level / 2);
@@ -1087,8 +1114,8 @@ int splResurrect(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
             player->print("You are not high enough level to cast that spell.\n");
             return(0);
         }
-        if(player->getAdjustedAlignment() != NEUTRAL) {
-            player->print("You must be neutral in order to cast that spell.\n");
+        if(player->getAdjustedAlignment() < NEUTRAL) {
+            player->print("The hatred in your heart right now prevents you from casting that spell.\n");
             return(0);
         }
     }

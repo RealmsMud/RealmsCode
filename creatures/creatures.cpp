@@ -1898,7 +1898,6 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
     short eAlign = enemy->getAlignment();
     int eMtype = enemy->getType();
 
-   
     //check hatreds using caller's race first
     switch(getRace()) {
     case DWARF:
@@ -2211,4 +2210,13 @@ std::string Creature::getHpProgressBar() {
     return (progressBar(50, getPercentRemaining(hp.getCur(), hp.getMax())));
 }
 
+bool Creature::isIndoors() {
+
+    std::shared_ptr<BaseRoom> room = this->getRoomParent();
+
+    if(!room)
+        return(false);
+
+    return (room->flagIsSet(R_INDOORS));
+}
 

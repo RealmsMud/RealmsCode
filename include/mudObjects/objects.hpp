@@ -411,6 +411,8 @@ public:
 
     // Check conditions
     [[nodiscard]] bool doRestrict(const std::shared_ptr<Creature>& creature, bool p);
+    [[nodiscard]] bool deityRestrict(const std::shared_ptr<const Creature> & creature) const;
+    [[nodiscard]] bool deityRestrict(const std::shared_ptr<Creature> & creature, bool p) const;
     [[nodiscard]] bool raceRestrict(const std::shared_ptr<const Creature> & creature) const;
     [[nodiscard]] bool raceRestrict(const std::shared_ptr<Creature> & creature, bool p) const;
     [[nodiscard]] bool classRestrict(const std::shared_ptr<const Creature> & creature) const;
