@@ -381,6 +381,7 @@ int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
             *player << "Your starstrike missed " << creature << ".\n";
             broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M's starstrike missed %N!", player.get(), creature.get());
             *creature << setf(CAP) << player << " tried to starstrike you!\n";
+            player->lasttime[LT_STARSTRIKE].interval = 10L;
             player->checkImprove("starstrike", false);
             return(0);
         }
