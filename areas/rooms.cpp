@@ -615,7 +615,10 @@ bool BaseRoom::deityRestrict(const std::shared_ptr<const Creature> & creature) c
         !flagIsSet(R_KAMIRA) &&
         !flagIsSet(R_ARES) &&
         !flagIsSet(R_ARACHNUS) &&
-        !flagIsSet(R_LINOTHAN) )
+        !flagIsSet(R_LINOTHAN) &&
+        !flagIsSet(R_MARA) &&
+        !flagIsSet(R_JAKAR)
+    )
         return(false);
 
     // if the deity flag is set and they match, they pass
@@ -626,7 +629,10 @@ bool BaseRoom::deityRestrict(const std::shared_ptr<const Creature> & creature) c
         (flagIsSet(R_KAMIRA) && creature->getDeity() == KAMIRA) ||
         (flagIsSet(R_ARES) && creature->getDeity() == ARES) ||
         (flagIsSet(R_ARACHNUS) && creature->getDeity() == ARACHNUS) ||
-        (flagIsSet(R_LINOTHAN) && creature->getDeity() == LINOTHAN) )
+        (flagIsSet(R_LINOTHAN) && creature->getDeity() == LINOTHAN) ||
+        (flagIsSet(R_MARA) && creature->getDeity() == MARA) ||
+        (flagIsSet(R_JAKAR) && creature->getDeity() == JAKAR)
+    )
         return(false);
 
     return(true);
