@@ -115,7 +115,7 @@ int splUndeadWard(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
             return(0);
         }
         if(player->getDeity() != ENOCH && player->getDeity() != LINOTHAN && 
-           player->getDeity() != CERIS && player->getDeity() != CERIS ) {
+           player->getDeity() != CERIS && player->getDeity() != MARA ) {
             player->print("%s will not allow you to cast that spell.\n", gConfig->getDeity(player->getDeity())->getName().c_str());
             return(0);
         }
