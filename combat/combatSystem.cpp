@@ -1414,12 +1414,12 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
 
     if(weapon) {
         attackDamage.add(weapon->damage.roll() + weapon->getAdjustment());
-        // Linothan clerics do +5% damage with great-swords/two-handed swords
+        // Linothan clerics do +20% damage with great-swords/two-handed swords
         if (cClass == CreatureClass::CLERIC && getDeity() == LINOTHAN && (weapon->getWeaponType() == "great-sword" || (weapon->getWeaponType() == "sword" && weapon->flagIsSet(O_TWO_HANDED))))
-            attackDamage.set(attackDamage.get() + (attackDamage.get())/20);
-        // At night, clercis of Mara do +10% damage with bows
+            attackDamage.set(attackDamage.get() + (attackDamage.get())/5);
+        // At night, clercis of Mara do +25% damage with bows
         if (cClass == CreatureClass::CLERIC && getDeity() == MARA && !isDay() && weapon->getWeaponType() == "bow")
-            attackDamage.set(attackDamage.get() + (attackDamage.get())/10);
+            attackDamage.set(attackDamage.get() + (attackDamage.get())/4);
     }
 
     if(isEffected("lycanthropy"))
