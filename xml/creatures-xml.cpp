@@ -432,6 +432,10 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                     addSkill("gore",std::max<int>(1,(level*30)/4));
 
             }
+            if (getVersion() < "2.61") {
+                if (getClass() == CreatureClass::CLERIC && getDeity() == LINOTHAN)
+                    addSkill("parry",std::max<int>(1,(level*10)));
+            }
             
         }
     }
