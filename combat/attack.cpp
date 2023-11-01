@@ -513,7 +513,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
             setFlag(P_LAG_PROTECTION_ACTIVE);
 
         if(mVictim->addEnemy(Containable::downcasted_shared_from_this<Player>()) && attackType == ATTACK_NORMAL) {
-            *this << "You attack " << mVictim.get() << ".\n";
+            *this << ColorOn << "You attack " << mVictim.get() << ".\n" << ColorOff;
             broadcast(getSock(), getRoomParent(), "%M attacks %N.", this, mVictim.get());
         }
 
@@ -522,7 +522,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
             return(0);
         }
     } else if(pVictim && attackType == ATTACK_NORMAL) {
-        *pVictim << this << " attacked you!\n";
+        *pVictim << ColorOn << this << " attacked you!\n" << ColorOff;
 
         broadcast(getSock(), pVictim->getSock(), getRoomParent(), "%M attacked %N!", this, pVictim.get());
     }

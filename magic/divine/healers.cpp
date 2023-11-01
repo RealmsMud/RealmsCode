@@ -272,9 +272,7 @@ int cmdEarthSmother(const std::shared_ptr<Player>& player, cmd* cmnd) {
 // This command allows clerics of Mara to call a starstrike on their enemies
 
 int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    std::shared_ptr<Creature> creature=nullptr;
-   std::shared_ptr<Player> pCreature=nullptr;
-   std::shared_ptr<Monster> mCreature=nullptr;
+    std::shared_ptr<Creature> target=nullptr;
     long    i=0, t=0;
     int     chance=0, dmg=0, roll=0;
     bool    noHighLevelDiff=false;
@@ -301,16 +299,13 @@ int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
     }
-    if(!(creature = player->findVictim(cmnd, 1, true, false, "Starstrike whom?\n", "You don't see that here.\n")))
+    if(!(target = player->findVictim(cmnd, 1, true, false, "Starstrike whom?\n", "You don't see that here.\n")))
         return(0);
-
-    pCreature = creature->getAsPlayer();
-    mCreature = creature->getAsMonster();
 
     player->smashInvis();
     player->interruptDelayedActions();
 
-    if(!player->canAttack(creature))
+    if(!player->canAttack(target))
         return(0);
 
     double level = player->getSkillLevel("starstrike");
@@ -339,31 +334,32 @@ int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
     else 
         player->lasttime[LT_STARSTRIKE].interval = 135L;
 
-    chance = 450 + player->piety.getCur() + ((((int)level-creature->getLevel())*100)/2);
+    chance = 450 + player->piety.getCur() + ((((int)level-target->getLevel())*100)/2);
     chance = std::min(chance, 950);
 
-    noHighLevelDiff = ((int)level - creature->getLevel()) < 10;
+    noHighLevelDiff = ((int)level - target->getLevel()) < 10;
 
     //resist-magic effect reduces chance unless player is 10+ levels higher than target
-    if(creature->isEffected("resist-magic") && noHighLevelDiff)
+    if(target->isEffected("resist-magic") && noHighLevelDiff)
         chance /= 2;
     
     dmg = Random::get((int)(level*4), (int)(level*5)/4) + Random::get(1,10);
     
     if(player->getRoomParent()->flagIsSet(R_MAGIC_BONUS))
         dmg = dmg*3/2;
-    if(creature->isUndead())
+    if(target->isUndead())
         dmg = dmg*3/2;
 
     //resist-magic effect overrides all above damage calculations, unless player is 10+ levels higher than target
-    if(creature->isEffected("resist-magic") && noHighLevelDiff)
+    if(target->isEffected("resist-magic") && noHighLevelDiff)
         dmg = Random::get(1, (int)level);
 
-    if(mCreature) {
-        mCreature->addEnemy(player);
+    if(target->isMonster()) {
+        target->getAsMonster()->addEnemy(player);
         //Mobs' innate magic resistance can make them immune to starstrike
-        if(Random::get(1,100) <= mCreature->getMagicResistance()) {
-            *player << ColorOn << "^MYour starstrike had no effect on " << mCreature << ".\n" << ColorOff;
+        if(Random::get(1,100) <= target->getAsMonster()->getMagicResistance()) {
+            *player << ColorOn << "^MYour starstrike had no effect on " << target << ".\n" << ColorOff;
+            player->lasttime[LT_STARSTRIKE].interval = 20L;
             return(0);
         }
         
@@ -378,30 +374,31 @@ int cmdStarstrike(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->isCt()) {
         if( roll > chance) {
-            *player << "Your starstrike missed " << creature << ".\n";
-            broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M's starstrike missed %N!", player.get(), creature.get());
-            *creature << setf(CAP) << player << " tried to starstrike you!\n";
+            *player << "Your starstrike missed " << target << ".\n";
+            broadcast(player->getSock(), target->getSock(), player->getRoomParent(), "%M's starstrike missed %N!", player.get(), target.get());
+            *target << setf(CAP) << player << " tried to starstrike you!\n";
+            player->lasttime[LT_STARSTRIKE].interval = 10L;
             player->checkImprove("starstrike", false);
             return(0);
         }
-        if(creature->chkSave(SPL, player, 0)) {
+        if(target->chkSave(SPL, player, 0)) {
             *player << ColorOn << "^WYour starstrike was only partially effective.\n" << ColorOff;
-            *creature << "You partially avoided " << player << "'s starstrike.\n";
+            *target << "You partially avoided " << player << "'s starstrike.\n";
             dmg /= 2;
         }
     }
 
-    *player << ColorOn << "^WYour starstrike hit " << creature << " for " << player->customColorize("*CC:DAMAGE*") << dmg << " ^Wdamage!\n" << ColorOff;
+    *player << ColorOn << "^WYour starstrike hit " << target << " for " << player->customColorize("*CC:DAMAGE*") << dmg << " ^Wdamage!\n" << ColorOff;
     player->checkImprove("starstrike", true);
     player->statistics.attackDamage(dmg, "starstrike");
 
-    if(creature->isEffected("resist-magic") && noHighLevelDiff)
-        *player << setf(CAP) << creature << "'s resist-magic dammpened your starstrike!\n";
+    if(target->isEffected("resist-magic") && noHighLevelDiff)
+        *player << setf(CAP) << target << "'s resist-magic dampened your starstrike!\n";
 
-    *creature << ColorOn << "^W" << setf(CAP) << player << "'s starstrike hit you for " << creature->customColorize("*CC:DAMAGE*") << dmg << " ^Wdamage!\n" << ColorOff;
-    broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M hit %N with a starstrike!", player.get(), creature.get());
+    *target << ColorOn << "^W" << setf(CAP) << player << "'s starstrike hit you for " << target->customColorize("*CC:DAMAGE*") << dmg << " ^Wdamage!\n" << ColorOff;
+    broadcast(player->getSock(), target->getSock(), player->getRoomParent(), "%M hit %N with a starstrike!", player.get(), target.get());
 
-    player->doDamage(creature, dmg, CHECK_DIE);
+    player->doDamage(target, dmg, CHECK_DIE);
     return(0);
 }
 

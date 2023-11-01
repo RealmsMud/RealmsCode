@@ -423,7 +423,7 @@ void Player::upLevel() {
         learnSpell(S_BLOODFUSION);
     }
 
-    if( (cClass == CreatureClass::RANGER || cClass == CreatureClass::DRUID) &&
+    if( (cClass == CreatureClass::RANGER || cClass == CreatureClass::DRUID || (cClass == CreatureClass::CLERIC && getDeity() == MARA)) &&
         level >= 10 &&
         !spellIsKnown(S_TRACK)
     ) {

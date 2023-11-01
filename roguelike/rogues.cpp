@@ -1538,7 +1538,7 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
                 break;
             case 4:
-                *player << ColorOn << "^cYou cut %N in half from behind! " << target->upHeShe() << "'s dead!\n" << ColorOff;
+                *player << ColorOn << "^cYou cut " << target << " in half from behind! " << target->upHeShe() << "'s dead!\n" << ColorOff;
                 broadcast(player->getSock(), player->getParent(), "%M cut %N in half from behind! %s's dead!",
                     player.get(), target.get(), target->upHeShe());
                 if(target->isPlayer())
