@@ -866,13 +866,19 @@ double Creature::getParryChance(const std::shared_ptr<Creature>& attacker, const
             return(0);
 
     }
-    double chance = (std::max<int>(dexterity.getCur(), 80) - 80) * .03;
+   
+    double chance = 0.0;
+    if (getClass() == CreatureClass::CLERIC && getDeity() == LINOTHAN)
+        chance = (std::max<int>(piety.getCur(), 80) - 80) * .03;
+    else
+        chance = (std::max<int>(dexterity.getCur(), 80) - 80) * .03;
+
     chance += adjustChance(difference);
 
     // Riposte is harder against some attacker types
     if( attacker->type == DRAGON || attacker->type == DEMON || attacker->type == DEVIL ||
         attacker->type == GIANTKIN || attacker->type == DEVA || attacker->type == DINOSAUR ||
-        attacker->type == ELEMENTAL
+        attacker->type == ELEMENTAL || attacker->type == MODRON || attacker->type == DAEMON
     )
         chance /= 2;
 
@@ -934,7 +940,7 @@ bool Creature::canParry(const std::shared_ptr<Creature>& attacker) {
         attacker->type == FISH || attacker->type == REPTILE || attacker->type == PLANT ||
         attacker->type == ETHEREAL || attacker->type == ASTRAL ||
         attacker->type == GASEOUS || attacker->type == ENERGY ||
-        attacker->type == PUDDING || attacker->type == SLIME
+        attacker->type == PUDDING || attacker->type == SLIME || attacker->type == OOZE
     )
         return(false);
 
@@ -1408,12 +1414,12 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
 
     if(weapon) {
         attackDamage.add(weapon->damage.roll() + weapon->getAdjustment());
-        // Linothan clerics do +5% damage with great-swords/two-handed swords
+        // Linothan clerics do +20% damage with great-swords/two-handed swords
         if (cClass == CreatureClass::CLERIC && getDeity() == LINOTHAN && (weapon->getWeaponType() == "great-sword" || (weapon->getWeaponType() == "sword" && weapon->flagIsSet(O_TWO_HANDED))))
-            attackDamage.set(attackDamage.get() + (attackDamage.get())/20);
-        // At night, clercis of Mara do +10% damage with bows
+            attackDamage.set(attackDamage.get() + (attackDamage.get())/5);
+        // At night, clercis of Mara do +25% damage with bows
         if (cClass == CreatureClass::CLERIC && getDeity() == MARA && !isDay() && weapon->getWeaponType() == "bow")
-            attackDamage.set(attackDamage.get() + (attackDamage.get())/10);
+            attackDamage.set(attackDamage.get() + (attackDamage.get())/4);
     }
 
     if(isEffected("lycanthropy"))
@@ -1778,6 +1784,7 @@ int Creature::parry(const std::shared_ptr<Creature>& target) {
 
 
     // If we're a player, or a monster that's over 15 and is a certain class,
+
     // we have a chance to riposte, otherwise only do a parry
     if(canRiposte())
         result = getAttackResult(target, weapon, DOUBLE_MISS|NO_DODGE|NO_PARRY|NO_BLOCK|NO_CRITICAL|NO_FUMBLE|NO_GLANCING);
