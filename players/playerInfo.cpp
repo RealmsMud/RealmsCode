@@ -276,7 +276,8 @@ int cmdDaily(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if( target->isCt() || ((target->getClass() == CreatureClass::CLERIC || target->getClass() == CreatureClass::PALADIN) && target->spellIsKnown(S_HEAL)) ) {
         player->print("Heals:          %d of %d remaining.\n", target->daily[DL_FHEAL].cur, target->daily[DL_FHEAL].max);
     }
-    if( target->isCt() || ((target->getClass() == CreatureClass::RANGER || target->getClass() == CreatureClass::DRUID) && target->spellIsKnown(S_TRACK))  ) {
+    if( target->isCt() || ((target->getClass() == CreatureClass::RANGER || target->getClass() == CreatureClass::DRUID || 
+                          (target->getClass() == CreatureClass::CLERIC && target->getDeity() == MARA)) && target->spellIsKnown(S_TRACK))  ) {
         player->print("Tracks:         %d of %d remaining.\n", target->daily[DL_TRACK].cur,target->daily[DL_TRACK].max);
     }
     if( target->isCt() || ((target->getClass() == CreatureClass::LICH || (target->getClass() == CreatureClass::MAGE && !target->hasSecondClass())) && target->getLevel() >= 10) ) {
