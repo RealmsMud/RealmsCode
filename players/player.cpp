@@ -2123,11 +2123,13 @@ int cmdVisible(const std::shared_ptr<Player>& player, cmd* cmnd) {
 int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd) {
     char    *str=nullptr, *tok=nullptr, diceOutput[256], add[256];
     int     strLen=0, i=0;
-    int     diceSides=0,diceNum=0,diceAdd=0;
+    int diceSides=6,diceNum=2, diceAdd=0;
+    
     int     rolls=0, total=0;
 
     const char *Syntax =    "\nSyntax: dice 1d2\n"
                             "        dice 1d2+3\n";
+
 
     strcpy(diceOutput, "");
     strcpy(add ,"");
@@ -2147,38 +2149,40 @@ int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd) {
 
     str = strdup(&cmnd->fullstr[i]);
     if(!str) {
-        player->print(Syntax);
+        *player << Syntax;
         return(0);
     }
 
     tok = strtok(str, "d");
     if(!tok) {
-        player->print(Syntax);
+        *player << Syntax;
         return(0);
     }
-    diceNum = toNum<int>(tok);
+   
+    diceNum = std::stoi(tok);
 
     tok = strtok(nullptr, "+");
     if(!tok) {
-        player->print(Syntax);
+        *player << Syntax;
         return(0);
     }
-    diceSides = toNum<int>(tok);
+   
+    diceSides = std::stoi(tok);
 
     tok = strtok(nullptr, "+");
 
     if(tok)
-        diceAdd = toNum<int>(tok);
+        diceAdd = std::stoi(tok);
 
     if(diceNum < 0) {
-        player->print("How can you roll a negative number of dice?\n");
+        *player << "How can you roll a negative number of dice?\n";
         return(0);
     }
 
     diceNum = std::max(1, diceNum);
 
     if(diceSides<2) {
-        player->print("A die has a minimum of 2 sides.\n");
+        *player << "A die has a minimum of 2 sides.\n";
         return(0);
     }
 
@@ -2201,11 +2205,9 @@ int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd) {
         total += Random::get(1, diceSides);
 
     total += diceAdd;
-
-
-    player->print("You roll %s\n: %d\n", diceOutput, total);
-    broadcast(player->getSock(), player->getParent(), "(Dice %s): %M got %d.", diceOutput, player.get(), total );
+    
+    *player << ColorOn << "You roll " << diceOutput << ": " << total << "\n" << ColorOff;
+    broadcast(player->getSock(), player->getParent(), "(Dice %s): %M rolled a %d.", diceOutput, player.get(), total );
 
     return(0);
 }
-
