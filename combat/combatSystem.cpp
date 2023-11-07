@@ -1425,8 +1425,8 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
     if(isEffected("lycanthropy"))
         attackDamage.add(packBonus());
 
-    // Mara and Linothan clerics do +5% damage to targets they hate
-    if((cClass == CreatureClass::CLERIC && (getDeity() == LINOTHAN || getDeity() == MARA)) && alignInOrder() && hatesEnemy(victim)) {
+    // Mara and Linothan clerics do +5% damage to targets they hate, so long as their alignment is in order and the target is not good aligned (except undead can be good or evil)
+    if((cClass == CreatureClass::CLERIC && (getDeity() == LINOTHAN || getDeity() == MARA)) && alignInOrder() && hatesEnemy(victim) && (victim->isEvil() || victim->isUndead())) {
         attackDamage.set(attackDamage.get() + (attackDamage.get())/20);
         *this << ColorOn << "^r" << gConfig->getDeity(getDeity())->getName() << "'s vicious hatred of " << victim << " increases your damage.\n" << ColorOff;
     }
