@@ -383,7 +383,7 @@ bool Config::loadSkills() {
     addToMap(SkillInfoBuilder()
         .name("turn").displayName("Turn Undead")
         .group("offensive")
-        .gainType(SkillGainType::MEDIUM)
+        .gainType(SkillGainType::EASY)
     , skills);
     addToMap(SkillInfoBuilder()
         .name("holyword").displayName("Holyword")
