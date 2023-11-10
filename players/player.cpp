@@ -2188,7 +2188,7 @@ int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd) {
     diceSides = std::min(maxSides, std::stoi(diceSidesStr));
 
 
-    if (!diceSides || diceSides <= 1) {
+    if (diceSides <= 1) {
         *player << "Don't be silly. A die must have at least 2 sides and cannot be negative! In this dimension, anyway!\n";
         return(0);
     }
