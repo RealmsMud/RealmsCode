@@ -2116,98 +2116,94 @@ int cmdVisible(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(0);
 }
 
-//********************************************************************
-//                      cmdDice
-//********************************************************************
-
 int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd) {
-    char    *str=nullptr, *tok=nullptr, diceOutput[256], add[256];
-    int     strLen=0, i=0;
-    int diceSides=6,diceNum=2, diceAdd=0;
+
+    std::string input, diceSidesStr, diceNumStr, diceModStr;
+
+    std::string syntax = "\nInvalid syntax.\ne.g: dice 5d6, dice 3d10+31, dice 4d7-3\n";
+
+    int diceNum=0, diceSides=0, diceMod=0, rolls=0, total=0;
+    int maxNum = 500, maxSides=500, maxMod=10000;
+
+    input = getFullstrText(cmnd->fullstr, 1);
+    if (input == "") {
+        for(rolls=0;rolls<2;rolls++)
+            total += Random::get(1, 6);
+        *player << "You roll 2d6: " << total << "\n";
+        broadcast(player->getSock(), player->getParent(), "(Dice 2d6): %M rolled a %d.", player.get(), total );
+        return(0);
+    }
+
+    // Remove all spaces from the command
+    input.erase(std::remove_if(input.begin(), input.end(), ::isspace), input.end());
+
+    // Make everything lowercase (so can use 'd' or 'D')
+    std::transform(input.begin(), input.end(), input.begin(), ::tolower);
+
+    size_t foundD = input.find('d');
+
+    // If we don't find a d in input string, exit
+    if (foundD == std::string::npos) {
+        *player << syntax;
+        return(0);
+    }
     
-    int     rolls=0, total=0;
+    diceNumStr = input.substr(0, foundD);
+    diceSidesStr = input.substr(foundD + 1);
 
-    const char *Syntax =    "\nSyntax: dice 1d2\n"
-                            "        dice 1d2+3\n";
+    if (!isAllNumeric(diceNumStr)) {
+        *player << syntax;
+         return(0);
+    }
 
+    // Look for a +, then set modifer. If no +, look for a - then set modifier
+    size_t foundPlus = diceSidesStr.find("+");
+    size_t foundMinus = diceSidesStr.find("-");
+    if (foundPlus != std::string::npos) {
+        diceModStr = diceSidesStr.substr(foundPlus + 1);
+        if (!isAllNumeric(diceModStr)) {
+            *player << syntax;
+            return(0);
+        }
 
-    strcpy(diceOutput, "");
-    strcpy(add ,"");
+        diceMod = std::min(maxMod, std::stoi(diceModStr));
+    }
+    else if (foundMinus != std::string::npos) {
+        diceModStr = diceSidesStr.substr(foundMinus + 1);
+        if (!isAllNumeric(diceModStr)) {
+            *player << syntax;
+            return(0);
+        }
 
-    strLen = cmnd->fullstr.length();
+        diceMod = std::min(maxMod,std::stoi(diceModStr)) * -1;
+    }
 
-    // This kills all leading whitespace
-    while(i<strLen && isspace(cmnd->fullstr[i]))
-        i++;
-    // This kills the command itself
-    while(i<strLen && !isspace(cmnd->fullstr[i]))
-        i++;
-
-    str = strstr(&cmnd->fullstr[i], "d");
-    if(!str)
-        return(cmdAction(player, cmnd));
-
-    str = strdup(&cmnd->fullstr[i]);
-    if(!str) {
-        *player << Syntax;
+    // if there's no diceMod, this keeps extra non-numerical crap out of diceSidesStr in the diceSides stoi call below (will crash otherwise)
+    if (!diceMod && !isAllNumeric(diceSidesStr)) {
+        *player << syntax;
         return(0);
     }
 
-    tok = strtok(str, "d");
-    if(!tok) {
-        *player << Syntax;
+    diceNum = std::min(maxNum, std::max(1,std::stoi(diceNumStr)));
+    diceSides = std::min(maxSides, std::stoi(diceSidesStr));
+
+
+    if (!diceSides || diceSides <= 1) {
+        *player << "Don't be silly. A die must have at least 2 sides and cannot be negative! In this dimension, anyway!\n";
         return(0);
     }
-   
-    diceNum = std::stoi(tok);
-
-    tok = strtok(nullptr, "+");
-    if(!tok) {
-        *player << Syntax;
-        return(0);
-    }
-   
-    diceSides = std::stoi(tok);
-
-    tok = strtok(nullptr, "+");
-
-    if(tok)
-        diceAdd = std::stoi(tok);
-
-    if(diceNum < 0) {
-        *player << "How can you roll a negative number of dice?\n";
-        return(0);
-    }
-
-    diceNum = std::max(1, diceNum);
-
-    if(diceSides<2) {
-        *player << "A die has a minimum of 2 sides.\n";
-        return(0);
-    }
-
-    diceNum = std::min(100, diceNum);
-    diceSides = std::min(100, diceSides);
-    diceAdd = std::max(-100,std::min(100, diceAdd));
-
-
-    sprintf(diceOutput, "%dd%d", diceNum, diceSides);
-    if(diceAdd) {
-        if(diceAdd > 0)
-            sprintf(add, "+%d", diceAdd);
-        else
-            sprintf(add, "%d", diceAdd);
-        strcat(diceOutput, add);
-    }
-
 
     for(rolls=0;rolls<diceNum;rolls++)
         total += Random::get(1, diceSides);
 
-    total += diceAdd;
+    total += diceMod;
+
+    std::string diceOutput = std::to_string(diceNum) + "d" + std::to_string(diceSides) + (diceMod>0?"+":"") + (diceMod?std::to_string(diceMod):"");
     
     *player << ColorOn << "You roll " << diceOutput << ": " << total << "\n" << ColorOff;
-    broadcast(player->getSock(), player->getParent(), "(Dice %s): %M rolled a %d.", diceOutput, player.get(), total );
+    broadcast(player->getSock(), player->getParent(), "(Dice %s): %M rolled a %d.", diceOutput.c_str(), player.get(), total );
 
     return(0);
+
 }
+

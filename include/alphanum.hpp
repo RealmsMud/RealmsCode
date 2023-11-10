@@ -125,3 +125,5 @@ struct alphanum_less {
     }
 };
 
+bool isAllNumeric(const std::string& str);
+

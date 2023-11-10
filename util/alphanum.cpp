@@ -177,3 +177,7 @@ int alphanum_comp<std::string>(const std::string& l, const std::string& r) {
 
 ////////////////////////////////////////////////////////////////////////////
 
+
+bool isAllNumeric(const std::string& str) {
+    return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
+}
