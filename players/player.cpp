@@ -2126,14 +2126,11 @@ int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd) {
     int maxNum = 500, maxSides=500, maxMod=10000;
 
     input = getFullstrText(cmnd->fullstr, 1);
-    if (input == "") {
-        for(rolls=0;rolls<2;rolls++)
-            total += Random::get(1, 6);
-        *player << "You roll 2d6: " << total << "\n";
-        broadcast(player->getSock(), player->getParent(), "(Dice 2d6): %M rolled a %d.", player.get(), total );
-        return(0);
-    }
 
+    // Default to 2d6 if no dice given
+    if (input == "")
+        input = "2d6";
+    
     // Remove all spaces from the command
     input.erase(std::remove_if(input.begin(), input.end(), ::isspace), input.end());
 
