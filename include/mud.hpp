@@ -162,9 +162,10 @@ class LastTime;
 #define LT_ENLARGE_REDUCE   91
 #define LT_ANCHOR       92
 #define LT_STARSTRIKE       93
-// free             94
-// free             95
-// free             96
+#define LT_SMOTHER  94
+#define LT_HOLYWORD 95
+#define LT_UNHOLYWORD 96
+
 // free             97
 // free             98
 // free             99
@@ -184,8 +185,6 @@ class LastTime;
 
 //#define LT_MOB_PASV_GUARD LT_UNCONSCIOUS  // Mobs use LT_UNCONSCIOUS cuz they don't need it anywhere else
 #define LT_RENOUNCE     LT_TOUCH_OF_DEATH
-#define LT_HOLYWORD     LT_FOCUS
-#define LT_SMOTHER      LT_FOCUS
 
 // BUG: Animate & tail slap both use LT_FOCUS -> high level animate tail slaps
 #define LT_ANIMATE      LT_FOCUS

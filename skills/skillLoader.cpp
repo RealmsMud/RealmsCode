@@ -386,9 +386,14 @@ bool Config::loadSkills() {
         .gainType(SkillGainType::EASY)
     , skills);
     addToMap(SkillInfoBuilder()
-        .name("holyword").displayName("Holyword")
+        .name("holyword").displayName("Holy Word")
         .group("offensive")
-        .gainType(SkillGainType::MEDIUM)
+        .gainType(SkillGainType::EASY)
+    , skills);
+    addToMap(SkillInfoBuilder()
+        .name("unholyword").displayName("Unholy Word")
+        .group("offensive")
+        .gainType(SkillGainType::EASY)
     , skills);
     addToMap(SkillInfoBuilder()
         .name("poison").displayName("Poison Strike")

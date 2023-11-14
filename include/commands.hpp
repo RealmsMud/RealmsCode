@@ -330,6 +330,8 @@ int cmdLottery(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdTurn(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdRenounce(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdHolyword(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdUnholyword(const std::shared_ptr<Player>& player, cmd* cmnd);
+int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::string wordType);
 
 // Magic6.c
 int conjureCmd(const std::shared_ptr<Player>& player, cmd* cmnd);
