@@ -1161,10 +1161,10 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
         if(player->getDeity() == target->getDeity()) {
             if (!holy) {
                 *player << "While " << gConfig->getDeity(player->getDeity())->getName() << 
-                        " would likely find it entertaining, he won't grant its use on another of your own faith. Perhaps torture " << target->himHer() << " instead?\n";
+                        " could sometimes find it entertaining, he won't grant an unholy word on another of his faith. Perhaps torture " << target->himHer() << " instead?\n";
             }
             else
-                *player << gConfig->getDeity(player->getDeity())->getName() << " will not let you harm one of your own faith. You should pray for " << target->hisHer() << " redemption instead.\n";
+                *player << gConfig->getDeity(player->getDeity())->getName() << " will not grant a holy word on another of his faith. You should pray for " << target->hisHer() << " redemption instead.\n";
             return(0);
         }
 
