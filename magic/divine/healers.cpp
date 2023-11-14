@@ -1138,8 +1138,8 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
                               (!holy && player->getAdjustedAlignment() > RED));
        
         if (badPlayerAlignment) {
-            *player << "You are not " << (holy?"pure":"wicked") << " enough at heart right now to channel " 
-                                << gConfig->getDeity(player->getDeity())->getName() << "'s " << (holy?"holy":"unholy") << " word.\n";
+            *player << ColorOn << "^yYou are not " << (holy?"pure":"wicked") << " enough at heart right now to channel " 
+                                << gConfig->getDeity(player->getDeity())->getName() << "'s " << (holy?"holy":"unholy") << " word.\n" << ColorOff;
             return(0);
         }
     }
@@ -1161,10 +1161,10 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
         if(player->getDeity() == target->getDeity()) {
             if (!holy) {
                 *player << "While " << gConfig->getDeity(player->getDeity())->getName() << 
-                        " would likely find it entertaining, it's probably not a good idea to harm another of your own faith. Perhaps torture " << target->himHer() << " instead?\n";
+                        " would likely find it entertaining, he won't grant its use on another of your own faith. Perhaps torture " << target->himHer() << " instead?\n";
             }
             else
-                *player << gConfig->getDeity(player->getDeity())->getName() << " will not let you harm one of your own faith. You should pray for " << target->hisHer() << " repentence instead.\n";
+                *player << gConfig->getDeity(player->getDeity())->getName() << " will not let you harm one of your own faith. You should pray for " << target->hisHer() << " redemption instead.\n";
             return(0);
         }
 
@@ -1172,20 +1172,20 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
                               (!holy && target->getAdjustedAlignment() <= NEUTRAL));
 
         if(badTargetAlignment) {
-            *player << ColorOn << "^y" << setf(CAP) << target << " is not " << (holy?"wicked":"pure") << " enough right now for your " << 
+            *player << ColorOn << "^y" << setf(CAP) << target << " is not " << (holy?"wicked":"pure") << " enough at heart for your " << 
                                                                                     (holy?"holy":"unholy") << " word to be effective.\n" << ColorOff;
             return(0);
         }
 
         if(target->isMonster()) {
             if (holy && target->getType() == DEVA) {
-                *player << gConfig->getDeity(player->getDeity())->getName() << " will not allow the use of a holy word on a celestial servant such as " << target << ".\n";
+                *player << ColorOn << "^y" << gConfig->getDeity(player->getDeity())->getName() << " will not allow the use of a holy word on his celestial servants.\n" << ColorOff;
                 return(0);
             }
 
             if(!holy && (target->getType() == DEMON || target->getType() == DEVIL || target->getType() == DAEMON)) {
-                *player << "You would be insane to use an unholy word on a denizen of the lower realms such as " << target << ".\n";
-                *player << gConfig->getDeity(player->getDeity())->getName() << "'s wrath would be near immediate if you did such a thing!\n";
+                *player << ColorOn << "^yYou would be insane to use an unholy word on a denizen of the lower realms.\n";
+                *player << gConfig->getDeity(player->getDeity())->getName() << "'s wrath would be near immediate if you did such a thing!\n" << ColorOff;
                 return(0);
             }
         }
@@ -1202,12 +1202,6 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
 
     player->smashInvis();
     player->interruptDelayedActions();
-    
-    if(target->isMonster()) {
-        if (player->flagIsSet(P_LAG_PROTECTION_SET))
-            player->setFlag(P_LAG_PROTECTION_ACTIVE);
-        target->getAsMonster()->addEnemy(player, true);
-    }
 
     player->updateAttackTimer(false);
     player->lasttime[holy?LT_HOLYWORD:LT_UNHOLYWORD].ltime = t;
@@ -1218,26 +1212,29 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
     player->lasttime[LT_SPELL].ltime = t;
     player->lasttime[holy?LT_HOLYWORD:LT_UNHOLYWORD].interval = 240L;
 
-
     chance = (((int)level - target->getLevel())*50) + (player->piety.getCur() - target->piety.getCur()) + 400;
-
     chance = std::min(chance, 950);
+
     if(player->isDm())
         chance = 1001;
 
-   
     if(target->isEffected(holy?"malediction":"benediction") && !(player->isEffected(holy?"benediction":"malediction") && ((int)level >= target->getLevel())) ) {
 
-        *player << ColorOn << "^DThe divine " << (holy?"darkness":"purity") << " infused into " << target << "'s soul thwarted " 
+        *player << ColorOn << "^yThe " << (holy?"^D":"^W") << "divine " << (holy?"darkness":"purity") << " ^yinfused into " << target << "'s soul thwarted " 
                                         << gConfig->getDeity(player->getDeity())->getName() << "'s " << (holy?"holy":"unholy") << " word.\n" << ColorOff;
 
-        *target << ColorOn << (holy?"^R":"^B") << setf(CAP) << player << " tried to pronounce " << (holy?"a holy":"an unholy") 
+        *target << ColorOn << (holy?"^W":"^D") << setf(CAP) << player << " tried to pronounce " << (holy?"a holy":"an unholy") 
                                                                 << " word on you. Your " << (holy?"malediction":"benediction") << " absorbed it.\n" << ColorOff;
 
         broadcast(player->getSock(), player->getParent(), "^y%N's %s absorbed %M's %s word.^x", 
                                     target.get(), (holy?"benediction":"malediction"), player.get(), (holy?"holy":"unholy"));
 
-        player->lasttime[holy?LT_HOLYWORD:LT_UNHOLYWORD].interval = 10L;
+        player->lasttime[holy?LT_HOLYWORD:LT_UNHOLYWORD].interval = 20L;
+        if(target->isMonster()) {
+            if (player->flagIsSet(P_LAG_PROTECTION_SET))
+                player->setFlag(P_LAG_PROTECTION_ACTIVE);
+            target->getAsMonster()->addEnemy(player, true);
+        }
         return(0);
     }
 
@@ -1247,15 +1244,25 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
         broadcast(player->getSock(), player->getParent(), "^y%M tried to pronounce %s word on %N.^x", player.get(), (holy?"a holy":"an unholy"), target.get());
         player->checkImprove((holy?"holyword":"unholyword"), false);
         player->lasttime[holy?LT_HOLYWORD:LT_UNHOLYWORD].interval = 10L;
+        if(target->isMonster()) {
+                if (player->flagIsSet(P_LAG_PROTECTION_SET))
+                    player->setFlag(P_LAG_PROTECTION_ACTIVE);
+                target->getAsMonster()->addEnemy(player, true);
+            }
         return(0);
     }
 
     if(!player->isCt()) {
         if(target->chkSave(LCK, player, 0)) {
             *player << ColorOn << "^yYou lack conviction! Your " << (holy?"holy":"unholy") << " word failed!\n" << ColorOff;
-            *target << ColorOn << "^c" << setf(CAP) << player << "'s " << (holy?"holy":"unholy") << " word failed!\n" << ColorOff;
+            *target << ColorOn << "^y" << setf(CAP) << player << "'s " << (holy?"holy":"unholy") << " word failed!\n" << ColorOff;
             player->checkImprove((holy?"holyword":"unholyword"), false);
             player->lasttime[holy?LT_HOLYWORD:LT_UNHOLYWORD].interval = 10L;
+            if(target->isMonster()) {
+                if (player->flagIsSet(P_LAG_PROTECTION_SET))
+                    player->setFlag(P_LAG_PROTECTION_ACTIVE);
+                target->getAsMonster()->addEnemy(player, true);
+            }
             return(0);
         }
     }
@@ -1263,7 +1270,7 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
     short smiteChance = 50 + player->piety.getCur()*2;
     if(player->isDm())
         smiteChance = 10001;
-
+        
     if(((int)level > target->getLevel()) && (Random::get(1,10000) <= smiteChance)) {
         *player << ColorOn << "^WThe divine power of " << gConfig->getDeity(player->getDeity())->getName() << "'s " << (holy?"holy":"unholy") 
                                                                                                         << " word smited " << target << " dead!\n" << ColorOff;
@@ -1279,7 +1286,7 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
         dmg += Random::get(1, ((int)(level*3)/2)) + player->piety.getCur()/(player->getDeity() == ARAMON?20:10); // Aramon unholy word is a little weaker because they have pets
         
         if(player->isEffected(holy?"benediction":"malediction")) {
-            *player << ColorOn << (holy?"^B":"^R")<< "Your channeled power was increased by the divine " << (holy?"pureness":"foulness") << " currently infused into your soul.\n";
+            *player << ColorOn << (holy?"^B":"^R")<< "Your channeled power was increased by the divine " << (holy?"purity":"foulness") << " infusing your soul.\n";
             dmg += (dmg/8);
         }
 
@@ -1290,22 +1297,29 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
         if (target->isMonster()) {
             if (holy && (target->getType() == DEMON || target->getType() == DEVIL || target->getType() == DAEMON)) {
                 *player << ColorOn << "^B" << gConfig->getDeity(player->getDeity())->getName() << "'s distaste for foul denizens of the lower realms such as " 
-                                                                                    << target << " increased your divinely channeled destruction!\n" << ColorOff;
+                                                                                                                    << target << " increased your damage!\n" << ColorOff;
                 dmg += (dmg/2);
             }
             else if (!holy && target->getType() == DEVA) {
-                *player << ColorOn << "^R" << gConfig->getDeity(player->getDeity())->getName() << "'s total disgust for sickening celestial swine such as " 
-                                                                                    << target << " increased your divinely channeled destruction!\n" << ColorOff;
+                *player << ColorOn << "^R" << gConfig->getDeity(player->getDeity())->getName() << "'s disgust for sickening celestial swine such as " 
+                                                                                                                  << target << " increased your damage!\n" << ColorOff;
                 dmg += (dmg/2);
             }
         }
 
+        *player << ColorOn << (holy?"^W":"^D") << gConfig->getDeity(player->getDeity())->getName() << "'s " << (holy?"holy":"unholy") 
+                                                << " word does " << (holy?"^Y":"^R") << dmg << (holy?"^W":"^D") << " divine damage to " << target << ".\n" << ColorOff;
 
-        *player << ColorOn << (holy?"^W":"^D") << gConfig->getDeity(player->getDeity())->getName() << "'s " << (holy?"holy":"unholy") << " word does " << (holy?"^Y":"^R") << dmg << (holy?"^W":"^D") << " divine damage to " << target << ".\n" << ColorOff;
         player->checkImprove((holy?"holyword":"unholyword"), true);
         target->stun((player->piety.getCur()/50) + Random::get(2, 5));
 
         broadcast(player->getSock(), player->getParent(), "%M pronounces %s word on %N. %s screams in agony!", player.get(), (holy?"a holy":"an unholy"), target.get(), target->upHeShe());
+
+        if(target->isMonster()) {
+            if (player->flagIsSet(P_LAG_PROTECTION_SET))
+                player->setFlag(P_LAG_PROTECTION_ACTIVE);
+            target->getAsMonster()->addEnemy(player, true);
+        }
 
         player->doDamage(target, dmg, CHECK_DIE);
     }
