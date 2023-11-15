@@ -1156,7 +1156,7 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
     if(!player->isCt()) {
 
         if(!player->canAttack(target))
-                return(0);
+            return(0);
 
         if(player->getDeity() == target->getDeity()) {
             if (!holy) {
@@ -1327,14 +1327,14 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
         // Target gets a luck save for 1/2 damage, bonus to save if target closer to opposing alignment max than player, otherwise no bonus
         // The bonus will rarely work out to be more than +3-4% due to alignment restrictions on using holy/unholy word. The way it works out,
         // is that for holyword it's a good idea to be royal blue when fighting a blood red mob, and bloodred if unholyword and royalblue mob.
-        //if(!player->isCt()) {
+        if(!player->isCt()) {
             if(target->chkSave(LCK, player, (alignDifference > 0 ? (alignDifference/200) : 0)) ) {
                 *player << ColorOn << "^yYour intonation was imperfect! The " << (holy?"holy":"unholy") << " word was only partially effective!\n" << ColorOff;
                 *target << ColorOn << "^y" << setf(CAP) << player << "'s intonation faltered! " << "The " << (holy?"holy":"unholy") << " word was only partially effective!\n" << ColorOff;
                 saved=true;
                 dmg /= 2;
             }
-        //}
+        }
 
         *player << ColorOn << (holy?"^W":"^D") << gConfig->getDeity(player->getDeity())->getName() << "'s " << (saved?"enervated":"") << " " << (holy?"holy":"unholy") 
                                                          << " word does " << (holy?"^Y":"^R") << dmg << (holy?"^W":"^D") << " divine damage to " << target << ".\n" << ColorOff;
