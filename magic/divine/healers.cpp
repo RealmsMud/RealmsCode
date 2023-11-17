@@ -1330,7 +1330,7 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
         if(!player->isCt()) {
             if(target->chkSave(LCK, player, (alignDifference > 0 ? (alignDifference/200) : 0)) ) {
                 *player << ColorOn << "^yYour intonation was imperfect! The " << (holy?"holy":"unholy") << " word was only partially effective!\n" << ColorOff;
-                *target << ColorOn << "^y" << setf(CAP) << player << "'s intonation faltered! " << "The " << (holy?"holy":"unholy") << " word was only partially effective!\n" << ColorOff;
+                *target << ColorOn << "^y" << setf(CAP) << player << "'s intonation was imperfect! " << "The " << (holy?"holy":"unholy") << " word was only partially effective!\n" << ColorOff;
                 saved=true;
                 dmg /= 2;
             }

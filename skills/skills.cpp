@@ -232,11 +232,11 @@ void Creature::checkImprove(const std::string&  skillName, bool success, int att
     if (roll <= chance) {
         bool af = gConfig->isAprilFools();
         if (success) {
-            printColor("Your practice %spays off, you have become %s at ^W%s^x!\n",
+            printColor("Your practice %spays off. You have become %s at ^W%s^x!\n",
                     af ? "fails to " : "", af ? "worse" : "better",
                     crSkill->getDisplayName().c_str());
         } else {
-            printColor("You %slearn from your mistakes, you have become %s at ^W%s^x!\n",
+            printColor("You %slearn from your mistakes. You have become %s at ^W%s^x!\n",
                     af ? "fail to " : "", af ? "worse" : "better",
                     crSkill->getDisplayName().c_str());
         }
