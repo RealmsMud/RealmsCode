@@ -967,7 +967,8 @@ int cmdTime(const std::shared_ptr<Player>& player, cmd* cmnd) {
             showAbility(player, "focus", "focus", LT_FOCUS, 600, P_FOCUSED);
             showAbility(player, "frenzy", "frenzy", LT_FRENZY, 600);
             showAbility(player, "harm", "harm touch", LT_LAY_HANDS, player->lasttime[LT_LAY_HANDS].interval);
-            showAbility(player, "holyword", "holyword", LT_SMOTHER, player->lasttime[LT_SMOTHER].interval);
+            showAbility(player, "holyword", "holy word", LT_HOLYWORD, player->lasttime[LT_HOLYWORD].interval);
+            showAbility(player, "unholyword", "unholy word", LT_UNHOLYWORD, player->lasttime[LT_UNHOLYWORD].interval);
             showAbility(player, "howl", "howl", LT_HOWLS, 240);
             showAbility(player, "hypnotize", "hypnotize", LT_HYPNOTIZE, player->lasttime[LT_HYPNOTIZE].interval);
             if( player->knowsSkill("identify") ||

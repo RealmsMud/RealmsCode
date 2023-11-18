@@ -59,14 +59,14 @@ bool isResistableEnchantment(const std::string spell) {
 //                      splHoldPerson
 //*********************************************************************
 int splHoldPerson(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* spellData) {
-
+    
     if(spellData->how == CastType::CAST && !caster->isCt() &&
         !caster->isArcaneCaster() && !caster->isDivineCaster())
     {
         *caster << "You are unable to comprehend the subtle nuances of that spell.\n";
         return(0);
     }
-
+    
     if (spellData->how == CastType::CAST && caster->getClass() == CreatureClass::RANGER) {
         *caster << "The complexity of that type of enchantment/trickery magic eludes you.\n";
         return(0);
@@ -218,10 +218,11 @@ int doHoldSpells(const std::shared_ptr<Creature>& caster, cmd* cmnd, SpellData* 
     std::string magicSkill = "";
     EffectInfo* holdEffect = nullptr;
 
-
-    if (!caster->getAsPlayer()->flagIsSet(P_PTESTER) && !caster->isStaff()) {
-        if(spellData->how == CastType::CAST)
-            *caster << ColorOn << "^cAll hold spells are currently disabled except for p-testers and staff.\n" << ColorOff;
+    if(caster->isPlayer() && !caster->flagIsSet(P_PTESTER) && !caster->isCt()) {
+         if(spellData->how == CastType::CAST) {
+            *caster << ColorOn << "^yAll hold spells are currently disabled except for p-testers and staff.\n";
+            *caster << "If you're bored and wish to help p-test hold spells sometime, check with Ocelot.\n" << ColorOff;
+        }
         else
             *caster << ColorOn << "^cNothing happens.\n" << ColorOff;
 

@@ -383,12 +383,17 @@ bool Config::loadSkills() {
     addToMap(SkillInfoBuilder()
         .name("turn").displayName("Turn Undead")
         .group("offensive")
-        .gainType(SkillGainType::EASY)
+        .gainType(SkillGainType::HARD)
     , skills);
     addToMap(SkillInfoBuilder()
-        .name("holyword").displayName("Holyword")
+        .name("holyword").displayName("Holy Word")
         .group("offensive")
-        .gainType(SkillGainType::MEDIUM)
+        .gainType(SkillGainType::HARD)
+    , skills);
+    addToMap(SkillInfoBuilder()
+        .name("unholyword").displayName("Unholy Word")
+        .group("offensive")
+        .gainType(SkillGainType::HARD)
     , skills);
     addToMap(SkillInfoBuilder()
         .name("poison").displayName("Poison Strike")

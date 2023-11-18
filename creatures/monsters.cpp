@@ -613,7 +613,6 @@ int Monster::castSpell(const std::shared_ptr<Creature>&target) {
         splNo == S_CANCEL_MAGIC ||
         splNo == S_ANNUL_MAGIC ||
         splNo == S_SCARE ||
-        splNo == S_HOLD_PERSON ||
         splNo == S_ENTANGLE ||
         splNo == S_ETHREAL_TRAVEL ||
         splNo == S_DISINTEGRATE ||

@@ -675,6 +675,7 @@ bool Config::initCommands() {
     playerCommands.emplace("turn", 100, cmdTurn, nullptr, "Turn an undead opponent");
     playerCommands.emplace("renounce", 100, cmdRenounce, nullptr, "Renounce an opponent of the opposing faith");
     playerCommands.emplace("holyword", 100, cmdHolyword, nullptr, "Use holyword ability");
+    playerCommands.emplace("unholyword", 100, cmdUnholyword, nullptr, "Use holyword ability");
     playerCommands.emplace("creep", 100, cmdCreepingDoom, nullptr, "Use creeping doom ability");
     playerCommands.emplace("poison", 100, cmdPoison, nullptr, "Poison an opponent");
     playerCommands.emplace("smother", 100, cmdEarthSmother, nullptr, "Use earth-smother on an opponent");

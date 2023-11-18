@@ -436,6 +436,11 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
                 if (getClass() == CreatureClass::CLERIC && getDeity() == LINOTHAN)
                     addSkill("parry",std::max<int>(1,(level*10)));
             }
+
+            if (getVersion() < "2.61b") {
+                if (getClass() == CreatureClass::CLERIC && getDeity() == ARAMON && getLevel() >=10)
+                    addSkill("unholyword",std::max<int>(1,(level*30)/4));
+            }
             
         }
     }
