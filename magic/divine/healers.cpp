@@ -1144,12 +1144,8 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
         }
     }
 
-    target = player->getParent()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
-
-    if (!target) {
-        *player << "You don't see that target here.\n";
+    if(!(target = player->findVictim(cmnd, 1, true, false, (holy?"Holyword whom?\n":"Unholyword whom?\n"), "You don't see that here.\n")))
         return(0);
-    }
 
     double level = player->getSkillLevel(holy?"holyword":"unholyword");
 
@@ -1336,7 +1332,7 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
             }
         }
 
-        *player << ColorOn << (holy?"^W":"^D") << gConfig->getDeity(player->getDeity())->getName() << "'s " << (saved?"enervated":"") << " " << (holy?"holy":"unholy") 
+        *player << ColorOn << (holy?"^W":"^D") << gConfig->getDeity(player->getDeity())->getName() << "'s " << (saved?"enervated ":"") << (holy?"holy":"unholy") 
                                                          << " word does " << (holy?"^Y":"^R") << dmg << (holy?"^W":"^D") << " divine damage to " << target << ".\n" << ColorOff;
 
         *target << ColorOn << (holy?"^W":"^D") << "The divine power of " << gConfig->getDeity(player->getDeity())->getName() << " " << (saved?"tears at":"savages") << " your soul for " 
