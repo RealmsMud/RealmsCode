@@ -77,6 +77,7 @@ const std::map<ObjectType, std::string> Object::objTypeToString = {
         {ObjectType::AMMO, "ammo"},
         {ObjectType::QUIVER, "quiver"},
         {ObjectType::LOTTERYTICKET, "lottery ticket"},
+        {ObjectType::GEMSTONE, "gemstone"},
 };
 
 const std::map<Material, std::string> Object::materialToString = {
@@ -92,6 +93,32 @@ const std::map<Material, std::string> Object::materialToString = {
         {Material::ORGANIC, "organic" },
         {Material::BONE, "bone" },
         {Material::LEATHER, "leather" },
+        {Material::DARKMETAL, "darkmetal" },
+        {Material::CRYSTAL, "crystal"},
+        {Material::MCOPPER, "copper"},
+        {Material::MSILVER, "silver"},
+        {Material::MGOLD, "gold"},
+        {Material::MPLATINUM, "platinum"},
+        {Material::MALANTHIUM, "alanthium"},
+        {Material::MELECTRUM, "electrum"},
+        {Material::CERAMIC, "ceramic"},
+        {Material::CLAY, "clay"},
+        {Material::SOFTSTONE, "soft stone"},
+        {Material::HARDLEATHER, "hard leather"},
+        {Material::BRONZE, "bronze"},
+        {Material::ARGENTINE, "argentine"},
+        {Material::ELVENSTEEL, "elvensteel"},
+        {Material::ELECTRITE, "electrite"},
+        {Material::METEORIC_IRON, "meteoric iron"},
+        {Material::SHADOW_IRON, "shadow iron"},
+        {Material::ORICHALCUM, "orichalcum"},
+        {Material::SCARLETITE, "scarletite"},
+        {Material::TRUESILVER, "true silver"},
+        {Material::AMARANTHIUM, "amaranthium"},
+        {Material::INFERNITE, "infernite"},
+        {Material::CELESTITE, "celestite"},
+        {Material::NEGATIVE_MITHRIL, "negative mithril"},
+        {Material::NEGATIVE_STEEL, "negative steel"},
 };
 
 const std::string NONE_STR = "none";

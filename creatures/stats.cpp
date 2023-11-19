@@ -687,7 +687,8 @@ void checkEffect(const std::shared_ptr<Creature>& creature, std::string_view eff
 }
 
 void Player::recordLevelInfo() {
-    std::clog << "Recording level info for " << getName() << std::endl;
+    //Commenting this out - breaks List output
+    //std::clog << "Recording level info for " << getName() << std::endl;
 
     statistics.startLevelHistoryTracking();
 
@@ -704,7 +705,8 @@ void Player::recordLevelInfo() {
     }
 }
 void Player::upgradeStats() {
-    std::clog << "Upgrading stats for " << getName() << std::endl;
+    //Commenting this out - breaks List output
+    //std::clog << "Upgrading stats for " << getName() << std::endl;
     *this << "Upgrading your stats to the new format.\n";
 
     loseRage();
@@ -797,7 +799,8 @@ void Player::upgradeStats() {
 
 
 void Monster::upgradeStats() {
-    std::clog << "Upgrading stats for " << getName() << std::endl;
+    //Commenting this out - breaks List output
+    //std::clog << "Upgrading stats for " << getName() << std::endl;
     *this << "Upgrading your stats to the new format.\n";
 
     int cStr = strength.getCur(false);

@@ -973,6 +973,8 @@ void Monster::checkScavange(long t) {
             std::ostringstream oStr;
             lasttime[LT_MOB_THIEF].ltime = t;
             ObjectSet::iterator it;
+            short loot_count=0;
+            bool noArticle=false;
             for(it = room->objects.begin() ; it != room->objects.end() ; ) {
                 object = (*it++);
                 if((flagIsSet(M_STREET_SWEEPER) ||
@@ -986,6 +988,10 @@ void Monster::checkScavange(long t) {
                         continue;
                     }
                     oStr << object->getName() << "^x, ";
+
+                    noArticle = (object->flagIsSet(O_NO_PREFIX) && loot_count < 2);
+                    loot_count++;
+                    
                     object->deleteFromRoom();
                     if(object->getType() == ObjectType::MONEY || !object->info.id) {
                         coins.add(object->value);
@@ -993,12 +999,15 @@ void Monster::checkScavange(long t) {
                     } else {
                         addObj(object);
                     }
+                    
+
                 }
             }
             auto str = oStr.str();
             if(!str.empty()) {
                 str = str.substr(0, str.length() - 2);
-                broadcast((std::shared_ptr<Socket> )nullptr, room, "%M picked up %s.", this, str.c_str());
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%M picked up %s%s.", this, ((noArticle || (loot_count>1))?"":"the "), str.c_str());
+                //broadcast((std::shared_ptr<Socket> )nullptr, room, "%M picked up %s.", this, str.c_str());
             }
             if(auto obj = hide_obj.lock()) {
                 broadcast(getSock(), room, "%M attempts to hide %1P.", this, obj.get());

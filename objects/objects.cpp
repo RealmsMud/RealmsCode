@@ -906,7 +906,7 @@ bool Object::skillRestrict(const std::shared_ptr<Creature> & creature, bool p) c
 }
 
 //*********************************************************************
-//                          levelRestrict
+//                          alignRestrict
 //*********************************************************************
 
 bool Object::alignRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
@@ -1253,6 +1253,14 @@ bool Object::isKey(const std::shared_ptr<UniqueRoom>& room, const std::shared_pt
     return(true);
 }
 
+
+bool Object::isGemstone() const {
+
+    if (info.isArea("gemstone") || getType() == ObjectType::GEMSTONE)
+        return(true);
+    else
+        return(false);
+}
 
 //*********************************************************************
 //                      spawnObjects
