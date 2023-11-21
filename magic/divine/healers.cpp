@@ -1264,7 +1264,8 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
     //If under both pray and benediction/malediction effects, bonus of 3.5% to smite chance
     if(player->isEffected("pray") && player->isEffected(holy?"benediction":"malediction"))
         smiteChance += 35;
-
+ 
+ 
     if(player->isDm() && !player->flagIsSet(P_PTESTER))
         smiteChance = 10001;
 
