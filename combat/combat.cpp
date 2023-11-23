@@ -1102,14 +1102,14 @@ void Player::damageArmor(int dmg) {
 
     std::string armorType = armor->getArmorType();
 
-    // 30% of the time, avoid check for armor damage altogether
-    // But 5% of the time, also check for skill improve if not shield
+    // 70% of the time, avoid check for armor damage altogether
+    // But 15% of the time, also check for skill improve if not shield
     int avoidRoll = Random::get(1,100);
-    if (avoidRoll <= 5 && armorType != "shield") {
+    if (avoidRoll <= 15 && armorType != "shield") {
         checkImprove(armorType, true);
         return;
     }
-    else if (avoidRoll <= 30)
+    else if (avoidRoll <= 70 )
         return;
 
     int armorSkill = (int)getSkillGained(armorType);
