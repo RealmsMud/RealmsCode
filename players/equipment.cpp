@@ -182,10 +182,10 @@ int cmdUse(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!strcmp(cmnd->str[1], "all"))
         return(cmdWear(player, cmnd));
 
-    object = player->findObject(player, cmnd, 1);
+    object = player->findObject(player, cmnd, 1, true);
 
     if(!object) {
-        object = room->findObject(player, cmnd, 1);
+        object = room->findObject(player, cmnd, 1, true);
         if(!object && player->ready[HELD-1]) {
             object = player->ready[HELD-1];
         } else if(!object || !object->flagIsSet(O_CAN_USE_FROM_FLOOR)) {
@@ -279,7 +279,7 @@ bool doWear(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(cmnd)
-        object = player->findObject(player, cmnd, 1);
+        object = player->findObject(player, cmnd, 1, true);
 
     if(!object) {
         player->print("You don't have that.\n");
@@ -565,7 +565,7 @@ void Player::doRemove(int i) {
         // Takes some time to remove boots in combat and then kick.
         if(inCombat()) {
             lasttime[LT_KICK].ltime = time(nullptr);
-            lasttime[LT_KICK].interval = (cClass == CreatureClass::FIGHTER ? 12L:15L);
+            lasttime[LT_KICK].interval = (cClass == CreatureClass::FIGHTER ? 9L:12L);
         }
     }
     if(cClass == CreatureClass::FIGHTER && cClass2 == CreatureClass::THIEF && object->isHeavyArmor()) {
@@ -704,7 +704,7 @@ bool doWield(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!cmnd || cmnd->num > 1) {
 
         if(cmnd)
-            object = player->findObject(player, cmnd, 1);
+            object = player->findObject(player, cmnd, 1, true);
 
         if(!object) {
             player->print("You don't have that.\n");
@@ -771,7 +771,7 @@ int cmdHold(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(cmnd->num > 1) {
 
-        object = player->findObject(player, cmnd, 1);
+        object = player->findObject(player, cmnd, 1, true);
 
         if(!object) {
             player->print("You don't have that.\n");
@@ -1274,7 +1274,7 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     //  - player will be the one getting the messages
 
     if(!player) {
-        creature->print("Unable to get!\n");
+        *creature << "Unable to get!\n";
         return(0);
     }
 
@@ -1288,17 +1288,17 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
     if(player->getClass() == CreatureClass::BUILDER) {
         if(!player->canBuildObjects()) {
-            player->print("You are not allowed get items.\n");
+            *player << "You are not allowed get items.\n";
             return(0);
         }
         if(!player->checkBuilder(player->getUniqueRoomParent())) {
-            player->print("Error: Room number not inside any of your alotted ranges.\n");
+            *player << ColorOn << "^yError: Room number not inside any of your alotted ranges.\n" << ColorOff;
             return(0);
         }
     }
 
     if(cmnd->num < 2) {
-        player->print("Get what?\n");
+        *player << "Get what?\n";
         return(0);
     }
 
@@ -1309,7 +1309,7 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     if(cmnd->num == 2) {
 
         if(!player->isStaff() && room->flagIsSet(R_SHOP_STORAGE)) {
-            player->print("You cannot get anything here.\n");
+            *player << "You cannot get anything in here. Somebody might think you're exploiting something...\n";
             return(0);
         }
 
@@ -1317,7 +1317,7 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             return(0);
 
         if(player->isBlind()) {
-            player->printColor("^CYou can't see to do that!\n");
+            *player << ColorOn << "^DYou're blind! You can't see what you're getting!\n" << ColorOff;
             return(0);
         }
         if(!strcmp(cmnd->str[1], "all")) {
@@ -1329,10 +1329,10 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             return(0);
         }
 
-        object = room->findObject(player, cmnd, 1);
+        object = room->findObject(player, cmnd, 1, true);
 
         if(!object) {
-            player->print("That isn't here.\n");
+            *player << "That isn't here.\n";
             return(0);
         }
 
@@ -1351,11 +1351,11 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         if(!canGetUnique(player, creature, object, true))
             return(0);
         if(!Lore::canHave(player, object, false)) {
-            player->print("You already have enough of those.\nYou cannot currently have any more.\n");
+            *player << "You already have enough of those.\nYou cannot currently have any more.\n";
             return(0);
         }
         if(!Lore::canHave(player, object, true)) {
-            player->print("You cannot get that item.\nIt contains a limited item that you cannot carry.\n");
+            *player << "You cannot get that item.\nIt contains a limited item that you cannot carry.\n";
             return(0);
         }
 
@@ -1414,21 +1414,19 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         object->clearFlag(O_HIDDEN);
 
         if(player == creature) {
-            player->printColor("You get %1P.\n", object.get());
+            *player << ColorOn << "You get " << object << ".\n" << ColorOff;
         } else
-            player->printColor("%M gets %1P.\n", creature.get(), object.get());
+            *player << ColorOn << setf(CAP) << creature << " gets " << object << ".\n" << ColorOff;
 
         if(object->flagIsSet(O_SILVER_OBJECT) && player->isEffected("lycanthropy")) {
             if(player == creature)
-                player->printColor("%O burns you and you drop it!\n", object.get());
+                *player << ColorOn << "^R" << setf(CAP) << object << " burns you and you drop it!\n" << ColorOff;
             else
-                player->printColor("%O burns %N and %s drop it!\n", object.get(), creature.get(), creature->heShe());
+                *player << ColorOn << "^R" << setf(CAP) << object << " burns " << creature << " and " << creature->heShe() << " drops it!\n" << ColorOff;
 
 
-            broadcast(player->getSock(), room, "%M is burned by %P.", creature.get(), object.get());
+            broadcast(player->getSock(), room, "^R%M is burned by %P.", creature.get(), object.get());
 
-            //player->delObj(object, false, true);
-            //object->addToRoom(room);
             return(0);
         }
 
@@ -1440,12 +1438,12 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
     } else {
 
-        container = creature->findObject(player, cmnd, 2);
+        container = creature->findObject(player, cmnd, 2, true);
         if(!container) {
-            container = room->findObject(player, cmnd, 2);
+            container = room->findObject(player, cmnd, 2, true);
             if(container) {
                 if(!player->isStaff() && room->flagIsSet(R_SHOP_STORAGE)) {
-                    player->print("You cannot get anything here.\n");
+                    *player << "You cannot get anything in here. Somebody might think you're exploiting something...\n";
                     return(0);
                 }
                 ground = true;
@@ -1476,12 +1474,12 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             pet = room->findMonster(player, cmnd, 2);
             if(pet) {
                 if(!player->findPet(pet)) {
-                    player->print("%M is not your pet!\n", pet.get());
+                    *player << setf(CAP) << pet << " is not your pet!\n";
                     return(0);
                 }
-                object = pet->findObject(pet, cmnd, 1);
+                object = pet->findObject(pet, cmnd, 1, true);
                 if(!object) {
-                    player->print("%M doesn't have %s.\n", pet.get(), Random::get(0, 1) ? "that" : "one of those");
+                    *player << setf(CAP) << pet << " doesn't have " << (Random::get(0, 1) ? "that" : "one of those") << ".\n";
                     return(0);
                 }
             }
@@ -1490,12 +1488,12 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         if(!object) {
             pet = nullptr;
             if(!container) {
-                player->print("That isn't here.\n");
+                *player << "That isn't here.\n";
                 return(0);
             }
 
             if(container->getType() != ObjectType::CONTAINER) {
-                player->print("That isn't a container.\n");
+                *player << "That isn't a container.\n";
                 return(0);
             }
 
@@ -1505,7 +1503,7 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
             if(!strcmp(cmnd->str[1], "all")) {
                 if(player->flagIsSet(P_NO_GET_ALL)) {
-                    player->print("You have lost the privilage to get all for now.\n");
+                    *player << "You have lost the privilage to get all for now.\n";
                     return(0);
                 }
 
@@ -1513,9 +1511,9 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
                 return(0);
             }
 
-            object = container->findObject(player, cmnd, 1);
+            object = container->findObject(player, cmnd, 1, true);
             if(!object) {
-                player->print("That isn't in there.\n");
+                *player << "That isn't in there.\n";
                 return(0);
             }
 
@@ -1554,11 +1552,11 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
         if(ground && !pet && !p) {
             if(!Lore::canHave(player, object, false)) {
-                player->print("You already have enough of those.\nYou cannot currently have any more.\n");
+                *player << "You already have enough of those.\nYou cannot currently have any more.\n";
                 return(0);
             }
             if(!Lore::canHave(player, object, true)) {
-                player->print("You cannot get that item.\nIt contains a limited item that you cannot carry.\n");
+                *player << "You cannot get that item.\nIt contains a limited item that you cannot carry.\n";
                 return(0);
             }
         }
@@ -1568,14 +1566,14 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
         if(pet) {
             pet->delObj(object);
-            player->printColor("You get %1P from %N.\n", object.get(), pet.get());
+            *player << ColorOn << "You get " << object << " from " << pet << ".\n" << ColorOff;
             broadcast(player->getSock(), room, "%M gets %1P from %N.", player.get(), object.get(), pet.get());
         } else {
             container->delObj(object);
             if(player == creature)
-                player->printColor("You get %1P from %1P.\n", object.get(), container.get());
+                *player << ColorOn << "You get " << object << " from " << container << ".\n" << ColorOff;
             else
-                player->printColor("%M gets %1P from %1P.\n", creature.get(), object.get(), container.get());
+                *player << ColorOn << setf(CAP) << creature << " gets " << object << " from " << container << ".\n" << ColorOff;
             broadcast(player->getSock(), room, "%M gets %1P from %1P.", creature.get(), object.get(), container.get());
 
         }
@@ -1597,6 +1595,8 @@ int cmdInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Player> target = player;
     int     m=0, n=0, flags = player->displayFlags();
     std::ostringstream oStr;
+    bool invFilter = false;
+    std::string otypeFilter;
 
 
     player->clearFlag(P_AFK);
@@ -1616,15 +1616,56 @@ int cmdInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 }
             }
 
-            if(target->isDm() && !player->isDm()) {
+            if(target->isCt() && !player->isCt()) {
                 player->print("You are not allowed to do that.\n");
                 return(0);
             }
 
-            if(cmnd->num > 2) {
+
+            otypeFilter = getFilterString(cmnd->str[2]);
+            *player << "Target = " << target << "\n";
+            *player << "cmnd->str[2] = " << cmnd->str[2] << "\n";
+            *player << "otypeFilter = " << otypeFilter << "\n";
+            if (!otypeFilter.empty()) {
+
+                if(otypeFilter.at(otypeFilter.length()-1) == 's')
+                    otypeFilter.erase(otypeFilter.length()-1, 1);
+
+                if(otypeFilter == "gem")
+                    otypeFilter = "gemstone";
+                else if (otypeFilter == "bag")
+                    otypeFilter = "container";
+                else if (otypeFilter == "other")
+                    otypeFilter = "misc";
+
+                invFilter = true;
+            }
+
+            if(cmnd->num > 2 && otypeFilter.empty()) {
                 peek_bag(player, target, cmnd, 1);
                 return(0);
             }
+            
+        }
+    }
+
+    if(!player->isCt() && cmnd->num == 2) {
+        otypeFilter = getFilterString(cmnd->str[1]);
+        *player << "cmnd->str[1] = " << cmnd->str[1] << "\n";
+        *player << "otypeFilter = " << otypeFilter << "\n";
+        if (!otypeFilter.empty()) {
+
+            if(otypeFilter.at(otypeFilter.length()-1) == 's')
+                otypeFilter.erase(otypeFilter.length()-1, 1);
+
+            if(otypeFilter == "gem")
+                otypeFilter = "gemstone";
+            else if (otypeFilter == "bag")
+                otypeFilter = "container";
+            else if (otypeFilter == "other")
+                otypeFilter = "misc";
+
+            invFilter = true;
         }
     }
 
@@ -1633,15 +1674,26 @@ int cmdInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(player == target)
-        oStr << "You have: ";
-    else
-        oStr << target->getName() << "'s inventory: ";
+    if(player == target) {
+        if (invFilter) 
+            oStr << "^D[Inventory filter: @" << otypeFilter <<"]^x\nYou have: ";
+        else
+            oStr << "You have: ";
+        }
+    else{
+        if (invFilter)
+            oStr << "^D[Inventory filter: @" << otypeFilter << "]^x\n" << target->getName() << "'s inventory: ";
+        else
+            oStr << target->getName() << "'s inventory: ";
+    }
+
 
     ObjectSet::iterator it;
     std::shared_ptr<Object>  obj;
     for( it = target->objects.begin() ; it != target->objects.end() ; ) {
         obj = (*it++);
+        if (invFilter && obj->getTypeName() != otypeFilter)
+            continue;
         if(player->canSee(obj)) {
             m = 1;
             while( it != target->objects.end() ) {
@@ -1687,8 +1739,10 @@ bool canDrop(const std::shared_ptr<Player>& player, const std::shared_ptr<Object
     if(object->flagIsSet(O_KEEP))
         return(false);
     for(const auto& obj : object->objects ) {
-        if(!canDrop(player, obj, p))
+        if(!canDrop(player, obj, p)) {
+            *player << ColorOn << "You must remove " << obj << " from your " << object << " before you can drop it.\n" << ColorOff;
             return(false);
+        }
     }
     return(true);
 }
@@ -1734,6 +1788,11 @@ void dropAllRoom(const std::shared_ptr<Creature>& creature, const std::shared_pt
 
     if(!storageProperty(player, nullptr, &p))
         return;
+
+    if(room->flagIsSet(R_NO_DROP_OBJECTS)) {
+        *player << "You can't drop anything here.\n";
+        return;
+    }
 
     if(room->isDropDestroy()) {
         if(player == creature)
@@ -2131,7 +2190,7 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
     if(cmnd->num == 2) {
 
-        if(!player->isStaff() && room->flagIsSet(R_SHOP_STORAGE)) {
+        if(!player->isStaff() && room->flagIsSet(R_SHOP_STORAGE) || room->flagIsSet(R_NO_DROP_OBJECTS)) {
             player->print("You cannot drop anything here.\n");
             return(0);
         }
@@ -2165,9 +2224,9 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             }
         } else {
             if(is_pet)
-                object = creature->findObject(player, cmnd, 1);
+                object = creature->findObject(player, cmnd, 1, true);
             else
-                object = player->findObject(player, cmnd, 1);
+                object = player->findObject(player, cmnd, 1, true);
         }
 
         if(!object) {
@@ -2263,14 +2322,14 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
     } else {
         if(is_pet)
-            container = creature->findObject(player, cmnd, 2);
+            container = creature->findObject(player, cmnd, 2, true);
         else
-            container = player->findObject(player, cmnd, 2);
+            container = player->findObject(player, cmnd, 2, true);
 
         if(!container) {
-            container = room->findObject(player, cmnd, 2);
+            container = room->findObject(player, cmnd, 2, true);
             if(container) {
-                if(!player->isStaff() && room->flagIsSet(R_SHOP_STORAGE)) {
+                if(!player->isStaff() && room->flagIsSet(R_SHOP_STORAGE) || room->flagIsSet(R_NO_DROP_OBJECTS)) {
                     player->print("You cannot drop anything here.\n");
                     return(0);
                 }
@@ -2313,9 +2372,9 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             return(0);
         }
         if(is_pet)
-            object = creature->findObject(player, cmnd, 1);
+            object = creature->findObject(player, cmnd, 1, true);
         else
-            object = player->findObject(player, cmnd, 1);
+            object = player->findObject(player, cmnd, 1, true);
 
         if(!object) {
             player->print("You don't have that.\n");
@@ -2573,7 +2632,7 @@ int cmdGive(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         return(0);
     }
 
-    object = creature->findObject(player, cmnd, 1);
+    object = creature->findObject(player, cmnd, 1, true);
 
     if(!object) {
         if(player == creature)
@@ -2870,7 +2929,7 @@ int cmdCost(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    object = player->findObject(player, cmnd, 1);
+    object = player->findObject(player, cmnd, 1, true);
 
     if(!object) {
         player->print("You don't have that item.\n");

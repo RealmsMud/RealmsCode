@@ -861,7 +861,7 @@ int cmdSell(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     player->unhide();
-    object = player->findObject(player, cmnd, 1);
+    object = player->findObject(player, cmnd, 1, true);
 
     if(!object) {
         *player << "You don't have that.\n";
@@ -973,7 +973,7 @@ int cmdValue(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->unhide();
 
-    object = player->findObject(player, cmnd, 1);
+    object = player->findObject(player, cmnd, 1, true);
 
     if(!object) {
         *player << "You don't have that.\n";

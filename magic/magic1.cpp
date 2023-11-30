@@ -796,7 +796,7 @@ std::shared_ptr<Object>  studyFindObject(const std::shared_ptr<Player>& player, 
         return(nullptr);
     }
 
-    object = player->findObject(player, cmnd, 1);
+    object = player->findObject(player, cmnd, 1, true);
     if(!object) {
         player->print("You don't have that.\n");
         return(nullptr);
@@ -1087,7 +1087,7 @@ int cmdReadScroll(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->printColor("^CYou're blind!\n");
         return(0);
     }
-    object = player->findObject(player, cmnd, 1);
+    object = player->findObject(player, cmnd, 1, true);
 
     if(!object || !cmnd->val[1]) {
         for(n = 0; n < MAXWEAR; n++) {
@@ -1419,7 +1419,7 @@ int cmdUseWand(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    object = player->findObject(player, cmnd, 1);
+    object = player->findObject(player, cmnd, 1, true);
 
     if(!object || !cmnd->val[1]) {
         for(n = 0; n < MAXWEAR; n++) {
@@ -1437,7 +1437,7 @@ int cmdUseWand(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(!object) {
-        object = player->getRoomParent()->findObject(player, cmnd, 1);
+        object = player->getRoomParent()->findObject(player, cmnd, 1, true);
         if(object && !object->flagIsSet(O_CAN_USE_FROM_FLOOR)) {
             player->print("You don't have that.\n");
             return(0);

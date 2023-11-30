@@ -297,6 +297,9 @@ bool validMobId(const CatRef& cr);
 bool validObjId(const CatRef& cr);
 bool validRoomId(const CatRef& cr);
 std::string timeStr(int seconds);
+std::string getFilterString(const std::string commandString);
+std::string getModifiedSearchFilter(std::string filter);
+bool isValidSearchFilter(std::string filter);
 
 std::string progressBar(int barLength, float percentFull, const std::string &text = "", char progressChar = '=', bool enclosed = true);
 

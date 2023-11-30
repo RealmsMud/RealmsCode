@@ -445,3 +445,4 @@ int cmdHowl(const std::shared_ptr<Creature>& player, cmd* cmnd);
 int dmStatDetail(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creature>& target, std::string_view spell, int strength = 130);
+

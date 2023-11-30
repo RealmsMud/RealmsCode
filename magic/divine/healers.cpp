@@ -1398,7 +1398,7 @@ int cmdBandage(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(cmnd->num == 2) {
 
-        object = player->findObject(player, cmnd, 1);
+        object = player->findObject(player, cmnd, 1, true);
         if(!object) {
             player->print("Use what bandages?\n");
             return(0);
@@ -1464,7 +1464,7 @@ int cmdBandage(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
 
-        object = player->findObject(player, cmnd, 2);
+        object = player->findObject(player, cmnd, 2, true);
         if(!object) {
             player->print("You don't have that in your inventory.\n");
             return(0);

@@ -840,7 +840,7 @@ int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         return(0);
     }
 
-    object = creature->findObject(creature, cmnd, 1);
+    object = creature->findObject(creature, cmnd, 1, true);
     room = creature->getRoomParent();
 
     if(!object) {
@@ -1108,7 +1108,7 @@ int cmdBreak(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->checkAttackTimer())
         return(0);
 
-    object = player->findObject(player, cmnd, 1);
+    object = player->findObject(player, cmnd, 1, true);
 
     if(!object) {
         player->print("You don't have that in your inventory.\n");

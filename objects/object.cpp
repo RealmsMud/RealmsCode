@@ -175,11 +175,7 @@ void Object::delObj(std::shared_ptr<Object> toDel) {
 // player's, room's or object's inventory.
 
 bool listObjectSee(const std::shared_ptr<const Player> player, std::shared_ptr<Object>  object, bool showAll) {
-    return(player->isStaff() || (
-        player->canSee(object) &&
-        (showAll || !object->flagIsSet(O_HIDDEN)) &&
-        !object->flagIsSet(O_SCENERY)
-    ) );
+    return(player->isStaff() || (player->canSee(object) && (showAll || !object->flagIsSet(O_HIDDEN)) && !object->flagIsSet(O_SCENERY)) );
 }
 
 std::string Container::listObjects(const std::shared_ptr<const Player> &player, bool showAll, char endColor) const {

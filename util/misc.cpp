@@ -740,6 +740,61 @@ std::shared_ptr<MudObject> findPlyTarget(std::shared_ptr<Creature> player, Playe
 }
 
 
+std::string getFilterString(const std::string commandString) {
+
+    size_t filterChar = commandString.find("@");
+    std::string filterString;
+
+    if(filterChar != std::string::npos) {
+        filterString = commandString.substr(filterChar+1);
+        std::transform(filterString.begin(), filterString.end(), filterString.begin(), ::tolower);
+    }
+
+    return(filterString);
+}
+
+std::string getModifiedSearchFilter(std::string filter) {
+    
+    std::string modString = filter;
+
+    //Strip any trailing s that a player might add to a filter
+    if(!modString.empty() && modString.at(modString.length()-1) == 's')
+        modString.erase(modString.length()-1, 1);
+
+    //Possible shortcuts
+    if (modString == "gem")
+        modString = "gemstone";
+    else if (modString == "bag")
+        modString = "container";
+    else if (modString == "other")
+        modString = "misc";
+    else if (modString == "lotteryticket")
+        modString = "lottery ticket";
+
+    return(modString);
+}
+
+bool isValidSearchFilter(std::string filter) {
+
+    std::string fs = getModifiedSearchFilter(filter);
+
+    if (fs.empty())
+        return(false);
+
+    if (fs == "weapon" || fs == "instrument" || fs == "herb" || fs == "armor" ||
+        fs == "potion" || fs == "scroll" || fs == "wand" || fs == "container" ||
+        fs == "money" || fs == "key" || fs == "lightsource" || fs == "misc" ||
+        fs == "song scroll" || fs == "songscroll" || fs == "poison" || fs == "bandage" ||
+        fs == "ammo" || fs == "quiver" || fs == "lottery ticket" || fs == "gemstone"
+    )
+        return(true);
+
+    if (fs == "trash")
+        return(true);
+
+    return(false);
+}
+
 
 //*********************************************************************
 //                      findTarget
@@ -748,6 +803,7 @@ std::shared_ptr<MudObject> findPlyTarget(std::shared_ptr<Creature> player, Playe
 std::shared_ptr<MudObject> Creature::findTarget(int findWhere, int findFlags, const std::string& str, int val) {
     int match=0;
     std::shared_ptr<MudObject> target;
+
     const auto cThis = getAsConstCreature();
     do {
         if(findWhere & FIND_OBJ_INVENTORY) {

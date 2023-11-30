@@ -109,7 +109,7 @@ int splTransport(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
         return(0);
     }
 
-    object = pPlayer->findObject(pPlayer, cmnd, 2);
+    object = pPlayer->findObject(pPlayer, cmnd, 2, true);
 
     if(!object) {
         pPlayer->print("You don't have that object.\n");

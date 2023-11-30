@@ -651,7 +651,7 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    object = player->getRoomParent()->findObject(player, cmnd, 1);
+    object = player->getRoomParent()->findObject(player, cmnd, 1, true);
 
     if(!object) {
         *player << "You don't see that here.\n";
