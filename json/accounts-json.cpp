@@ -1,31 +1,44 @@
-#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
-#include <string_view>
 
-#include "json.hpp"
-#include "mudObjects/accounts.hpp"
+#include "accounts.hpp"
+#include "paths.hpp"
 
 using json = nlohmann::json;
 
-void from_json(const json &j, Account &acc) {
-  acc.id = j.at("id").get<std::string>();
-  acc.name = j.at("name").get<std::string>();
-  acc.password = j.at("password").get<std::string>();
-  acc.email = j.at("email").get<std::string>();
+void from_json(const json &j, std::shared_ptr<Account> &acc) {
+  std::clog << "\n" << "from_json 1\n";
+  acc->setId(j.at("id").get<std::string>());
+  std::clog << "\n" << "from_json 2\n";
+  acc->setName(j.at("name").get<std::string>());
+  acc->setPassword(j.at("password").get<std::string>());
+  acc->setEmail(j.at("email").get<std::string>());
+  std::clog << "\n" << "loadAccount END\n";
+  //j.at("id").get_to(acc.id);
 }
 
-void to_json(json &j, const Account &acc) {
+void to_json(json &j, const std::shared_ptr<Account> &acc) {
   j = json{{
-    {"id", acc.id},
-    {"name", acc.name},
-    {"password", acc.password},
-    {"email", acc.email}
-  }}
+    {"id", acc->getId()},
+    {"name", acc->getName()},
+    {"password", acc->getPassword()},
+    {"email", acc->getEmail()}
+  }};
 }
 
-bool loadAccount(std::string_view name, std::shared_ptr<Account>& acc) {
+bool loadAccount(std::string name, std::shared_ptr<Account> &acc) {
+  std::clog << "\n" << "loadAccount 1\n";
+  json j;
   std::ifstream fileStream((Path::Account / name).replace_extension("json"));
+  std::clog << "\n" << "loadAccount 2\n";
+
+  fileStream >> j;
+  std::clog << "\n" << "loadAccount 3\n";
+  from_json(j, acc);
+  std::clog << "\n" << "loadAccount 4\n";
+
+  return true;
 }
 
 // bool loadPlayer(std::string_view name, std::shared_ptr<Player>& player, enum LoadType loadType) {

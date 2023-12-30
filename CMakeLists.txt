@@ -99,6 +99,7 @@ set(COMMON_HEADER_FILES
     include/mudObjects/rooms.hpp
     include/mudObjects/uniqueRooms.hpp
 
+    include/accounts.hpp
     include/alchemy.hpp
     include/anchor.hpp
     include/area.hpp
@@ -314,6 +315,8 @@ set(COMMON_SOURCE_FILES
     objects/objects.cpp
     objects/special1.cpp
 
+    accounts/accounts.cpp
+
     players/clans.cpp
     players/equipment.cpp
     players/guilds.cpp
@@ -404,6 +407,7 @@ set(COMMON_SOURCE_FILES
     util/misc.cpp
     util/timer.cpp
 
+    json/accounts-json.cpp
     json/catref-json.cpp
     json/effects-json.cpp
     json/hooks-json.cpp

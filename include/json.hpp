@@ -20,8 +20,9 @@
 
 #include <nlohmann/json.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <string_view>
 
-#include "mudObjects/accounts.hpp"
+#include "accounts.hpp"
 
 using json = nlohmann::json;
 
@@ -30,4 +31,4 @@ namespace boost {
     void from_json(const nlohmann::json &j, boost::dynamic_bitset<> &b);
 }
 
-bool loadAccount(std::string_view name, std::shared_ptr<Account>& account);
+bool loadAccount(std::string name, std::shared_ptr<Account>& acc);
