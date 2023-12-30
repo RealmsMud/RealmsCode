@@ -36,4 +36,6 @@
 # Executables
 *.exe   binary
 *.out   binary
-*.app   binary[aA][tT][eE][dD]* binary
+*.app   binary
+[aA][tT][eE][dD]* binary
+
