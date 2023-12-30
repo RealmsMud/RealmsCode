@@ -1,13 +1,10 @@
-#pragma once
-
-#include <filesystem>
 #include <string>
-#include <boost/dynamic_bitset.hpp>
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
 class Account {
-  private:
+  protected:
     std::string id;
     std::string name;
     std::string password;
@@ -16,9 +13,8 @@ class Account {
   public:
     Account();
 
-    friend void to_json(json &j, const Account &account);
-    friend void from_json(const json &j, Account &account);
-    // static bool loadFromFile(std::string_view name, std::shared_ptr<Account>& account);
+    friend void to_json(json &j, const std::shared_ptr<Account> &acc);
+    friend void from_json(const json &j, std::shared_ptr<Account> &acc);
     // static std::string hashPassword(const std::string &pass);
 
     // Getters

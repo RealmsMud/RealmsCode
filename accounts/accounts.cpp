@@ -1,4 +1,4 @@
-#include "mudObjects/accounts.hpp"
+#include "accounts.hpp"
 
 Account::Account() {}
 

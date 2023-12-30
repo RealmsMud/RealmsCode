@@ -37,6 +37,7 @@ struct Path {
     static inline const fs::path AreaRoom = BasePath / "rooms/area";
     static inline const fs::path Monster = BasePath / "monsters";
     static inline const fs::path Object = BasePath / "objects";
+    static inline const fs::path Account = BasePath / "accounts";
     static inline const fs::path Player = BasePath / "player";
     static inline const fs::path PlayerBackup = BasePath / "player/backup";
 

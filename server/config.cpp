@@ -457,6 +457,7 @@ bool Path::checkPaths() {
     fs::create_directory(Path::AreaRoom);
     fs::create_directory(Path::Monster);
     fs::create_directory(Path::Object);
+    fs::create_directory(Path::Account);
     fs::create_directory(Path::Player);
     fs::create_directory(Path::PlayerBackup);
 

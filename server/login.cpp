@@ -65,6 +65,7 @@
 #include "stats.hpp"                             // for Stat
 #include "structs.hpp"                           // for SEX_FEMALE, SEX_MALE
 #include "xml.hpp"                               // for loadPlayer, loadObject
+#include "json.hpp"                              // for loadAccount
 #include "deityData.hpp"                         // for Deity names
 
 class StartLoc;
@@ -150,7 +151,7 @@ unsigned const char echo_off[] = {255, 251, 1, 0};
 unsigned const char echo_on[] = {255, 252, 1, 0};
 
 void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
-    std::shared_ptr<Account> account=nullptr;
+    std::shared_ptr<Account> account;
     std::shared_ptr<Player> player=nullptr;
     std::string::size_type proxyCheck = 0;
     if(!sock) {
@@ -160,6 +161,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 
     std::string str = inStr;
 
+    std::clog << "\n" << sock->getState();
+    std::clog << "\n" << str;
 
     switch(sock->getState()) {
     case LOGIN_DNS_LOOKUP:
@@ -177,8 +180,11 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         return;
         // End LOGIN_GET_LOCKOUT_PASSWORD
     case LOGIN_GET_NAME_ACCOUNT:
+        std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 1\n";
         loadAccount("test", account);
-        std::clog << account;
+        std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 2\n";
+        std::clog << "\n" << account;
+        std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 3\n";
 
         if(!nameIsAllowed(str, sock)) {
             sock->askFor("Please enter account name: ");
