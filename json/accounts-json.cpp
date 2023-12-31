@@ -8,27 +8,31 @@
 using json = nlohmann::json;
 
 void from_json(const json &j, std::shared_ptr<Account> &acc) {
-  std::clog << "\n" << "from_json 1\n";
   acc->setId(j.at("id").get<std::string>());
-  std::clog << "\n" << "from_json 2\n";
   acc->setName(j.at("name").get<std::string>());
   acc->setPassword(j.at("password").get<std::string>());
   acc->setEmail(j.at("email").get<std::string>());
-  std::clog << "\n" << "loadAccount END\n";
-  //j.at("id").get_to(acc.id);
+  // j.at("id").get_to(acc.id);
+  // j.at("name").get_to(acc.name);
+  // j.at("password").get_to(acc.password);
+  // j.at("email").get_to(acc.email);
 }
 
 void to_json(json &j, const std::shared_ptr<Account> &acc) {
-  j = json{{
+  j = json{
     {"id", acc->getId()},
     {"name", acc->getName()},
     {"password", acc->getPassword()},
     {"email", acc->getEmail()}
-  }};
+  };
 }
 
 bool loadAccount(std::string name, std::shared_ptr<Account> &acc) {
   std::clog << "\n" << "loadAccount 1\n";
+  // fs::path file = (Path::Account / name).replace_extension("json");
+  // if(fs::exists(file)) {
+
+  // }
   json j;
   std::ifstream fileStream((Path::Account / name).replace_extension("json"));
   std::clog << "\n" << "loadAccount 2\n";

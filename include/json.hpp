@@ -31,4 +31,4 @@ namespace boost {
     void from_json(const nlohmann::json &j, boost::dynamic_bitset<> &b);
 }
 
-bool loadAccount(std::string name, std::shared_ptr<Account>& acc);
+bool loadAccount(std::string name, std::shared_ptr<Account> &acc);
