@@ -280,6 +280,7 @@ private:
     // Delayed Actions
 protected:
     void parseDelayedActions(long t);
+    bool initSqlite();
 
 #ifdef SQL_LOGGER
 

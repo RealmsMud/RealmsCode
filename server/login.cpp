@@ -180,18 +180,18 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         return;
         // End LOGIN_GET_LOCKOUT_PASSWORD
     case LOGIN_GET_NAME_ACCOUNT:
-        std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 1\n";
-        loadAccount("test", account);
-        std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 2\n";
-        std::clog << "\naccount id: " << account->getId();
-        std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 3\n";
+        // std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 1\n";
+        // loadAccount("test", account);
+        // std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 2\n";
+        // std::clog << "\naccount id: " << account->getId();
+        // std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 3\n";
 
         if(!nameIsAllowed(str, sock)) {
             sock->askFor("Please enter account name: ");
             return;
         }
 
-        if(!loadAccount(str, account)) {
+        if(!loadPlayer(str, player)) {
             strcpy(sock->tempstr[0], str.c_str());
             sock->print("\n%s? Did I get that right? ", str.c_str());
             sock->setState(LOGIN_CHECK_CREATE_NEW_ACCOUNT);

@@ -207,6 +207,11 @@ bool Server::init() {
     Port = gConfig->getPortNum();
     Tablesize = getdtablesize();
 
+    std::clog <<  "Initializing SQLite...";
+    if(initSqlite())
+        std::clog << "done." << std::endl;
+    else
+        std::clog << "failed." << std::endl;
 
     std::clog << "Initializing Spelling...";
     if(init_spelling())

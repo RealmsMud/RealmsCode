@@ -42,6 +42,7 @@ struct Path {
     static inline const fs::path PlayerBackup = BasePath / "player/backup";
 
     static inline const fs::path Config = BasePath / "config";
+    static inline const fs::path SQL = BasePath / "sql";
 
     static inline const fs::path Code = Config / "code";
 // First check the docker install path; then the code directory, and finally fall back to the old place
