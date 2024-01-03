@@ -227,10 +227,6 @@ void Config::reset(bool reload) {
         delete ticket;
     }
 
-    logDbType="";
-    logDbUser="";
-    logDbPass="";
-    logDbDatabase="";
     botToken="";
     
     // the following settings aren't cleared on reload
@@ -457,7 +453,6 @@ bool Path::checkPaths() {
     fs::create_directory(Path::AreaRoom);
     fs::create_directory(Path::Monster);
     fs::create_directory(Path::Object);
-    fs::create_directory(Path::Account);
     fs::create_directory(Path::Player);
     fs::create_directory(Path::PlayerBackup);
 

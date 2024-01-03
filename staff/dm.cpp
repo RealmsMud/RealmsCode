@@ -1153,9 +1153,6 @@ int dmGameStatus(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->printColor("^B\n\nGame Variable Status\n");
     player->printColor("^CGame Port: %d      PID: %d\n",gConfig->getPortNum(), getpid());
-#ifdef SQL_LOGGER
-     player->printColor("^CSQL Logger Connection: %s  Timeout: %d\n", (gServer->getConnStatus() == true ? "Active" : "Inactive"), gServer->getConnTimeout());
-#endif // SQL_LOGGER
 
     player->printColor("\n^cDMs here are: ");
     strcpy(buf,"");
