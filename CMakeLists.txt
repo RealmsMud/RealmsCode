@@ -377,7 +377,6 @@ set(COMMON_SOURCE_FILES
     server/security.cpp
     server/server.cpp
     server/serverTimer.cpp
-    server/sql.cpp
     server/sqlite.cpp
     server/swap.cpp
     server/update.cpp
