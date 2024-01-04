@@ -7,6 +7,8 @@ namespace SQL {
   using namespace sqlite_orm;
 
   inline auto initDb(const std::string &path) {
+    fs::create_directory(Path::SQL);
+
     return make_storage(
       path,
 
