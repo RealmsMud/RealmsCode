@@ -123,7 +123,7 @@ Server::Server():
     roomCache(RQMAX, true),
     monsterCache(MQMAX, false),
     objectCache(OQMAX, false),
-    db(initDb(Path::SQL / "realms.sqlite"))
+    db(SQL::initDb(Path::SQL / "realms.sqlite"))
 {
 	std::clog << "Constructing the Server." << std::endl;
     FD_ZERO(&inSet);

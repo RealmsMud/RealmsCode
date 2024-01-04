@@ -183,6 +183,7 @@ set(COMMON_HEADER_FILES
     include/socket.hpp
     include/songs.hpp
     include/specials.hpp
+    include/sql.hpp
     include/startlocs.hpp
     include/statistics.hpp
     include/stats.hpp
@@ -377,7 +378,6 @@ set(COMMON_SOURCE_FILES
     server/security.cpp
     server/server.cpp
     server/serverTimer.cpp
-    server/sqlite.cpp
     server/swap.cpp
     server/update.cpp
 
@@ -385,7 +385,6 @@ set(COMMON_SOURCE_FILES
     server/httpServer.cpp
     server/http/zones-http.cpp
     server/http/auth-http.cpp
-
 
     skills/skillCommand.cpp
     skills/skillGain.cpp

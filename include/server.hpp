@@ -32,6 +32,7 @@
 #include "swap.hpp"
 #include "weather.hpp"
 #include "lru/lru.hpp"
+#include "sql.hpp"
 
 namespace pybind11 {
     class object;
@@ -98,40 +99,6 @@ auto idComp = [](const std::string& lhs, const std::string& rhs) {
     return(true);
 };
 
-// SQL database
-// Full definition lives in this file due to `inline auto` and using `decltype` to derive the Server member variable type
-#include <sqlite_orm/sqlite_orm.h>
-#include "accounts.hpp"
-inline auto initDb(const std::string &path) {
-  using namespace sqlite_orm;
-  return make_storage(
-    path,
-
-    // Note that make_index calls need to come before make_table as sync_schema evaluates these in reverse order
-    // Account
-    make_unique_index("idx_accounts_name", &Account::getName),
-    make_table(
-      "accounts",
-      make_column("id", &Account::setId, &Account::getId, primary_key().autoincrement()),
-      make_column("name", &Account::setName, &Account::getName),
-      make_column("password", &Account::setPassword, &Account::getPassword),
-      make_column("email", &Account::setEmail, &Account::getEmail)
-    ),
-    // Player -- only used to relate players to accounts, for now
-    make_index("idx_players_account_id", &AccountPlayer::accountId),
-    make_index("idx_players_name", &AccountPlayer::playerName),
-    make_table(
-      "players",
-      make_column("id", &AccountPlayer::playerId, primary_key()),
-      make_column("name", &AccountPlayer::playerName),
-      make_column("account_id", &AccountPlayer::accountId),
-      foreign_key(&AccountPlayer::accountId).references(&Account::getId).on_delete.cascade()
-    )
-  )
-  .sync_schema(true);
-}
-using SqlStore = decltype(initDb(""));
-
 #include "async.hpp"
 
 typedef std::map<std::string, std::weak_ptr<MudObject>, decltype(idComp)> IdMap;
@@ -145,6 +112,8 @@ using PlayerMap = std::map<std::string, std::shared_ptr<Player>>;
 using RoomCache = LRU::lru_cache<CatRef, std::shared_ptr<UniqueRoom>, CleanupRoomFn, CanCleanupRoomFn>;
 using MonsterCache = LRU::lru_cache<CatRef, Monster >;
 using ObjectCache = LRU::lru_cache<CatRef, Object >;
+
+using SqlStore = decltype(SQL::initDb(""));
 
 class Server {
     friend class PythonHandler;
