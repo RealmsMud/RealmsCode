@@ -90,7 +90,6 @@
 #include "wanderInfo.hpp"                           // for WanderInfo
 #include "xml.hpp"                                  // for copyToNum, newNum...
 
-
 // External declarations
 extern int Numplayers;
 extern long last_time_update;
@@ -123,7 +122,8 @@ void CleanupRoomFn::operator()(const std::shared_ptr<UniqueRoom>& r ) {
 Server::Server():
     roomCache(RQMAX, true),
     monsterCache(MQMAX, false),
-    objectCache(OQMAX, false)
+    objectCache(OQMAX, false),
+    db(initDb(Path::SQL / "realms.sqlite"))
 {
 	std::clog << "Constructing the Server." << std::endl;
     FD_ZERO(&inSet);
@@ -202,12 +202,6 @@ bool Server::init() {
 
     Port = gConfig->getPortNum();
     Tablesize = getdtablesize();
-
-    std::clog << "Initializing SQLite...";
-    if(db = gConfig->initDb(Path::SQL / "realms.sqlite"))
-        std::clog << "done." << std::endl;
-    else
-        std::clog << "failed." << std::endl;
 
     std::clog << "Initializing Spelling...";
     if(init_spelling())

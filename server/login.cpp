@@ -65,7 +65,6 @@
 #include "stats.hpp"                             // for Stat
 #include "structs.hpp"                           // for SEX_FEMALE, SEX_MALE
 #include "xml.hpp"                               // for loadPlayer, loadObject
-#include "json.hpp"                              // for loadAccount
 #include "deityData.hpp"                         // for Deity names
 
 class StartLoc;

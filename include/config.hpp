@@ -157,9 +157,6 @@ public:
     bool save() const;
     void cleanUp();
 
-// Database
-    static auto initDb(const std::string &path);
-
 // Proxy
     void loadProxyAccess();
     void saveProxyAccess();
