@@ -25,6 +25,7 @@
 // C Includes
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
 
+#include "config.hpp"
 #include "catRef.hpp"
 #include "delayedAction.hpp"
 #include "money.hpp"
@@ -112,6 +113,8 @@ using RoomCache = LRU::lru_cache<CatRef, std::shared_ptr<UniqueRoom>, CleanupRoo
 using MonsterCache = LRU::lru_cache<CatRef, Monster >;
 using ObjectCache = LRU::lru_cache<CatRef, Object >;
 
+using SqlStore = decltype(Config::initDb(""));
+
 class Server {
     friend class PythonHandler;
 // **************
@@ -163,6 +166,8 @@ public:
     RoomCache roomCache;
     MonsterCache monsterCache;
     ObjectCache objectCache;
+
+    SqlStore db;
 
 // ******************
 // Internal Variables
@@ -272,7 +277,6 @@ private:
     // Delayed Actions
 protected:
     void parseDelayedActions(long t);
-    bool initSqlite();
 
 public:
 

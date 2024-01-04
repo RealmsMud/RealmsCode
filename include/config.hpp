@@ -151,12 +151,14 @@ private:
     static Config* myInstance;
     bool inUse;
 
-
 public:
     bool loadBeforePython();
     bool loadAfterPython();
     bool save() const;
     void cleanUp();
+
+// Database
+    static auto initDb(const std::string &path);
 
 // Proxy
     void loadProxyAccess();

@@ -120,7 +120,11 @@ void CleanupRoomFn::operator()(const std::shared_ptr<UniqueRoom>& r ) {
 //                      Server
 //********************************************************************
 
-Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCache(OQMAX, false) {
+Server::Server():
+    roomCache(RQMAX, true),
+    monsterCache(MQMAX, false),
+    objectCache(OQMAX, false)
+{
 	std::clog << "Constructing the Server." << std::endl;
     FD_ZERO(&inSet);
     FD_ZERO(&outSet);
@@ -136,7 +140,6 @@ Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCach
     pythonHandler = nullptr;
     httpServer = nullptr;
     idDirty = false;
-
 }
 
 //********************************************************************
@@ -200,8 +203,8 @@ bool Server::init() {
     Port = gConfig->getPortNum();
     Tablesize = getdtablesize();
 
-    std::clog <<  "Initializing SQLite...";
-    if(initSqlite())
+    std::clog << "Initializing SQLite...";
+    if(db = gConfig->initDb(Path::SQL / "realms.sqlite"))
         std::clog << "done." << std::endl;
     else
         std::clog << "failed." << std::endl;
