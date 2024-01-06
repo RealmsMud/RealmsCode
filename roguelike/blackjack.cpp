@@ -501,7 +501,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
       if (strncasecmp(str.c_str(), "Y", 1) == 0) {
         os << "Press [enter] to continue.\n";
         sock->setState(BLACKJACK_START);
-      } else if (strncasecmp(str.c_str(), "N", 1) == 0) {
+      } else {
         os << "Goodbye!\n";
         sock->setState(CON_PLAYING);
       }
