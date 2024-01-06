@@ -415,6 +415,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
             Blackjack::Hand newHand = Blackjack::Hand(hand.getBet());
             newHand.addCard(hand.popCard());
             game->playerHands.insert(game->playerHands.begin() + i + 1, newHand);
+            hand.update();
           }
         } else if (strncasecmp(str.c_str(), "D", 1) == 0) {
           // Double Down
