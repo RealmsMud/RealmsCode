@@ -55,6 +55,7 @@
 #include "mudObjects/creatures.hpp"              // for CustomCrt, Creature
 #include "mudObjects/objects.hpp"                // for Object
 #include "mudObjects/players.hpp"                // for Player
+#include "accounts.hpp"                          // for Account
 #include "paths.hpp"                             // for Config, CreateHelp
 #include "playerClass.hpp"                       // for PlayerClass
 #include "proto.hpp"                             // for low, get_class_string

@@ -113,8 +113,6 @@ using RoomCache = LRU::lru_cache<CatRef, std::shared_ptr<UniqueRoom>, CleanupRoo
 using MonsterCache = LRU::lru_cache<CatRef, Monster >;
 using ObjectCache = LRU::lru_cache<CatRef, Object >;
 
-using SqlStore = decltype(SQL::initDb(""));
-
 class Server {
     friend class PythonHandler;
 // **************

@@ -23,7 +23,6 @@
 void handle_args(int argc, char *argv[]);
 void startup_mordor();
 
-
 int main(int argc, char *argv[]) {
     // Get our instance variables
     gConfig = Config::getInstance();
@@ -34,6 +33,3 @@ int main(int argc, char *argv[]) {
 
     return(0);
 }
-
-
-
