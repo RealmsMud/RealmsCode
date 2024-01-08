@@ -1,3 +1,5 @@
+#pragma once
+
 #include <sqlite_orm/sqlite_orm.h>
 
 #include "paths.hpp"
@@ -38,9 +40,10 @@ namespace SQL {
         make_column("name", &Player::name, unique()),
         foreign_key(&Player::accountId).references(&Account::getId).on_delete.cascade()
       )
-    )
-    .sync_schema(true);
+    );
   }
 }
 
-using SqlStore = decltype(SQL::initDb(""));
+using Database = decltype(SQL::initDb(""));
+
+extern Database database;

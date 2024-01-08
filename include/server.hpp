@@ -32,7 +32,6 @@
 #include "swap.hpp"
 #include "weather.hpp"
 #include "lru/lru.hpp"
-#include "sql.hpp"
 
 namespace pybind11 {
     class object;
@@ -164,8 +163,6 @@ public:
     RoomCache roomCache;
     MonsterCache monsterCache;
     ObjectCache objectCache;
-
-    SqlStore db;
 
 // ******************
 // Internal Variables

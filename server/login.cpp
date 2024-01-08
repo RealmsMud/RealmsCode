@@ -151,7 +151,8 @@ unsigned const char echo_off[] = {255, 251, 1, 0};
 unsigned const char echo_on[] = {255, 252, 1, 0};
 
 void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
-    std::shared_ptr<Account> account=nullptr;
+    //std::shared_ptr<Account> account=nullptr;
+    Account account;
     std::shared_ptr<Player> player=nullptr;
     std::string::size_type proxyCheck = 0;
     if(!sock) {
@@ -185,6 +186,14 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         // std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 2\n";
         // std::clog << "\naccount id: " << account->getId();
         // std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 3\n";
+
+        // account->setName("test");
+        // account->setPassword("testpw");
+        // account->setEmail("");
+        // account.setName("test");
+        // account.setPassword("testpw");
+        account = Account("test");
+        Account::save(account);
 
         if(!nameIsAllowed(str, sock)) {
             sock->askFor("Please enter account name: ");

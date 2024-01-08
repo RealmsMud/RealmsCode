@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <optional>
 #include <map>
@@ -16,7 +17,10 @@ class Account {
     std::map<PlayerName, PlayerId> players;
 
   public:
+    static int save(Account acc);
+
     Account();
+    Account(std::string name_);
 
     // Getters
     int getId() const;

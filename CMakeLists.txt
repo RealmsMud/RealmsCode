@@ -122,6 +122,7 @@ set(COMMON_HEADER_FILES
     include/craft.hpp
     include/creatureStreams.hpp
     include/damage.hpp
+    include/database.hpp
     include/deityData.hpp
     include/delayedAction.hpp
     include/dice.hpp
@@ -183,7 +184,6 @@ set(COMMON_HEADER_FILES
     include/socket.hpp
     include/songs.hpp
     include/specials.hpp
-    include/sql.hpp
     include/startlocs.hpp
     include/statistics.hpp
     include/stats.hpp
@@ -268,6 +268,8 @@ set(COMMON_SOURCE_FILES
     creatures/raceData.cpp
     creatures/size.cpp
     creatures/stats.cpp
+
+    database/database.cpp
 
     economy/bank.cpp
     economy/commerce.cpp

@@ -1,7 +1,16 @@
 #include <optional>
 #include "accounts.hpp"
+#include "database.hpp"
 
 Account::Account() {}
+
+Account::Account(std::string name_) :
+  id(0),
+  name(name_) {}
+
+int Account::save(Account acc) {
+  return database.insert(acc);
+}
 
 // Getters
 int Account::getId() const { return id; }

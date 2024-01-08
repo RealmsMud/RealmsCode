@@ -122,8 +122,7 @@ void CleanupRoomFn::operator()(const std::shared_ptr<UniqueRoom>& r ) {
 Server::Server():
     roomCache(RQMAX, true),
     monsterCache(MQMAX, false),
-    objectCache(OQMAX, false),
-    db(SQL::initDb(Path::SQL / "realms.sqlite"))
+    objectCache(OQMAX, false)
 {
 	std::clog << "Constructing the Server." << std::endl;
     FD_ZERO(&inSet);

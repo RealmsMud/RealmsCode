@@ -16,7 +16,7 @@
  *
  */
 
-
+#include "database.hpp" // for database
 #include "config.hpp"  // for Config
 #include "server.hpp"  // for Server
 
@@ -24,6 +24,7 @@ void handle_args(int argc, char *argv[]);
 void startup_mordor();
 
 int main(int argc, char *argv[]) {
+    database.sync_schema(true);
     // Get our instance variables
     gConfig = Config::getInstance();
     gServer = Server::getInstance();
