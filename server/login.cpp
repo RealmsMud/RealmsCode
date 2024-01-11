@@ -55,6 +55,7 @@
 #include "mudObjects/creatures.hpp"              // for CustomCrt, Creature
 #include "mudObjects/objects.hpp"                // for Object
 #include "mudObjects/players.hpp"                // for Player
+#include "accounts.hpp"                          // for Account
 #include "paths.hpp"                             // for Config, CreateHelp
 #include "playerClass.hpp"                       // for PlayerClass
 #include "proto.hpp"                             // for low, get_class_string
@@ -150,6 +151,8 @@ unsigned const char echo_off[] = {255, 251, 1, 0};
 unsigned const char echo_on[] = {255, 252, 1, 0};
 
 void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
+    //std::shared_ptr<Account> account=nullptr;
+    Account account;
     std::shared_ptr<Player> player=nullptr;
     std::string::size_type proxyCheck = 0;
     if(!sock) {
@@ -159,6 +162,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 
     std::string str = inStr;
 
+    std::clog << "\n" << sock->getState();
+    std::clog << "\n" << str;
 
     switch(sock->getState()) {
     case LOGIN_DNS_LOOKUP:
@@ -169,13 +174,73 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             sock->disconnect();
             return;
         }
-        sock->askFor("Please enter name: ");
+        sock->askFor("Please enter account name: ");
 
-        sock->setState(LOGIN_GET_NAME);
+        sock->setState(LOGIN_GET_NAME_ACCOUNT);
 
         return;
         // End LOGIN_GET_LOCKOUT_PASSWORD
-    case LOGIN_GET_NAME:
+    case LOGIN_GET_NAME_ACCOUNT:
+        // std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 1\n";
+        // loadAccount("test", account);
+        // std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 2\n";
+        // std::clog << "\naccount id: " << account->getId();
+        // std::clog << "\n" << "LOGIN_GET_NAME_ACCOUNT 3\n";
+
+        // account->setName("test");
+        // account->setPassword("testpw");
+        // account->setEmail("");
+        // account.setName("test");
+        // account.setPassword("testpw");
+        account = Account("test");
+        Account::save(account);
+
+        if(!nameIsAllowed(str, sock)) {
+            sock->askFor("Please enter account name: ");
+            return;
+        }
+
+        if(!loadPlayer(str, player)) {
+            strcpy(sock->tempstr[0], str.c_str());
+            sock->print("\n%s? Did I get that right? ", str.c_str());
+            sock->setState(LOGIN_CHECK_CREATE_NEW_ACCOUNT);
+            return;
+        } else {
+            player->fd = -1;
+            sock->setPlayer(player);
+            sock->print("%s", echo_off);
+            sock->askFor("Please enter password: ");
+            sock->setState(LOGIN_GET_PASSWORD_ACCOUNT);
+            player = nullptr;
+            return;
+        }
+        // End LOGIN_GET_NAME_ACCOUNT
+    case LOGIN_CHECK_CREATE_NEW_ACCOUNT:
+        if(str[0] != 'y' && str[0] != 'Y') {
+            sock->tempstr[0][0] = 0;
+            sock->askFor("Please enter name: ");
+            sock->setState(LOGIN_GET_NAME_PLAYER);
+            return;
+        } else {
+            sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command. \n");
+            sock->print("\nHit return: ");
+            sock->setState(CREATE_NEW);
+            return;
+        }
+        // End LOGIN_CHECK_CREATE_NEW_PLAYER
+    case LOGIN_GET_PASSWORD_ACCOUNT:
+        player = sock->getPlayer();
+        if(!player || !player->isPassword(str)) {
+            sock->write("\255\252\1\n\rIncorrect.\n\r");
+            logn("log.incorrect", fmt::format("Invalid password({}) for {} from {}\n", str, player ? player->getName() : "", sock->getHostname()).c_str());
+            sock->disconnect();
+            return;
+        } else {
+            player = nullptr;
+            sock->finishLogin();
+            return;
+        }
+    case LOGIN_GET_NAME_PLAYER:
 
         proxyCheck = checkProxyLogin(str);
         if(proxyCheck != std::string::npos) {
@@ -259,7 +324,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         if(!loadPlayer(str, player)) {
             strcpy(sock->tempstr[0], str.c_str());
             sock->print("\n%s? Did I get that right? ", str.c_str());
-            sock->setState(LOGIN_CHECK_CREATE_NEW);
+            sock->setState(LOGIN_CHECK_CREATE_NEW_PLAYER);
             return;
         } else {
             player->fd = -1;
@@ -267,16 +332,16 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             sock->print("%s", echo_off);
             //sock->print("%c%c%c", 255, 251, 1);
             sock->askFor("Please enter password: ");//, 255, 251, 1);
-            sock->setState(LOGIN_GET_PASSWORD);
+            sock->setState(LOGIN_GET_PASSWORD_PLAYER);
             player = nullptr;
             return;
         }
-        // End LOGIN_GET_NAME
-    case LOGIN_CHECK_CREATE_NEW:
+        // End LOGIN_GET_NAME_PLAYER
+    case LOGIN_CHECK_CREATE_NEW_PLAYER:
         if(str[0] != 'y' && str[0] != 'Y') {
             sock->tempstr[0][0] = 0;
             sock->askFor("Please enter name: ");
-            sock->setState(LOGIN_GET_NAME);
+            sock->setState(LOGIN_GET_NAME_PLAYER);
             return;
         } else {
 
@@ -287,8 +352,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             sock->setState(CREATE_NEW);
             return;
         }
-        // End LOGIN_CHECK_CREATE_NEW
-    case LOGIN_GET_PASSWORD:
+        // End LOGIN_CHECK_CREATE_NEW_PLAYER
+    case LOGIN_GET_PASSWORD_PLAYER:
         player = sock->getPlayer();
         if(!player || !player->isPassword(str)) {
             sock->write("\255\252\1\n\rIncorrect.\n\r");
@@ -338,7 +403,7 @@ void Socket::finishLogin() {
 
     if(!loadPlayer(charName, player)) {
         askFor("Player no longer exists!\n\nPlease enter name: ");
-        setState(LOGIN_GET_NAME);
+        setState(LOGIN_GET_NAME_PLAYER);
         return;
     }
     player->setProxy(proxyName, proxyId);

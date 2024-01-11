@@ -106,10 +106,6 @@ void Config::loadGeneral(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "CheckDouble")) xml::copyToBool(checkDouble, curNode);
         else if(NODE_NAME(curNode, "GetHostByName")) xml::copyToBool(getHostByName, curNode);
         else if(NODE_NAME(curNode, "LessExpLoss")) xml::copyToBool(lessExpLoss, curNode);
-        else if(NODE_NAME(curNode, "LogDatabaseType")) xml::copyToString(logDbType, curNode);
-        else if(NODE_NAME(curNode, "LogDatabaseUser")) xml::copyToString(logDbUser, curNode);
-        else if(NODE_NAME(curNode, "LogDatabasePassword")) xml::copyToString(logDbPass, curNode);
-        else if(NODE_NAME(curNode, "LogDatabaseDatabase")) xml::copyToString(logDbDatabase, curNode);
         else if(NODE_NAME(curNode, "LogDeath")) xml::copyToBool(logDeath, curNode);
         else if(NODE_NAME(curNode, "PkillInCombatDisabled")) xml::copyToBool(pkillInCombatDisabled, curNode);
         else if(NODE_NAME(curNode, "RecordAll")) xml::copyToBool(recordAll, curNode);
@@ -219,11 +215,6 @@ bool Config::saveConfig() const {
     xml::saveNonNullString(curNode, "UserAgent", userAgent);
     xml::saveNonNullString(curNode, "CustomColors", customColors);
     xml::saveNonNullString(curNode, "Reviewer", reviewer);
-
-    xml::newStringChild(curNode, "LogDatabaseType", logDbType);
-    xml::newStringChild(curNode, "LogDatabaseUser", logDbUser);
-    xml::newStringChild(curNode, "LogDatabasePassword", logDbPass);
-    xml::newStringChild(curNode, "LogDatabaseDatabase", logDbDatabase);
 
     xml::newBoolChild(curNode, "AprilFools", doAprilFools);
     xml::newBoolChild(curNode, "BonusXP", doBonusXP);

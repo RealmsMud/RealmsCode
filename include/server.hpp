@@ -18,21 +18,13 @@
 
 #pragma once
 
-#ifdef SQL_LOGGER
-
-namespace odbc {
-    class Connection;
-}
-
-#endif //SQL_LOGGER
-
 #include <list>
 #include <map>
 #include <vector>
 
 // C Includes
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
-
+#include "config.hpp"
 #include "catRef.hpp"
 #include "delayedAction.hpp"
 #include "money.hpp"
@@ -280,22 +272,6 @@ private:
     // Delayed Actions
 protected:
     void parseDelayedActions(long t);
-
-#ifdef SQL_LOGGER
-
-protected:
-    odbc::Connection* conn;
-    bool connActive;
-    void cleanUpSql();
-    bool initSql();
-    bool logGoldSql(std::string& pName, std::string& pId, std::string& targetStr, std::string& source, std::string& room,
-                    std::string& logType, unsigned long amt, std::string& direction);
-
-public:
-    bool getConnStatus();
-    int getConnTimeout();
-#endif // SQL_LOGGER
-
 
 public:
 

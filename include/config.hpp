@@ -151,7 +151,6 @@ private:
     static Config* myInstance;
     bool inUse;
 
-
 public:
     bool loadBeforePython();
     bool loadAfterPython();
@@ -476,11 +475,6 @@ public:
 
     bool writeHelpFiles() const;
 
-#ifdef SQL_LOGGER
-// Sql Logging
-    std::string getDbConnectionString();
-#endif
-
 private:
     bool bHavePort = false;
 public:
@@ -524,16 +518,6 @@ private:
 public:
     void setDefaultArea(const std::string &pDefaultArea);
     [[nodiscard]] const std::string &getDefaultArea() const;
-
-private:
-    // loaded from catrefinfo file
-
-//#ifdef SQL_LOGGER
-    std::string logDbType;
-    std::string logDbUser;
-    std::string logDbPass;
-    std::string logDbDatabase;
-//#endif
 
 private:
     bool listing;
