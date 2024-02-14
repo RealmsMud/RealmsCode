@@ -6,7 +6,7 @@
 #include "accounts.hpp"
 
 namespace SQL {
-  // Bridge the gap between SQL and XML Player models. Easier to migrate players to SQL later
+  // Bridge the gap between SQL and XML Player models. Easier to migrate Players to SQL later maybe
   struct Player {
     int id;
     int accountId;
@@ -14,7 +14,7 @@ namespace SQL {
     std::string name;
   };
 
-  inline auto initDb(const std::string &fileName) {
+  inline auto init(const std::string &fileName) {
     using namespace sqlite_orm;
     fs::create_directory(Path::SQL);
 
@@ -30,7 +30,7 @@ namespace SQL {
         make_column("password", &Account::setPassword, &Account::getPassword),
         make_column("email", &Account::setEmail, &Account::getEmail)
       ),
-      // Player -- only used to relate players to accounts, for 
+      // Player -- only used to relate players to accounts for now
       make_index("idx_players_account_id", &Player::accountId),
       make_table(
         "players",
@@ -44,6 +44,6 @@ namespace SQL {
   }
 }
 
-using Database = decltype(SQL::initDb(""));
+using Database = decltype(SQL::init(""));
 
 extern Database database;
