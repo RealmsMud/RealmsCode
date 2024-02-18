@@ -438,8 +438,20 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             }
 
             if (getVersion() < "2.61b") {
-                if (getClass() == CreatureClass::CLERIC && getDeity() == ARAMON && getLevel() >=10)
+                if (getClass() == CreatureClass::CLERIC && getDeity() == ARAMON && level >= 10 && getAsPlayer()->getSecondClass() == CreatureClass::NONE)
                     addSkill("unholyword",std::max<int>(1,(level*30)/4));
+            }
+
+            //Multi-class clerics (like cleric/assassins) weren't supposed to get unholyword. Ooops....This fixes that.
+            if(getVersion() < "2.61c") {
+                if (getClass() == CreatureClass::CLERIC && getAsPlayer()->getSecondClass() != CreatureClass::NONE && knowsSkill("unholyword"))
+                    remSkill("unholyword");
+
+                // Bring Enoch clerics up to snuff with holyword, since they've been suffering with it being broken for so long
+                if (getClass() == CreatureClass::CLERIC && getAsPlayer()->getSecondClass() == CreatureClass::NONE && knowsSkill("holyword")) {
+                    if (getSkillGained("holyword") < ((level*30)/4))
+                        setSkill("holyword", ((level*30)/4));
+                }
             }
             
         }

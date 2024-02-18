@@ -1264,7 +1264,8 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
     //If under both pray and benediction/malediction effects, bonus of 3.5% to smite chance
     if(player->isEffected("pray") && player->isEffected(holy?"benediction":"malediction"))
         smiteChance += 35;
-
+ 
+ 
     if(player->isDm() && !player->flagIsSet(P_PTESTER))
         smiteChance = 10001;
 
@@ -1281,6 +1282,9 @@ int doDivineWords(const std::shared_ptr<Player>& player, cmd* cmnd, const std::s
 
         player->checkImprove((holy?"holyword":"unholyword"), true);
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%s%M's %s word smited %N to death!^x", (holy?"^W":"^D"), player.get(), (holy?"holy":"unholy"), target.get());
+
+        if(target->isMonster())
+            target->getAsMonster()->adjustThreat(player, target->hp.getCur());
         
         player->statistics.attackDamage(target->hp.getCur(), (holy?"holyword":"unholyword"));
         target->die(player);

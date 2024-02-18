@@ -87,6 +87,7 @@ std::string Blackjack::Hand::getStatusStr() const {
 }
 
 void Blackjack::Hand::update() {
+  bool isSoft = false;
   int newSum = 0;
   int aces = 0;
 
@@ -110,6 +111,7 @@ void Blackjack::Hand::update() {
     // only one ace can count as 11 before busting, all others must be 1
     // so we need only check the last ace
     if (i == aces && newSum + 11 <= 21) {
+      isSoft = true;
       newSum += 11;
     } else {
       newSum += 1;
@@ -125,7 +127,7 @@ void Blackjack::Hand::update() {
     statusStr += " NATURAL";
   } else if (status == Blackjack::HandStatus::Standing) {
     statusStr += " STANDING";
-  } else if (aces > 0) {
+  } else if (aces > 0 && isSoft) {
     statusStr += " or " + std::to_string(sum - 10);
   }
 }
@@ -413,6 +415,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
             Blackjack::Hand newHand = Blackjack::Hand(hand.getBet());
             newHand.addCard(hand.popCard());
             game->playerHands.insert(game->playerHands.begin() + i + 1, newHand);
+            hand.update();
           }
         } else if (strncasecmp(str.c_str(), "D", 1) == 0) {
           // Double Down
@@ -498,7 +501,7 @@ void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
       if (strncasecmp(str.c_str(), "Y", 1) == 0) {
         os << "Press [enter] to continue.\n";
         sock->setState(BLACKJACK_START);
-      } else if (strncasecmp(str.c_str(), "N", 1) == 0) {
+      } else {
         os << "Goodbye!\n";
         sock->setState(CON_PLAYING);
       }
