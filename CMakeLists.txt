@@ -31,6 +31,7 @@ find_package(PythonLibs)
 find_package(OpenSSL REQUIRED)
 find_package(Boost COMPONENTS system REQUIRED)
 find_package(Threads REQUIRED)
+find_package(Boost CONFIG REQUIRED COMPONENTS regex)
 
 message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")

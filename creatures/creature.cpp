@@ -1512,8 +1512,6 @@ std::string Player::getFlagList(std::string_view sep) const {
         return ostr.str();
 }
 
-
-
 //*********************************************************************
 //                      recallWhere
 //*********************************************************************
@@ -1623,4 +1621,5 @@ std::shared_ptr<BaseRoom> Creature::teleportWhere() {
         return(abortFindRoom(cThis, "teleportWhere"));
     return(newRoom);
 }
+
 

@@ -303,16 +303,39 @@ std::string Container::getFilterString(const std::string commandString) const {
     return(filterString);
 }
 
+bool Container::isUseableFilterString(const std::shared_ptr<const Creature>& searcher, std::string fs, bool print) const {
+
+    if (!searcher) 
+        return(false);
+
+    if (fs == "weapon" || fs == "instrument" || fs == "herb" || fs == "armor" ||
+        fs == "potion" || fs == "scroll" || fs == "wand" || fs == "container" ||
+        fs == "money" || fs == "key" || fs == "lightsource" || fs == "misc" ||
+        fs == "song scroll" || fs == "poison" || fs == "bandage" || fs == "ammo" || 
+        fs == "quiver" || fs == "lottery ticket" || fs == "gemstone"
+    )
+        return(true);
+
+    if (fs == "trash")
+        return(true);
+
+    if (print)
+        searcher->printColor("Unavailable filter: ^c@%s^x\n", fs.c_str());
+
+    return(false);
+}
+
+
 std::shared_ptr<Object>  Container::findObjectType(const std::shared_ptr<const Creature>& searcher, std::string otypeString) const {
     std::shared_ptr<Object>target = nullptr;
 
-    if(otypeString == "gems" || otypeString == "gem")
-        otypeString = "gemstone";
+    if(!isUseableFilterString(searcher, otypeString, false))
+        return(nullptr);
 
     for(const auto& obj : objects) {
         if(obj->getTypeName() == otypeString) {
             target = obj;
-            searcher->printColor("^D[Filter @%s]: %s\n^x", otypeString.c_str(), target->getName().c_str());
+            searcher->printColor("^D[Using filter ^c@%s^D]: (^x%s^D)^x\n", otypeString.c_str(), target->getName().c_str());
             break;
         }
     }

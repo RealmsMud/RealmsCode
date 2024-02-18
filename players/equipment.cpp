@@ -1596,104 +1596,41 @@ int cmdInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
     int     m=0, n=0, flags = player->displayFlags();
     std::ostringstream oStr;
     bool invFilter = false;
-    std::string otypeFilter;
-
+    std::string filterString;
 
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
         return(0);
 
-    if(player->isCt()) {
-        if(cmnd->num>1) {
-            cmnd->str[1][0] = up(cmnd->str[1][0]);
-            target = gServer->findPlayer(cmnd->str[1]);
-
-            if(!target) {
-                if(!loadPlayer(cmnd->str[1], target)) {
-                    player->print("Player does not exist.\n");
-                    return(0);
-                }
-            }
-
-            if(target->isCt() && !player->isCt()) {
-                player->print("You are not allowed to do that.\n");
-                return(0);
-            }
-
-
-            otypeFilter = getFilterString(cmnd->str[2]);
-            *player << "Target = " << target << "\n";
-            *player << "cmnd->str[2] = " << cmnd->str[2] << "\n";
-            *player << "otypeFilter = " << otypeFilter << "\n";
-            if (!otypeFilter.empty()) {
-
-                if(otypeFilter.at(otypeFilter.length()-1) == 's')
-                    otypeFilter.erase(otypeFilter.length()-1, 1);
-
-                if(otypeFilter == "gem")
-                    otypeFilter = "gemstone";
-                else if (otypeFilter == "bag")
-                    otypeFilter = "container";
-                else if (otypeFilter == "other")
-                    otypeFilter = "misc";
-
-                invFilter = true;
-            }
-
-            if(cmnd->num > 2 && otypeFilter.empty()) {
-                peek_bag(player, target, cmnd, 1);
-                return(0);
-            }
-            
-        }
-    }
-
-    if(!player->isCt() && cmnd->num == 2) {
-        otypeFilter = getFilterString(cmnd->str[1]);
-        *player << "cmnd->str[1] = " << cmnd->str[1] << "\n";
-        *player << "otypeFilter = " << otypeFilter << "\n";
-        if (!otypeFilter.empty()) {
-
-            if(otypeFilter.at(otypeFilter.length()-1) == 's')
-                otypeFilter.erase(otypeFilter.length()-1, 1);
-
-            if(otypeFilter == "gem")
-                otypeFilter = "gemstone";
-            else if (otypeFilter == "bag")
-                otypeFilter = "container";
-            else if (otypeFilter == "other")
-                otypeFilter = "misc";
-
-            invFilter = true;
-        }
-    }
-
-    if(target != player && player->isBlind()) {
-        player->printColor("^CYou can't do that! You're blind!\n");
+    /*
+    if(player->isBlind() && !player->isCt()) {
+        *player << ColorOn << "^DYou can't do that! You're blind!\n";
         return(0);
     }
+    */
 
-    if(player == target) {
-        if (invFilter) 
-            oStr << "^D[Inventory filter: @" << otypeFilter <<"]^x\nYou have: ";
+    if(cmnd->num == 2 && isFilterString(cmnd->str[1])) {
+        filterString = getFilterString(cmnd->str[1]);
+        if (!isUseableFilterString(player, filterString, true))
+            return(0);
         else
-            oStr << "You have: ";
-        }
-    else{
-        if (invFilter)
-            oStr << "^D[Inventory filter: @" << otypeFilter << "]^x\n" << target->getName() << "'s inventory: ";
-        else
-            oStr << target->getName() << "'s inventory: ";
+            invFilter = true;
     }
 
+    if (invFilter)
+        oStr << "^D[Using filter: ^c@" << filterString <<"^D]^x\n";
+    
+    oStr << "You have: ";
 
     ObjectSet::iterator it;
     std::shared_ptr<Object>  obj;
     for( it = target->objects.begin() ; it != target->objects.end() ; ) {
         obj = (*it++);
-        if (invFilter && obj->getTypeName() != otypeFilter)
+        if (invFilter && obj->getTypeName() != filterString)
             continue;
+        //if (invFilter && (!obj->isTrash() && filterString == "trash"))
+        //    continue;
         if(player->canSee(obj)) {
             m = 1;
             while( it != target->objects.end() ) {
@@ -1716,12 +1653,11 @@ int cmdInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
     }
 
-
     if(!n)
         oStr << "nothing";
 
     oStr << ".\n";
-    player->printColor("%s", oStr.str().c_str());
+    *player << ColorOn << oStr.str() << ColorOff;
 
     return(0);
 }
@@ -1768,13 +1704,14 @@ bool delete_drop_obj(const std::shared_ptr<BaseRoom>& room, const std::shared_pt
 //                      dropAllRoom
 //*********************************************************************
 
-void dropAllRoom(const std::shared_ptr<Creature>& creature, const std::shared_ptr<Player>& player, bool factionCanRecycle) {
+void dropAllRoom(const std::shared_ptr<Creature>& creature, const std::shared_ptr<Player>& player, bool factionCanRecycle, std::string filterString) {
     std::shared_ptr<Player> pCreature = creature->getAsPlayer();
     int     money=0, flags=0, m=0, n=0;
     std::shared_ptr<BaseRoom> room = creature->getRoomParent();
     std::shared_ptr<Object> object=nullptr;
     Property* p=nullptr;
     bool    first=false;
+    bool    dropFilter = !filterString.empty();
     std::string txt = "";
 
     // we're being sent either a player or a pet
@@ -1796,9 +1733,9 @@ void dropAllRoom(const std::shared_ptr<Creature>& creature, const std::shared_pt
 
     if(room->isDropDestroy()) {
         if(player == creature)
-            player->print("Surely you would lose your entire inventory if you did that here!\n");
+            player->print("Surely you would lose everything if you did that here!\n");
         else
-            player->print("Surely %N would lose %s entire inventory if %s did that here!\n", creature.get(), creature->hisHer(), creature->heShe());
+            player->print("Surely %N would lose everything if %s did that here!\n", creature.get(), creature->heShe());
         return;
     }
 
@@ -1810,6 +1747,15 @@ void dropAllRoom(const std::shared_ptr<Creature>& creature, const std::shared_pt
     std::shared_ptr<Object>obj;
     for( it = creature->objects.begin() ; it != creature->objects.end() ; ) {
         obj = (*it++);
+
+        if(dropFilter) {
+            if(obj->getTypeName() != filterString)
+                continue;
+           // if(!obj->isTrash() && filterString == "trash")
+           //     continue;
+        }
+
+
         if(!canDrop(player, obj, p)) {
             continue;
         }
@@ -1866,7 +1812,13 @@ void dropAllRoom(const std::shared_ptr<Creature>& creature, const std::shared_pt
         player->printColor("You drop: %s\n", txt.c_str());
     else
         player->printColor("%M drops: %s\n", creature.get(), txt.c_str());
-    broadcast(player->getSock(), room, "%M drops %s", creature.get(), txt.c_str());
+
+    if(player->isStaff())
+        broadcast(player->getSock(), room, "%M drops a bunch of stuff.\n", creature.get());
+    else
+        broadcast(player->getSock(), room, "%M drops %s", creature.get(), txt.c_str());
+       
+
 
     if(money) {
         player->coins.add(money, GOLD);
@@ -2142,6 +2094,7 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     unsigned long cash=0;
     bool is_pet=false, factionCanRecycle=true, created=false;
     Property *p=nullptr;
+    std::string filterString;
 
 // TODO: check to see if this extra aliasing check is even needed - won't  print handle it?
 
@@ -2172,7 +2125,7 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
     if(player->getClass() == CreatureClass::BUILDER) {
         if(!player->canBuildObjects()) {
-            player->print("You are not allowed drop items.\n");
+            player->print("You are not allowed to drop items.\n");
             return(0);
         }
         if(!player->checkBuilder(player->getUniqueRoomParent())) {
@@ -2180,6 +2133,7 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             return(0);
         }
     }
+
 
     // with an extra rule, let's simplify the check to see if a pet is doing it
     is_pet = player != creature;
@@ -2190,13 +2144,13 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 
     if(cmnd->num == 2) {
 
-        if(!player->isStaff() && room->flagIsSet(R_SHOP_STORAGE) || room->flagIsSet(R_NO_DROP_OBJECTS)) {
+        if(!player->isStaff() && (room->flagIsSet(R_SHOP_STORAGE) || room->flagIsSet(R_NO_DROP_OBJECTS))) {
             player->print("You cannot drop anything here.\n");
             return(0);
         }
 
         if(!strcmp(cmnd->str[1], "all")) {
-            dropAllRoom(creature, player, factionCanRecycle);
+            dropAllRoom(creature, player, factionCanRecycle, "");
             return(0);
         }
 
@@ -2222,15 +2176,20 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
                 player->print("You don't have that much!\n");
                 return(0);
             }
-        } else {
-            if(is_pet)
+        } 
+        else {
+                
+            if (is_pet)
                 object = creature->findObject(player, cmnd, 1, true);
             else
                 object = player->findObject(player, cmnd, 1, true);
         }
 
         if(!object) {
-            player->print("You don't have that.\n");
+            if (is_pet)
+                *player << ColorOn << setf(CAP) << creature << " is not carrying that in " << creature->hisHer() << " inventory.\n" << ColorOff;
+            else
+                *player << "You are not carrying that in your inventory.\n";
             return(0);
         }
 
@@ -2320,7 +2279,9 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             player->setLastPawn(object);
         }
 
-    } else {
+    } 
+    else 
+    {
         if(is_pet)
             container = creature->findObject(player, cmnd, 2, true);
         else
@@ -2329,7 +2290,7 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         if(!container) {
             container = room->findObject(player, cmnd, 2, true);
             if(container) {
-                if(!player->isStaff() && room->flagIsSet(R_SHOP_STORAGE) || room->flagIsSet(R_NO_DROP_OBJECTS)) {
+                if(!player->isStaff() && (room->flagIsSet(R_SHOP_STORAGE) || room->flagIsSet(R_NO_DROP_OBJECTS))) {
                     player->print("You cannot drop anything here.\n");
                     return(0);
                 }
@@ -2355,7 +2316,7 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             }
         }
 
-        if(!container) {
+        if (!container) {
             player->print("You don't see that here.\n");
             return(0);
         }

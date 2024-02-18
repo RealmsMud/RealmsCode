@@ -178,7 +178,7 @@ bool listObjectSee(const std::shared_ptr<const Player> player, std::shared_ptr<O
     return(player->isStaff() || (player->canSee(object) && (showAll || !object->flagIsSet(O_HIDDEN)) && !object->flagIsSet(O_SCENERY)) );
 }
 
-std::string Container::listObjects(const std::shared_ptr<const Player> &player, bool showAll, char endColor) const {
+std::string Container::listObjects(const std::shared_ptr<const Player> &player, bool showAll, char endColor, std::string filter) const {
     std::shared_ptr<Object> object=nullptr;
     int     num=1, n=0;
     int flags = player->displayFlags();
@@ -196,10 +196,18 @@ std::string Container::listObjects(const std::shared_ptr<const Player> &player, 
                     Unique::is(object) ||
                     (object->inMonster() && object->flagIsSet(O_BODYPART)) ) )
                 continue;
+
         }
 
         if(!listObjectSee(player, object, showAll))
             continue;
+
+        if (!filter.empty()) {
+            if (object->getTypeName() != filter)
+                continue;
+            //if (object->isTrash() && filter != "trash")
+            //    continue;
+            }
 
         num = 1;
         while(it != objects.end()) {

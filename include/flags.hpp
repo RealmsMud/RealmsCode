@@ -387,7 +387,7 @@
 #define M_NO_FACTION_AGGRO          27      // Don't aggro based on faction
 #define M_CAN_RIPOSTE               28      // Can riposte regardless of other rules
 #define M_DARKNESS                  29      // Monster is carrying a darkness item
-// free                             30
+#define M_RANDOM_SEX                30      // Monster will load with random sex (male/female)
 // free                             31
 #define M_CAN_PLEDGE_TO             32      // players can pledge to monster
 #define M_CAN_RESCIND_TO            33      // players can rescind to monster

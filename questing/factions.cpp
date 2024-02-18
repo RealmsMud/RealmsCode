@@ -827,19 +827,19 @@ void Player::adjustFactionStanding(const std::map<std::string, long>& factionLis
         if(faction->alwaysHates(pThis) && regard <= 0)
             continue;
 
-        oStr << (regard > 0 ? "^R" : "^c")
-            << "Your faction standing with " << faction->getDisplayName()
-            << (faction->isParent() ? " and its subfactions" : "")
-            << (regard > 0 ? " has gotten worse." : " has improved.");
+        oStr << (regard > 0 ? "^R" : "^c") << "Your standing with " << faction->getDisplayName()
+            << (faction->isParent() ? " and its subfactions have" : " has") << " gotten " << getFactionChangeAdverb(regard) 
+            << " " << (regard > 0 ? "worse":"better") << ".";
 
-        if(isDm())
+        if(isStaff())
             oStr << " (" << std::abs(regard) << ")";
 
         oStr << "\n";
         factions[faction->getName()] -= regard;
     }
 
-    printColor("%s", oStr.str().c_str());
+    *this << ColorOn << oStr.str() << ColorOff;
+
 }
 
 //*********************************************************************
@@ -996,4 +996,40 @@ void Config::clearFactionList() {
         //factions.erase(fIt);
     }
     factions.clear();
+}
+
+//*********************************************************************
+//                      getFactionChangeAdverb
+//*********************************************************************
+std::string getFactionChangeAdverb(long factionChange) {
+
+    std::string changeAdverb = "";
+    long regard = abs(factionChange);
+
+    if (regard == 0)
+        return(changeAdverb);
+
+    if (regard <= 2)                    
+        changeAdverb = "minimally";        // 1 - 2
+    else if (regard <= 5 )              
+        changeAdverb = "slightly";         // 3 - 5
+    else if (regard <= 10)              
+        changeAdverb = "noticeably";       // 6 - 10    
+    else if (regard <= 25)              
+        changeAdverb = "markedly";         // 11 - 25
+    else if (regard <= 50)              
+        changeAdverb = "substantially";    // 26 - 50
+    else if (regard <= 200)             
+        changeAdverb = "vastly";           // 51 - 200
+    else if (regard <= 500)             
+        changeAdverb = "drastically";      // 201 - 500
+    else if (regard <= 999)             
+        changeAdverb = "enormously";       // 501 - 999
+    else
+        changeAdverb = "massively";        // 1000+
+
+
+    return(changeAdverb);
+
+
 }

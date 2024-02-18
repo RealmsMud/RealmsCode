@@ -739,58 +739,72 @@ std::shared_ptr<MudObject> findPlyTarget(std::shared_ptr<Creature> player, Playe
     return(nullptr);
 }
 
+bool isFilterString(const std::string commandString) {
+
+    if (!commandString.empty() && commandString[0] == '@')
+        return(true);
+
+    return(false);
+
+}
+
 
 std::string getFilterString(const std::string commandString) {
-
-    size_t filterChar = commandString.find("@");
     std::string filterString;
 
-    if(filterChar != std::string::npos) {
-        filterString = commandString.substr(filterChar+1);
-        std::transform(filterString.begin(), filterString.end(), filterString.begin(), ::tolower);
+    filterString = commandString;
+
+    if(isFilterString(filterString))
+    {
+
+        size_t filterChar = commandString.find("@");
+        
+        if(filterChar != std::string::npos) {
+            filterString = commandString.substr(filterChar+1);
+            std::transform(filterString.begin(), filterString.end(), filterString.begin(), ::tolower);
+        }
+
+        if (!filterString.empty()) {
+            //Strip any trailing s that a player might add to a filter
+            if(filterString.at(filterString.length()-1) == 's')
+                filterString.erase(filterString.length()-1, 1);
+
+            //Possible shortcuts
+            if (filterString == "gem")
+                filterString = "gemstone";
+            else if (filterString == "bag")
+                filterString = "container";
+            else if (filterString == "other")
+                filterString = "misc";
+            else if (filterString == "lotteryticket")
+                filterString = "lottery ticket";
+            else if (filterString == "song scroll")
+                filterString = "songscroll";
+        }
     }
 
     return(filterString);
 }
 
-std::string getModifiedSearchFilter(std::string filter) {
-    
-    std::string modString = filter;
+bool isUseableFilterString(std::shared_ptr<Creature> searcher, std::string fs, bool print) {
 
-    //Strip any trailing s that a player might add to a filter
-    if(!modString.empty() && modString.at(modString.length()-1) == 's')
-        modString.erase(modString.length()-1, 1);
-
-    //Possible shortcuts
-    if (modString == "gem")
-        modString = "gemstone";
-    else if (modString == "bag")
-        modString = "container";
-    else if (modString == "other")
-        modString = "misc";
-    else if (modString == "lotteryticket")
-        modString = "lottery ticket";
-
-    return(modString);
-}
-
-bool isValidSearchFilter(std::string filter) {
-
-    std::string fs = getModifiedSearchFilter(filter);
-
-    if (fs.empty())
+    if (!searcher) 
         return(false);
 
     if (fs == "weapon" || fs == "instrument" || fs == "herb" || fs == "armor" ||
         fs == "potion" || fs == "scroll" || fs == "wand" || fs == "container" ||
         fs == "money" || fs == "key" || fs == "lightsource" || fs == "misc" ||
-        fs == "song scroll" || fs == "songscroll" || fs == "poison" || fs == "bandage" ||
-        fs == "ammo" || fs == "quiver" || fs == "lottery ticket" || fs == "gemstone"
+        fs == "song scroll" || fs == "poison" || fs == "bandage" || fs == "ammo" || 
+        fs == "quiver" || fs == "lottery ticket" || fs == "gemstone"
     )
         return(true);
 
     if (fs == "trash")
         return(true);
+
+    if (print) {
+        *searcher << ColorOn << "Unavailable filter: ^c@" << fs << "\n" << ColorOff;
+    }
 
     return(false);
 }
@@ -960,4 +974,43 @@ std::vector<std::string> splitString(std::string s, std::string delimiter)
 std::string joinVector(std::vector<std::string> v, std::string delimiter)
 {
     return boost::join(v, delimiter);
+}
+
+//******************************************************************************
+//                      getIntFromStr                     
+//******************************************************************************
+
+int getIntFromStr(std::string& someString) {
+
+    if (someString.empty())
+        return(0);
+
+    int returnInt = 0;
+    try {
+        returnInt = std::stoi(someString);
+    } catch (std::invalid_argument &) {
+        returnInt = 0;
+    } catch (std::out_of_range &) {
+        returnInt = 0;
+    }
+
+    return(returnInt);
+
+}
+//****************************************************
+//               stripNonDigits                     
+//****************************************************
+std::string stripNonDigits(std::string someString) {
+    
+    std::string digitString;
+    
+    if(someString.empty())
+        return(digitString);
+
+    for(char c : someString) {
+        if(std::isdigit(c))
+            digitString += c;
+    }
+
+    return(digitString);
 }

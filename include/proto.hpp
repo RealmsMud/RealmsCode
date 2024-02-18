@@ -169,7 +169,7 @@ char* get_skill_string(int nIndex);
 
 void remove_all(const std::shared_ptr<Player>& player);
 
-int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd* cmnd, int inv);
+int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd* cmnd, bool staffPeeking);
 
 
 void steal_gold(std::shared_ptr<Player> player, std::shared_ptr<Creature> creature);
@@ -223,7 +223,8 @@ bool canRemovePlyFromGuild(std::shared_ptr<Player> player);
 // alignment.cpp
 bool antiGradius(int race);
 
-
+// factions.cpp
+std::string getFactionChangeAdverb(long factionChange);
 
 
 // io.cpp
@@ -297,14 +298,16 @@ bool validMobId(const CatRef& cr);
 bool validObjId(const CatRef& cr);
 bool validRoomId(const CatRef& cr);
 std::string timeStr(int seconds);
+bool isFilterString(const std::string commandString);
 std::string getFilterString(const std::string commandString);
-std::string getModifiedSearchFilter(std::string filter);
-bool isValidSearchFilter(std::string filter);
+bool isUseableFilterString(std::shared_ptr<Creature> searcher, std::string fs, bool print);
 
 std::string progressBar(int barLength, float percentFull, const std::string &text = "", char progressChar = '=', bool enclosed = true);
 
 std::vector<std::string> splitString(std::string s, std::string delimiter = "");
 std::string joinVector(std::vector<std::string> v, std::string delimiter = "");
+int getIntFromStr(std::string& someString);
+std::string stripNonDigits(std::string someString);
 
 bool nameIsAllowed(std::string str, const std::shared_ptr<Socket>& sock);
 int bonus(int num);

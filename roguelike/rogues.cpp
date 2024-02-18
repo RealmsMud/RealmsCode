@@ -1910,8 +1910,10 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Player> pCreature=nullptr;
     std::shared_ptr<Monster>  mCreature=nullptr;
     std::string str = "";
+    std::string filterString;
     long    i=0, t=0;
-    int     chance=0, goldchance=0, ok=0;
+    int     chance=0, goldchance=0;
+    bool    peekFilter=false;
 
     player->clearFlag(P_AFK);
 
@@ -1951,7 +1953,7 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
             *player << "You cannot peek players.\n";
             return(0);
         }
-    if(!player->canBuildMonsters() && !player->canBuildObjects())
+        if(!player->canBuildMonsters() && !player->canBuildObjects())
             return(cmdNoAuth(player));
         if(!player->checkBuilder(player->getUniqueRoomParent())) {
             *player << ColorOn << "^yError: Room number not inside any of your alotted ranges.\n" << ColorOff;
@@ -1964,10 +1966,10 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(!pCreature && player->isStaff())
-        return(dmMobInventory(player, cmnd));
+        return(dmGetMobInventory(player, mCreature, cmnd));
 
 
-    if(pCreature && pCreature->isEffected("mist")) {
+    if(pCreature && pCreature->isEffected("mist") && !player->isStaff()) {
         *player << "You cannot peek at the inventory of a mist.\n";
         return(0);
     }
@@ -1996,12 +1998,22 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(cmnd->num > 2 && pCreature && (player->getClass() == CreatureClass::THIEF || player->isCt())) {
-        peek_bag(player, pCreature, cmnd, 0);
-        return(0);
+    //Only pure thieves and CT+ can use object filters when peeking and peek in bags
+    if ((player->getClass() == CreatureClass::THIEF && player->getSecondClass() == CreatureClass::NONE) || player->isCt()) {
+
+        if (cmnd->num > 2 && isFilterString(cmnd->str[2])) {
+            filterString = getFilterString(cmnd->str[2]);
+            if(!isUseableFilterString(player, filterString, true))
+                return(0);
+            else
+                peekFilter = true;
+        } else if(cmnd->num > 2 && pCreature) {
+            peek_bag(player, pCreature, cmnd, (player->isCt()?true:false));
+            return(0);
+        }
     }
 
-    if(!ok && (player->getClass() == CreatureClass::THIEF || player->isStaff()))
+    if(player->getClass() == CreatureClass::THIEF || player->isStaff())
         chance = (25 + level*10)-(creature->getLevel()*5);
     else
         chance = (level*10)-(creature->getLevel()*5);
@@ -2034,11 +2046,17 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
     player->checkImprove("peek", true);
 
-    str = creature->listObjects(player, player->isStaff());
-    if(!str.empty())
+    if (peekFilter) {
+        *player << ColorOn << "^D[Using filter: ^c@" << filterString << "^D]^x\n" << ColorOff;
+        str = creature->listObjects(player, player->isStaff(), 'x', filterString);
+    }
+    else
+        str = creature->listObjects(player, player->isStaff());
+
+    if (!str.empty()) 
         *player << ColorOn << creature->upHeShe() << " is carrying: " << str << ".\n" << ColorOff;
     else
-        *player << creature->upHeShe() << " isn't holding anything.\n";
+        *player << creature->upHeShe() << " isn't carrying anything.\n";
 
 
     goldchance = (5+(level*5)) - creature->getLevel();
@@ -2059,10 +2077,12 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //                      peek_bag
 //*********************************************************************
 
-int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd* cmnd, int inv) {
+int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd* cmnd, bool staffPeeking) {
     std::shared_ptr<Object> container=nullptr;
     std::string str = "";
+    std::string filterString;
     int     chance=0;
+    bool    peekFilter=false;
 
     if(!player->isStaff()) {
         int level = (int)player->getSkillLevel("peek");
@@ -2090,7 +2110,7 @@ int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd
 
     if(!container) {
         *player << target->upHeShe() << " doesn't have that.\n";
-        return(0);
+        return(0); 
     }
 
     if(container->getType() != ObjectType::CONTAINER) {
@@ -2098,9 +2118,17 @@ int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd
         return(0);
     }
 
-    if(!inv) {
-        if(Random::get(1,100) > chance && !player->isStaff()) {
+    if(cmnd->num > 3 && isFilterString(cmnd->str[3])) {
+        filterString = getFilterString(cmnd->str[3]);
+        if (!isUseableFilterString(player, filterString, true))
+            return(0);
+        else
+            peekFilter = true;
+    }
+    
 
+    if (!staffPeeking) {
+        if(Random::get(1,100) > chance && !player->isCt()) {
             *player << ColorOn << "You manage to peek inside " << target << "'s " << container->getCName() << ".\n" << ColorOff;
             *target << ColorOn << setf(CAP) << player << " managed to peek inside your " << container->getCName() << "!\n" << ColorOff;
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M peeked at %N's inventory.",
@@ -2113,13 +2141,19 @@ int peek_bag(std::shared_ptr<Player> player, std::shared_ptr<Player> target, cmd
         }
         player->checkImprove("peek", true);
     }
+    
 
     if(container->getType() == ObjectType::CONTAINER) {
-        str = container->listObjects(player, false);
-        if(!str.empty())
-            *player << ColorOn << "It contains: " << str << ".\n" << ColorOff;
+        if (peekFilter) {
+            *player << ColorOn << "^D[Using filter: ^c@" << filterString << "^D]^x\n" << ColorOff;
+            str = container->listObjects(player, player->isCt()?true:false, 'x', filterString);
+        }
         else
-            *player << "It is empty.\n";
+            str = container->listObjects(player, player->isCt()?true:false);
+        if(!str.empty())
+            *player << ColorOn << setf(CAP) << container << " contains: " << str << ".\n" << ColorOff;
+        else
+            *player << ColorOn << setf(CAP) << container << " is empty.\n" << ColorOff;
     }
 
     return(0);

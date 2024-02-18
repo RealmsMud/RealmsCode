@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     libssl-dev \
     libboost-filesystem-dev \
     libboost-date-time-dev \
+    libboost-regex-dev \
     libpython3.10 \
     libpython3.10-dev \
     python3-dev \

@@ -1139,7 +1139,7 @@ int Monster::checkWander(long t) {
         // Then we've got a chance to wander away
         if(Random::get<bool>(0.05)) {
             if(race || monType::isIntelligent(type))
-                broadcast((std::shared_ptr<Socket> )nullptr, room, "%1M %s away in search of someone to bully.", this, moveString.c_str());
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%1M %s off in search of enemies to attack.", this, moveString.c_str());
             else
                 broadcast((std::shared_ptr<Socket> )nullptr, room, "%1M just %s away.", this, moveString.c_str());
             return(2);

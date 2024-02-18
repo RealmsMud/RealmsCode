@@ -2230,3 +2230,4 @@ bool Creature::isIndoors() {
     return (room->flagIsSet(R_INDOORS));
 }
 
+

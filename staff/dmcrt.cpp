@@ -672,6 +672,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Object> object=nullptr;
     bool    ctModBuilder=false;
     std::string intText="", objText="";
+    std::string rNumString;
 
     if(player->getClass() == CreatureClass::BUILDER) {
         if(!player->canBuildMonsters())
@@ -1886,12 +1887,23 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
         default:
 
-            Realm r = (Realm)std::max((int)MIN_REALM, std::min((int)MAX_REALM-1, toNum<int>(&cmnd->str[3][1])));
+            rnum = toNum<int>(&cmnd->str[3][1]);
+
+            if (rnum < MIN_REALM || rnum > MAX_REALM-1) {
+                *player << ColorOn << "^gRealm # should be a numeric value between " << MIN_REALM << " and " << MAX_REALM-1 << ".\n" << ColorOff;
+                return(0);
+            }
+            Realm r = (Realm)std::max((int)MIN_REALM, std::min((int)MAX_REALM-1, rnum));
+
             target->setRealm(cmnd->val[3], r);
-            player->print("%M given %d shots in realm#%d.\n", target.get(), target->getRealm(r), num);
-            log_immort(true, player, "%s set %s %s's %s%d to %ld.\n",
-                player->getCName(), PLYCRT(target), target->getCName(), "Realm#",
-                num, target->getRealm(r));
+
+            *player << ColorOn << "^y" << setf(CAP) << target << "'s Realm #" << rnum << " (" << getRealmSpellName(r) << 
+                                ") now set to " << target->getRealm(r) << " [" << mprofic(target, rnum) << "%].\n" << ColorOff;
+
+
+            log_immort(true, player, "%s set %s %s's %s%d(%s) to %ld[%d%] in room %s\n",
+                player->getCName(), PLYCRT(target), target->getCName(),"Realm#",
+                rnum, getRealmSpellName(r).c_str(), target->getRealm(r),mprofic(target, rnum), target->getRoomParent()->fullName().c_str());
             break;
         }
         break;
@@ -1900,7 +1912,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
         case 'i':
             target->setSize(getSize(cmnd->str[4]));
             player->print("%s's %s set to %s.\n", target->getCName(), "Size", getSizeName(target->getSize()).c_str());
-            log_immort(true, player, "%s set %s %s's %s to %s.\n",
+            log_immort(true, player, "%s set %s %s(%s) %s to %s.\n",
                 player->getCName(), PLYCRT(target), target->getCName(), "Size", getSizeName(target->getSize()).c_str());
             return(0);
 
