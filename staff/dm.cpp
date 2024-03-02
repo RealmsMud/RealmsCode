@@ -109,31 +109,131 @@ int dmReboot(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 }
 
+int dmCheckInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Monster> mTarget=nullptr;
+    std::shared_ptr<Player> pTarget=nullptr;
+
+    if (cmnd->num < 2) {
+        *player << "Check inventory of which monster or player?\n";
+        return(0);
+    }
+
+    mTarget = player->getParent()->findMonster(player, cmnd);
+
+    if (!mTarget) {
+        cmnd->str[1][0] = up(cmnd->str[1][0]);
+        pTarget = gServer->findPlayer(cmnd->str[1]);
+        if(!pTarget) {
+            if(!loadPlayer(cmnd->str[1], pTarget)) {
+                player->print("Monster not present, or player does not exist.\n");
+                return(0);
+            }
+        }
+    }
+
+    if (mTarget) {
+        return(dmGetMobInventory(player, mTarget, cmnd));
+    }
+    else if (pTarget) {
+        return(dmGetPlyInventory(player, pTarget, cmnd));
+    }
+
+    //Something really weird happened here...
+    if(!mTarget && !pTarget)
+        *player << "ERROR: mTarget or pTarget not found!\n";
+
+    return(0);
+}
+
+int dmGetPlyInventory(const std::shared_ptr<Player>& player, const std::shared_ptr<Player>& target, cmd* cmnd) {
+    int m=0, n=0, flags = player->displayFlags();
+    std::string filterString;
+    bool invFilter = false;
+    std::ostringstream oStr;
+
+    if (!target)
+        return(0);
+
+    if (!player->isCt()) {
+        *player << ColorOn << "^yYou are not authorized to do that.\n" << ColorOff;
+        return(0);
+    }
+
+    if (cmnd->num > 2  && isFilterString(cmnd->str[2])) {
+         filterString = getFilterString(cmnd->str[2]); 
+        if (!isUseableFilterString(player, filterString, true))
+            return(0);
+        else
+            invFilter = true;
+    }
+    else if (cmnd->num > 2) {
+        peek_bag(player, target, cmnd, 1);
+        return(0);
+       
+    }
+
+    if (invFilter) 
+        oStr << "^D[Using filter: ^c@" << filterString << "^D]^x\n";
+
+    oStr << target->getName() << "'s inventory: ";
+
+    ObjectSet::iterator it;
+    std::shared_ptr<Object>  obj;
+    for( it = target->objects.begin() ; it != target->objects.end() ; ) {
+        obj = (*it++);
+        if (invFilter && obj->getTypeName() != filterString)
+            continue;
+        //if (invFilter && (!obj->isTrash() && filterString == "trash"))
+        //    continue;
+        if(player->canSee(obj)) {
+            m = 1;
+            while( it != target->objects.end() ) {
+                if(obj->showAsSame(player, (*it))) {
+                    m++;
+                    it++;
+                } else
+                    break;
+            }
+
+            if(n)
+                oStr << ", ";
+            oStr << obj->getObjStr(player, flags, m);
+
+            if(obj->flagIsSet(O_KEEP))
+                oStr << "(K)";
+            if(obj->flagIsSet(O_BEING_PREPARED))
+                oStr << "(P)";
+            n++;
+        }
+    }
+
+    if(!n)
+        oStr << "nothing";
+
+    oStr << ".\n";
+
+    *player << ColorOn << oStr.str() << ColorOff;
+
+    return(0);
+
+}
+
 //*********************************************************************
-//                      dmMobInventory
+//                      dmGetMobInventory
 //*********************************************************************
 
-int dmMobInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    std::shared_ptr<Monster> monster=nullptr;
+int dmGetMobInventory(const std::shared_ptr<Player>& player, const std::shared_ptr<Monster>& monster, cmd* cmnd) {
+    //std::shared_ptr<Monster> monster=nullptr;
     std::shared_ptr<Object> object;
-    //char  str[2048];
+    bool invFilter = false;
+    std::string filterString;
     int     i=0;
+
+    if (!monster)
+        return(0);
 
     if(!player->canBuildMonsters())
         return(cmdNoAuth(player));
-
-
-    if(cmnd->num < 2) {
-        player->print("Which monster?\n");
-        return(0);
-    }
-
-    monster = player->getParent()->findMonster(player, cmnd);
-    if(!monster) {
-        player->print("That's not here.\n");
-        return(0);
-    }
-
 
 
     if(!strcmp(cmnd->str[2], "-l") || player->getClass() == CreatureClass::BUILDER) {
@@ -158,8 +258,25 @@ int dmMobInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         return(0);
     }
-    std::string str = monster->listObjects(player, true);
-    std::string prefix =std::string(monster->flagIsSet(M_NO_PREFIX) ? "":"The ") + monster->getName() + " is carrying: ";
+
+    if (cmnd->num > 2 && isFilterString(cmnd->str[2])) {
+        filterString = getFilterString(cmnd->str[2]);
+        if(!isUseableFilterString(player, filterString, true)) {
+            return(0);
+        }
+        else
+            invFilter = true;
+    }
+
+    std::string str;
+    if (invFilter) {
+        *player << ColorOn << "^D[Using filter: ^c@" << filterString << "^D]^x\n" << ColorOff;
+        str = monster->listObjects(player, true, 'x', filterString);
+    }
+    else
+        str = monster->listObjects(player, true);
+
+    std::string prefix = std::string(monster->flagIsSet(M_NO_PREFIX) ? "":"The ") + monster->getName() + " is carrying: ";
     if(!str.empty()) {
         str =  prefix + str + ".";
     } else {
@@ -525,7 +642,7 @@ int dmTeleport(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         if(player->getClass() == CreatureClass::BUILDER && creature->getClass() !=  CreatureClass::BUILDER) {
-            player->print("You are only allowed to teleport to other builder.\n");
+            player->print("You are only allowed to teleport to other builders.\n");
             return(0);
         }
 

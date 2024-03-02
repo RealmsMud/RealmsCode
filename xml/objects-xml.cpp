@@ -287,6 +287,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
             if(NODE_NAME(curNode, "SpecialThree")) xml::copyToNum(effectDuration, curNode);
         }
 
+
         curNode = curNode->next;
     }
 
@@ -302,6 +303,11 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
         addEffect("invisibility", -1);
         clearFlag(O_OLD_INVISIBLE);
     }
+
+    if (version < "2.61d" && info.isArea("gemstone")) {
+        setType(ObjectType::GEMSTONE);
+    }
+
     // make sure uniqueness stays intact
     setFlag(O_UNIQUE);
     if(!gConfig->getUnique(getAsObject()))

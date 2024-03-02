@@ -284,7 +284,7 @@ int cmdClaim(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->unhide();
 
-    ticket = player->findObject(player, cmnd, 1);
+    ticket = player->findObject(player, cmnd, 1, true);
 
     if(!ticket) {
         player->print("You don't have that.\n");

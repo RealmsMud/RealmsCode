@@ -714,7 +714,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 if(weapon) {
                     if(attackType == ATTACK_AMBUSH && Random::get(1,2) == 1) //50% chance to lose a shot, same as backstab
                         weapon->decShotsCur();
-                    else if (Random::get(1,8) == 1) //12.5% chance to lose a shot (was previously 25% in stock mordor up to RoH v2.59)
+                    else if (Random::get(1,10) == 1) //10% chance to lose a shot (was previously 25% in stock mordor up to RoH v2.59)
                         weapon->decShotsCur();
                 }
 

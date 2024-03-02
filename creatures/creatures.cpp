@@ -128,18 +128,23 @@ bool Creature::canSee(const std::shared_ptr<const MudObject> target, bool skip) 
     if(target->isCreature()) {
         const std::shared_ptr<const Creature> & cTarget = target->getAsConstCreature();
         if(cTarget->isPlayer()) {
-            if(cTarget->flagIsSet(P_DM_INVIS) && getClass() < cTarget->getClass()) return(false);
-            if(target->isEffected("incognito") && (getClass() < cTarget->getClass()) && getParent() != cTarget->getParent()) return(false);
+            if(cTarget->flagIsSet(P_DM_INVIS) && getClass() < cTarget->getClass()) 
+                return(false);
+            if(target->isEffected("incognito") && (getClass() < cTarget->getClass()) && getParent() != cTarget->getParent()) 
+                return(false);
 
             if(!skip) {
-                if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff()) return(false);
-                if(target->isEffected("mist") && !isEffected("true-sight") && !isStaff()) return(false);
+                if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff()) 
+                    return(false);
+                if(target->isEffected("mist") && !isEffected("true-sight") && !isStaff()) 
+                    return(false);
             }
 
         } else {
 
             if(!skip) {
-                if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff()) return(false);
+                if(cTarget->isInvisible() && !isEffected("detect-invisible") && !isStaff()) 
+                    return(false);
             }
 
         }
@@ -147,17 +152,22 @@ bool Creature::canSee(const std::shared_ptr<const MudObject> target, bool skip) 
     } // End Creature
     if(target->isExit()) {
         const std::shared_ptr<const Exit> &exit = target->getAsConstExit();
-        if(isStaff()) return(true);
+        if(isStaff()) 
+            return(true);
 
         // handle NoSee right away
-        if(exit->flagIsSet(X_NO_SEE)) return(false);
-        if(exit->isEffected("invisibility") && !isEffected("detect-invisible")) return(false);
+        if(exit->flagIsSet(X_NO_SEE)) 
+            return(false);
+        if(exit->isEffected("invisibility") && !isEffected("detect-invisible")) 
+            return(false);
     }
     if(target->isObject()) {
         const std::shared_ptr<const Object> &object = target->getAsConstObject();
 
-        if(isStaff()) return(true);
-        if(object->isEffected("invisibility") && !isEffected("detect-invisible")) return(false);
+        if(isStaff()) 
+            return(true);
+        if(object->isEffected("invisibility") && !isEffected("detect-invisible")) 
+            return(false);
 
     }
     return(true);
@@ -2219,4 +2229,5 @@ bool Creature::isIndoors() {
 
     return (room->flagIsSet(R_INDOORS));
 }
+
 

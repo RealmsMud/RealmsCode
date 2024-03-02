@@ -345,7 +345,7 @@ int cmdSecond(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->unhide();
     if(cmnd->num > 1) {
 
-        object = player->findObject(player, cmnd, 1);
+        object = player->findObject(player, cmnd, 1, true);
         if(!object) {
             player->print("You don't have that.\n");
             return(0);

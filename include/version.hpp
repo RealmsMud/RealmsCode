@@ -21,7 +21,7 @@
 #define VERSION_MINOR "6"
 
 
-#define VERSION_SUB "1d"
+#define VERSION_SUB "2"
 
 
 #define VERSION VERSION_MAJOR "." VERSION_MINOR VERSION_SUB

@@ -742,7 +742,11 @@ std::string QuestCompletion::getStatusDisplay() {
 
     std::ostringstream displayStr;
     int i;
+
+   
     checkQuestCompletion(false);
+
+    QuestCompleted* completed = myPlayer->getQuestCompleted(parentQuest->questId);
 
     if(mobsCompleted && itemsCompleted && roomsCompleted)
         displayStr << "^Y*";
@@ -750,8 +754,13 @@ std::string QuestCompletion::getStatusDisplay() {
         displayStr << "^y";
     displayStr << parentQuest->name << "^x\n";
     displayStr << "Frequency:" << "^x";
-    if(parentQuest->timesRepeatable)
-        displayStr << " ^G*Repeatable Limited*^x";
+
+    if(parentQuest->timesRepeatable > 1) {
+        if(completed && parentQuest->timesRepeatable > completed->getTimesCompleted())
+            displayStr << " ^G*Repeatable (" << (parentQuest->timesRepeatable - completed->getTimesCompleted()) << " remaining)*^x";
+        else
+            displayStr << " ^G*Repeatable " << parentQuest->timesRepeatable << " times*^x";
+    }
     if (parentQuest->isRepeatable()) {
         if(parentQuest->repeatFrequency == QuestRepeatFrequency::REPEAT_DAILY)
             displayStr << " ^G*Offered Daily*^x";
@@ -1468,28 +1477,35 @@ bool QuestInfo::canGetQuest(const std::shared_ptr<const Player> &player, const s
 
     if(eligibility == QuestEligibility::INELIGIBLE_HAS_QUEST) {
         // Staff still can't have it in their quest book twice
-        player->printColor("^m%M says, \"I'd tell you about ^W%s^m, but you already know about it!\"\n", giver.get(), getName().c_str());
+        player->printColor("^m%M says, \"You have already accepted ^W%s^m! You should either complete the quest or abandon it.\"\n", giver.get(), getName().c_str());
         return(false);
     }
 
+
+    if(eligibility == QuestEligibility::INELIGIBLE_NOT_REPETABLE && timesRepeatable &&
+        !player->checkStaff("^m%M says, \"Unfortunately, you have already completed ^W%s^m enough times. You should seek adventure elsewhere.\"\n", giver.get(), getName().c_str()))
+    {
+        return (false);
+    }
+
     if(eligibility == QuestEligibility::INELIGIBLE_NOT_REPETABLE &&
-            !player->checkStaff("^m%M says, \"I'd tell you about ^W%s^m, but you've already done that quest!\"\n", giver.get(), getName().c_str()))
+         !player->checkStaff("^m%M says, \"Unfortunately, you have already completed ^W%s^m. It cannot be repeated. You should seek adventure elsewhere.\"\n", giver.get(), getName().c_str()))
     {
         return (false);
     }
 
     if (eligibility == QuestEligibility::INELIGIBLE_DAILY_NOT_EXPIRED &&
-            !player->checkStaff("^m%M says, \"Come back tomorrow and I'll tell you more about ^W%s^m.\"\n", giver.get(), getName().c_str())) {
+            !player->checkStaff("^m%M says, \"Unfortunately, ^W%s^m is not available right now. You should come back tomorrow.\"\n", giver.get(), getName().c_str())) {
         return (false);
     }
 
     if (eligibility == QuestEligibility::INELIGIBLE_WEEKLY_NOT_EXPIRED &&
-            !player->checkStaff("^m%M says, \"Come back next week and I'll tell you more about ^W%s^m.\"\n", giver.get(), getName().c_str())) {
+            !player->checkStaff("^m%M says, \"Unfortunately, ^W%s^m is not available right now. You should come back next week.\"\n", giver.get(), getName().c_str())) {
         return (false);
     }
 
     if (eligibility == QuestEligibility::INELIGIBLE_LEVEL &&
-        !player->checkStaff("^m%M says, \"You're not ready for that information yet! Return when you have gained more experience.\"\n", giver.get()))
+        !player->checkStaff("^m%M says, \"I don't think that you're ready for that information yet. You should return when you have more experience.\"\n", giver.get()))
         return(false);
 
     if (eligibility == QuestEligibility::INELIGIBLE_FACTION &&
@@ -1724,7 +1740,7 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(str, "^WOld Quests Completed:^x\n");
+    sprintf(str, "^WLegacy RoH Quests Completed:^x\n");
     for(i=1, j=0; i<MAX_QUEST; i++)
         if(player->questIsSet(i)) {
             sprintf(str2, "%s, ", get_quest_name(i));
@@ -1749,7 +1765,7 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
             displayStr << gConfig->getQuest(qc.first)->getName();
 
             if(qc.second->getTimesCompleted() > 1)
-                displayStr << " (" << qc.second << ")";
+                displayStr << " (" << qc.second->getTimesCompleted() << " times)";
 
             displayStr << "\n";
         }

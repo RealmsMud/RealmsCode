@@ -38,6 +38,7 @@
 #include "mudObjects/uniqueRooms.hpp"               // for UniqueRoom
 #include "proto.hpp"                                // for keyTxtEqual, broa...
 #include "toNum.hpp"                                // for toNum
+#include "commands.hpp"                             // for checkObjectFilters
 
 class BaseRoom;
 
@@ -244,32 +245,104 @@ std::shared_ptr<MudObject> Container::findTarget(const std::shared_ptr<const Cre
 }
 
 // Wrapper for the real findObject to support legacy callers
-std::shared_ptr<Object>  Container::findObject(const std::shared_ptr<const Creature>& searcher, const cmd* cmnd, int val) const {
-    return(findObject(searcher, cmnd->str[val], cmnd->val[val]));
+std::shared_ptr<Object>  Container::findObject(const std::shared_ptr<const Creature>& searcher, const cmd* cmnd, int val, bool filter) const {
+    bool exactMatch = false;
+    return(findObject(searcher, cmnd->str[val], cmnd->val[val], exactMatch, filter));
 }
-std::shared_ptr<Object>  Container::findObject(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch ) const {
+std::shared_ptr<Object>  Container::findObject(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch, bool filter) const {
     int match = 0;
-    return(findObject(searcher, name, num,exactMatch, match));
+    return(findObject(searcher, name, num,exactMatch, match, filter));
 }
-std::shared_ptr<Object>  Container::findObject(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch, int& match) const {
+std::shared_ptr<Object>  Container::findObject(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch, int& match, bool filter) const {
     std::shared_ptr<Object>target = nullptr;
-    for(const auto& obj : objects) {
-        if(isMatch(searcher, obj, name, exactMatch, true)) {
-            match++;
-            if(match == num) {
-                if(exactMatch)
-                    return(obj);
-                else {
-                    target = obj;
-                    break;
-                }
+    std::string filterString;
 
+
+    if(filter) {
+        filterString = getFilterString(name);
+        if (!filterString.empty()) 
+            target = checkObjectFilters(searcher, filterString);
+    }
+   
+    if(!target) {
+        for(const auto& obj : objects) {
+            if(isMatch(searcher, obj, name, exactMatch, true)) {
+                match++;
+                if(match == num) {
+                    if(exactMatch)
+                        return(obj);
+                    else {
+                        target = obj;
+                        break;
+                    }
+                }
             }
         }
     }
 
     return(target);
 }
+
+std::shared_ptr<Object> Container::checkObjectFilters(const std::shared_ptr<const Creature>& searcher, std::string filterString) const {
+    std::shared_ptr<Object>target = nullptr;
+
+    target = findObjectType(searcher, filterString);
+
+    return(target);
+}
+
+std::string Container::getFilterString(const std::string commandString) const {
+
+    size_t filterChar = commandString.find("@");
+    std::string filterString;
+
+    if(filterChar != std::string::npos) {
+        filterString = commandString.substr(filterChar+1);
+    }
+
+    return(filterString);
+}
+
+bool Container::isUseableFilterString(const std::shared_ptr<const Creature>& searcher, std::string fs, bool print) const {
+
+    if (!searcher) 
+        return(false);
+
+    if (fs == "weapon" || fs == "instrument" || fs == "herb" || fs == "armor" ||
+        fs == "potion" || fs == "scroll" || fs == "wand" || fs == "container" ||
+        fs == "money" || fs == "key" || fs == "lightsource" || fs == "misc" ||
+        fs == "song scroll" || fs == "poison" || fs == "bandage" || fs == "ammo" || 
+        fs == "quiver" || fs == "lottery ticket" || fs == "gemstone"
+    )
+        return(true);
+
+    if (fs == "trash")
+        return(true);
+
+    if (print)
+        searcher->printColor("Unavailable filter: ^c@%s^x\n", fs.c_str());
+
+    return(false);
+}
+
+
+std::shared_ptr<Object>  Container::findObjectType(const std::shared_ptr<const Creature>& searcher, std::string otypeString) const {
+    std::shared_ptr<Object>target = nullptr;
+
+    if(!isUseableFilterString(searcher, otypeString, false))
+        return(nullptr);
+
+    for(const auto& obj : objects) {
+        if(obj->getTypeName() == otypeString) {
+            target = obj;
+            searcher->printColor("^D[Using filter ^c@%s^D]: (^x%s^D)^x\n", otypeString.c_str(), target->getName().c_str());
+            break;
+        }
+    }
+
+    return(target);
+}
+
 
 
 // Wrapper for the real findCreature to support legacy callers

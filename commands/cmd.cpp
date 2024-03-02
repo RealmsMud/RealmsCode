@@ -257,7 +257,7 @@ bool Config::initCommands() {
 
     // dm.c
     staffCommands.emplace("*reboot", 100, dmReboot, isCt, "Reboot the mud");
-    staffCommands.emplace("*inv", 100, dmMobInventory, nullptr, "Inspect a monster's inventory");
+    staffCommands.emplace("*inv", 100, dmCheckInventory, nullptr, "Inspect a monster or player's inventory");
     staffCommands.emplace("*sockets", 100, dmSockets, isDm, "Show all connected sockets");
     staffCommands.emplace("*dmload", 100, dmLoad, isDm, "Reload configuration files");
     staffCommands.emplace("*txtoncrash", 100, dmTxtOnCrash, isDm, "Toggle whether the mud sends a text message when it crashes");

@@ -170,6 +170,7 @@ int list_objects() {
               << "bulk" << ","
               << "maxbulk" << ","
               << "material" << ","
+              << "materialName" << ","
 
               << "increase" << ","
               << "Bestows" << ","
@@ -237,6 +238,7 @@ int list_objects() {
                               << lObject->getBulk() << ","
                               << lObject->getMaxbulk() << ","
                               << lObject->getMaterial() << ","
+                              << lObject->getMaterialName() << ","
 
                               << (lObject->increase ? lObject->increase->increase : "") << ","
                               << lObject->getEffect() << ","

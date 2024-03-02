@@ -40,6 +40,8 @@
 #include "random.hpp"                // for Random
 #include "stats.hpp"                 // for Stat
 #include "xml.hpp"                   // for loadObject
+#include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
 
 typedef struct {
     short   hpstart;
@@ -127,6 +129,30 @@ balanceStat balancedStats[41]  = {
     {1320,-12,14250,26,3,20},   // 38
     {1360,-13,14625,27,3,21},   // 39
     {1400,-14,15000,28,3,23}    // 40
+};
+
+std::map<std::string, std::string> maleToFemale = {
+     {"*UPHESHE*", "She"},
+     {"*HESHE*", "she"},
+     {"*UPHIMHER*", "Her"},
+     {"*HIMHER*", "her"},
+     {"*UPHISHER*", "Her"},
+     {"*HISHER*", "her"},
+     {"*MANWOMAN*", "woman"},
+     {"*MENWOMEN*", "women"},
+     {"*BOYGIRL*", "girl"}
+ };
+
+std::map<std::string, std::string> femaleToMale = {
+    {"*UPHESHE*", "He"},
+    {"*HESHE*", "he"},
+    {"*UPHIMHER*", "Him"},
+    {"*HIMHER*", "him"},
+    {"*UPHISHER*", "His"},
+    {"*HISHER*", "her"},
+    {"*MANWOMAN*", "man"},
+    {"*MENWOMEN*", "men"},
+    {"*BOYGIRL*", "boy"}
 };
 
 void Monster::adjust(int buffswitch) {
@@ -246,6 +272,9 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
     lasttime[LT_TICK_SECONDARY].ltime = t;
     lasttime[LT_TICK_HARMFUL].ltime = t;
 
+    if (flagIsSet(M_RANDOM_SEX))
+        setRandomSex();
+
     // Make sure armor is set properly
     if(armor < (unsigned)(balancedStats[std::min<short>(level, MAXALVL)].armor - 150)) {
         armor = balancedStats[std::min<short>(level, MAXALVL)].armor;
@@ -348,6 +377,32 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
         weaponSkill = (level-1) * Random::get(9,11);
     return(1);
 }
+
+void Monster::setRandomSex() {
+    
+    if (flagIsSet(M_SEXLESS))
+        return;
+
+    if (flagIsSet(M_MALE))
+        clearFlag(M_MALE);
+
+    if (Random::get(0,1))
+        setFlag(M_MALE);
+
+    std::string description = getAsCreature()->getDescription();
+
+    //Replace wild cards used in desc for random-sex with correct word for gender.
+    if (!description.empty()) {
+        for(const auto& translation : (flagIsSet(M_MALE) ? femaleToMale:maleToFemale) ) {
+            boost::algorithm::replace_all(description, translation.first, translation.second);
+        }
+
+        getAsCreature()->setDescription(description);
+    }
+
+    return;
+}
+
 
 
 //*********************************************************************

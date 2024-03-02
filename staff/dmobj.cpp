@@ -20,6 +20,7 @@
 #include <boost/algorithm/string/replace.hpp>  // for replace_all
 #include <boost/algorithm/string/trim.hpp>     // for trim
 #include <boost/iterator/iterator_traits.hpp>  // for iterator_value<>::type
+#include <boost/algorithm/string.hpp>
 #include <cctype>                              // for isspace, isdigit, isalpha
 #include <cstdio>                              // for sprintf
 #include <cstdlib>                             // for atoi, atof
@@ -66,6 +67,7 @@
 #include "unique.hpp"                          // for Unique, Lore
 #include "xml.hpp"                             // for loadObject
 #include "toNum.hpp"
+#include "join.hpp"
 
 //*********************************************************************
 //                      dmCreateObj
@@ -331,7 +333,7 @@ std::string Object::statObj(int statFlags) {
     }
 
     if(!effect.empty()) {
-        objStr << "^yEffect: " << effect << "^x\n"
+        objStr << "^yBestows Effect: " << effect << "^x\n"
                << "  Duration: ";
 
         if(effect == "poison" && !effectDuration)
@@ -350,6 +352,7 @@ std::string Object::statObj(int statFlags) {
     if(flagIsSet(O_EQUIPPING_BESTOWS_EFFECT) && !Effect::objectCanBestowEffect(effect))
         objStr << "^yObject is flagged as bestowing effect \"" << effect << "\" that cannot be bestowed.^x\n";
 
+    objStr << "\nObject Effects set: " << (join(effects.effectList, ",")) << "\n\n";
 
     objStr << "Flags set: ";
 

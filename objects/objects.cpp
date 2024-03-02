@@ -57,6 +57,7 @@
 #include "structs.hpp"                 // for SEX_FEMALE, SEX_MALE, SEX_NONE
 #include "xml.hpp"                     // for loadObject, loadRoom
 #include "deityData.hpp"               // for deityRestrict output
+#include "color.hpp"                   // for stripColor
 
 
 // Object flags to be saved for object refs
@@ -906,7 +907,7 @@ bool Object::skillRestrict(const std::shared_ptr<Creature> & creature, bool p) c
 }
 
 //*********************************************************************
-//                          levelRestrict
+//                          alignRestrict
 //*********************************************************************
 
 bool Object::alignRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
@@ -1143,12 +1144,30 @@ std::string Object::getObjStr(const std::shared_ptr<const Creature> & viewer, in
             nameStr += getName();
 
             if(!flagIsSet(O_SOME_PREFIX)) {
-                auto last = nameStr.at(nameStr.length() - 1);
-                if(last == 's' || last == 'x') {
-                    nameStr += "es";
-                } else {
-                    nameStr += 's';
+
+                //Account for trailing color tags in nameStr in order to have correct output with colored objects
+                bool isTrailingColorTag=false;
+                std::string trailingColorTag;
+                //Length of nameStr should not be under 4, but protection here just in case something dumb happens.
+                if(nameStr.length() > 3){
+                    //Look for trailing color tag in nameStr and if found, store it
+                    isTrailingColorTag = (nameStr.at(nameStr.length()-2) == '^' && (isalpha(nameStr.at(nameStr.length()-1)) || nameStr.at(nameStr.length()-1) == '#') );
+                    if (isTrailingColorTag) {
+                        trailingColorTag = nameStr.substr(nameStr.length()-2, 2); 
+                        nameStr.erase(nameStr.length()-2, 2); // temporarily remove the trailing color tag from nameStr
+                    }
                 }
+
+                //find the proper ending based on last letter, then add it to nameStr
+                auto lastLetter = nameStr.at(nameStr.length() - 1);
+                if(lastLetter == 's' || lastLetter == 'x') 
+                    nameStr += "es";
+                else
+                    nameStr += 's';
+
+                // if a trailing color tag was found and temporarily stored, re-insert it back onto the end of nameStr
+                if (isTrailingColorTag)
+                    nameStr += trailingColorTag; 
             }
             objStr << nameStr;
         }
@@ -1253,6 +1272,14 @@ bool Object::isKey(const std::shared_ptr<UniqueRoom>& room, const std::shared_pt
     return(true);
 }
 
+
+bool Object::isGemstone() const {
+
+    if (info.isArea("gemstone") || getType() == ObjectType::GEMSTONE)
+        return(true);
+    else
+        return(false);
+}
 
 //*********************************************************************
 //                      spawnObjects

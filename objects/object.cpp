@@ -77,6 +77,7 @@ const std::map<ObjectType, std::string> Object::objTypeToString = {
         {ObjectType::AMMO, "ammo"},
         {ObjectType::QUIVER, "quiver"},
         {ObjectType::LOTTERYTICKET, "lottery ticket"},
+        {ObjectType::GEMSTONE, "gemstone"},
 };
 
 const std::map<Material, std::string> Object::materialToString = {
@@ -92,6 +93,32 @@ const std::map<Material, std::string> Object::materialToString = {
         {Material::ORGANIC, "organic" },
         {Material::BONE, "bone" },
         {Material::LEATHER, "leather" },
+        {Material::DARKMETAL, "darkmetal" },
+        {Material::CRYSTAL, "crystal"},
+        {Material::MCOPPER, "copper"},
+        {Material::MSILVER, "silver"},
+        {Material::MGOLD, "gold"},
+        {Material::MPLATINUM, "platinum"},
+        {Material::MALANTHIUM, "alanthium"},
+        {Material::MELECTRUM, "electrum"},
+        {Material::CERAMIC, "ceramic"},
+        {Material::CLAY, "clay"},
+        {Material::SOFTSTONE, "soft stone"},
+        {Material::HARDLEATHER, "hard leather"},
+        {Material::BRONZE, "bronze"},
+        {Material::ARGENTINE, "argentine"},
+        {Material::ELVENSTEEL, "elvensteel"},
+        {Material::ELECTRITE, "electrite"},
+        {Material::METEORIC_IRON, "meteoric iron"},
+        {Material::SHADOW_IRON, "shadow iron"},
+        {Material::ORICHALCUM, "orichalcum"},
+        {Material::SCARLETITE, "scarletite"},
+        {Material::TRUESILVER, "true silver"},
+        {Material::AMARANTHIUM, "amaranthium"},
+        {Material::INFERNITE, "infernite"},
+        {Material::CELESTITE, "celestite"},
+        {Material::NEGATIVE_MITHRIL, "negative mithril"},
+        {Material::NEGATIVE_STEEL, "negative steel"},
 };
 
 const std::string NONE_STR = "none";
@@ -148,14 +175,10 @@ void Object::delObj(std::shared_ptr<Object> toDel) {
 // player's, room's or object's inventory.
 
 bool listObjectSee(const std::shared_ptr<const Player> player, std::shared_ptr<Object>  object, bool showAll) {
-    return(player->isStaff() || (
-        player->canSee(object) &&
-        (showAll || !object->flagIsSet(O_HIDDEN)) &&
-        !object->flagIsSet(O_SCENERY)
-    ) );
+    return(player->isStaff() || (player->canSee(object) && (showAll || !object->flagIsSet(O_HIDDEN)) && !object->flagIsSet(O_SCENERY)) );
 }
 
-std::string Container::listObjects(const std::shared_ptr<const Player> &player, bool showAll, char endColor) const {
+std::string Container::listObjects(const std::shared_ptr<const Player> &player, bool showAll, char endColor, std::string filter) const {
     std::shared_ptr<Object> object=nullptr;
     int     num=1, n=0;
     int flags = player->displayFlags();
@@ -173,10 +196,18 @@ std::string Container::listObjects(const std::shared_ptr<const Player> &player, 
                     Unique::is(object) ||
                     (object->inMonster() && object->flagIsSet(O_BODYPART)) ) )
                 continue;
+
         }
 
         if(!listObjectSee(player, object, showAll))
             continue;
+
+        if (!filter.empty()) {
+            if (object->getTypeName() != filter)
+                continue;
+            //if (object->isTrash() && filter != "trash")
+            //    continue;
+            }
 
         num = 1;
         while(it != objects.end()) {

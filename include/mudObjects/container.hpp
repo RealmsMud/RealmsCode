@@ -89,7 +89,7 @@ public:
     void wake(const std::string &str, bool noise) const;
 
 
-    std::string listObjects(const std::shared_ptr<const Player>& player, bool showAll, char endColor ='x' ) const;
+    std::string listObjects(const std::shared_ptr<const Player>& player, bool showAll, char endColor ='x', std::string filter = "" ) const;
 
     // Find routines
     std::shared_ptr<Creature> findCreaturePython(const std::shared_ptr<Creature>& searcher, const std::string& name, bool monFirst = true, bool firstAggro = false, bool exactMatch = false );
@@ -104,9 +104,14 @@ public:
     std::shared_ptr<Player> findPlayer(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch = false) const;
     std::shared_ptr<Player> findPlayer(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch, int& match) const;
 
-    std::shared_ptr<Object>  findObject(const std::shared_ptr<const Creature>& searcher, const cmd* cmnd, int val) const;
-    std::shared_ptr<Object>  findObject(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch = false) const;
-    std::shared_ptr<Object>  findObject(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch, int& match) const;
+    std::shared_ptr<Object>  findObject(const std::shared_ptr<const Creature>& searcher, const cmd* cmnd, int val, bool filter = false) const;
+    std::shared_ptr<Object>  findObject(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch = false, bool filter = false) const;
+    std::shared_ptr<Object>  findObject(const std::shared_ptr<const Creature>& searcher, const std::string& name, int num, bool exactMatch, int& match, bool filter) const;
+
+    bool isUseableFilterString(const std::shared_ptr<const Creature>& searcher, std::string fs, bool print) const;
+    std::shared_ptr<Object>  findObjectType(const std::shared_ptr<const Creature>& searcher, std::string otypeString) const;
+    std::shared_ptr<Object>  checkObjectFilters(const std::shared_ptr<const Creature>& searcher, std::string filterString) const;
+    std::string getFilterString(const std::string commandString) const;
 
     std::shared_ptr<MudObject> findTarget(const std::shared_ptr<const Creature>& searcher,  cmd* cmnd, int num=1) const;
     std::shared_ptr<MudObject> findTarget(const std::shared_ptr<const Creature>& searcher,  const std::string& name, int num, bool monFirst= true, bool firstAggro = false, bool exactMatch = false) const;

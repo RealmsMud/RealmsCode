@@ -53,6 +53,30 @@ enum Material {
     LEATHER = 12,
     DARKMETAL = 13,
     CRYSTAL = 14,
+    MCOPPER = 15,
+    MSILVER = 16,
+    MGOLD = 17,
+    MPLATINUM = 18,
+    MALANTHIUM = 19,
+    MELECTRUM = 20,
+    CERAMIC = 21,
+    CLAY = 22, 
+    SOFTSTONE = 23,
+    HARDLEATHER = 24,
+    BRONZE = 25,
+    ARGENTINE = 26,
+    ELVENSTEEL = 27, 
+    ELECTRITE = 28,
+    METEORIC_IRON = 29,
+    SHADOW_IRON = 30,
+    ORICHALCUM = 31,
+    SCARLETITE = 32,
+    TRUESILVER = 33,
+    AMARANTHIUM = 34,
+    INFERNITE = 35,
+    CELESTITE = 36,
+    NEGATIVE_MITHRIL = 37,
+    NEGATIVE_STEEL = 38,
 
     MAX_MATERIAL
 };
@@ -82,6 +106,7 @@ enum class ObjectType {
     AMMO = 18,
     QUIVER = 19,
     LOTTERYTICKET = 20,
+    GEMSTONE = 21,
 
     MAX_OBJECT_TYPE,
 };
@@ -437,6 +462,7 @@ public:
     [[nodiscard]] std::string statObj(int statFlags);
     [[nodiscard]] double winterProtection() const;
     [[nodiscard]] bool isKey(const std::shared_ptr<UniqueRoom>& room, const std::shared_ptr<Exit>& exit) const;
+    [[nodiscard]] bool isGemstone() const;
 
     bool swap(const Swap& s);
     bool swapIsInteresting(const Swap& s) const;

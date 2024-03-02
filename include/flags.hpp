@@ -133,7 +133,8 @@
 #define R_GOOD_DAMAGE               103     // Evil players receive good damage in this room
 #define R_EVIL_DAMAGE               104     // Good players receive evil damage in this room
 #define R_BOULDERS                  105     // Deadly flying boulders - thrown by giants or otherwise
-#define MAX_ROOM_FLAGS              106     // Incriment when you add a room flag
+#define R_NO_DROP_OBJECTS			106		// Cannot drop objects in this room
+#define MAX_ROOM_FLAGS              107     // Incriment when you add a room flag
 // Player flags
 // free                             0
 #define P_HIDDEN                    1        // Hidden
@@ -386,7 +387,7 @@
 #define M_NO_FACTION_AGGRO          27      // Don't aggro based on faction
 #define M_CAN_RIPOSTE               28      // Can riposte regardless of other rules
 #define M_DARKNESS                  29      // Monster is carrying a darkness item
-// free                             30
+#define M_RANDOM_SEX                30      // Monster will load with random sex (male/female)
 // free                             31
 #define M_CAN_PLEDGE_TO             32      // players can pledge to monster
 #define M_CAN_RESCIND_TO            33      // players can rescind to monster
