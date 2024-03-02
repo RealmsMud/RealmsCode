@@ -755,11 +755,11 @@ std::string QuestCompletion::getStatusDisplay() {
     displayStr << parentQuest->name << "^x\n";
     displayStr << "Frequency:" << "^x";
 
-    if(parentQuest->timesRepeatable) {
+    if(parentQuest->timesRepeatable > 1) {
         if(completed && parentQuest->timesRepeatable > completed->getTimesCompleted())
             displayStr << " ^G*Repeatable (" << (parentQuest->timesRepeatable - completed->getTimesCompleted()) << " remaining)*^x";
         else
-            displayStr << " ^G*Repeatable " << parentQuest->timesRepeatable << " time" << (parentQuest->timesRepeatable>1?"s":"") << "*^x";
+            displayStr << " ^G*Repeatable " << parentQuest->timesRepeatable << " times*^x";
     }
     if (parentQuest->isRepeatable()) {
         if(parentQuest->repeatFrequency == QuestRepeatFrequency::REPEAT_DAILY)
