@@ -347,7 +347,7 @@ bool Creature::canAttack(const std::shared_ptr<Creature>& target, bool stealing)
             !checkStaff("You cannot %s %s.\n", stealing ? "steal from" : "harm", mTarget->himHer()))
             return(false);
 
-        if( mTarget->flagIsSet(M_PERMENANT_MONSTER) &&
+        if( mTarget->flagIsSet(M_PERMANENT_MONSTER) &&
             level < 3 &&
             mTarget->getLevel() > level &&
             !getRoomParent()->flagIsSet(R_ONE_PERSON_ONLY) &&
@@ -1148,7 +1148,7 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         }
 
         // Werewolf silver vulnerability
-        if(weapon && weapon->flagIsSet(O_SILVER_OBJECT) && isEffected("lycanthropy"))
+        if(weapon && weapon->isSilver() && isEffected("lycanthropy"))
             attackDamage.set(attackDamage.get() * 2);
     }
 

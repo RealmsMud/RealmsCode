@@ -370,7 +370,7 @@ int cmdHypnotize(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->lasttime[LT_HYPNOTIZE].interval = 600L;
     chance = std::min(90, 40 + (int)(player->getSkillLevel("hypnotize") - target->getLevel()) * 20 + 4 *
             bonus(player->intelligence.getCur()));
-    if(target->flagIsSet(M_PERMENANT_MONSTER))
+    if(target->flagIsSet(M_PERMANENT_MONSTER))
         chance-=25;
     if(player->isDm())
         chance = 101;

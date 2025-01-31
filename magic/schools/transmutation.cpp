@@ -21,7 +21,7 @@
 
 #include "cmd.hpp"                   // for cmd
 #include "effects.hpp"               // for EffectInfo
-#include "flags.hpp"                 // for M_PERMENANT_MONSTER, X_PORTAL
+#include "flags.hpp"                 // for M_PERMANENT_MONSTER, X_PORTAL
 #include "global.hpp"                // for CastType, CreatureClass, CastTyp...
 #include "magic.hpp"                 // for SpellData, splGeneric, checkRefu...
 #include "money.hpp"                 // for Money
@@ -160,7 +160,7 @@ int splEntangle(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
 
         if(target->isMonster()) {
             if( target->flagIsSet(M_DM_FOLLOW) ||
-                target->flagIsSet(M_PERMENANT_MONSTER) ||
+                target->flagIsSet(M_PERMANENT_MONSTER) ||
                 target->isEffected("resist-magic") ||
                 target->flagIsSet(M_RESIST_STUN_SPELL) ||
                 target->isEffected("reflect-magic")
@@ -554,7 +554,7 @@ int splDisintegrate(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
 
         bns = ((int)target->getLevel() - (int)player->getLevel())  * 25;
 
-        if(target->mFlagIsSet(M_PERMENANT_MONSTER))
+        if(target->mFlagIsSet(M_PERMANENT_MONSTER))
             bns = 50;
 
         if(target->isPlayer() && target->isEffected("resist-magic"))
@@ -814,7 +814,7 @@ int splDeafness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
         if(!player->canAttack(target))
             return(0);
 
-        if(player->isPlayer() && target->mFlagIsSet(M_PERMENANT_MONSTER)) {
+        if(player->isPlayer() && target->mFlagIsSet(M_PERMANENT_MONSTER)) {
             if(!dec_daily(&player->daily[DL_SILENCE]) && !player->isCt()) {
                 player->print("You have done that enough times for today.\n");
                 return(0);
@@ -833,7 +833,7 @@ int splDeafness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
         if(target->isPlayer() && player->isCt())
             dur = 600L;
 
-        if(target->mFlagIsSet(M_PERMENANT_MONSTER))
+        if(target->mFlagIsSet(M_PERMANENT_MONSTER))
             bns = (target->saves[SPL].chance)/3;
 
         target->wake("Terrible nightmares disturb your sleep!");

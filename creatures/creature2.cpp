@@ -265,7 +265,7 @@ int Monster::initMonster(bool loadOriginal, bool prototype) {
 
     t = time(nullptr);
     // init the timers
-    lasttime[LT_MON_SCAVANGE].ltime = t;
+    lasttime[LT_MON_SCAVENGE].ltime = t;
     lasttime[LT_MON_WANDER].ltime = t;
     lasttime[LT_MOB_THIEF].ltime = t;
     lasttime[LT_TICK].ltime = t;

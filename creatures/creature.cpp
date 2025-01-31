@@ -443,7 +443,7 @@ int Monster::mobileCrt() {
 
 
     if( !flagIsSet(M_MOBILE_MONSTER) ||
-        flagIsSet(M_PERMENANT_MONSTER) ||
+        flagIsSet(M_PERMANENT_MONSTER) ||
         flagIsSet(M_PASSIVE_EXIT_GUARD)
     )
         return(0);
@@ -1026,7 +1026,7 @@ bool Creature::canFlee(bool displayFail, bool checkTimer) {
         if(hp.getCur() > hp.getMax()/5)
             return(false);
 
-        if(flagIsSet(M_PERMENANT_MONSTER))
+        if(flagIsSet(M_PERMANENT_MONSTER))
             return(false);
 
     } else {

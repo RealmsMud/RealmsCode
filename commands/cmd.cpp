@@ -375,8 +375,9 @@ bool Config::initCommands() {
     staffCommands.emplace("*abyss", 100, dmKillSwitch, isCt, "Kill a player");
     staffCommands.emplace("*shard", 100, dmKillSwitch, isCt, "Kill a player");
     staffCommands.emplace("*flatulence", 100, dmKillSwitch, isCt, "Kill a player");
-    staffCommands.emplace("*diarreah", 100, dmKillSwitch, isCt, "Kill a player");
+    staffCommands.emplace("*diarrhea", 100, dmKillSwitch, isCt, "Kill a player");
     staffCommands.emplace("*kinetic", 100, dmKillSwitch, isCt, "Kill a player");
+    staffCommands.emplace("*drone", 100, dmKillSwitch, isCt, "Kill a player");
     staffCommands.emplace("*repair", 100, dmRepair, isDm, "Repair a player's worn/wielded equipment");
     staffCommands.emplace("*max", 100, dmMax, nullptr, "Set your stats to max");
     staffCommands.emplace("*backup", 100, dmBackupPlayer, isDm, "Backup a player or restore a player from backup");
@@ -704,6 +705,7 @@ bool Config::initCommands() {
     playerCommands.emplace("charm", 100, cmdCharm, nullptr, "Use bard charm");
     playerCommands.emplace("identify", 100, cmdIdentify, nullptr, "Use bard identify");
     playerCommands.emplace("songs", 100, cmdSongs, nullptr, "List your known bard songs");
+    playerCommands.emplace("levitate", 100, innateLevitate, nullptr, "Call on innate ability to levitate");
 
     playerCommands.emplace("enthrall", 100, cmdEnthrall, nullptr, "Attempt to enthrall undead");
     playerCommands.emplace("meditate", 100, cmdMeditate, nullptr, "Use monk meditate");

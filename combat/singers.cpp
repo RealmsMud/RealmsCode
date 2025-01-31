@@ -813,7 +813,7 @@ int cmdCharm(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     chance = std::min(90, 40 + ((level) - (creature->getLevel())) * 20 + 4 * bonus(player->intelligence.getCur()));
 
-    if(creature->flagIsSet(M_PERMENANT_MONSTER) && creature->isMonster())
+    if(creature->flagIsSet(M_PERMANENT_MONSTER) && creature->isMonster())
         chance /= 2;
 
     if(player->isDm())

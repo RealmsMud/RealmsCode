@@ -665,7 +665,7 @@ bool Monster::summonMobs(const std::shared_ptr<Creature>&victim) {
 
         monster->setFlag(M_WILL_ASSIST);
         monster->setFlag(M_WILL_BE_ASSISTED);
-        monster->clearFlag(M_PERMENANT_MONSTER);
+        monster->clearFlag(M_PERMANENT_MONSTER);
     }
 
     return(true);

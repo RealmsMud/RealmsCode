@@ -357,7 +357,7 @@
 // free                             217
 #define MAX_PLAYER_FLAGS            218     // Incriment when u add a new player flag
 // Monster flags
-#define M_PERMENANT_MONSTER         0       // Permanent monster
+#define M_PERMANENT_MONSTER         0       // Permanent monster
 #define M_HIDDEN                    1       // Hidden
 #define M_WAS_HIDDEN                2       // Monster was hidden before and will rehide again
 #define M_FACTION_NO_GUARD          3       // If the player is in good standing with the monster, the monster will not passively guard exits
@@ -368,14 +368,14 @@
 #define M_BLOCK_EXIT                8       // Blocks exits
 #define M_FOLLOW_ATTACKER           9       // Monster follows attacker
 #define M_WILL_FLEE                 10      // Monster flees
-#define M_SCAVANGER                 11      // Monster is a scavenger
+#define M_SCAVENGER                 11      // Monster is a scavenger
 #define M_MALE                      12      // Sex == male
 #define M_WILL_POISON               13      // Poisoner
 #define M_UNDEAD                    14      // Undead
 #define M_CANT_BE_STOLEN_FROM       15      // Cannot be stolen from
 #define M_NO_HARM_SPELL             16      // Immune to Harm spell
 #define M_CAN_CAST                  17      // Can cast spells
-#define M_HAS_SCAVANGED             18      // Has already scavenged something
+#define M_HAS_SCAVENGED             18      // Has already scavenged something
 // free                             19
 #define M_ONLY_HARMED_BY_MAGIC      20      // Can only be harmed by magic
 #define M_FACTION_ASSIST            21      // monster will assist members of primeFaction
@@ -758,7 +758,7 @@
 #define O_UNIQUE                    153      // Object is unique or limited
 #define O_BULKLESS_CONTAINER        154      // Bulkless container object
 #define O_BULKLESS_OBJECT           155      // Bulkless object
-// free                             156
+#define O_WAS_SCAVENGED	            156      // Object was scavenged by monster
 #define O_NOT_PEEKABLE              157      // Object can not be peeked at
 #define O_ENHANCE_BASH              158      // Object does extra bash damage equal to dice
 #define O_KEEP                      159      // Object is being kept - cannot be dropped or sole on accident

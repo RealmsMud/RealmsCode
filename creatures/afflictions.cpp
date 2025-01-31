@@ -746,13 +746,13 @@ bool Creature::sunlightDamage() {
     unmist();
     wake("Terrible nightmares disturb your sleep!");
     printColor("^Y^#The searing sunlight burns your flesh!\n");
-    broadcast(getSock(), getRoomParent(), "^Y%M's flesh is burned by the sunlight!", this);
+    broadcast(getSock(), getRoomParent(), "^Y%M's flesh is ignited by the sun!", this);
 
     // lots of damage every 5 seconds
     hp.decrease(dmg);
 
     if(hp.getCur() < 1) {
-        printColor("^YYou have been disintegrated!\n");
+        printColor("^YYou have been disintegrated!\n^DYour ash swirls away in the wind.^x\n");
         if(isPlayer())
             getAsPlayer()->die(SUNLIGHT);
         else

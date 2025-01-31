@@ -59,9 +59,10 @@ class LastTime;
 #define DL_SCARES       11  // Daily scare casts
 #define DL_SILENCE      12
 #define DL_HARM         13  // Daily harm casts
+#define DL_LEVITATE     14  // Daily innate levitates
 
 
-#define DAILYLAST       13
+#define DAILYLAST       14
 
 // Object Last-time stuff
 #define LT_ENCHA        0
@@ -73,7 +74,7 @@ class LastTime;
 // free             2
 #define LT_AGGRO_ACTION     3
 #define LT_TRACK        4
-#define LT_MON_SCAVANGE     4
+#define LT_MON_SCAVENGE     4
 #define LT_STEAL        5
 #define LT_PICKLOCK     6
 #define LT_MON_WANDER       6
@@ -87,7 +88,7 @@ class LastTime;
 #define LT_HIDE         14
 #define LT_TURN         15
 #define LT_FRENZY       16
-// free             17
+#define LT_INNATE       17
 // free             18
 #define LT_PRAY         19
 #define LT_PREPARE      20
@@ -190,7 +191,7 @@ class LastTime;
 #define LT_ANIMATE      LT_FOCUS
 
 #define LT_MOB_BASH     LT_IDENTIFY
-#define LT_RIPOSTE      LT_MON_SCAVANGE
+#define LT_RIPOSTE      LT_MON_SCAVENGE
 
 #define LT_DISARM       LT_FOCUS
 #define LT_TAIL_SLAP        LT_FOCUS   // Mobs use LT_FOCUS on tail slap since they don't ever use focus.

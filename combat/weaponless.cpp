@@ -25,7 +25,7 @@
 
 #include "commands.hpp"              // for cmdFocus, cmdFrenzy, cmdHowl
 #include "damage.hpp"                // for Damage
-#include "flags.hpp"                 // for M_PERMENANT_MONSTER, P_AFK, P_FO...
+#include "flags.hpp"                 // for M_PERMANENT_MONSTER, P_AFK, P_FO...
 #include "global.hpp"                // for CreatureClass, CreatureClass::CA...
 #include "group.hpp"                 // for CreatureList, Group
 #include "lasttime.hpp"              // for lasttime
@@ -228,7 +228,7 @@ int cmdTouchOfDeath(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if( ((Random::get(1,100) > 80 - bonus(player->constitution.getCur())) &&
          (   (creature->isMonster() &&
-                !creature->flagIsSet(M_PERMENANT_MONSTER)) ||
+                !creature->flagIsSet(M_PERMANENT_MONSTER)) ||
                 creature->isPlayer() )) ||
         player->isDm())
     {
@@ -638,7 +638,7 @@ int cmdHowl(const std::shared_ptr<Creature>& player, cmd* cmnd) {
 
 
         if( !monster->flagIsSet(M_DM_FOLLOW) &&
-            !monster->flagIsSet(M_PERMENANT_MONSTER) &&
+            !monster->flagIsSet(M_PERMANENT_MONSTER) &&
             !monster->flagIsSet(M_PASSIVE_EXIT_GUARD) &&
             Random::get(1,100) <= 50
         ) {

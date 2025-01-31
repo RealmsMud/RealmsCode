@@ -159,7 +159,7 @@ void ShipExit::spawnRaiders(ShipRaid* sRaid) {
         else
             raider->addToRoom(room, 0);
 
-        raider->setFlag(M_PERMENANT_MONSTER);
+        raider->setFlag(M_PERMANENT_MONSTER);
         raider->setFlag(M_RAIDING);
         gServer->addActive(raider);
         l++;

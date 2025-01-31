@@ -81,44 +81,44 @@ const std::map<ObjectType, std::string> Object::objTypeToString = {
 };
 
 const std::map<Material, std::string> Object::materialToString = {
-        {Material::WOOD, "wood"},
-        {Material::GLASS, "glass" },
-        {Material::CLOTH, "cloth" },
-        {Material::PAPER, "paper" },
-        {Material::IRON, "iron" },
-        {Material::STEEL, "steel" },
-        {Material::MITHRIL, "mithril" },
-        {Material::ADAMANTIUM, "adamantium" },
-        {Material::STONE, "stone" },
-        {Material::ORGANIC, "organic" },
-        {Material::BONE, "bone" },
-        {Material::LEATHER, "leather" },
-        {Material::DARKMETAL, "darkmetal" },
-        {Material::CRYSTAL, "crystal"},
-        {Material::MCOPPER, "copper"},
-        {Material::MSILVER, "silver"},
-        {Material::MGOLD, "gold"},
-        {Material::MPLATINUM, "platinum"},
-        {Material::MALANTHIUM, "alanthium"},
-        {Material::MELECTRUM, "electrum"},
-        {Material::CERAMIC, "ceramic"},
-        {Material::CLAY, "clay"},
-        {Material::SOFTSTONE, "soft stone"},
-        {Material::HARDLEATHER, "hard leather"},
-        {Material::BRONZE, "bronze"},
-        {Material::ARGENTINE, "argentine"},
-        {Material::ELVENSTEEL, "elvensteel"},
-        {Material::ELECTRITE, "electrite"},
-        {Material::METEORIC_IRON, "meteoric iron"},
-        {Material::SHADOW_IRON, "shadow iron"},
-        {Material::ORICHALCUM, "orichalcum"},
-        {Material::SCARLETITE, "scarletite"},
-        {Material::TRUESILVER, "true silver"},
-        {Material::AMARANTHIUM, "amaranthium"},
-        {Material::INFERNITE, "infernite"},
-        {Material::CELESTITE, "celestite"},
-        {Material::NEGATIVE_MITHRIL, "negative mithril"},
-        {Material::NEGATIVE_STEEL, "negative steel"},
+        {Material::WOOD, "^ywood^x"},
+        {Material::GLASS, "^wglass^x" },
+        {Material::CLOTH, "^wcloth^x" },
+        {Material::PAPER, "^wpaper^x" },
+        {Material::IRON, "^Diron^x" },
+        {Material::STEEL, "^wsteel^x" },
+        {Material::MITHRIL, "^Wmithril^x" },
+        {Material::ADAMANTIUM, "^Dadamantium^x" },
+        {Material::STONE, "^wstone^x" },
+        {Material::ORGANIC, "^worganic^x" },
+        {Material::BONE, "^Wbone^x" },
+        {Material::LEATHER, "^yleather^x" },
+        {Material::DARKMETAL, "^Ddarkmetal^x" },
+        {Material::CRYSTAL, "^wcrystal^x"},
+        {Material::MCOPPER, "^rcopper^x"},
+        {Material::MSILVER, "^Dsilver^x"},
+        {Material::MGOLD, "^Ygold^x"},
+        {Material::MPLATINUM, "^Wplatinum^x"},
+        {Material::MALANTHIUM, "^calanthium^x"},
+        {Material::MELECTRUM, "^yelectrum^x"},
+        {Material::CERAMIC, "^wceramic^x"},
+        {Material::CLAY, "^Dclay^x"},
+        {Material::SOFTSTONE, "^wsoft stone^x"},
+        {Material::HARDLEATHER, "^yhard leather^x"},
+        {Material::BRONZE, "^ybronze^x"},
+        {Material::ARGENTINE, "^Wargentine^x"},
+        {Material::ELVENSTEEL, "^Welvensteel^x"},
+        {Material::ELECTRITE, "^celectrite^x"},
+        {Material::METEORIC_IRON, "^wmeteoric iron^x"},
+        {Material::SHADOW_IRON, "^Dshadow iron^x"},
+        {Material::ORICHALCUM, "^yorichalcum^x"},
+        {Material::SCARLETITE, "^rscarletite^x"},
+        {Material::TRUESILVER, "^Wtrue silver^x"},
+        {Material::AMARANTHIUM, "^mamaranthium^x"},
+        {Material::INFERNITE, "^Rinfernite^x"},
+        {Material::CELESTITE, "^Bcelestite^x"},
+        {Material::NEGATIVE_MITHRIL, "^Dnegative mithril^x"},
+        {Material::NEGATIVE_STEEL, "^Dnegative steel^x"},
 };
 
 const std::string NONE_STR = "none";
@@ -136,6 +136,8 @@ const std::string & Object::getMaterialName() const {
 
     return materialToString.at(material);
 }
+
+
 
 //*********************************************************************
 //                      add_obj_obj
@@ -556,6 +558,9 @@ int displayObject(const std::shared_ptr<const Player> &player, const std::shared
             oStr << "It is alloyed with pure silver.\n";
     }
 
+    if(target->getMaterial())
+        oStr << "Its material make-up is " << target->getMaterialName() << ".^x\n";
+
     if(target->getRequiredSkill() && !requiredSkillString.empty()) {
     	oStr << "It requires minimum proficiency of '" << getSkillLevelStr(target->getRequiredSkill()) << "' with " << requiredSkillString << ".\n";
     }
@@ -566,7 +571,7 @@ int displayObject(const std::shared_ptr<const Player> &player, const std::shared
     if(Lore::isLore(target))
         oStr << target->getObjStr(nullptr, flags | CAP, 1) << " is an object of lore.\n";
 
-    if(target->flagIsSet(O_DARKMETAL))
+    if(target->isDarkmetal())
         oStr << "^yIt is vulnerable to sunlight.\n";
 
     if(target->flagIsSet(O_DARKNESS))
@@ -721,7 +726,7 @@ void BaseRoom::killMortalObjectsOnFloor() {
         if(isStor && object->info.id == 1 && object->info.isArea("stor"))
             continue;
 
-        if(sunlight && object->flagIsSet(O_DARKMETAL)) {
+        if(sunlight && object->isDarkmetal()) {
             broadcast((std::shared_ptr<Socket> )nullptr, getAsRoom(), "^yThe %s^y was destroyed by the sunlight!", object->getCName());
             object->deleteFromRoom();
         } else if(!Unique::canLoad(object)) {
@@ -779,7 +784,7 @@ void Creature::killDarkmetal() {
     ObjectSet::iterator it;
     for( it = objects.begin() ; it != objects.end() ; ) {
         object = (*it++);
-        if(object && object->flagIsSet(O_DARKMETAL)) {
+        if(object && object->isDarkmetal()) {
             if(pTarget)
                 printColor("^yYour %s was destroyed by the sunlight!\n", object->getCName());
             else if(isPet())
@@ -798,7 +803,7 @@ void Creature::killDarkmetal() {
     // that includes EQ!
     for(i=0; i<MAXWEAR; i++) {
         if( pTarget->ready[i] &&
-            pTarget->ready[i]->flagIsSet(O_DARKMETAL)
+            pTarget->ready[i]->isDarkmetal()
         ) {
             printColor("^yYour %s was destroyed by the sunlight!\n", pTarget->ready[i]->getCName());
             // i is wearloc-1, so add 1.   Delete it when done

@@ -264,10 +264,10 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if (!player->isStaff()) {
         player->lasttime[LT_TRAFFIC].ltime = t;
-        player->lasttime[LT_TRAFFIC].interval = 15L;
+        player->lasttime[LT_TRAFFIC].interval = 5L;
     }
 
-    *player << ColorOn << "^gYou examine the area for foot traffic or disturbances.\n" << ColorOff;
+    *player << ColorOn << "^wYou examine the area for foot traffic or disturbances.\n" << ColorOff;
     if(player->isStaff() && player->flagIsSet(P_DM_INVIS))
         broadcast(isStaff, player->getSock(), player->getRoomParent(), "%M examines the area for foot traffic or disturbances.", player.get());
     else
@@ -284,7 +284,7 @@ int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         int traffic = (int)roomTraffic * (int)randomCount;
 
-        oStr << "^g";
+        oStr << "^y";
 
         if(player->isStaff() || player->flagIsSet(P_PTESTER)) {
             oStr << "Chance: " << chance << "%\n";
@@ -425,6 +425,10 @@ int cmdRoominfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if (player->getRoomParent()->flagIsSet(R_FIRE_BONUS)) {
         count++;
         oStr << "^rFire Realm Room^x: This room has enhanced fire realm properties.\n";
+    }
+    if (player->getRoomParent()->flagIsSet(R_NO_DROP_OBJECTS)) {
+        count++;
+        oStr << "^yDrop Restrict^x: You cannot drop objects in this room.\n";
     }
     if (player->getRoomParent()->flagIsSet(R_WATER_BONUS)) {
         count++;
@@ -852,7 +856,7 @@ int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     // throw checks
 
     if(object->flagIsSet(O_KEEP)) {
-        player->printColor("%O is currently in safe keeping.\nYou must unkeep it to throw it.\n", object.get());
+        player->printColor("%O is currently set for safe keeping.\nYou must unkeep it to throw it: ^Wunkeep %s^x\n", object.get(), object.get()->key[0]);
         return(0);
     }
 

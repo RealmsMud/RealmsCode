@@ -638,6 +638,17 @@ bool BaseRoom::deityRestrict(const std::shared_ptr<const Creature> & creature) c
     return(true);
 }
 
+bool BaseRoom::mobCanDropObjects() const {
+
+    if (flagIsSet(R_NO_DROP_OBJECTS) || flagIsSet(R_DESTROYS_ITEMS) ||
+        flagIsSet(R_DUMP_ROOM) || flagIsSet(R_SHOP) ||
+        flagIsSet(R_IS_STORAGE_ROOM) || flagIsSet(R_PAWN_SHOP) ||
+        flagIsSet(R_SHOP_STORAGE) || flagIsSet(R_LIMBO))
+        return(false);
+
+    return(true);
+}
+
 
 
 //*********************************************************************

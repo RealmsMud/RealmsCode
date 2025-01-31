@@ -304,6 +304,12 @@ int cmdDaily(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("Resurrections:  %d of %d remaining.\n", target->daily[DL_RESURRECT].cur, target->daily[DL_RESURRECT].max);
     }
 
+    // Daily limited racial innate abilities go here
+    if( target->isCt() || target->getRace() == DARKELF) {
+        player->print("Levitate:       %d of %d remaining.\n", target->daily[DL_LEVITATE].cur, target->daily[DL_LEVITATE].max);
+    }
+
+    //General daily limits here
     player->print("\n");
     player->print("Can defecate?   %s\n", target->canDefecate() ? "Yes" : "No");
     player->print("Can be resurrected?   %s\n", (target->daily[DL_RESURRECT].cur > 0) ? "Yes" : "No");

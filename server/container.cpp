@@ -333,7 +333,8 @@ std::shared_ptr<Object>  Container::findObjectType(const std::shared_ptr<const C
         return(nullptr);
 
     for(const auto& obj : objects) {
-        if(obj->getTypeName() == otypeString) {
+        if((obj->getTypeName() == otypeString) ||
+           (obj->isTrashAtPawn(obj->value) && otypeString == "trash")) {
             target = obj;
             searcher->printColor("^D[Using filter ^c@%s^D]: (^x%s^D)^x\n", otypeString.c_str(), target->getName().c_str());
             break;

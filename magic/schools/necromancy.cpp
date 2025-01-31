@@ -175,7 +175,7 @@ int splHarm(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
 
         bns = 10 * ((int)target->getLevel() - (int)player->getLevel());
 
-        if(target->mFlagIsSet(M_PERMENANT_MONSTER))
+        if(target->mFlagIsSet(M_PERMANENT_MONSTER))
             bns += 40;
 
         saved = target->chkSave(DEA, player, bns);

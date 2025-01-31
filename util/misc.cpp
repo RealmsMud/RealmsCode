@@ -778,8 +778,8 @@ std::string getFilterString(const std::string commandString) {
                 filterString = "misc";
             else if (filterString == "lotteryticket")
                 filterString = "lottery ticket";
-            else if (filterString == "song scroll")
-                filterString = "songscroll";
+            else if (filterString == "songscroll")
+                filterString = "song scroll";
         }
     }
 

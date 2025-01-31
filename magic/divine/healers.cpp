@@ -110,7 +110,7 @@ int cmdEnthrall(const std::shared_ptr<Player>& player, cmd* cmnd) {
     chance = std::min(90, 40 + (int)((player->getSkillLevel("enthrall") - creature->getLevel()) * 10) +
             4 * bonus(player->piety.getCur()));
 
-    if(creature->flagIsSet(M_PERMENANT_MONSTER))
+    if(creature->flagIsSet(M_PERMANENT_MONSTER))
         chance -= 25;
 
     if(player->isDm())
@@ -970,7 +970,7 @@ int cmdRenounce(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->lasttime[LT_RENOUNCE].interval = 60L;
 
         chance = ((int)(level - target->getLevel())*20) + bonus(player->piety.getCur()) * 5 + 25;
-        if(target->flagIsSet(M_PERMENANT_MONSTER))
+        if(target->flagIsSet(M_PERMANENT_MONSTER))
             chance -= 15;
         chance = std::min(chance, 90);
         if(player->isDm())

@@ -792,7 +792,7 @@ int splTeleport(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
             if(!player->canAttack(mTarget))
                 return(0);
             if( mTarget->flagIsSet(M_PASSIVE_EXIT_GUARD) ||
-                mTarget->flagIsSet(M_PERMENANT_MONSTER)
+                mTarget->flagIsSet(M_PERMANENT_MONSTER)
             ) {
                 player->print("Nothing happens.\n");
                 mTarget->addEnemy(player);

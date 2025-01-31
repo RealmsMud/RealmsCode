@@ -970,7 +970,7 @@ int saveCreaturesXml(xmlNodePtr parentNode, const MonsterSet& set, int permOnly)
     for(const auto &mons : set) {
         if( mons && mons->isMonster() &&
             (   (permOnly == ALLITEMS && !mons->isPet()) ||
-                (permOnly == PERMONLY && mons->flagIsSet(M_PERMENANT_MONSTER))
+                (permOnly == PERMONLY && mons->flagIsSet(M_PERMANENT_MONSTER))
             ) )
         {
             if(mons->flagIsSet(M_SAVE_FULL)) {

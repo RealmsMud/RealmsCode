@@ -188,6 +188,9 @@ public:
     bool getEnchantmentImmunity(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
     bool getEnchantmentVsMontype(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
     void doCheckFailedCastAggro(const std::shared_ptr<Creature>& caster, bool willAggro, bool print);
+    std::shared_ptr<Object> findScavengedObject();
+    std::shared_ptr<Object> findObjectToScavenge();
+    int countScavengedObjects();
 
 // Set
     void setMaxLevel(unsigned short l);
@@ -217,6 +220,7 @@ public:
     void checkScavange(long t);
     int checkWander(long t);
     bool canScavange(const std::shared_ptr<Object>&  object);
+
 
     bool doTalkAction(const std::shared_ptr<Player>& target, std::string action, QuestInfo* quest = nullptr);
     void sayTo(const std::shared_ptr<Player>& player, const std::string& message);
