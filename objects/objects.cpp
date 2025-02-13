@@ -928,7 +928,7 @@ bool Object::alignRestrict(const std::shared_ptr<Creature> & creature, bool p) c
         (flagIsSet(O_EVIL_ALIGN_ONLY) && creature->getAdjustedAlignment() > NEUTRAL) )
     {
         if(p) {
-            creature->checkStaff("%O shocks you and you drop it.\n", this);
+            creature->checkStaff("%O shocks you%s\n", this, (flagIsSet(O_NO_DROP) ? "!":"! You dropped it!"));
             if(!creature->isStaff())
                 broadcast(creature->getSock(), creature->getConstRoomParent(), "%M is shocked by %P.", creature.get(), this);
         }
@@ -1056,9 +1056,9 @@ bool Object::doRestrict(const std::shared_ptr<Creature> &creature, bool p) {
      || raceRestrict(creature, p) || sexRestrict(creature, p) || clanRestrict(creature, p) || lawchaoRestrict(creature, p) || deityRestrict(creature, p))
         return (true);
     if (alignRestrict(creature, p)) {
-        if (p && !creature->isStaff()) {
-            creature->delObj(Containable::downcasted_shared_from_this<Object>(), false, true);
-            addToRoom(creature->getRoomParent());
+        if (p && !flagIsSet(O_NO_DROP) && !creature->isStaff() ) {
+                creature->delObj(Containable::downcasted_shared_from_this<Object>(), false, true);
+                addToRoom(creature->getRoomParent());
         }
         return (true);
     }

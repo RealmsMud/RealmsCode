@@ -19,6 +19,7 @@
 #pragma once
 
 #include <memory>
+#include "money.hpp"
 
 
 #define TAX .06
@@ -37,3 +38,5 @@ void playerShopList(const std::shared_ptr<Player>& player, Property* p, std::str
 void shopList(const std::shared_ptr<Player>& player, Property* p, std::string& filter, std::shared_ptr<UniqueRoom>& storage);
 void playerShopBuy(const std::shared_ptr<Player>& player, cmd* cmnd, Property* p, std::shared_ptr<UniqueRoom>& storage);
 void shopBuy(const std::shared_ptr<Player>& player, cmd* cmnd, Property* p, std::shared_ptr<UniqueRoom>& storage);
+Money sellAmount(const std::shared_ptr<Player>& player, const std::shared_ptr<const UniqueRoom>& room, const std::shared_ptr<Object>&  object, bool sell);
+Money sellAmount(const std::shared_ptr<const Player>& player, const std::shared_ptr<const UniqueRoom>& room, const std::shared_ptr<Object>&  object, bool sell);

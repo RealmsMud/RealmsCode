@@ -115,7 +115,7 @@ void compileSocialList(std::map<std::string, std::string>& list, const std::set<
 
         name = cmnd.getName();
 
-        if(name == "vomjom" || name == "usagi" || name == "defenestrate" || name == "mithas")
+        if(name == "vomjom" || name == "usagi" || name == "defenestrate" || name == "mithas" || name == "micturate")
             continue;
 
         list[name] = "";

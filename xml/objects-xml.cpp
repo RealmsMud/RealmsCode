@@ -308,6 +308,17 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
         setType(ObjectType::GEMSTONE);
     }
 
+    // Found several bogus non-armor items in my areas that for some reason have wear location set to BODY, so they 
+    // can be worn -_-... Probably happened when I mass built objects. This fixes those, and it will also keep it from 
+    // happening again. Sanity check. -TC
+    if (getWearflag() && (info.isArea("hp") || info.isArea("hellbog") || info.isArea("kbtung") || getType() == ObjectType::GEMSTONE) ) {
+        if (getType() != ObjectType::ARMOR && getType() != ObjectType::WEAPON && getType() != ObjectType::MONEY)
+            setWearflag(HELD);
+
+        if (getType() == ObjectType::MONEY)
+            setWearflag(0);
+    }
+
     // make sure uniqueness stays intact
     setFlag(O_UNIQUE);
     if(!gConfig->getUnique(getAsObject()))

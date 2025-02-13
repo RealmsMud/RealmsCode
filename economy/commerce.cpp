@@ -97,6 +97,11 @@ Money sellAmount(const std::shared_ptr<Player>& player, const std::shared_ptr<co
     return(value);
 }
 
+Money sellAmount(const std::shared_ptr<const Player>& player, const std::shared_ptr<const UniqueRoom>& room, const std::shared_ptr<Object>&  object, bool sell) {
+    Money value = Faction::adjustPrice(player, room->getFaction(), object->value, sell);
+    value.set(std::min<unsigned long>(value[GOLD] / 2, MAXPAWN), GOLD);
+    return(value);
+}
 
 //*********************************************************************
 //                      bailCost

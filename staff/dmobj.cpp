@@ -275,6 +275,9 @@ std::string Object::statObj(int statFlags) {
         if(type == ObjectType::ARMOR && (!wearflag || wearflag == HELD || wearflag == WIELD))
             objStr << "^rThis object is a armor and is not wearable.^x\n";
     }
+    else if (wearflag && wearflag != HELD) {
+        objStr << "^RInvalid wear location set: " << getWearName() << "(" << wearflag << ").^x\n";
+    }
 
     if(size)
         objStr << "Size: ^y" << getSizeStr() << "^x\n";

@@ -61,6 +61,8 @@
 #include "unique.hpp"                          // for remove, Lore, is, dele...
 #include "xml.hpp"                             // for loadObject, loadPlayer
 #include "toNum.hpp"
+#include "commerce.hpp"                        // for sellAmount()
+#include "money.hpp"
 
 class Socket;
 
@@ -1625,10 +1627,13 @@ int cmdInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     ObjectSet::iterator it;
     std::shared_ptr<Object>  obj;
+    Money value;
+    bool inPawn = (player->getRoomParent()->flagIsSet(R_PAWN_SHOP) || player->getRoomParent()->flagIsSet(R_SHOP));
+
     for( it = target->objects.begin() ; it != target->objects.end() ; ) {
         obj = (*it++);
         if (invFilter) {
-            if (filterString == "trash" && !obj->isTrashAtPawn(obj->value)) {
+            if (filterString == "trash" && !obj->isTrashAtPawn(inPawn ? sellAmount(player, player->getConstUniqueRoomParent(), obj, false) : obj->value)) {
                 continue;
             }
             else if (filterString != "trash" && obj->getTypeName() != filterString)

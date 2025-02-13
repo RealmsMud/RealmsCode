@@ -563,6 +563,11 @@ bool Creature::willFit(const std::shared_ptr<Object>&  object) const {
     return(true);
 }
 
+bool Creature::inPawn() const {
+    return(getConstRoomParent()->flagIsSet(R_PAWN_SHOP) || getConstRoomParent()->flagIsSet(R_SHOP));
+}
+
+
 //********************************************************************
 //                      canWear
 //********************************************************************
@@ -709,7 +714,7 @@ bool Player::canUse(const std::shared_ptr<Object>&  object, bool all) {
     if( size &&
         object->getSize() &&
         size != object->getSize() &&
-        object->getWearflag() != HELD-1
+        object->getWearflag() != HELD
     ) {
         if(!all)
             printColor("Using %P is awkward due to its size.\n", object.get());

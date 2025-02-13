@@ -39,6 +39,7 @@
 #include "proto.hpp"                                // for keyTxtEqual, broa...
 #include "toNum.hpp"                                // for toNum
 #include "commands.hpp"                             // for checkObjectFilters
+#include "commerce.hpp"                             // for sellAmount()
 
 class BaseRoom;
 
@@ -334,7 +335,7 @@ std::shared_ptr<Object>  Container::findObjectType(const std::shared_ptr<const C
 
     for(const auto& obj : objects) {
         if((obj->getTypeName() == otypeString) ||
-           (obj->isTrashAtPawn(obj->value) && otypeString == "trash")) {
+           (obj->isTrashAtPawn(!searcher->inPawn() ? obj->value : sellAmount(searcher->getAsConstPlayer(), searcher->getConstUniqueRoomParent(), obj, false)) && otypeString == "trash")) {
             target = obj;
             searcher->printColor("^D[Using filter ^c@%s^D]: (^x%s^D)^x\n", otypeString.c_str(), target->getName().c_str());
             break;
