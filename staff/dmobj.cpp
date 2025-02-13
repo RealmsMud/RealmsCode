@@ -127,6 +127,7 @@ std::string Object::statObj(int statFlags) {
         objStr << "Name:   " << objName << "^x\n"
                << "Plural: " << objPlural << "^x\n";
     }
+    objStr << "Version: " << getVersion() << "\n";
     objStr << "CompStr: " << this->getCompareStr() << " ";
     objStr << "Id: " << getId() << " Registered(Obj/Svr): " << (isRegistered() ? "Y" : "N") << "/" << (gServer->lookupObjId(getId()) != nullptr ? "Y" : "N") << "\n";
     const Unique* unique = gConfig->getUnique(getAsConstObject());
