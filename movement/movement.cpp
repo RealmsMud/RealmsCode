@@ -783,10 +783,10 @@ void Move::checkFollowed(const std::shared_ptr<Player>& player, const std::share
         ::broadcast(player->getSock(), room, "%M follows %N.", target.get(), player.get());
 
         // prevent players from continuously creating new monsters
-        if(target->flagIsSet(M_PERMENANT_MONSTER))
+        if(target->flagIsSet(M_PERMANENT_MONSTER))
             target->diePermCrt();
 
-        target->clearFlag(M_PERMENANT_MONSTER);
+        target->clearFlag(M_PERMANENT_MONSTER);
         gServer->addActive(target);
 
         target->deleteFromRoom();

@@ -58,7 +58,7 @@
 #include "config.hpp"                               // for Config, gConfig
 #include "delayedAction.hpp"                        // for DelayedAction
 #include "factions.hpp"                             // for Faction
-#include "flags.hpp"                                // for M_PERMENANT_MONSTER
+#include "flags.hpp"                                // for M_PERMANENT_MONSTER
 #include "global.hpp"                               // for FATAL, ALLITEMS
 #include "httpServer.hpp"                           // for HttpServer
 #include "lasttime.hpp"                             // for lasttime
@@ -851,15 +851,15 @@ void Server::updateRandom(long t) {
             for (l = 0; l < num; l++) {
                 monster->initMonster();
 
-                if (monster->flagIsSet(M_PERMENANT_MONSTER))
-                    monster->clearFlag(M_PERMENANT_MONSTER);
+                if (monster->flagIsSet(M_PERMANENT_MONSTER))
+                    monster->clearFlag(M_PERMANENT_MONSTER);
 
                 if (!l)
                     monster->addToRoom(room, num);
                 else
                     monster->addToRoom(room, 0);
 
-                if (!monster->flagIsSet(M_PERMENANT_MONSTER) || monster->flagIsSet(M_NO_ADJUST))
+                if (!monster->flagIsSet(M_PERMANENT_MONSTER) || monster->flagIsSet(M_NO_ADJUST))
                     monster->adjust(-1);
 
                 gServer->addActive(monster);
@@ -944,7 +944,7 @@ void Server::updateActive(long t) {
             !monster->isPet() &&
             !monster->isPoisoned() &&
             !monster->isEffected("slow") &&
-            !monster->flagIsSet(M_PERMENANT_MONSTER) &&
+            !monster->flagIsSet(M_PERMANENT_MONSTER) &&
             !monster->flagIsSet(M_AGGRESSIVE))
         {
             std::clog << "Removing " << monster->getName() << " from active list" << std::endl;
@@ -963,7 +963,7 @@ void Server::updateActive(long t) {
             for(const auto& mons : room->monsters) {
                 if(mons == monster)
                     continue;
-                if( mons->flagIsSet(M_PERMENANT_MONSTER) && !monster->willAssist(mons->getAsMonster()) && !monster->isEnemy(mons))
+                if( mons->flagIsSet(M_PERMANENT_MONSTER) && !monster->willAssist(mons->getAsMonster()) && !monster->isEnemy(mons))
                     monster->addEnemy(mons);
             }
         }
@@ -973,7 +973,7 @@ void Server::updateActive(long t) {
                 if(mons == monster)
                     continue;
                 if( !monster->willAssist(mons->getAsMonster()) &&
-                    !mons->flagIsSet(M_PERMENANT_MONSTER) &&
+                    !mons->flagIsSet(M_PERMANENT_MONSTER) &&
                     !monster->isEnemy(mons) && 
                     !mons->isPet()
                 )

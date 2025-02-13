@@ -127,6 +127,7 @@ std::string Object::statObj(int statFlags) {
         objStr << "Name:   " << objName << "^x\n"
                << "Plural: " << objPlural << "^x\n";
     }
+    objStr << "Version: " << getVersion() << "\n";
     objStr << "CompStr: " << this->getCompareStr() << " ";
     objStr << "Id: " << getId() << " Registered(Obj/Svr): " << (isRegistered() ? "Y" : "N") << "/" << (gServer->lookupObjId(getId()) != nullptr ? "Y" : "N") << "\n";
     const Unique* unique = gConfig->getUnique(getAsConstObject());
@@ -274,6 +275,9 @@ std::string Object::statObj(int statFlags) {
             objStr << "^rThis object is a weapon and is not wieldable.^x\n";
         if(type == ObjectType::ARMOR && (!wearflag || wearflag == HELD || wearflag == WIELD))
             objStr << "^rThis object is a armor and is not wearable.^x\n";
+    }
+    else if (wearflag && wearflag != HELD) {
+        objStr << "^RInvalid wear location set: " << getWearName() << "(" << wearflag << ").^x\n";
     }
 
     if(size)

@@ -31,7 +31,7 @@
 #include "config.hpp"                  // for Config, gConfig
 #include "creatureStreams.hpp"         // for Streamable, operator<<, setf
 #include "effects.hpp"                 // for EffectInfo
-#include "flags.hpp"                   // for M_PERMENANT_MONSTER, O_JUST_BO...
+#include "flags.hpp"                   // for M_PERMANENT_MONSTER, O_JUST_BO...
 #include "global.hpp"                  // for MAG, CreatureClass, CAP, Creat...
 #include "hooks.hpp"                   // for Hooks
 #include "lasttime.hpp"                // for crlasttime, lasttime
@@ -316,7 +316,7 @@ int Player::doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) {
                 !mons->flagIsSet(M_ALWAYS_ACTIVE) &&
                 !mons->flagIsSet(M_REGENERATES) &&
                 !mons->isEffected("slow") &&
-                !mons->flagIsSet(M_PERMENANT_MONSTER) &&
+                !mons->flagIsSet(M_PERMANENT_MONSTER) &&
                 !mons->flagIsSet(M_AGGRESSIVE)
             )
                 gServer->delActive(mons.get());
@@ -381,7 +381,7 @@ void Monster::addToRoom(const std::shared_ptr<BaseRoom>& room, int num) {
 
     // Only show if num != 0 and it isn't a perm, otherwise we'll either
     // show to staff or players
-    if(num != 0 && !flagIsSet(M_PERMENANT_MONSTER)) {
+    if(num != 0 && !flagIsSet(M_PERMANENT_MONSTER)) {
         if(!flagIsSet(M_NO_SHOW_ARRIVE) && !isInvisible()
             && !flagIsSet(M_WAS_PORTED) )
         {
@@ -471,7 +471,7 @@ void UniqueRoom::addPermCrt() {
             continue;
 
         for(const auto& mons : monsters) {
-            if( mons->flagIsSet(M_PERMENANT_MONSTER) && mons->getName() == monster->getName() )
+            if( mons->flagIsSet(M_PERMANENT_MONSTER) && mons->getName() == monster->getName() )
                 m++;
         }
 
@@ -483,7 +483,7 @@ void UniqueRoom::addPermCrt() {
                 continue;
 
             monster->initMonster();
-            monster->setFlag(M_PERMENANT_MONSTER);
+            monster->setFlag(M_PERMANENT_MONSTER);
             monster->daily[DL_BROAD].cur = 20;
             monster->daily[DL_BROAD].max = 20;
 

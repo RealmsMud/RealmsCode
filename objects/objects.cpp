@@ -537,9 +537,8 @@ int Object::getActualBulk() const {
                     n = 4;
             }
             break;
-        case    ObjectType::MONEY:
-        case    ObjectType::POISON:
-        case    ObjectType::POTION:
+        case ObjectType::POISON:
+        case ObjectType::POTION:
             n = 4;
             break;
         case ObjectType::ARMOR:
@@ -554,18 +553,19 @@ int Object::getActualBulk() const {
                 n = 14;
                 break;
             case NECK:
-                n = 6;
+                n = 4;
                 break;
             case BELT:
             case HANDS:
             case HEAD:
             case FEET:
             case HELD:
-            case FACE:
                 n = 4;
                 break;
+            case FACE:
+                n = 1;
+                break;
             case FINGER:
-
             case FINGER2:
             case FINGER3:
             case FINGER4:
@@ -573,13 +573,13 @@ int Object::getActualBulk() const {
             case FINGER6:
             case FINGER7:
             case FINGER8:
-                n = 1;
+                n = 0;
                 break;
             case SHIELD:
                 n = 10;
                 break;
             default:
-                n =1;
+                n = 1;
                 break;
             }
             break;
@@ -589,16 +589,29 @@ int Object::getActualBulk() const {
         case ObjectType::MISC:
             n = 3;
             break;
-        case ObjectType::KEY:
-            n = 1;
-            break;
         case ObjectType::CONTAINER:
-            n = 5;
+            n = 3;
             break;
         case ObjectType::LIGHTSOURCE:
         case ObjectType::BANDAGE:
             n = 2;
             break;
+        case ObjectType::INSTRUMENT:
+            n = 4;
+            break;
+        case ObjectType::QUIVER:
+            n = 2;
+            break;
+        case ObjectType::AMMO:
+        case ObjectType::HERB:
+        case ObjectType::GEMSTONE:
+        case ObjectType::LOTTERYTICKET:
+        case ObjectType::MONEY:
+        case ObjectType::KEY:
+            n = 0;
+            break;
+        default:
+            n = 0;
         }
     } else
         n = bulk;
@@ -915,7 +928,7 @@ bool Object::alignRestrict(const std::shared_ptr<Creature> & creature, bool p) c
         (flagIsSet(O_EVIL_ALIGN_ONLY) && creature->getAdjustedAlignment() > NEUTRAL) )
     {
         if(p) {
-            creature->checkStaff("%O shocks you and you drop it.\n", this);
+            creature->checkStaff("%O shocks you%s\n", this, (flagIsSet(O_NO_DROP) ? "!":"! You dropped it!"));
             if(!creature->isStaff())
                 broadcast(creature->getSock(), creature->getConstRoomParent(), "%M is shocked by %P.", creature.get(), this);
         }
@@ -1020,7 +1033,7 @@ bool Object::clanRestrict(const std::shared_ptr<const Creature> & creature) cons
 
 
 //*********************************************************************
-//                          lawchaoRestrict
+//                          lawchaosRestrict
 //*********************************************************************
 
 bool Object::lawchaoRestrict(const std::shared_ptr<Creature> & creature, bool p) const {
@@ -1043,9 +1056,9 @@ bool Object::doRestrict(const std::shared_ptr<Creature> &creature, bool p) {
      || raceRestrict(creature, p) || sexRestrict(creature, p) || clanRestrict(creature, p) || lawchaoRestrict(creature, p) || deityRestrict(creature, p))
         return (true);
     if (alignRestrict(creature, p)) {
-        if (p && !creature->isStaff()) {
-            creature->delObj(Containable::downcasted_shared_from_this<Object>(), false, true);
-            addToRoom(creature->getRoomParent());
+        if (p && !flagIsSet(O_NO_DROP) && !creature->isStaff() ) {
+                creature->delObj(Containable::downcasted_shared_from_this<Object>(), false, true);
+                addToRoom(creature->getRoomParent());
         }
         return (true);
     }
@@ -1274,11 +1287,36 @@ bool Object::isKey(const std::shared_ptr<UniqueRoom>& room, const std::shared_pt
 
 
 bool Object::isGemstone() const {
+    return(info.isArea("gemstone") || getType() == ObjectType::GEMSTONE);
+}
 
-    if (info.isArea("gemstone") || getType() == ObjectType::GEMSTONE)
+bool Object::isSilver() const {
+    return(flagIsSet(O_SILVER_OBJECT) || getMaterial() == TRUESILVER || getMaterial() == MSILVER);
+}
+
+bool Object::isDarkmetal() const {
+    return(flagIsSet(O_DARKMETAL) || getMaterial() == DARKMETAL);
+}
+
+bool Object::isTrashAtPawn(Money value) const {
+
+    //poor quality = weapon/armor too damaged
+    if((getType() == ObjectType::WEAPON || getType() == ObjectType::ARMOR) && getShotsCur() <= getShotsMax()/8)
         return(true);
-    else
-        return(false);
+    if((getType() == ObjectType::WAND || getType() > ObjectType::MISC || getType() == ObjectType::KEY) && getShotsCur() < 1)
+        return(true);
+
+    //Otherwise ineligable to pawn for some reason
+    if(getType() == ObjectType::SCROLL || getType() == ObjectType::SONGSCROLL || flagIsSet(O_STARTING) ||
+        (getType() == ObjectType::POTION && !flagIsSet(O_EATABLE) && !flagIsSet(O_DRINKABLE)))
+        return(true);
+
+    //too cheap = gold value less than 20
+    if(value[GOLD] < 20)
+        return(true);
+
+    return(false);
+
 }
 
 //*********************************************************************
@@ -1331,7 +1369,7 @@ void spawnObjects(const std::string &room, const std::string &objects) {
 
             if(loadObject(cr, object)) {
                 // no need to spawn darkmetal items in a sunlit room
-                if(object->flagIsSet(O_DARKMETAL) && dest->isSunlight())
+                if(object->isDarkmetal() && dest->isSunlight())
                     object.reset();
                 else {
                     object->addToRoom(dest);

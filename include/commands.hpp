@@ -74,6 +74,8 @@ int cmdDeleteStatement(const std::shared_ptr<Player>& player, cmd* cmnd);
 // color.c
 int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd);
 
+int innateLevitate(const std::shared_ptr<Player>& player, cmd* cmnd);
+
 // command2.c
 int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdRoominfo(const std::shared_ptr<Player>& player, cmd* cmnd);

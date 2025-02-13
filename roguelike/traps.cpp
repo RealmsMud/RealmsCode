@@ -591,7 +591,7 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
                     } else {
                         std::shared_ptr<Monster>  mon = target->getAsMonster();
                         broadcast((std::shared_ptr<Socket> )nullptr,  room, "%M was killed!", mon.get());
-                        if(mon->flagIsSet(M_PERMENANT_MONSTER))
+                        if(mon->flagIsSet(M_PERMANENT_MONSTER))
                             mon->diePermCrt();
                         mon->deleteFromRoom();
 
@@ -837,13 +837,13 @@ int Player::doCheckTraps(const std::shared_ptr<UniqueRoom>& room) {
         auto mIt = uRoom->monsters.begin();
         while(mIt != uRoom->monsters.end()) {
             tmp_crt = (*mIt++);
-            if(tmp_crt->flagIsSet(M_PERMENANT_MONSTER)) {
+            if(tmp_crt->flagIsSet(M_PERMANENT_MONSTER)) {
                 if(!uRoom->players.empty())
                     broadcast(tmp_crt->getSock(), tmp_crt->getRoomParent(),
                         "%M hears an alarm and leaves to investigate.",tmp_crt.get());
                 else
                     gServer->addActive(tmp_crt);
-                tmp_crt->clearFlag(M_PERMENANT_MONSTER);
+                tmp_crt->clearFlag(M_PERMANENT_MONSTER);
                 tmp_crt->setFlag(M_AGGRESSIVE);
                 tmp_crt->diePermCrt();
                 tmp_crt->deleteFromRoom();

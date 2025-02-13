@@ -463,6 +463,9 @@ public:
     [[nodiscard]] double winterProtection() const;
     [[nodiscard]] bool isKey(const std::shared_ptr<UniqueRoom>& room, const std::shared_ptr<Exit>& exit) const;
     [[nodiscard]] bool isGemstone() const;
+    [[nodiscard]] bool isSilver() const;
+    [[nodiscard]] bool isDarkmetal() const;
+    [[nodiscard]] bool isTrashAtPawn(Money value) const;
 
     bool swap(const Swap& s);
     bool swapIsInteresting(const Swap& s) const;

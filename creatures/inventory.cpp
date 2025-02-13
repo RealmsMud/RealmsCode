@@ -40,7 +40,7 @@ void Creature::addObj(const std::shared_ptr<Object>&  object) {
 
     // players have big inventories; to keep the mud from searching them when it
     // doesn't need to, record a flag on the player
-    if(pPlayer && object->flagIsSet(O_DARKMETAL))
+    if(pPlayer && object->isDarkmetal())
         setFlag(P_DARKMETAL);
     if(object->flagIsSet(O_DARKNESS))
         setFlag(pPlayer ? P_DARKNESS : M_DARKNESS);
@@ -101,6 +101,7 @@ void Creature::delObj(std::shared_ptr<Object>  object, bool breakUnique, bool re
     object->clearFlag(O_BEING_PREPARED);
     object->clearFlag(O_HIDDEN);
     object->clearFlag(O_JUST_LOADED);
+    object->clearFlag(O_WAS_SCAVENGED);
 
     // if it doesnt have a parent_crt, it's either being worn or is in a bag
     if(!object->inCreature()) {

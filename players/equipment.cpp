@@ -61,6 +61,8 @@
 #include "unique.hpp"                          // for remove, Lore, is, dele...
 #include "xml.hpp"                             // for loadObject, loadPlayer
 #include "toNum.hpp"
+#include "commerce.hpp"                        // for sellAmount()
+#include "money.hpp"
 
 class Socket;
 
@@ -1418,7 +1420,7 @@ int cmdGet(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         } else
             *player << ColorOn << setf(CAP) << creature << " gets " << object << ".\n" << ColorOff;
 
-        if(object->flagIsSet(O_SILVER_OBJECT) && player->isEffected("lycanthropy")) {
+        if(object->isSilver() && player->isEffected("lycanthropy")) {
             if(player == creature)
                 *player << ColorOn << "^R" << setf(CAP) << object << " burns you and you drop it!\n" << ColorOff;
             else
@@ -1625,12 +1627,18 @@ int cmdInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     ObjectSet::iterator it;
     std::shared_ptr<Object>  obj;
+    Money value;
+    bool inPawn = (player->getRoomParent()->flagIsSet(R_PAWN_SHOP) || player->getRoomParent()->flagIsSet(R_SHOP));
+
     for( it = target->objects.begin() ; it != target->objects.end() ; ) {
         obj = (*it++);
-        if (invFilter && obj->getTypeName() != filterString)
-            continue;
-        //if (invFilter && (!obj->isTrash() && filterString == "trash"))
-        //    continue;
+        if (invFilter) {
+            if (filterString == "trash" && !obj->isTrashAtPawn(inPawn ? sellAmount(player, player->getConstUniqueRoomParent(), obj, false) : obj->value)) {
+                continue;
+            }
+            else if (filterString != "trash" && obj->getTypeName() != filterString)
+                continue;
+        }
         if(player->canSee(obj)) {
             m = 1;
             while( it != target->objects.end() ) {
@@ -2194,7 +2202,7 @@ int cmdDrop(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         }
 
         if(object->flagIsSet(O_KEEP)) {
-            player->printColor("%O is currently in safe keeping.\nYou must unkeep it to drop it.\n", object.get());
+            player->printColor("%O is currently set for safe keeping.\nYou must unkeep it to drop it: ^Wunkeep %s^x\n", object.get(),object.get()->key[0]);
             return(0);
         }
 
@@ -2530,7 +2538,7 @@ int canGiveTransport(const std::shared_ptr<Creature>& creature, const std::share
 
 
     if(object->flagIsSet(O_KEEP)) {
-        player->printColor("%O is currently in safe keeping.\nYou must unkeep it to %s.\n", object.get(), give ? "give it away" : "transport it");
+        player->printColor("%O is currently set for safe keeping.\nYou must unkeep it to %s: ^Wunkeep %s^x\n", object.get(), give ? "give it away" : "transport it",object.get()->key[0]);
         return(0);
     }
 
@@ -2688,7 +2696,7 @@ int cmdGive(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
     if(!player->isDm())
         log_immort(false, player, "%s%s gave %s to %s.\n", player->getCName(), player != creature ? "'s pet" : "", object->getCName(), target->getCName());
 
-    if(object->flagIsSet(O_SILVER_OBJECT) && target->isEffected("lycanthropy")) {
+    if(object->isSilver() && target->isEffected("lycanthropy")) {
         target->printColor("%O burns you and you drop it!\n", object.get());
         broadcast(player->getSock(), room, "%M is burned by %P and %s drops it.", target.get(), object.get(), target->heShe());
         target->delObj(object, false, true);

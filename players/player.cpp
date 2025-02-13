@@ -165,6 +165,10 @@ void Player::init() {
         daily[DL_SILENCE].max = 3;
         daily[DL_HARM].max = 2;
         daily[DL_SCARES].max = 5;
+        if (race == DARKELF)
+            daily[DL_LEVITATE].max = 2;
+        else
+            daily[DL_LEVITATE].max = 1;
     } else {
         daily[DL_DEFEC].max = 100;
     }

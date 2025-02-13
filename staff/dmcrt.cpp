@@ -2418,7 +2418,7 @@ int dmAlias(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(monster->mFlagIsSet(M_PERMENANT_MONSTER)) {
+    if(monster->mFlagIsSet(M_PERMANENT_MONSTER)) {
         player->print("Their soul refuses to be displaced.\n");
         return(0);
     }
@@ -2481,7 +2481,7 @@ int dmFollow(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(creature->flagIsSet(M_PERMENANT_MONSTER)) {
+    if(creature->flagIsSet(M_PERMANENT_MONSTER)) {
         player->print("Perms can't follow.\n");
         return(0);
     }
@@ -2525,7 +2525,7 @@ int dmAttack(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(attacker->flagIsSet(M_PERMENANT_MONSTER)) {
+    if(attacker->flagIsSet(M_PERMANENT_MONSTER)) {
         player->print("Perms can't do that.\n");
         return(0);
     }
@@ -2543,7 +2543,7 @@ int dmAttack(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(victim->flagIsSet(M_PERMENANT_MONSTER) && victim->isMonster()) {
+    if(victim->flagIsSet(M_PERMANENT_MONSTER) && victim->isMonster()) {
         player->print("Perms can't do that.\n");
         return(0);
     }
@@ -2776,7 +2776,7 @@ int dmAddMob(const std::shared_ptr<Player>& player, cmd* cmnd) {
     for(n=0; n<20; n++)
         new_mob->ready[n] = nullptr;
     new_mob->setFlag(M_SAVE_FULL);
-    new_mob->lasttime[LT_MON_SCAVANGE].ltime =
+    new_mob->lasttime[LT_MON_SCAVENGE].ltime =
     new_mob->lasttime[LT_MON_WANDER].ltime =
     new_mob->lasttime[LT_MOB_THIEF].ltime =
     new_mob->lasttime[LT_TICK].ltime =
@@ -2830,7 +2830,7 @@ int dmForceWander(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(monster->flagIsSet(M_PERMENANT_MONSTER)) {
+    if(monster->flagIsSet(M_PERMANENT_MONSTER)) {
         player->print("Do not make perms wander away.\n");
         return(0);
     }

@@ -1204,7 +1204,7 @@ bool Creature::canHit(const std::shared_ptr<Creature>& victim, std::shared_ptr<O
             weapon = ready[HANDS-1];
         } else if(weapon) {
             enchant = abs(weapon->getAdjustment());
-            if(weapon->flagIsSet(O_SILVER_OBJECT))
+            if(weapon->isSilver())
                 silver = true;
         }
 

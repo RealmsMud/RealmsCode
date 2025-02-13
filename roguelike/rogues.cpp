@@ -30,7 +30,7 @@
 #include "delayedAction.hpp"           // for ActionSearch, DelayedAction
 #include "dm.hpp"                      // for dmMobInventory
 #include "factions.hpp"                // for Faction
-#include "flags.hpp"                   // for P_AFK, M_PERMENANT_MONSTER
+#include "flags.hpp"                   // for P_AFK, M_PERMANENT_MONSTER
 #include "global.hpp"                  // for CreatureClass, CreatureClass::...
 #include "hooks.hpp"                   // for Hooks
 #include "lasttime.hpp"                // for lasttime
@@ -173,7 +173,7 @@ int cmdBribe(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     Server::logGold(GOLD_OUT, player, Money(amount, GOLD), creature, "Bribe");
 
-    if(amount < cost[GOLD] || creature->flagIsSet(M_PERMENANT_MONSTER)) {
+    if(amount < cost[GOLD] || creature->flagIsSet(M_PERMANENT_MONSTER)) {
         *player << setf(CAP) << creature << " takes your money, but stays.\n";
         broadcast(player->getSock(), player->getParent(), "%M tried to bribe %N.", player.get(), creature.get());
         creature->coins.add(amount, GOLD);
@@ -1074,7 +1074,7 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
     
     storage->addPermCrt();
     for(const auto& mons : storage->monsters) {
-        if(mons->getLevel() >= 10 && mons->flagIsSet(M_PERMENANT_MONSTER))
+        if(mons->getLevel() >= 10 && mons->flagIsSet(M_PERMANENT_MONSTER))
             guarded++;
     }
 
@@ -1192,7 +1192,7 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->setFlag(P_LAG_PROTECTION_ACTIVE);
 
         for(const auto& mons : room->monsters) {
-            if(mons->flagIsSet(M_PERMENANT_MONSTER)) {
+            if(mons->flagIsSet(M_PERMANENT_MONSTER)) {
 
                 gServer->addActive(mons);
                 mons->clearFlag(M_DEATH_SCENE);
@@ -1211,13 +1211,13 @@ int cmdShoplift(const std::shared_ptr<Player>& player, cmd* cmnd) {
         while(mIt != storage->monsters.end()) {
 
             std::shared_ptr<Monster> mons = (*mIt++);
-            if(mons->flagIsSet(M_PERMENANT_MONSTER)) {
+            if(mons->flagIsSet(M_PERMANENT_MONSTER)) {
                 if(!storage->players.empty())
                     broadcast(mons->getSock(), mons->getRoomParent(),
                         "%M runs out after a shoplifter.", mons.get());
                 else
                     gServer->addActive(mons);
-                mons->clearFlag(M_PERMENANT_MONSTER);  // This is all done to prevent people from getting
+                mons->clearFlag(M_PERMANENT_MONSTER);  // This is all done to prevent people from getting
                 mons->clearFlag(M_FAST_WANDER);  // killed mostly by others baiting these mobs in.
                 mons->clearFlag(M_DEATH_SCENE);
                 mons->addPermEffect("detect-invisible");
@@ -1657,7 +1657,7 @@ int Player::checkPoison(std::shared_ptr<Creature> target, std::shared_ptr<Object
         poisonchance = 0;
 
     // Less of a chance to poison a perm
-    if(!target && target->flagIsSet(M_PERMENANT_MONSTER))
+    if(!target && target->flagIsSet(M_PERMANENT_MONSTER))
         poisonchance = std::min(poisonchance, 10);
 
     // We can always poison someone if we're a ct
@@ -2065,7 +2065,7 @@ int cmdPeek(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isCt())
         goldchance = 101;
 
-    if(Random::get(1,100) <= goldchance && !pCreature && !creature->flagIsSet(M_PERMENANT_MONSTER))
+    if(Random::get(1,100) <= goldchance && !pCreature && !creature->flagIsSet(M_PERMANENT_MONSTER))
         *player << ColorOn << creature->upHeShe() << " has ^y" << creature->coins[GOLD] << "^x gold coins.\n" << ColorOff;
 
 

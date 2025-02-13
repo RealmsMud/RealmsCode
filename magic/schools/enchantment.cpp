@@ -22,7 +22,7 @@
 #include "cmd.hpp"                     // for cmd
 #include "config.hpp"                  // for Config, gConfig
 #include "deityData.hpp"               // for DeityData
-#include "flags.hpp"                   // for M_PERMENANT_MONSTER, M_RESIST_...
+#include "flags.hpp"                   // for M_PERMANENT_MONSTER, M_RESIST_...
 #include "global.hpp"                  // for CastType, CreatureClass, CastT...
 #include "lasttime.hpp"                // for lasttime
 #include "magic.hpp"                   // for SpellData, checkRefusingMagic
@@ -730,7 +730,7 @@ int splFear(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
             return(0);
 
         
-        if( (target->mFlagIsSet(M_PERMENANT_MONSTER))) {
+        if( (target->mFlagIsSet(M_PERMANENT_MONSTER))) {
             *player << setf(CAP) << target << " is too strong willed for that. Your spell had no effect.\n";
             broadcast(player->getSock(), target->getSock(), player->getParent(),
                              "%M casts a fear spell on %N.\n%M brushes it off and attacks %N.", player.get(), target.get(), target.get(), player.get());
@@ -854,7 +854,7 @@ int splSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         if(!player->canAttack(target))
             return(0);
 
-        if(player->isPlayer() && target->mFlagIsSet(M_PERMENANT_MONSTER)) {
+        if(player->isPlayer() && target->mFlagIsSet(M_PERMANENT_MONSTER)) {
             if(!dec_daily(&player->daily[DL_SILENCE]) && !player->isCt()) {
                 player->print("You have done that enough times for today.\n");
                 return(0);
@@ -873,7 +873,7 @@ int splSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         if(target->isPlayer() && player->isCt())
             dur = 600L;
 
-        if(target->mFlagIsSet(M_PERMENANT_MONSTER))
+        if(target->mFlagIsSet(M_PERMANENT_MONSTER))
             bns = (target->saves[SPL].chance)/3;
 
         if(spellData->how == CastType::CAST)
@@ -1342,7 +1342,7 @@ int splStun(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
                 && !target->isCt())
             ) {
 
-                if(mTarget && mTarget->flagIsSet(M_PERMENANT_MONSTER))
+                if(mTarget && mTarget->flagIsSet(M_PERMANENT_MONSTER))
                     bns = 10;
 
                 if(!mTarget && target->getClass() == CreatureClass::CLERIC && target->getDeity() == ARES)

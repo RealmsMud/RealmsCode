@@ -1087,7 +1087,7 @@ int dmPut(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(object->flagIsSet(O_DARKMETAL) && target->getRoomParent()->isSunlight()) {
+    if(object->isDarkmetal() && target->getRoomParent()->isSunlight()) {
         player->printColor("You cannot give %P to %N now!\nIt would surely be destroyed!\n", object.get(), target.get());
         return(0);
     }
@@ -1631,6 +1631,7 @@ int dmBugPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
 #define DM_FLATULENCE   28
 #define DM_DIARRHEA     29
 #define DM_KINETIC      30
+#define DM_DRONESWARM  31
 
 //*********************************************************************
 //                      dmKillAll
@@ -1845,12 +1846,16 @@ int dmKill(std::shared_ptr<Player> player, std::shared_ptr<Player>victim, int ty
             victim->printColor("^r%M tried to give you an overabundance of flatulence and kill you!\n", player.get());
             break;
         case DM_DIARRHEA:
-            player->print("You tried to give %N excessive diarreah of the mouth and kill %s!\n", victim.get(), victim->himHer());
-            victim->printColor("^r%M tried to give you excessive diarreah and kill you!\n", player.get());
+            player->print("You tried to give %N excessive diarrhea of the mouth and kill %s!\n", victim.get(), victim->himHer());
+            victim->printColor("^r%M tried to give you excessive diarrhea and kill you!\n", player.get());
             break;
         case DM_KINETIC:
             player->print("You tried to kill %N with a kinetic strike from space!\n", victim.get());
             victim->printColor("^r%M tried to kill you with a kinetic strike from space!\n", player.get());
+            break;
+        case DM_DRONESWARM:
+            player->print("You tried to kill %N with a swarm of hunter-killer explosive drones!\n", victim.get());
+            victim->printColor("^r%M tried to kill you with a swarm of hunter-killer explosive drones!\n", player.get());
             break;
         default:
             player->print("You tried to strike down %N!\n", victim.get());
@@ -1951,12 +1956,16 @@ int dmKill(std::shared_ptr<Player> player, std::shared_ptr<Player>victim, int ty
         victim->print("It gets so bad that you explode. You die horribly.\n");
         break;
     case DM_DIARRHEA:
-        victim->print("Excessive diarreah suddenly spurts uncontrollably from your mouth.\n");
+        victim->print("Excessive diarrhea suddenly spurts uncontrollably from your mouth.\n");
         victim->print("You die in agony from dehydration.\n");
         break;
     case DM_KINETIC:
         victim->print("A small titanium rod hits you from space at nearly the speed of light!\n");
         victim->print("You were utterly obliterated!\n");
+        break;
+    case DM_DRONESWARM:
+        victim->print("A swarm of hunter-killer drones appears and surrounds you.\n");
+        victim->print("They all explode! You died.\n");
         break;
     default:
         break;
@@ -2088,13 +2097,18 @@ int dmKill(std::shared_ptr<Player> player, std::shared_ptr<Player>victim, int ty
             break;
         case DM_DIARRHEA:
             broadcast(victim->getSock(), victim->getRoomParent(),
-                "^yExcessive diarreah suddenly spurts uncontrollably from %s's mouth.\n%s dies in agony from dehydration.", victim->getCName(), victim->upHeShe());
-            broadcast("^y### Sadly, %s died suddenly from excessive diarreah of the mouth.", victim->getCName());
+                "^yExcessive diarrhea suddenly spurts uncontrollably from %s's mouth.\n%s dies in agony from dehydration.", victim->getCName(), victim->upHeShe());
+            broadcast("^y### Sadly, %s died suddenly from excessive diarrhea of the mouth.", victim->getCName());
             break;
         case DM_KINETIC:
             broadcast(victim->getSock(), victim->getRoomParent(),
                 "^cA small titanium rod hits %s from space at nearly the speed of light!\n%s was utterly obliterated.", victim->getCName(), victim->upHeShe());
             broadcast("^c### Sadly, %s was killed by a kinetic strike from space.", victim->getCName());
+            break;
+        case DM_DRONESWARM:
+            broadcast(victim->getSock(), victim->getRoomParent(),
+                "^yA swarm of hunter-killer drones appears and surrounds %s! They all explode and kill %s!", victim->getCName(), victim->himHer());
+            broadcast("^y### Sadly, %s was killed by a hunter-killer drone swarm.", victim->getCName());
             break;
         default:
             break;
@@ -2180,10 +2194,13 @@ int dmKill(std::shared_ptr<Player> player, std::shared_ptr<Player>victim, int ty
             broadcast(isStaff, "^m### Sadly, %s exploded due to an overabundance of flatulence.", victim->getCName());
             break;
         case DM_DIARRHEA:
-            broadcast(isStaff, "^y### Sadly, %s died suddenly from excessive diarreah of the mouth.", victim->getCName());
+            broadcast(isStaff, "^y### Sadly, %s died suddenly from excessive diarrhea of the mouth.", victim->getCName());
             break;
         case DM_KINETIC:
             broadcast(isStaff, "^r### Sadly, %s was killed by a kinetic strike from space.", victim->getCName());
+            break;
+        case DM_DRONESWARM:
+            broadcast(isStaff, "^y### Sadly, %s was killed by a hunter-killer drone swarm.", victim->getCName());
             break;
         default:
             break;
@@ -2356,8 +2373,10 @@ int dmKillSwitch(const std::shared_ptr<Player>& player, cmd* cmnd) {
         type = DM_FLATULENCE;
     else if(!strcasecmp(cmnd->str[0], "*diarreah"))
         type = DM_DIARRHEA;
-     else if(!strcasecmp(cmnd->str[0], "*kinetic"))
+    else if(!strcasecmp(cmnd->str[0], "*kinetic"))
         type = DM_KINETIC;
+    else if(!strcasecmp(cmnd->str[0], "*drone"))
+        type = DM_DRONESWARM;
 
     if(cmnd->num >  2) {
         if(!strcasecmp(cmnd->str[2], "-combust"))
@@ -2412,8 +2431,10 @@ int dmKillSwitch(const std::shared_ptr<Player>& player, cmd* cmnd) {
             type = DM_FLATULENCE;
         else if(!strcasecmp(cmnd->str[2], "-diarreah"))
             type = DM_DIARRHEA;
-         else if(!strcasecmp(cmnd->str[2], "-kinetic"))
+        else if(!strcasecmp(cmnd->str[2], "-kinetic"))
             type = DM_KINETIC;
+        else if(!strcasecmp(cmnd->str[2], "-drone"))
+            type = DM_DRONESWARM;
     }
 
     dmKill(player, victim, type, silent, hpmp_loss, unconscious, uncon_length);

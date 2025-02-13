@@ -97,6 +97,11 @@ Money sellAmount(const std::shared_ptr<Player>& player, const std::shared_ptr<co
     return(value);
 }
 
+Money sellAmount(const std::shared_ptr<const Player>& player, const std::shared_ptr<const UniqueRoom>& room, const std::shared_ptr<Object>&  object, bool sell) {
+    Money value = Faction::adjustPrice(player, room->getFaction(), object->value, sell);
+    value.set(std::min<unsigned long>(value[GOLD] / 2, MAXPAWN), GOLD);
+    return(value);
+}
 
 //*********************************************************************
 //                      bailCost
@@ -836,7 +841,6 @@ void shopBuy(const std::shared_ptr<Player>& player, cmd* cmnd, Property* p, std:
 
 int cmdSell(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Object> object=nullptr;
-    bool    poorquality=false;
     Money value;
 
 
@@ -869,7 +873,7 @@ int cmdSell(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(object->flagIsSet(O_KEEP)) {
-        player->printColor("%O is currently in safe keeping. Unkeep it to sell it.\n", object.get());
+        player->printColor("%O is currently set for safe keeping.\nUnkeep it to sell it: ^Wunkeep %s^x\n", object.get(), object.get()->key[0]);
         return(0);
     }
 
@@ -885,22 +889,8 @@ int cmdSell(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     value = sellAmount(player, player->getConstUniqueRoomParent(), object, false);
 
-    player->computeLuck();
-    // Luck for sale of items
-    //  gold = ((Ply[fd].extr->getLuck()*gold)/100);
-
-    if((object->getType() == ObjectType::WEAPON || object->getType() == ObjectType::ARMOR) && object->getShotsCur() <= object->getShotsMax()/8)
-        poorquality = true;
-
-    if((object->getType() == ObjectType::WAND || object->getType() > ObjectType::MISC || object->getType() == ObjectType::KEY) && object->getShotsCur() < 1)
-        poorquality = true;
-
-    if (value[GOLD] < 20 || poorquality || object->getType() == ObjectType::SCROLL ||
-    // objects flagged as eatable/drinkable can be sold
-            (object->getType() == ObjectType::POTION && !object->flagIsSet(O_EATABLE)
-                    && !object->flagIsSet(O_DRINKABLE)) || object->getType() == ObjectType::SONGSCROLL
-            || object->flagIsSet(O_STARTING)) {
-        switch(Random::get(1,5)) {
+    if (object->isTrashAtPawn(value)) {
+        switch(Random::get(1,6)) {
             case 1:
                 player->print("The shopkeep says, \"I'm not interested in that.\"\n");
                 break;
@@ -908,10 +898,13 @@ int cmdSell(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 player->print("The shopkeep says, \"I don't want that.\"\n");
                 break;
             case 3:
-                player->print("The shopkeep says, \"I don't have any use for that.\"\n");
+                player->print("The shopkeep says, \"Sorry, I can't sell that. I'm not buying it!\"\n");
                 break;
             case 4:
-                player->print("The shopkeep says, \"You must be joking; that's worthless!\"\n");
+                player->print("The shopkeep says, \"Sorry, there's no market for garbage like that.\"\n");
+                break;
+            case 5:
+                player->print("The shopkeep says, \"You must be joking, right? I can't sell that!\"\n");
                 break;
             default:
                 player->print("The shopkeep says, \"I won't buy that crap from you.\"\n");
@@ -920,14 +913,14 @@ int cmdSell(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    // This prevents high level thieves from possibly cashing in on shoplifting.
+    // No pawning of hot items!
     if(object->flagIsSet(O_WAS_SHOPLIFTED)) {
-        player->print("The shopkeep says, \"That was stolen from a shop somewhere. I won't buy it!\"\n");
+        player->print("The shopkeep says, \"That's so hot that it's practically smoking! I won't buy it! Get out!\"\n");
         return(0);
     }
 
     if(object->flagIsSet(O_NO_PAWN)) {
-        player->print("The shopkeep says, \"I refuse to buy that! Get out!\"\n");
+        player->print("The shopkeep says, \"There's no way I could move such an item. That won't work for me. Sorry.\"\n");
         return(0);
     }
 

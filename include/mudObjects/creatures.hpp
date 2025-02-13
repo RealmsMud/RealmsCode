@@ -504,6 +504,7 @@ public:
     int doMpCheck(int splno);
     int getTurnChance(const std::shared_ptr<Creature>& target);
 
+
 // Special Attacks
     std::string getSpecialsFullList() const;
     bool useSpecial(SpecialAttack &attack, const std::shared_ptr<Creature> &victim);
@@ -553,6 +554,7 @@ public:
     bool isPureCaster() const;
     bool isHybridCaster() const;
     bool hatesEnemy(std::shared_ptr<Creature> enemy) const;
+    bool inPawn() const;
 
 // Equipment / Inventory
     void addObj(const std::shared_ptr<Object>&  object);

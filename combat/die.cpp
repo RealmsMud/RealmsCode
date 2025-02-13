@@ -1246,7 +1246,7 @@ void Monster::logDeath(const std::shared_ptr<Creature>& killer) {
     if(flagIsSet(M_WILL_BE_LOGGED)) {
         strcpy(file, "log.mdeath");
         logType = 1;
-    } else if(flagIsSet(M_PERMENANT_MONSTER) && (killer->isPlayer() || killer->isPet())) {
+    } else if(flagIsSet(M_PERMANENT_MONSTER) && (killer->isPlayer() || killer->isPet())) {
         strcpy(file, "log.perm");
         logType = 2;
     } else if(killer->pFlagIsSet(P_BUGGED) ) {
@@ -1414,7 +1414,7 @@ void Monster::distributeExperience(const std::shared_ptr<Creature>&killer) {
     if(isPet())
         return;
 
-    if(flagIsSet(M_PERMENANT_MONSTER))
+    if(flagIsSet(M_PERMANENT_MONSTER))
         diePermCrt();
 
     if(killer) {
@@ -1599,7 +1599,7 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
     if (gConfig->bonusXpActive())
         bonusExp = std::max(1,(int)(expAmount * 0.1));
 
-    if(victim->flagIsSet(M_PERMENANT_MONSTER)) {
+    if(victim->flagIsSet(M_PERMANENT_MONSTER)) {
         holidayExp = 0;
         bonusExp = 0;
     }

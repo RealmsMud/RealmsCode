@@ -21,6 +21,7 @@
 #include <ctime>                       // for time
 #include <set>                         // for operator==, _Rb_tree_const_ite...
 #include <string>                      // for allocator, string, operator==
+#include <vector>                      // for std::vector
 
 #include "catRef.hpp"                  // for CatRef
 #include "cmd.hpp"                     // for cmd
@@ -178,7 +179,7 @@ void Monster::pulseTick(long t) {
     // ****** End Secondary Tick ******
 
 
-    if(flagIsSet(M_PERMENANT_MONSTER) && (hpTickAmt || mpTickAmt)) {
+    if(flagIsSet(M_PERMANENT_MONSTER) && (hpTickAmt || mpTickAmt)) {
         broadcast(hearMobTick, "^y*** %M(L%d,R%s) just ticked. [%d/%dH](+%d) [%d/%dM](+%d)",
             this, level, currentLocation.room.displayStr().c_str(),
             std::min(hp.getCur(),hp.getMax()), hp.getMax(), hpTickAmt,
@@ -925,13 +926,93 @@ bool Monster::willAssist(const std::shared_ptr<Monster> victim) const {
     return(false);
 }
 
+//*******************************************************************
+//                    findObjectToScavenge
+//*******************************************************************
+// This will search all objects on the ground in a room and randomly
+// choose one for a mob to scavenge
+std::shared_ptr<Object> Monster::findObjectToScavenge() {
+    std::shared_ptr<BaseRoom> room = getRoomParent();
+    std::vector<std::shared_ptr<Object>> scavengableObject;
+
+    if (room->objects.empty())
+        return(nullptr);
+
+    if(getWeight() >= maxWeight())
+        return(nullptr);
+
+    if (getTotalBulk() >= getMaxBulk())
+        return(nullptr);
+
+    for (const auto& obj : room->objects) {
+        if (!canScavange(obj))
+            continue;
+        if (obj->getType() == ObjectType::WEAPON && flagIsSet(M_WILL_WIELD))
+            continue;
+        if ((getWeight() + obj->getActualWeight()) > maxWeight())
+            continue;
+        if ((getTotalBulk() + obj->getActualBulk()) > getMaxBulk())
+            continue;
+
+        scavengableObject.push_back(obj);
+    }
+    
+    if(scavengableObject.empty()) {
+        return(nullptr);
+    }
+
+    return(*Random::get(scavengableObject));
+}
+
+//*******************************************************************
+//                    findScavengedObject
+//*******************************************************************
+// This will search all of a mob's scavenged objects and return one
+// of them chosen at random
+std::shared_ptr<Object> Monster::findScavengedObject() {
+    std::vector<std::shared_ptr<Object>> scavengedObjects;
+
+    // Collect all objects with the O_WAS_SCAVENGED flag
+    for (const auto& obj : objects) {
+        if (obj->flagIsSet(O_WAS_SCAVENGED)) {
+            scavengedObjects.push_back(obj);
+        }
+    }
+
+    // If no flagged objects are found, return nullptr
+    if (scavengedObjects.empty()) {
+        return(nullptr);
+    }
+
+    // Pick one at random
+    return(*Random::get(scavengedObjects));
+}
+
+//**********************************************************************
+//                    countScavengedObjects
+//**********************************************************************
+// This counts the total number of objects a mob currently has scavenged
+int Monster::countScavengedObjects() {
+
+    int count = 0;
+    if (objects.empty())
+        return(0);
+
+    for (const auto& obj : objects) {
+        if (obj->flagIsSet(O_WAS_SCAVENGED))
+            count++;
+    }
+
+    return(count);
+}
+
 //*********************************************************************
 //                      checkScavange
 //*********************************************************************
 
 void Monster::checkScavange(long t) {
     std::shared_ptr<BaseRoom> room = getRoomParent();
-    std::shared_ptr<Object>  object=nullptr;
+    std::shared_ptr<Object>  object=nullptr, scavengedObject=nullptr;
     long i=0;
 
     if(room->flagIsSet(R_SHOP_STORAGE))
@@ -939,32 +1020,48 @@ void Monster::checkScavange(long t) {
 
     if(isMagicallyHeld())
         return;
-
-    if(flagIsSet(M_SCAVANGER)) {
-        i = lasttime[LT_MON_SCAVANGE].ltime;
-        if( t - i > 20 &&
-            Random::get<bool>(0.15) &&
-            !room->objects.empty() &&
-            canScavange((*room->objects.begin())) &&
-            !((*room->objects.begin())->getType() == ObjectType::WEAPON && flagIsSet(M_WILL_WIELD)))
-        {
-            object = (*room->objects.begin());
-            object->deleteFromRoom();
-
-            setFlag(M_HAS_SCAVANGED);
-            broadcast((std::shared_ptr<Socket> )nullptr, room, "%M picked up %1P.", this, object.get());
-
-            // Object is gold
-            if(!object->info.id) {
-                coins.add(object->value);
-                object.reset();
-            } else
-                addObj(object);
+    
+    // If already scavenged, might decide to drop!
+    if(flagIsSet(M_HAS_SCAVENGED) && countScavengedObjects() > 0) {
+        i = lasttime[LT_MON_SCAVENGE].ltime;
+        if (t - i > 20 && Random::get<bool>(0.03) && room->mobCanDropObjects()) {
+            scavengedObject = findScavengedObject();
+            if (scavengedObject && scavengedObject->info.id && scavengedObject->getType() != ObjectType::MONEY && canScavange(scavengedObject)) {
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%M dropped %1P.", this, scavengedObject.get());
+                delObj(scavengedObject); // This will also clear the O_WAS_SCAVENGED oflag
+                scavengedObject->addToRoom(room);
+                lasttime[LT_MON_SCAVENGE].ltime = t;
+            }
         }
-        if(t - i > 20)
-            lasttime[LT_MON_SCAVANGE].ltime = t;
+            
+        if (countScavengedObjects() == 0)
+            clearFlag(M_HAS_SCAVENGED);
     }
 
+    if(flagIsSet(M_SCAVENGER)) {
+        i = lasttime[LT_MON_SCAVENGE].ltime;
+        if( t - i > 20 && Random::get<bool>(0.15)) {
+            object = findObjectToScavenge();
+            if (object) {
+                setFlag(M_HAS_SCAVENGED);
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "%M picked up %1P.", this, object.get());
+
+                object->deleteFromRoom();
+
+                // Object is gold
+                if(object->getType() == ObjectType::MONEY || !object->info.id) {
+                    coins.add(object->value);
+                    object.reset();
+                } else {
+                    object->setFlag(O_WAS_SCAVENGED);
+                    addObj(object);
+                }
+            }
+        }
+        if(t - i > 20)
+            lasttime[LT_MON_SCAVENGE].ltime = t;
+    } 
+    
     // thief code
     if(flagIsSet(M_TAKE_LOOT) || flagIsSet(M_STREET_SWEEPER)) {
         i = lasttime[LT_MOB_THIEF].ltime;
@@ -997,6 +1094,7 @@ void Monster::checkScavange(long t) {
                         coins.add(object->value);
                         object.reset();
                     } else {
+                        object->setFlag(O_WAS_SCAVENGED);
                         addObj(object);
                     }
                     
@@ -1007,7 +1105,6 @@ void Monster::checkScavange(long t) {
             if(!str.empty()) {
                 str = str.substr(0, str.length() - 2);
                 broadcast((std::shared_ptr<Socket> )nullptr, room, "%M picked up %s%s.", this, ((noArticle || (loot_count>1))?"":"the "), str.c_str());
-                //broadcast((std::shared_ptr<Socket> )nullptr, room, "%M picked up %s.", this, str.c_str());
             }
             if(auto obj = hide_obj.lock()) {
                 broadcast(getSock(), room, "%M attempts to hide %1P.", this, obj.get());
@@ -1052,7 +1149,7 @@ int Monster::checkWander(long t) {
             // If we're a mobile monster
     if( flagIsSet(M_MOBILE_MONSTER) &&
         // if fast wander, mobile even if perm.
-        (!flagIsSet(M_PERMENANT_MONSTER) || flagIsSet(M_FAST_WANDER)) &&
+        (!flagIsSet(M_PERMANENT_MONSTER) || flagIsSet(M_FAST_WANDER)) &&
         // can fast-wander if enemies are not nearby
         (flagIsSet(M_FAST_WANDER) ? !nearEnemy() :
             // if not fast-wander, can mobile if no enemies
@@ -1089,7 +1186,7 @@ int Monster::checkWander(long t) {
     // and sufficient time has passed
     if( flagIsSet(M_ATTACKING_SHOPLIFTER) &&
         !nearEnemy() &&
-        (t - i > 60 && Random::get(1, 100) <= (!flagIsSet(M_PERMENANT_MONSTER) ? 40:30))
+        (t - i > 60 && Random::get(1, 100) <= (!flagIsSet(M_PERMANENT_MONSTER) ? 40:30))
     ) {
         // If we have a mobile chance or we're a fast wanderer
         if((Random::get(1, 100) < Mobilechance || flagIsSet(M_FAST_WANDER))) {
@@ -1099,7 +1196,7 @@ int Monster::checkWander(long t) {
             // If we're nto chasing someone
             // Then we might start chasing them or let our guard down
 
-            if(!flagIsSet(M_PERMENANT_MONSTER)) {
+            if(!flagIsSet(M_PERMANENT_MONSTER)) {
                 broadcast((std::shared_ptr<Socket> )nullptr, room, "%1M mutters obscenities under %s breath.", this, hisHer());
                 // If we're not a perm, become a fast wander and go looking for the guy
                 setFlag(M_FAST_WANDER);
@@ -1134,7 +1231,7 @@ int Monster::checkWander(long t) {
     const std::string moveString = Move::getString(Containable::downcasted_shared_from_this<Monster>());
     if(flagIsSet(M_AGGRESSIVE) &&
         t - lasttime[LT_AGGRO_ACTION].ltime > 1200 &&
-       !flagIsSet(M_PERMENANT_MONSTER)
+       !flagIsSet(M_PERMANENT_MONSTER)
     ) {
         // Then we've got a chance to wander away
         if(Random::get<bool>(0.05)) {
@@ -1149,15 +1246,15 @@ int Monster::checkWander(long t) {
 
     // Now see if we'll either wander away or if we can become a wanderer
           // No wandering away if we have scavanged
-    if( (!flagIsSet(M_HAS_SCAVANGED) &&
+    if( (!flagIsSet(M_HAS_SCAVENGED) &&
         // if fast wander, wander even if perm.
-        (!flagIsSet(M_PERMENANT_MONSTER) || flagIsSet(M_FAST_WANDER)) &&
+        (!flagIsSet(M_PERMANENT_MONSTER) || flagIsSet(M_FAST_WANDER)) &&
         // pets and other followers don't wander
         !isPet() && !flagIsSet(M_DM_FOLLOW)) &&
         // will not wander if magically held - since they can't move
         (!isMagicallyHeld()))
     {
-        if( // If it's time to wander, and we have no enemey
+        if( // If it's time to wander, and we have no enemy
             (t - i > 60 && (inUniqueRoom() && Random::get(1, 100) <= getUniqueRoomParent()->wander.getTraffic()) && !hasEnemy()) ||
             // or we fast-wander if enemies are not nearby
             (flagIsSet(M_FAST_WANDER) && !nearEnemy()))
@@ -1175,7 +1272,7 @@ int Monster::checkWander(long t) {
                 else
                     wanderchance = 5;
                     // If we're not a permenant monster
-                if( !flagIsSet(M_PERMENANT_MONSTER) &&
+                if( !flagIsSet(M_PERMANENT_MONSTER) &&
                     // and there is no dminvis person in the room
                     !room->dmInRoom() &&
                     // and we've got a wander chance
@@ -1195,7 +1292,7 @@ int Monster::checkWander(long t) {
                 }
                 // Otherwise if we have no enemy and we're not a perm, and there's no
                 // dm invis person in the room, we can wander away
-                else if(!room->dmInRoom() && !hasEnemy() && !flagIsSet(M_PERMENANT_MONSTER)) {
+                else if(!room->dmInRoom() && !hasEnemy() && !flagIsSet(M_PERMANENT_MONSTER)) {
                     // Time to wander away
                     broadcast((std::shared_ptr<Socket> )nullptr, room, "%1M just %s away.", this, moveString.c_str());
                     return(2);
@@ -1357,7 +1454,7 @@ void spawnMonsters(const std::string &roomId, const std::list<std::string> &mons
             continue;
         }
         
-        if (monster->flagIsSet(M_PERMENANT_MONSTER)) {
+        if (monster->flagIsSet(M_PERMANENT_MONSTER)) {
             broadcast(isDm, "^GHook:spawnMonsters: ^gtried to spawn PERM monster\n--Monster: %s(%s^g), Room: %s(%s^g)^x", 
                                         mId.c_str(), monster->getCName(), roomId.c_str(), room->getName().c_str());
             continue;

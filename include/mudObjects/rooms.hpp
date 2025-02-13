@@ -79,6 +79,7 @@ public:
     void addExit(const std::shared_ptr<Exit>& ext);
     void checkExits();
     [[nodiscard]] bool deityRestrict(const std::shared_ptr<const Creature> & creature) const;
+    [[nodiscard]] bool mobCanDropObjects() const;
     [[nodiscard]] int maxCapacity() const;
     [[nodiscard]] bool isFull() const;
     [[nodiscard]] int countVisPly() const;
