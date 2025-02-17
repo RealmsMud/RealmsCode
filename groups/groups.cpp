@@ -464,10 +464,7 @@ int Group::target(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if (std::string(cmnd->str[2]) == "-c") {
-
-        if (!group->flagIsSet(LEADER_IGNORE_GTARGET))
-            *player << ColorOn << "^gAll group member targets cleared.\n" << ColorOff;
-        
+        *player << ColorOn << "^gAll group member targets cleared." << (group->flagIsSet(LEADER_IGNORE_GTARGET)?" Your target was not cleared.":"") << "^x\n" << ColorOff;    
         group->clearTargets();
         return(0);
     }

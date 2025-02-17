@@ -523,6 +523,8 @@ std::string Group::getFlagsDisplay() const {
     oStr << displayPref("Group Experience Split: ", flagIsSet(GROUP_SPLIT_EXPERIENCE));
     oStr << ", ";
     oStr << displayPref("Split Gold: ", flagIsSet(GROUP_SPLIT_GOLD));
+    oStr << ", ";
+    oStr << displayPref("Leader Ignore Gtarget: ", flagIsSet(LEADER_IGNORE_GTARGET));
     oStr << ".";
     return(oStr.str());
 }
