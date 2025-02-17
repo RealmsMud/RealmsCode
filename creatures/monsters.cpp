@@ -1022,7 +1022,7 @@ void Monster::checkScavange(long t) {
         return;
     
     // If already scavenged, might decide to drop!
-    if(flagIsSet(M_HAS_SCAVENGED) && countScavengedObjects() > 0) {
+    if(flagIsSet(M_HAS_SCAVENGED) && !flagIsSet(M_SCAVENGE_NO_DROP) && countScavengedObjects() > 0) {
         i = lasttime[LT_MON_SCAVENGE].ltime;
         if (t - i > 20 && Random::get<bool>(0.03) && room->mobCanDropObjects()) {
             scavengedObject = findScavengedObject();

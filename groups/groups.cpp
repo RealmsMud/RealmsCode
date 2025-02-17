@@ -37,6 +37,7 @@
 #include "server.hpp"                // for Server, gServer
 
 
+
 //*********************************************************************
 //                      cmdFollow
 //*********************************************************************
@@ -138,9 +139,11 @@ int cmdFollow(const std::shared_ptr<Player>& player, cmd* cmnd) {
 void Creature::addToGroup(Group* toJoin, bool announce) {
     toJoin->add(Containable::downcasted_shared_from_this<Creature>());
     if(announce) {
+
         *this << ColorOn << "^gYou join \"" << toJoin->getName() << "\".\n" << ColorOff;
-        toJoin->sendToAll(std::string("^g") + getName() + " has joined your group.\n", Containable::downcasted_shared_from_this<Creature>());
-        broadcast(getSock(), getRoomParent(), "%M joins the group \"%s\".", this, toJoin->getName().c_str());
+        broadcast(getSock(), getRoomParent(), "%M joins group: \"%s\"", this, toJoin->getName().c_str());
+        toJoin->sendToAll(std::string("^g") + "<Group> " + getName() + " has joined the group.\n", Containable::downcasted_shared_from_this<Creature>());
+        
     }
 
 }
@@ -156,6 +159,7 @@ void Creature::createGroup(const std::shared_ptr<Creature>& crt) {
     groupStatus = GROUP_LEADER;
 
     crt->addToGroup(group);
+
 }
 
 //*********************************************************************
@@ -177,7 +181,7 @@ bool Creature::removeFromGroup(bool announce) {
         } else {
             if(announce) {
                 if(!pFlagIsSet(P_DM_INVIS) && !isEffected("incognito"))
-                    group->sendToAll(getCrtStr(nullptr, CAP) + " leaves the group.\n", cThis);
+                    group->sendToAll(std::string("^g") + "<Group> " + getCrtStr(nullptr, CAP) + " leaves the group.\n", cThis);
                 if(group->getLeader() == cThis)
                     *this << ColorOn << "^gYou leave your group.^x\n" << ColorOff;
                 else
@@ -256,11 +260,13 @@ int printGroupSyntax(const std::shared_ptr<Player>& player) {
     }
     if(player->getGroupStatus() == GROUP_LEADER) {
         player->printColor("              ^e<^xpromote^e>^x ^e<^cplayer name^e>^x\n");
+        player->printColor("              ^e<^xtarget^e>^x ^e<^ctarget name^e>|^e<^c-c^e>^x\n");
+        player->printColor("              ^e<^xmtarget^e>^x ^e<^cgroup member^e> ^e<^ctarget name^e>|^e<^c-c^e>^x\n");
         player->printColor("              ^e<^xkick^e>^x ^e<^cplayer name^e>\n");
         player->printColor("              ^e<^xname^e>^x ^e<^cgroup name^e>\n");
         player->printColor("              ^e<^xtype^e>^x ^e<^cpublic/private/invite only^e>\n");
-        player->printColor("              ^e<^xset^e>^x ^e<^csplit/xpsplit^e>\n");
-        player->printColor("              ^e<^xclear^e>^x ^e<^csplit/xpsplit^e>\n");
+        player->printColor("              ^e<^xset^e>^x ^e<^csplit/xpsplit/lgtignore^e>\n");
+        player->printColor("              ^e<^xclear^e>^x ^e<^csplit/xpsplit/lgtignore^e>\n");
         player->printColor("              ^e<^xdisband^e>^x\n");
     }
     if(player->getGroupStatus() == GROUP_LEADER
@@ -293,6 +299,8 @@ int cmdGroup(const std::shared_ptr<Player>& player, cmd* cmnd) {
         else if(!strncasecmp(cmnd->str[1], "disband", len)) return(Group::disband(player, cmnd));
         else if(!strncasecmp(cmnd->str[1], "kick", len))    return(Group::kick(player, cmnd));
         else if(!strncasecmp(cmnd->str[1], "promote", len)) return(Group::promote(player, cmnd));
+        else if(!strncasecmp(cmnd->str[1], "target", len))  return(Group::target(player, cmnd));
+        else if(!strncasecmp(cmnd->str[1], "mtarget", len))  return(Group::mtarget(player, cmnd));
         else if(!strncasecmp(cmnd->str[1], "name", len))    return(Group::rename(player, cmnd));
         else if(!strncasecmp(cmnd->str[1], "type", len))    return(Group::type(player, cmnd));
         else if(!strncasecmp(cmnd->str[1], "set", len))     return(Group::set(player, cmnd, true));
@@ -411,15 +419,166 @@ int Group::disband(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
     if(player->getGroupStatus() != GROUP_LEADER) {
-        *player << "You are not the group leader of \"" << toDisband->getName() << "\".\n";
+        *player << "Only the group leader can disband the group.\n";
         return(0);
     }
-    *player << "You disband \"" << toDisband->getName() << "\".\n";
-    toDisband->sendToAll(std::string(player->getName()) + " disbands the group.\n", player);
+    *player << "You disband the group.\n";
+
+    toDisband->sendToAll(std::string("^g") + "<GroupLeader> The group has been disbanded.\n", player);
     toDisband->disband();
 
     return(0);
 }
+
+void Group::clearTargets() {
+    for(auto it = members.begin() ; it != members.end() ; it++) {
+        if(auto gMember = it->lock()) {
+            if(gMember->isPlayer() && !gMember->isStaff() && gMember->inSameRoom(getLeader())) {
+                if(gMember == getLeader() && flagIsSet(LEADER_IGNORE_GTARGET))
+                    continue;
+                if(gMember != getLeader() && gMember->isPlayer())
+                    *gMember << ColorOn << "^g<GroupLeader> All group member targets cleared.^x\n" << ColorOff;
+                gMember->clearTarget();
+            }
+        }
+    }
+    return;
+}
+
+int Group::target(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    Group* group = player->getGroup(true);
+    std::shared_ptr<Creature> target=nullptr;
+    
+    if(!group) {
+        *player << "You are not in a group.\n";
+        return(0);
+    }
+    if(player->getGroupStatus() != GROUP_LEADER) {
+        *player << "You must be the group leader to set a group target.\n";
+        return(0);
+    }
+
+    if(cmnd->num < 3) {
+        *player << "You must pick a target.\n";
+        return(0);
+    }
+
+    if (std::string(cmnd->str[2]) == "-c") {
+
+        if (!group->flagIsSet(LEADER_IGNORE_GTARGET))
+            *player << ColorOn << "^gAll group member targets cleared.\n" << ColorOff;
+        
+        group->clearTargets();
+        return(0);
+    }
+
+
+    cmnd->str[2][0] = up(cmnd->str[2][0]);
+    target = player->getRoomParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
+
+    if (!target) {
+        *player << "That target is not here.\n";
+        return(0);
+    }
+
+    std::string numString = (cmnd->val[2] > 1 ? " (" + std::to_string(cmnd->val[2]) + ")" : "");
+
+    *player << ColorOn << "^gSetting group member targets to: '^y" << target->getCName() << numString << "'^x\n" << ColorOff;
+
+    for(auto it = group->members.begin() ; it != group->members.end() ; it++) {
+        if(auto gMember = it->lock()) {
+            if(gMember == group->getLeader() && group->flagIsSet(LEADER_IGNORE_GTARGET))
+                continue;
+            if(gMember->isPlayer() && !gMember->isStaff() && gMember->inSameRoom(player)) {
+                if (gMember != group->getLeader() && gMember->isPlayer())
+                    *gMember << ColorOn << "^g<GroupLeader> All group members now targeting: '^y" << target->getCName() << numString << "'^x\n" << ColorOff;
+                gMember->addTarget(target,true);
+            }
+        }
+    }
+
+    return(0);
+}
+
+int Group::mtarget(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    Group* group = player->getGroup(true);
+    std::shared_ptr<Player> gMember=nullptr;
+    std::shared_ptr<Creature> target=nullptr;
+
+    if(!group) {
+        *player << "You are not in a group.\n";
+        return(0);
+    }
+
+    if(player->getGroupStatus() != GROUP_LEADER) {
+        *player << "You must be the group leader to set member targets.\n";
+        return(0);
+    }
+
+    if(cmnd->num < 4) {
+        *player << ColorOn << "^ySyntax: group mtarget (group member) (target|-c)^x\n" << ColorOff;
+        return(0);
+    }
+    
+    lowercize(cmnd->str[2], 1);
+    gMember = gServer->findPlayer(cmnd->str[2]);
+
+    if(!gMember || !player->canSee(gMember)) {
+
+        *player << "That player is not logged on.\n";
+        return(0);
+    }
+
+    if(player == gMember) {
+        *player << "Use 'target' to set your own target, dummy.\n";
+        return(0);
+    }
+
+    if(gMember->getGroup(true) != group) {
+        *player << gMember->getName() << " is not in your group.\n";
+        return(0);
+    }
+
+    if(!player->inSameRoom(gMember)) {
+        *player << "You must be in the same room as " << gMember << " to set " << gMember->hisHer() << " target.\n";
+        return(0);
+    }
+
+    if(gMember->isStaff() && !player->isCt()) {
+        *player << "You are unable to set " << gMember << "'s target. The gods will not allow it.\n";
+        return(0);
+    }
+
+    if (std::string(cmnd->str[3]) == "-c") {
+        if (gMember->getTarget()) {
+            *player << ColorOn << "^gYou clear " << gMember << "'s target. ^g(Last target: ^y'" << gMember->getTarget()->getCName() << "'^g)^x\n" << ColorOff;
+            *gMember << ColorOn << "^g<GroupLeader> Your target has been cleared.\n" << ColorOff;
+            gMember->clearTarget();
+        }
+        else
+            *player << ColorOn << "^g" << gMember << " has no target to clear.^x\n";
+
+        return(0);
+    }
+
+    cmnd->str[3][0] = up(cmnd->str[3][0]);
+    target = player->getRoomParent()->findCreature(player, cmnd->str[3], cmnd->val[3], false);
+
+    if (!target) {
+        *player << "That target is not here.\n";
+        return(0);
+    }
+
+    std::string numString = (cmnd->val[3] > 1 ? " (" + std::to_string(cmnd->val[3]) + ")" : "");
+
+    *player << ColorOn << "^gSetting " << gMember << "'s target to: '^y" << target->getCName() << numString << "' ^g(Last target: ^y'" 
+                                << (gMember->getAsCreature()->getTarget() ? gMember->getTarget()->getCName():"No-one!") << "'^g)^x\n" << ColorOff;
+    *gMember << ColorOn << "^g<GroupLeader> Your target has been reset to: '^y" << target->getCName() << numString << "'^x\n" << ColorOff;
+    gMember->addTarget(target,true);
+
+    return(0);    
+}
+
 int Group::promote(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Group* group = player->getGroup(true);
     if(!group) {
@@ -427,7 +586,7 @@ int Group::promote(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
     if(player->getGroupStatus() != GROUP_LEADER) {
-        *player << "You are not the group leader of \"" << group->getName() << "\".\n";
+        *player << "Only the group leader can promote someone to group leader.\n";
         return(0);
     }
 
@@ -454,7 +613,7 @@ int Group::promote(const std::shared_ptr<Player>& player, cmd* cmnd) {
     group->setLeader(target);
 
     *player << ColorOn << "^gYou promote " << target->getName() << " to group leader\nYou are now a member of \"" << group->getName() << "\".\n" << ColorOff;
-    group->sendToAll(std::string("^g") + player->getName() + " promotes " + target->getName() + " to group leader.^x\n", player);
+    group->sendToAll(std::string("^g") + "<GroupLeader> " + target->getName() + " has been promoted to group leader.^x\n", player);
 
     *target << ColorOn << "^gYou are now the group leader of \"" << group->getName() << "\".\n^x" << ColorOff;
 
@@ -495,17 +654,17 @@ int Group::kick(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
     if(target->getGroupStatus() == GROUP_INVITED) {
         *player << "You rescind the group invitation from " << target->getName() << ".\n";
-        group->sendToAll(std::string(player->getName()) + " rescinds the invitation for " + target->getName() + " to join the group.\n", player);
+        group->sendToAll(std::string(player->getName()) + "<Group> Group invite has been rescinded for " + target->getName() + " to join the group.\n", player);
         *target << player << " rescinds your invitation to join \"" << group->getName() << "\".\n";
         target->removeFromGroup(false);
     }
     else {
         if(player->getGroupStatus() != GROUP_LEADER) {
-            *player << "You can't kick people out of the group!\n";
+            *player << "Only the group leader can kick people from the group.\n";
             return(0);
         } else {
-            *player << ColorOn << "^gYou kick " << target->getName() << " out of your group.^x\n" << ColorOff;
-            group->sendToAll(std::string("^g") + player->getName() + " kicks " + target->getName() + " out of the group.^x\n", player);
+            *player << ColorOn << "^gYou kick " << target->getName() << " from the group.^x\n" << ColorOff;
+            group->sendToAll(std::string("^g") + "<GroupLeader> " + target->getName() + " was kicked from the group.^x\n", player);
             target->removeFromGroup(true);
         }
     }
@@ -531,7 +690,7 @@ int Group::rename(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
     if(player->getGroupStatus() != GROUP_LEADER) {
-        *player << "You are not the group leader of \"" << group->getName() << "\".\n";
+        *player << "Only the group leader can rename the group.\n";
         return(0);
     }
 
@@ -546,8 +705,8 @@ int Group::rename(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
     group->setName(newName);
-    *player << ColorOn << "^gYou rename your group to \"" << newName << "\".\n^x" << ColorOff;
-    group->sendToAll(std::string("^g") + player->getName() + " renames the group to \"" + newName + "\".\n^x", player, true);
+    *player << ColorOn << "^gYou rename the group to: \"" << newName << "\".\n^x" << ColorOff;
+    group->sendToAll(std::string("^g") + "<GroupLeader> Group has been renamed to: \"" + newName + "\"^x\n", player, true);
 
     return(0);
 }
@@ -559,7 +718,7 @@ int Group::type(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
     if(player->getGroupStatus() != GROUP_LEADER) {
-        *player << "You are not the group leader of \"" << group->getName() << "\".\n";
+        *player << "Only the group leader can set the group type.\n";
         return(0);
     }
 
@@ -579,19 +738,19 @@ int Group::type(const std::shared_ptr<Player>& player, cmd* cmnd) {
         if(!strncasecmp(str, "public", len)) {
             group->setGroupType(GROUP_PUBLIC);
             *player << ColorOn << "^gYou change the group type to Public.\n" << ColorOff;
-            group->sendToAll(std::string("^g") + player->getName() + " changes the group to Public.\n^x", player);
+            group->sendToAll(std::string("^g") + "<GroupLeader> Group type changed to: Public.\n^x", player);
             return(0);
         } else if(!strncasecmp(str, "private", len)) {
             group->setGroupType(GROUP_PRIVATE);
             *player << ColorOn << "^gYou change the group type to Private.^x\n" << ColorOff;
-            group->sendToAll(std::string("^g") + player->getName() + " changes the group to Private.^x\n", player);
+            group->sendToAll(std::string("^g") + "<GroupLeader> Group type changed to: Private.^x\n", player);
             return(0);
         }
     }
     if(!strncasecmp(str, "invite only", len) || !strncmp(str, "inviteonly", len)) {
         group->setGroupType(GROUP_INVITE_ONLY);
         *player << ColorOn << "^gYou change the group type to Invite Only.^x\n" << ColorOff;
-        group->sendToAll(std::string("^g") + player->getName() + " changes the group to Invite Only.\n^x", player);
+        group->sendToAll(std::string("^g") + "<GroupLeader> Group type changed to: Invite Only.\n^x", player);
         return(0);
     }
     *player << errorMsg;
@@ -602,16 +761,16 @@ int Group::set(const std::shared_ptr<Player>& player, cmd* cmnd, bool set) {
     Group* group = player->getGroup(true);
     const char* errorMsg;
     if(set)
-        errorMsg = "What group flag would you like to set? (Currently available: Split, XpSplit).\n";
+        errorMsg = "What group preference would you like to set? (split, xpsplit, lgtignore)\n";
     else
-        errorMsg = "What group flag would you like to clear? (Currently available: Split, XpSplit).\n";
+        errorMsg = "What group preference would you like to clear? (split, xpsplit, lgtignore)\n";
 
     if(!group) {
         *player << "You are not in a group.\n";
         return(0);
     }
     if(player->getGroupStatus() != GROUP_LEADER) {
-        *player << "You are not the group leader of \"" << group->getName() << "\".\n";
+        *player << "Only the group leader can set the group preferences.\n";
         return(0);
     }
 
@@ -630,19 +789,28 @@ int Group::set(const std::shared_ptr<Player>& player, cmd* cmnd, bool set) {
     if(!strncasecmp(str, "split", len)) {
         if(set) {
             group->setFlag(GROUP_SPLIT_GOLD);
-            group->sendToAll("^gGold will now be split with the group.^x\n");
+            group->sendToAll("^g<GroupLeader> Gold will now be split with the group.^x\n");
         } else {
             group->clearFlag(GROUP_SPLIT_GOLD);
-            group->sendToAll("^gGold will no longer be split with the group.^x\n");
+            group->sendToAll("^g<GroupLeader> Gold will no longer be split with the group.^x\n");
         }
         return(0);
     } else if(!strncasecmp(str, "xpsplit", len)) {
         if(set) {
             group->setFlag(GROUP_SPLIT_EXPERIENCE);
-            group->sendToAll("^gGroup experience split enabled.^x\n");
+            group->sendToAll("^g<GroupLeader> Group experience split enabled.^x\n");
         } else {
             group->clearFlag(GROUP_SPLIT_EXPERIENCE);
-            group->sendToAll("^gGroup experience split disabled.^x\n");
+            group->sendToAll("^g<GroupLeader> Group experience split disabled.^x\n");
+        }
+        return(0);
+    } else if(!strncasecmp(str, "lgtignore", len)) {
+        if(set) {
+            group->setFlag(LEADER_IGNORE_GTARGET);
+            group->sendToAll("^g<GroupLeader> Leader group target ignore: enabled.^x\n");
+        } else {
+            group->clearFlag(LEADER_IGNORE_GTARGET);
+            group->sendToAll("^g<GroupLeader> Leader group target ignore: disabled.^x\n");
         }
         return(0);
     }

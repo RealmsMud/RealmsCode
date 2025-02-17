@@ -356,7 +356,7 @@ void Creature::checkTarget(const std::shared_ptr<Creature>& toTarget) {
 //                          addTarget
 //*********************************************************************
 
-std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& toTarget) {
+std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& toTarget, bool suppressGroupTargetMsg) {
     if(!toTarget)
         return(nullptr);
 
@@ -367,12 +367,19 @@ std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& t
 
     clearTarget();
 
+
     toTarget->addTargetingThis(Containable::downcasted_shared_from_this<Creature>());
     myTarget = toTarget;
 
     std::shared_ptr<Player> ply = getAsPlayer();
+    Group* group = getAsPlayer()->getGroup(true);
+
     if(ply) {
         ply->printColor("You are now targeting %s.\n", toTarget->getCName());
+
+        if(group && !suppressGroupTargetMsg) {
+            group->sendToAll(std::string("^g") + "<Group> " + ply->getName() + " is now targeting: " + std::string("^y") + toTarget->getCName() + "\n", ply, true, true);
+        }
     }
     hasTarget = true;
     return(lockedTarget);

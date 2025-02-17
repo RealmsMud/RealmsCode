@@ -269,7 +269,7 @@ public:
     bool hasAttackableTarget();
     bool isAttackingTarget();
     std::shared_ptr<Creature> getTarget();
-    std::shared_ptr<Creature> addTarget(const std::shared_ptr<Creature>& toTarget);
+    std::shared_ptr<Creature> addTarget(const std::shared_ptr<Creature>& toTarget,bool supressGroupTargetMsg=false);
     void checkTarget(const std::shared_ptr<Creature>& toTarget);
     void addTargetingThis(const std::shared_ptr<Creature>& targeter);
     void clearTarget(bool clearTargetsList = true);

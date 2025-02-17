@@ -2649,14 +2649,18 @@ int cmdGive(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         }
     }
 
-
-
     if(target->isPlayer()) {
-        if( target->isEffected("mist") &&
-            !player->checkStaff("How can you give something to a misted creature?\n")
-        )
+        if( target->isEffected("mist") && !player->checkStaff("How can you give something to a misted creature?\n"))
             return(0);
-    } else {
+
+        // Prevent using the @trash object filter for shenanigans. Force to give trash items individually.
+        if(std::string(cmnd->str[1]) == "@trash") {
+            player->printColor("You cannot give %M items using the ^c@trash^x filter.\n", target.get());
+            player->printColor("You need to give %P to %s without the filter.\n", object.get(),target->himHer());
+            return(0);
+        }
+    } 
+    else {
         if(target->flagIsSet(M_WILL_WIELD) && object->getType() == ObjectType::WEAPON) {
             player->print("%M doesn't want that.\n", target.get());
             return(0);

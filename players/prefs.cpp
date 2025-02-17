@@ -106,6 +106,7 @@ prefInfo prefList[] =
 
     { "-Group",     0, nullptr, "", false },
     { "group",      P_IGNORE_GROUP_BROADCAST,nullptr,     "group combat messages",    true },
+    { "nogmtarget",   P_NO_GROUP_TARGET_MSG   ,nullptr,   "ignore group member targeting messages", false },
     { "xpsplit",    P_XP_DIVIDE,            nullptr,      "group experience split",   false },
     { "split",      P_GOLD_SPLIT,           nullptr,      "split gold among group",   false },
     { "stats",      P_NO_SHOW_STATS,        nullptr,      "show group your stats",    true },
@@ -333,6 +334,7 @@ int cmdPrefs(const std::shared_ptr<Player>& player, cmd* cmnd) {
             !player->flagIsSet(P_NO_SHOW_MAIL) ||
             !player->flagIsSet(P_NO_SHOW_MAIL) ||
             !player->flagIsSet(P_IGNORE_GROUP_BROADCAST) ||
+            !player->flagIsSet(P_NO_GROUP_TARGET_MSG) ||
             player->flagIsSet(P_PERM_DEATH) ||
             !player->flagIsSet(P_NO_AUCTIONS) ||
             !player->flagIsSet(P_HIDE_FORUM_POSTS)
@@ -380,6 +382,7 @@ int cmdPrefs(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->clearFlag(P_DONT_SHOW_SHOP_PROFITS);
             player->clearFlag(P_NO_SHOW_MAIL);
             player->clearFlag(P_IGNORE_GROUP_BROADCAST);
+            player->clearFlag(P_NO_GROUP_TARGET_MSG);
             player->setFlag(P_PERM_DEATH);
             player->clearFlag(P_NO_AUCTIONS);
             player->clearFlag(P_HIDE_FORUM_POSTS);
@@ -418,6 +421,7 @@ int cmdPrefs(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->setFlag(P_DONT_SHOW_SHOP_PROFITS);
             player->setFlag(P_NO_SHOW_MAIL);
             player->setFlag(P_IGNORE_GROUP_BROADCAST);
+            player->setFlag(P_NO_GROUP_TARGET_MSG);
             player->clearFlag(P_PERM_DEATH);
             player->setFlag(P_NO_AUCTIONS);
             player->setFlag(P_HIDE_FORUM_POSTS);
