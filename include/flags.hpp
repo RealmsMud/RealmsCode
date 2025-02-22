@@ -345,7 +345,7 @@
 #define P_DARKMETAL                 205      // Player has a darkmetal item (DONT SET)
 #define P_SAVE_DEBUG                206
 #define P_NO_GROUP_TARGET_MSG       207		 // Player will not see individual group targeting changes
-// free                             208
+#define P_NO_MTARGET_ORDINALS   208		 // Player will not see monster ordinals in group target messages
 // free                             209
 // free                             210
 // free                             211

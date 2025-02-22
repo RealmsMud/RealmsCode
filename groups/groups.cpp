@@ -441,7 +441,7 @@ void Group::clearTargets() {
                 continue;
             if(gMember != getLeader())
                     *gMember << ColorOn << "^g" << (flagIsSet(GROUP_AUTOTARGET)?"<GroupAutoTarget>":"<GroupLeader>") 
-                                << " Your target has been cleared.^x\n" << ColorOff;
+                                << " Group target has been cleared.^x\n" << ColorOff;
 
              gMember->clearTarget();
         }
@@ -463,10 +463,13 @@ void Group::setTargets(const std::shared_ptr<Creature>& target, int ordinalNumbe
                 continue;
             if(flagIsSet(GROUP_AUTOTARGET) && gMember->inCombat())
                 continue;
-            if (gMember != getLeader()) 
+            if (gMember != getLeader()) {
                 *gMember << ColorOn << "^g" << (flagIsSet(GROUP_AUTOTARGET)?"<GroupAutoTarget>":"<GroupLeader>") 
-                                << " You are now targeting: ^y" << target->getCName() << numString << "^x\n" << ColorOff;
-            gMember->addTarget(target,true);
+                                << " Group target set to: ^y" << ((gMember->flagIsSet(P_NO_MTARGET_ORDINALS) || gMember->flagIsSet(P_NO_NUMBERS)) ? 
+                                            "":(ordinalNumber>1?(getOrdinal(ordinalNumber)+" "):"")) << target->getCName() << "^x\n" << ColorOff;
+            }
+
+            gMember->addTarget(target,true,ordinalNumber);
         }
     }
 
@@ -506,9 +509,9 @@ int Group::target(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    //std::string numString = (cmnd->val[2] > 1 ? " (" + std::to_string(cmnd->val[2]) + ")" : "");
-
-    *player << ColorOn << "^gSetting group member targets to: ^y" << (cmnd->val[2]>1?(getOrdinal(cmnd->val[2])+" "):"") << target->getCName() << "'^x\n" << ColorOff;
+    *player << ColorOn << "^gSetting group member targets to: ^y" << 
+                ((player->flagIsSet(P_NO_MTARGET_ORDINALS) || player->flagIsSet(P_NO_NUMBERS)) ? 
+                            "":(cmnd->val[2]>1?(getOrdinal(cmnd->val[2])+" "):"")) << target->getCName() << "^x\n" << ColorOff;
 
     group->setTargets(target, cmnd->val[2]);
 
@@ -584,12 +587,17 @@ int Group::mtarget(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    std::string numString = (cmnd->val[3] > 1 ? " (" + std::to_string(cmnd->val[3]) + ")" : "");
+    *player << ColorOn << "^gSetting " << gMember << "'s target to: ^y"
+        << ((player->flagIsSet(P_NO_MTARGET_ORDINALS) || player->flagIsSet(P_NO_NUMBERS)) ? "" : (cmnd->val[3] > 1 ? (getOrdinal(cmnd->val[3]) + " ") : ""))
+        << target->getCName() << " ^g(Last target: ^y"
+        << (gMember->getAsCreature()->getTarget() ? gMember->getTarget()->getCName() : "No-one!")
+        << "^g)^x\n" << ColorOff;
 
-    *player << ColorOn << "^gSetting " << gMember << "'s target to: '^y" << target->getCName() << numString << "' ^g(Last target: ^y'" 
-                                << (gMember->getAsCreature()->getTarget() ? gMember->getTarget()->getCName():"No-one!") << "'^g)^x\n" << ColorOff;
-    *gMember << ColorOn << "^g<GroupLeader> Your target has been reset to: '^y" << target->getCName() << numString << "'^x\n" << ColorOff;
-    gMember->addTarget(target,true);
+    *gMember << ColorOn << "^g<GroupLeader> Your target has been set to: ^y" 
+        << ((gMember->flagIsSet(P_NO_MTARGET_ORDINALS) || gMember->flagIsSet(P_NO_NUMBERS)) ? "" : (cmnd->val[3]>1?(getOrdinal(cmnd->val[3])+" "):"")) 
+        << target->getCName() << "^x\n" << ColorOff;
+
+    gMember->addTarget(target,true, cmnd->val[3]);
 
     return(0);    
 }

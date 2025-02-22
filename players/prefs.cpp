@@ -103,6 +103,7 @@ prefInfo prefList[] =
     { "mobnums",    P_NO_NUMBERS,           nullptr,      "monster ordinal numbers",  true },
     { "autotarget", P_NO_AUTO_TARGET,       nullptr,      "automatic targeting",      true },
     { "fleetarget", P_CLEAR_TARGET_ON_FLEE, nullptr,      "clear target on flee",     false },
+    { "notargetnumbers",  P_NO_MTARGET_ORDINALS, nullptr, "no monster ordinals in targeting", false},
 
     { "-Group",     0, nullptr, "", false },
     { "group",      P_IGNORE_GROUP_BROADCAST,nullptr,     "group combat messages",    true },
@@ -111,6 +112,7 @@ prefInfo prefList[] =
     { "split",      P_GOLD_SPLIT,           nullptr,      "split gold among group",   false },
     { "stats",      P_NO_SHOW_STATS,        nullptr,      "show group your stats",    true },
     { "follow",     P_NO_FOLLOW,            nullptr,      "can be followed",          true },
+
 
     { "-Display",   0, nullptr, "", false },
     { "showall",    P_SHOW_ALL_PREFS,       nullptr,      "show all preferences",     false },
