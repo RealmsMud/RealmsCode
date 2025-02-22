@@ -435,7 +435,7 @@ void Group::clearTargets() {
         if(auto gMember = it->lock()) {
             if(!gMember->isPlayer() || !gMember->inSameRoom(getLeader()) || (gMember->isStaff() && gMember != getLeader()))
                 continue;
-            if(gMember == getLeader() && (flagIsSet(LEADER_IGNORE_GTARGET) || flagIsSet(GROUP_AUTOTARGET)))
+            if(gMember == getLeader() && flagIsSet(LEADER_IGNORE_GTARGET))
                 continue;
             if(flagIsSet(GROUP_AUTOTARGET) && gMember->inCombat())
                 continue;
@@ -459,7 +459,7 @@ void Group::setTargets(const std::shared_ptr<Creature>& target, int ordinalNumbe
         if(auto gMember = it->lock()) {
             if(!gMember->isPlayer() || !gMember->inSameRoom(getLeader()) || (gMember->isStaff() && gMember != getLeader()))
                 continue;
-            if(gMember == getLeader() && (flagIsSet(LEADER_IGNORE_GTARGET) || flagIsSet(GROUP_AUTOTARGET)))
+            if(gMember == getLeader() && flagIsSet(LEADER_IGNORE_GTARGET))
                 continue;
             if(flagIsSet(GROUP_AUTOTARGET) && gMember->inCombat())
                 continue;
@@ -597,7 +597,7 @@ int Group::mtarget(const std::shared_ptr<Player>& player, cmd* cmnd) {
         << ((gMember->flagIsSet(P_NO_MTARGET_ORDINALS) || gMember->flagIsSet(P_NO_NUMBERS)) ? "" : (cmnd->val[3]>1?(getOrdinal(cmnd->val[3])+" "):"")) 
         << target->getCName() << "^x\n" << ColorOff;
 
-    gMember->addTarget(target,true, cmnd->val[3]);
+    gMember->addTarget(target,false, cmnd->val[3]);
 
     return(0);    
 }
