@@ -209,7 +209,7 @@ bool Monster::updateCombat() {
             if( pet->isPet() && getMaster() != pTarget && pet->getMaster() == pTarget && !pet->isEnemy(this) && pet.get() != this ) {
                 auto enemy = findFirstEnemyCrt(pet);
                 pet->addEnemy(enemy);
-                pTarget->print("%M jumps to your aid against %M!!\n", pet.get(), enemy.get());
+                pTarget->print("%M jumps to your aid against %N!!\n", pet.get(), enemy.get());
                 break;
             }
         }

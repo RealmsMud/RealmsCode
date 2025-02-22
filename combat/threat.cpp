@@ -377,9 +377,8 @@ std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& t
     if(ply) {
         ply->printColor("You are now targeting %s.\n", toTarget->getCName());
 
-        if(group && !suppressGroupTargetMsg) {
+        if(group && !suppressGroupTargetMsg)
             group->sendToAll(std::string("^g") + "<Group> " + ply->getName() + " is now targeting: " + std::string("^y") + toTarget->getCName() + "\n", ply, true, true);
-        }
     }
     hasTarget = true;
     return(lockedTarget);
@@ -404,6 +403,7 @@ void Creature::addTargetingThis(const std::shared_ptr<Creature>& targeter) {
 
 void Creature::clearTarget(bool clearTargetsList) {
     auto lockedTarget = myTarget.lock();
+
     if(isPlayer()) {
         if(lockedTarget)
             printColor("You are no longer targeting %s!\n", lockedTarget->getCName());
@@ -488,8 +488,21 @@ int cmdTarget(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(!strcasecmp(cmnd->str[1], "-c")) {
+    Group* group = player->getGroup(true);
+
+    if(std::string(cmnd->str[1]) == "-c") {
         player->print("Clearing target.\n");
+
+        if (group) 
+            group->sendToAll("^g<Group> " + player->getName() + " cleared " + player->hisHer() + " target.^x\n", player, true, true);
+
+        if (group && player == group->getLeader() && group->flagIsSet(GROUP_AUTOTARGET)) {
+            group->clearTargets();
+            player->printColor("^g<GroupAutoTarget> Targeting info updated.^x\n");
+        }
+
+        
+
         player->clearTarget();
         return(0);
     }
@@ -501,7 +514,15 @@ int cmdTarget(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("You don't see that here.\n");
         return(0);
     }
+    
     player->addTarget(toTarget);
+    
+    if (group && player == group->getLeader() && group->flagIsSet(GROUP_AUTOTARGET)) {
+        group->setTargets(toTarget, cmnd->val[1]);
+        player->printColor("^g<GroupAutoTarget> Targeting info updated.^x\n");
+    }
+
+    
 
     return(0);
 }

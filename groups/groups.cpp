@@ -263,10 +263,9 @@ int printGroupSyntax(const std::shared_ptr<Player>& player) {
         player->printColor("              ^e<^xtarget^e>^x ^e<^ctarget name^e>|^e<^c-c^e>^x\n");
         player->printColor("              ^e<^xmtarget^e>^x ^e<^cgroup member^e> ^e<^ctarget name^e>|^e<^c-c^e>^x\n");
         player->printColor("              ^e<^xkick^e>^x ^e<^cplayer name^e>\n");
-        player->printColor("              ^e<^xname^e>^x ^e<^cgroup name^e>\n");
+        player->printColor("              ^e<^xname/rename^e>^x ^e<^cgroup name|rename^e>\n");
         player->printColor("              ^e<^xtype^e>^x ^e<^cpublic/private/invite only^e>\n");
-        player->printColor("              ^e<^xset^e>^x ^e<^csplit/xpsplit/lgtignore^e>\n");
-        player->printColor("              ^e<^xclear^e>^x ^e<^csplit/xpsplit/lgtignore^e>\n");
+        player->printColor("              ^e<^xset/clear^e>^x ^e<^csplit|xpsplit|autotarget|lgtignore^e>\n");
         player->printColor("              ^e<^xdisband^e>^x\n");
     }
     if(player->getGroupStatus() == GROUP_LEADER
@@ -300,8 +299,9 @@ int cmdGroup(const std::shared_ptr<Player>& player, cmd* cmnd) {
         else if(!strncasecmp(cmnd->str[1], "kick", len))    return(Group::kick(player, cmnd));
         else if(!strncasecmp(cmnd->str[1], "promote", len)) return(Group::promote(player, cmnd));
         else if(!strncasecmp(cmnd->str[1], "target", len))  return(Group::target(player, cmnd));
-        else if(!strncasecmp(cmnd->str[1], "mtarget", len))  return(Group::mtarget(player, cmnd));
+        else if(!strncasecmp(cmnd->str[1], "mtarget", len)) return(Group::mtarget(player, cmnd));
         else if(!strncasecmp(cmnd->str[1], "name", len))    return(Group::rename(player, cmnd));
+        else if(!strncasecmp(cmnd->str[1], "rename", len))  return(Group::rename(player, cmnd));
         else if(!strncasecmp(cmnd->str[1], "type", len))    return(Group::type(player, cmnd));
         else if(!strncasecmp(cmnd->str[1], "set", len))     return(Group::set(player, cmnd, true));
         else if(!strncasecmp(cmnd->str[1], "clear", len))   return(Group::set(player, cmnd, false));
@@ -314,7 +314,7 @@ int cmdGroup(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
     if(player->getGroupStatus() == GROUP_INVITED) {
-        *player << "You have been invited to join \"" << group->getName() << "\".\nTo accept, type <group accept>; To reject type <group reject>.\n";
+        *player << ColorOn << "You have been invited to join \"" << group->getName() << "\".\nTo accept, type: '^ygroup accept^g'; To reject, type: '^ygroup reject^g'^x\n" << ColorOff;
         return(0);
     }
     *player << group->getName() << " " << group->getGroupTypeStr() << ":\n";
@@ -360,11 +360,11 @@ int Group::invite(const std::shared_ptr<Player>& player, cmd* cmnd) {
     Group* group = player->getGroup(false);
     if(group) {
         if(group->getGroupType() == GROUP_PRIVATE && player->getGroupStatus() != GROUP_LEADER) {
-            *player << "You are not the group leader of \"" << group->getName() << "\".\n";
+            *player << ColorOn << "^gThis group is currently set to private. Only the group leader can invite new members.^x\n";
             return(0);
         }
         if(player->getGroupStatus() < GROUP_MEMBER) {
-            *player << "Reject your current group invitation before you try to start a group!\n";
+            *player << ColorOn << "^gYou must reject your current group invitation before you try to start a group.^x\n" << ColorOff;
             return(0);
         }
     }
@@ -433,16 +433,44 @@ int Group::disband(const std::shared_ptr<Player>& player, cmd* cmnd) {
 void Group::clearTargets() {
     for(auto it = members.begin() ; it != members.end() ; it++) {
         if(auto gMember = it->lock()) {
-            if(gMember->isPlayer() && !gMember->isStaff() && gMember->inSameRoom(getLeader())) {
-                if(gMember == getLeader() && flagIsSet(LEADER_IGNORE_GTARGET))
-                    continue;
-                if(gMember != getLeader() && gMember->isPlayer())
-                    *gMember << ColorOn << "^g<GroupLeader> All group member targets cleared.^x\n" << ColorOff;
-                gMember->clearTarget();
-            }
+            if(!gMember->isPlayer() || !gMember->inSameRoom(getLeader()) || (gMember->isStaff() && gMember != getLeader()))
+                continue;
+            if(gMember == getLeader() && (flagIsSet(LEADER_IGNORE_GTARGET) || flagIsSet(GROUP_AUTOTARGET)))
+                continue;
+            if(flagIsSet(GROUP_AUTOTARGET) && gMember->inCombat())
+                continue;
+            if(gMember != getLeader())
+                    *gMember << ColorOn << "^g" << (flagIsSet(GROUP_AUTOTARGET)?"<GroupAutoTarget>":"<GroupLeader>") 
+                                << " Your target has been cleared.^x\n" << ColorOff;
+
+             gMember->clearTarget();
         }
     }
     return;
+}
+
+void Group::setTargets(const std::shared_ptr<Creature>& target, int ordinalNumber) {
+    if (!target)
+        return;
+
+    std::string numString = (ordinalNumber > 1 ? " (" + std::to_string(ordinalNumber) + ")" : "");
+
+    for(auto it = members.begin() ; it != members.end() ; it++) {
+        if(auto gMember = it->lock()) {
+            if(!gMember->isPlayer() || !gMember->inSameRoom(getLeader()) || (gMember->isStaff() && gMember != getLeader()))
+                continue;
+            if(gMember == getLeader() && (flagIsSet(LEADER_IGNORE_GTARGET) || flagIsSet(GROUP_AUTOTARGET)))
+                continue;
+            if(flagIsSet(GROUP_AUTOTARGET) && gMember->inCombat())
+                continue;
+            if (gMember != getLeader()) 
+                *gMember << ColorOn << "^g" << (flagIsSet(GROUP_AUTOTARGET)?"<GroupAutoTarget>":"<GroupLeader>") 
+                                << " You are now targeting: ^y" << target->getCName() << numString << "^x\n" << ColorOff;
+            gMember->addTarget(target,true);
+        }
+    }
+
+return;
 }
 
 int Group::target(const std::shared_ptr<Player>& player, cmd* cmnd) {
@@ -478,21 +506,11 @@ int Group::target(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    std::string numString = (cmnd->val[2] > 1 ? " (" + std::to_string(cmnd->val[2]) + ")" : "");
+    //std::string numString = (cmnd->val[2] > 1 ? " (" + std::to_string(cmnd->val[2]) + ")" : "");
 
-    *player << ColorOn << "^gSetting group member targets to: '^y" << target->getCName() << numString << "'^x\n" << ColorOff;
+    *player << ColorOn << "^gSetting group member targets to: ^y" << (cmnd->val[2]>1?(getOrdinal(cmnd->val[2])+" "):"") << target->getCName() << "'^x\n" << ColorOff;
 
-    for(auto it = group->members.begin() ; it != group->members.end() ; it++) {
-        if(auto gMember = it->lock()) {
-            if(gMember == group->getLeader() && group->flagIsSet(LEADER_IGNORE_GTARGET))
-                continue;
-            if(gMember->isPlayer() && !gMember->isStaff() && gMember->inSameRoom(player)) {
-                if (gMember != group->getLeader() && gMember->isPlayer())
-                    *gMember << ColorOn << "^g<GroupLeader> All group members now targeting: '^y" << target->getCName() << numString << "'^x\n" << ColorOff;
-                gMember->addTarget(target,true);
-            }
-        }
-    }
+    group->setTargets(target, cmnd->val[2]);
 
     return(0);
 }
@@ -703,7 +721,7 @@ int Group::rename(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
     group->setName(newName);
     *player << ColorOn << "^gYou rename the group to: \"" << newName << "\".\n^x" << ColorOff;
-    group->sendToAll(std::string("^g") + "<GroupLeader> Group has been renamed to: \"" + newName + "\"^x\n", player, true);
+    group->sendToAll("^g<GroupLeader> Group has been renamed to: \"" + newName + "\"^x\n", player, true);
 
     return(0);
 }
@@ -758,9 +776,9 @@ int Group::set(const std::shared_ptr<Player>& player, cmd* cmnd, bool set) {
     Group* group = player->getGroup(true);
     const char* errorMsg;
     if(set)
-        errorMsg = "What group preference would you like to set? (split, xpsplit, lgtignore)\n";
+        errorMsg = "What group preference would you like to set? (split, xpsplit, autotarget, lgtignore)\n";
     else
-        errorMsg = "What group preference would you like to clear? (split, xpsplit, lgtignore)\n";
+        errorMsg = "What group preference would you like to clear? (split, xpsplit, autotarget, lgtignore)\n";
 
     if(!group) {
         *player << "You are not in a group.\n";
@@ -804,10 +822,27 @@ int Group::set(const std::shared_ptr<Player>& player, cmd* cmnd, bool set) {
     } else if(!strncasecmp(str, "lgtignore", len)) {
         if(set) {
             group->setFlag(LEADER_IGNORE_GTARGET);
-            group->sendToAll("^g<GroupLeader> Leader group target ignore: enabled.^x\n");
+            *player << ColorOn << "^gLeader group target ignore: enabled.^x\n" << ColorOff;
+            if(group->flagIsSet(GROUP_AUTOTARGET)) {
+                group->clearFlag(GROUP_AUTOTARGET);
+                group->sendToAll("^g<GroupLeader> Group autotarget: disabled.^x\n");
+            }
         } else {
             group->clearFlag(LEADER_IGNORE_GTARGET);
-            group->sendToAll("^g<GroupLeader> Leader group target ignore: disabled.^x\n");
+            *player << ColorOn << "^gLeader group target ignore: disabled.^x\n" << ColorOff;
+        }
+        return(0);
+    } else if(!strncasecmp(str, "autotarget", len)) {
+        if(set) {
+            group->setFlag(GROUP_AUTOTARGET);
+            group->sendToAll("^g<GroupLeader> Group autotarget: enabled.^x\n");
+            if(group->flagIsSet(LEADER_IGNORE_GTARGET)) {
+                group->clearFlag(LEADER_IGNORE_GTARGET);
+                *player << ColorOn << "^gLeader group target ignore: disabled.^x\n" << ColorOff;
+            }
+        } else {
+            group->clearFlag(GROUP_AUTOTARGET);
+            group->sendToAll("^g<GroupLeader> Group autotarget: disabled.^x\n");
         }
         return(0);
     }

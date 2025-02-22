@@ -525,6 +525,8 @@ std::string Group::getFlagsDisplay() const {
     oStr << displayPref("Split Gold: ", flagIsSet(GROUP_SPLIT_GOLD));
     oStr << ", ";
     oStr << displayPref("Leader Ignore Gtarget: ", flagIsSet(LEADER_IGNORE_GTARGET));
+    oStr << ", ";
+    oStr << displayPref("Group Autotarget: ", flagIsSet(GROUP_AUTOTARGET));
     oStr << ".";
     return(oStr.str());
 }

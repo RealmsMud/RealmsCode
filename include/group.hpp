@@ -50,6 +50,7 @@ enum GroupFlags {
     GROUP_SPLIT_EXPERIENCE = 0,
     GROUP_SPLIT_GOLD,
     LEADER_IGNORE_GTARGET,
+    GROUP_AUTOTARGET,
 
     GROUP_MAX_FLAG
 };
@@ -92,6 +93,7 @@ public:
     void setFlag(int flag);
     void clearFlag(int flag);
     void clearTargets();
+    void setTargets(const std::shared_ptr<Creature>& target, int ordinalNumber=0);
 
 
     // Various info about a group
