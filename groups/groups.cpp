@@ -453,8 +453,6 @@ void Group::setTargets(const std::shared_ptr<Creature>& target, int ordinalNumbe
     if (!target)
         return;
 
-    std::string numString = (ordinalNumber > 1 ? " (" + std::to_string(ordinalNumber) + ")" : "");
-
     for(auto it = members.begin() ; it != members.end() ; it++) {
         if(auto gMember = it->lock()) {
             if(!gMember->isPlayer() || !gMember->inSameRoom(getLeader()) || (gMember->isStaff() && gMember != getLeader()))
