@@ -356,7 +356,7 @@ void Creature::checkTarget(const std::shared_ptr<Creature>& toTarget) {
 //                          addTarget
 //*********************************************************************
 
-std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& toTarget) {
+std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& toTarget, bool suppressGroupTargetMsg, int ordinalNumber) {
     if(!toTarget)
         return(nullptr);
 
@@ -367,12 +367,29 @@ std::shared_ptr<Creature> Creature::addTarget(const std::shared_ptr<Creature>& t
 
     clearTarget();
 
+
     toTarget->addTargetingThis(Containable::downcasted_shared_from_this<Creature>());
     myTarget = toTarget;
 
     std::shared_ptr<Player> ply = getAsPlayer();
+    Group* group = getAsPlayer()->getGroup(true);
+    
+
     if(ply) {
-        ply->printColor("You are now targeting %s.\n", toTarget->getCName());
+        *ply << ColorOn << "You are now targeting: ^y" << 
+                ((ply->flagIsSet(P_NO_MTARGET_ORDINALS) || ply->flagIsSet(P_NO_NUMBERS)) ? 
+                            "" : (ordinalNumber>1?(getOrdinal(ordinalNumber)+" "):"")) + toTarget->getCName() + "^x\n" << ColorOff;
+
+        if(group && !suppressGroupTargetMsg) {
+            for(auto it = group->members.begin(); it != group->members.end(); it++) {
+                if (auto gMember = it->lock())
+                    if (gMember->isPlayer() && gMember != ply && !gMember->flagIsSet(P_NO_GROUP_TARGET_MSG))
+                         *gMember << ColorOn << "^g<Group> " << ply->getName() << " is now targeting: ^y" << 
+                                    ((gMember->flagIsSet(P_NO_MTARGET_ORDINALS) || gMember->flagIsSet(P_NO_NUMBERS)) ? 
+                                            "":(ordinalNumber>1?(getOrdinal(ordinalNumber)+" "):"")) << toTarget->getCName() << "^x\n" << ColorOff;
+            }
+        }
+
     }
     hasTarget = true;
     return(lockedTarget);
@@ -397,6 +414,7 @@ void Creature::addTargetingThis(const std::shared_ptr<Creature>& targeter) {
 
 void Creature::clearTarget(bool clearTargetsList) {
     auto lockedTarget = myTarget.lock();
+
     if(isPlayer()) {
         if(lockedTarget)
             printColor("You are no longer targeting %s!\n", lockedTarget->getCName());
@@ -481,8 +499,19 @@ int cmdTarget(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    if(!strcasecmp(cmnd->str[1], "-c")) {
+    Group* group = player->getGroup(true);
+
+    if(std::string(cmnd->str[1]) == "-c") {
         player->print("Clearing target.\n");
+
+        if (group) 
+            group->sendToAll("^g<Group> " + player->getName() + " cleared " + player->hisHer() + " target.^x\n", player, true, true);
+
+        if (group && player == group->getLeader() && group->flagIsSet(GROUP_AUTOTARGET)) {
+            group->clearTargets();
+            player->printColor("^g<GroupAutoTarget> Targeting info updated.^x\n");
+        }
+
         player->clearTarget();
         return(0);
     }
@@ -494,7 +523,15 @@ int cmdTarget(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("You don't see that here.\n");
         return(0);
     }
-    player->addTarget(toTarget);
+    
+    player->addTarget(toTarget,false,cmnd->val[1]);
+    
+    if (group && player == group->getLeader() && group->flagIsSet(GROUP_AUTOTARGET)) {
+        group->setTargets(toTarget, cmnd->val[1]);
+        player->printColor("^g<GroupAutoTarget> Group targeting info updated.^x\n");
+    }
+
+    
 
     return(0);
 }

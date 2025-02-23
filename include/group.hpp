@@ -49,6 +49,8 @@ enum GroupFlags {
     GROUP_NO_FLAG = -1,
     GROUP_SPLIT_EXPERIENCE = 0,
     GROUP_SPLIT_GOLD,
+    LEADER_IGNORE_GTARGET,
+    GROUP_AUTOTARGET,
 
     GROUP_MAX_FLAG
 };
@@ -65,6 +67,8 @@ public:
     static int reject(const std::shared_ptr<Player>& player, cmd* cmnd);
     static int disband(const std::shared_ptr<Player>& player, cmd* cmnd);
     static int promote(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static int target(const std::shared_ptr<Player>& player, cmd* cmnd);
+    static int mtarget(const std::shared_ptr<Player>& player, cmd* cmnd);
     static int kick(const std::shared_ptr<Player>& player, cmd* cmnd);
     static int leave(const std::shared_ptr<Player>& player, cmd* cmnd);
     static int rename(const std::shared_ptr<Player>& player, cmd* cmnd);
@@ -88,6 +92,8 @@ public:
     void setGroupType(GroupType newType);
     void setFlag(int flag);
     void clearFlag(int flag);
+    void clearTargets();
+    void setTargets(const std::shared_ptr<Creature>& target, int ordinalNumber=0);
 
 
     // Various info about a group
@@ -108,7 +114,7 @@ public:
     std::string getGroupList(const std::shared_ptr<Creature>& viewer);
 
 
-    void sendToAll(std::string_view msg, const std::shared_ptr<Creature>& ignore = nullptr, bool sendToInvited = false);
+    void sendToAll(std::string_view msg, const std::shared_ptr<Creature>& ignore = nullptr, bool sendToInvited = false, bool gtargetChange=false);
 
     [[nodiscard]] std::string getMsdp(const std::shared_ptr<Creature>& viewer) const;
 

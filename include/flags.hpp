@@ -344,8 +344,8 @@
 #define P_BUILDER_OBJS              204      // Builder can make objs
 #define P_DARKMETAL                 205      // Player has a darkmetal item (DONT SET)
 #define P_SAVE_DEBUG                206
-// free                             207
-// free                             208
+#define P_NO_GROUP_TARGET_MSG       207		 // Player will not see individual group targeting changes
+#define P_NO_MTARGET_ORDINALS   208		 // Player will not see monster ordinals in group target messages
 // free                             209
 // free                             210
 // free                             211
@@ -526,7 +526,7 @@
 #define M_NO_POISON                 166      // Monster cannot be poisoned
 #define M_NO_CHARM                  167      // Monster cannot be charmed
 #define M_SPECIAL_UNDEAD            168      // Monster turned as 'special' undead -- harder to turn
-// free                             169
+#define M_SCAVENGE_NO_DROP			169		 // Scavenging mob will not drop scavenged objects
 // free                             170
 // free                             171
 #define M_NO_EXP_LOSS               172      // Monster does not make player lose exp when they die

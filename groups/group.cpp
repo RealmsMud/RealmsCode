@@ -323,11 +323,13 @@ bool Group::inGroup(std::shared_ptr<Creature> target) {
 //********************************************************************************
 // Parameters: sendToInvited - Are invited members counted as in the group or not?
 // Send msg to everyone in the group except ignore
-void Group::sendToAll(std::string_view msg, const std::shared_ptr<Creature>& ignore, bool sendToInvited) {
+void Group::sendToAll(std::string_view msg, const std::shared_ptr<Creature>& ignore, bool sendToInvited, bool gtargetChange) {
     auto it = members.begin();
     while (it != members.end()) {
         if(auto crt = it->lock()) {
-            if(!crt->isPet() && crt != ignore && (sendToInvited || crt->getGroupStatus() >= GROUP_MEMBER )) {
+            if (!crt->isPet() && crt != ignore && 
+                (sendToInvited || crt->getGroupStatus() >= GROUP_MEMBER) &&
+                     !(gtargetChange && crt->flagIsSet(P_NO_GROUP_TARGET_MSG))) { 
                 *crt << ColorOn << msg << ColorOff;
             }
             it++;
@@ -521,6 +523,10 @@ std::string Group::getFlagsDisplay() const {
     oStr << displayPref("Group Experience Split: ", flagIsSet(GROUP_SPLIT_EXPERIENCE));
     oStr << ", ";
     oStr << displayPref("Split Gold: ", flagIsSet(GROUP_SPLIT_GOLD));
+    oStr << ", ";
+    oStr << displayPref("Leader Ignore Gtarget: ", flagIsSet(LEADER_IGNORE_GTARGET));
+    oStr << ", ";
+    oStr << displayPref("Group Autotarget: ", flagIsSet(GROUP_AUTOTARGET));
     oStr << ".";
     return(oStr.str());
 }
@@ -607,7 +613,12 @@ std::string Group::getGroupList(const std::shared_ptr<Creature>& viewer) {
                     oStr << ", Wounded";
             }
 
-            oStr << ".";
+            oStr << " - ^gTargeting: ";
+            if(auto target = crt->myTarget.lock())
+                oStr << "^y" << target->getCName();
+            else
+                oStr << "^yNo-one!";
+            oStr << "^x";
         }
         oStr << "\n";
     }
