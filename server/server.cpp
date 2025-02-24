@@ -90,7 +90,6 @@
 #include "wanderInfo.hpp"                           // for WanderInfo
 #include "xml.hpp"                                  // for copyToNum, newNum...
 
-
 // External declarations
 extern int Numplayers;
 extern long last_time_update;
@@ -120,7 +119,11 @@ void CleanupRoomFn::operator()(const std::shared_ptr<UniqueRoom>& r ) {
 //                      Server
 //********************************************************************
 
-Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCache(OQMAX, false) {
+Server::Server():
+    roomCache(RQMAX, true),
+    monsterCache(MQMAX, false),
+    objectCache(OQMAX, false)
+{
 	std::clog << "Constructing the Server." << std::endl;
     FD_ZERO(&inSet);
     FD_ZERO(&outSet);
@@ -136,11 +139,6 @@ Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCach
     pythonHandler = nullptr;
     httpServer = nullptr;
     idDirty = false;
-
-#ifdef SQL_LOGGER
-    connActive = false;
-#endif // SQL_LOGGER
-
 }
 
 //********************************************************************
@@ -166,9 +164,6 @@ Server::~Server() {
 
 
     delete vSockets;
-#ifdef SQL_LOGGER
-    cleanUpSql();
-#endif // SQL_LOGGER
 
 }
 
@@ -207,7 +202,6 @@ bool Server::init() {
     Port = gConfig->getPortNum();
     Tablesize = getdtablesize();
 
-
     std::clog << "Initializing Spelling...";
     if(init_spelling())
         std::clog << "done." << std::endl;
@@ -235,16 +229,6 @@ bool Server::init() {
         initHttpServer();
         initDiscordBot();
     }
-
-
-
-#ifdef SQL_LOGGER
-    std::clog <<  "Initializing SQL Logger...";
-    if(initSql())
-        std::clog << "done." << std::endl;
-    else
-        std::clog << "failed." << std::endl;
-#endif // SQL_LOGGER
 
     umask(000);
     srand(getpid() + time(nullptr));
@@ -2296,10 +2280,6 @@ void Server::logGold(GoldLog dir, const std::shared_ptr<Player>& player, Money a
     // logType
     std::string direction = (dir == GOLD_IN ? "In" : "Out");
     std::clog << direction << ": P:" << pName << " I:" << pId << " T: " << targetStr << " S:" << source << " R: " << room << " Type:" << logType << " G:" << amt.get(GOLD) << std::endl;
-
-#ifdef SQL_LOGGER
-    logGoldSql(pName, pId, targetStr, source, room, logType, amt.get(GOLD), direction);
-#endif // SQL_LOGGER
 }
 
 //*********************************************************************

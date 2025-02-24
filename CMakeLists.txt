@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16...3.26)
+cmake_minimum_required(VERSION 3.24...3.26)
 
 project(RealmsCode)
 include(FetchContent)
@@ -18,6 +18,8 @@ set(HTTP_LIB_NAME "Crow::Crow")
 set(CROW_FEATURES ssl compression)
 
 set(JWT_LIB_NAME "jwt-cpp")
+
+set(SQLITE_LIB_NAME "sqlite_orm::sqlite_orm")
 
 set(Python_ADDITIONAL_VERSIONS 3.8)
 
@@ -57,9 +59,10 @@ FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.
 FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.0.23       )
 FetchContent_Declare(jwt-cpp     GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git  GIT_TAG v0.6.0         )
 FetchContent_Declare(googletest  GIT_REPOSITORY https://github.com/google/googletest.git   GIT_TAG release-1.11.0 )
+FetchContent_Declare(sqliteOrm   GIT_REPOSITORY https://github.com/fnc12/sqlite_orm        GIT_TAG v1.8.2         )
 
 
-FetchContent_MakeAvailable(pybind11 fmt json crow dpp jwt-cpp googletest)
+FetchContent_MakeAvailable(pybind11 fmt json crow dpp jwt-cpp googletest sqliteOrm)
 set(FMT_INCLUDE_DIR "${FMT_SOURCE_DIR}/${FMT_INC_DIR}")
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR} ${FMT_INCLUDE_DIR} "include")
@@ -100,6 +103,7 @@ set(COMMON_HEADER_FILES
     include/mudObjects/rooms.hpp
     include/mudObjects/uniqueRooms.hpp
 
+    include/accounts.hpp
     include/alchemy.hpp
     include/anchor.hpp
     include/area.hpp
@@ -119,6 +123,7 @@ set(COMMON_HEADER_FILES
     include/craft.hpp
     include/creatureStreams.hpp
     include/damage.hpp
+    include/database.hpp
     include/deityData.hpp
     include/delayedAction.hpp
     include/dice.hpp
@@ -265,6 +270,8 @@ set(COMMON_SOURCE_FILES
     creatures/size.cpp
     creatures/stats.cpp
 
+    database/database.cpp
+
     economy/bank.cpp
     economy/commerce.cpp
     economy/playerCommerce.cpp
@@ -314,6 +321,8 @@ set(COMMON_SOURCE_FILES
     objects/objectAttr.cpp
     objects/objects.cpp
     objects/special1.cpp
+
+    accounts/accounts.cpp
 
     players/clans.cpp
     players/equipment.cpp
@@ -372,7 +381,6 @@ set(COMMON_SOURCE_FILES
     server/security.cpp
     server/server.cpp
     server/serverTimer.cpp
-    server/sql.cpp
     server/swap.cpp
     server/update.cpp
 
@@ -380,7 +388,6 @@ set(COMMON_SOURCE_FILES
     server/httpServer.cpp
     server/http/zones-http.cpp
     server/http/auth-http.cpp
-
 
     skills/skillCommand.cpp
     skills/skillGain.cpp
@@ -476,6 +483,7 @@ target_link_libraries(
     ${HTTP_LIB_NAME}
     ${JWT_LIB_NAME}
     ${FMT_LIB_NAME}
+    ${SQLITE_LIB_NAME}
 )
 
 add_executable(RealmsCode ${REALMS_SOURCE_FILES})

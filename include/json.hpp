@@ -20,6 +20,7 @@
 
 #include <nlohmann/json.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <string_view>
 
 using json = nlohmann::json;
 
