@@ -74,7 +74,7 @@ int cmdDeleteStatement(const std::shared_ptr<Player>& player, cmd* cmnd);
 // color.c
 int cmdColors(const std::shared_ptr<Player>& player, cmd* cmnd);
 
-int innateLevitate(const std::shared_ptr<Player>& player, cmd* cmnd);
+
 
 // command2.c
 int cmdTraffic(const std::shared_ptr<Player>& player, cmd* cmnd);
@@ -123,6 +123,7 @@ int cmdTelOpts(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdQuit(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdChangeStats(const std::shared_ptr<Player>& player, cmd* cmnd);
 void changingStats(std::shared_ptr<Socket> sock, const std::string& str );
+std::string getFullStatName(int stat);
 
 
 // command7.c

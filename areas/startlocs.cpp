@@ -142,7 +142,7 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
 
         options.emplace_back("schnai");
 
-    } else if (race == DWARF) {
+    } else if (race == DWARF || race == DUERGAR) {
 
         options.emplace_back("highport");
 
@@ -180,7 +180,7 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
 
         options.emplace_back("orc");
 
-    } else if (race == ELF || player->getDeity() == LINOTHAN) {
+    } else if (race == ELF || player->getDeity() == LINOTHAN || race == GREYELF) {
 
         options.emplace_back("eldinwood");
 

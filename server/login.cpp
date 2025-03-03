@@ -566,7 +566,7 @@ no_pass:
 
         if(!Create::getSubRace(sock, str, Create::doWork))
             return;
-        Create::getClass(sock, str, Create::doPrint);
+        Create::getSex(sock, str, Create::doPrint);
         return;
 
     case CREATE_GET_SEX:
@@ -1294,12 +1294,11 @@ bool Create::getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str
         }
 
         sock->print("\nFor character stats, you may:\n");
-
         sock->printColor("\n[^WC^x]hoose your own stats");
         sock->printColor("\n[^WU^x]se predefined stats provided by the mud");
 
         sock->print("\n\nNote: For beginners that are unfamiliar with game mechanics, it is highly recommended to use predefined stats to reduce the learning curve.\n");
-
+        
         sock->askFor(": ");
 
         sock->setState(CREATE_GET_STATS_CHOICE);
@@ -1313,6 +1312,14 @@ bool Create::getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str
                 // We've set the next state so don't change it after we return
                 return(false);
             } else if(tolower(str.at(0)) == 'u') {
+
+                if(usePredefinedStatsUnavailable(sock->getPlayer()->getRace())) {
+                    sock->printColor("^yDue to large stat adjustments for race ^W%s^y, the predefined option is not available.^x\n", gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str());
+                    sock->printColor("^yYou will need to choose your own initial stats.^x\n");
+                    Create::getStats(sock, "", Create::doPrint);
+                    return(false);
+                }
+
                 PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
                 if(!pClass) {
                     Create::getStats(sock, str, Create::doPrint);
@@ -1330,6 +1337,60 @@ bool Create::getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str
     }
     return(false);
 }
+std::string getRacialBonusesString(short race) {
+    short num = 0;
+    const std::string abbrevStat[7] = { "none", "STR", "DEX", "CON", "INT", "PIE", "CHA" };
+    std::ostringstream oStr;
+
+    auto playerRace = gConfig->getRace(race);
+    
+    if(playerRace == nullptr)
+        return(nullptr);
+
+    if(race == HUMAN)
+        return("You'll choose one stat to raise and one stat to lower");
+
+    for (int i = 0; i < 5; ++i) {
+        num = playerRace->getStatAdj(i + 1) / 10;
+
+        oStr << abbrevStat[i + 1] << ": ";
+
+        if (num == 0) {
+            oStr << "-"; 
+        } else {
+            oStr << (num > 0 ? "+" : "") << num; 
+        }
+
+        oStr << " "; 
+    }
+
+    return oStr.str();
+}
+
+//*********************************************************************
+//       usesPredefinedStatusUnavailable                    
+//*********************************************************************
+// The predefined stats are all stored in the classes.xml file. Some 
+// races might have racial stat adjustments that knock a newly created
+// character's stats to 0. For example, if a race has a -30 adjustment.
+// We do not want that. This function is a safeguard against that. It 
+// checks the gConfig for the chosen race, and if it finds any initial 
+// stat adjustment that is lower than -20, it will return true. The
+// player will then be forced to choose their own stats, where safeguards
+// to keep a stat from going below 10 are in place. 
+bool usePredefinedStatsUnavailable(short race) {
+
+    short num = 0;
+    auto playerRace = gConfig->getRace(race);
+
+    for (int i = 0; i < 5; ++i) {
+        num = playerRace->getStatAdj(i+1);
+        if (num < -20)
+            return(true);
+    }
+
+    return(false);
+}
 
 
 //*********************************************************************
@@ -1337,12 +1398,20 @@ bool Create::getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str
 //*********************************************************************
 
 bool Create::getStats(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
 
+    std::string raceHelpfile = stripSpaces(gConfig->getRace(sock->getPlayer()->getRace())->getName());
+    lowercize(raceHelpfile,0);
+
+    if(mode == Create::doPrint) {
         sock->print("\nYou have 56 points to distribute among your 5 stats. Please enter your 5");
         sock->print("\nnumbers in the following order: Strength, Dexterity, Constitution,");
         sock->print("\nIntelligence, Piety.  No stat may be smaller than 3 or larger than 18.");
-        sock->print("\nUse the following format: ## ## ## ## ##\n\n");
+        sock->printColor("\nUse the following format: ## ## ## ## ##\n");
+
+        sock->print("\nDon't forget about initial racial stat adjustments. No stat can end up below 1.");
+        sock->printColor("\nYou can type ^yhelp %s^x for more info. This will work for any other races too.",raceHelpfile.c_str());
+        sock->printColor("\nThe ^W%s^x initial racial stat adjustments are: %s\n", 
+                        gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(),getRacialBonusesString(sock->getPlayer()->getRace()).c_str());
 
         sock->askFor(": ");
 
@@ -1369,9 +1438,22 @@ bool Create::getStats(const std::shared_ptr<Socket>& sock, std::string str, int 
             return(false);
         }
 
+        short statAdjustment=0;
+
         for(i=0; i<5; i++) {
             if(num[i] < 3 || num[i] > 18) {
                 sock->print("No stats < 3 or > 18 please.\n");
+                sock->print(": ");
+                sock->setState(CREATE_GET_STATS);
+                return(false);
+            }
+            statAdjustment = gConfig->getRace(sock->getPlayer()->getRace())->getStatAdj(i+1);
+            if(((num[i]*10)+statAdjustment) < 10) {
+                sock->printColor("For race ^W%s^x, the initially chosen value for %s cannot be less than %d.", 
+                        gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(), getFullStatName(i+1).c_str(), abs(statAdjustment/10)+1);
+                sock->printColor("\nThe initial stat adjustments for race ^W%s^x are: %s", 
+                        gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(),getRacialBonusesString(sock->getPlayer()->getRace()).c_str());
+                sock->print("\nPlease choose five numbers again.\n");
                 sock->print(": ");
                 sock->setState(CREATE_GET_STATS);
                 return(false);

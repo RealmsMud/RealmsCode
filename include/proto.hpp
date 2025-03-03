@@ -308,6 +308,8 @@ std::vector<std::string> splitString(std::string s, std::string delimiter = "");
 std::string joinVector(std::vector<std::string> v, std::string delimiter = "");
 int getIntFromStr(std::string& someString);
 std::string stripNonDigits(std::string someString);
+std::string stripSpaces(std::string someString);
+std::string toLower(const std::string& str);
 
 bool nameIsAllowed(std::string str, const std::shared_ptr<Socket>& sock);
 int bonus(int num);

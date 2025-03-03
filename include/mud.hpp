@@ -60,9 +60,10 @@ class LastTime;
 #define DL_SILENCE      12
 #define DL_HARM         13  // Daily harm casts
 #define DL_LEVITATE     14  // Daily innate levitates
+#define DL_INVISIBLE    15  // Daily innate invisibles
 
 
-#define DAILYLAST       14
+#define DAILYLAST       15
 
 // Object Last-time stuff
 #define LT_ENCHA        0

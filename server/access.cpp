@@ -71,22 +71,22 @@ char lang_color[LANGUAGE_COUNT][3] = {
     "^c",                       // Common
     "^y",                       // Orcish
     "^y",                       // Giantkin
-    "^b",                       // Gnomish
+    "^C",                       // Gnomish
     "^g",                       // Trollish
     "^y",                       // Ogrish
     "^m",                       // Dark-Elven (Drow)
     "^g",                       // Goblinoid
-    "^y",                       // Minotaur
+    "^r",                       // Minotaur
     "^B",                       // Celestial
     "^c",                       // Kobold
     "^R",                       // Infernal
-    "^y",                       // Schnai
+    "^C",                       // Schnai
     "^r",                       // Kataran
     "^g",                       // Druidic
     "^y",                       // Wolfen
     "^m",                       // Thieves' Cant
-    "^m",                       // Arcanic (Mages/Lich)
-    "^m",                       // Abyssal
+    "^M",                       // Arcanic (Mages/Lich)
+    "^D",                       // Abyssal
     "^r",                       // Tiefling
     "^y",                       // Kenku
     "^M",                       // Fey
@@ -100,13 +100,28 @@ char lang_color[LANGUAGE_COUNT][3] = {
     "^Y",                       // Firbolg
     "^r",                       // Satyr
     "^m",                       // Quickling
+    "^D",                       // Undercommon
+    "^c",                       // Svirfneblin
+    "^M",                       // Draconic
+    "^y",                       // Primordial
+    "^Y",                       // Thri-Kreen
+    "^y",                       // Sylvan
+    "^C",                       // Gith
+    "^Y",                       // Sphinx
+    "^G",                       // Pixie
+    "^g",                       // Leprechaun
+    "^D",                       // Necril
+    "^W",                       // Modron
+    "^D"                        // Noctis
 
 };
 
-char language_adj[][32] = { "an alien language", "dwarven", "elven", "halfling", "common", "orcish", "giantkin",
-        "gnomish", "trollish", "ogrish", "darkelf", "goblinoid", "minotaur", "celestial", "kobold", "infernal",
-        "barbarian", "kataran", "druidic", "wolfen", "thieves' cant", "arcanic", "abyssal", "tiefling", "kenku",
-        "fey", "lizardman", "centaur", "duergar", "gnoll", "bugbear", "hobgoblin", "brownie", "firbolg", "satyr", "quickling"};
+char language_adj[][32] = { "an alien language", "Dwarvish", "Elvish", "Halfling", "Common", "Orcish", "Giantkin",
+        "Gnomish", "Trollish", "Ogrish", "Darkelf", "Goblinoid", "Minotaur", "Celestial", "Kobold", "Infernal",
+        "Schnai", "Kataran", "Druidic", "Wolfen", "Thieves' Cant", "Arcanic", "Abyssal", "Tiefling", "Kenku",
+        "Fey", "Lizardman", "Centaur", "Duergar", "Gnoll", "Bugbear", "Hobgoblin", "Brownie", "Firbolg", "Satyr", "Quickling",
+        "Undercommon", "Svirfneblin", "Draconic", "Primordial", "Thri-kreen", "Sylvan", "Gith", "Sphinx", "Pixie", "Leprechaun",
+        "Necril", "Modron", "Noctis"};
 
 char language_verb[][3][24] = {
     // Unknown (alien)
@@ -114,37 +129,37 @@ char language_verb[][3][24] = {
     // Dwarven
     {"mutter", "utter", "grumble"},
     // Elven
-    {"say", "speak", "lecture"},
+    {"say", "lilt", "lecture"},
     // Halfling
     {"say", "speak", "utter"},
     // Common
-    {"say", "speak", "chat"},
+    {"say", "drawl", "chat"},
     // Orcish
     {"grunt", "squeal", "snort"},
     // Giantkin
-    {"boom", "speak", "bellow"},
+    {"boom", "rumble", "bellow"},
     // Gnomish
     {"say", "speak", "utter"},
     // Trollish*/
-    {"snarl", "spit", "gutterly cough"},
+    {"snarl", "spit", "rasp"},
     // Ogrish
     {"grunt", "snarl", "boom"},
     // Dark elven
     {"scoff", "sneer", "preen"},
     // Goblinoid
-    {"sputter", "snort", "cough"},
+    {"sputter", "chitter", "cough"},
     // Minotaur
     {"snort", "grunt", "speak"},
     // Celestial
-    {"speak", "sing", "eloquently speak"},
+    {"speak", "sing", "orate"},
     // Kobold
     {"bark", "snort", "growl"},
     // Infernal
-    {"snarl", "growl", "gutterly speak"},
+    {"snarl", "growl", "seethe"},
     // Schnai
     {"growl", "snarl", "sneer"},
     // Kataran
-    {"purr", "growl", "spit"},
+    {"hiss", "growl", "spit"},
     // Druidic
     {"mutter", "say", "sound"},
     // Wolfen
@@ -152,13 +167,13 @@ char language_verb[][3][24] = {
     // Thieves' Cant
     {"gesture", "allude", "mumble"},
     // Arcanic
-    {"gibber", "quickly speak", "chatter"},
+    {"jabber", "rattle", "chatter"},
     // Abyssal
-    {"growl", "snarl", "cough"},
+    {"shriek", "howl", "gibber"},
     // Tiefling
-    {"jabber", "spit", "snarl"},
+    {"hiss", "spit", "snarl"},
     //Kenku
-    {"squawk", "cluck", "screech"},
+    {"squawk", "mimic", "screech"},
     //Fey
     {"sing", "whistle", "buzz"},
     //Lizardman
@@ -176,11 +191,37 @@ char language_verb[][3][24] = {
     //Brownie
     {"squeak", "scritch", "shrill"},
     //Firbolg
-    {"grunt", "bellow", "heavily cough"},
+    {"grunt", "bellow", "murmur"},
     //Satyr
-    {"groan", "gutterly growl", "grunt"},
+    {"groan", "grate", "rasp"},
     //Quickling
-    {"sputter", "rapidly squeak", "jabber"}
+    {"sputter", "rapidly squeak", "jabber"},
+    //Undercommon
+    {"grunt", "growl", "rasp"},
+    //Svirfneblin
+    {"whisper", "murmur", "mutter"},
+    //Draconic
+    {"hiss", "growl", "roar"},
+    //Primordial
+    {"vibrate", "rumble", "resonate"},
+    //Thri-Kreen
+    {"click", "drone", "rasp"},
+    //Sylvan
+    {"chime", "lilt", "whisper"},
+    //Gith
+    {"intone", "utter", "growl"},
+    //Sphinx
+    {"pronounce", "proclaim", "riddle"},
+    //Pixie
+    {"squeak", "chatter", "trill"},
+    //Leprechaun
+    {"jest", "babble", "cackle"},
+    //Necril
+    {"rasp", "moan", "lament"},
+    //Modron
+    {"state", "drone", "calculate"},
+    //Noctis
+    {"hiss", "rasp", "enthrall"}
 
 };
 

@@ -19,6 +19,8 @@
 #pragma once
 
 #include "enums/bits.hpp"
+#include <string>
+#include <map>
 
 #define MAX_DIMEN_ANCHORS   5
 
@@ -272,9 +274,24 @@ enum Languages {
     LFIRBOLG = 33,
     LSATYR = 34,
     LQUICKLING = 35,
+    LUNDERCOMMON = 36,
+    LSVIRFNEBLIN = 37,
+    LDRACONIC = 38,
+    LPRIMORDIAL = 39,
+    LTHRIKREEN = 40,
+    LSYLVAN = 41,
+    LGITH = 42,
+    LSPHINX = 43,
+    LPIXIE = 44,
+    LLEPRECHAUN = 45,
+    LNECRIL = 46,
+    LMODRON = 47,
+    LNOCTIS = 48,
 
-    LANGUAGE_COUNT = 36
+    LANGUAGE_COUNT = 49
 };
+
+extern const std::map<std::string, Languages> languageMap;
 
 // positions in the color array
 enum CustomColor {
@@ -380,8 +397,10 @@ enum Races {
     KATARAN = 19,
     TIEFLING = 20,
     KENKU = 21,
+    GREYELF = 22,
+    DUERGAR = 23,
 
-    MAX_PLAYABLE_RACE = 22,
+    MAX_PLAYABLE_RACE = 24,
 
     // non-playable
     LIZARDMAN = 33,
@@ -390,10 +409,10 @@ enum Races {
     // subraces, currently non-playable
     HALFFROSTGIANT = 35,
     HALFFIREGIANT = 36,
-    GREYELF = 37,
+    //GREYELF = 37,
     WILDELF = 38,
     AQUATICELF = 39,
-    DUERGAR = 40,
+    //DUERGAR = 40,
     HILLDWARF = 41,
 
     // non-playable

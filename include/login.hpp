@@ -181,3 +181,5 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr);
 void createPlayer(std::shared_ptr<Socket> sock, const std::string& str);
 void doSurname(std::shared_ptr<Socket> sock, const std::string& str);
 void doTitle(std::shared_ptr<Socket> sock, const std::string& str);
+std::string getRacialBonusesString(short race);
+bool usePredefinedStatsUnavailable(short race);

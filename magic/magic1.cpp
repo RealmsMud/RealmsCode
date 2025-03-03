@@ -2375,17 +2375,22 @@ bool Creature::noPotion(SpellData* spellData) const {
 
 
 //*********************************************************************
-//                      innateLevitate
+//                      cmdInnateLevitate
 //*********************************************************************
 // Innate racial ability to levitate self on command
 
-int innateLevitate(const std::shared_ptr<Player>& player, cmd* cmnd) {
+int cmdInnateLevitate(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long i,t;
 
     player->clearFlag(P_AFK);
 
     if (!player->isCt() && player->getRace() != DARKELF) {
         *player << "You do not have the innate ability to levitate.\n";
+        return(0);
+    }
+
+    if(player->isEffected("levitate")) {
+        *player << "You are already levitating!\n";
         return(0);
     }
 
@@ -2408,7 +2413,7 @@ int innateLevitate(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
     player->lasttime[LT_INNATE].ltime = t;
-    player->lasttime[LT_INNATE].interval = 120L;
+    player->lasttime[LT_INNATE].interval = 60L;
 
     if(player->isStaff())
         player->lasttime[LT_INNATE].interval = 1;
@@ -2418,7 +2423,62 @@ int innateLevitate(const std::shared_ptr<Player>& player, cmd* cmnd) {
     *player << "You call upon your innate ability to levitate.\n";
     if(!player->flagIsSet(P_DM_INVIS))
         broadcast(player->getSock(), player->getRoomParent(), "%M calls upon %s innate ability to levitate.", player.get(), player->hisHer());
-    player->addEffect("levitate", 600, player->getLevel(), player, true);
+    player->addEffect("levitate", 450, player->getLevel(), player, true);
+
+    return(0);
+
+}
+
+//*********************************************************************
+//                      cmdInnateInvisible
+//*********************************************************************
+// Innate racial ability to turn invisible on command
+
+int cmdInnateInvisible(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    long i,t;
+
+    player->clearFlag(P_AFK);
+
+    if (!player->isCt() && player->getRace() != DUERGAR) {
+        *player << "You do not have the innate ability to turn invisible.\n";
+        return(0);
+    }
+
+    if(player->isEffected("invisibility")) {
+        *player << "You are already invisible!\n";
+        return(0);
+    }
+
+    // Check for daily limit here
+     if( !dec_daily(&player->daily[DL_INVISIBLE])  && !player->isCt()) {
+            *player << "You have used your innate invisibility enough times for today.\n";
+            return(0);
+        }
+
+    t = time(nullptr);
+    i = LT(player, LT_INNATE);
+
+    if(!player->isStaff() && t < i) {
+        *player << "You are not able to call another innate ability yet.\n";
+        player->pleaseWait(i-t);
+        return(0);
+    }
+
+    if(player->getRoomParent()->flagIsSet(R_NO_MAGIC) && !player->checkStaff("Your innate abilities will not work here.\n"))
+        return(0);
+
+    player->lasttime[LT_INNATE].ltime = t;
+    player->lasttime[LT_INNATE].interval = 60L;
+
+    if(player->isStaff())
+        player->lasttime[LT_INNATE].interval = 1;
+
+    player->interruptDelayedActions();
+
+    *player << "You call upon your innate ability to to turn invisible.\n";
+    if(!player->flagIsSet(P_DM_INVIS))
+        broadcast(player->getSock(), player->getRoomParent(), "%M calls upon %s innate invisibility.", player.get(), player->hisHer());
+    player->addEffect("invisibility", 900, player->getLevel(), player, true);
 
     return(0);
 

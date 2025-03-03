@@ -444,3 +444,7 @@ bool replaceCancelingEffects(const std::shared_ptr<Creature>& player, const std:
 int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd);
 bool isResistableEnchantment(const std::string spell);
 
+//Innate racial magical abilities
+int cmdInnateLevitate(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdInnateInvisible(const std::shared_ptr<Player>& player, cmd* cmnd);
+

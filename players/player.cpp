@@ -169,6 +169,10 @@ void Player::init() {
             daily[DL_LEVITATE].max = 2;
         else
             daily[DL_LEVITATE].max = 1;
+
+        if (race == DUERGAR)
+            daily[DL_INVISIBLE].max = 1;
+
     } else {
         daily[DL_DEFEC].max = 100;
     }
@@ -1143,10 +1147,27 @@ void Player::initLanguages() {
             learnLanguage(LGOBLINOID);
             learnLanguage(LORCISH);
             break;
+        case DUERGAR:
+            learnLanguage(LDUERGAR);
+            learnLanguage(LDWARVEN);
+            learnLanguage(LDARKELVEN);
+            learnLanguage(LKOBOLD);
+            learnLanguage(LGOBLINOID);
+            learnLanguage(LORCISH);
+            learnLanguage(LUNDERCOMMON);
+            learnLanguage(LSVIRFNEBLIN);
+            break;
         case ELF:
             learnLanguage(LELVEN);
             learnLanguage(LGOBLINOID);
             learnLanguage(LORCISH);
+            break;
+        case GREYELF:
+            learnLanguage(LELVEN);
+            learnLanguage(LGOBLINOID);
+            learnLanguage(LORCISH);
+            learnLanguage(LGNOMISH);
+            learnLanguage(LHALFLING);
             break;
         case HALFELF:
             learnLanguage(LELVEN);
@@ -1172,6 +1193,7 @@ void Player::initLanguages() {
             break;
         case TROLL:
             learnLanguage(LTROLL);
+            learnLanguage(LBUGBEAR);
             break;
         case HALFORC:
             learnLanguage(LORCISH);
@@ -1179,6 +1201,7 @@ void Player::initLanguages() {
         case OGRE:
             learnLanguage(LOGRISH);
             learnLanguage(LGIANTKIN);
+            learnLanguage(LBUGBEAR);
             break;
         case DARKELF:
             learnLanguage(LDARKELVEN);
@@ -1188,10 +1211,16 @@ void Player::initLanguages() {
             learnLanguage(LGNOMISH);
             learnLanguage(LKOBOLD);
             learnLanguage(LGOBLINOID);
+            learnLanguage(LUNDERCOMMON);
+            learnLanguage(LDUERGAR);
+            learnLanguage(LSVIRFNEBLIN);
             break;
         case GOBLIN:
             learnLanguage(LGOBLINOID);
             learnLanguage(LORCISH);
+            learnLanguage(LUNDERCOMMON);
+            learnLanguage(LHOBGOBLIN);
+            learnLanguage(LBUGBEAR);
             break;
         case MINOTAUR:
             learnLanguage(LMINOTAUR);
@@ -1213,9 +1242,10 @@ void Player::initLanguages() {
             learnLanguage(LDARKELVEN);
             learnLanguage(LOGRISH);
             learnLanguage(LGIANTKIN);
+            learnLanguage(LUNDERCOMMON);
             break;
         case CAMBION:
-            learnLanguage(LINFERNAL);
+            learnLanguage(LABYSSAL);
             learnLanguage(LDARKELVEN);
             learnLanguage(LELVEN);
             learnLanguage(LCELESTIAL);

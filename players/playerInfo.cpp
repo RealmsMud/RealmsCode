@@ -308,6 +308,9 @@ int cmdDaily(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if( target->isCt() || target->getRace() == DARKELF) {
         player->print("Levitate:       %d of %d remaining.\n", target->daily[DL_LEVITATE].cur, target->daily[DL_LEVITATE].max);
     }
+    if( target->isCt() || target->getRace() == DUERGAR) {
+        player->print("Invisibility:   %d of %d remaining.\n", target->daily[DL_INVISIBLE].cur, target->daily[DL_INVISIBLE].max);
+    }
 
     //General daily limits here
     player->print("\n");

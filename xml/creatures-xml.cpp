@@ -256,6 +256,26 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             setRace(getRace()+10);
     }
 
+    if(getVersion() < "2.62c") {
+        #define OLD_GREYELF 37
+        #define OLD_DUERGAR 40
+
+        if(getRace() == OLD_GREYELF)
+            setRace(GREYELF);
+        if(getRace() == OLD_DUERGAR)
+            setRace(DUERGAR);
+
+        if(getRace() == CAMBION) {
+            forgetLanguage(LINFERNAL);
+            learnLanguage(LABYSSAL);
+        }
+
+        //Added a lot of additional languages for the various races
+        //Going to just reinit the languages for players
+        if(isPlayer())
+            getAsPlayer()->initLanguages();
+    }
+
     if(isPlayer()) {
         if(getVersion() < "2.47b") {
             pThis->recordLevelInfo();

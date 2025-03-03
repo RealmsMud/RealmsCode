@@ -21,6 +21,8 @@
 #include "commands.hpp"
 #include "flags.hpp"
 #include "proto.hpp"
+#include <map>
+#include <string>
 
 class Creature;
 class Player;
@@ -72,7 +74,6 @@ typedef struct sayInfo {
 
 extern sayInfo sayList[];
 
-
 typedef struct channelInfo {
     const char  *channelName;       // Name of the channel
     bool    useLanguage;            // Should this channel use languages?
@@ -102,4 +103,6 @@ void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &tex
 
 channelPtr getChannelByName(const std::shared_ptr<Player>& player, const std::string &chanStr);
 channelPtr getChannelByDiscordChannel(unsigned long discordChannelID);
+
+
 

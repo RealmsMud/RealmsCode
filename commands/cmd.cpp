@@ -705,7 +705,8 @@ bool Config::initCommands() {
     playerCommands.emplace("charm", 100, cmdCharm, nullptr, "Use bard charm");
     playerCommands.emplace("identify", 100, cmdIdentify, nullptr, "Use bard identify");
     playerCommands.emplace("songs", 100, cmdSongs, nullptr, "List your known bard songs");
-    playerCommands.emplace("levitate", 100, innateLevitate, nullptr, "Call on innate ability to levitate");
+    playerCommands.emplace("levitate", 100, cmdInnateLevitate, nullptr, "Call on innate levitation");
+    playerCommands.emplace("invisible", 100, cmdInnateLevitate, nullptr, "Call on innate invisibility");
 
     playerCommands.emplace("enthrall", 100, cmdEnthrall, nullptr, "Attempt to enthrall undead");
     playerCommands.emplace("meditate", 100, cmdMeditate, nullptr, "Use monk meditate");
