@@ -6,7 +6,7 @@
 #include "accounts.hpp"
 
 namespace SQL {
-  // Bridge the gap between SQL and XML Player models. Easier to migrate Players to SQL later maybe
+  // Connect SQL accounts to XML Player models
   struct Player {
     int id;
     int accountId;
@@ -24,16 +24,16 @@ namespace SQL {
       // Note that make_index calls need to come before make_table as sync_schema evaluates these in reverse order
       // Account
       make_table(
-        "accounts",
+        "account",
         make_column("id", &Account::setId, &Account::getId, primary_key().autoincrement()),
         make_column("name", &Account::setName, &Account::getName, unique()),
         make_column("password", &Account::setPassword, &Account::getPassword),
         make_column("email", &Account::setEmail, &Account::getEmail)
       ),
       // Player -- only used to relate players to accounts for now
-      make_index("idx_players_account_id", &Player::accountId),
+      make_index("idx_player_account_id", &Player::accountId),
       make_table(
-        "players",
+        "player",
         make_column("id", &Player::id, primary_key().autoincrement()),
         make_column("account_id", &Player::accountId),
         make_column("xml_id", &Player::xmlId, unique()),

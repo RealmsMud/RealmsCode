@@ -193,7 +193,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         // account.setName("test");
         // account.setPassword("testpw");
         account = Account("test");
-        Account::save(account);
+        account.save();
 
         if(!nameIsAllowed(str, sock)) {
             sock->askFor("Please enter account name: ");
@@ -218,8 +218,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
     case LOGIN_CHECK_CREATE_NEW_ACCOUNT:
         if(str[0] != 'y' && str[0] != 'Y') {
             sock->tempstr[0][0] = 0;
-            sock->askFor("Please enter name: ");
-            sock->setState(LOGIN_GET_NAME_PLAYER);
+            sock->askFor("Please enter account name: ");
+            sock->setState(LOGIN_GET_NAME_ACCOUNT);
             return;
         } else {
             sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command. \n");

@@ -17,7 +17,7 @@ class Account {
     std::map<PlayerName, PlayerId> players;
 
   public:
-    static int save(Account acc);
+    //friend int save(Account &acc);
 
     Account();
     Account(std::string name_);
@@ -35,11 +35,7 @@ class Account {
     void setPassword(std::string password);
     void setEmail(std::optional<std::string> email);
     void setPlayers(std::map<PlayerName, PlayerId> players);
-};
 
-// std::ostream& operator<<(std::ostream& os, const Blackjack::Hand& hand) {
-//   for (Card card : hand.getCards()) {
-//     os << card << " ";
-//   }
-//   return os;
-// }
+    // Database
+    int save();
+};
