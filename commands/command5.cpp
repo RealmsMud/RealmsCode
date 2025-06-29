@@ -586,6 +586,16 @@ void Player::deletePlayer() {
         }
     }
 
+    // Remove player from account if they belong to one
+    if(!getAccountName().empty()) {
+        std::shared_ptr<Account> account;
+        if(Account::load(getAccountName(), account)) {
+            if(account->removeCharacter(name)) {
+                account->save();
+            }
+        }
+    }
+
     // this deletes the player object
     std::shared_ptr<Socket> sock = getSock();
     uninit();
