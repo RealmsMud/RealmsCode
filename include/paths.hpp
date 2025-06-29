@@ -39,6 +39,7 @@ struct Path {
     static inline const fs::path Object = BasePath / "objects";
     static inline const fs::path Player = BasePath / "player";
     static inline const fs::path PlayerBackup = BasePath / "player/backup";
+    static inline const fs::path Account = BasePath / "accounts";
 
     static inline const fs::path Config = BasePath / "config";
 
