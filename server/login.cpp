@@ -75,7 +75,6 @@ class StartLoc;
 void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
 void showCharacterList(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
 void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
-void handleCharacterDeletion(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
 void handleCharacterClaim(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
 bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& charName);
 
@@ -362,55 +361,6 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             return;
         }
         // End LOGIN_SELECT_CHARACTER
-        
-    case LOGIN_DELETE_CHARACTER:
-        {
-            account = sock->getAccount();
-            if(!account) {
-                sock->print("Error: No account found!\n");
-                sock->disconnect();
-                return;
-            }
-            
-            handleCharacterDeletion(sock, account, str);
-            return;
-        }
-        // End LOGIN_DELETE_CHARACTER
-        
-    case LOGIN_CONFIRM_DELETE:
-        {
-            account = sock->getAccount();
-            if(!account) {
-                sock->print("Error: No account found!\n");
-                sock->disconnect();
-                return;
-            }
-            
-            if(str != "DELETE") {
-                sock->print("Character deletion cancelled.\n");
-                showAccountMenu(sock, account);
-                return;
-            }
-            
-            std::string charName = sock->tempstr[1];
-            
-            // Remove from account
-            if(account->removeCharacter(charName)) {
-                // Delete the character file
-                std::shared_ptr<Player> player;
-                if(loadPlayer(charName, player)) {
-                    player->deletePlayer();
-                }
-                account->save();
-                sock->print("\n^RCharacter '%s' has been permanently deleted.^x\n", charName.c_str());
-            } else {
-                sock->print("Error removing character from account.\n");
-            }
-            
-            showAccountMenu(sock, account);
-            return;
-        }
-        // End LOGIN_CONFIRM_DELETE
 
     case LOGIN_CLAIM_CHARACTER:
         {
@@ -511,7 +461,6 @@ void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> acco
     const auto& characters = account->getCharacterNames();
     if(!characters.empty()) {
         sock->print("  ^W(p)lay^x <name> - Play a character\n");
-        sock->print("  ^W(d)elete^x     - Delete a character\n");
     }
     
     sock->print("  ^W(q)uit^x       - Disconnect\n");
@@ -730,28 +679,6 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
         return;
     }
     
-    // Handle "delete" command with partial matching
-    if(command.length() >= 1 && !strncasecmp(command.c_str(), "delete", std::min(command.length(), 6UL))) {
-        if(characters.empty()) {
-            sock->print("You have no characters to delete.\n");
-            showAccountMenu(sock, account);
-            return;
-        }
-        
-        sock->print("\n^RDelete which character?^x\n");
-        int i = 1;
-        for(const auto& charName : characters) {
-            sock->print("  ^C%d^x) %s\n", i, charName.c_str());
-            i++;
-        }
-        sock->print("  ^C0^x) Cancel\n");
-        sock->askFor("\nEnter character number to delete: ");
-        sock->setState(LOGIN_DELETE_CHARACTER);
-        return;
-    }
-    
-
-    
     // Handle "quit" command with partial matching
     if(command.length() >= 1 && !strncasecmp(command.c_str(), "quit", std::min(command.length(), 4UL))) {
         sock->print("Goodbye!\n");
@@ -816,52 +743,8 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     }
     
     // Invalid command
-    sock->print("Invalid command. Available commands: create, list, claim, play <name>, delete, quit\n");
+    sock->print("Invalid command. Available commands: (c)reate, (l)ist, (cl)aim, (p)lay <name>, (q)uit\n");
     showAccountMenu(sock, account);
-}
-
-//*********************************************************************
-//                    handleCharacterDeletion
-//*********************************************************************
-
-void handleCharacterDeletion(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str) {
-    const auto& characters = account->getCharacterNames();
-    
-    if(characters.empty()) {
-        sock->print("No characters to delete.\n");
-        showAccountMenu(sock, account);
-        return;
-    }
-    
-    int choice = 0;
-    try {
-        choice = std::stoi(str);
-    } catch(const std::exception&) {
-        sock->print("Invalid choice. ");
-        showAccountMenu(sock, account);
-        return;
-    }
-    
-    if(choice == 0) {
-        // Cancel deletion
-        showAccountMenu(sock, account);
-        return;
-    }
-    
-    if(choice < 1 || choice > static_cast<int>(characters.size())) {
-        sock->print("Invalid character number. ");
-        showAccountMenu(sock, account);
-        return;
-    }
-    
-    const std::string& charName = characters[choice - 1];
-    
-    sock->print("\n^RAre you sure you want to permanently delete '%s'?^x\n", charName.c_str());
-    sock->askFor("Type 'DELETE' to confirm, or anything else to cancel: ");
-    
-    // Store character name in tempstr[1] for confirmation
-    strcpy(sock->tempstr[1], charName.c_str());
-    sock->setState(LOGIN_CONFIRM_DELETE);
 }
 
 void Socket::finishLogin() {

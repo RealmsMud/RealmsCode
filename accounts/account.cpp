@@ -68,7 +68,7 @@ void Account::reset() {
     email.clear();
     created = 0;
     lastLogin = 0;
-    characterLimit = 5;  // Default character limit
+    characterLimit = 60;  // Default character limit
     characterNames.clear();
     banned = false;
     banReason.clear();
