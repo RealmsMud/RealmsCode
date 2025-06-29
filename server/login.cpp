@@ -294,15 +294,6 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         }
         // End LOGIN_SELECT_CHARACTER
         
-    case LOGIN_CREATE_CHARACTER:
-        // Character creation with account - handle in createPlayer
-        // Account should already be set from character selection
-        sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command. \n");
-        sock->askFor("\nHit return to continue: ");
-        sock->setState(CREATE_NEW);
-        return;
-        // End LOGIN_CREATE_CHARACTER
-        
     case LOGIN_DELETE_CHARACTER:
         {
             account = sock->getAccount();
@@ -461,7 +452,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command. \n");
 
             sock->print("\nHit return: ");
-            sock->setState(CREATE_NEW);
+            sock->setState(CREATE_NEW_CHARACTER);
             return;
         }
         // End LOGIN_CHECK_CREATE_NEW
@@ -499,32 +490,30 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 //*********************************************************************
 
 void showCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account) {
-    sock->print("\n^W=== Account Menu ===^x\n");
+    sock->print("\n^W========= Menu =========^x\n\n");
     sock->print("^WAccount: ^C%s^x\n", account->getName().c_str());
     sock->print("^WCharacters: ^x(%d/%d)\n\n", account->getCharacterCount(), account->getCharacterLimit());
     
     // Show command options
     sock->print("^WCommands:^x\n");
-    sock->print("  ^Wcreate^x     - Create a new character");
+    sock->print("  ^W(c)reate^x     - Create a new character");
     if(account->canCreateCharacter()) {
         sock->print("\n");
     } else {
         sock->print(" ^R(limit reached)^x\n");
     }
-    
+
+    sock->print("  ^W(l)ist^x       - List your characters\n");
+
     const auto& characters = account->getCharacterNames();
     if(!characters.empty()) {
-        sock->print("  ^Wlist^x       - List your characters\n");
-        sock->print("  ^Wplay^x <name> - Play a character\n");
-        sock->print("  ^Wdelete^x     - Delete a character\n");
-    } else {
-        sock->print("  ^Wlist^x       - List your characters ^K(none)^x\n");
+        sock->print("  ^W(p)lay^x <name> - Play a character\n");
+        sock->print("  ^W(d)elete^x     - Delete a character\n");
     }
     
-    sock->print("  ^Wquit^x       - Disconnect\n");
-    sock->print("\n^KCommands can be abbreviated (c, l, p, d, q).^x\n");
+    sock->print("  ^W(q)uit^x       - Disconnect\n");
     
-    sock->askFor("Command: ");
+    sock->askFor("\nEnter a command: ");
     sock->setState(LOGIN_SELECT_CHARACTER);
 }
 
@@ -610,8 +599,10 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
             showCharacterSelection(sock, account);
             return;
         }
-        sock->print("\nCreating new character...\n");
-        sock->setState(LOGIN_CREATE_CHARACTER);
+        sock->print("\nCreating new character...");
+        sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command.");
+        sock->askFor("\nHit return to continue: ");
+        sock->setState(CREATE_NEW_CHARACTER);
         return;
     }
     
@@ -932,7 +923,7 @@ void doCreateHelp(const std::shared_ptr<Socket>& sock, std::string_view str) {
 void createPlayer(std::shared_ptr<Socket> sock, const std::string& str) {
 
     switch(sock->getState()) {
-    case CREATE_NEW:
+    case CREATE_NEW_CHARACTER:
     case CREATE_GET_DM_PASSWORD:
         break;
     default:
@@ -943,7 +934,7 @@ void createPlayer(std::shared_ptr<Socket> sock, const std::string& str) {
         break;
     }
     switch(sock->getState()) {
-    case CREATE_NEW:
+    case CREATE_NEW_CHARACTER:
         {
             std::shared_ptr<Player> target = sock->getPlayer();
             sock->print("\n");
@@ -967,7 +958,7 @@ void createPlayer(std::shared_ptr<Socket> sock, const std::string& str) {
             return;
         } else
             goto no_pass;
-        // End CREATE_NEW
+        // End CREATE_NEW_CHARACTER
     case CREATE_GET_DM_PASSWORD:
         if(str != gConfig->getDmPass()) {
             sock->disconnect();
