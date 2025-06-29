@@ -1083,19 +1083,19 @@ no_pass:
         if(gConfig->classes[get_class_string(static_cast<int>(sock->getPlayer()->getClass()))]->numProfs()==2)
             Create::getSecondProf(sock, str, Create::doPrint);
         else
-            Create::getPassword(sock, str, Create::doPrint);
+            Create::getName(sock, str, Create::doPrint);
         return;
 
     case CREATE_SECOND_PROF:
 
         if(!Create::getSecondProf(sock, str, Create::doWork))
             return;
-        Create::getPassword(sock, str, Create::doPrint);
+        Create::getName(sock, str, Create::doPrint);
         return;
 
-    case CREATE_GET_PASSWORD:
+    case CREATE_GET_NAME:
 
-        if(!Create::getPassword(sock, str, Create::doWork))
+        if(!Create::getName(sock, str, Create::doWork))
             return;
         Create::done(sock, str, Create::doPrint);
         return;
@@ -2160,35 +2160,60 @@ bool Create::getSecondProf(const std::shared_ptr<Socket>& sock, std::string str,
 }
 
 //*********************************************************************
-//                      getPassword
+//                      getName
 //*********************************************************************
 
-bool Create::getPassword(const std::shared_ptr<Socket>& sock, const std::string &str, int mode) {
+bool Create::getName(const std::shared_ptr<Socket>& sock, const std::string &str, int mode) {
     if(mode == Create::doPrint) {
 
-        sock->print("\nYou must now choose a password. Remember that it\n");
-        sock->print("is YOUR responsibility to remember this password. The staff\n");
-        sock->print("at Realms will not give out password information to anyone\n");
-        sock->print("at any time. Please write it down someplace, because if you\n");
-        sock->print("forget it, you will no longer be able to play this character.\n\n");
-        sock->print("Please choose a password (up to 14 chars): ");
+        sock->print("\nYou must now choose a name for your character.\n");
+        sock->print("Your character name should be appropriate for a fantasy setting.\n");
+        sock->print("Names that are offensive, reference real-world people/places,\n");
+        sock->print("or are otherwise inappropriate may be changed by staff.\n\n");
+        sock->print("Please choose a character name: ");
 
-        sock->setState(CREATE_GET_PASSWORD);
+        sock->setState(CREATE_GET_NAME);
 
     } else if(mode == Create::doWork) {
 
-        if(!isValidPassword(sock, str)) {
-            sock->print("\nChoose a password: ");
-            sock->setState(CREATE_GET_PASSWORD);
+        // Store the name in tempstr[0] for validation and use
+        std::string charName = str;
+        boost::trim(charName);
+        
+        if(charName.empty()) {
+            sock->print("\nName cannot be empty. Choose a character name: ");
+            sock->setState(CREATE_GET_NAME);
             return(false);
         }
-
-        sock->getPlayer()->setFlag(P_PASSWORD_CURRENT);
-
-        //t = time(0);
-        //strcpy(sock->getPlayer()->last_mod, ctime(&t));
-
-        sock->getPlayer()->setPassword(str);
+        
+        if(charName.length() > 20) {
+            sock->print("\nName too long (max 20 characters). Choose a character name: ");
+            sock->setState(CREATE_GET_NAME);
+            return(false);
+        }
+        
+        if(!nameIsAllowed(charName, sock)) {
+            sock->setState(CREATE_GET_NAME);
+            return(false);
+        }
+        
+        // Check if character already exists
+        if(Player::exists(charName)) {
+            sock->print("\nThat character name is already taken. Choose a character name: ");
+            sock->setState(CREATE_GET_NAME);
+            return(false);
+        }
+        
+        // Check if character is already in the account
+        std::shared_ptr<Account> account = sock->getAccount();
+        if(account && account->hasCharacter(charName)) {
+            sock->print("\nYou already have a character with that name. Choose a character name: ");
+            sock->setState(CREATE_GET_NAME);
+            return(false);
+        }
+        
+        // Store the name for later use
+        strcpy(sock->tempstr[0], charName.c_str());
 
     }
     return(true);
@@ -2217,14 +2242,31 @@ void Create::done(const std::shared_ptr<Socket>& sock, const std::string &str, i
         player->setBirthday();
         player->setCreated();
 
-        player->setName( sock->tempstr[0]);
+        // Set character name from what user entered
+        player->setName(sock->tempstr[0]);
 
         if(gServer->checkDuplicateName(sock, false))
             return;
         if(gServer->checkDouble(sock))
             return;
+        
+        // Additional check (name validation was already done in getName())
         if(Player::exists(player->getName())) {
             sock->printColor("\n\n^ySorry, that player already exists.^x\n\n\n");
+            sock->reconnect();
+            return;
+        }
+        
+        // In account system, characters don't have individual passwords
+        // They inherit authentication from the account
+        std::shared_ptr<Account> account = sock->getAccount();
+        if(account) {
+            // Set the character's account name and use account's password
+            player->setAccountName(account->getName());
+            player->setPassword(account->getPassword()); // Use account password for compatibility
+            player->setFlag(P_PASSWORD_CURRENT);
+        } else {
+            sock->print("Error: No account found during character creation!\n");
             sock->reconnect();
             return;
         }
@@ -2366,18 +2408,9 @@ void Create::done(const std::shared_ptr<Socket>& sock, const std::string &str, i
         if(player->getClass() == CreatureClass::BARD)
             player->learnSong(SONG_HEAL);
             
-        // Handle account registration
-        std::shared_ptr<Account> account = sock->getAccount();
-        
-        if(account) {
-            // Link player to account
-            player->setAccountName(account->getName());
-            account->addCharacter(player->getName());
-            account->save();
-        } else {
-            // This shouldn't happen in the new account system, but handle gracefully
-            sock->print("Warning: No account found during character creation!\n");
-        }
+        // Add character to account (account was already validated above)
+        account->addCharacter(player->getName());
+        account->save();
 
         player->save(true);
         sock->registerPlayer();

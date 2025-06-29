@@ -97,7 +97,7 @@ typedef enum {
     CREATE_GET_STATS,
     CREATE_GET_PROF,
     CREATE_GET_ALIGNMENT,
-    CREATE_GET_PASSWORD,
+    CREATE_GET_NAME,
     CREATE_BONUS_STAT,
     CREATE_PENALTY_STAT,
     CREATE_SECOND_PROF,
@@ -166,7 +166,7 @@ namespace Create {
     bool handleWeapon(const std::shared_ptr<Socket>& sock, int mode, char ch);
     bool getProf(const std::shared_ptr<Socket>& sock, std::string str, int mode);
     bool getSecondProf(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getPassword(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
+    bool getName(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
     void done(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
 
     // character customization functions
