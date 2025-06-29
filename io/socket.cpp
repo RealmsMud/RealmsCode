@@ -73,6 +73,7 @@
 #include "version.hpp"                              // for VERSION
 #include "xml.hpp"                                  // for copyToBool, newBo...
 #include "blackjack.hpp"                            // for interactive gambling
+#include "account.hpp"                              // for Account
 
 const int MIN_PAGES = 10;
 
@@ -217,6 +218,7 @@ void Socket::reset() {
     outCompressBuf = nullptr;
     outCompress = nullptr;
     myPlayer = nullptr;
+    myAccount = nullptr;
 
     tState = NEG_NONE;
     oneIAC = watchBrokenClient = false;
@@ -300,6 +302,7 @@ void Socket::cleanUp() {
         }
         myPlayer = nullptr;
     }
+    myAccount = nullptr;
     endCompress();
     if(fd > -1) {
         close(fd);
@@ -1149,6 +1152,7 @@ void Socket::reconnect(bool pauseScreen) {
         gServer->clearPlayer(myPlayer->getName());
         myPlayer = nullptr;
     }
+    myAccount = nullptr;
 
     if (pauseScreen) {
         setState(LOGIN_PAUSE_SCREEN);
@@ -2263,5 +2267,27 @@ void Socket::registerPlayer() {
         registered = false;
     }
 }
+
+//********************************************************************
+//                      Account Methods
+//********************************************************************
+
+bool Socket::hasAccount() const {
+    return myAccount != nullptr;
+}
+
+std::shared_ptr<Account> Socket::getAccount() const {
+    return myAccount;
+}
+
+void Socket::setAccount(std::shared_ptr<Account> acc) {
+    myAccount = acc;
+}
+
+void Socket::clearAccount() {
+    myAccount = nullptr;
+}
+
+
 
 

@@ -236,6 +236,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             } else {
                 account->updateLastLogin();
                 account->save();
+                sock->setAccount(account);
                 // Show character selection
                 showCharacterSelection(sock, account);
                 return;
@@ -270,6 +271,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             }
             
             sock->print("\n^GAccount '%s' created successfully!^x\n", accountName.c_str());
+            sock->setAccount(account);
             showCharacterSelection(sock, account);
             return;
         }
@@ -277,8 +279,9 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         
     case LOGIN_SELECT_CHARACTER:
         {
-            if(!Account::load(sock->tempstr[0], account)) {
-                sock->print("Error loading account!\n");
+            account = sock->getAccount();
+            if(!account) {
+                sock->print("Error: No account found!\n");
                 sock->disconnect();
                 return;
             }
@@ -290,16 +293,18 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         
     case LOGIN_CREATE_CHARACTER:
         // Character creation with account - handle in createPlayer
+        // Account should already be set from character selection
         sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command. \n");
-        sock->print("\nHit return: ");
+        sock->askFor("\nHit return to continue: ");
         sock->setState(CREATE_NEW);
         return;
         // End LOGIN_CREATE_CHARACTER
         
     case LOGIN_DELETE_CHARACTER:
         {
-            if(!Account::load(sock->tempstr[0], account)) {
-                sock->print("Error loading account!\n");
+            account = sock->getAccount();
+            if(!account) {
+                sock->print("Error: No account found!\n");
                 sock->disconnect();
                 return;
             }
@@ -311,8 +316,9 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         
     case LOGIN_CONFIRM_DELETE:
         {
-            if(!Account::load(sock->tempstr[0], account)) {
-                sock->print("Error loading account!\n");
+            account = sock->getAccount();
+            if(!account) {
+                sock->print("Error: No account found!\n");
                 sock->disconnect();
                 return;
             }
@@ -497,7 +503,7 @@ void showCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Accoun
     
     if(characters.empty()) {
         sock->print("^YNo characters found. You must create a new character.^x\n");
-        sock->print("Press ^W<Enter>^x to create a new character: ");
+        sock->askFor("Press ^W<Enter>^x to create a new character: ");
         sock->setState(LOGIN_CREATE_CHARACTER);
         return;
     }
@@ -667,7 +673,6 @@ void handleCharacterDeletion(std::shared_ptr<Socket> sock, std::shared_ptr<Accou
 void Socket::finishLogin() {
     char    charName[25];
 
-    print("%s", echo_on);
     auto player = getPlayer();
 
     strcpy(charName, player->getCName());
@@ -2281,25 +2286,16 @@ void Create::done(const std::shared_ptr<Socket>& sock, const std::string &str, i
             player->learnSong(SONG_HEAL);
             
         // Handle account registration
-        std::string accountName = sock->tempstr[0]; // Account name stored during login
+        std::shared_ptr<Account> account = sock->getAccount();
         
-        if(!accountName.empty()) {
-            // Load the account (should exist since we created it during login)
-            std::shared_ptr<Account> account;
-            if(Account::load(accountName, account)) {
-                // Link player to account
-                player->setAccountName(accountName);
-                account->addCharacter(player->getName());
-                account->save();
-            } else {
-                // Fallback: account should exist, but if not, create it
-                account = std::make_shared<Account>(accountName);
-                account->setPassword(player->getPassword());
-                account->setCreated(time(nullptr));
-                player->setAccountName(accountName);
-                account->addCharacter(player->getName());
-                account->save();
-            }
+        if(account) {
+            // Link player to account
+            player->setAccountName(account->getName());
+            account->addCharacter(player->getName());
+            account->save();
+        } else {
+            // This shouldn't happen in the new account system, but handle gracefully
+            sock->print("Warning: No account found during character creation!\n");
         }
 
         player->save(true);
