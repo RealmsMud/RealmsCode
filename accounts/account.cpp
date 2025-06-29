@@ -196,7 +196,6 @@ void Account::setPasswordRaw(const std::string& hashedPassword) { password = has
 void Account::setEmail(const std::string& mail) { email = mail; }
 void Account::setCreated(time_t time) { created = time; }
 void Account::setLastLogin(time_t time) { lastLogin = time; }
-void Account::setCharacterLimit(int limit) { characterLimit = std::max(1, limit); }
 void Account::setBanned(bool ban) { banned = ban; }
 void Account::setBanReason(const std::string& reason) { banReason = reason; }
 

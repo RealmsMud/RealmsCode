@@ -484,9 +484,7 @@ void showCharacterList(std::shared_ptr<Socket> sock, std::shared_ptr<Account> ac
             sock->print("  ^C%s^x\n", charName.c_str());
         }
     }
-    sock->print("\n");
-    
-    sock->askFor("Press ^W<Enter>^x to continue: ");
+    sock->askFor("\nEnter a command: ");
     // Stay in LOGIN_SELECT_CHARACTER state to return to menu
 }
 

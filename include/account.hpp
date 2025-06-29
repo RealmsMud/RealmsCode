@@ -63,7 +63,6 @@ public:
     void setEmail(const std::string& email);
     void setCreated(time_t created);
     void setLastLogin(time_t lastLogin);
-    void setCharacterLimit(int limit);
     void setBanned(bool banned);
     void setBanReason(const std::string& reason);
 

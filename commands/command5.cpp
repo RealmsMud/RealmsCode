@@ -56,6 +56,7 @@
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for StatsContainer
 #include "web.hpp"                     // for updateRecentActivity, webUnass...
+#include "account.hpp"                 // for Account
 
 //*********************************************************************
 //                      who
