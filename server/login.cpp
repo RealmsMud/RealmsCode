@@ -289,6 +289,74 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 return;
             }
             
+            // Check for proxy login syntax in character selection
+            proxyCheck = checkProxyLogin(str);
+            if(proxyCheck != std::string::npos) {
+                std::string proxyChar = getProxyChar(str, proxyCheck);
+                std::string proxiedChar = getProxiedChar(str, proxyCheck);
+                lowercize(proxyChar, 1);
+                lowercize(proxiedChar, 1);
+                
+                if(proxyChar == proxiedChar) {
+                    sock->print("That's just silly.\n");
+                    showCharacterSelection(sock, account);
+                    return;
+                }
+                
+                // Verify both characters exist
+                if(!Player::exists(proxyChar)) {
+                    sock->print("Character '%s' doesn't exist.\n", proxyChar.c_str());
+                    showCharacterSelection(sock, account);
+                    return;
+                }
+                if(!Player::exists(proxiedChar)) {
+                    sock->print("Character '%s' doesn't exist.\n", proxiedChar.c_str());
+                    showCharacterSelection(sock, account);
+                    return;
+                }
+                
+                // Load the proxied character
+                if(!loadPlayer(proxiedChar, player)) {
+                    sock->print("Error loading character '%s'.\n", proxiedChar.c_str());
+                    showCharacterSelection(sock, account);
+                    return;
+                }
+                
+                // Load the proxy character  
+                std::shared_ptr<Player> proxy = nullptr;
+                proxy = gServer->findPlayer(proxyChar);
+                if(!proxy) {
+                    if(!loadPlayer(proxyChar, proxy)) {
+                        sock->print("Error loading proxy character '%s'.\n", proxyChar.c_str());
+                        showCharacterSelection(sock, account);
+                        return;
+                    }
+                }
+                
+                // Check proxy access
+                if(!player->checkProxyAccess(proxy)) {
+                    sock->print("%s does not have proxy access to %s.\n", proxy->getName().c_str(), player->getName().c_str());
+                    showCharacterSelection(sock, account);
+                    return;
+                }
+                
+                player->fd = -1;
+                sock->setPlayer(player);
+                
+                if(gServer->checkDuplicateName(sock, false)) {
+                    return;
+                }
+                
+                sock->print("Logging in %s using %s as proxy.\n", player->getName().c_str(), proxy->getName().c_str());
+                sock->print("%s", echo_off);
+                sock->print("Please enter password for %s: ", proxy->getName().c_str());
+                sock->tempbstr = proxy->getPassword();
+                
+                player->setProxy(proxy);
+                sock->setState(LOGIN_GET_PROXY_PASSWORD);
+                return;
+            }
+            
             handleCharacterSelection(sock, account, str);
             return;
         }
@@ -342,133 +410,6 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             return;
         }
         // End LOGIN_CONFIRM_DELETE
-        
-    case LOGIN_GET_NAME:
-
-        proxyCheck = checkProxyLogin(str);
-        if(proxyCheck != std::string::npos) {
-            std::string proxyChar = getProxyChar(str, proxyCheck);
-            std::string proxiedChar = getProxiedChar(str, proxyCheck);
-            lowercize(proxyChar, 1);
-            lowercize(proxiedChar, 1);
-            if(proxyChar == proxiedChar) {
-                sock->askFor("That's just silly.\nPlease enter name: ");
-                return;
-            }
-            if(!nameIsAllowed(proxyChar, sock) || !nameIsAllowed(proxiedChar, sock)) {
-                sock->askFor("Please enter name: ");
-                return;
-            }
-            if(!Player::exists(proxyChar)) {
-                sock->println(proxyChar + " doesn't exist.");
-                sock->askFor("Please enter name: ");
-                return;
-            }
-            if(!Player::exists(proxiedChar)) {
-                sock->println(proxiedChar + " doesn't exist.");
-                sock->askFor("Please enter name: ");
-                return;
-            }
-            if(!loadPlayer(proxiedChar, player)) {
-                sock->println(std::string("Error loading ") + proxiedChar + "\n");
-                sock->askFor("Please enter name: ");
-                return;
-            }
-            player->fd = -1;
-            std::shared_ptr<Player> proxy = nullptr;
-            proxy = gServer->findPlayer(proxyChar);
-            if(!proxy) {
-                if(!loadPlayer(proxyChar, proxy)) {
-                    sock->println(std::string("Error loading ") + proxyChar + "\n");
-                    sock->askFor("Please enter name: ");
-                    return;
-                }
-            }
-            if(!player->checkProxyAccess(proxy)) {
-                sock->println(std::string(proxy->getName()) + " does not have access to " + player->getName());
-                sock->askFor("Please enter name: ");
-                return;
-            }
-
-            player->fd = -1;
-            sock->setPlayer(player);
-
-            if(gServer->checkDuplicateName(sock, false)) {
-                // Don't free player here or ask for name again because checkDuplicateName does that
-                // We only need to worry about freeing proxy
-                return;
-            }
-            sock->println(std::string("Trying to log in ") + player->getName() + " using " + proxy->getName() + " as proxy.");
-
-
-
-            sock->print("%s", echo_off);
-            //sock->print("%c%c%c", 255, 251, 1);
-            std::string passwordPrompt = std::string("Please enter password for ") + proxy->getName() + ": ";
-            sock->askFor(passwordPrompt.c_str());
-            sock->tempbstr = proxy->getPassword();
-
-
-            player->setProxy(proxy);
-
-            sock->setState(LOGIN_GET_PROXY_PASSWORD);
-
-            return;
-        }
-        lowercize(str, 1);
-        if(str.length() >= 25)
-            str[25]=0;
-
-        if(!nameIsAllowed(str, sock)) {
-            sock->askFor("Please enter name: ");
-            return;
-        }
-
-        if(!loadPlayer(str, player)) {
-            strcpy(sock->tempstr[0], str.c_str());
-            sock->print("\n%s? Did I get that right? ", str.c_str());
-            sock->setState(LOGIN_CHECK_CREATE_NEW);
-            return;
-        } else {
-            player->fd = -1;
-            sock->setPlayer(player);
-            sock->print("%s", echo_off);
-            //sock->print("%c%c%c", 255, 251, 1);
-            sock->askFor("Please enter password: ");//, 255, 251, 1);
-            sock->setState(LOGIN_GET_PASSWORD);
-            player = nullptr;
-            return;
-        }
-        // End LOGIN_GET_NAME
-    case LOGIN_CHECK_CREATE_NEW:
-        if(str[0] != 'y' && str[0] != 'Y') {
-            sock->tempstr[0][0] = 0;
-            sock->askFor("Please enter account name: ");
-            sock->setState(LOGIN_GET_ACCOUNT_NAME);
-            return;
-        } else {
-
-
-            sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command. \n");
-
-            sock->print("\nHit return: ");
-            sock->setState(CREATE_NEW_CHARACTER);
-            return;
-        }
-        // End LOGIN_CHECK_CREATE_NEW
-    case LOGIN_GET_PASSWORD:
-        player = sock->getPlayer();
-        if(!player || !player->isPassword(str)) {
-            sock->write("\255\252\1\n\rIncorrect.\n\r");
-            logn("log.incorrect", fmt::format("Invalid password({}) for {} from {}\n", str, player ? player->getName() : "", sock->getHostname()).c_str());
-            sock->disconnect();
-            return;
-        } else {
-            player = nullptr;
-            sock->finishLogin();
-            return;
-        }
-        break;
 
     case LOGIN_GET_PROXY_PASSWORD:
         if(Player::hashPassword(str) != sock->tempbstr) {
@@ -587,10 +528,18 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     boost::trim(input);
     
     const auto& characters = account->getCharacterNames();
-    int len = input.length();
+    
+    // Extract just the command word (first word) for proper matching
+    std::string command;
+    size_t spacePos = input.find(' ');
+    if(spacePos != std::string::npos) {
+        command = input.substr(0, spacePos);
+    } else {
+        command = input;
+    }
     
     // Handle "create" command with partial matching
-    if(!strncasecmp(input.c_str(), "create", len)) {
+    if(command.length() >= 1 && !strncasecmp(command.c_str(), "create", std::min(command.length(), 6UL))) {
         if(!account->canCreateCharacter()) {
             sock->print("^RYou have reached your character limit (%d/%d).^x\n", 
                        account->getCharacterCount(), account->getCharacterLimit());
@@ -607,25 +556,34 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     }
     
     // Handle "list" command with partial matching
-    if(!strncasecmp(input.c_str(), "list", len)) {
+    if(command.length() >= 1 && !strncasecmp(command.c_str(), "list", std::min(command.length(), 4UL))) {
         showCharacterList(sock, account);
         return;
     }
     
     // Handle "play <character>" command with partial matching
-    if(!strncasecmp(input.c_str(), "play", len)) {
-        // Check if there's a character name after "play"
+    if(command.length() >= 1 && !strncasecmp(command.c_str(), "play", std::min(command.length(), 4UL))) {
+        // Find where the command word ends and character name begins
         std::string original = str; // Keep original case for character name
         boost::trim(original);
         
-        if(original.length() <= 5) {
+        // Find the first space to separate command from character name
+        size_t spacePos = original.find(' ');
+        if(spacePos == std::string::npos) {
             sock->print("Usage: play <character name>\n");
             showCharacterSelection(sock, account);
             return;
         }
         
-        std::string charName = original.substr(5); // Skip "play "
+        // Extract character name after the command and any spaces
+        std::string charName = original.substr(spacePos + 1);
         boost::trim(charName);
+        
+        if(charName.empty()) {
+            sock->print("Usage: play <character name>\n");
+            showCharacterSelection(sock, account);
+            return;
+        }
         
         // Check if character exists in account (case insensitive)
         std::string foundChar;
@@ -650,7 +608,7 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     }
     
     // Handle "delete" command with partial matching
-    if(!strncasecmp(input.c_str(), "delete", len)) {
+    if(command.length() >= 1 && !strncasecmp(command.c_str(), "delete", std::min(command.length(), 6UL))) {
         if(characters.empty()) {
             sock->print("You have no characters to delete.\n");
             showCharacterSelection(sock, account);
@@ -670,7 +628,7 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     }
     
     // Handle "quit" command with partial matching
-    if(!strncasecmp(input.c_str(), "quit", len)) {
+    if(command.length() >= 1 && !strncasecmp(command.c_str(), "quit", std::min(command.length(), 4UL))) {
         sock->print("Goodbye!\n");
         sock->disconnect();
         return;
@@ -2248,13 +2206,14 @@ void Create::done(const std::shared_ptr<Socket>& sock, const std::string &str, i
             return;
         }
         
-        // In account system, characters don't have individual passwords
-        // They inherit authentication from the account
+        // Link character to account system
         std::shared_ptr<Account> account = sock->getAccount();
         if(account) {
-            // Set the character's account name and use account's password
+            // Set the character's account name
             player->setAccountName(account->getName());
-            player->setPassword(account->getPassword()); // Use account password for compatibility
+            // Characters don't need individual passwords in account system
+            // Keep existing password field empty or use a placeholder
+            player->setPassword(""); // Clear any password - account handles auth
             player->setFlag(P_PASSWORD_CURRENT);
         } else {
             sock->print("Error: No account found during character creation!\n");
