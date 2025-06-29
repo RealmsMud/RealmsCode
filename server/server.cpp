@@ -96,6 +96,9 @@ extern int Numplayers;
 extern long last_time_update;
 extern long last_weather_update;
 
+// Forward declaration
+void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
+
 // Function prototypes
 bool init_spelling();  // TODO: Move spelling stuff into server
 void initSpellList();
@@ -1882,7 +1885,14 @@ bool Server::checkDuplicateName(std::shared_ptr<Socket> sock, bool dis) {
         if(sock != s && s->hasPlayer() && s->getPlayer()->getName() ==  sock->getPlayer()->getName()) {
             if(!dis) {
                 sock->printColor("\n\n^ySorry, that character is already logged in.^x\n\n\n");
-                sock->reconnect();
+                // Return to account menu instead of reconnecting
+                auto account = sock->getAccount();
+                if(account) {
+                    sock->clearPlayer();
+                    showAccountMenu(sock, account);
+                } else {
+                    sock->reconnect();
+                }
             } else {
                 s->disconnect();
             }

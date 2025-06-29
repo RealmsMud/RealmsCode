@@ -72,7 +72,7 @@
 class StartLoc;
 
 // Forward declarations for account login functions
-void showCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
+void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
 void showCharacterList(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
 void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
 void handleCharacterDeletion(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
@@ -241,7 +241,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 account->save();
                 sock->setAccount(account);
                 // Show character selection
-                showCharacterSelection(sock, account);
+                showAccountMenu(sock, account);
                 return;
             }
         }
@@ -275,7 +275,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             
             sock->print("\n^GAccount '%s' created successfully!^x\n", accountName.c_str());
             sock->setAccount(account);
-            showCharacterSelection(sock, account);
+            showAccountMenu(sock, account);
             return;
         }
         // End LOGIN_GET_ACCOUNT_CREATE_PASSWORD
@@ -299,26 +299,26 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 
                 if(proxyChar == proxiedChar) {
                     sock->print("That's just silly.\n");
-                    showCharacterSelection(sock, account);
+                    showAccountMenu(sock, account);
                     return;
                 }
                 
                 // Verify both characters exist
                 if(!Player::exists(proxyChar)) {
                     sock->print("Character '%s' doesn't exist.\n", proxyChar.c_str());
-                    showCharacterSelection(sock, account);
+                    showAccountMenu(sock, account);
                     return;
                 }
                 if(!Player::exists(proxiedChar)) {
                     sock->print("Character '%s' doesn't exist.\n", proxiedChar.c_str());
-                    showCharacterSelection(sock, account);
+                    showAccountMenu(sock, account);
                     return;
                 }
                 
                 // Load the proxied character
                 if(!loadPlayer(proxiedChar, player)) {
                     sock->print("Error loading character '%s'.\n", proxiedChar.c_str());
-                    showCharacterSelection(sock, account);
+                    showAccountMenu(sock, account);
                     return;
                 }
                 
@@ -328,7 +328,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 if(!proxy) {
                     if(!loadPlayer(proxyChar, proxy)) {
                         sock->print("Error loading proxy character '%s'.\n", proxyChar.c_str());
-                        showCharacterSelection(sock, account);
+                        showAccountMenu(sock, account);
                         return;
                     }
                 }
@@ -336,7 +336,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 // Check proxy access
                 if(!player->checkProxyAccess(proxy)) {
                     sock->print("%s does not have proxy access to %s.\n", proxy->getName().c_str(), player->getName().c_str());
-                    showCharacterSelection(sock, account);
+                    showAccountMenu(sock, account);
                     return;
                 }
                 
@@ -387,7 +387,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             
             if(str != "DELETE") {
                 sock->print("Character deletion cancelled.\n");
-                showCharacterSelection(sock, account);
+                showAccountMenu(sock, account);
                 return;
             }
             
@@ -406,7 +406,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 sock->print("Error removing character from account.\n");
             }
             
-            showCharacterSelection(sock, account);
+            showAccountMenu(sock, account);
             return;
         }
         // End LOGIN_CONFIRM_DELETE
@@ -427,10 +427,10 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 }
 
 //*********************************************************************
-//                    showCharacterSelection
+//                    showAccountMenu
 //*********************************************************************
 
-void showCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account) {
+void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account) {
     sock->print("\n^W========= Menu =========^x\n\n");
     sock->print("^WAccount: ^C%s^x\n", account->getName().c_str());
     sock->print("^WCharacters: ^x(%d/%d)\n\n", account->getCharacterCount(), account->getCharacterLimit());
@@ -491,7 +491,7 @@ bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account>
         // Remove from account
         account->removeCharacter(charName);
         account->save();
-        showCharacterSelection(sock, account);
+        showAccountMenu(sock, account);
         return false;
     }
     
@@ -519,7 +519,7 @@ bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account>
 
 void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str) {
     if(str.empty()) {
-        showCharacterSelection(sock, account);
+        showAccountMenu(sock, account);
         return;
     }
     
@@ -545,7 +545,7 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
                        account->getCharacterCount(), account->getCharacterLimit());
             sock->print("You must delete a character before creating a new one.\n");
             sock->askFor("Press ^W<Enter>^x to continue: ");
-            showCharacterSelection(sock, account);
+            showAccountMenu(sock, account);
             return;
         }
         sock->print("\nCreating new character...");
@@ -571,7 +571,7 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
         size_t spacePos = original.find(' ');
         if(spacePos == std::string::npos) {
             sock->print("Usage: play <character name>\n");
-            showCharacterSelection(sock, account);
+            showAccountMenu(sock, account);
             return;
         }
         
@@ -581,7 +581,7 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
         
         if(charName.empty()) {
             sock->print("Usage: play <character name>\n");
-            showCharacterSelection(sock, account);
+            showAccountMenu(sock, account);
             return;
         }
         
@@ -594,16 +594,59 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
             }
         }
         
-        if(foundChar.empty()) {
-            sock->print("Character '%s' not found in your account.\n", charName.c_str());
-            showCharacterSelection(sock, account);
+        if(!foundChar.empty()) {
+            // Load and play the character from our account
+            if(loadCharacterForPlay(sock, account, foundChar)) {
+                sock->finishLogin();
+            }
             return;
         }
         
-        // Load and play the character
-        if(loadCharacterForPlay(sock, account, foundChar)) {
-            sock->finishLogin();
+        // Character not in our account - check if it exists and if we have proxy access
+        // Format the character name properly (capitalize first letter)
+        std::string formattedCharName = charName;
+        lowercize(formattedCharName, 1);
+        
+        std::shared_ptr<Player> player = nullptr;
+        if(!loadPlayer(formattedCharName, player)) {
+            sock->print("Character '%s' does not exist.\n", formattedCharName.c_str());
+            showAccountMenu(sock, account);
+            return;
         }
+        
+        // Check if any of our account's characters has proxy access to this character
+        std::shared_ptr<Player> proxyGranter = nullptr;
+        
+        for(const auto& accountCharName : characters) {
+            std::shared_ptr<Player> accountChar = nullptr;
+            if(loadPlayer(accountCharName, accountChar)) {
+                if(player->checkProxyAccess(accountChar)) {
+                    proxyGranter = accountChar;
+                    break;
+                }
+            }
+        }
+        
+        if(!proxyGranter) {
+            sock->print("'%s' is not one of your characters and you don't have proxy access to it.\n", formattedCharName.c_str());
+            showAccountMenu(sock, account);
+            return;
+        }
+        
+        // Set up the proxy relationship
+        player->setProxy(proxyGranter);
+        
+        // Set up the socket for the player
+        player->fd = -1;
+        sock->setPlayer(player);
+        
+        // Check for duplicate names
+        if(gServer->checkDuplicateName(sock, false)) {
+            return;
+        }
+        
+        sock->print("Loading %s (using %s as proxy)...\n", player->getName().c_str(), proxyGranter->getName().c_str());
+        sock->finishLogin();
         return;
     }
     
@@ -611,7 +654,7 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     if(command.length() >= 1 && !strncasecmp(command.c_str(), "delete", std::min(command.length(), 6UL))) {
         if(characters.empty()) {
             sock->print("You have no characters to delete.\n");
-            showCharacterSelection(sock, account);
+            showAccountMenu(sock, account);
             return;
         }
         
@@ -626,6 +669,8 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
         sock->setState(LOGIN_DELETE_CHARACTER);
         return;
     }
+    
+
     
     // Handle "quit" command with partial matching
     if(command.length() >= 1 && !strncasecmp(command.c_str(), "quit", std::min(command.length(), 4UL))) {
@@ -644,16 +689,55 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     }
     
     if(!foundChar.empty()) {
-        // Load and play the character
+        // Load and play the character from our account
         if(loadCharacterForPlay(sock, account, foundChar)) {
             sock->finishLogin();
         }
         return;
     }
     
+    // Character not in our account - check if it exists and if we have proxy access
+    // Format the character name properly (capitalize first letter)
+    std::string formattedInput = input;
+    lowercize(formattedInput, 1);
+    
+    std::shared_ptr<Player> player = nullptr;
+    if(loadPlayer(formattedInput, player)) {
+        // Check if any of our account's characters has proxy access to this character
+        std::shared_ptr<Player> proxyGranter = nullptr;
+        
+        for(const auto& accountCharName : characters) {
+            std::shared_ptr<Player> accountChar = nullptr;
+            if(loadPlayer(accountCharName, accountChar)) {
+                if(player->checkProxyAccess(accountChar)) {
+                    proxyGranter = accountChar;
+                    break;
+                }
+            }
+        }
+        
+        if(proxyGranter) {
+            // Set up the proxy relationship
+            player->setProxy(proxyGranter);
+            
+            // Set up the socket for the player
+            player->fd = -1;
+            sock->setPlayer(player);
+            
+            // Check for duplicate names
+            if(gServer->checkDuplicateName(sock, false)) {
+                return;
+            }
+            
+            sock->print("Loading %s (using %s as proxy)...\n", player->getName().c_str(), proxyGranter->getName().c_str());
+            sock->finishLogin();
+            return;
+        }
+    }
+    
     // Invalid command
     sock->print("Invalid command. Available commands: create, list, play <name>, delete, quit\n");
-    showCharacterSelection(sock, account);
+    showAccountMenu(sock, account);
 }
 
 //*********************************************************************
@@ -665,7 +749,7 @@ void handleCharacterDeletion(std::shared_ptr<Socket> sock, std::shared_ptr<Accou
     
     if(characters.empty()) {
         sock->print("No characters to delete.\n");
-        showCharacterSelection(sock, account);
+        showAccountMenu(sock, account);
         return;
     }
     
@@ -674,19 +758,19 @@ void handleCharacterDeletion(std::shared_ptr<Socket> sock, std::shared_ptr<Accou
         choice = std::stoi(str);
     } catch(const std::exception&) {
         sock->print("Invalid choice. ");
-        showCharacterSelection(sock, account);
+        showAccountMenu(sock, account);
         return;
     }
     
     if(choice == 0) {
         // Cancel deletion
-        showCharacterSelection(sock, account);
+        showAccountMenu(sock, account);
         return;
     }
     
     if(choice < 1 || choice > static_cast<int>(characters.size())) {
         sock->print("Invalid character number. ");
-        showCharacterSelection(sock, account);
+        showAccountMenu(sock, account);
         return;
     }
     
