@@ -2141,6 +2141,9 @@ bool Create::getName(const std::shared_ptr<Socket>& sock, const std::string &str
             return(false);
         }
         
+        // Capitalize the name properly (first letter uppercase, rest lowercase)
+        lowercize(charName, 1);
+        
         if(!nameIsAllowed(charName, sock)) {
             sock->setState(CREATE_GET_NAME);
             return(false);
@@ -2161,7 +2164,7 @@ bool Create::getName(const std::shared_ptr<Socket>& sock, const std::string &str
             return(false);
         }
         
-        // Store the name for later use
+        // Store the properly capitalized name for later use
         strcpy(sock->tempstr[0], charName.c_str());
 
     }
@@ -2777,8 +2780,10 @@ bool Create::getWeight(const std::shared_ptr<Socket>& sock, std::string str, int
 bool nameIsAllowed(std::string str, const std::shared_ptr<Socket>& sock) {
     int i=0, nonalpha=0, len = str.length();
 
-    if(!isalpha(str[0]))
+    if(!isalpha(str[0])) {
+        sock->print("The first character of your name must be a letter.\n");
         return(false);
+    }
 
     if(len < 3) {
         sock->print("Name must be at least 3 characters.\n");
@@ -2803,11 +2808,21 @@ bool nameIsAllowed(std::string str, const std::shared_ptr<Socket>& sock) {
         return(false);
     }
 
+    // Check each character - allow only letters, apostrophes, and hyphens
     for(i=0; i<len; i++) {
-        if(!isalpha(str[i])) {
+        if(!isalpha(str[i]) && str[i] != '\'' && str[i] != '-') {
             sock->print("Name must be alphabetic.\n");
+            sock->print("It may only contain the non-alpha characters ' and -.\n");
             return(false);
         }
+    }
+
+    // First character must be a letter (already checked above)
+    // Last two characters must be letters
+    if( str[len-1] == '\'' || str[len-1] == '-' ||
+        (len > 1 && (str[len-2] == '\'' || str[len-2] == '-'))) {
+        sock->print("The last two characters of your name must be letters.\n");
+        return(false);
     }
 
     if(!parse_name(str)) {
