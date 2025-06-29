@@ -617,7 +617,7 @@ void Player::plyReset() {
     bank.zero();
     created = 0;
 
-    oldCreated = surname = lastCommand = lastCommunicate = password = title = tempTitle = "";
+    accountName = oldCreated = surname = lastCommand = lastCommunicate = password = title = tempTitle = "";
     lastPassword = afflictedBy = forum = "";
     tickDmg = pkwon = pkin = lastLogin = lastInterest = uniqueObjId = 0;
 
@@ -818,6 +818,7 @@ void Player::plyCopy(const Player& cr, bool assign) {
 
     wrap = cr.wrap;
 
+    accountName = cr.accountName;
     title = cr.title;
     password = cr.getPassword();
     surname = cr.surname;

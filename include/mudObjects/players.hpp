@@ -22,6 +22,7 @@
 
 #include "mudObjects/creatures.hpp"
 
+class Account;
 class Blackjack;
 class Fishing;
 
@@ -61,6 +62,7 @@ public:
 protected:
 // Data
 
+    std::string accountName;    // Account this character belongs to
     std::string proxyName;
     std::string proxyId;
 
@@ -154,13 +156,18 @@ public:
 
     bool checkProxyAccess(const std::shared_ptr<Player>& proxy);
 
+    void setAccountName(const std::string& name);
     void setProxy(std::shared_ptr<Player> proxy);
     void setProxy(std::string_view pProxyName, std::string_view pProxyId);
     void setProxyName(std::string_view pProxyName);
     void setProxyId(std::string_view pProxyId);
 
+    std::string getAccountName() const;
     std::string getProxyName() const;
     std::string getProxyId() const;
+    
+    // Account utilities
+    bool hasAccount() const;
 
     // Combat & Death
     int computeAttackPower();

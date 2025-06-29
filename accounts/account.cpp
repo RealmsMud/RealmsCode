@@ -285,3 +285,17 @@ bool Account::isValidPassword(const std::string& password) {
     // Same validation as used elsewhere in the codebase
     return password.length() >= 5 && password.length() <= 35;
 } 
+
+//*********************************************************************
+//                      Player Account Functions
+//*********************************************************************
+
+bool Player::hasAccount() const { 
+    return(!accountName.empty()); 
+}
+
+void Player::setAccountName(const std::string& name) {
+    accountName = name;
+}
+
+std::string Player::getAccountName() const { return(accountName); }
