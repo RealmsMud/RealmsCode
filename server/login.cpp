@@ -76,6 +76,7 @@ void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> acco
 void showCharacterList(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
 void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
 void handleCharacterDeletion(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
+void handleCharacterClaim(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
 bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& charName);
 
 /*
@@ -411,6 +412,66 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         }
         // End LOGIN_CONFIRM_DELETE
 
+    case LOGIN_CLAIM_CHARACTER:
+        {
+            account = sock->getAccount();
+            if(!account) {
+                sock->print("Error: No account found!\n");
+                sock->disconnect();
+                return;
+            }
+            
+            handleCharacterClaim(sock, account, str);
+            return;
+        }
+        // End LOGIN_CLAIM_CHARACTER
+        
+    case LOGIN_CLAIM_PASSWORD:
+        {
+            account = sock->getAccount();
+            if(!account) {
+                sock->print("Error: No account found!\n");
+                sock->disconnect();
+                return;
+            }
+            
+            std::string charName = sock->tempstr[1];
+            
+            // Load the character to verify password
+            std::shared_ptr<Player> player;
+            if(!loadPlayer(charName, player)) {
+                sock->print("Error: Character no longer exists!\n");
+                showAccountMenu(sock, account);
+                return;
+            }
+            
+            // Check password
+            if(!player->isPassword(str)) {
+                sock->print("\n^RIncorrect password for character '%s'.^x\n", charName.c_str());
+                sock->print("Character claim failed.\n");
+                showAccountMenu(sock, account);
+                return;
+            }
+            
+            // Success! Claim the character
+            if(!account->addCharacter(charName)) {
+                sock->print("Error: Could not add character to account.\n");
+                showAccountMenu(sock, account);
+                return;
+            }
+            
+            // Update the character's account name
+            player->setAccountName(account->getName());
+            player->save();
+            account->save();
+            
+            sock->print("\n^GCharacter '%s' has been successfully claimed!^x\n", charName.c_str());
+            sock->print("The character is now linked to your account.\n");
+            showAccountMenu(sock, account);
+            return;
+        }
+        // End LOGIN_CLAIM_PASSWORD
+
     case LOGIN_GET_PROXY_PASSWORD:
         if(Player::hashPassword(str) != sock->tempbstr) {
             sock->write("\255\252\1\n\rIncorrect.\n\r");
@@ -445,6 +506,7 @@ void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> acco
     }
 
     sock->print("  ^W(l)ist^x       - List your characters\n");
+    sock->print("  ^W(cl)aim^x      - Claim a legacy character\n");
 
     const auto& characters = account->getCharacterNames();
     if(!characters.empty()) {
@@ -558,6 +620,24 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     // Handle "list" command with partial matching
     if(command.length() >= 1 && !strncasecmp(command.c_str(), "list", std::min(command.length(), 4UL))) {
         showCharacterList(sock, account);
+        return;
+    }
+    
+    // Handle "claim" command with partial matching
+    if(command.length() >= 2 && !strncasecmp(command.c_str(), "claim", std::min(command.length(), 5UL))) {
+        if(!account->canCreateCharacter()) {
+            sock->print("^RYou have reached your character limit (%d/%d).^x\n", 
+                       account->getCharacterCount(), account->getCharacterLimit());
+            sock->print("You cannot claim additional characters.\n");
+            sock->askFor("Press ^W<Enter>^x to continue: ");
+            showAccountMenu(sock, account);
+            return;
+        }
+        sock->print("\n^WClaim Legacy Character^x\n");
+        sock->print("Enter the name of the character you wish to claim.\n");
+        sock->print("This character must have existed before the account system was implemented.\n");
+        sock->askFor("Character name: ");
+        sock->setState(LOGIN_CLAIM_CHARACTER);
         return;
     }
     
@@ -736,7 +816,7 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     }
     
     // Invalid command
-    sock->print("Invalid command. Available commands: create, list, play <name>, delete, quit\n");
+    sock->print("Invalid command. Available commands: create, list, claim, play <name>, delete, quit\n");
     showAccountMenu(sock, account);
 }
 
@@ -777,7 +857,7 @@ void handleCharacterDeletion(std::shared_ptr<Socket> sock, std::shared_ptr<Accou
     const std::string& charName = characters[choice - 1];
     
     sock->print("\n^RAre you sure you want to permanently delete '%s'?^x\n", charName.c_str());
-    sock->print("^RType 'DELETE' to confirm, or anything else to cancel:^x ");
+    sock->askFor("Type 'DELETE' to confirm, or anything else to cancel: ");
     
     // Store character name in tempstr[1] for confirmation
     strcpy(sock->tempstr[1], charName.c_str());
@@ -2914,4 +2994,53 @@ bool nameIsAllowed(std::string str, const std::shared_ptr<Socket>& sock) {
         return(false);
     }
     return(true);
+}
+
+//*********************************************************************
+//                    handleCharacterClaim
+//*********************************************************************
+
+void handleCharacterClaim(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str) {
+    std::string charName = str;
+    boost::trim(charName);
+    
+    if(charName.empty()) {
+        sock->print("You must enter a character name.\n");
+        showAccountMenu(sock, account);
+        return;
+    }
+    
+    // Format the character name properly (capitalize first letter)
+    lowercize(charName, 1);
+    
+    // Check if character exists
+    std::shared_ptr<Player> player;
+    if(!loadPlayer(charName, player)) {
+        sock->print("Character '%s' does not exist.\n", charName.c_str());
+        showAccountMenu(sock, account);
+        return;
+    }
+    
+    // Check if character is already claimed by an account
+    if(!player->getAccountName().empty()) {
+        sock->print("Character '%s' is already claimed by an account.\n", charName.c_str());
+        sock->print("Only unclaimed legacy characters can be claimed.\n");
+        showAccountMenu(sock, account);
+        return;
+    }
+    
+    // Check if we already have this character in our account somehow
+    if(account->hasCharacter(charName)) {
+        sock->print("Character '%s' is already in your account.\n", charName.c_str());
+        showAccountMenu(sock, account);
+        return;
+    }
+    
+    // Store the character name for the password verification step
+    strcpy(sock->tempstr[1], charName.c_str());
+    
+    sock->print("\nTo claim character '%s', you must verify ownership by entering the character's password.\n", charName.c_str());
+    sock->print("%s", echo_off);
+    sock->askFor("Character password: ");
+    sock->setState(LOGIN_CLAIM_PASSWORD);
 }
