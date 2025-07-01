@@ -146,14 +146,12 @@ unsigned const char echo_on[] = {255, 252, 1, 0};
 void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
     std::shared_ptr<Player> player=nullptr;
     std::shared_ptr<Account> account=nullptr;
-    std::string::size_type proxyCheck = 0;
     if(!sock) {
         std::clog << "**** ERORR: Null socket in login.\n";
         return;
     }
 
     std::string str = inStr;
-
 
     switch(sock->getState()) {
     case LOGIN_DNS_LOOKUP:
@@ -215,177 +213,163 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         // End LOGIN_CHECK_CREATE_ACCOUNT
         
     case LOGIN_GET_ACCOUNT_PASSWORD:
-        {
-            if(!Account::load(sock->tempstr[0], account) || !account->isPassword(str)) {
-                sock->write("\255\252\1\n\rIncorrect.\n\r");
-                logn("log.incorrect", fmt::format("Invalid account password({}) for {} from {}\n", str, sock->tempstr[0], sock->getHostname()).c_str());
-                sock->disconnect();
-                return;
-            } else {
-                account->updateLastLogin();
-                account->save();
-                sock->setAccount(account);
-                // Show character selection
-                showAccountMenu(sock, account);
-                return;
-            }
+        if(!Account::load(sock->tempstr[0], account) || !account->isPassword(str)) {
+            sock->write("\255\252\1\n\rIncorrect.\n\r");
+            logn("log.incorrect", fmt::format("Invalid account password({}) for {} from {}\n", str, sock->tempstr[0], sock->getHostname()).c_str());
+            sock->disconnect();
+            return;
+        } else {
+            account->updateLastLogin();
+            account->save();
+            sock->setAccount(account);
+            // Show character selection
+            showAccountMenu(sock, account);
+            return;
         }
         // End LOGIN_GET_ACCOUNT_PASSWORD
         
     case LOGIN_GET_ACCOUNT_CREATE_PASSWORD:
-        {
-            sock->print("%s", echo_on);
-            
-            if(!Account::isValidPassword(str)) {
-                sock->print("\nPassword must be between 5 and 35 characters.\n");
-                sock->print("Please enter a password for your account: ");
-                sock->print("%s", echo_off);
-                sock->setState(LOGIN_GET_ACCOUNT_CREATE_PASSWORD);
-                return;
-            }
-            
-            // Create the account
-            std::string accountName = sock->tempstr[0];
-            account = std::make_shared<Account>(accountName);
-            account->setPassword(str);
-            account->setCreated(time(nullptr));
-            account->updateLastLogin();
-            
-            if(!account->save()) {
-                sock->print("Error creating account. Please try again.\n");
-                sock->askFor("Please enter account name: ");
-                sock->setState(LOGIN_GET_ACCOUNT_NAME);
-                return;
-            }
-            
-            sock->print("\n^GAccount '%s' created successfully!^x\n", accountName.c_str());
-            sock->setAccount(account);
-            showAccountMenu(sock, account);
+        sock->print("%s", echo_on);
+        
+        if(!Account::isValidPassword(str)) {
+            sock->print("\nPassword must be between 5 and 35 characters.\n");
+            sock->print("Please enter a password for your account: ");
+            sock->print("%s", echo_off);
+            sock->setState(LOGIN_GET_ACCOUNT_CREATE_PASSWORD);
             return;
         }
+        
+        // Create the account
+        std::string accountName = sock->tempstr[0];
+        account = std::make_shared<Account>(accountName);
+        account->setPassword(str);
+        account->setCreated(time(nullptr));
+        account->updateLastLogin();
+        
+        if(!account->save()) {
+            sock->print("Error creating account. Please try again.\n");
+            sock->askFor("Please enter account name: ");
+            sock->setState(LOGIN_GET_ACCOUNT_NAME);
+            return;
+        }
+        
+        sock->print("\n^GAccount '%s' created successfully!^x\n", accountName.c_str());
+        sock->setAccount(account);
+        showAccountMenu(sock, account);
+        return;
         // End LOGIN_GET_ACCOUNT_CREATE_PASSWORD
         
     case LOGIN_SELECT_CHARACTER:
-        {
-            account = validateAndGetAccount(sock);
-            if(!account) return;
+        account = validateAndGetAccount(sock);
+        if(!account) return;
 
-            handleAccountMenuCommand(sock, account, str);
-            return;
-        }
+        handleAccountMenuCommand(sock, account, str);
+        return;
         // End LOGIN_SELECT_CHARACTER
 
     case LOGIN_CLAIM_CHARACTER:
-        {
-            account = validateAndGetAccount(sock);
-            if(!account) return;
-            
-            handleCharacterClaim(sock, account, str);
-            return;
-        }
+        account = validateAndGetAccount(sock);
+        if(!account) return;
+        
+        handleCharacterClaim(sock, account, str);
+        return;
         // End LOGIN_CLAIM_CHARACTER
         
     case LOGIN_CLAIM_PASSWORD:
-        {
-            account = validateAndGetAccount(sock);
-            if(!account) return;
-            
-            std::string charName = sock->tempstr[1];
-            
-            // Load the character to verify password
-            std::shared_ptr<Player> player;
-            if(!loadPlayer(charName, player)) {
-                sock->print("Error: Character no longer exists!\n");
-                showAccountMenu(sock, account);
-                return;
-            }
-            
-            // Check password
-            if(!player->isPassword(str)) {
-                sock->print("\n^RIncorrect password for character '%s'.^x\n", charName.c_str());
-                sock->print("Character claim failed.\n");
-                showAccountMenu(sock, account);
-                return;
-            }
-            
-            // Success! Claim the character
-            if(!account->addCharacter(charName)) {
-                sock->print("Error: Could not add character to account.\n");
-                showAccountMenu(sock, account);
-                return;
-            }
-            
-            // Update the character's account name
-            player->setAccountName(account->getName());
-            player->save();
-            account->save();
-            
-            sock->print("\n^GCharacter '%s' has been successfully claimed!^x\n", charName.c_str());
-            sock->print("The character is now linked to your account.\n");
+        account = validateAndGetAccount(sock);
+        if(!account) return;
+        
+        std::string charName = sock->tempstr[1];
+        
+        // Load the character to verify password
+        std::shared_ptr<Player> player;
+        if(!loadPlayer(charName, player)) {
+            sock->print("Error: Character no longer exists!\n");
             showAccountMenu(sock, account);
             return;
         }
+        
+        // Check password
+        if(!player->isPassword(str)) {
+            sock->print("\n^RIncorrect password for character '%s'.^x\n", charName.c_str());
+            sock->print("Character claim failed.\n");
+            showAccountMenu(sock, account);
+            return;
+        }
+        
+        // Success! Claim the character
+        if(!account->addCharacter(charName)) {
+            sock->print("Error: Could not add character to account.\n");
+            showAccountMenu(sock, account);
+            return;
+        }
+        
+        // Update the character's account name
+        player->setAccountName(account->getName());
+        player->save();
+        account->save();
+        
+        sock->print("\n^GCharacter '%s' has been successfully claimed!^x\n", charName.c_str());
+        sock->print("The character is now linked to your account.\n");
+        showAccountMenu(sock, account);
+        return;
         // End LOGIN_CLAIM_PASSWORD
 
     case LOGIN_SET_EMAIL:
-        {
-            account = validateAndGetAccount(sock);
-            if(!account) return;
-            
-            std::string email = str;
-            boost::trim(email);
-            
-            // Empty string clears the email
-            if(email.empty()) {
-                account->setEmail("");
-                account->save();
-                sock->print("^GEmail address cleared.^x\n");
-                showAccountMenu(sock, account);
-                return;
-            }
-            
-            // Basic email validation
-            if(email.find('@') == std::string::npos || email.find('.') == std::string::npos) {
-                sock->print("^RInvalid email format. Please enter a valid email address.^x\n");
-                sock->askFor("Enter new email address (or press enter to clear): ");
-                return;
-            }
-            
-            if(email.length() > 255) {
-                sock->print("^REmail address too long (maximum 255 characters).^x\n");
-                sock->askFor("Enter new email address (or press enter to clear): ");
-                return;
-            }
-            
-            // Store the email temporarily for confirmation
-            strcpy(sock->tempstr[2], email.c_str());
-            sock->print("Confirm email address: ^C%s^x\n", email.c_str());
-            sock->askFor("Is this correct? (y/n): ");
-            sock->setState(LOGIN_SET_EMAIL_CONFIRM);
-            return;
-        }
-        // End LOGIN_SET_EMAIL
-
-    case LOGIN_SET_EMAIL_CONFIRM:
-        {
-            account = validateAndGetAccount(sock);
-            if(!account) return;
-            
-            if(str.empty() || (str[0] != 'y' && str[0] != 'Y')) {
-                sock->print("Email not set.\n");
-                showAccountMenu(sock, account);
-                return;
-            }
-            
-            // Set and save the email
-            std::string email = sock->tempstr[2];
-            account->setEmail(email);
+        account = validateAndGetAccount(sock);
+        if(!account) return;
+        
+        std::string email = str;
+        boost::trim(email);
+        
+        // Empty string clears the email
+        if(email.empty()) {
+            account->setEmail("");
             account->save();
-            
-            sock->print("^GEmail address set to: ^C%s^x^G.^x\n", email.c_str());
+            sock->print("^GEmail address cleared.^x\n");
             showAccountMenu(sock, account);
             return;
         }
+        
+        // Basic email validation
+        if(email.find('@') == std::string::npos || email.find('.') == std::string::npos) {
+            sock->print("^RInvalid email format. Please enter a valid email address.^x\n");
+            sock->askFor("Enter new email address (or press enter to clear): ");
+            return;
+        }
+        
+        if(email.length() > 255) {
+            sock->print("^REmail address too long (maximum 255 characters).^x\n");
+            sock->askFor("Enter new email address (or press enter to clear): ");
+            return;
+        }
+        
+        // Store the email temporarily for confirmation
+        strcpy(sock->tempstr[2], email.c_str());
+        sock->print("Confirm email address: ^C%s^x\n", email.c_str());
+        sock->askFor("Is this correct? (y/n): ");
+        sock->setState(LOGIN_SET_EMAIL_CONFIRM);
+        return;
+        // End LOGIN_SET_EMAIL
+
+    case LOGIN_SET_EMAIL_CONFIRM:
+        account = validateAndGetAccount(sock);
+        if(!account) return;
+        
+        if(str.empty() || (str[0] != 'y' && str[0] != 'Y')) {
+            sock->print("Email not set.\n");
+            showAccountMenu(sock, account);
+            return;
+        }
+        
+        // Set and save the email
+        std::string email = sock->tempstr[2];
+        account->setEmail(email);
+        account->save();
+        
+        sock->print("^GEmail address set to: ^C%s^x^G.^x\n", email.c_str());
+        showAccountMenu(sock, account);
+        return;
         // End LOGIN_SET_EMAIL_CONFIRM
     }
 }
