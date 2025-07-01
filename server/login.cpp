@@ -422,6 +422,75 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         }
         // End LOGIN_CLAIM_PASSWORD
 
+    case LOGIN_SET_EMAIL:
+        {
+            account = sock->getAccount();
+            if(!account) {
+                sock->print("Error: No account found!\n");
+                sock->disconnect();
+                return;
+            }
+            
+            std::string email = str;
+            boost::trim(email);
+            
+            // Empty string clears the email
+            if(email.empty()) {
+                account->setEmail("");
+                account->save();
+                sock->print("^GEmail address cleared.^x\n");
+                showAccountMenu(sock, account);
+                return;
+            }
+            
+            // Basic email validation
+            if(email.find('@') == std::string::npos || email.find('.') == std::string::npos) {
+                sock->print("^RInvalid email format. Please enter a valid email address.^x\n");
+                sock->askFor("Enter new email address (or press enter to clear): ");
+                return;
+            }
+            
+            if(email.length() > 255) {
+                sock->print("^REmail address too long (maximum 255 characters).^x\n");
+                sock->askFor("Enter new email address (or press enter to clear): ");
+                return;
+            }
+            
+            // Store the email temporarily for confirmation
+            strcpy(sock->tempstr[2], email.c_str());
+            sock->print("Confirm email address: ^C%s^x\n", email.c_str());
+            sock->askFor("Is this correct? (y/n): ");
+            sock->setState(LOGIN_SET_EMAIL_CONFIRM);
+            return;
+        }
+        // End LOGIN_SET_EMAIL
+
+    case LOGIN_SET_EMAIL_CONFIRM:
+        {
+            account = sock->getAccount();
+            if(!account) {
+                sock->print("Error: No account found!\n");
+                sock->disconnect();
+                return;
+            }
+            
+            if(str.empty() || (str[0] != 'y' && str[0] != 'Y')) {
+                sock->print("Email not set.\n");
+                showAccountMenu(sock, account);
+                return;
+            }
+            
+            // Set and save the email
+            std::string email = sock->tempstr[2];
+            account->setEmail(email);
+            account->save();
+            
+            sock->print("^GEmail address set to: ^C%s^x^G.^x\n", email.c_str());
+            showAccountMenu(sock, account);
+            return;
+        }
+        // End LOGIN_SET_EMAIL_CONFIRM
+
     case LOGIN_GET_PROXY_PASSWORD:
         if(Player::hashPassword(str) != sock->tempbstr) {
             sock->write("\255\252\1\n\rIncorrect.\n\r");
@@ -444,26 +513,30 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account) {
     sock->print("\n^W========= Menu =========^x\n\n");
     sock->print("^WAccount: ^C%s^x\n", account->getName().c_str());
+    if(!account->getEmail().empty()) {
+        sock->print("^WEmail: ^x%s\n", account->getEmail().c_str());
+    }
     sock->print("^WCharacters: ^x(%d/%d)\n\n", account->getCharacterCount(), account->getCharacterLimit());
     
     // Show command options
     sock->print("^WCommands:^x\n");
-    sock->print("  ^W(c)reate^x     - Create a new character");
+    sock->print("  ^W(c)reate^x       - Create a new character");
     if(account->canCreateCharacter()) {
         sock->print("\n");
     } else {
         sock->print(" ^R(limit reached)^x\n");
     }
 
-    sock->print("  ^W(l)ist^x       - List your characters\n");
-    sock->print("  ^W(cl)aim^x      - Claim a legacy character\n");
+    sock->print("  ^W(l)ist^x         - List your characters\n");
+    sock->print("  ^W(cl)aim^x        - Claim a legacy character\n");
 
     const auto& characters = account->getCharacterNames();
     if(!characters.empty()) {
-        sock->print("  ^W(p)lay^x <name> - Play a character\n");
+        sock->print("  ^W(p)lay^x <name>  - Play a character\n");
     }
     
-    sock->print("  ^W(q)uit^x       - Disconnect\n");
+    sock->print("  ^W(e)mail^x        - Set email address\n");
+    sock->print("  ^W(q)uit^x         - Disconnect\n");
     
     sock->askFor("\nEnter a command: ");
     sock->setState(LOGIN_SELECT_CHARACTER);
@@ -585,6 +658,17 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
         sock->print("This character must have existed before the account system was implemented.\n");
         sock->askFor("Character name: ");
         sock->setState(LOGIN_CLAIM_CHARACTER);
+        return;
+    }
+    
+    // Handle "email" command with partial matching
+    if(command.length() >= 1 && !strncasecmp(command.c_str(), "email", std::min(command.length(), 5UL))) {
+        sock->print("\n^WSet Email Address^x\n");
+        if(!account->getEmail().empty()) {
+            sock->print("Current email: %s\n", account->getEmail().c_str());
+        }
+        sock->print("Enter new email address (or press enter to clear): ");
+        sock->setState(LOGIN_SET_EMAIL);
         return;
     }
     
@@ -741,7 +825,7 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     }
     
     // Invalid command
-    sock->print("Invalid command. Available commands: (c)reate, (l)ist, (cl)aim, (p)lay <name>, (q)uit\n");
+    sock->print("Invalid command. Available commands: (c)reate, (l)ist, (cl)aim, (p)lay <name>, (e)mail, (q)uit\n");
     showAccountMenu(sock, account);
 }
 
