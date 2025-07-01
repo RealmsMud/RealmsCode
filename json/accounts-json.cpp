@@ -38,7 +38,7 @@ void from_json(const nlohmann::json &j, Account &account) {
     
     // Password is already hashed when loaded from JSON, so set directly
     // Note: We need a way to set the raw hashed password without re-hashing
-    account.setPasswordRaw(j.at("password").get<std::string>());
+    account.setPassword(j.at("password").get<std::string>());
     
     // Optional fields with defaults
     if (j.contains("email")) {

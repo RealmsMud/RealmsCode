@@ -78,20 +78,6 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
 void handleCharacterClaim(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
 bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& charName);
 
-/*
- * Generic get function, copy for future use
- *
-bool Create::get(std::shared_ptr<Socket> sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
-
-    } else if(mode == Create::doWork) {
-
-    }
-    return(true);
-}
- *
- */
-
 char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16] =
     { "Assassin", "Berserker", "Cleric", "Fighter",
       "Mage", "Paladin", "Ranger", "Thief", "Pureblood", "Monk", "Death Knight",
@@ -282,12 +268,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         
     case LOGIN_SELECT_CHARACTER:
         {
-            account = sock->getAccount();
-            if(!account) {
-                sock->print("Error: No account found!\n");
-                sock->disconnect();
-                return;
-            }
+            account = validateAndGetAccount(sock);
+            if(!account) return;
             
             // Check for proxy login syntax in character selection
             proxyCheck = checkProxyLogin(str);
@@ -364,12 +346,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 
     case LOGIN_CLAIM_CHARACTER:
         {
-            account = sock->getAccount();
-            if(!account) {
-                sock->print("Error: No account found!\n");
-                sock->disconnect();
-                return;
-            }
+            account = validateAndGetAccount(sock);
+            if(!account) return;
             
             handleCharacterClaim(sock, account, str);
             return;
@@ -378,12 +356,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         
     case LOGIN_CLAIM_PASSWORD:
         {
-            account = sock->getAccount();
-            if(!account) {
-                sock->print("Error: No account found!\n");
-                sock->disconnect();
-                return;
-            }
+            account = validateAndGetAccount(sock);
+            if(!account) return;
             
             std::string charName = sock->tempstr[1];
             
@@ -424,12 +398,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 
     case LOGIN_SET_EMAIL:
         {
-            account = sock->getAccount();
-            if(!account) {
-                sock->print("Error: No account found!\n");
-                sock->disconnect();
-                return;
-            }
+            account = validateAndGetAccount(sock);
+            if(!account) return;
             
             std::string email = str;
             boost::trim(email);
@@ -467,12 +437,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 
     case LOGIN_SET_EMAIL_CONFIRM:
         {
-            account = sock->getAccount();
-            if(!account) {
-                sock->print("Error: No account found!\n");
-                sock->disconnect();
-                return;
-            }
+            account = validateAndGetAccount(sock);
+            if(!account) return;
             
             if(str.empty() || (str[0] != 'y' && str[0] != 'Y')) {
                 sock->print("Email not set.\n");
@@ -827,6 +793,17 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     // Invalid command
     sock->print("Invalid command. Available commands: (c)reate, (l)ist, (cl)aim, (p)lay <name>, (e)mail, (q)uit\n");
     showAccountMenu(sock, account);
+}
+
+// Helper function to validate account exists and is loaded, returns account or nullptr if invalid (handles error)
+std::shared_ptr<Account> validateAndGetAccount(std::shared_ptr<Socket> sock) {
+    std::shared_ptr<Account> account = sock->getAccount();
+    if(!account) {
+        sock->print("Error: No account found!\n");
+        sock->disconnect();
+        return nullptr;
+    }
+    return account;
 }
 
 void Socket::finishLogin() {

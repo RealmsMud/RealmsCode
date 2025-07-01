@@ -59,7 +59,6 @@ public:
     // Setters
     void setName(const std::string& name);
     void setPassword(const std::string& password);
-    void setPasswordRaw(const std::string& hashedPassword);  // For loading from file
     void setEmail(const std::string& email);
     void setCreated(time_t created);
     void setLastLogin(time_t lastLogin);

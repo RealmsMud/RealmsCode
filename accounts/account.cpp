@@ -192,7 +192,6 @@ const std::string& Account::getBanReason() const { return banReason; }
 
 void Account::setName(const std::string& name) { accountName = name; }
 void Account::setPassword(const std::string& pass) { password = hashPassword(pass); }
-void Account::setPasswordRaw(const std::string& hashedPassword) { password = hashedPassword; }
 void Account::setEmail(const std::string& mail) { email = mail; }
 void Account::setCreated(time_t time) { created = time; }
 void Account::setLastLogin(time_t time) { lastLogin = time; }
