@@ -72,9 +72,10 @@
 class StartLoc;
 
 // Forward declarations for account login functions
+std::shared_ptr<Account> validateAndGetAccount(std::shared_ptr<Socket> sock);
 void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
 void showCharacterList(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
-void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
+void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
 void handleCharacterClaim(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
 bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& charName);
 
@@ -84,8 +85,6 @@ char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16] =
       "Druid", "Lich", "Werewolf", "Bard", "Rogue", "Figh/Mage", "Figh/Thief",
       "Cler/Ass", "Mage/Thief", "Thief/Mage", "Cler/Figh", "Mage/Ass"
     };
-
-
 
 //*********************************************************************
 //                      cmdReconnect
@@ -270,76 +269,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
         {
             account = validateAndGetAccount(sock);
             if(!account) return;
-            
-            // Check for proxy login syntax in character selection
-            proxyCheck = checkProxyLogin(str);
-            if(proxyCheck != std::string::npos) {
-                std::string proxyChar = getProxyChar(str, proxyCheck);
-                std::string proxiedChar = getProxiedChar(str, proxyCheck);
-                lowercize(proxyChar, 1);
-                lowercize(proxiedChar, 1);
-                
-                if(proxyChar == proxiedChar) {
-                    sock->print("That's just silly.\n");
-                    showAccountMenu(sock, account);
-                    return;
-                }
-                
-                // Verify both characters exist
-                if(!Player::exists(proxyChar)) {
-                    sock->print("Character '%s' doesn't exist.\n", proxyChar.c_str());
-                    showAccountMenu(sock, account);
-                    return;
-                }
-                if(!Player::exists(proxiedChar)) {
-                    sock->print("Character '%s' doesn't exist.\n", proxiedChar.c_str());
-                    showAccountMenu(sock, account);
-                    return;
-                }
-                
-                // Load the proxied character
-                if(!loadPlayer(proxiedChar, player)) {
-                    sock->print("Error loading character '%s'.\n", proxiedChar.c_str());
-                    showAccountMenu(sock, account);
-                    return;
-                }
-                
-                // Load the proxy character  
-                std::shared_ptr<Player> proxy = nullptr;
-                proxy = gServer->findPlayer(proxyChar);
-                if(!proxy) {
-                    if(!loadPlayer(proxyChar, proxy)) {
-                        sock->print("Error loading proxy character '%s'.\n", proxyChar.c_str());
-                        showAccountMenu(sock, account);
-                        return;
-                    }
-                }
-                
-                // Check proxy access
-                if(!player->checkProxyAccess(proxy)) {
-                    sock->print("%s does not have proxy access to %s.\n", proxy->getName().c_str(), player->getName().c_str());
-                    showAccountMenu(sock, account);
-                    return;
-                }
-                
-                player->fd = -1;
-                sock->setPlayer(player);
-                
-                if(gServer->checkDuplicateName(sock, false)) {
-                    return;
-                }
-                
-                sock->print("Logging in %s using %s as proxy.\n", player->getName().c_str(), proxy->getName().c_str());
-                sock->print("%s", echo_off);
-                sock->print("Please enter password for %s: ", proxy->getName().c_str());
-                sock->tempbstr = proxy->getPassword();
-                
-                player->setProxy(proxy);
-                sock->setState(LOGIN_GET_PROXY_PASSWORD);
-                return;
-            }
-            
-            handleCharacterSelection(sock, account, str);
+
+            handleAccountMenuCommand(sock, account, str);
             return;
         }
         // End LOGIN_SELECT_CHARACTER
@@ -456,19 +387,6 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             return;
         }
         // End LOGIN_SET_EMAIL_CONFIRM
-
-    case LOGIN_GET_PROXY_PASSWORD:
-        if(Player::hashPassword(str) != sock->tempbstr) {
-            sock->write("\255\252\1\n\rIncorrect.\n\r");
-            logn("log.incorrect", fmt::format("Invalid password({}) for {} from {}\n", str, sock->getPlayer()->getName(), sock->getHostname()).c_str());
-            sock->disconnect();
-            return;
-        } else {
-            sock->tempbstr.clear();
-            sock->finishLogin();
-            return;
-        }
-        break;
     }
 }
 
@@ -562,10 +480,10 @@ bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account>
 }
 
 //*********************************************************************
-//                    handleCharacterSelection
+//                    handleAccountMenuCommand
 //*********************************************************************
 
-void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str) {
+void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str) {
     if(str.empty()) {
         showAccountMenu(sock, account);
         return;
@@ -629,11 +547,10 @@ void handleCharacterSelection(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     
     // Handle "email" command with partial matching
     if(command.length() >= 1 && !strncasecmp(command.c_str(), "email", std::min(command.length(), 5UL))) {
-        sock->print("\n^WSet Email Address^x\n");
         if(!account->getEmail().empty()) {
             sock->print("Current email: %s\n", account->getEmail().c_str());
         }
-        sock->print("Enter new email address (or press enter to clear): ");
+        sock->askFor("Enter new email address (or press enter to clear): ");
         sock->setState(LOGIN_SET_EMAIL);
         return;
     }
