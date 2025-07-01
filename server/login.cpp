@@ -74,7 +74,6 @@ class StartLoc;
 // Forward declarations for account login functions
 std::shared_ptr<Account> validateAndGetAccount(std::shared_ptr<Socket> sock);
 void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
-void showCharacterList(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
 void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
 void handleCharacterClaim(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
 bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& charName);
@@ -243,13 +242,13 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             return;
             // End LOGIN_GET_ACCOUNT_CREATE_PASSWORD
         }
-        case LOGIN_SELECT_CHARACTER: {
+        case LOGIN_ACCOUNT_MENU: {
             account = validateAndGetAccount(sock);
             if(!account) return;
 
             handleAccountMenuCommand(sock, account, str);
             return;
-            // End LOGIN_SELECT_CHARACTER
+            // End LOGIN_ACCOUNT_MENU
         }
         case LOGIN_CLAIM_CHARACTER: {
             account = validateAndGetAccount(sock);
@@ -391,26 +390,7 @@ void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> acco
     }
     
     sock->askFor("\nEnter a command: ");
-    sock->setState(LOGIN_SELECT_CHARACTER);
-}
-
-//*********************************************************************
-//                    showCharacterList
-//*********************************************************************
-
-void showCharacterList(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account) {
-    const auto& characters = account->getCharacterNames();
-    
-    if(characters.empty()) {
-        sock->print("^KYou have no characters.^x\n");
-    } else {
-        sock->print("^WYour Characters:^x\n");
-        for(const auto& charName : characters) {
-            sock->print("  ^C%s^x\n", charName.c_str());
-        }
-    }
-    sock->askFor("\nEnter a command: ");
-    // Stay in LOGIN_SELECT_CHARACTER state to return to menu
+    sock->setState(LOGIN_ACCOUNT_MENU);
 }
 
 //*********************************************************************
@@ -491,7 +471,18 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     
     // Handle "list" command with partial matching
     if(command.length() >= 1 && !strncasecmp(command.c_str(), "list", std::min(command.length(), 4UL))) {
-        showCharacterList(sock, account);
+        const auto& characters = account->getCharacterNames();
+        
+        if(characters.empty()) {
+            sock->print("^KYou have no characters.^x\n");
+        } else {
+            sock->print("^WYour Characters:^x\n");
+            for(const auto& charName : characters) {
+                sock->print("  ^C%s^x\n", charName.c_str());
+            }
+        }
+        sock->askFor("\nEnter a command: ");
+        // Stay in LOGIN_ACCOUNT_MENU state to return to menu
         return;
     }
     
@@ -530,7 +521,7 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
         return;
     }
     
-    // Handle direct character name (for convenience)
+    // Handle character name login
     std::string foundChar;
     for(const auto& accountChar : characters) {
         if(strcasecmp(accountChar.c_str(), input.c_str()) == 0) {
@@ -588,8 +579,7 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     
     // Invalid command
     sock->print("Invalid command. Available commands: (c)reate, (l)ist, (cl)aim, (e)mail, (q)uit");
-    sock->print("\nOr enter a character name to play.\n");
-    showAccountMenu(sock, account);
+    sock->askFor("\nOr enter a character name to play.\n");
 }
 
 // Helper function to validate account exists and is loaded, returns account or nullptr if invalid (handles error)
