@@ -28,7 +28,8 @@ void to_json(nlohmann::json &j, const Account &account) {
         {"lastLogin", account.getLastLogin()},
         {"characterNames", account.getCharacterNames()},
         {"banned", account.isBanned()},
-        {"banReason", account.getBanReason()}
+        {"banReason", account.getBanReason()},
+        {"experience", account.getExperience()}
     };
 }
 
@@ -67,5 +68,9 @@ void from_json(const nlohmann::json &j, Account &account) {
     
     if (j.contains("banReason")) {
         account.setBanReason(j.at("banReason").get<std::string>());
+    }
+    
+    if (j.contains("experience")) {
+        account.setExperience(j.at("experience").get<unsigned long>());
     }
 } 

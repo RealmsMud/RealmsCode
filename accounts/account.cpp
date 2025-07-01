@@ -72,6 +72,7 @@ void Account::reset() {
     characterNames.clear();
     banned = false;
     banReason.clear();
+    experience = 0;
 }
 
 void Account::copyFrom(const Account& other) {
@@ -84,6 +85,7 @@ void Account::copyFrom(const Account& other) {
     characterNames = other.characterNames;
     banned = other.banned;
     banReason = other.banReason;
+    experience = other.experience;
 }
 
 //*********************************************************************
@@ -185,6 +187,7 @@ int Account::getCharacterLimit() const { return characterLimit; }
 const std::vector<std::string>& Account::getCharacterNames() const { return characterNames; }
 bool Account::isBanned() const { return banned; }
 const std::string& Account::getBanReason() const { return banReason; }
+unsigned long Account::getExperience() const { return experience; }
 
 //*********************************************************************
 //                      Setters
@@ -197,6 +200,8 @@ void Account::setCreated(time_t time) { created = time; }
 void Account::setLastLogin(time_t time) { lastLogin = time; }
 void Account::setBanned(bool ban) { banned = ban; }
 void Account::setBanReason(const std::string& reason) { banReason = reason; }
+void Account::setExperience(unsigned long exp) { experience = exp; }
+void Account::addExperience(unsigned long exp) { experience += exp; }
 
 //*********************************************************************
 //                      Character Management

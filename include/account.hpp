@@ -55,6 +55,7 @@ public:
     const std::vector<std::string>& getCharacterNames() const;
     bool isBanned() const;
     const std::string& getBanReason() const;
+    unsigned long getExperience() const;
 
     // Setters
     void setName(const std::string& name);
@@ -64,6 +65,8 @@ public:
     void setLastLogin(time_t lastLogin);
     void setBanned(bool banned);
     void setBanReason(const std::string& reason);
+    void setExperience(unsigned long exp);
+    void addExperience(unsigned long exp);
 
     // Character management
     bool addCharacter(const std::string& characterName);
@@ -90,6 +93,7 @@ private:
     std::vector<std::string> characterNames; // List of character names
     bool banned;                    // Is account banned
     std::string banReason;          // Reason for ban if applicable
+    unsigned long experience;       // Account experience points
 
     // Helper functions
     void copyFrom(const Account& other);
