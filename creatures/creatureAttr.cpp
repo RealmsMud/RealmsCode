@@ -69,6 +69,7 @@
 #include "version.hpp"                         // for VERSION
 #include "xml.hpp"                             // for copyPropToString
 #include "server.hpp"
+#include "account.hpp"                         // for Account
 
 //*********************************************************************
 //                      getClass
@@ -146,8 +147,20 @@ bool Creature::inJail() const {
 
 void Creature::addExperience(unsigned long e) {
     setExperience(experience + e);
-    if(isPlayer())
-        getAsPlayer()->checkLevel();
+    if(isPlayer()) {
+        auto player = getAsPlayer();
+        player->checkLevel();
+        
+        // Add account experience if player has an account
+        if(player->hasAccount()) {
+            std::shared_ptr<Account> account;
+            if(Account::load(player->getAccountName(), account)) {
+                // Calculate 1% of player experience gained
+                unsigned long accountExp = e / 100;
+                account->addExperience(accountExp);
+            }
+        }
+    }
 }
 
 void Creature::subExperience(unsigned long e) {
