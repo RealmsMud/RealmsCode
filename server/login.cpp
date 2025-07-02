@@ -364,26 +364,26 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 
 void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account) {
     sock->print("\n\n^W~~~~~~~ Menu ~~~~~~~^x\n\n");
-    sock->print("^WAccount:    ^C%s^x\n", account->getName().c_str());
+    sock->print("^W%-12s^C%s^x\n", "Account:", account->getName().c_str());
     if(!account->getEmail().empty()) {
-        sock->print("^WEmail:      ^x%s\n", account->getEmail().c_str());
+        sock->print("^W%-12s^x%s\n", "Email:", account->getEmail().c_str());
     }
-    sock->print("^WCharacters: ^x%d/%d\n", account->getCharacterCount(), account->getCharacterLimit());
-    sock->print("^WExperience: ^G%lu^x\n\n", account->getExperience());
+    sock->print("^W%-12s^x%d/%d\n", "Characters:", account->getCharacterCount(), account->getCharacterLimit());
+    sock->print("^W%-12s^G%lu^x\n\n", "Experience:", account->getExperience());
     
     // Show command options
     sock->print("^WCommands:^x\n");
-    sock->print("  ^W(c)reate^x       - Create a new character");
+    sock->print("  ^W%-9s^x - Create a new character", "(c)reate");
     if(account->canCreateCharacter()) {
         sock->print("\n");
     } else {
         sock->print(" ^R(limit reached)^x\n");
     }
 
-    sock->print("  ^W(l)ist^x         - List your characters\n");
-    sock->print("  ^W(cl)aim^x        - Claim a legacy character\n");
-    sock->print("  ^W(e)mail^x        - Set email address\n");
-    sock->print("  ^W(q)uit^x         - Disconnect\n");
+    sock->print("  ^W%-9s^x - List your characters\n", "(l)ist");
+    sock->print("  ^W%-9s^x - Claim a legacy character\n", "(cl)aim");
+    sock->print("  ^W%-9s^x - Set email address\n", "(e)mail");
+    sock->print("  ^W%-9s^x - Disconnect\n", "(q)uit");
     
     const auto& characters = account->getCharacterNames();
     if(!characters.empty()) {
@@ -392,40 +392,6 @@ void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> acco
     
     sock->askFor("\nEnter a command: ");
     sock->setState(LOGIN_ACCOUNT_MENU);
-}
-
-//*********************************************************************
-//                    loadCharacterForPlay
-//*********************************************************************
-
-bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& charName) {
-    // Verify character still exists and belongs to this account
-    std::shared_ptr<Player> player;
-    if(!loadPlayer(charName, player)) {
-        sock->print("Character '%s' no longer exists!\n", charName.c_str());
-        // Remove from account
-        account->removeCharacter(charName);
-        account->save();
-        showAccountMenu(sock, account);
-        return false;
-    }
-    
-    // Check if character belongs to this account (migration support)
-    if(player->getAccountName() != account->getName()) {
-        // Update player's account name
-        player->setAccountName(account->getName());
-        player->save();
-    }
-    
-    // Load character for login
-    sock->setPlayer(player);
-    player->fd = -1;
-    
-    if(gServer->checkDuplicateName(sock, false)) {
-        return false;
-    }
-    
-    return true;
 }
 
 //*********************************************************************
@@ -581,6 +547,40 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     // Invalid command
     sock->print("Invalid command. Available commands: (c)reate, (l)ist, (cl)aim, (e)mail, (q)uit");
     sock->askFor("\nOr enter a character name to play.\n");
+}
+
+//*********************************************************************
+//                    loadCharacterForPlay
+//*********************************************************************
+
+bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& charName) {
+    // Verify character still exists and belongs to this account
+    std::shared_ptr<Player> player;
+    if(!loadPlayer(charName, player)) {
+        sock->print("Character '%s' no longer exists!\n", charName.c_str());
+        // Remove from account
+        account->removeCharacter(charName);
+        account->save();
+        showAccountMenu(sock, account);
+        return false;
+    }
+    
+    // Check if character belongs to this account (migration support)
+    if(player->getAccountName() != account->getName()) {
+        // Update player's account name
+        player->setAccountName(account->getName());
+        player->save();
+    }
+    
+    // Load character for login
+    sock->setPlayer(player);
+    player->fd = -1;
+    
+    if(gServer->checkDuplicateName(sock, false)) {
+        return false;
+    }
+    
+    return true;
 }
 
 // Helper function to validate account exists and is loaded, returns account or nullptr if invalid (handles error)
