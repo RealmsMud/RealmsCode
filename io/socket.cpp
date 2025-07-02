@@ -527,7 +527,7 @@ std::string Socket::stripTelnet(std::string_view inStr) {
 void Socket::checkLockOut() {
     int lockStatus = gConfig->isLockedOut(shared_from_this());
     if (lockStatus == 0) {
-        askFor("\n\nPlease enter account name: ");
+        askFor("\n\nPlease enter account name\n(or legacy <character name> to login without an account): ");
         setState(LOGIN_GET_ACCOUNT_NAME);
     } else if (lockStatus == 2) {
         print("\n\nA password is required to play from your site: ");

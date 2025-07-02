@@ -152,12 +152,37 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             // End LOGIN_GET_LOCKOUT_PASSWORD
         }
         case LOGIN_GET_ACCOUNT_NAME: {
+            // Check for legacy login format: "legacy <character name>"
+            if(str.length() >= 7 && str.substr(0, 7) == "legacy ") {
+                std::string charName = str.substr(7);
+                boost::trim(charName);
+                
+                if(charName.empty()) {
+                    sock->print("Please specify a character name.\n");
+                    sock->askFor("Please enter account name (or legacy <character name>): ");
+                    return;
+                }
+                
+                lowercize(charName, 1);
+                if(charName.length() >= 25)
+                    charName[25] = 0;
+                
+                // Store character name for legacy login
+                strcpy(sock->tempstr[1], charName.c_str());
+                
+                sock->print("Legacy login for character '%s'.\n", charName.c_str());
+                sock->print("%s", echo_off);
+                sock->askFor("Please enter character password: ");
+                sock->setState(LOGIN_LEGACY_PASSWORD);
+                return;
+            }
+            
             lowercize(str, 1);
             if(str.length() >= 25)
                 str[25] = 0;
                 
             if(!Account::isValidAccountName(str)) {
-                sock->askFor("Invalid account name. Please enter account name: ");
+                sock->askFor("Invalid account name. Please enter account name (or legacy <character name>): ");
                 return;
             }
             
@@ -355,6 +380,48 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             return;
             // End LOGIN_SET_EMAIL_CONFIRM
         }
+        case LOGIN_LEGACY_PASSWORD: {
+            sock->print("%s", echo_on);
+            std::string charName = sock->tempstr[1];
+            
+            // Load the character
+            std::shared_ptr<Player> player;
+            if(!loadPlayer(charName, player)) {
+                sock->print("\n^RCharacter '%s' does not exist.^x\n", charName.c_str());
+                sock->askFor("Please enter account name (or legacy <character name>): ");
+                sock->setState(LOGIN_GET_ACCOUNT_NAME);
+                return;
+            }
+            
+            // Check password
+            if(!player->isPassword(str)) {
+                sock->print("\n^RIncorrect.^x\n");
+                logn("log.incorrect", fmt::format("Invalid legacy password({}) for {} from {}\n", str, charName, sock->getHostname()).c_str());
+                sock->disconnect();
+                return;
+            }
+            
+            // Success! Log the player in directly
+            sock->print("\n^GLegacy login successful!^x\n");
+            
+            // Update last login time
+            player->setLastLogin(time(nullptr));
+            
+            // Set up the socket and player connection
+            sock->setPlayer(player);
+            player->fd = -1;
+            
+            // Check for duplicate names
+            if(gServer->checkDuplicateName(sock, false)) {
+                return;
+            }
+            
+            // Complete the login process
+            sock->finishLogin();
+            
+            return;
+            // End LOGIN_LEGACY_PASSWORD
+        }
     }
 }
 
@@ -387,7 +454,7 @@ void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> acco
     
     const auto& characters = account->getCharacterNames();
     if(!characters.empty()) {
-        sock->print("\n\n^KOr enter a character name to play.^x\n");
+        sock->print("\n^KOr enter a character name to play.^x\n");
     }
     
     sock->askFor("\nEnter a command: ");

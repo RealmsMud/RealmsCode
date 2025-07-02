@@ -76,6 +76,7 @@ typedef enum {
     LOGIN_CLAIM_PASSWORD,
     LOGIN_SET_EMAIL,
     LOGIN_SET_EMAIL_CONFIRM,
+    LOGIN_LEGACY_PASSWORD,
     LOGIN_END,
 
     // Creation States
