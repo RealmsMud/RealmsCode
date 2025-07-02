@@ -366,9 +366,9 @@ void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> acco
     sock->print("\n\n^W~~~~~~~ Menu ~~~~~~~^x\n\n");
     sock->print("^WAccount:    ^C%s^x\n", account->getName().c_str());
     if(!account->getEmail().empty()) {
-        sock->print("^WEmail: ^x%s\n", account->getEmail().c_str());
+        sock->print("^WEmail:      ^x%s\n", account->getEmail().c_str());
     }
-    sock->print("^WCharacters: ^x(%d/%d)\n", account->getCharacterCount(), account->getCharacterLimit());
+    sock->print("^WCharacters: ^x%d/%d\n", account->getCharacterCount(), account->getCharacterLimit());
     sock->print("^WExperience: ^G%lu^x\n\n", account->getExperience());
     
     // Show command options
