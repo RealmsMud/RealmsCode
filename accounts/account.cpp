@@ -27,6 +27,7 @@
 #include "json.hpp"
 #include "paths.hpp"
 #include "mudObjects/players.hpp"
+#include "socket.hpp"
 
 namespace fs = std::filesystem;
 
@@ -295,6 +296,14 @@ bool Account::isValidPassword(const std::string& password) {
 
 bool Player::hasAccount() const { 
     return(!accountName.empty()); 
+}
+
+std::shared_ptr<Account> Player::getAccount() const {
+    auto sock = getSock();
+    if (sock) {
+        return sock->getAccount();
+    }
+    return nullptr;
 }
 
 void Player::setAccountName(const std::string& name) {

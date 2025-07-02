@@ -588,11 +588,19 @@ void Player::deletePlayer() {
     }
 
     // Remove player from account if they belong to one
-    if(!getAccountName().empty()) {
-        std::shared_ptr<Account> account;
-        if(Account::load(getAccountName(), account)) {
+    if(hasAccount()) {
+        auto account = getAccount();
+        if(account) {
             if(account->removeCharacter(name)) {
                 account->save();
+            }
+        } else {
+            // Fallback: load from disk if socket account not available
+            std::shared_ptr<Account> diskAccount;
+            if(Account::load(getAccountName(), diskAccount)) {
+                if(diskAccount->removeCharacter(name)) {
+                    diskAccount->save();
+                }
             }
         }
     }

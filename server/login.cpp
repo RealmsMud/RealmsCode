@@ -315,7 +315,6 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             // Update the character's account name
             player->setAccountName(account->getName());
             player->save();
-            account->save();
             
             sock->print("\n^GCharacter '%s' has been successfully claimed!^x\n", charName.c_str());
             sock->print("The character is now linked to your account.\n");
