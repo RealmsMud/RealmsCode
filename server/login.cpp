@@ -167,6 +167,22 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 if(charName.length() >= 25)
                     charName[25] = 0;
                 
+                // Check if character exists and is not already claimed by an account
+                std::shared_ptr<Player> player;
+                if(!loadPlayer(charName, player)) {
+                    sock->print("Character '%s' does not exist.\n", charName.c_str());
+                    sock->askFor("Please enter account name (or legacy <character name>): ");
+                    return;
+                }
+                
+                // Check if character is already claimed by an account
+                if(!player->getAccountName().empty()) {
+                    sock->print("Character '%s' is already claimed by an account.\n", charName.c_str());
+                    sock->print("Please login using the account system instead of legacy login.\n");
+                    sock->askFor("Please enter account name (or legacy <character name>): ");
+                    return;
+                }
+                
                 // Store character name for legacy login
                 strcpy(sock->tempstr[1], charName.c_str());
                 
