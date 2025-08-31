@@ -61,9 +61,11 @@ void Object::decChargesCur(short s) { chargesCur -= s; }
 void Object::incChargesCur(short s) { chargesCur += s; }
 
 void Object::setMagicpower(short m) { magicpower = m; }
+void Object::setCastChance(unsigned short s) { castChance = std::max<unsigned short>(0, std::min<unsigned short>(1000, s)); }
 void Object::setLevel(short l) { level = l; }
 void Object::setRequiredSkill(int s) { requiredSkill = s; }
 void Object::setMinStrength(short s) { minStrength = s; }
+void Object::setPermSpawnChance(unsigned short s) { permSpawnChance = std::max<unsigned short>(0, std::min<unsigned short>(1000, s)); }
 void Object::setClan(short c) { clan = c; }
 void Object::setSpecial(short s) { special = s; }
 void Object::setQuestnum(short q) { questnum = q; }

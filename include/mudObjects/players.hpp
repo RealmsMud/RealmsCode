@@ -202,6 +202,7 @@ public:
     void gainExperience(const std::shared_ptr<Monster> &victim, const std::shared_ptr<Creature> &killer, int expAmount, bool groupExp = false) override;
     void disarmSelf();
     bool lagProtection();
+    int getXPModifiers() const;
     
     void computeAC();
     void alignAdjustAcThaco();
@@ -459,6 +460,7 @@ public:
 
     int computeLuck();
     int getArmorWeight() const;
+    bool checkClimbing();
     int getFallBonus();
     int getSneakChance();
     int getLight() const;

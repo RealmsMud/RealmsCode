@@ -827,6 +827,7 @@ int cmdCharm(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
         creature->printColor("^m%M tried to charm you.\n", player.get());
+        player->lasttime[LT_HYPNOTIZE].interval = 30L;
         return(0);
     }
 
@@ -835,6 +836,7 @@ int cmdCharm(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->printColor("^yYour charm failed!\n");
             creature->print("Your mind tingles as you brush off %N's charm.\n", player.get());
             player->checkImprove("charm", false);
+            player->lasttime[LT_HYPNOTIZE].interval = 30L;
             return(0);
         }
     }

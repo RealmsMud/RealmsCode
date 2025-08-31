@@ -73,6 +73,8 @@ void init_module_effects(py::module &m) {
         .def("getName", &Effect::getName)
         .def("getPulseDelay", &Effect::getPulseDelay)
         .def("isPulsed", &Effect::isPulsed)
+        .def("usesStrength", &Effect::usesStrength)
+        .def("usesVariableStrength", &Effect::usesVariableStrength)
         ;
 
 }

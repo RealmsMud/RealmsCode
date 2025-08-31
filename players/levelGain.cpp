@@ -593,7 +593,7 @@ int cmdTrain(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->flagIsSet(P_CHOSEN_ALIGNMENT) && player->getLevel() == ALIGNMENT_LEVEL) {
         player->print("You must choose your alignment before you can train to level %d.\n", ALIGNMENT_LEVEL+1);
-        player->print("Use the 'alignment' command to do so. HELP ALIGNMENT.\n");
+        player->print("Use the 'choosealignment' command to do so. HELP CHOOSEALIGNMENT.\n");
         return(0);
     }
 
@@ -613,9 +613,6 @@ int cmdTrain(const std::shared_ptr<Player>& player, cmd* cmnd) {
         maxgold = ((player->getLevel()-22)*500000) + 3000000;
 
     goldneeded = std::min(maxgold, expneeded / 2L);
-
-    if(player->getRace() == HUMAN)
-        goldneeded += goldneeded/3/10; // Humans have +10% training costs.
 
     // Level training cost for levels 1-3 is free
     if(player->getLevel() <= 3)  // Free for levels 1-3 to train.
@@ -669,7 +666,7 @@ int cmdTrain(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!player->flagIsSet(P_CHOSEN_ALIGNMENT) && player->getLevel() == ALIGNMENT_LEVEL) {
         player->print("You may now choose your alignment. You must do so before you can reach level %d.\n", ALIGNMENT_LEVEL+1);
-        player->print("Use the 'alignment' command to do so. HELP ALIGNMENT.\n");
+        player->print("Use the 'choosealignment' command to do so. HELP CHOOSEALIGNMENT.\n");
     }
     return(0);
 }

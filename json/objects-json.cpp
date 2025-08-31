@@ -71,6 +71,7 @@ void to_json(nlohmann::json &j, const Object &obj, bool permOnly, LoadType saveT
             {"subType", obj.subType},
             {"wearFlag", obj.wearflag},
             {"magicPower", obj.magicpower},
+            {"castCjamce", obj.castChance},
             {"level", obj.level},
             {"quality", obj.quality},
             {"requiredSkill", obj.requiredSkill},
@@ -85,6 +86,7 @@ void to_json(nlohmann::json &j, const Object &obj, bool permOnly, LoadType saveT
             {"keyVal", obj.keyVal},
             {"material", obj.material},
             {"minStrength", obj.minStrength},
+            {"permSpawnChance", obj.permSpawnChance},
             {"inBag", obj.in_bag}
 
         });

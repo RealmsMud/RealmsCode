@@ -123,7 +123,7 @@ int cmdTelOpts(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdQuit(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdChangeStats(const std::shared_ptr<Player>& player, cmd* cmnd);
 void changingStats(std::shared_ptr<Socket> sock, const std::string& str );
-std::string getFullStatName(int stat);
+std::string getFullStatName(int stat, bool cap=false);
 
 
 // command7.c
@@ -242,7 +242,9 @@ int cmdRepair(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSlam(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdSmash(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdMaul(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdTalk(const std::shared_ptr<Player>& player, cmd* cmnd);
@@ -413,6 +415,7 @@ int cmdSurname(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdVisible(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdDice(const std::shared_ptr<Creature>& player, cmd* cmnd);
 int cmdChooseAlignment(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdAlignment(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdKeep(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdUnkeep(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdLabel(const std::shared_ptr<Player>& player, cmd* cmnd);

@@ -1157,6 +1157,7 @@ const std::map<std::string, Languages> languageMap = {
         {"gnoll", LGNOLL},
         {"gnomish", LGNOMISH},
         {"goblinoid", LGOBLINOID},
+        {"grugach", LGRUGACH},
         {"halfling", LHALFLING},
         {"hobgoblin", LHOBGOBLIN},
         {"infernal", LINFERNAL},
@@ -1183,6 +1184,7 @@ const std::map<std::string, Languages> languageMap = {
         {"tiefling", LTIEFLING},
         {"trollish", LTROLL},
         {"undercommon", LUNDERCOMMON},
+        {"wild-elf", LGRUGACH},
         {"wolfen", LWOLFEN}
     };
 

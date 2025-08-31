@@ -429,59 +429,85 @@ int Monster::doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) {
     return(0);
 }
 
-//********************************************************************
-//              addPermCrt
-//********************************************************************
-// This function checks a room to see if any permanent monsters need to
-// be loaded. If so, the monsters are loaded to the room, and their
-// permanent flag is set.
-
 void UniqueRoom::addPermCrt() {
     std::map<int, CRLastTime>::iterator it, nt;
     CRLastTime* crtm;
     std::map<int, bool> checklist;
-    std::shared_ptr<Monster> monster=nullptr;
-    long    t = time(nullptr);
-    int     j=0, m=0, n=0;
+    std::shared_ptr<Monster> monster = nullptr;
+    long t = time(nullptr);
+    std::vector<CRLastTime*> groupedTimers;
 
-    for(it = permMonsters.begin(); it != permMonsters.end() ; it++) {
+    for (it = permMonsters.begin(); it != permMonsters.end(); ++it) {
         crtm = &(*it).second;
 
-        if(checklist[(*it).first])
+        if (checklist[(*it).first])
             continue;
-        if(!crtm->cr.id)
+        if (!crtm->cr.id)
             continue;
-        if(crtm->ltime + crtm->interval > t)
+        if (crtm->ltime + crtm->interval > t)
             continue;
 
-        n = 1;
-        m = 0;
+        groupedTimers.clear();
+        groupedTimers.push_back(crtm);
+
         nt = it;
-        nt++;
-        for(; nt != permMonsters.end() ; nt++) {
-            if( crtm->cr == (*nt).second.cr &&
-                ((*nt).second.ltime + (*nt).second.interval) < t
-            ) {
-                n++;
+        ++nt;
+        for (; nt != permMonsters.end(); ++nt) {
+            if (crtm->cr == (*nt).second.cr &&
+                ((*nt).second.ltime + (*nt).second.interval) < t)
+            {
                 checklist[(*nt).first] = true;
+                groupedTimers.push_back(&(*nt).second);
             }
         }
 
-        if(!loadMonster(crtm->cr, monster))
+        // Count how many of this monster are already spawned
+        if (!loadMonster(crtm->cr, monster))
             continue;
 
-        for(const auto& mons : monsters) {
-            if( mons->flagIsSet(M_PERMANENT_MONSTER) && mons->getName() == monster->getName() )
-                m++;
+        int existingCount = 0;
+        for (const auto& mons : monsters) {
+            if (mons->flagIsSet(M_PERMANENT_MONSTER) && mons->getName() == monster->getName()) {
+                existingCount++;
+            }
         }
-
         monster.reset();
 
-        for(j=0; j<n-m; j++) {
+        // Now process ONLY missing monsters
+        int missing = groupedTimers.size() - existingCount;
+        if (missing <= 0)
+            continue; // Nothing missing, skip
 
-            if(!loadMonster(crtm->cr, monster))
+        for (size_t i = 0; i < groupedTimers.size(); ++i) {
+            if (i < existingCount)
+                continue; // Already spawned
+
+            if (!loadMonster(crtm->cr, monster))
                 continue;
 
+            int spawnChance = monster->getPermSpawnChance();
+            if (spawnChance > 0) {
+                int roll = Random::get(1, 1000);
+
+                if (roll > spawnChance) {
+                    // Failed spawn chance
+                    broadcast(isCt, "^y### PermCrt '%s' in room %s (%s) FAILED perm spawn chance (%d on %d/1000) and did not spawn.^x",
+                              monster->getCName(), info.displayStr().c_str(), getCName(), roll, spawnChance);
+                    groupedTimers[i]->ltime = t; // Reset only this monster's timer
+                    monster.reset();
+                    continue;
+                }
+
+                // Passed spawn chance
+                broadcast(isCt, "^y### PermCrt '%s' in room %s (%s) PASSED perm spawn chance (%d on %d/1000) and has spawned.^x",
+                          monster->getCName(), info.displayStr().c_str(), getCName(), roll, spawnChance);
+            } else {
+                // No spawn chance set, guaranteed spawn
+                broadcast(isCt, "^y### PermCrt '%s' ^yhas respawned in room %s (%s).^x",
+                          monster->getCName(), info.displayStr().c_str(), getCName());
+            }
+
+            // Spawn the monster
             monster->initMonster();
             monster->setFlag(M_PERMANENT_MONSTER);
             monster->daily[DL_BROAD].cur = 20;
@@ -490,85 +516,110 @@ void UniqueRoom::addPermCrt() {
             monster->validateAc();
             monster->addToRoom(BaseRoom::downcasted_shared_from_this<UniqueRoom>(), 0);
 
-            if(!players.empty())
+            if (!players.empty())
                 gServer->addActive(monster);
+
+            monster.reset();
         }
     }
 }
-
-
-//*********************************************************************
-//                      addPermObj
-//*********************************************************************
-// This function checks a room to see if any permanent objects need to
-// be loaded.  If so, the objects are loaded to the room, and their
-// permanent flag is set.
 
 void UniqueRoom::addPermObj() {
     std::map<int, CRLastTime>::iterator it, nt;
-    CRLastTime* crtm=nullptr;
+    CRLastTime* crtm = nullptr;
     std::map<int, bool> checklist;
-    std::shared_ptr<Object> object=nullptr;
-    long    t = time(nullptr);
-    int     j=0, m=0, n=0;
+    std::shared_ptr<Object> object = nullptr;
+    long t = time(nullptr);
+    std::vector<CRLastTime*> groupedTimers;
 
-    for(it = permObjects.begin(); it != permObjects.end() ; it++) {
+    for (it = permObjects.begin(); it != permObjects.end(); ++it) {
         crtm = &(*it).second;
 
-        if(checklist[(*it).first])
+        if (checklist[(*it).first])
             continue;
-        if(!crtm->cr.id)
+        if (!crtm->cr.id)
             continue;
-        if(crtm->ltime + crtm->interval > t)
+        if (crtm->ltime + crtm->interval > t)
             continue;
 
-        n = 1;
-        m = 0;
+        groupedTimers.clear();
+        groupedTimers.push_back(crtm);
+
         nt = it;
-        nt++;
-        for(; nt != permObjects.end() ; nt++) {
-            if( crtm->cr == (*nt).second.cr &&
-                ((*nt).second.ltime + (*nt).second.interval) < t )
-            {
-                n++;
+        ++nt;
+        for (; nt != permObjects.end(); ++nt) {
+            if (crtm->cr == (*nt).second.cr &&
+                ((*nt).second.ltime + (*nt).second.interval) < t) {
                 checklist[(*nt).first] = true;
+                groupedTimers.push_back(&(*nt).second);
             }
         }
 
-        if(!loadObject(crtm->cr, object))
+        // Load object once to check name/info for comparison
+        if (!loadObject(crtm->cr, object))
             continue;
 
-        for(const auto& obj : objects) {
-            if(obj->flagIsSet(O_PERM_ITEM)) {
-                if(obj->getName() == object->getName() && obj->info == object->info)
-                    m++;
-                else if( object->getName() == obj->droppedBy.getName() &&
-                        object->info.str() == obj->droppedBy.getIndex())
-                    m++;
-                }
+        int existingCount = 0;
+        for (const auto& obj : objects) {
+            if (obj->flagIsSet(O_PERM_ITEM)) {
+                if (obj->getName() == object->getName() && obj->info == object->info)
+                    ++existingCount;
+                else if (object->getName() == obj->droppedBy.getName() &&
+                         object->info.str() == obj->droppedBy.getIndex())
+                    ++existingCount;
+            }
         }
-
         object.reset();
 
-        for(j=0; j<n-m; j++) {
-            if(!loadObject(crtm->cr, object))
+        int missing = groupedTimers.size() - existingCount;
+        if (missing <= 0)
+            continue;
+
+        for (size_t i = 0; i < groupedTimers.size(); ++i) {
+            if (i < existingCount)
                 continue;
-        if (!object->randomObjects.empty())
-             object->init();
-        else
-             object->setDroppedBy(shared_from_this(), "PermObject");
 
+            if (!loadObject(crtm->cr, object))
+                continue;
 
-            if(object->flagIsSet(O_RANDOM_ENCHANT))
+            int spawnChance = object->getPermSpawnChance();
+            if (spawnChance > 0) {
+                int roll = Random::get(1, 1000);
+                if (roll > spawnChance) {
+                    // Spawn failed
+                    broadcast(isCt, "^y### PermObj '%s' in room %s (%s) FAILED spawn chance (%d on %d/1000) and did not spawn.^x",
+                              object->getCName(), info.displayStr().c_str(), getCName(), roll, spawnChance);
+                    groupedTimers[i]->ltime = t;
+                    object.reset();
+                    continue;
+                }
+
+                broadcast(isCt, "^y### PermObj '%s' in room %s (%s) PASSED spawn chance (%d on %d/1000) and has spawned.^x",
+                          object->getCName(), info.displayStr().c_str(), getCName(), roll, spawnChance);
+            } else {
+                // Guaranteed spawn
+                broadcast(isCt, "^y### PermObj '%s' ^yhas respawned in room %s (%s).^x",
+                          object->getCName(), info.displayStr().c_str(), getCName());
+            }
+
+            if (!object->randomObjects.empty())
+                object->init();
+            else
+                object->setDroppedBy(shared_from_this(), (spawnChance?"VariablePermObject":"PermObject"));
+
+            if (object->flagIsSet(O_RANDOM_ENCHANT))
                 object->randomEnchant();
 
             object->setFlag(O_PERM_ITEM);
-
-
             object->addToRoom(BaseRoom::downcasted_shared_from_this<UniqueRoom>());
+
+            groupedTimers[i]->ltime = t;
+            object.reset();
         }
     }
 }
+
+
 
 //*********************************************************************
 //                      roomEffStr

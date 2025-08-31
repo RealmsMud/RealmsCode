@@ -81,7 +81,6 @@ bool Monster::updateCombat() {
     std::shared_ptr<Monster>  mTarget=nullptr;
     char    atk[30];
     int     n, rtn=0, yellchance=0, num=0, breathe=0;
-    int     x=0;
     bool    monstervmonster, casted=false;
     bool    resistPet=false, immunePet=false, vulnPet=false;
     bool    willCast=false, antiMagic=false, isCharmed=false;
@@ -352,16 +351,14 @@ bool Monster::updateCombat() {
         if(flagIsSet(M_DISEASES))
             tryToDisease(target);
 
-        if( (flagIsSet(M_WOUNDING) && x <= 15) &&
-            (target->getClass() !=  CreatureClass::LICH) &&
-            !target->isEffected("stoneskin")
-        ) {
+        if( (flagIsSet(M_WOUNDING) && Random::get(1,1000) <= target->getWoundingChance())) {
             if(!target->chkSave(DEA, Containable::downcasted_shared_from_this<Monster>(),0)) {
-                target->printColor("^RThe wound is festering and unclean.\n");
-                broadcastGroup(false, target, "%M wounds are festering and unclean.\n", target.get());
-                broadcast(getSock(), target->getSock(), room, "%M's wounds are festering and unclean.\n", target.get());
 
-                target->addEffect("wounded", -1, 1, Containable::downcasted_shared_from_this<Monster>(), false, target);
+                target->printColor("^RThe wound is festering and unclean.^x\n");
+                broadcastGroup(false, target, "^R%M's wounds are festering and unclean.^x\n", target.get());
+                broadcast(getSock(), target->getSock(), room, "^R%M's wounds are festering and unclean.^x\n", target.get());
+               
+                target->addEffect("wounded", (long)getLevel()/5, getLevel(), Containable::downcasted_shared_from_this<Monster>(), false, target);
             }
         }
 
@@ -388,7 +385,7 @@ bool Monster::updateCombat() {
         if(flagIsSet(M_WILL_BLIND))
             tryToBlind(target);
 
-        if(pTarget && flagIsSet(M_DISOLVES_ITEMS) && Random::get(1,100) <= 15)
+        if(pTarget && hasAcidDissolveAttack() && Random::get(1,100) <= 10)
             pTarget->dissolveItem(Containable::downcasted_shared_from_this<Monster>());
 
         if( doDamage(target, attackDamage.get(), CHECK_DIE_ROB, PHYSICAL_DMG, freeTarget) ||
@@ -882,6 +879,9 @@ bool Creature::chkSave(short savetype, const std::shared_ptr<Creature>& target, 
             chance -= ( 5*((target->intelligence.getCur()+target->piety.getCur())/2) - ((intelligence.getCur()+piety.getCur())/2));
         else
             chance += (intelligence.getCur()+piety.getCur())/2;
+
+        if(isSimpleMinded())
+            chance -= (chance*10)/100;
         break;
     case SPL:
         if(opposing)
@@ -893,6 +893,9 @@ bool Creature::chkSave(short savetype, const std::shared_ptr<Creature>& target, 
             natural = 0;
             chance += 2500;
         }
+
+         if(isSimpleMinded())
+            chance -= (chance*10)/100;
         break;
     case LCK:
         chance += 100*((saves[POI].chance + saves[DEA].chance +
@@ -1274,7 +1277,7 @@ bool Monster::tryToPoison(const std::shared_ptr<Creature>& target, SpecialAttack
     if(target->isPoisoned())
         return(false);
 
-    if(!pAttack && Random::get(1, 100) > 15)
+    if(!pAttack && Random::get(1, 100) > (target->resistantToPoison()?5:15))
         return(false);
 
     if(target->immuneToPoison()) {
@@ -1297,6 +1300,9 @@ bool Monster::tryToPoison(const std::shared_ptr<Creature>& target, SpecialAttack
         } else {
             duration = (Random::get(2,3)*60) - 12*bonus(target->constitution.getCur());
         }
+
+        if(target->resistantToPoison())
+            duration = (duration*80)/100;
 
         target->poison(isPet() ? getMaster() : Containable::downcasted_shared_from_this<Monster>(), poison_dmg ? poison_dmg : level, duration);
         return(true);
@@ -1368,7 +1374,7 @@ bool Monster::tryToDisease(const std::shared_ptr<Creature>& target, SpecialAttac
         return(false);
     if(target->isPlayer() && target->isEffected("stoneskin"))
         return(false);
-    if(!pAttack && Random::get(1, 100) > 15)
+    if(!pAttack && Random::get(1, 100) > (target->resistantToDisease()?5:15))
         return(false);
 
     if(target->immuneToDisease()) {

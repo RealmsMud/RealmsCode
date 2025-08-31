@@ -1,4 +1,4 @@
-/*
+ /*
  * cmd.cpp
  *   Handle player/pet input commands.
  *   ____            _
@@ -636,10 +636,12 @@ bool Config::initCommands() {
     playerCommands.emplace("save", 100, cmdSave, nullptr, "Save your player");
     playerCommands.emplace("time", 100, cmdTime, nullptr, "Show the current time");
     playerCommands.emplace("circle", 50, cmdCircle, nullptr, "Circle an opponent");
-    playerCommands.emplace("bash", 50, cmdBash, nullptr, "Bash an opponent");
+    playerCommands.emplace("bash", 50, cmdBash, nullptr, "Shield bash an opponent");
+    playerCommands.emplace("slam", 50, cmdSlam, nullptr, "Slam an opponent");
     playerCommands.emplace("barkskin", 100, cmdBarkskin, nullptr, "Use barkskin ability");
     playerCommands.emplace("kick", 100, cmdKick, nullptr, "Kick an opponent");
     playerCommands.emplace("gore", 100, cmdGore, nullptr, "Gore an opponent (Minotaur only)");
+    playerCommands.emplace("smash", 100, cmdSmash, nullptr, "SMASH an opponent (selective large races only)");
     playerCommands.emplace("gamestat", 100, infoGamestat, nullptr, "Game time statistics");
 
     playerCommands.emplace("list", 100, cmdList, nullptr, "Show items for sale");
@@ -751,7 +753,8 @@ bool Config::initCommands() {
     playerCommands.emplace("keep", 100, cmdKeep, nullptr, "Prevent accidentially throwing away an item");
     playerCommands.emplace("unkeep", 100, cmdUnkeep, nullptr, "Unkeep an item");
     playerCommands.emplace("label", 100, cmdLabel, nullptr, "Set a custom label on an item");
-    playerCommands.emplace("alignment", 100, cmdChooseAlignment, nullptr, "Choose your alignment");
+    playerCommands.emplace("choosealignment", 100, cmdChooseAlignment, nullptr, "Choose your alignment");
+    playerCommands.emplace("alignment", 100, cmdAlignment, nullptr, "Check your alignment or a target's alignment");
     playerCommands.emplace("push", 100, cmdPush, nullptr, "Push an object");
     playerCommands.emplace("pull", 100, cmdPull, nullptr, "Pull an object");
     playerCommands.emplace("press", 100, cmdPress, nullptr, "Press a rune");

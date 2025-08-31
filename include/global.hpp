@@ -161,7 +161,10 @@ enum Alignments {
     ROYALBLUE = 4
 };
 
-#define P_TOP_ROYALBLUE  1000
+#define MAX_ALIGN 1000
+#define MIN_ALIGN -1000
+
+#define P_TOP_ROYALBLUE  MAX_ALIGN
 #define P_BOTTOM_ROYALBLUE  856
 #define P_TOP_BLUE  855
 #define P_BOTTOM_BLUE  399 
@@ -178,9 +181,9 @@ enum Alignments {
 #define P_TOP_RED  -399
 #define P_BOTTOM_RED  -855
 #define P_TOP_BLOODRED  -856
-#define P_BOTTOM_BLOODRED  -1000
+#define P_BOTTOM_BLOODRED  MIN_ALIGN
 
-#define M_TOP_ROYALBLUE  1000
+#define M_TOP_ROYALBLUE  MAX_ALIGN
 #define M_BOTTOM_ROYALBLUE  558
 #define M_TOP_BLUE  557
 #define M_BOTTOM_BLUE  299 
@@ -197,7 +200,7 @@ enum Alignments {
 #define M_TOP_RED  -299
 #define M_BOTTOM_RED  -557
 #define M_TOP_BLOODRED  -558
-#define M_BOTTOM_BLOODRED  -1000
+#define M_BOTTOM_BLOODRED  MIN_ALIGN
 
 
 // Attack types
@@ -287,8 +290,9 @@ enum Languages {
     LNECRIL = 46,
     LMODRON = 47,
     LNOCTIS = 48,
+    LGRUGACH = 49,
 
-    LANGUAGE_COUNT = 49
+    LANGUAGE_COUNT = 50
 };
 
 extern const std::map<std::string, Languages> languageMap;
@@ -399,8 +403,10 @@ enum Races {
     KENKU = 21,
     GREYELF = 22,
     DUERGAR = 23,
+    WILDELF = 24,
+    OROG = 25,
 
-    MAX_PLAYABLE_RACE = 24,
+    MAX_PLAYABLE_RACE = 26,
 
     // non-playable
     LIZARDMAN = 33,
@@ -410,7 +416,7 @@ enum Races {
     HALFFROSTGIANT = 35,
     HALFFIREGIANT = 36,
     //GREYELF = 37,
-    WILDELF = 38,
+    //WILDELF = 38,
     AQUATICELF = 39,
     //DUERGAR = 40,
     HILLDWARF = 41,

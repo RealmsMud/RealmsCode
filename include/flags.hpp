@@ -193,7 +193,6 @@
 #define P_LOG_WATCH                 54       // DM is watching the log channel
 #define P_CLEAR_TARGET_ON_FLEE      55       // Clear target on flee
 #define P_NO_AUTO_TARGET            56       // Don't Automatically target anything you attack if you don't already have a target
-// free                             56       // UNUSED
 #define P_IGNORE_CLASS_SEND         57       // Player is ignoring class sends
 #define P_IGNORE_GROUP_BROADCAST    58       // Player is ignoring group broadcasts
 #define P_ENCHANT_ONLY              59       // Player resists-hands
@@ -204,7 +203,7 @@
 #define P_SHOW_TICK                 64       // Show ticks
 #define P_JUST_REFUNDED             65       // No haggling until they leave the room!
 #define P_CT_CAN_KILL               66       // CT Can use *kill command
-// free                             67
+#define P_PTEST_SMASH               67       // Player able to ptest smash ability
 // free                             68
 // free                             69
 #define P_HIDE_FORUM_POSTS          70       // Player does not want to see forum post notifications
@@ -345,7 +344,7 @@
 #define P_DARKMETAL                 205      // Player has a darkmetal item (DONT SET)
 #define P_SAVE_DEBUG                206
 #define P_NO_GROUP_TARGET_MSG       207		 // Player will not see individual group targeting changes
-#define P_NO_MTARGET_ORDINALS   208		 // Player will not see monster ordinals in group target messages
+#define P_NO_MTARGET_ORDINALS   	208		 // Player will not see monster ordinals in group target messages
 // free                             209
 // free                             210
 // free                             211
@@ -392,7 +391,7 @@
 #define M_CAN_PLEDGE_TO             32      // players can pledge to monster
 #define M_CAN_RESCIND_TO            33      // players can rescind to monster
 #define M_DISEASES                  34      // Monster causes disease
-#define M_DISOLVES_ITEMS            35      // Monster can dissolve items
+#define M_DISSOLVES_ALL            35      // Monster can dissolve items of any material
 #define M_CAN_PURCHASE_FROM         36      // player can purchase from monster
 #define M_TRADES                    37      // monster will give items
 #define M_PASSIVE_EXIT_GUARD        38      // passive exit guard
@@ -406,18 +405,18 @@
 #define M_DM_FOLLOW                 46      // Monster will follow DM
 // free                             47
 // free                             48
-// free                             49
+#define M_DISSOLVES_ROOM_OBJ        49      // Monster will dissolve objects on the ground
 #define M_CHARMED                   50      // Monster is charmed
 #define M_MOBILE_MONSTER            51      // Monster will wander around the area
 #define M_LOGIC_MONSTER             52      // Logic Monster
 #define M_TAKE_LOOT                 53      // Monster will try to take players' loot
 #define M_FAST_WANDER               54      // Monster will quickly wander around the area
 #define M_PET                       55      // Monster is a pet
-// free                             56
-// free                             57
-// free                             58
-// free                             59
-// free                             60
+#define M_DISSOLVES_ALL_METAL       56      // Monster can dissolve any metal object
+#define M_DISSOLVES_FERROUS_METAL	57      // Monster can dissolve ferrous metal objects
+#define M_DISSOLVES_NONFERROUS_METAL 58     // Monster can dissolve non-ferrous metal objects
+#define M_DISSOLVES_ORGANIC         59      // Monster can dissolve organic objects
+#define M_DISSOLVES_STONE           60      // Monster can dissolve stone objects
 // free                             61
 #define M_SEXLESS                   62      // sexless
 // free                             63
@@ -450,7 +449,7 @@
 #define M_REGENERATES               90      // monster regenerates
 #define M_PLUS_TWO                  91      // monster needs +2 weapon or above to be hit
 #define M_PLUS_THREE                92      // monster needs +3 weapon or above to be hit
-// free                             93
+#define M_PLUS_FOUR                 93      // monster needs +4 weapon or above to be hit
 #define M_STEAL_WHEN_ATTACKING      94      // monster steals if attacked
 #define M_STEAL_ALWAYS              95      // monster steals on sight
 // free                             96
@@ -509,9 +508,9 @@
 // free                             149
 // free                             150
 // free                             151
-// free                             152
-// free                             153
-// free                             154
+#define M_NO_SLAM                   152      // Monster unaffected by slam attacks
+#define M_NO_BASH                   153      // Monster unaffected by bash attacks
+#define M_NO_SMASH					154		 // Monster unaffected by smash attacks
 #define M_NO_GORE                   155      // Monster unaffected by gore attacks
 #define M_NO_LEVEL_ONE              156      // Monster uneffected by level 1 spells
 #define M_NO_LEVEL_TWO              157      // Monster uneffected by level 2 spells or less
@@ -660,7 +659,7 @@
 #define O_LAWFUL_ONLY               57      // Lawfuls Only
 #define O_TEMP_ENCHANT              58      // Temp Enchant
 #define O_STARTING                  59      // Starting Item
-// free                             60
+#define O_NO_SMASH                  60      // Cannot use smash ability with this object(weapon)
 #define O_CLAN_1                    61      // Clan 1 can use
 #define O_CLAN_2                    62      // Clan 2 can use
 #define O_CLAN_3                    63      // Clan 3 can use
@@ -697,10 +696,10 @@
 #define O_EATABLE                   92      // You can eat the object
 #define O_ALWAYS_DROPPED            93      // Monsters always drop this object
 #define O_CONSUME_HEAL              94      // Consumable object that will heal the player
-// free                             95
-// free                             96
-// free                             97
-// free                             98
+#define O_SEL_GREYELF               95      // race selective: grey elf
+#define O_SEL_WILDELF               96      // race selective: wild elf
+#define O_SEL_DUERGAR               97      // race selective: duergar
+#define O_SEL_OROG                  98      // race selective: orog
 #define O_CLAN_11                   99      // Clan 11 can use
 #define O_CLAN_12                   100      // Clan 12 can use
 // free                             101
@@ -713,12 +712,12 @@
 #define O_CAN_HIT_MIST              108      // Object can hit misted vampire
 #define O_SILVER_OBJECT             109      // Object made of silver - extra damage to werewolf
 #define O_HOLD_BONUS                110      // Object confers a bonus to hit if held
-// free                             111
+#define O_ENHANCE_SLAM              111      // Object/weapon enhances slam attacks
 #define O_NO_STEAL                  112      // Object cannot be stolen
 #define O_SMALL_SHIELD              113      // Object is a small shield
-// free                             114
-// free                             115
-// free                             116
+#define	O_NO_SLAM                   114      // Object cannot be used to slam (override normally allowed)
+#define O_CAN_USE_SLAM              115	     // Can use slam ability with object (override normal restricts)
+#define O_CAN_USE_SMASH             116		 // Can use smash ability with object
 #define O_SEL_KENKU                 117      // race selective: kenku
 #define O_NO_PAWN                   118      // Object not pawnable
 #define O_BREAK_ON_DROP             119      // Object breaks when drops
@@ -871,5 +870,9 @@
 #define X_NO_KNOCK_SPELL            96      // Exit immune to knock spell
 #define X_SEL_KENKU                 97      // race selective: kenku
 #define X_NO_REMEMBER               98      // Unable to remember this exit
-#define MAX_EXIT_FLAGS              99      // Incriment when adding... check structs.h for max
+#define X_SEL_GREYELF               99      // race selective: grey elf
+#define X_SEL_WILDELF               100     // race selective: wild elf
+#define X_SEL_DUERGAR               101     // race selective: duergar
+#define X_SEL_OROG                  102     // race selective: orog
+#define MAX_EXIT_FLAGS              103     // Incriment when adding... check structs.h for max
 

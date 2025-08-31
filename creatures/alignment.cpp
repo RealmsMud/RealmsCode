@@ -263,13 +263,57 @@ std::string Creature::alignString() const {
     }
 }
 
+int cmdAlignment(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> target=nullptr;
+    int alignValue = 0;
+    std::string alignValString;
+
+    std::string syntax = "Syntax: alignment\n"
+                         "        alignment (player|monster)\n";
+
+
+    if(!player->ableToDoCommand())
+        return(0);
+
+    if(!player->isCt() && !player->isEffected("know-aura") && player->getClass() != CreatureClass::PALADIN) {
+        *player << "You must be under a know-aura spell to use the alignment command.\n";
+        return(0);
+    }
+    
+    if(cmnd->num < 2) {
+        alignValue = (int)player->getAlignment();
+        alignValString = (player->isEffected("empathy") || player->isCt())?(" (" + std::to_string(alignValue) + ")"):"";
+
+        *player << ColorOn << "Your alignment is currently: " << player->alignColor() << player->alignString() << ColorOff << alignValString << ".\n";
+
+    } else {
+    
+        cmnd->str[1][0] = up(cmnd->str[1][0]);
+        target = player->getParent()->findCreature(player, cmnd->str[1], cmnd->val[1], false);
+
+        if(!target) {
+            *player << "You don't see that here.\n\n";
+            *player << syntax;
+            return(0);
+        }
+
+        alignValue = (int)target->getAlignment();
+        alignValString = (player->isEffected("empathy") || player->isCt())?(" (" + std::to_string(alignValue) + ")"):"";
+
+        *player << ColorOn << setf(CAP) << target << "'s alignment is: " << target->alignColor() << target->alignString() << ColorOff << alignValString << ".\n";
+
+    }
+
+    return(0);
+}
+
 //********************************************************************
 //                      cmdChooseAlignment
 //********************************************************************
 
 int cmdChooseAlignment(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    char syntax[] = "Syntax: alignment lawful\n"
-                    "        alignment chaotic\n"
+    char syntax[] = "Syntax: choosealignment lawful\n"
+                    "        choosealignment chaotic\n"
                     "Note: Tieflings must be chaotic.\n\n";
 
     if(player->isStaff() && !player->isCt())
@@ -452,7 +496,9 @@ bool antiGradius(int race) {
             race == OGRE ||
             race == GOBLIN ||
             race == TROLL ||
-            race == KOBOLD );
+            race == KOBOLD ||
+            race == DUERGAR ||
+            race == OROG);
 }
 
 
@@ -461,11 +507,11 @@ bool antiGradius(int race) {
 //********************************************************************
 
 void Player::adjustAlignment(std::shared_ptr<Monster> victim) {
-    auto adjust = (short)(victim->getAlignment() / 8);
+    auto adjust = (short)(victim->getAlignment() / 10);
 
-    if(victim->getAlignment() < 0 && victim->getAlignment() > -8)
+    if(victim->getAlignment() < 0 && victim->getAlignment() > -10)
         adjust = -1;
-    if(victim->getAlignment() > 0 && victim->getAlignment() < 8)
+    if(victim->getAlignment() > 0 && victim->getAlignment() < 10)
         adjust = 1;
 
    // bool toNeutral = ((alignment > 0 && adjust > 0) ||
@@ -481,7 +527,7 @@ void Player::adjustAlignment(std::shared_ptr<Monster> victim) {
         adjust=0; // no alignment change
     
     alignment -= adjust;
-    alignment = std::max<short>(-1000, std::min<short>(1000, alignment));
+    alignment = std::max<short>(MIN_ALIGN, std::min<short>(MAX_ALIGN, alignment));
 }
 
 //*********************************************************************

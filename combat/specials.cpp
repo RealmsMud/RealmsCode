@@ -371,12 +371,12 @@ bool Creature::doSpecial(SpecialAttack &attack, const std::shared_ptr<Creature>&
                 // SPECIAL-realm matches up with the corresponding Realm so we can just
                 // pass that, after casting it to a Realm
                 attackDamage.set(victim->checkRealmResist(attackDamage.get(), (Realm)attack.type));
+                
+                //Trolls take +20% damage from fire special attacks
+                if(attack.type == SPECIAL_FIRE && victim->getRace() == TROLL)
+                    attackDamage.set((attackDamage.get()*120)/100);
             }
-            // TODO: Check for warmth/heat-protection on elemental attacks
-//          if( pVictim && (
-//                  (realm == COLD && (pVictim->isEffected("warmth") || pVictim->isEffected("alwayscold"))) ||
-//                  (realm == FIRE && pVictim->isEffected("heat-protection") || pVictim->isEffected("alwayswarm"))
-//          ) )
+
         }
 
         if(attack.flagIsSet(SA_EARTH_SHIELD_REDUCE))
@@ -665,6 +665,7 @@ int dmSpecials(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->print("     petrifying-gaze   petrifying-breath\n");
             player->print("     confusing-gaze    zap-mana\n");
             player->print("     death-gaze        gore\n");
+            player->print("     smash\n");
             return(0);
         } else {
             player->printColor("Added special ^W%s^x to ^W%M^x.\n", attack->getName().c_str(), target.get());
@@ -884,6 +885,30 @@ SpecialAttack* Creature::addSpecial(std::string_view specialName) {
         attack.damage.setNumber(4);
         attack.damage.setSides(2);
         attack.damage.setPlus((isMartial() ? ((strength.getCur()/25)+(level/4)) : level/5) + 1);
+
+        return &specials.emplace_back(attack);
+
+    } else if(specialName == "smash") {
+        SpecialAttack attack;
+        attack.name = "Smash";
+        attack.verb = "smashed";
+
+        attack.type = SPECIAL_WEAPON;
+        attack.targetStr = "^Y*ATTACKER* SMASHED you for ^W*DAMAGE*^Y damage.^x";
+        attack.roomStr = "^Y*ATTACKER* SMASHED *LOW-TARGET*.^x";
+        attack.targetSaveStr = attack.targetFailStr = "^Y*ATTACKER* tried to SMASH you.^x";
+        attack.roomSaveStr = attack.roomFailStr = "^Y*ATTACKER* tried to SMASH *LOW-TARGET*!^x";
+        attack.saveType = SAVE_DEXTERITY;
+        attack.chance = 101; // Always goes off
+        attack.delay = 20;
+
+        attack.setFlag(SA_SINGLE_TARGET);
+        attack.setFlag(SA_CHECK_DIE_ROB);
+        attack.setFlag(SA_UNDEAD_WARD_REDUCE);
+        attack.setFlag(SA_SAVE_NO_DAMAGE);
+        attack.damage.setNumber(level);
+        attack.damage.setSides(3);
+        attack.damage.setPlus((isMartial() ? ((strength.getCur()/25)+(level/4)) : level/6) + 1);
 
         return &specials.emplace_back(attack);
 

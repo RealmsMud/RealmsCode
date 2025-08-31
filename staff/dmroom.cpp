@@ -801,6 +801,8 @@ int stat_rom(const std::shared_ptr<Player>& player, const std::shared_ptr<Unique
     std::shared_ptr<Monster>  monster=nullptr;
     std::shared_ptr<Object>  object=nullptr;
     std::shared_ptr<UniqueRoom> shop=nullptr;
+    double mSpawnChance = 0.0, oSpawnChance = 0.0;
+    std::string mSpawnChanceString, oSpawnChanceString;
     time_t t = time(nullptr);
 
     if(!player->checkBuilder(room))
@@ -851,8 +853,17 @@ int stat_rom(const std::shared_ptr<Player>& player, const std::shared_ptr<Unique
         crtm = &(*it).second;
         loadObject((*it).second.cr, object);
 
-        player->printColor("^y%2d) ^x%14s ^y::^x %-30s ^yInterval:^x %-5d  ^yTime Until Spawn:^x %-5d", (*it).first+1,
-                           crtm->cr.displayStr("", 'y').c_str(), object ? object->getCName() : "", crtm->interval, std::max<long>(0, crtm->ltime + crtm->interval - t));
+        if(object && object->getPermSpawnChance()) {
+            oSpawnChance = (object->getPermSpawnChance()/1000.0)*100;
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(2) << oSpawnChance;
+    
+            oSpawnChanceString = "Spawn Attempt (" + oss.str() + "%)";
+        }
+
+        player->printColor("^y%2d) ^x%14s ^y::^x %-30s ^yInterval:^x %-5d  ^yTime Until %s:^x %-5d", (*it).first+1,
+                           crtm->cr.displayStr("", 'y').c_str(), object ? object->getCName() : "", crtm->interval, 
+                                ((object && object->getPermSpawnChance())?oSpawnChanceString.c_str():"Spawn"), std::max<long>(0, crtm->ltime + crtm->interval - t));
 
         if(room->flagIsSet(R_SHOP_STORAGE) && object)
             player->printColor(" ^yCost:^x %s", object->value.str().c_str());
@@ -873,9 +884,17 @@ int stat_rom(const std::shared_ptr<Player>& player, const std::shared_ptr<Unique
     for(it = room->permMonsters.begin(); it != room->permMonsters.end() ; it++) {
         crtm = &(*it).second;
         loadMonster((*it).second.cr, monster);
+        if(monster && monster->getPermSpawnChance()) {
+            mSpawnChance = (monster->getPermSpawnChance()/1000.0)*100;
+            std::ostringstream mss;
+            mss << std::fixed << std::setprecision(2) << mSpawnChance;
+    
+            mSpawnChanceString = "Spawn Attempt (" + mss.str() + "%)";
+        }
 
-        player->printColor("^m%2d) ^x%14s ^m::^x %-30s ^mInterval:^x %d  ^yTime until Spawn:^x %-5d\n", (*it).first+1,
-                           crtm->cr.displayStr("", 'm').c_str(), monster ? monster->getCName() : "", crtm->interval, std::max<long>(0, crtm->ltime + crtm->interval - t));
+        player->printColor("^m%2d) ^x%14s ^m::^x %-30s ^mInterval:^x %d  ^yTime Until %s:^x %-5d\n", (*it).first+1,
+                           crtm->cr.displayStr("", 'm').c_str(), monster ? monster->getCName() : "", crtm->interval, 
+                                ((monster && monster->getPermSpawnChance())?mSpawnChanceString.c_str():"Spawn"), std::max<long>(0, crtm->ltime + crtm->interval - t));
 
         if(monster) {
             monster = nullptr;

@@ -926,6 +926,57 @@ bool Monster::willAssist(const std::shared_ptr<Monster> victim) const {
     return(false);
 }
 
+bool Monster::hasAcidDissolveAttack() const {
+    static const std::array<int, 6> dissolveFlags = {
+        M_DISSOLVES_ALL, M_DISSOLVES_ALL_METAL, 
+        M_DISSOLVES_FERROUS_METAL, M_DISSOLVES_NONFERROUS_METAL, 
+        M_DISSOLVES_ORGANIC, M_DISSOLVES_STONE
+    };
+
+    return(std::any_of(dissolveFlags.begin(), dissolveFlags.end(), 
+                       [this](int flag) { return flagIsSet(flag); }));
+}
+
+
+//*******************************************************************
+//                    findObjectToDissolve
+//*******************************************************************
+// This will search all objects on the ground in a room and randomly
+// choose one for a mob to eat, if it can dissolve it - would be used
+// primarily for oozes/slimes,etc
+std::shared_ptr<Object> Monster::findObjectToDissolve() {
+    std::shared_ptr<BaseRoom> room = getRoomParent();
+
+    if (room->objects.empty()) {
+        return(nullptr);
+    }
+
+    std::shared_ptr<Object> selectedObject = nullptr;
+    int count = 0;
+
+    for (const auto& obj : room->objects) {
+        if (!canScavange(obj, true)) continue;  // When passing true, hidden objects are fair game!
+        if (obj->flagIsSet(O_RESIST_DISOLVE)) continue;  // Ignore dissolve-resistant objects
+
+        if (flagIsSet(M_DISSOLVES_ALL) || 
+            (flagIsSet(M_DISSOLVES_ALL_METAL) && obj->isMetal()) ||
+            (flagIsSet(M_DISSOLVES_FERROUS_METAL) && obj->isFerrousMetal()) ||
+            (flagIsSet(M_DISSOLVES_NONFERROUS_METAL) && obj->isNonFerrousMetal()) ||
+            (flagIsSet(M_DISSOLVES_ORGANIC) && obj->isOrganic()) ||
+            (flagIsSet(M_DISSOLVES_STONE) && obj->isStone())) {
+            
+            // Random selection with equal probability
+            if (Random::get(0, count++) == 0) {
+                selectedObject = obj;
+            }
+        }
+    }
+
+    return(selectedObject);
+}
+
+
+
 //*******************************************************************
 //                    findObjectToScavenge
 //*******************************************************************
@@ -933,36 +984,29 @@ bool Monster::willAssist(const std::shared_ptr<Monster> victim) const {
 // choose one for a mob to scavenge
 std::shared_ptr<Object> Monster::findObjectToScavenge() {
     std::shared_ptr<BaseRoom> room = getRoomParent();
-    std::vector<std::shared_ptr<Object>> scavengableObject;
 
-    if (room->objects.empty())
+    if (room->objects.empty() || getWeight() >= maxWeight() || getTotalBulk() >= getMaxBulk()) {
         return(nullptr);
+    }
 
-    if(getWeight() >= maxWeight())
-        return(nullptr);
-
-    if (getTotalBulk() >= getMaxBulk())
-        return(nullptr);
+    std::shared_ptr<Object> selectedObject = nullptr;
+    int count = 0;
 
     for (const auto& obj : room->objects) {
-        if (!canScavange(obj))
-            continue;
-        if (obj->getType() == ObjectType::WEAPON && flagIsSet(M_WILL_WIELD))
-            continue;
-        if ((getWeight() + obj->getActualWeight()) > maxWeight())
-            continue;
-        if ((getTotalBulk() + obj->getActualBulk()) > getMaxBulk())
-            continue;
+        if (!canScavange(obj)) continue;
+        if (obj->getType() == ObjectType::WEAPON && flagIsSet(M_WILL_WIELD)) continue;
+        if ((getWeight() + obj->getActualWeight()) > maxWeight()) continue;
+        if ((getTotalBulk() + obj->getActualBulk()) > getMaxBulk()) continue;
 
-        scavengableObject.push_back(obj);
-    }
-    
-    if(scavengableObject.empty()) {
-        return(nullptr);
+        // Reservoir Sampling: randomly select one object from valid candidates
+        if (Random::get(0, count++) == 0) {
+            selectedObject = obj;
+        }
     }
 
-    return(*Random::get(scavengableObject));
+    return(selectedObject);
 }
+
 
 //*******************************************************************
 //                    findScavengedObject
@@ -970,23 +1014,21 @@ std::shared_ptr<Object> Monster::findObjectToScavenge() {
 // This will search all of a mob's scavenged objects and return one
 // of them chosen at random
 std::shared_ptr<Object> Monster::findScavengedObject() {
-    std::vector<std::shared_ptr<Object>> scavengedObjects;
+    std::shared_ptr<Object> selectedObject = nullptr;
+    int count = 0;
 
-    // Collect all objects with the O_WAS_SCAVENGED flag
     for (const auto& obj : objects) {
-        if (obj->flagIsSet(O_WAS_SCAVENGED)) {
-            scavengedObjects.push_back(obj);
+        if (!obj->flagIsSet(O_WAS_SCAVENGED)) continue;
+
+        // Randomly select one, ensuring equal probability among all valid objects
+        if (Random::get(0, count++) == 0) {
+            selectedObject = obj;
         }
     }
 
-    // If no flagged objects are found, return nullptr
-    if (scavengedObjects.empty()) {
-        return(nullptr);
-    }
-
-    // Pick one at random
-    return(*Random::get(scavengedObjects));
+    return(selectedObject);
 }
+
 
 //**********************************************************************
 //                    countScavengedObjects
@@ -1020,7 +1062,7 @@ void Monster::checkScavange(long t) {
 
     if(isMagicallyHeld())
         return;
-    
+
     // If already scavenged, might decide to drop!
     if(flagIsSet(M_HAS_SCAVENGED) && !flagIsSet(M_SCAVENGE_NO_DROP) && countScavengedObjects() > 0) {
         i = lasttime[LT_MON_SCAVENGE].ltime;
@@ -1060,7 +1102,21 @@ void Monster::checkScavange(long t) {
         }
         if(t - i > 20)
             lasttime[LT_MON_SCAVENGE].ltime = t;
-    } 
+    }
+
+    if(flagIsSet(M_DISSOLVES_ROOM_OBJ)) {
+        i = lasttime[LT_MON_SCAVENGE].ltime;
+        if( t - i > 20 && Random::get<bool>(0.15)) {
+            object = findObjectToDissolve();
+            if (object) {
+                broadcast((std::shared_ptr<Socket> )nullptr, room, "^g%M dissolved %1P^x.", this, object.get());
+                object->deleteFromRoom();
+                object.reset();
+            }
+        }
+        if(t - i > 20)
+            lasttime[LT_MON_SCAVENGE].ltime = t;
+    }
     
     // thief code
     if(flagIsSet(M_TAKE_LOOT) || flagIsSet(M_STREET_SWEEPER)) {
@@ -1121,10 +1177,10 @@ void Monster::checkScavange(long t) {
 //                      canScavange
 //*********************************************************************
 
-bool Monster::canScavange(const std::shared_ptr<Object>&  object) {
+bool Monster::canScavange(const std::shared_ptr<Object>&  object, bool scavengeHiddenObjects) {
     return( !object->flagIsSet(O_NO_TAKE) &&
             !object->flagIsSet(O_SCENERY) &&
-            !object->flagIsSet(O_HIDDEN) &&
+            !(object->flagIsSet(O_HIDDEN) && !scavengeHiddenObjects) &&
             !object->flagIsSet(O_PERM_INV_ITEM) &&
             !object->flagIsSet(O_PERM_ITEM) &&
             !Unique::is(object)

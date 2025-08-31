@@ -81,6 +81,7 @@ typedef enum {
     CREATE_GET_SEX,
     CREATE_GET_RACE,
     CREATE_GET_SUBRACE,
+    CREATE_GET_VERIFY_RACE,
     CREATE_GET_CLASS,
     CREATE_GET_DEITY,
     CREATE_START_LOC,
@@ -146,6 +147,7 @@ namespace Create {
     bool getSex(const std::shared_ptr<Socket>& sock, std::string str, int mode);
     bool getRace(const std::shared_ptr<Socket>& sock, std::string str, int mode);
     bool getSubRace(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    bool getVerifyRace(const std::shared_ptr<Socket>& sock, std::string str, int mode);
     void finishRace(const std::shared_ptr<Socket>& sock);
     bool getClass(const std::shared_ptr<Socket>& sock, std::string str, int mode);
     bool getDeity(const std::shared_ptr<Socket>& sock, std::string str, int mode);
@@ -181,5 +183,5 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr);
 void createPlayer(std::shared_ptr<Socket> sock, const std::string& str);
 void doSurname(std::shared_ptr<Socket> sock, const std::string& str);
 void doTitle(std::shared_ptr<Socket> sock, const std::string& str);
-std::string getRacialBonusesString(short race);
+std::string getRacialBonusesString(short race, bool full=false);
 bool usePredefinedStatsUnavailable(short race);

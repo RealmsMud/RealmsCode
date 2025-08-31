@@ -331,6 +331,74 @@ bool Creature::immuneToPoison() const {
     return(false);
 }
 
+bool Creature::resistantToPoison() const {
+
+    if(getRace()==DWARF || getRace()==GOBLIN || getRace()==OGRE ||
+        getRace()==OROG || getRace()==DUERGAR || getRace() == KOBOLD ||
+        getRace() == ORC || getRace() == HALFORC)
+        return(true);
+
+    return(false);
+}
+
+int Creature::getWoundingChance() {
+    int woundingChance = 250; // default base; percentage: 1d1000 roll
+
+    // Conditions for no wounding
+    if(getClass() == CreatureClass::LICH || // Liches immune!
+        isEffected("stoneskin") || isEffected("armor") || isEffected("regeneration") || // These effects prevent wounding
+        isEffected("wounding")) // If already wounded, do not wound again!
+        return(0);
+
+    //Race based resistance
+    switch(getRace()) {
+        case TROLL:
+            woundingChance = 20;
+            break;
+        case OGRE:
+        case MINOTAUR:
+            woundingChance = 100;
+            break;
+        case OROG:
+            woundingChance = 120;
+            break;
+        case HALFGIANT:
+        case HALFORC:
+        case ORC:
+        case DUERGAR:
+        case KATARAN:
+            woundingChance = 150;
+            break;
+        default:
+            break;
+    }
+
+    //Beat up means more receptable
+    if(hp.getCur() < hp.getMax()/4)
+        woundingChance *= 2;
+
+    return(woundingChance);
+}
+
+
+
+bool Creature::resistantToDisease() const {
+
+    if(getRace()==GOBLIN || getRace()==OGRE || getRace()==OROG || 
+       getRace() == KOBOLD || getRace() == ORC || 
+       getRace() == HALFORC || getRace() == TROLL)
+        return(true);
+
+    return(false);
+}
+
+bool Creature::isSimpleMinded() const {
+
+    if(getRace() == OGRE || getRace()==OROG)
+        return(true);
+
+    return(false);
+}
 //*********************************************************************
 //                      isPoisoned
 //*********************************************************************

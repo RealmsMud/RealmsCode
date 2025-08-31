@@ -466,7 +466,8 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
     if(isMagicallyHeld(false))
         return(0);
 
-    if(attackType != ATTACK_BASH && attackType != ATTACK_AMBUSH && attackType != ATTACK_MAUL && attackType != ATTACK_KICK && attackType != ATTACK_GORE) {
+    if(attackType != ATTACK_BASH && attackType != ATTACK_AMBUSH && attackType != ATTACK_MAUL && 
+       attackType != ATTACK_KICK && attackType != ATTACK_GORE && attackType != ATTACK_SLAM) {
         if(!checkAttackTimer())
             return(0);
 
@@ -527,7 +528,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
         broadcast(getSock(), pVictim->getSock(), getRoomParent(), "%M attacked %N!", this, pVictim.get());
     }
 
-    if(attackType != ATTACK_KICK && attackType != ATTACK_MAUL && attackType != ATTACK_GORE) {
+    if(attackType != ATTACK_KICK && attackType != ATTACK_MAUL && attackType != ATTACK_GORE && attackType != ATTACK_BASH && attackType != ATTACK_SLAM) {
         // A monk that has no weapon, no holding item, but is wearing gloves gets to use the enchant off of them
         if (cClass == CreatureClass::MONK && !ready[WIELD - 1] && !ready[HELD - 1] && ready[HANDS - 1]) {
             //enchant = abs(ready[HANDS-1]->adjustment);
@@ -541,34 +542,49 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
             loc = WIELD;
 
             // No multiple attacks for bash
-            if (attackType != ATTACK_BASH) {
+          //  if (attackType != ATTACK_BASH) {  <--- This will get changed to ATTACK_SLAM
                 // Two attacks for duel wield
                 if (ready[HELD - 1] && ready[HELD - 1]->getWearflag() == WIELD) {
                     duelWield = true;
                     attacks++;
                 }
-            }
+
+         //   }
+
         }
     } else if(attackType == ATTACK_KICK) {
         // kick
         if(ready[FEET-1]) {
             weapon = ready[FEET-1];
-            //enchant = abs(weapon->adjustment);
             duelWield = false;
             loc = FEET;
         }
+    } else if(attackType == ATTACK_BASH) {
+        // shield bash
+        if(ready[SHIELD-1]) {
+            weapon = ready[SHIELD-1];
+            duelWield = false;
+            loc = SHIELD;
+        }
     } else if(attackType == ATTACK_GORE) {
-        // kick
+        // gore
         if(ready[HEAD-1]) {
             weapon = ready[HEAD-1];
-            //enchant = abs(weapon->adjustment);
+            duelWield = false;
+            loc = HEAD;
+        }
+    } else if(attackType == ATTACK_SLAM) {
+        // gore
+        if(ready[WIELD-1]) {
+            weapon = ready[WIELD-1];
             duelWield = false;
             loc = HEAD;
         }
     }
 
-    // No numAttacks for ambush
-    if(weapon && weapon->getNumAttacks() && attackType != ATTACK_AMBUSH && attackType != ATTACK_BASH && attackType != ATTACK_MAUL) {
+    // No numAttacks for ambush, bash, maul, slam, gore, kick
+    if(weapon && weapon->getNumAttacks() && attackType != ATTACK_AMBUSH && attackType != ATTACK_BASH && attackType != ATTACK_MAUL && 
+                                            attackType != ATTACK_SLAM && attackType != ATTACK_GORE && attackType != ATTACK_KICK) {
         // Random number of attacks 1-numAttacks
         attacks = Random::get<short>(1, weapon->getNumAttacks());
         // TODO: maybe add a flag so always certain # of attacks
@@ -601,13 +617,19 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 // Can't fumble your boots when kicking
                 resultFlags |= NO_FUMBLE;
                 altSkillLevel = (int)getSkillGained("kick");
-            } else if(attackType == ATTACK_MAUL) {
+            } else if(attackType == ATTACK_BASH) {
+                // Can't fumble shield when bashing
+                resultFlags |= NO_FUMBLE;
+                altSkillLevel = (int)getSkillGained("bash");
+            }else if(attackType == ATTACK_MAUL) {
                 resultFlags |= NO_FUMBLE;
                 altSkillLevel = (int)getSkillGained("maul");
             } else if(attackType == ATTACK_GORE) {
                 resultFlags |= NO_FUMBLE;
                 altSkillLevel = (int)getSkillGained("gore");
-            }
+            } else if(attackType == ATTACK_SLAM) {
+                altSkillLevel = (int)getSkillGained("slam");
+            } 
 
             AttackResult result = getAttackResult(victim, weapon, resultFlags, altSkillLevel);
             // We can only fumble on the first hit of a multi weapon attack,
@@ -620,6 +642,12 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 if(result == ATTACK_HIT || result == ATTACK_CRITICAL || result == ATTACK_BLOCK || result == ATTACK_GLANCING) {
                     if(!pVictim && victim->flagIsSet(M_NO_BACKSTAB))
                         result = ATTACK_MISS;
+
+                    if(victim->getRace() == BARBARIAN && Random::get(1,100) <= 15) {
+                        *this << setf(CAP) << victim << " noticed you at the last second! Your ambush failed!\n";
+                        *victim << "You noticed " << this << "'s ambush just in the nick of time!\n";
+                        result = ATTACK_MISS;
+                    }
                 }
             }
 
@@ -642,6 +670,15 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                         multiplier = 0.5;
 
                     if(ready[SHIELD-1] && ready[SHIELD-1]->flagIsSet(O_ENHANCE_BASH))
+                        multiplier += .1;
+                }
+                else if(attackType == ATTACK_SLAM) {
+                    if(cClass == CreatureClass::BERSERKER || cClass == CreatureClass::FIGHTER)
+                        multiplier = 0.5;
+                    else
+                        multiplier = 0.4;
+
+                    if(ready[WIELD-1] && ready[WIELD-1]->flagIsSet(O_ENHANCE_SLAM))
                         multiplier += .1;
                 }
 
@@ -678,7 +715,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 bool wasKilled = false, freeTarget = false, meKilled;
 
                 if(attackType == ATTACK_BASH) {
-                    atk ="bashed";
+                    atk ="shield bashed";
                     showToRoom = true;
                 } else if(attackType == ATTACK_KICK) {
                     atk ="kicked";
@@ -688,6 +725,10 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                     showToRoom = true;
                 } else if(attackType == ATTACK_GORE) {
                     atk ="gored";
+                    showToRoom = true;
+                }
+                else if(attackType == ATTACK_SLAM) {
+                    atk ="slammed";
                     showToRoom = true;
                 }
                 else {
@@ -704,7 +745,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 
                 meKilled = doReflectionDamage(attackDamage, victim);
 
-                if(!meKilled && weapon && weapon->getMagicpower() && weapon->flagIsSet(O_WEAPON_CASTS) && weapon->getChargesCur() > 0)
+                if(!meKilled && attackType != ATTACK_SLAM && weapon && weapon->getMagicpower() && weapon->flagIsSet(O_WEAPON_CASTS) && weapon->getChargesCur() > 0)
                     wcdmg += castWeapon(victim, weapon, wasKilled);
 
                 broadcastGroup(false, victim, "^M%M^x %s ^M%N^x for *CC:DAMAGE*%d^x damage, %s%s\n", this, atk.c_str(), victim.get(), attackDamage.get()+drain, victim->heShe(), victim->getStatusStr(attackDamage.get()+drain));
@@ -735,10 +776,17 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
 
                 if(attackType == ATTACK_BASH) {
                     if(victim->isPlayer())
-                        victim->stun(Random::get(4,6));
+                        victim->stun(Random::get(2,3));
                     else
-                        victim->stun(Random::get(5,8));
+                        victim->stun(Random::get(3,5));
                     checkImprove("bash", true);
+                } else if(attackType == ATTACK_SLAM) {
+                    if (Random::get(1,10) < 3) {
+                        *this << ColorOn << "^y" << setf(CAP) << victim << " is momentarily stunned by your slam!\n" << ColorOff;
+                        *victim << ColorOn << "^y" << setf(CAP) << this << "'s slam momentarily stunned you!\n" << ColorOff;
+                        victim->stun(Random::get(1,2));
+                    }
+                    checkImprove("slam", true);
                 } else if(attackType == ATTACK_MAUL) {
                     int dur = 0;
                     if(!pVictim) {
@@ -792,10 +840,16 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                     setAttackDelay(getAttackDelay() * 2);
                     break;
                 } else if(attackType == ATTACK_BASH) {
-                    *this << "Your bash failed.\n";
+                    *this << "Your shield bash was ineffective.\n";
                     checkImprove("bash", false);
-                    *victim << this << " tried to bash you.\n";
-                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to bash %N.", this, victim.get());
+                    *victim << this << " tried to shield bash you.\n";
+                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to shield bash %N.", this, victim.get());
+                    break;
+                } else if(attackType == ATTACK_SLAM) {
+                    *this << "Your slam was ineffective.\n";
+                    checkImprove("slam", false);
+                    *victim << this << " tried to slam you.\n";
+                    broadcast(getSock(), victim->getSock(), victim->getRoomParent(), "%M tried to slam %N.", this, victim.get());
                     break;
                 } else if(attackType == ATTACK_KICK) {
                     *this << "Your kick was ineffective.\n";
@@ -845,7 +899,7 @@ int Player::attackCreature(const std::shared_ptr<Creature> &victim, AttackType a
                 }
             } else if(result == ATTACK_FUMBLE) {
                 statistics.fumble();
-                *this << ColorOn << "^gYou FUMBLED your weapon.\n" << ColorOff;
+                *this << ColorOn << "^gYou FUMBLED " << ((weapon && !weapon->flagIsSet(O_NO_PREFIX))?"your ":" ") << (weapon?weapon->getName():"your attack") << ".\n" << ColorOff;
                 broadcast(getSock(), getRoomParent(), "^g%M fumbled %s weapon.", this, hisHer());
 
                 checkWeapon(Containable::downcasted_shared_from_this<Player>(), weapon, true, &loc, &attacks, &wielding, multiWeapon);
@@ -892,6 +946,19 @@ int Creature::castWeapon(const std::shared_ptr<Creature>& target, std::shared_pt
 
     if(getRoomParent()->flagIsSet(R_NO_MAGIC) || weapon->getMagicpower() < 1)
         return(0);
+
+    if(weapon->getChargesCur() <=0)
+        return(0);
+
+    if(weapon->getCastChance()) {
+        short roll = Random::get(1,1000);
+
+        if(roll > weapon->getCastChance()) {
+            if(isCt())
+                *this << ColorOn << "^DWeapon cast chance roll (d1000): " << roll << " (" << weapon->getCastChance() << "/1000)^x\n";
+            return(0);
+        }
+    }
 
     splno = weapon->getMagicpower() - 1;
     // Do we have sufficient charges to cast?

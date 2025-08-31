@@ -43,6 +43,7 @@
 PlayerClass::PlayerClass(xmlNodePtr rootNode) {
     needDeity = false;
     numProf = 1;
+    xpAdjust = 0;
     hasAutomaticStats = false;
     baseStrength=-1;
     baseDexterity=-1;
@@ -89,6 +90,7 @@ short PlayerClass::getBaseHp() { return(baseHp); }
 short PlayerClass::getBaseMp() { return(baseMp); }
 bool PlayerClass::needsDeity() { return(needDeity); }
 short PlayerClass::numProfs() { return(numProf); }
+int PlayerClass::getXPAdjustment() { return(xpAdjust); }
 LevelGain* PlayerClass::getLevelGain(int lvl) { return(levels[lvl]); }
 bool PlayerClass::hasDefaultStats() { return(hasAutomaticStats); }
 bool PlayerClass::setDefaultStats(std::shared_ptr<Player> player) {

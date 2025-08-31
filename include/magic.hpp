@@ -63,6 +63,8 @@ enum DomainOfMagic {
     TRICKERY,
     TRAVEL,
     CREATION,
+    DAY,
+    NIGHT,
 
     NO_DOMAIN,
 
@@ -272,8 +274,12 @@ std::string realmSkill(Realm realm);
 #define S_HOLD_PLANT            173 // hold-plant spell
 #define S_HOLD_ELEMENTAL        174 // hold-elemental spell
 #define S_HOLD_FEY              175 // hold-fey
+#define S_LIGHT                 176 // light spell
+#define S_SHIELD                177 // shield spell
+#define S_EMPATHY               178 // shield spell
 
-#define MAXSPELL                176 // Increment when you add a spell
+
+#define MAXSPELL                179 // Increment when you add a spell
 
 
 #define SpellFn const std::shared_ptr<Creature>&, cmd*, SpellData*
@@ -287,6 +293,7 @@ DomainOfMagic get_spell_domain(int nIndex);
 // spells
 int splAnnulMagic(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splArmor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splShield(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splAuraOfFlame(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splBarrierOfCombustion(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splBind(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
@@ -358,7 +365,9 @@ int splInvisibility(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
 int splJudgement(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splKnock(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splKnowAura(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splEmpathy(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splLevitate(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
+int splLight(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splMagicMissile(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splMendWounds(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
 int splNecroDrain(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData);
@@ -437,7 +446,7 @@ bool canEnchant(const std::shared_ptr<Player>& player, SpellData* spellData);
 bool canEnchant(const std::shared_ptr<Creature>& player, std::shared_ptr<Object>  object);
 bool decEnchant(const std::shared_ptr<Player>& player, CastType how);
 
-int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength=-2, long duration=-2);
+int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength=-2, long duration=-2, int maxStr=0);
 
 bool checkRefusingMagic(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, bool healing=false, bool print=true);
 bool replaceCancelingEffects(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, const std::string &effect);

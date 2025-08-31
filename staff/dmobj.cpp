@@ -68,6 +68,7 @@
 #include "xml.hpp"                             // for loadObject
 #include "toNum.hpp"
 #include "join.hpp"
+#include "color.hpp"
 
 //*********************************************************************
 //                      dmCreateObj
@@ -117,6 +118,7 @@ std::string Object::statObj(int statFlags) {
     std::string str = "";
     std::string objName = getName();
     std::string objPlural = plural;
+    std::string castChanceString;
     
     boost::replace_all(objName, "^", "^^");
     boost::replace_all(objPlural, "^", "^^");
@@ -215,11 +217,17 @@ std::string Object::statObj(int statFlags) {
     if(minStrength > 0)
         objStr << "^WMinimum " << minStrength << " strength required to use.^x\n";
 
+    if(permSpawnChance > 0)
+        objStr << "^cPerm spawn chance: " << permSpawnChance << "/1000^x\n";
+
     objStr << "Type: " << getTypeName() << "    ";
 
     if(type == ObjectType::WEAPON) {
-        if(magicpower > 0 && magicpower < MAXSPELL && flagIsSet(O_WEAPON_CASTS))
-            objStr << "Casts: " << magicpower << "(" << get_spell_name(magicpower - 1) << ")\n";
+        if(magicpower > 0 && magicpower < MAXSPELL && flagIsSet(O_WEAPON_CASTS)) {
+            if(castChance>0)
+                castChanceString = " - CastChance: " + std::to_string(castChance) + "/1000";
+            objStr << "^yCasts: " << magicpower << " (" << get_spell_name(magicpower - 1) << (castChance>0?castChanceString:"") << ")^x\n";
+        }
     } else {
         switch (type) {
         case ObjectType::ARMOR:
@@ -265,6 +273,8 @@ std::string Object::statObj(int statFlags) {
         case ObjectType::SONGSCROLL:
             if(magicpower > 0 && magicpower < gConfig->getMaxSong())
                 objStr << "Song #" << magicpower << "(Song of " << get_song_name(magicpower-1) << ")\n";
+            break;
+        default:
             break;
         }
     }
@@ -511,6 +521,8 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
             !strcmp(cmnd->str[3], "material") ||
             !strcmp(cmnd->str[3], "effect") ||
             !strcmp(cmnd->str[3], "eff") ||
+            !strcmp(cmnd->str[3], "efa") ||
+            !strcmp(cmnd->str[3], "efr") ||
             !strcmp(cmnd->str[3], "wear")
         ) )
     ) {
@@ -710,8 +722,8 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
             }
         } else if(flags[1] == 'h') {
             // Charges
-            if(num > 100000 || num < 0) {
-                player->print("How about a realistic number of charges.\n");
+            if(num > 1000 || num < 0) {
+                player->print("Charges must be between 0 and 1000.\n");
                 return(PROMPT);
             }
 
@@ -733,9 +745,31 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 setType = "Charges (Cur)";
             }
             result = num;
+        } else if(flags[1] == 'c') {
+            if(object->getType() != ObjectType::WEAPON || !object->flagIsSet(O_WEAPON_CASTS) || 
+                    !object->getMagicpower() || !object->getChargesCur() || !object->getChargesMax()) {
+
+                *player << ColorOn << "^yFor weapon cast chance to work, the object:\n";
+                *player << "1) Must be of object type weapon. " << (object->getType() == ObjectType::WEAPON?"(Valid)":"^R<--^y") << "\n";
+                *player << "2) Must have oflag " << (O_WEAPON_CASTS+1) << " set. " << (object->flagIsSet(O_WEAPON_CASTS)?"(Valid)":"^R<--^y") << "\n";
+                *player << "3) Must have a magic power (spell) set. " << (object->getMagicpower()?"(Valid)":"^R<--^y") << "\n";
+                *player << "4) Must have current charges set. " << (object->getChargesCur()?"(Valid)":"^R<--^y") << "\n";
+                *player << "5) Must have max charges set, and max charges >= current charges. " 
+                                    << ((object->getChargesMax() && (object->getChargesMax()>=object->getChargesCur()))?"(Valid)":"^R<--^y") << "\n";
+                *player << "^x\n" << ColorOff;
+
+                return(0);
+            }
+            else if(cmnd->val[3] < 0 || cmnd->val[3] > 1000) {
+                *player << ColorOn << "^yWeapon cast chance must be between 1 and 1000 (out of 1000).^x\n" << ColorOff;
+                return(0);
+            }
+        
+            object->setCastChance((short)cmnd->val[3]);
+                *player << "Weapon cast chance set to: " << cmnd->val[3] << "/1000.\n";
         }
         else {
-            return(setWhich(player, "coin cost, compass, ch(arges), ch(arges)m(ax), ch(arges)a(ll)"));
+            return(setWhich(player, "cast chance(cc), coin cost(coi), compass(com), charges(ch), charges max(chm), charges all(cha)"));
         }
         break;
 
@@ -793,8 +827,19 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
             break;
         case 'f':
         {
+
+            bool addToEffList=false, remFromEffList=false;
+
+            if(flags[2] == 'a') 
+                addToEffList=true;
+            else if (flags[2] == 'r')
+                remFromEffList=true;
+
             if(cmnd->num < 5) {
-                player->print("Set what effect to what?\n");
+                if(addToEffList || remFromEffList)
+                    *player << ColorOn << (addToEffList?"Add":"Remove") << " what effect " << (addToEffList?"to ":"from ") << stripColor(objname) << "'s effect list?\n" << ColorOff; 
+                else
+                    *player << ColorOn << "Set " << stripColor(objname) << "'s bestowed effect to what?\n" << ColorOff;
                 return(0);
             }
 
@@ -803,34 +848,55 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
             std::string txt = getFullstrText(cmnd->fullstr, 5);
             if(!txt.empty())
-                duration = toNum<long>(txt);
+                duration = (long)std::stoi(txt);
             txt = getFullstrText(cmnd->fullstr, 6);
             if(!txt.empty())
-                strength = toNum<long>(txt);
+                strength = std::stoi(txt);
 
             if(duration > EFFECT_MAX_DURATION || duration < -1) {
-                player->print("Duration must be between -1 and %d.\n", EFFECT_MAX_DURATION);
+                *player << "Duration must be either -1 (permanent), or up to " << EFFECT_MAX_DURATION << " seconds.\n";
                 return(0);
             }
 
             if(strength < 0 || strength > EFFECT_MAX_STRENGTH) {
-                player->print("Strength must be between 0 and %d.\n", EFFECT_MAX_STRENGTH);
+                *player << "Strength must be between 0 and " << EFFECT_MAX_STRENGTH << ".\n";
                 return(0);
             }
 
             std::string effectStr = cmnd->str[4];
 
-            if(duration == 0) {
-                player->print("Effect '%s' removed.\n", object->getEffect().c_str());
-                object->clearEffect();
-                log_immort(2, player, "%s cleared %s's effect.\n",
-                    player->getCName(), objname);
-            } else {
+            if(duration == 0 || remFromEffList) {
+                if(remFromEffList && !object->isEffected(effectStr)) {
+                    *player << ColorOn << "Effect '^W" << effectStr << "^x' not present or not found on " << stripColor(objname) << ".\n" << ColorOff;
+                    return(0);
+                }
+                if(remFromEffList) {
+                    *player << ColorOn << "Effect '^W" << effectStr << "^x' removed from " << stripColor(objname) << "'s effect list.\n" << ColorOff;
+                    object->removeEffect(effectStr);
+                    log_immort(2, player, "%s removed effect '%s' from %s's effect list.\n",player->getCName(), effectStr.c_str(), objname);   
+                }
+                else {
+                    *player << ColorOn << "Bestowed effect '^W" << object->getEffect() << "^x' removed from " << stripColor(objname) << ".\n" << ColorOff;
+                    log_immort(2, player, "%s cleared %s's bestowed effect (%s).\n",player->getCName(), objname, object->getEffect().c_str());
+                    object->clearEffect();
+                }
+
+            } else if (addToEffList) {
+                object->addEffect(effectStr,duration,strength);
+                if(!object->isEffected(effectStr)) {
+                    *player << ColorOn << "The efffect '^W" << effectStr << "^x' is not a valid effect to be added to an object's effect list.\n" << ColorOff;
+                    return(0);
+                }
+                *player << ColorOn << "Effect '^W" << effectStr << "^x' added to " << stripColor(objname) << "'s effect list. (Duration: " << duration << " Strength: " << strength << ")\n" << ColorOff;
+                log_immort(2, player, "%s added effect '%s' to %s's effect list.\n", player->getCName(), effectStr.c_str(), objname);
+
+            } 
+            else {
                 object->setEffect(effectStr);
                 object->setEffectDuration(duration);
                 object->setEffectStrength(strength);
-                player->print("Effect '%s' added with duration %d and strength %d.\n", effectStr.c_str(), duration, strength);
-                log_immort(2, player, "%s set %s's effect to %s with duration %d and strength %d.\n",
+                *player << ColorOn << "Bestowed effect '^W" << effectStr << "^x' added with duration " << duration << ", strength " << strength << ".\n" << ColorOff;
+                log_immort(2, player, "%s set %s's bestowed effect to '%s' with duration %d, strength %d.\n",
                     player->getCName(), objname, effectStr.c_str(), duration, strength);
             }
         }
@@ -1030,7 +1096,23 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(setWhich(player, "objects"));
         }
         break;
-
+    case 'p':
+        if(!strcmp(cmnd->str[3], "pschance")) {
+            if(cmnd->val[3] < 0 || cmnd->val[3] > 1000) {
+                *player << "PermObj spawn chance must be between 0 and 1000.";
+                return(0);
+            }
+            object->setPermSpawnChance((short)cmnd->val[3]);
+            *player << "PermObj spawn chance set to " << (short)cmnd->val[3] << "/1000.\n";
+            log_immort(true, player, "%s set object %s's %s to %d/1000.\n",
+                player->getCName(), object->getCName(),
+                "PermObj spawn chance", object->getPermSpawnChance());
+            if (!object->flagIsSet(O_PERM_ITEM)) {
+                *player << "NOTE: PermObj spawn chance only works on permed objects.\n";
+                *player << ColorOn << "Please remember to use *perm on " << object << ".\n" << ColorOff;
+            }
+        }
+        break;
     case 'q':
         if(flags[1] == 'u' && flags[2] == 'a') {
             if(object->getType() == ObjectType::ARMOR || object->getType() == ObjectType::WEAPON) {

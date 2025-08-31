@@ -62,6 +62,7 @@ private:
 
     bool isSpellEffect{};  // Decides if the effect will show up under "spells under"
     bool useStrength{};
+    bool useVariableStrength{};
 
     int baseDuration{};       // Base duration of the effect
     float potionMultiplyer{}; // Multiplier of duration for potion
@@ -92,6 +93,7 @@ public:
     [[nodiscard]] bool isPulsed() const;
     [[nodiscard]] bool isSpell() const;
     [[nodiscard]] bool usesStrength() const;
+    [[nodiscard]] bool usesVariableStrength() const;
 
     // Base effect(s) - for multiple effects that confer the same type of effect (fly, etc)
     const std::list<std::string> &getBaseEffects();
@@ -172,6 +174,8 @@ public:
     void setStrength(int pStrength);
     void setExtra(int pExtra);
     void setDuration(long pDuration);
+    
+
     void setParent(MudObject *parent);
 
     bool isOwner(const std::shared_ptr<Creature> &owner) const;
@@ -193,6 +197,7 @@ private:
     int pulseModifier = 0;      // Adjustment to base pulse timer
     long duration = 0;          // How much longer will this effect last
     int strength = 0;           // How strong is this effect (for overwriting effects)
+
     int extra = 0;              // Extra info
     const Effect *myEffect = nullptr; // Pointer to the effect listing
 
@@ -227,8 +232,10 @@ public:
 
     //EffectInfo* addEffect(std::string_view effect, std::shared_ptr<MudObject> applier, bool show, std::shared_ptr<MudObject> pParent=0, const std::shared_ptr<Creature> & onwer=0, bool keepApplier=false);
     EffectInfo *addEffect(EffectInfo *newEffect, bool show, MudObject *parent = nullptr, bool keepApplier = false);
+
     EffectInfo *addEffect(const std::string& effect, long duration, int strength, const std::shared_ptr<MudObject>&applier = nullptr, bool show = true, MudObject *parent = nullptr,
                           const std::shared_ptr<Creature> &onwer = nullptr, bool keepApplier = false);
+
     void copy(const Effects *source, MudObject *pParent = nullptr);
 
     bool removeEffect(const std::string& effect, bool show, bool remPerm, const std::shared_ptr<MudObject>&fromApplier = nullptr);

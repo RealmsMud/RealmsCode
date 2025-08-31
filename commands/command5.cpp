@@ -647,13 +647,19 @@ int cmdQuit(const std::shared_ptr<Player>& player, cmd* cmnd) {
 }
 
 
-std::string getFullStatName(int stat) {
+std::string getFullStatName(int stat, bool cap) {
     std::string fullStatName[7] = { "noStat", "strength", "dexterity", "constitution", "intelligence", "piety", "charisma"};
 
-    if (stat < 0 || stat > 7)
-        return(fullStatName[0]);
+    if (stat < 0 || stat >= 7) 
+        return fullStatName[0];
 
-    return(fullStatName[stat]);
+    std::string statName = fullStatName[stat];
+
+    if (cap) {
+        statName[0] = std::toupper(statName[0]); // Capitalize first letter
+    }
+
+    return statName;
 }
 
 //*********************************************************************
@@ -1052,9 +1058,9 @@ int cmdTime(const std::shared_ptr<Player>& player, cmd* cmnd) {
             if(pet->isMonster() && pet->isPet()) {
                 i = 1;
                 if(pet->isUndead())
-                    *player << "Time left before creature following you leaves/fades: " << (timestr(pet->lasttime[LT_ANIMATE].ltime+pet->lasttime[LT_ANIMATE].interval-t)) << "\n";
+                    *player << "Time left before creature following you leaves/fades: " << (timestr(std::max<long>(0,(pet->lasttime[LT_ANIMATE].ltime+pet->lasttime[LT_ANIMATE].interval-t)))) << "\n";
                 else
-                    *player << "Time left before creature following you leaves/fades: " << (timestr(pet->lasttime[LT_INVOKE].ltime+pet->lasttime[LT_INVOKE].interval-t)) << "\n";
+                    *player << "Time left before creature following you leaves/fades: " << (timestr(std::max<long>(0,(pet->lasttime[LT_INVOKE].ltime+pet->lasttime[LT_INVOKE].interval-t)))) << "\n";
 
             }
         }

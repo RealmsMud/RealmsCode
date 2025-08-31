@@ -61,9 +61,10 @@ class LastTime;
 #define DL_HARM         13  // Daily harm casts
 #define DL_LEVITATE     14  // Daily innate levitates
 #define DL_INVISIBLE    15  // Daily innate invisibles
+#define DL_DEAFNESS     16 // Daily deafness
 
 
-#define DAILYLAST       15
+#define DAILYLAST       16
 
 // Object Last-time stuff
 #define LT_ENCHA        0
@@ -90,10 +91,10 @@ class LastTime;
 #define LT_TURN         15
 #define LT_FRENZY       16
 #define LT_INNATE       17
-// free             18
+#define LT_BASH         18
 #define LT_PRAY         19
 #define LT_PREPARE      20
-// free             21
+#define LT_SLAM         21
 #define LT_PLAYER_SAVE      22
 // free             23
 // free             24
@@ -103,7 +104,7 @@ class LastTime;
 #define LT_AGE          28
 // free             29
 // free             30
-// free             31
+#define LT_SMASH    31
 #define LT_SONG_PLAYED      33
 #define LT_SING         35
 #define LT_CHARMED      36

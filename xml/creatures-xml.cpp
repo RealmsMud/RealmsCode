@@ -56,6 +56,7 @@
 #include "stats.hpp"                                // for Stat
 #include "structs.hpp"                              // for daily, saves
 #include "xml.hpp"                                  // for newStringChild
+#include "paths.hpp"                                // for Post notifications on changes
 
 class Object;
 
@@ -258,46 +259,51 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
 
     if(getVersion() < "2.62c") {
         #define OLD_GREYELF 37
+        #define OLD_WILDELF 38
         #define OLD_DUERGAR 40
 
         if(getRace() == OLD_GREYELF)
             setRace(GREYELF);
+        if(getRace() == OLD_WILDELF)
+            setRace(WILDELF);
         if(getRace() == OLD_DUERGAR)
             setRace(DUERGAR);
 
-        if(getRace() == CAMBION) {
+        // Lanugage correction
+        if(getRace() == CAMBION || getRace() == TIEFLING) {
             forgetLanguage(LINFERNAL);
             learnLanguage(LABYSSAL);
         }
 
-        //Added a lot of additional languages for the various races
-        //Going to just reinit the languages for players
-        if(isPlayer())
-            getAsPlayer()->initLanguages();
     }
 
+    // Here and above - all creatures (including players)
+
     if(isPlayer()) {
+
         if(getVersion() < "2.47b") {
             pThis->recordLevelInfo();
         }
-    }
-    if(isPlayer()) {
+        
         if(getVersion() < "2.47b") {
-#define P_OLD_MISTED                55       // Player is in mist form
+            #define P_OLD_MISTED                55       // Player is in mist form
             if(flagIsSet(P_OLD_MISTED)) {
                 addEffect("mist", -1);
                 clearFlag(P_OLD_MISTED);
             }
-#define P_OLD_INCOGNITO                 104      // DM/CT is incognito
+            #define P_OLD_INCOGNITO                 104      // DM/CT is incognito
             if(flagIsSet(P_OLD_INCOGNITO)) {
                 addEffect("incognito", -1);
                 clearFlag(P_OLD_INCOGNITO);
             }
         }
+
         if(getVersion() < "2.54h") {
-#define P_OLD_NO_AUTO_WEAR              79       // Player won't wear all when they log on
+            #define P_OLD_NO_AUTO_WEAR              79       // Player won't wear all when they log on
             clearFlag(P_OLD_NO_AUTO_WEAR);
-        }
+            }
+
+
         if(getVersion() < "2.47a") {
             // Update weapon skills
             for (auto const& [skillId, skill] : skills) {
@@ -323,9 +329,9 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
 
         if(getVersion() < "2.46k" && knowsSkill("endurance")) {
             remSkill("endurance");
-#define P_RUNNING_OLD 56
+            #define P_RUNNING_OLD 56
             clearFlag(P_RUNNING_OLD);
-        }
+            }
 
         if(getVersion() < "2.43" && getClass() !=  CreatureClass::BERSERKER) {
             int skill = level;
@@ -346,7 +352,6 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             addSkill("necromancy", skill);
             addSkill("translocation", skill);
             addSkill("transmutation", skill);
-
             addSkill("fire", convertProf(cThis, FIRE));
             addSkill("water", convertProf(cThis, WATER));
             addSkill("earth", convertProf(cThis, EARTH));
@@ -354,6 +359,8 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             addSkill("cold", convertProf(cThis, COLD));
             addSkill("electric", convertProf(cThis, ELEC));
         }
+
+
         if(getVersion() < "2.45c" && getCastingType() == Divine) {
             int skill = level;
             if(isPureCaster() || isHybridCaster() || isStaff()) {
@@ -404,78 +411,132 @@ int Creature::readFromXml(xmlNodePtr rootNode, bool offline) {
             }
         }
 
-         if(isPlayer()) {
+            
 
-            if(getVersion() < "2.52") {
-                #define P_NO_LONG_DESCRIPTION_OLD      4
-                #define P_NO_SHORT_DESCRIPTION_OLD     5
-                clearFlag(P_NO_LONG_DESCRIPTION_OLD);
-                clearFlag(P_NO_SHORT_DESCRIPTION_OLD);
-            }
-             if(getVersion() < "2.52b") {
-                #define P_CAN_PROXY_OLD 156
-                clearFlag(P_CAN_PROXY_OLD);
-             }
+        if(getVersion() < "2.52") {
+            #define P_NO_LONG_DESCRIPTION_OLD      4
+            #define P_NO_SHORT_DESCRIPTION_OLD     5
+            clearFlag(P_NO_LONG_DESCRIPTION_OLD);
+            clearFlag(P_NO_SHORT_DESCRIPTION_OLD);
+        }
+        if(getVersion() < "2.52b") {
+            #define P_CAN_PROXY_OLD 156
+            clearFlag(P_CAN_PROXY_OLD);
+        }
 
-             if(getVersion() < "2.52d") {
-                #define P_CAN_MUDMAIL_STAFF_OLD 161
-                clearFlag(P_CAN_MUDMAIL_STAFF_OLD);
-             }
+        if(getVersion() < "2.52d") {
+            #define P_CAN_MUDMAIL_STAFF_OLD 161
+            clearFlag(P_CAN_MUDMAIL_STAFF_OLD);
+        }
 
-             //reset all saves to max of 99
-              if(getVersion() < "2.54c") {
-                for(int a=POI; a<=SPL;a++)
-                    saves[a].chance = std::min<short>(99,saves[a].chance);
-             }
+        //reset all saves to max of 99
+        if(getVersion() < "2.54c") {
+            for(int a=POI; a<=SPL;a++)
+                saves[a].chance = std::min<short>(99,saves[a].chance);
+         }
 
-              if(getVersion() < "2.54f") {
-                if (level < 15)
-                    daily[DL_TELEP].cur = 1;
-                else
-                    daily[DL_TELEP].cur = 3;
-                if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
-                    daily[DL_TELEP].cur = std::max(3,std::min(10, (int)getSkillLevel("translocation")/5));
+        if(getVersion() < "2.54f") {
+            if (level < 15)
+                daily[DL_TELEP].cur = 1;
+            else
+                daily[DL_TELEP].cur = 3;
+            if (getClass() == CreatureClass::MAGE || getClass() == CreatureClass::LICH)
+                daily[DL_TELEP].cur = std::max(3,std::min(10, (int)getSkillLevel("translocation")/5));
 
-             }
-             if(getVersion() < "2.56c") {
-                if (getClass() == CreatureClass::PALADIN && deity == LINOTHAN && level >=13) {
-                    addSkill("hands",(level*9));
-                }
-             }
-
-             if (getVersion() < "2.59") { 
-                // Free-action was turned into an effect - clean up old flag
-                #define P_FREE_ACTION_OLD   180
-                clearFlag(P_FREE_ACTION_OLD);
-                // Gore skill added for Minotaurs - give existing Minotaurs 75% of max gained skill
-                if (getRace() == MINOTAUR)
-                    addSkill("gore",std::max<int>(1,(level*30)/4));
-
-            }
-            if (getVersion() < "2.61") {
-                if (getClass() == CreatureClass::CLERIC && getDeity() == LINOTHAN)
-                    addSkill("parry",std::max<int>(1,(level*10)));
-            }
-
-            if (getVersion() < "2.61b") {
-                if (getClass() == CreatureClass::CLERIC && getDeity() == ARAMON && level >= 10 && getAsPlayer()->getSecondClass() == CreatureClass::NONE)
-                    addSkill("unholyword",std::max<int>(1,(level*30)/4));
-            }
-
-            //Multi-class clerics (like cleric/assassins) weren't supposed to get unholyword. Ooops....This fixes that.
-            if(getVersion() < "2.61c") {
-                if (getClass() == CreatureClass::CLERIC && getAsPlayer()->getSecondClass() != CreatureClass::NONE && knowsSkill("unholyword"))
-                    remSkill("unholyword");
-
-                // Bring Enoch clerics up to snuff with holyword, since they've been suffering with it being broken for so long
-                if (getClass() == CreatureClass::CLERIC && getAsPlayer()->getSecondClass() == CreatureClass::NONE && knowsSkill("holyword")) {
-                    if (getSkillGained("holyword") < ((level*30)/4))
-                        setSkill("holyword", ((level*30)/4));
-                }
             }
             
+        if(getVersion() < "2.56c") {
+            if (getClass() == CreatureClass::PALADIN && deity == LINOTHAN && level >=13) {
+                addSkill("hands",(level*9));
+            }
+         }
+
+         if (getVersion() < "2.59") { 
+            // Free-action was turned into an effect - clean up old flag
+            #define P_FREE_ACTION_OLD   180
+            clearFlag(P_FREE_ACTION_OLD);
+            // Gore skill added for Minotaurs - give existing Minotaurs 75% of max gained skill
+            if (getRace() == MINOTAUR)
+                addSkill("gore",std::max<int>(1,(level*30)/4));
+            }
+
+        if (getVersion() < "2.61") {
+            if (getClass() == CreatureClass::CLERIC && getDeity() == LINOTHAN)
+                addSkill("parry",std::max<int>(1,(level*10)));
         }
-    }
+
+        if (getVersion() < "2.61b") {
+            if (getClass() == CreatureClass::CLERIC && getDeity() == ARAMON && level >= 10 && getAsPlayer()->getSecondClass() == CreatureClass::NONE)
+                addSkill("unholyword",std::max<int>(1,(level*30)/4));
+        }
+        
+        //Multi-class clerics (like cleric/assassins) weren't supposed to get unholyword. Ooops....This fixes that.
+        if(getVersion() < "2.61c") {
+            if (getClass() == CreatureClass::CLERIC && getAsPlayer()->getSecondClass() != CreatureClass::NONE && knowsSkill("unholyword"))
+                remSkill("unholyword");
+            // Bring Enoch clerics up to snuff with holyword, since they've been suffering with it being broken for so long
+            if (getClass() == CreatureClass::CLERIC && getAsPlayer()->getSecondClass() == CreatureClass::NONE && knowsSkill("holyword")) {
+                if (getSkillGained("holyword") < ((level*30)/4))
+                    setSkill("holyword", ((level*30)/4));
+            }
+        }
+
+        if(getVersion() < "2.63") {
+            //Added a lot of additional languages for the various races
+            //Going to just reinit the languages for players
+            getAsPlayer()->initLanguages();
+
+            //Add transmute and enchant to existing level 10+ Mage/Thief or Lich at level*9 gained
+            if (level >=10 && (getClass() == CreatureClass::LICH || (getClass() == CreatureClass::MAGE && getAsPlayer()->getSecondClass() == CreatureClass::THIEF))) {
+                addSkill("transmute",(level*9));
+                addSkill("enchant",(level*9));
+            }
+
+            // Smash skill added for existing Ogres and Half-Giants - 75% of max gained for current level
+            if (getRace() == OGRE || getRace() == HALFGIANT)
+                addSkill("smash",std::max<int>(1,(level*9)/10));
+
+            // Existing Paladins receiving kick/slam/bash - 75% of max gained for current level
+            if (getClass() == CreatureClass::PALADIN) {
+                addSkill("kick",std::max<int>(1,(level*30)/4));
+            }
+
+            // Existing Dknights and paladins get bash at 75% of max gained for current level
+            if (getClass() == CreatureClass::DEATHKNIGHT || getClass() == CreatureClass::PALADIN) {
+                addSkill("bash",std::max<int>(1,(level*30)/4));
+            }
+
+            //Existing Berserkers, Fighters, Assassins, Rogues, Thieves, and Thief/Mages get slam at 75% of max gained per level
+            if (getClass() == CreatureClass::ASSASSIN || getClass() == CreatureClass::THIEF || getClass() == CreatureClass::ROGUE ||
+                getClass() == CreatureClass::FIGHTER || getClass() == CreatureClass::BERSERKER || getClass() == CreatureClass::PALADIN) {
+                addSkill("slam",std::max<int>(1,(level*30)/4));
+            }
+
+            //Existing clerics of Ares and Linothan get slam at 75% max gained for level
+            if (getClass() == CreatureClass::CLERIC && (getDeity() == ARES || getDeity() == LINOTHAN)) {
+                addSkill("slam",std::max<int>(1,(level*30)/4));
+            }
+
+            const auto notification = (Path::Post / getName()).replace_extension("notify");
+            std::string msg = "^yThe racial stat adjustments for race ^YOgre^y and ^WTroll^x were recently changed.\n"
+                             "Since your ogre or troll is currently one of their allowed classes, the 'changestats'\n"
+                             "command is now active for you.\n"
+                             "Please see: ^Rhelp changelog^y, ^Rhelp ogre^y, ^Rhelp troll^x, ^Rhelp changestats^y.^x\n";
+
+
+            if((getRace() == OGRE && (getClass() == CreatureClass::BERSERKER || getClass()==CreatureClass::DEATHKNIGHT || getClass()==CreatureClass::FIGHTER)) ||
+                (getRace() == TROLL && (getClass() == CreatureClass::ASSASSIN || getClass()==CreatureClass::BERSERKER || 
+                                       getClass()==CreatureClass::DEATHKNIGHT || getClass()==CreatureClass::FIGHTER || getClass()==CreatureClass::MONK))) {
+                if (!fs::exists(notification))
+                    sendSystemNotice(getName(), msg);
+                setFlag(P_CAN_CHANGE_STATS);
+                setFlag(P_UNREAD_MAIL);
+                
+            }
+                    
+        }
+
+    } // end if(isPlayer())
 
     setVersion();
 

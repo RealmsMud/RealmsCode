@@ -139,8 +139,8 @@ int dmEffectList(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         if(id != 0 && i != id) continue;
 
-        player->printPaged(fmt::format("{})\tName: ^W{:<20}^x   Use Str: {}^x    Display: {}\n", i,
-            effect.getName(), effect.usesStrength() ? "^gY" : "^rN", effect.getDisplay()));
+        player->printPaged(fmt::format("{})\tName: ^W{:<20}^x   Use Str: {}^x  Use vStr: {}^x  Display: {}\n", i,
+            effect.getName(), effect.usesStrength() ? "^gY" : "^rN", effect.usesVariableStrength() ? "^gY" : "^rN", effect.getDisplay()));
 
         if(!all && i != id) continue;
 
@@ -868,8 +868,6 @@ std::string Effects::getEffectsString(const std::shared_ptr<Creature> & viewer) 
     
 
         if(viewer->isStaff()) {
-//          if(!effectInfo->getBaseEffect().empty())
-//              effStr << " Base(" << effectInfo->getBaseEffect() << ")";
             effStr << "  ^WStrength:^x " << effectInfo->getStrength();
             if(effectInfo->getExtra()) {
                 effStr << "  ^WExtra:^x " << effectInfo->getExtra();
@@ -1356,12 +1354,21 @@ bool Effect::isSpell() const {
 }
 
 //*********************************************************************
-//                      isSpell
+//                      usesStrength
 //*********************************************************************
 
 bool Effect::usesStrength() const {
     return(useStrength);
 }
+
+//*********************************************************************
+//                      usesVariableStrength
+//*********************************************************************
+
+bool Effect::usesVariableStrength() const {
+    return(useVariableStrength);
+}
+
 
 //*********************************************************************
 //                      getRoomDelStr

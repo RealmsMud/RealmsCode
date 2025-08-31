@@ -221,6 +221,14 @@ void Creature::checkImprove(const std::string&  skillName, bool success, int att
         chance += crSkill->getGainBonus();
     }
 
+    //Humans get +20% bonus chance on all skill raises
+    if (getRace()==HUMAN)
+        chance += (chance*20)/100;
+
+    //Half-Elf and Half-Orc get +10% bonus chance on all skill raises
+    if (getRace()==HALFELF || getRace()==HALFORC)
+        chance += (chance*10)/100;
+
     // Unless max for level, 3% chance minimum
     chance = std::max(chance, 3);
 

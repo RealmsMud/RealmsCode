@@ -551,6 +551,7 @@ void PlayerClass::load(xmlNodePtr rootNode) {
         }
         else if(NODE_NAME(curNode, "UnarmedWeaponSkill")) xml::copyToString(unarmedWeaponSkill, curNode);
         else if(NODE_NAME(curNode, "NumProfs")) xml::copyToNum(numProf, curNode);
+        else if(NODE_NAME(curNode, "XPAdjustment")) xml::copyToNum(xpAdjust, curNode);
         else if(NODE_NAME(curNode, "NeedsDeity")) {
             int i=0;
             xml::copyToNum(i, curNode);

@@ -48,17 +48,17 @@
 
 
 char conjureTitles[][3][10][30] = {
-// earth
+        // earth
         {
                 // weak
                 { "lesser earth elemental", "marble mongoose", "rock ape", "earth spider", "giant badger",
-                  "steel snake", "golden fox", "giant rock worm", "glassteel golem", "earth demon" },
+                  "steel snake", "golden fox", "giant rock worm", "glassteel golem", "hulking earth demon" },
                 // normal
                 { "giant mole", "obsidian worm", "mud sloth", "crystal wolf", "earth elemental", "granite elephant",
                   "iron sentinel", "greater earth elemental", "steel tiger", "adamantium tiger" },
                 // buff
                 { "pet rock", "sandman", "rock wolverine", "rock demon", "marble tiger", "earth devil",
-                  "crystal sentinel", "galeb duhr", "steel hydra", "adamantium dragon" } },
+                  "crystal sentinel", "galeb duhr", "steel hydra", "adamantium pseudo-dragon" } },
         // air
         {
                 // weak
@@ -80,40 +80,40 @@ char conjureTitles[][3][10][30] = {
                   "fire angel", "greater fire elemental", "fire kraken", "phoenix" },
                 // buff
                 { "burning bush", "fire asp", "flame sprite", "ruby serpent", "crimson iguana", "brimstone demon",
-                  "efretti", "horned fire devil", "fire giant shaman", "venerable red dragon" } },
+                  "efretti", "horned fire devil", "fire giant shaman", "venerable red pseudo-dragon" } },
         // water
         {
                 // weak
-                { "lesser water elemental", "aquatic elf", "acidic blob", "vapor rat", "water weird", "fog beast",
-                  "white crocodile", "steam jaguar", "water-logged troll", "bronze dragon" },
+                { "lesser water elemental", "psychotic aquatic elf", "acidic blob", "vapor rat", "water weird", "fog beast",
+                  "white crocodile", "steam jaguar", "water-logged troll", "menacing brine beast" },
                 // normal
                 { "giant frog", "water imp", "mist devil", "water scorpion", "water elemental", "steam spider",
                   "blood elemental", "greater water elemental", "acid devil", "water elemental lord" },
                 // buff
-                { "mist rat", "creeping fog", "water mephit", "mist spider", "carp dragon", "giant water slug",
-                  "giant squid", "mist dragon", "kraken", "sea titan" } },
+                { "mist rat", "creeping fog", "water mephit", "mist spider", "tidal wraith", "giant water slug",
+                  "giant squid", "hulking mist beast", "adolescent kraken", "titanic merman" } },
         // electricity
         {
                 // weak
                 { "lesser lightning elemental", "lightning ball", "storm cloud", "lightning imp", "crackling mephit",
-                  "crackling orb", "storm mephit", "storm eagle", "storm sentinel", "greater lightning elemental" },
+                  "electric scarab", "storm mephit", "storm eagle", "storm sentinel", "greater lightning elemental" },
                 // normal
-                { "spark", "shocker lizard", "thunder hawk", "electric eel", "lightning demon",
-                  "shocker imp", "shocking salamander", "thunderbolt", "storm giant", "storm giant shaman" },
+                { "spark", "shocker lizard", "thunder hawk", "electric eel", "lesser lightning demon",
+                  "shocker imp", "shocking salamander", "thunderbolt", "storm giant", "hulking lighting devil" },
                 // buff
-                { "static ball", "lightning serpent", "lightning devil", "thundercloud", "thunder cat",
-                  "lightning djinn", "crackling roc", "young blue dragon", "blue dragon", "venerable blue dragon" } },
+                { "static ball", "electric serpent", "lightning demon", "thundercloud", "thunder cat",
+                  "electrogriffin", "crackling roc", "plasma wraith", "giant xag-yi", "storm revenant" } },
         // cold
         {
                 // weak
-                { "lesser ice elemental", "snow storm", "polar bear cub", "frost revenant", "swirling blizzard",
-                  "frozen beast", "snow witch", "crystalline golem", "ice troll", "greater ice elemental" },
+                { "lesser ice elemental", "snow storm", "polar bear", "frost revenant", "swirling blizzard",
+                  "frozen ice beast", "snow witch", "ice golem", "iceblue troll", "greater ice elemental" },
                 // normal
-                { "ice rat", "snowman", "snow eagle", "winter mephit", "ice elemental",
-                  "glacier wolf", "frozen guardian", "white remorhaz", "frost giant shaman", "frost giant lord" },
+                { "ice rat", "snowman", "snow eagle", "frost mephit", "ice elemental",
+                  "glacial tiger", "frozen guardian", "frost drake", "glacial wraith", "frost giant lord" },
                 // buff
-                { "winter fox", "winter wolf cub", "ice mephit", "polar bear", "frozen yeti",
-                  "winter wolf", "abominable snowman", "young white dragon", "white dragon", "venerable white dragon" } }
+                { "winter fox", "winter wolf", "lesser ice devil", "dire polar bear", "iceshard swarm",
+                  "frost basilisk", "abominable snowman", "white remorhaz", "snow stalker", "ice vortex" } }
 };
 
 char bardConjureTitles[][10][35] = {
@@ -385,7 +385,8 @@ int conjure(const std::shared_ptr<Creature>&player, cmd *cmnd, SpellData *spellD
     std::shared_ptr<Monster> target = nullptr;
     int title = 0, mp = 0, realm = 0, level = 0, spells = 0, chance = 0, sRealm = 0;
     int buff = 0, hp_percent = 0, mp_percent = 0, a = 0, rnum = 0, cClass = 0, skLevel = 0;
-    int interval = 0, n = 0, x = 0, hplow = 0, hphigh = 0, mplow = 0, mphigh = 0;
+    int n = 0, x = 0, hplow = 0, hphigh = 0, mplow = 0, mphigh = 0;
+    long interval = 0;
     time_t t, i, len = 0;;
     const char *delem;
 

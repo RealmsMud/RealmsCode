@@ -204,7 +204,7 @@ int cmdDispel(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
        
         effect = toDispel->getEffect();
-        if(effect->getType() != "Positive") {
+        if(effect->getType() != "Positive" && player->getName() != toDispel->getOwner()) {
             *player << "On your person, only positive/beneficial effects may be dispelled.\n";
             return(0);
         }
@@ -1719,13 +1719,14 @@ bool noCastUndead(std::string_view effect) {
 //                      splGeneric
 //*********************************************************************
 
-int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength, long duration) {
+int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData, const char* article, const char* spell, const std::string &effect, int strength, long duration, int maxStr) {
     std::shared_ptr<Creature> target=nullptr;
+
 
     if (spellData->object) 
         strength = (spellData->object->getLevel() > 0 ? spellData->object->getLevel():10);
     else
-        strength = spellData->level;
+        strength = strength>0?strength:spellData->level;
 
     if(cmnd->num == 2) {
         target = player;
@@ -1736,8 +1737,21 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         )
             return(0);
 
+        if(player->isEffected(effect) && player->getName() != player->getEffect(effect)->getOwner()) {
+             const Effect* playerEffect = player->getEffect(effect)->getEffect();
+            if ( playerEffect && ((playerEffect->usesVariableStrength() && maxStr < player->getEffect(effect)->getStrength()) ||
+                                    (playerEffect->usesStrength() && strength < player->getEffect(effect)->getStrength())) ) {
+                if(isPtester(player)) {
+                    *player << ColorOn << "^DEffect: " << effect << "\nusesVariableStrength() = " << (playerEffect->usesVariableStrength()?"true":"false") << "\nmaxStr = " << maxStr << "\n";
+                    *player << "effect owner = " << player->getEffect(effect)->getOwner() << "\nusesStrength() = " << (playerEffect->usesStrength()?"true":"false") << "\nstrength = " << strength << "^x\n" << ColorOff;
+                }
+                 *player << ColorOn << "^c" << "The " << spell << " spell effect currently on you is too powerful for you to overpower.^x\n" << ColorOff;
+                 return(0);
+             }
+        }
+
         if(spellData->how == CastType::CAST) {
-            player->print("You cast %s %s spell.\n", article, spell);
+            *player << "You cast " << article << " " << spell << " spell.\n";
             broadcast(player->getSock(), player->getParent(), "%M casts %s %s spell.", player.get(), article, spell);
         }
 
@@ -1749,7 +1763,7 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
         if(!target) {
-            player->print("You don't see that player here.\n");
+            *player << "You don't see that target here.\n";
             return(0);
         }
 
@@ -1760,7 +1774,6 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
 
         if(checkRefusingMagic(player, target))
             return(0);
-
 
         if (((effect == "benediction" && (target->isPlayer()?target->getAdjustedAlignment():target->getAsMonster()->getAdjustedAlignment()) < NEUTRAL) || 
             (effect == "malediction" && (target->isPlayer()?target->getAdjustedAlignment():target->getAsMonster()->getAdjustedAlignment()) > NEUTRAL)) && !player->isCt()) {
@@ -1786,15 +1799,28 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
             return(0);
         }
 
-
-        if((effect == "drain-shield" || effect == "undead-ward") && target->isUndead()) {
-            player->print("The spell fizzles.\n%M naturally resisted your spell.\n", target.get());
+        if ((effect == "drain-shield" || effect == "undead-ward") && target->isUndead() && !player->isCt()) {
+            *player << "Your spell fizzled with a loud bang! You cannot cast " << article << " " << spell << " spell on the undead.\n";
             return(0);
         }
 
+        
+        if(target->isEffected(effect) && player->getName() != target->getEffect(effect)->getOwner()) {
+             const Effect* targetEffect = target->getEffect(effect)->getEffect();
+            if ( targetEffect && ((targetEffect->usesVariableStrength() && maxStr < target->getEffect(effect)->getStrength()) ||
+                                    (targetEffect->usesStrength() && strength < target->getEffect(effect)->getStrength())) ) {
+                if(isPtester(player)) {
+                    *player << ColorOn << "^DEffect: " << effect << "\nusesVariableStrength() = " << (targetEffect->usesVariableStrength()?"true":"false") << "\nmaxStr = " << maxStr << "\n";
+                    *player << "effect owner = " << target->getEffect(effect)->getOwner() << "\nusesStrength() = " << (targetEffect->usesStrength()?"true":"false") << "\nstrength = " << strength << "^x\n" << ColorOff;
+                }
+                 *player << ColorOn << "^c" << "The " << spell << " spell currently on " << target << " is too powerful for you to replace.^x\n" << ColorOff;
+                 return(0);
+             }
+        }
+
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts %s %s spell on %N.", player.get(), article, spell, target.get());
-        target->print("%M casts %s on you.\n", player.get(), spell);
-        player->print("You cast %s %s spell on %N.\n", article, spell, target.get());
+        *target << setf(CAP) << player << " casts " << article << " " << spell << " spell on you.\n";
+        *player << "You cast " << article << " " << spell  << " spell on " << target << ".\n";
 
        
     }
@@ -1806,7 +1832,7 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         (effect == "heat-protection" && target->hasPermEffect("alwayswarm")) ||
         (effect == "warmth" && target->hasPermEffect("alwayscold"))
     ) {
-        player->print("The spell didn't take hold.\n");
+        *player << "The spell didn't take hold.\n";
         return(0);
     }
 
@@ -1814,14 +1840,15 @@ int splGeneric(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
     if((effect == "drain-shield" || effect == "undead-ward") && target->isEffected("porphyria"))
         target->removeEffect("porphyria");
 
-     if (replaceCancelingEffects(player,target,effect))
-            return(0);
-
+    if (replaceCancelingEffects(player,target,effect))
+        return(1);
 
     if(spellData->how == CastType::CAST) {
-        if(player->getRoomParent()->magicBonus())
-            player->print("The room's magical properties increase the power of your spell.\n");
-        if(!target->addEffect(effect, duration, strength, player, true)) 
+        if(player->getRoomParent()->magicBonus()) {
+            *player << "The room's magical properties increase the power of your spell.\n";
+            duration += duration>0?(duration*30)/100:0;
+        }
+        if(!target->addEffect(effect, duration, strength, player, true, player)) 
             return(0);
     } else {
         target->addEffect(effect, duration, strength, nullptr, true);

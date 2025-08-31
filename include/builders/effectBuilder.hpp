@@ -54,6 +54,7 @@ public:
     BOOL_BUILDER(pulsed);
     BOOL_BUILDER(isSpellEffect);
     BOOL_BUILDER(useStrength);
+    BOOL_BUILDER(useVariableStrength);
 
     INT_BUILDER(pulseDelay);
     INT_BUILDER(baseDuration);

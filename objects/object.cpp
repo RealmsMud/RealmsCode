@@ -936,9 +936,11 @@ std::string Object::getDurabilityIndicator() const {
     return progressBar(5, getDurabilityPercent());
 }
 short Object::getMagicpower() const { return(magicpower); }
+unsigned short Object::getCastChance() const { return(castChance); }
 short Object::getLevel() const { return(level); }
 int Object::getRequiredSkill() const { return(requiredSkill); }
 short Object::getMinStrength() const { return(minStrength); }
+unsigned short Object::getPermSpawnChance() const { return(permSpawnChance); }
 short Object::getClan() const { return(clan); }
 short Object::getSpecial() const { return(special); }
 short Object::getQuestnum() const { return(questnum); }
@@ -966,6 +968,8 @@ const std::string & Object::getQuestOwner() const { return(questOwner); }
 std::string Object::getSizeStr() const{
     return(getSizeName(size));
 }
+
+
 
 //*********************************************************************
 //                      isQuestOwner

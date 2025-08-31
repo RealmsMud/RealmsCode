@@ -782,24 +782,38 @@ int splFear(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
 
 int splSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     std::shared_ptr<Creature> target=nullptr;
-    int     bns=0, canCast=0, mpCost=0;
+    int     bns=0, mpCost=0;
     long    dur=0;
+    bool    canCast = false;
 
 
     if(player->getClass() == CreatureClass::BUILDER) {
-        player->print("You cannot cast this spell.\n");
+        *player << "You cannot cast this spell.\n";
         return(0);
     }
 
     if( player->getClass() == CreatureClass::LICH ||
-        player->getClass() == CreatureClass::MAGE ||
-        player->getClass() == CreatureClass::CLERIC ||
+        player->getClass() == CreatureClass::MAGE || player->getAsPlayer()->getSecondClass() == CreatureClass::MAGE ||
         player->isCt()
     )
-        canCast = 1;
+        canCast = true;
+
+    if(player->getClass() == CreatureClass::CLERIC) {
+        switch(player->getDeity()) {
+            case CERIS:
+            case ARACHNUS:
+            case ENOCH:
+            case ARAMON:
+            case MARA:
+                canCast = true;
+                break;
+            default:
+                break;
+        }
+    }
 
     if(!canCast && player->isPlayer() && spellData->how == CastType::CAST) {
-        player->print("You are unable to cast that spell.\n");
+        *player << "You are unable to cast that spell.\n";
         return(0);
     }
 
@@ -820,8 +834,6 @@ int splSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
     else
         dur = Random::get(30,60);
 
-
-
     if(player->spellFail( spellData->how))
         return(0);
 
@@ -837,7 +849,7 @@ int splSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             broadcast(player->getSock(), player->getParent(), "%M casts silence on %sself.", player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION)
-            player->print("Your throat goes dry and you cannot speak.\n");
+            *player << "Your throat goes dry and you cannot speak.\n";
 
     // silence a monster or player
     } else {
@@ -847,7 +859,7 @@ int splSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
         if(!target || target == player) {
-            player->print("That's not here.\n");
+            *player << "That's not here.\n";
             return(0);
         }
 
@@ -856,7 +868,7 @@ int splSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
 
         if(player->isPlayer() && target->mFlagIsSet(M_PERMANENT_MONSTER)) {
             if(!dec_daily(&player->daily[DL_SILENCE]) && !player->isCt()) {
-                player->print("You have done that enough times for today.\n");
+                *player << "You have done that enough times for today.\n";
                 return(0);
             }
         }
@@ -882,28 +894,28 @@ int splSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         target->wake("Terrible nightmares disturb your sleep!");
 
         if(target->chkSave(SPL, player, bns) && !player->isCt()) {
-            target->print("%M tried to cast a silence spell on you!\n", player.get());
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a silence spell on %N!", player.get(), target.get());
-            player->print("Your spell fizzles.\n");
+            *target << ColorOn << "^c" << setf(CAP) << player << " tried to cast a silence spell on you!^x\n" << ColorOff;
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "^c%M tried to cast a silence spell on %N!^x", player.get(), target.get());
+            *player << ColorOn << "^c" << setf(CAP) << target << " resisted your spell!^x\n" << ColorOff;
             return(0);
         }
 
 
         if(player->isPlayer() && target->isPlayer()) {
             if(!dec_daily(&player->daily[DL_SILENCE]) && !player->isCt()) {
-                player->print("You have done that enough times for today.\n");
+                *player << "You have done that enough times for today.\n";
                 return(0);
             }
         }
 
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("Silence casted on %s.\n", target->getCName());
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a silence spell on %N.", player.get(), target.get());
+            *player << ColorOn << "^cSilence casted on " << target << ".^x\n" << ColorOff;
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "^c%M casts a silence spell on %N.^x", player.get(), target.get());
 
             logCast(player, target, "silence");
 
-            target->print("%M casts a silence spell on you.\n", player.get());
+            *target << ColorOn << "^c" << setf(CAP) << player << " casts a silence spell on you!^x\n" << ColorOff;
         }
 
         if(target->isMonster())
@@ -927,11 +939,11 @@ int splSilence(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
 bool canEnchant(const std::shared_ptr<Player>& player, SpellData* spellData) {
     if(!player->isStaff()) {
         if(spellData->how == CastType::CAST && player->getClass() !=  CreatureClass::MAGE && player->getClass() !=  CreatureClass::LICH) {
-            player->print("Only mages may enchant objects.\n");
+            player->print("Only mages and liches may enchant objects with the enchant spell.\n");
             return(false);
         }
         if(spellData->how == CastType::CAST && player->getClass() == CreatureClass::MAGE && player->hasSecondClass()) {
-            player->print("Only pure mages may enchant objects.\n");
+            player->print("Only pure mages may enchant objects with the enchant spell.\n");
             return(false);
         }
         
@@ -1047,7 +1059,7 @@ int cmdEnchant(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isMagicallyHeld(true))
         return(0);
 
-    if(!player->knowsSkill("enchant") || player->hasSecondClass()) {
+    if(!player->knowsSkill("enchant")) {
         player->print("You lack the training to enchant objects.\n");
         return(0);
     }

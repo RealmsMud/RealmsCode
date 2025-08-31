@@ -173,6 +173,7 @@ void Monster::readXml(xmlNodePtr curNode, bool offline) {
     }
     else if(NODE_NAME(curNode, "TradeTalk")) xml::copyToCString(ttalk, curNode);
     else if(NODE_NAME(curNode, "NumWander")) setNumWander(xml::toNum<unsigned short>(curNode));
+    else if(NODE_NAME(curNode, "PermSpawnChance")) setPermSpawnChance(xml::toNum<unsigned short>(curNode));
     else if(NODE_NAME(curNode, "MagicResistance")) setMagicResistance(xml::toNum<unsigned short>(curNode));
     else if(NODE_NAME(curNode, "MobTrade")) setMobTrade(xml::toNum<unsigned short>(curNode));
     else if(NODE_NAME(curNode, "AssistMobs")) {
@@ -294,6 +295,7 @@ void Monster::saveXml(xmlNodePtr curNode) const {
 
     xml::saveNonNullString(curNode, "TradeTalk", ttalk);
     xml::saveNonZeroNum(curNode, "NumWander", numwander);
+    xml::saveNonZeroNum(curNode, "PermSpawnChance", permSpawnChance);
     xml::saveNonZeroNum(curNode, "MagicResistance", magicResistance);
     xml::saveNonZeroNum(curNode, "DefenseSkill", defenseSkill);
     xml::saveNonZeroNum(curNode, "AttackPower", attackPower);

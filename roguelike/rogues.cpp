@@ -503,6 +503,10 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
     long    i = LT(player, LT_HIDE), t = time(nullptr);
     int     chance=0;
 
+    const auto dexBns = bonus(player->dexterity.getCur());
+    const auto pRace = player->getRace();
+    const auto pRoom = player->getRoomParent();
+
     player->clearFlag(P_AFK);
 
     if(!player->ableToDoCommand())
@@ -532,104 +536,110 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if( player->getClass() == CreatureClass::THIEF ||
         player->getClass() == CreatureClass::ASSASSIN ||
         player->getClass() == CreatureClass::ROGUE ||
-        player->getClass() == CreatureClass::RANGER ||
+        ((player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID) && !player->isIndoors()) ||
         (player->getClass() == CreatureClass::CLERIC && player->getDeity() == MARA && !isDay()) ||
         (player->getClass() == CreatureClass::CLERIC && player->getDeity() == LINOTHAN && !player->isIndoors()) ||
-        (player->getRace() == DARKELF && player->getRoomParent()->flagIsSet(R_UNDERGROUND)) ||
-        player->getRace() == HALFLING ||
-        player->getRace() == KENKU ||
-        player->getRace() == KOBOLD 
+        (pRace == DARKELF && pRoom->flagIsSet(R_UNDERGROUND)) ||
+        (pRace == ELF && pRoom->isForest()) ||
+        (pRace == WILDELF && !player->isIndoors()) ||
+        pRace == HALFLING ||
+        pRace == KENKU ||
+        pRace == KOBOLD ||
+        pRace == KATARAN
     )
         player->lasttime[LT_HIDE].interval = 5;
     else if(player->getSecondClass() == CreatureClass::THIEF || player->getSecondClass() == CreatureClass::ASSASSIN || (player->getClass() == CreatureClass::CLERIC && player->getDeity() == KAMIRA))
         player->lasttime[LT_HIDE].interval = 6;
     else
-        player->lasttime[LT_HIDE].interval = 15;
+        player->lasttime[LT_HIDE].interval = 10;
 
     int level = (int)player->getSkillLevel("hide");
     if(cmnd->num == 1) {
         switch(player->getClass()) {
         case CreatureClass::THIEF:
             if(player->getSecondClass() == CreatureClass::MAGE) {
-                chance = std::min(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 4*level + 3*dexBns);
                 player->lasttime[LT_HIDE].interval = 8;
             } else
-                chance = std::min(90, 5 + 6*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 6*level + 3*dexBns);
             break;
         case CreatureClass::ASSASSIN:
-            chance = std::min(90, 5 + 6*level + 3*bonus(player->dexterity.getCur()));
+            chance = std::min(90, 5 + 6*level + 3*dexBns);
             break;
         case CreatureClass::FIGHTER:
             if(player->getSecondClass() == CreatureClass::THIEF)
-                chance = std::min(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 4*level + 3*dexBns);
             else
-                chance = std::min(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 2*level + 3*dexBns);
             break;
         case CreatureClass::MAGE:
             if(player->getSecondClass() == CreatureClass::ASSASSIN || player->getSecondClass() == CreatureClass::THIEF) {
-                chance = std::min(90, 5 + 4*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 4*level + 3*dexBns);
                 player->lasttime[LT_HIDE].interval = 8;
             } else
                 chance = std::min(90, 5 + 2*level +
-                        3*bonus(player->dexterity.getCur()));
+                        3*dexBns);
             break;
         case CreatureClass::CLERIC:
             if(player->getSecondClass() == CreatureClass::ASSASSIN) 
-                chance = std::min(90, 5 + 5*level + 3*bonus(player->dexterity.getCur()));
+                chance = std::min(90, 5 + 5*level + 3*dexBns);
             else if ((player->getDeity() == KAMIRA || player->getDeity() == ARACHNUS) && player->alignInOrder())
-                chance = std::min(90, 5 + 4*level + 3*bonus(player->piety.getCur()));
+                chance = std::min(90, 5 + 4*level + 3*dexBns);
             else if (player->getDeity() == MARA && !isDay() && player->alignInOrder() && !player->isIndoors())
-                chance = std::min(90, 5 + 6*level + 3*bonus(player->piety.getCur()));
+                chance = std::min(90, 5 + 6*level + 3*dexBns);
             else if (player->getDeity() == LINOTHAN && player->alignInOrder() && !player->isIndoors())
-                chance = 5 + 10*level + 3*bonus(player->piety.getCur());
+                chance = std::min(90,5 + 10*level + 3*dexBns);
             else
-               chance = std::min(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
+               chance = std::min(90, 5 + 2*level + 3*dexBns);
             break;
         case CreatureClass::RANGER:
         case CreatureClass::DRUID:
-            chance = 5 + 10*level + 3*bonus(player->dexterity.getCur());
+            chance = 5 + 10*level + 3*dexBns;
             break;
         case CreatureClass::ROGUE:
-            chance = std::min(90, 5 + 5*level + 3*bonus(player->dexterity.getCur()));
+            chance = std::min(90, 5 + 5*level + 3*dexBns);
             break;
         default:
-            chance = std::min(90, 5 + 2*level + 3*bonus(player->dexterity.getCur()));
+            chance = std::min(90, 5 + 2*level + 3*dexBns);
             break;
         }
 
         if(player->isStaff())
             chance = 101;
 
-        if(player->isEffected("camouflage") && player->getRoomParent()->isOutdoors())
+        if(player->isEffected("camouflage") && pRoom->isOutdoors())
             chance += 20;
 
-        if( (player->getRoomParent()->flagIsSet(R_DARK_AT_NIGHT) && !isDay()) ||
-            player->getRoomParent()->flagIsSet(R_DARK_ALWAYS) ||
-            player->getRoomParent()->isEffected("dense-fog")
+        if( (pRoom->flagIsSet(R_DARK_AT_NIGHT) && !isDay()) ||
+            pRoom->flagIsSet(R_DARK_ALWAYS) ||
+            pRoom->isEffected("dense-fog")
         )
             chance += 10;
 
         if(player->dexterity.getCur()/10 < 9 && !(player->getClass() == CreatureClass::CLERIC && (player->getDeity() == KAMIRA || player->getDeity() == MARA || 
                                                                                                   player->getDeity() == LINOTHAN || player->getDeity() == ARACHNUS)))
-            chance -= 10*(9 - player->dexterity.getCur()/10); // Having less then average dex
+            chance -= 10*(9 - player->dexterity.getCur()/10); // Having less then average dex is a penalty
 
-        *player << "You attempt to hide in the shadows.\n";
-
-        //Racial hide bonuses
-        if(player->getRace() == ELF && player->getRoomParent()->isForest())
-            chance += chance/4;
-        if(player->getRace() == HALFLING || player->getRace() == KENKU)
-            chance += chance/5;
-        if(player->getRace() == KOBOLD)
-            chance += chance/10;
-
-        if(player->isIndoors() && (player->getClass() == CreatureClass::RANGER || 
-                                   player->getClass() == CreatureClass::DRUID ||
-                                   (player->getClass() == CreatureClass::CLERIC && player->getDeity() == LINOTHAN))) 
-        {
-            chance /= 2;
-            chance = std::max(25, chance);
-            *player << "You have trouble hiding while inside.\n";
+        // Racial hide bonuses
+        if (pRace == WILDELF) {
+            // Wild Elves get 35% in forests, 10% otherwise
+            chance += (player->getRoomParent()->isForest() ? (chance * 35) / 100 : (chance * 10) / 100);
+        } 
+        else if (pRace == ELF) {
+            // Elves get 25% in forests, 10% otherwise
+            chance += (player->getRoomParent()->isForest() ? (chance * 25) / 100 : (chance * 10) / 100);
+        }
+        else if (pRace == DARKELF && player->getRoomParent()->flagIsSet(R_UNDERGROUND)) {
+            // Dark elves get +25% bonus when underground
+            chance += (chance * 25) / 100;
+        } 
+        else if (pRace == HALFLING || player->getRace() == KENKU) {
+            // Halflings and Kenku always get a 20% bonus
+            chance += (chance * 20) / 100;
+        } 
+        else if (pRace == KOBOLD || pRace == KATARAN) {
+            // Kobolds always get a 10% bonus
+            chance += (chance * 10) / 100;
         }
 
         if(player->inCombat())
@@ -637,6 +647,16 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         if(player->isBlind())
             chance = std::min(chance, 20);
+
+        *player << "You attempt to hide in the shadows.\n";
+
+        if(player->isIndoors() && (player->getClass() == CreatureClass::RANGER || 
+                                   player->getClass() == CreatureClass::DRUID ||
+                                   (player->getClass() == CreatureClass::CLERIC && player->getDeity() == LINOTHAN))) 
+        {
+            chance = std::max(chance / 2, 1);
+            *player << "You have trouble hiding while indoors.\n";
+        }
 
         if(Random::get(1,100) <= chance || player->isEffected("mist")) {
             player->setFlag(P_HIDDEN);
@@ -651,12 +671,13 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    object = player->getRoomParent()->findObject(player, cmnd, 1, true);
+    object = pRoom->findObject(player, cmnd, 1, true);
 
     if(!object) {
         *player << "You don't see that here.\n";
         return(0);
     }
+
 
     player->unhide();
 
@@ -665,17 +686,39 @@ int cmdHide(const std::shared_ptr<Player>& player, cmd* cmnd) {
     )
         return(0);
 
-    if(isGuardLoot(player->getRoomParent(), player, "%M will not let you hide that.\n"))
+    if(isGuardLoot(pRoom, player, "%M will not let you hide that.\n"))
         return(0);
 
-    if(player->isDm())
+    if(object->flagIsSet(O_HIDDEN)) {
+        *player << "It's already hidden!\n";
+        return(0);
+    }
+
+    if (player->isDm()) {
         chance = 100;
-    else if(player->getClass() == CreatureClass::THIEF || player->getClass() == CreatureClass::ASSASSIN || player->getClass() == CreatureClass::ROGUE)
-        chance = std::min(90, 10 + 5*level + 5*bonus(player->dexterity.getCur()));
-    else if(player->getClass() == CreatureClass::RANGER || player->getClass() == CreatureClass::DRUID)
-        chance = 5 + 9*level + 3*bonus(player->dexterity.getCur());
-    else
-        chance = std::min(90, 5 + 3*level + 3*bonus(player->dexterity.getCur()));
+    }
+    // Thief-like classes get a high chance all the time, anywhere
+    else if (player->getClass() == CreatureClass::THIEF || 
+             player->getClass() == CreatureClass::ASSASSIN || 
+             player->getClass() == CreatureClass::ROGUE) {
+        chance = std::min(90, 10 + 5 * level + 5 * dexBns);
+    }
+    // Rangers, Druids, Wild Elves, and Elves get bonuses outdoors, but ONLY if in a forest
+    else if (pRoom->isForest() && 
+        (player->getClass() == CreatureClass::RANGER || 
+         player->getClass() == CreatureClass::DRUID || 
+         pRace == WILDELF || 
+         pRace == ELF)) {
+    chance = 5 + 9 * level + 3 * dexBns;
+    }
+    // Dark Elves get bonuses underground
+    else if (pRoom->flagIsSet(R_UNDERGROUND) && pRace == DARKELF) {
+         chance = 5 + 9 * level + 3 * dexBns;
+    }
+    // Default case for all other classes/races
+    else {
+        chance = std::min(90, 5 + 3 * level + 3 * dexBns);
+    }
 
     *player << "You attempt to hide it.\n";
     broadcast(player->getSock(), player->getParent(), "%M attempts to hide %1P.", player.get(), object.get());
@@ -803,13 +846,23 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
+    std::string scoutExit = cmnd->str[1];
+    if (scoutExit == "nw")
+        strcpy(cmnd->str[1], "northwest");
+    else if (scoutExit == "ne")
+        strcpy(cmnd->str[1], "northeast");
+    else if (scoutExit == "sw")
+        strcpy(cmnd->str[1], "southwest");
+    else if (scoutExit == "se")
+        strcpy(cmnd->str[1], "southeast");
+
     exit = findExit(player, Move::formatFindExit(cmnd), cmnd->val[1], player->getRoomParent());
 
 
     if(!exit) {
         *player << "You don't see that exit.\n";
         player->lasttime[LT_SCOUT].ltime = t;
-        player->lasttime[LT_SCOUT].interval = 10L;
+        player->lasttime[LT_SCOUT].interval = 2L;
         return(0);
     }
 
@@ -826,9 +879,23 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
     if(!alwaysSucceed) {
-        player->lasttime[LT_SCOUT].ltime = t;
-        player->lasttime[LT_SCOUT].interval = 20L;
 
+        if( (exit->flagIsSet(X_LOCKED) || exit->flagIsSet(X_CLOSED) ) &&
+            !player->checkStaff("The '%s' exit is closed. You cannot scout through a closed exit.\n", exit->getName().c_str())
+        )
+            return(0);
+
+        if( exit->flagIsSet(X_NEEDS_FLY) &&
+            !player->isEffected("fly") &&
+            !player->checkStaff("You must be flying to scout there.\n")
+        )
+            return(0);
+
+        if((exit->flagIsSet(X_NEEDS_CLIMBING_GEAR) || exit->flagIsSet(X_CLIMBING_GEAR_TO_REPEL)) && !player->checkClimbing()) {
+            *player << "You need to equip climbing gear to scout that exit.\n";
+            return(0);
+        }
+        
         chance = 40 + (int)player->getSkillLevel("scout") * 3;
         if (player->getClass() == CreatureClass::CLERIC && (player->getDeity() == MARA || player->getDeity() == LINOTHAN))
             chance += ((player->piety.getCur()+player->dexterity.getCur())/20);
@@ -847,21 +914,11 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
         chance = std::min(85, chance);
 
         if(!player->isStaff() && Random::get(1, 100) > chance) {
-            player->print("You fail scout in that direction.\n");
+            *player << ColorOn << "You failed scout the '^W" << exit->getName() << "^x' exit.\n" << ColorOff;
             player->checkImprove("scout", false);
             return(0);
         }
 
-        if( (exit->flagIsSet(X_LOCKED) || exit->flagIsSet(X_CLOSED) ) &&
-            !player->checkStaff("You cannot scout through a closed exit.\n")
-        )
-            return(0);
-
-        if( exit->flagIsSet(X_NEEDS_FLY) &&
-            !player->isEffected("fly") &&
-            !player->checkStaff("You must fly to scout there.\n")
-        )
-            return(0);
     }
 
     // can't scout where you can't go
@@ -880,14 +937,18 @@ int cmdScout(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(!alwaysSucceed)
         player->checkImprove("scout", true);
-    player->printColor("You scout the %s^x exit.\n", exit->getCName());
+    *player << ColorOn << "You scout the '^W" << exit->getName() << "^x' exit.\n" << ColorOff;
 
     if(player->isStaff() && player->flagIsSet(P_DM_INVIS))
-        broadcast(isStaff, player->getSock(), player->getRoomParent(), "%M scouts the %s^x exit.", player.get(), exit->getCName());
+        broadcast(isStaff, player->getSock(), player->getRoomParent(), "%M scouts the '^W%s^x' exit.", player.get(), exit->getCName());
     else if(exit->flagIsSet(X_SECRET) || exit->isConcealed() || exit->flagIsSet(X_DESCRIPTION_ONLY))
         broadcast(player->getSock(), player->getParent(), "%M scouts the area.", player.get());
     else
-        broadcast(player->getSock(), player->getParent(), "%M scouts the %s^x exit.", player.get(), exit->getCName());
+        broadcast(player->getSock(), player->getParent(), "%M scouts the '^W%s^x' exit.", player.get(), exit->getCName());
+
+    player->lasttime[LT_SCOUT].ltime = t;
+    player->lasttime[LT_SCOUT].interval = 15L;
+
 
     doScout(player, exit);
     return(0);
@@ -1344,8 +1405,12 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
     *target << setf(CAP) << player << " attempts to backstab you!\n";
     broadcast(player->getSock(), target->getSock(), player->getParent(), "%M attempts to backstab %N.", player.get(), target.get());
 
-    if(target->isMonster())
+    if(target->isMonster()) {
         target->getAsMonster()->addEnemy(player);
+
+        if(player->flagIsSet(P_LAG_PROTECTION_SET)) // Activates Lag protection.
+            player->setFlag(P_LAG_PROTECTION_ACTIVE);
+    }
 
     if(player->breakObject(player->ready[WIELD-1], WIELD)) {
         broadcast(player->getSock(), player->getParent(), "%s backstab failed.", player->upHisHer());
@@ -1353,7 +1418,17 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
+
     int skillLevel = (int)((player->getWeaponSkill(weapon) + (player->getSkillGained("backstab")*2)) / 3);
+
+    if(player->getRace() == KATARAN)
+        skillLevel += (skillLevel*10)/100;
+
+    //Barbarians are naturally hyper aware - harder to backstab them.
+    if(target->getRace() == BARBARIAN)
+        skillLevel -= (skillLevel*30)/100;
+
+    skillLevel = std::max(1,skillLevel);
 
     AttackResult result = player->getAttackResult(target, weapon, DOUBLE_MISS, skillLevel);
 
@@ -1575,7 +1650,7 @@ int cmdBackstab(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
     } else if(result == ATTACK_FUMBLE) {
         player->statistics.fumble();
-        *player << ColorOn << "^gYou FUMBLED your weapon.\n" << ColorOff;
+        *player << ColorOn << "^gYou FUMBLED " << ((weapon && !weapon->flagIsSet(O_NO_PREFIX))?"your ":" ") << (weapon?weapon->getName():"your attack") << ".\n" << ColorOff;
         broadcast(player->getSock(), player->getParent(), "^g%M fumbled %s weapon.", player.get(), player->hisHer());
 
         if(weapon->flagIsSet(O_ENVENOMED)) {

@@ -54,9 +54,9 @@ char shortClassAbbrev[][8] = { "A", "Be", "Cl", "F", "M", "P", "R", "T", "Va", "
 char mob_skill_str[][16] = { "Horrible", "Poor", "Fair", "Decent", "Average", "Talented", "Very Good", "Exceptional",
         "Master", "Grand Master", "Godlike" };
 
-int permAC[30] = {
+int permAC[40] = {
         25, 70, 110, 155, 200, 245, 290, 335, 380, 425, 470, 510, 535, 560, 580, 600, 620, 645,
-        670, 690, 710, 730, 760, 780, 820, 870, 890, 910, 960, 1000 };
+        670, 690, 710, 730, 760, 780, 820, 870, 890, 910, 960, 1000, 1080, 1160, 1250, 1340, 1490, 1630, 1780, 1890, 1980, 2100};
 
 
 //
@@ -112,7 +112,8 @@ char lang_color[LANGUAGE_COUNT][3] = {
     "^g",                       // Leprechaun
     "^D",                       // Necril
     "^W",                       // Modron
-    "^D"                        // Noctis
+    "^D",                       // Noctis
+    "^G"                        // Grugach (Wild Elf)
 
 };
 
@@ -121,7 +122,7 @@ char language_adj[][32] = { "an alien language", "Dwarvish", "Elvish", "Halfling
         "Schnai", "Kataran", "Druidic", "Wolfen", "Thieves' Cant", "Arcanic", "Abyssal", "Tiefling", "Kenku",
         "Fey", "Lizardman", "Centaur", "Duergar", "Gnoll", "Bugbear", "Hobgoblin", "Brownie", "Firbolg", "Satyr", "Quickling",
         "Undercommon", "Svirfneblin", "Draconic", "Primordial", "Thri-kreen", "Sylvan", "Gith", "Sphinx", "Pixie", "Leprechaun",
-        "Necril", "Modron", "Noctis"};
+        "Necril", "Modron", "Noctis", "Grugach"};
 
 char language_verb[][3][24] = {
     // Unknown (alien)
@@ -221,7 +222,9 @@ char language_verb[][3][24] = {
     //Modron
     {"state", "drone", "calculate"},
     //Noctis
-    {"hiss", "rasp", "enthrall"}
+    {"hiss", "rasp", "enthrall"},
+    //Grugach
+    {"chatter", "grunt", "snap"}
 
 };
 
@@ -310,7 +313,7 @@ std::string getOrdinal(int num) {
 
     last = getLastDigit(num, 2);
 
-    if(last > 10&& last < 14)
+    if(last > 10 && last < 14)
         ordinal += "th";
     else {
         last = getLastDigit(num, 1);
@@ -334,7 +337,7 @@ std::string getOrdinal(int num) {
 }
 
 int get_perm_ac(int nIndex) {
-    nIndex = std::max( 0, std::min(nIndex, 29 ) );
+    nIndex = std::max( 0, std::min(nIndex, 39 ) );
 
     return(permAC[nIndex]);
 }

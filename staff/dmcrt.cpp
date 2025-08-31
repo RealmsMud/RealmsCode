@@ -316,6 +316,9 @@ std::string Creature::statCrt(int statFlags) {
     if(size)
         crtStr << "Size: ^Y" << getSizeName(size) << "^x\n";
 
+    if(mTarget && mTarget->getPermSpawnChance())
+        crtStr << "^cPerm spawn chance: " << mTarget->getPermSpawnChance() << "/1000^x\n";
+
     if(clan)
         crtStr << "Clan: " << gConfig->getClan(clan)->getName() << "(" << clan << ")\n";
     if(pTarget && pTarget->getGuild())
@@ -824,7 +827,7 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                     target->setAlignment((short)(target->isPlayer()?((P_TOP_ROYALBLUE+P_BOTTOM_ROYALBLUE)/2):((M_TOP_ROYALBLUE+M_BOTTOM_ROYALBLUE)/2)));
                 else {
                     al_match=false;
-                    *player << ColorOn << "^yInvalid alignment: '" << align_txt << "'\nEnter in alignment name or number. i.e. name: bloodred, red, royalblue, etc.. or number (-1000 to 1000)\nNOTE: 'royal blue' or 'blood red' will not work. Use no spaces.\n" << ColorOff;
+                    *player << ColorOn << "^yInvalid alignment: '" << align_txt << "'\nEnter in alignment name or number. i.e. name: bloodred, red, royalblue, etc.. or number (" << MIN_ALIGN << " to " << MAX_ALIGN << ")\nNOTE: 'royal blue' or 'blood red' will not work. Use no spaces.\n" << ColorOff;
                     break;
                 }
             if (al_match)
@@ -1673,15 +1676,32 @@ int dmSetCrt(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 "Poison damage/tick", mTarget->getPoisonDamage());
             break;
         }
-        if(!strcmp(cmnd->str[3], "pty")) {
 
-        target->piety.setMax(std::max(1, std::min<int>(cmnd->val[3], MAX_STAT_NUM)));
-        target->piety.restore();
-        player->print("Piety set.\n");
-        log_immort(true, player, "%s set %s %s's %s to %d.\n",
-            player->getCName(), PLYCRT(target), target->getCName(),
-            "Peity", target->piety.getCur());
-        break;
+        if(!strcmp(cmnd->str[3], "pschance") && mTarget) {
+            if(cmnd->val[3] < 0 || cmnd->val[3] > 1000) {
+                *player << "PermCrt spawn chance must be between 0 and 1000.";
+                return(0);
+            }
+            mTarget->setPermSpawnChance((short)cmnd->val[3]);
+            *player << "PermCrt spawn chance set to " << (short)cmnd->val[3] << "/1000.\n";
+            log_immort(true, player, "%s set %s %s's %s to %d/1000.\n",
+                player->getCName(), PLYCRT(mTarget), mTarget->getCName(),
+                "PermCrt spawn chance", mTarget->getPermSpawnChance());
+            if (!mTarget->flagIsSet(M_PERMANENT_MONSTER)) {
+                *player << "NOTE: PermCrt spawn chance only works on permed mobs.\n";
+                *player << "Please remember to use *perm on " << mTarget << ".\n";
+            }
+            break;
+
+        }
+        if(!strcmp(cmnd->str[3], "pty") || !strcmp(cmnd->str[3], "pie")) {
+            target->piety.setMax(std::max(1, std::min<int>(cmnd->val[3], MAX_STAT_NUM)));
+            target->piety.restore();
+            player->print("Piety set.\n");
+            log_immort(true, player, "%s set %s %s's %s to %d.\n",
+                player->getCName(), PLYCRT(target), target->getCName(),
+                "Peity", target->piety.getCur());
+            break;
         }
         
         /*
@@ -2983,14 +3003,14 @@ int dmAlignment(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 else if (alignName == "royalblue")
                     creature->setAlignment((short)(creature->isPlayer()?((P_TOP_ROYALBLUE+P_BOTTOM_ROYALBLUE)/2):((M_TOP_ROYALBLUE+M_BOTTOM_ROYALBLUE)/2)));
                 else {
-                    *player << ColorOn << "^yInvalid alignment: '" << alignName << "'\nEnter in alignment name or a number. i.e. name: bloodred, red, royalblue, etc.. or number (-1000 to 1000)\nNOTE: 'royal blue' or 'blood red' will not work. Use no spaces.\n" << ColorOff;
+                    *player << ColorOn << "^yInvalid alignment: '" << alignName << "'\nEnter in alignment name or a number. i.e. name: bloodred, red, royalblue, etc.. or number (" << MIN_ALIGN << " to " << MAX_ALIGN << ")\nNOTE: 'royal blue' or 'blood red' will not work. Use no spaces.\n" << ColorOff;
                     return(0);
                 }
             *player << ColorOn << setf(CAP) << creature << "'s alignment value is now set to median " << creature->alignColor() << creature->alignString() << "^x. (" << creature->getAlignment() << ") [" << (creature->isPlayer()?"Player":"Monster") << "]\n" << ColorOff; 
             break;
             }
         alignValue = (short)cmnd->val[2];
-        alignValue = std::max<short>(-1000,std::min<short>(1000,alignValue));
+        alignValue = std::max<short>(MIN_ALIGN,std::min<short>(MAX_ALIGN,alignValue));
 
         creature->setAlignment((short)alignValue);
 

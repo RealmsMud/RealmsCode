@@ -608,6 +608,13 @@ no_pass:
         Create::startCustom(sock, str, Create::doPrint);
         return;
 
+    case CREATE_GET_VERIFY_RACE:
+        if(!Create::getVerifyRace(sock, str, Create::doWork))
+            return;
+        Create::getSex(sock, str, Create::doPrint);
+        Create::getClass(sock, str, Create::doPrint);
+        return;
+
     case CREATE_GET_STATS:
 
         if(!Create::getStats(sock, str, Create::doWork))
@@ -976,8 +983,19 @@ bool Create::getRace(const std::shared_ptr<Socket>& sock, std::string str, int m
         }
         if(!sock->getPlayer()->getRace())
             return(false);
-        if(!gConfig->getRace(sock->getPlayer()->getRace())->isParent())
+        if(!gConfig->getRace(sock->getPlayer()->getRace())->isParent()) {
+
+            int xpadjust = gConfig->getRace(sock->getPlayer()->getRace())->getXPAdjustment();
+            if(xpadjust < 0) {
+                sock->printColor("Race ^W%s^x currently has an earned experience penalty of %s%d%%.\n", gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(), (xpadjust<0?"":"+"), xpadjust);
+                sock->printColor("This will make leveling up more difficult. Are you sure you want %s as your race? (Y/N):", gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str());
+                Create::getVerifyRace(sock, "", Create::doPrint);
+                sock->setState(CREATE_GET_VERIFY_RACE);
+                return(false);
+            }
+
             Create::finishRace(sock);
+        }
     }
     return(true);
 }
@@ -1042,10 +1060,30 @@ bool Create::getSubRace(const std::shared_ptr<Socket>& sock, std::string str, in
 
         if(choices.find(k) != choices.end()) {
             sock->getPlayer()->setRace(choices[k]->getId());
+            int xpadjust = gConfig->getRace(sock->getPlayer()->getRace())->getXPAdjustment();
+            if(xpadjust < 0) {
+                sock->printColor("Race ^W%s^x currently has an earned experience penalty of %s%d%%.\n", gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(), (xpadjust<0?"":"+"), xpadjust);
+                sock->printColor("This will make leveling up more difficult. Are you sure you want %s as your race? (Y/N):", gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str());
+                Create::getVerifyRace(sock, "", Create::doPrint);
+                sock->setState(CREATE_GET_VERIFY_RACE);
+                return(false);
+            }
+
+
             Create::finishRace(sock);
             return(true);
         }
-        return(false);
+        else {
+
+            Create::getSubRace(sock, "", Create::doPrint);
+            sock->setState(CREATE_GET_SUBRACE);
+            return(false);
+        }
+
+        //return(false);
+
+        if(!sock->getPlayer()->getRace())
+            return(false);
     }
     return(true);
 }
@@ -1058,6 +1096,7 @@ void Create::finishRace(const std::shared_ptr<Socket>& sock) {
     const RaceData* race = gConfig->getRace(sock->getPlayer()->getRace());
 
     sock->printColor("\nYour chosen race: ^W%s^x\n\n", race->getName().c_str());
+   
     sock->getPlayer()->setSize(race->getSize());
     sock->getPlayer()->initLanguages();
 
@@ -1281,6 +1320,38 @@ bool Create::startCustom(const std::shared_ptr<Socket>& sock, std::string str, i
     }
     return(true);
 }
+
+
+//*********************************************************************
+//                      getVerifyRace
+//*********************************************************************
+bool Create::getVerifyRace(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
+    if(mode == Create::doPrint) {
+        sock->setState(CREATE_GET_VERIFY_RACE);
+        return(false);
+    }
+    else if (mode == Create::doWork) {
+        boost::trim(str);
+        if (str.length() > 0) {
+            if(tolower(str.at(0)) == 'y') {
+                Create::finishRace(sock);
+                return(true);
+            } else if(tolower(str.at(0)) == 'n') {
+                Create::getRace(sock, "", Create::doPrint);
+                sock->setState(CREATE_GET_RACE);
+                return(false);
+            }
+        }
+    }
+
+    Create::getVerifyRace(sock, "", Create::doPrint);
+            sock->print("\nPlease choose Y or N:\n: ");
+            sock->setState(CREATE_GET_VERIFY_RACE);
+            return(false);
+
+    return(true);
+}
+
 //*********************************************************************
 //                      getStatsChoice
 //*********************************************************************
@@ -1293,11 +1364,18 @@ bool Create::getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str
             return(false);
         }
 
-        sock->print("\nFor character stats, you may:\n");
-        sock->printColor("\n[^WC^x]hoose your own stats");
-        sock->printColor("\n[^WU^x]se predefined stats provided by the mud");
+        sock->print("\nYour character is defined by five core attributes, each shaping how they navigate the world:");
+        sock->printColor("\n^cStrength^x.........Your sheer physical might. More strength means harder hits and greater feats of power.");
+        sock->printColor("\n^cDexterity^x........Your agility and reflexes. Speed, precision, and finesse can turn the tide of battle.");
+        sock->printColor("\n^cConstitution^x.....Your toughness and stamina. The greater your endurance, the longer you can survive punishment.");
+        sock->printColor("\n^cIntelligence^x.....Your reasoning and knowledge. A sharp mind is key to mastering magic, tactics, and learning.");
+        sock->printColor("\n^cPiety^x............Your willpower and spiritual strength. Vital for those who seek divine favor or unwavering resolve.");
 
-        sock->print("\n\nNote: For beginners that are unfamiliar with game mechanics, it is highly recommended to use predefined stats to reduce the learning curve.\n");
+        sock->printColor("\n\nSet your character's attributes:");
+        sock->printColor("\n[^WC^x]hoose - You'll manually assign points to each attribute, customizing your strengths and weaknesses.");
+        sock->printColor("\n[^WU^x]se prefefined - We will select predefined attributes optimized for your chosen class.");
+
+        sock->print("\n\nNote: If you are a beginner here or are generally new to MUDs, we highly recommended choosing the predefined option.\n");
         
         sock->askFor(": ");
 
@@ -1307,15 +1385,15 @@ bool Create::getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str
         boost::trim(str);
         if (str.length() > 0) {
             if(tolower(str.at(0)) == 'c') {
-                sock->print("You have chosen to select your own stats.\n");
+                sock->print("You have chosen to select your own attributes.\n");
                 Create::getStats(sock, "", Create::doPrint);
                 // We've set the next state so don't change it after we return
                 return(false);
             } else if(tolower(str.at(0)) == 'u') {
 
                 if(usePredefinedStatsUnavailable(sock->getPlayer()->getRace())) {
-                    sock->printColor("^yDue to large stat adjustments for race ^W%s^y, the predefined option is not available.^x\n", gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str());
-                    sock->printColor("^yYou will need to choose your own initial stats.^x\n");
+                    sock->printColor("^yDue to large attribute adjustments for race ^c%s^y, the predefined option is not available.^x\n", gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str());
+                    sock->printColor("^yYou will need to choose your own initial attributes.^x\n");
                     Create::getStats(sock, "", Create::doPrint);
                     return(false);
                 }
@@ -1332,12 +1410,13 @@ bool Create::getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str
             }
         }
 
+        sock->print("\nPlease choose [C] or [U]");
         sock->askFor(": ");
         sock->setState(CREATE_GET_STATS_CHOICE);
     }
     return(false);
 }
-std::string getRacialBonusesString(short race) {
+std::string getRacialBonusesString(short race, bool full) {
     short num = 0;
     const std::string abbrevStat[7] = { "none", "STR", "DEX", "CON", "INT", "PIE", "CHA" };
     std::ostringstream oStr;
@@ -1348,12 +1427,12 @@ std::string getRacialBonusesString(short race) {
         return(nullptr);
 
     if(race == HUMAN)
-        return("You'll choose one stat to raise and one stat to lower");
+        return("You'll choose one attribute to raise and one attribute to lower");
 
     for (int i = 0; i < 5; ++i) {
         num = playerRace->getStatAdj(i + 1) / 10;
 
-        oStr << abbrevStat[i + 1] << ": ";
+        oStr << (full?getFullStatName(i+1,true):abbrevStat[i + 1]) << ": ";
 
         if (num == 0) {
             oStr << "-"; 
@@ -1368,7 +1447,7 @@ std::string getRacialBonusesString(short race) {
 }
 
 //*********************************************************************
-//       usesPredefinedStatusUnavailable                    
+//       usePredefinedStatusUnavailable                    
 //*********************************************************************
 // The predefined stats are all stored in the classes.xml file. Some 
 // races might have racial stat adjustments that knock a newly created
@@ -1403,16 +1482,14 @@ bool Create::getStats(const std::shared_ptr<Socket>& sock, std::string str, int 
     lowercize(raceHelpfile,0);
 
     if(mode == Create::doPrint) {
-        sock->print("\nYou have 56 points to distribute among your 5 stats. Please enter your 5");
-        sock->print("\nnumbers in the following order: Strength, Dexterity, Constitution,");
-        sock->print("\nIntelligence, Piety.  No stat may be smaller than 3 or larger than 18.");
-        sock->printColor("\nUse the following format: ## ## ## ## ##\n");
-
-        sock->print("\nDon't forget about initial racial stat adjustments. No stat can end up below 1.");
-        sock->printColor("\nYou can type ^yhelp %s^x for more info. This will work for any other races too.",raceHelpfile.c_str());
-        sock->printColor("\nThe ^W%s^x initial racial stat adjustments are: %s\n", 
-                        gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(),getRacialBonusesString(sock->getPlayer()->getRace()).c_str());
-
+        sock->printColor("\nYou have 56 points to distribute across your 5 core attributes: ^cStrength, Dexterity, Constitution, Intelligence, Piety^x.");
+        sock->printColor("\n\nEach attribute value you choose will be adjusted due to your chosen race: ^c%s^x.", gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str());
+        sock->printColor("\nThe adjustments for ^c%s^x are as follows: ^c%s^x\n", 
+                        gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(),getRacialBonusesString(sock->getPlayer()->getRace(), true).c_str());
+       
+        sock->print("\n\nPlease enter your 5 attribute numbers in order, using the following format: ## ## ## ## ##");
+        sock->printColor("\nNOTE: Each value you choose must be at least 3 and no higher than 18. Also, none must be adjusted to below 1.\n");
+ 
         sock->askFor(": ");
 
         sock->setState(CREATE_GET_STATS);
@@ -1442,18 +1519,18 @@ bool Create::getStats(const std::shared_ptr<Socket>& sock, std::string str, int 
 
         for(i=0; i<5; i++) {
             if(num[i] < 3 || num[i] > 18) {
-                sock->print("No stats < 3 or > 18 please.\n");
+                sock->print("No values may be < 3 or > 18. Please try again.\n");
                 sock->print(": ");
                 sock->setState(CREATE_GET_STATS);
                 return(false);
             }
             statAdjustment = gConfig->getRace(sock->getPlayer()->getRace())->getStatAdj(i+1);
             if(((num[i]*10)+statAdjustment) < 10) {
-                sock->printColor("For race ^W%s^x, the initially chosen value for %s cannot be less than %d.", 
+                sock->printColor("For race ^c%s^x, the initially chosen value for %s cannot be less than %d.", 
                         gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(), getFullStatName(i+1).c_str(), abs(statAdjustment/10)+1);
-                sock->printColor("\nThe initial stat adjustments for race ^W%s^x are: %s", 
-                        gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(),getRacialBonusesString(sock->getPlayer()->getRace()).c_str());
-                sock->print("\nPlease choose five numbers again.\n");
+                sock->printColor("\n\nThe initial adjustments for race ^c%s^x are as follows: \n^c%s^x", 
+                        gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(),getRacialBonusesString(sock->getPlayer()->getRace(),true).c_str());
+                sock->print("\n\nPlease choose five numbers again.\n");
                 sock->print(": ");
                 sock->setState(CREATE_GET_STATS);
                 return(false);
@@ -1462,7 +1539,7 @@ bool Create::getStats(const std::shared_ptr<Socket>& sock, std::string str, int 
         }
 
         if(sum != 56) {
-            sock->print("Stat total must equal 56 points, yours totaled %d.\n", sum);
+            sock->print("Attribute total must equal 56 points, yours totaled %d.\n", sum);
             sock->print(": ");
             sock->setState(CREATE_GET_STATS);
             return(false);
@@ -1511,7 +1588,7 @@ void Create::finishStats(const std::shared_ptr<Socket>& sock) {
 bool Create::getBonusStat(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
-        sock->print("\nRaise which stat?\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n : ");
+        sock->print("\nRaise which attribute?\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n : ");
         sock->setState(CREATE_BONUS_STAT);
 
     } else if(mode == Create::doWork) {
@@ -1549,7 +1626,7 @@ bool Create::getBonusStat(const std::shared_ptr<Socket>& sock, std::string str, 
 bool Create::getPenaltyStat(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
     if(mode == Create::doPrint) {
 
-        sock->printColor("\nChoose your stat to lower:\n[^WA^x] Strength, [^WB^x] Dexterity, [^WC^x] Constitution, [^WD^x] Intelligence, or [^WE^x] Piety.\n : ");
+        sock->printColor("\nChoose an attribute to lower:\n[^WA^x] Strength, [^WB^x] Dexterity, [^WC^x] Constitution, [^WD^x] Intelligence, or [^WE^x] Piety.\n : ");
         sock->setState(CREATE_PENALTY_STAT);
 
     } else if(mode == Create::doWork) {
@@ -2001,6 +2078,9 @@ void Create::done(const std::shared_ptr<Socket>& sock, const std::string &str, i
         Create::addStartingItem(player, "tut", 40);
 
         Create::addStartingItem(player, "tut", 42, false, true, 3);
+        if(player->knowsSkill("bash"))
+            Create::addStartingItem(player, "tut", 48);
+   
 
         player->fd = sock->getFd();
         player->setSock(sock);

@@ -1037,7 +1037,7 @@ bool QuestCompletion::complete(const std::shared_ptr<Monster>&  monster) {
             oStr << " (" << parentQuest->alignmentChange << ")";
         *myPlayer << ColorOn << oStr.str() << ColorOff << "\n";
 
-        myPlayer->setAlignment(std::max<short>(-1000, std::min<short>(1000,(myPlayer->getAlignment()+parentQuest->alignmentChange))));
+        myPlayer->setAlignment(std::max<short>(MIN_ALIGN, std::min<short>(MAX_ALIGN,(myPlayer->getAlignment()+parentQuest->alignmentChange))));
         myPlayer->alignAdjustAcThaco();
     }
     if(!parentQuest->alignmentChange && parentQuest->alignmentShift) {

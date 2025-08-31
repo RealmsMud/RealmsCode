@@ -768,7 +768,7 @@ int splDeafness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
         canCast = 1;
 
     if(!canCast && player->isPlayer() && spellData->how == CastType::CAST) {
-        player->print("You are unable to cast that spell.\n");
+        *player << "You are unable to cast that spell.\n";
         return(0);
     }
 
@@ -797,7 +797,7 @@ int splDeafness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
             broadcast(player->getSock(), player->getParent(), "%M casts deafness on %sself.", player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION)
-            player->print("Your throat goes dry and you cannot speak.\n");
+            *player << "Everything goes suddenly deathly silent. You can't hear!\n";
 
     // silence a monster or player
     } else {
@@ -807,7 +807,7 @@ int splDeafness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
         target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
         if(!target || target == player) {
-            player->print("That's not here.\n");
+            *player << "That's not here.\n";
             return(0);
         }
 
@@ -815,7 +815,7 @@ int splDeafness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
             return(0);
 
         if(player->isPlayer() && target->mFlagIsSet(M_PERMANENT_MONSTER)) {
-            if(!dec_daily(&player->daily[DL_SILENCE]) && !player->isCt()) {
+            if(!dec_daily(&player->daily[DL_DEAFNESS]) && !player->isCt()) {
                 player->print("You have done that enough times for today.\n");
                 return(0);
             }
@@ -839,28 +839,28 @@ int splDeafness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
         target->wake("Terrible nightmares disturb your sleep!");
 
         if(target->chkSave(SPL, player, bns) && !player->isCt()) {
-            target->print("%M tried to cast a deafness spell on you!\n", player.get());
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M tried to cast a deafness spell on %N!", player.get(), target.get());
-            player->print("Your spell fizzles.\n");
+            *target << ColorOn << "^c" << setf(CAP) << player << " tried to cast a deafness spell on you!^x\n" << ColorOff;
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "^c%M tried to cast a deafness spell on %N!^x", player.get(), target.get());
+            *player << "Your spell failed to take hold.\n";
             return(0);
         }
 
 
         if(player->isPlayer() && target->isPlayer()) {
-            if(!dec_daily(&player->daily[DL_SILENCE]) && !player->isCt()) {
-                player->print("You have done that enough times for today.\n");
+            if(!dec_daily(&player->daily[DL_DEAFNESS]) && !player->isCt()) {
+                *player << "You have done that enough times for today.\n";
                 return(0);
             }
         }
 
 
         if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
-            player->print("Deafness casted on %s.\n", target->getCName());
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a deafness spell on %N.", player.get(), target.get());
+            *player << ColorOn << "^cDeafness casted on " << target << ".^x\n" << ColorOff;
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "^c%M casts a deafness spell on %N.^x", player.get(), target.get());
 
             logCast(player, target, "silence");
 
-            target->print("%M casts a deafness spell on you.\n", player.get());
+            *target << ColorOn << "^c" << setf(CAP) << player << " casts a deafness spell on you.^x\n" << ColorOff;
         }
 
         if(target->isMonster())
@@ -886,7 +886,7 @@ int splRegeneration(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
             case CreatureClass::DRUID:
                 break;
             default:
-                player->print("Only clerics and druids may cast this spell.\n");
+                player->print("Only clerics and druids may cast that spell.\n");
                 return(0);
         }
     }

@@ -45,6 +45,7 @@
 #include "track.hpp"                   // for Track
 #include "unique.hpp"                  // for Unique
 #include "wanderInfo.hpp"              // for WanderInfo
+ #include "commands.hpp"               // for isPtester()
 
 
 //*********************************************************************
@@ -662,28 +663,25 @@ int cmdCircle(const std::shared_ptr<Player>& player, cmd* cmnd) {
 int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Creature> creature;
     std::shared_ptr<Player> pCreature=nullptr;
-    long    t = time(nullptr);
+    long    i=0, t = time(nullptr);
     int     chance;
     double level;
 
     if(!player->ableToDoCommand())
         return(0);
 
+
     if(!player->knowsSkill("bash")) {
-        player->print("You lack the skills to effectively bash anything!\n");
+        *player << "You lack the skills to effectively shield bash enemies.\n";
         return(0);
     }
-    if(!player->isCt()) {
-        if(!player->ready[WIELD-1] && player->getSize() < SIZE_LARGE) {
-            player->print("You are too small to bash without a weapon.\n");
-            return(0);
-        }
-        if(player->getPrimaryWeaponCategory() == "ranged") {
-            player->print("You can't use a ranged weapon to bash someone!\n");
-            return(0);
-        }
+
+    if(!player->isCt() && !player->ready[SHIELD-1]) {
+        *player << "Shield bashing enemies requires equipping a shield.\n";
+        return(0);
     }
-    if(!(creature = player->findVictim(cmnd, 1, true, false, "Bash whom?\n", "You don't see that here.\n")))
+
+    if(!(creature = player->findVictim(cmnd, 1, true, false, "Shield bash whom?\n", "You don't see that here.\n")))
         return(0);
 
     if(creature)
@@ -692,49 +690,92 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->canAttack(creature))
         return(0);
 
-    if(!player->isCt()) {
-        if(!pCreature) {
-            if(creature->getAsMonster()->isEnemy(player)) {
-                player->print("Not while you're already fighting %s.\n", creature->himHer());
-                return(0);
-            }
+     // Certain mtypes cannot be smashed, and colossal and gargantuan mobs cannot ever be smashed
+    if (creature->isMonster()) {
+        switch(creature->getType()) {
+        case ETHEREAL:
+        case ENERGY:
+        case GASEOUS:
+        case INSECT:
+        case SLIME:
+        case PUDDING:
+            *player << ColorOn << "^y" << "Creatures of type '" << monType::getName(creature->getType()) << "' cannot be shield bashed!\n" << ColorOff;
+            return(0);
+            break;
+        default:
+            break;
+        }
+
+        if(creature->getSize() == SIZE_COLOSSAL || creature->getSize() == SIZE_GARGANTUAN) {
+            *player << "Are you kidding? " << setf(CAP) << creature << " is of " << 
+                        getSizeName(creature->getSize()) << " size! You can't shield bash " << creature->himHer() << "!\n";
+            return(0);
         }
     }
 
-    if(!player->checkAttackTimer(true))
+    i = LT(player, LT_BASH);
+    t = time(nullptr);
+
+    if(i > t && !player->isCt()) {
+        player->pleaseWait(i - t);
         return(0);
-
-    player->updateAttackTimer();
-    player->lasttime[LT_KICK].ltime = t;
-    player->lasttime[LT_KICK].interval = (player->getPrimaryDelay()/10);
-    player->lasttime[LT_GORE].ltime = t;
-    player->lasttime[LT_GORE].interval = (player->getPrimaryDelay()/10);
-
-    if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARES) {
-        player->lasttime[LT_SPELL].ltime = t;
-        player->lasttime[LT_SPELL].interval = 3L;
     }
+
+    level = player->getSkillLevel("bash");
+    if(player->getClass() == CreatureClass::CLERIC && player->getSecondClass() == CreatureClass::FIGHTER)
+        level = std::max(1, (int)level-2);
+    else if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARES)
+        level = std::max(1, (int)level-3);
+    else if((player->getClass() == CreatureClass::FIGHTER && player->getSecondClass() != CreatureClass::NONE) || player->getClass() == CreatureClass::PALADIN)
+        level = std::max(1, (int)level-1);
+
+    long bashDelay = 0;
+    if (level <= 40)
+        bashDelay = 13L;
+    else if (level <= 30)
+        bashDelay = 14L;
+    else if (level <= 20)
+        bashDelay = 15L;
+    else if (level <= 10)
+        bashDelay = 16L;
+    
+    player->updateAttackTimer();
+    player->lasttime[LT_BASH].ltime = t;
+    player->lasttime[LT_BASH].interval = bashDelay;
+
+    i = LT(player, LT_SPELL);
+    if (t >= i) 
+        player->lasttime[LT_SPELL].interval = 3L;
+
+    if(player->knowsSkill("slam")) {
+        i = LT(player, LT_SLAM);
+        if (t >= i) 
+            player->lasttime[LT_SLAM].interval = player->getPrimaryDelay()/10;
+    }
+
+    if(player->knowsSkill("gore")) {
+        i = LT(player, LT_GORE);
+        if (t >= i) 
+            player->lasttime[LT_GORE].interval = player->getPrimaryDelay()/10;
+    }
+
+    if(player->knowsSkill("smash")) {
+        i = LT(player, LT_SMASH);
+        if (t >= i) 
+            player->lasttime[LT_SMASH].interval = 3L;
+    }
+
+    //player->lasttime[LT_KICK].ltime = t;
+    //player->lasttime[LT_KICK].interval = (player->getPrimaryDelay()/10);
+    //player->lasttime[LT_GORE].ltime = t;
+    //player->lasttime[LT_GORE].interval = (player->getPrimaryDelay()/10);
+
     // All the logic to check if a weapon can hit the target is inside the attackCreature function
     // so only put anything specific to bash here, or check for ATTACK_BASH in attackCreature
 
     player->unhide();
     player->smashInvis();
     player->interruptDelayedActions();
-
-    if(creature->isMonster()) {
-        creature->getAsMonster()->addEnemy(player);
-    }
-
-    if(player->flagIsSet(P_LAG_PROTECTION_SET)) // Activates Lag protection.
-        player->setFlag(P_LAG_PROTECTION_ACTIVE);
-
-    level = player->getSkillLevel("bash");
-
-    if(player->getClass() == CreatureClass::CLERIC && player->getSecondClass() == CreatureClass::FIGHTER)
-        level = std::max(1, (int)level-2);
-    else if(player->getClass() == CreatureClass::CLERIC && player->getDeity() == ARES)
-        level = std::max(1, (int)level-3);
-
 
     chance = 50 + (int)((level-creature->getLevel())*10) +
              bonus(player->strength.getCur()) * 3 +
@@ -746,22 +787,226 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isBlind())
         chance = std::min(20, chance);
 
-    if(creature->isMonster() && (player->ready[WIELD-1] &&
-            player->ready[WIELD-1]->flagIsSet(O_ALWAYS_CRITICAL)) && creature->flagIsSet(M_NO_AUTO_CRIT))
-        chance = 0; // automatic miss with autocrit weapon.
+    if(creature->isMonster()) {
+        creature->getAsMonster()->addEnemy(player);
+
+        if(player->flagIsSet(P_LAG_PROTECTION_SET)) // Activates Lag protection.
+            player->setFlag(P_LAG_PROTECTION_ACTIVE);
+
+        if (player->ready[SHIELD-1]->flagIsSet(O_ALWAYS_CRITICAL) && creature->flagIsSet(M_NO_AUTO_CRIT))
+            chance = 0; // automatic miss if autocrit is set on shield.
+
+        if (creature->flagIsSet(M_NO_BASH))
+            chance = 0;
+
+        // A shield bash, regardless of outcome, adds 2.5% of target's max hp to threat
+        creature->getAsMonster()->adjustThreat(player, std::max<long>((long)(creature->hp.getMax()*0.025), 2));
+
+    }
 
     if(player->isCt()) chance = 101;
     // For bash we have a bash chance, and then a normal attack miss chance
     if(Random::get(1,100) <= chance) {
         // We made the bash check, do the attack
         player->attackCreature(creature, ATTACK_BASH);
+
     }
     else {
-        player->print("Your bash failed.\n");
+        player->print("Your shield bash had no effect.\n");
         player->checkImprove("bash", false);
-        creature->print("%M tried to bash you.\n", player.get());
+        creature->print("%M tried to shield bash you.\n", player.get());
         broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(),
-            "%M tried to bash %N.", player.get(), creature.get());
+            "%M tried to shield bash %N.", player.get(), creature.get());
+    }
+
+    return(0);
+
+}
+
+//*********************************************************************
+//                      cmdSlam
+//*********************************************************************
+// This function allows a player to "slam" an opponent, doing a bit of
+// extra damage, and possibly stunning them for 1-2 seconds. It is essentially
+// like a pommel strike with a weapon, so the weapon subtype used is relevent.
+
+int cmdSlam(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Creature> creature;
+    long    i=0, t = time(nullptr);
+    int     chance;
+    double level;
+    bool noSlam = false;
+
+    if(!player->ableToDoCommand())
+        return(0);
+
+
+    std::shared_ptr<Object> weapon = player->ready[WIELD-1];
+    std::string category = player->getPrimaryWeaponCategory();
+
+    if (weapon) {
+        noSlam = (category == "ranged");
+    }
+
+    if(!player->isCt()) {
+
+        if(!player->knowsSkill("slam")) {
+            *player << "You lack the skills to effectively slam with a weapon.\n";
+            return(0);
+        }
+
+        if(!weapon) {
+            *player << "Slamming an opponent requires a wielded primary weapon.\n";
+            return(0);
+
+        }
+        else if ((noSlam && !weapon->flagIsSet(O_CAN_USE_SLAM)) || weapon->flagIsSet(O_NO_SLAM) ) {
+            *player << ColorOn << "You cannot slam an opponent with " << weapon << ".\n" << ColorOff;
+            return(0);
+        }
+
+    }
+
+    
+    if(!(creature = player->findVictim(cmnd, 1, true, false, "Slam whom?\n", "You don't see that here.\n")))
+        return(0);
+
+    if(!player->canAttack(creature))
+        return(0);
+
+     // Certain mtypes cannot be slammed, and colossal and gargantuan mobs cannot ever be slammed
+    if (creature->isMonster()) {
+        switch(creature->getType()) {
+        case ETHEREAL:
+        case ENERGY:
+        case GASEOUS:
+        case INSECT:
+        case SLIME:
+        case PUDDING:
+            *player << ColorOn << "^y" << "Creatures of type '" << monType::getName(creature->getType()) << "' cannot be slammed!\n" << ColorOff;
+            return(0);
+            break;
+        default:
+            break;
+        }
+
+        if(creature->getSize() == SIZE_COLOSSAL || creature->getSize() == SIZE_GARGANTUAN) {
+            *player << "Are you kidding? " << setf(CAP) << creature << " is of " << 
+                        getSizeName(creature->getSize()) << " size! You can't slam " << creature->himHer() << "!\n";
+            return(0);
+        }
+    }
+
+    i = LT(player, LT_SLAM);
+    t = time(nullptr);
+
+    if(i > t && !player->isCt()) {
+        player->pleaseWait(i - t);
+        return(0);
+    }
+
+    level = player->getSkillLevel("slam");
+
+    switch (player->getClass()) {
+    case CreatureClass::FIGHTER:
+        if(player->getSecondClass() != CreatureClass::NONE)
+            level = std::max(1, (int)level-1);
+        break;
+    case CreatureClass::PALADIN:
+         level = std::max(1, (int)level-1);
+         break;    
+    case CreatureClass::CLERIC:
+        if(player->getDeity() == ARES || player->getDeity() == LINOTHAN)
+            level = std::max(1, (int)level-2);
+        break;
+    case CreatureClass::THIEF:
+    case CreatureClass::ASSASSIN:
+    case CreatureClass::ROGUE:
+         level = std::max(1, (int)level-3);
+         break;
+    default:
+        break;
+    }
+
+    long slamDelay = 0;
+    if (level <= 40)
+        slamDelay = 9L;
+    else if (level <= 30)
+        slamDelay = 10L;
+    else if (level <= 20)
+        slamDelay = 11L;
+    else if (level <= 10)
+        slamDelay = 12L;
+
+    if(player->getClass() != CreatureClass::FIGHTER && player->getClass() != CreatureClass::BERSERKER)
+        slamDelay += 2L;
+    
+    player->updateAttackTimer();
+    player->lasttime[LT_SLAM].ltime = t;
+    player->lasttime[LT_SLAM].interval = slamDelay;
+
+    i = LT(player, LT_SPELL);
+    if (t >= i) 
+        player->lasttime[LT_SPELL].interval = 3L;
+
+    if(player->knowsSkill("gore")) {
+        i = LT(player, LT_GORE);
+        if (t >= i) 
+            player->lasttime[LT_GORE].interval = player->getPrimaryDelay()/10;
+    }
+
+    if(player->knowsSkill("smash")) {
+        i = LT(player, LT_SMASH);
+        if (t >= i) 
+            player->lasttime[LT_SMASH].interval = 3L;
+    }
+
+    // All the logic to check if a weapon can hit the target is inside the attackCreature function
+    // so only put anything specific to bash here, or check for ATTACK_BASH in attackCreature
+
+    player->unhide();
+    player->smashInvis();
+    player->interruptDelayedActions();
+
+    chance = 50 + (int)((level-creature->getLevel())*10) +
+             bonus(player->strength.getCur()) * 3 +
+             (bonus(player->dexterity.getCur()) - bonus(creature->dexterity.getCur())) * 2;
+    chance += player->getClass() == CreatureClass::BERSERKER ? 10:0;
+
+    chance = player->getClass() == CreatureClass::BERSERKER ? std::min(90, chance) : std::min(85, chance);
+
+    if(player->isBlind())
+        chance = std::min(20, chance);
+
+    if(creature->isMonster()) {
+        creature->getAsMonster()->addEnemy(player);
+
+        if(player->flagIsSet(P_LAG_PROTECTION_SET)) // Activates Lag protection.
+            player->setFlag(P_LAG_PROTECTION_ACTIVE);
+
+        if (player->ready[WIELD-1]->flagIsSet(O_ALWAYS_CRITICAL) && creature->flagIsSet(M_NO_AUTO_CRIT))
+            chance = 0; // automatic miss if autocrit is set on weapon.
+
+        if (creature->flagIsSet(M_NO_SLAM))
+            chance = 0;
+
+    }
+
+    if(player->isCt()) chance = 101;
+    // For slam we have a slam chance, and then a normal attack miss chance
+    if(Random::get(1,100) <= chance) {
+        // We made the slam check, do the attack
+        player->attackCreature(creature, ATTACK_SLAM);
+        // A successful slam , regardless of whether it does damge, adds 1% of target's max hp to threat
+        creature->getAsMonster()->adjustThreat(player, std::max<long>((long)(creature->hp.getMax()*0.01), 2));
+
+    }
+    else {
+        player->print("Your slam was ineffective.\n");
+        player->checkImprove("slam", false);
+        creature->print("%M tried to slam you.\n", player.get());
+        broadcast(player->getSock(),  creature->getSock(), creature->getRoomParent(),
+            "%M tried to slam %N.", player.get(), creature.get());
     }
 
     return(0);
@@ -778,12 +1023,13 @@ int cmdBash(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Creature> creature;
-    long    lt_gore, lt_kick, t;
+    long    i=0, t=0;
     int     chance;
 
 
     if(!player->ableToDoCommand())
         return(0);
+
 
     if(!player->isStaff()) {
         if(!player->knowsSkill("gore")) {
@@ -798,18 +1044,19 @@ int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->canAttack(creature))
         return(0);
 
+    //player->updateAttackTimer();
 
-    lt_gore = LT(player, LT_GORE);
+    i = LT(player, LT_GORE);
     t = time(nullptr);
 
-    if(lt_gore > t && !player->isDm()) {
-        player->pleaseWait(lt_gore - t);
+    if(i > t && !player->isCt()) {
+        player->pleaseWait(i - t);
         return(0);
     }
 
     // Gore
     long goreInterval = 0;
-    int goreSkill = player->getSkillLevel("gore");
+    int goreSkill = (int)player->getSkillLevel("gore");
 
     // Time between use decreases with skill level
     if (goreSkill >= 40)
@@ -829,28 +1076,40 @@ int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     player->lasttime[LT_GORE].ltime = t;
     player->lasttime[LT_GORE].interval = goreInterval;
+    
 
-    // No gore-cast. Not going to smash your head into something and then cast after. That'd just be dumb.
-    player->lasttime[LT_SPELL].ltime = t;
+    i = LT(player, LT_SPELL);
+    if (t >= i) 
+        player->lasttime[LT_SPELL].interval = 3L;
 
-    //For now, we're not going to be doing gore-kick combos
+    if(player->knowsSkill("slam")) {
+        i = LT(player, LT_SLAM);
+        if (t >= i) 
+            player->lasttime[LT_SLAM].interval = player->getPrimaryDelay()/10;
+    }
+
     if(player->knowsSkill("kick")) {
-        lt_kick = LT(player, LT_KICK);
-        if (lt_kick < t) {
-            player->lasttime[LT_KICK].ltime = t;
-            player->lasttime[LT_KICK].interval = std::max<long>(lt_kick - t, 3); 
-        }
+        i = LT(player, LT_KICK);
+        if (t >= i) 
+            player->lasttime[LT_KICK].interval = player->getPrimaryDelay()/10;
+    }
+
+    if(player->knowsSkill("smash")) {
+        i = LT(player, LT_SMASH);
+        if (t >= i) 
+            player->lasttime[LT_SMASH].interval = player->getPrimaryDelay()/10;
     }
 
     player->unhide();
     player->smashInvis();
     player->interruptDelayedActions();
     
-    if(player->flagIsSet(P_LAG_PROTECTION_SET)) // Activates Lag protection.
-        player->setFlag(P_LAG_PROTECTION_ACTIVE);
-
     if(creature->isMonster()) {
         creature->getAsMonster()->addEnemy(player);
+
+        if(player->flagIsSet(P_LAG_PROTECTION_SET)) // Activates Lag protection.
+            player->setFlag(P_LAG_PROTECTION_ACTIVE);
+
     }
 
     // Agility = avg of dex + con
@@ -910,6 +1169,489 @@ int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(0);
 }
 
+//******************************************************************************************
+//                      cmdSmash
+//******************************************************************************************
+// This allows some larger races to smash their opponents every so often, either with or without
+// a weapon. It has a chance to stun, and size differences with attacker, target, and the
+// weapon used also are considered. A smash attack is immune to parrying,
+// turning those into either a miss or a dodge instead. The chance to block an attack is 
+// still there, but difference between attacker and target size are considered. A successful
+// smash has a chance to stun, but that also has bonus/penalty depending on size difference.
+// As of v2.63, only ogres and half-giants have this ability. -TC
+
+int cmdSmash(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    std::shared_ptr<Player> pTarget=nullptr;
+    std::shared_ptr<Creature> target=nullptr;
+    int      n=0;
+    int     squish=0, dur=0, dmg=0;
+    long    i=0, t=0;
+    float   smashMod = 0.0;
+    Damage damage;
+
+     if(!player->ableToDoCommand())
+        return(0);
+
+    if(!player->isStaff()) {
+        if(!player->knowsSkill("smash")) {
+            *player << "You do not have the ability to smash your enemies.\n";
+            return(0);
+        }
+
+        if(!player->flagIsSet(P_PTEST_SMASH)) {
+            *player << "The smash ability is only available for ptesting right now.\n";
+            return(0);
+        }
+    }
+
+
+
+    std::shared_ptr<Object>  weapon = player->ready[WIELD - 1];
+    std::string category = player->getPrimaryWeaponCategory();
+
+
+    if(!player->isCt()) {
+        if(weapon && category != "crushing" && !weapon->flagIsSet(O_CAN_USE_SMASH) && !player->isStaff()) {
+            *player << setf(CAP) << weapon << " is not suitable for smashing! You need a crushing weapon or no weapon at all!\n";
+            return(0);
+        }
+    }
+
+    int weaponSizeDiff = 0;
+
+    // Size of weapon being used compared to size of attacker matters
+    if(weapon) {
+       
+        weaponSizeDiff = (weapon->getSize()?(player->getSize() - weapon->getSize()):0);
+
+        if(abs(weaponSizeDiff) >= 2 && !player->isStaff()) {
+            *player << ColorOn << "^y" << setf(CAP) << weapon << " is too " 
+                    << (weaponSizeDiff>0?"small and awkward":"large and unwieldy") << " for you to smash with.^x\n" << ColorOff;
+            return(0);
+        } 
+        
+        if (weapon->flagIsSet(O_NO_SMASH) && !player->checkStaff("%O cannot be used to smash.\n", weapon.get()))
+            return(0);
+    }
+
+    if(!(target = player->findVictim(cmnd, 1, true, false, "Smash what?\n", "You don't see that here.\n")))
+        return(0);
+
+    if(!player->canAttack(target))
+        return(0);
+
+    // Certain mtypes cannot be smashed, and colossal and gargantuan mobs cannot ever be smashed
+    if (target->isMonster()) {
+        switch(target->getType()) {
+        case ETHEREAL:
+        case ENERGY:
+        case GASEOUS:
+        case INSECT:
+        case SLIME:
+        case PUDDING:
+            *player << ColorOn << "^y" << "Creatures of type '" << monType::getName(target->getType()) << "' cannot be smashed!\n" << ColorOff;
+            return(0);
+            break;
+        default:
+            break;
+        }
+
+        if(target->getSize() == SIZE_COLOSSAL || target->getSize() == SIZE_GARGANTUAN) {
+            *player << "Are you kidding? " << setf(CAP) << target << " is of " << 
+                        getSizeName(target->getSize()) << " size! You can't smash " << target->himHer() << "!\n";
+            return(0);
+        }
+    }
+
+    player->updateAttackTimer();
+
+    i = LT(player, LT_SMASH);
+    t = time(nullptr);
+
+    if(i > t && !player->isCt()) {
+        player->pleaseWait(i - t);
+        return(0);
+    }
+
+    long smashInterval = 0;
+    int smashSkill = (int)player->getSkillLevel("smash");
+
+    // Time between smashes will decrease slightly with increased skill level
+    if (smashSkill >= 40)
+        smashInterval = 155;
+    else if (smashSkill >= 30)
+        smashInterval = 160;
+    else if (smashSkill >= 20)
+        smashInterval = 165;
+    else if (smashSkill >= 10)
+        smashInterval = 170;
+    else
+        smashInterval = 180;
+
+    if(player->isStaff() || player->flagIsSet(P_PTESTER))
+        smashInterval = 3;
+
+    player->lasttime[LT_SMASH].ltime = t;
+    player->lasttime[LT_SMASH].interval = smashInterval;
+
+    
+    i = LT(player, LT_SPELL);
+    if (t >= i) 
+        player->lasttime[LT_SPELL].interval = 6L;
+    
+    if(player->knowsSkill("slam")) {
+        i = LT(player, LT_SLAM);
+        if (t >= i) 
+            player->lasttime[LT_SLAM].interval = 6L;
+    }
+
+    if(player->knowsSkill("bash")) {
+        i = LT(player, LT_BASH);
+        if (t >= i) 
+            player->lasttime[LT_BASH].interval = 6L;
+    }
+
+    if(player->knowsSkill("kick")) {
+        i = LT(player, LT_KICK);
+        if (t >= i) 
+            player->lasttime[LT_KICK].interval = 6L;
+    }
+
+    if(player->knowsSkill("gore")) {
+        i = LT(player, LT_GORE);
+        if (t >= i) 
+            player->lasttime[LT_GORE].interval = 6L;
+    }
+
+
+    if(target->isMonster()) {
+        target->getAsMonster()->addEnemy(player);
+
+        if(player->flagIsSet(P_LAG_PROTECTION_SET)) // Activates Lag protection.
+            player->setFlag(P_LAG_PROTECTION_ACTIVE);
+    }
+
+    // If using a weapon, allow for the weapon breaking
+    if(weapon && player->breakObject(weapon, WIELD)) {
+        *player << ColorOn << "^yYour SMASH missed!\n" << ColorOff;
+        broadcast(player->getSock(), player->getParent(), "^y%M's SMASH missed!^x", player.get());
+        player->lasttime[LT_SMASH].ltime = t;
+        player->lasttime[LT_SMASH].interval = 12L;
+        return(0);
+    }
+   
+    int skillLevel=0, wpnSkill=0, modifier=0;
+    
+    wpnSkill = player->getWeaponSkill(weapon)/10;
+
+    skillLevel = (smashSkill + wpnSkill)/2;
+
+    if(player->flagIsSet(P_PTESTER) || player->flagIsSet(P_PTEST_SMASH))
+        *player << ColorOn << "^DwpnSkill: " << wpnSkill << "\nsmashSkill: " << smashSkill << "\nInitial skillLevel: " << skillLevel << "\n" << ColorOff;
+
+    //High brutality (avg of str + con) gives a bonus
+    if(player->getBrutality() > 200) {
+        //modifier = 300 - player->getBrutality()/10;
+        modifier = (player->getBrutality() - 200)/10;
+        skillLevel += modifier;
+    }
+    //Low brutality (avg of str + con) gives a penalty
+    else if (player->getBrutality() < 100) {
+         modifier = (100 - player->getBrutality()) / 10;
+        skillLevel = std::max(1,skillLevel - modifier);
+    }
+
+    // Now modify by level, since we dont use computeBonus for damage.
+    if (player->getLevel() > target->getLevel())
+        skillLevel += player->getLevel() - target->getLevel();
+
+    if(player->flagIsSet(P_PTESTER) || player->flagIsSet(P_PTEST_SMASH))
+        *player << ColorOn << "^DBrutality: " << player->getBrutality() << "\nModifier: " << modifier << "\nModified skillLevel: " << skillLevel << "\n" << ColorOff;
+
+    // Much harder to smash opponents more than 1 size larger than you are, effectively reducing skill level
+    short sizeDiff = target->getSize() - player->getSize();
+    if (sizeDiff > 1)
+        skillLevel -= (skillLevel*(25*sizeDiff))/100;
+
+    //Using a wrong-sized weapon will have consequences also
+    if(weapon && abs(weaponSizeDiff) > 0)
+        skillLevel -= (skillLevel*10)/100;
+
+    AttackResult result = player->getAttackResult(target, weapon, (weapon?NO_FLAG:NO_FUMBLE), skillLevel);
+
+    // On occasion, mobtype or size is not enough to customize, so some mobs can be flagged so they're not able to be smashed.
+    // If that happens, the attack will be converted into a miss.
+    if(!pTarget && target->flagIsSet(M_NO_SMASH) && result != ATTACK_MISS)
+        result = ATTACK_MISS;
+
+    if(player->isStaff() || player->flagIsSet(P_PTESTER) || player->flagIsSet(P_PTEST_SMASH)) {
+        *player << ColorOn << "^DskillLevel = " << skillLevel << "\n";
+        if (result == ATTACK_MISS)
+            *player << "result = ATTACK_MISS\n";
+        else if (result == ATTACK_HIT)
+            *player << "result = ATTACK_HIT\n";
+        else if (result == ATTACK_PARRY)
+            *player << "result = ATTACK_PARRY\n";
+        else if (result == ATTACK_BLOCK)
+            *player << "result = ATTACK_BLOCK\n";
+        else if (result == ATTACK_GLANCING)
+            *player << "result = ATTACK_GLANCING\n";
+        else 
+            *player << "result = other\n";
+        *player << "^x" << ColorOff;
+        }
+
+    player->smashInvis();
+    player->unhide();
+    player->interruptDelayedActions();
+
+    std::string with = Statistics::damageWith(player, weapon);
+
+    if(player->isDm() && result != ATTACK_CRITICAL)
+        result = ATTACK_HIT;
+
+    player->statistics.swing();
+
+    // A blocked attack can turn into a hit depending on size difference between attacker and target
+    if (result == ATTACK_BLOCK && target->getSize() < player->getSize()) {
+        *player << ColorOn << "^y" << setf(CAP) << target << " was unable to block your smash!\n" << ColorOff;
+        *target << ColorOn << "^yYou were unable to block " << player << " 's SMASH!\n" << ColorOff;
+        result = ATTACK_HIT;
+    }
+    // An ATTACK_PARRY result will turn into a dodge if target has high enough elusiveness (dex,int average), otherwise, normal hit
+    else if (result == ATTACK_PARRY) {
+        *player << ColorOn << "^y" << setf(CAP) << target << " tried to parry, but " << target->heShe() << " failed!\n" << ColorOff;
+        *target << ColorOn << "^yYou tried to parry " << player << " 's SMASH, but you failed!\n" << ColorOff;
+
+        if (Random::get(1,5) == 1 && target->getElusiveness() >= 160)
+            result = ATTACK_DODGE;
+        else
+            result = ATTACK_HIT;
+    }
+
+
+    if(result == ATTACK_HIT || result == ATTACK_CRITICAL || result == ATTACK_BLOCK || result == ATTACK_GLANCING) {
+        
+        // Smash does base damage generally 1.2x-2.0x either what attacker's unarmed attack 
+        // damage is (no weapon), or damage of the wielded weapon if a weapon is being used
+        smashMod = Random::get(1.5,3.0);
+
+        int drain = 0;
+        bool wasKilled = false, meKilled = false;
+        // Return of 1 means the weapon was shattered or otherwise rendered unsuable
+        if(player->computeDamage(target, weapon, ATTACK_SMASH, result, damage, false, drain, smashMod) == 1) {
+            player->unequip(WIELD, UNEQUIP_DELETE);
+            weapon = nullptr;
+            player->computeAttackPower();
+        }
+        damage.includeBonus();
+
+
+        n = damage.get();
+
+        if(result == ATTACK_CRITICAL)
+            player->statistics.critical();
+        else
+            player->statistics.hit();
+
+        if(target->isPlayer())
+            target->getAsPlayer()->statistics.wasHit();
+
+
+        if(target->isMonster()) {
+            // A successful smash hit, gives 10% of the target's max health as threat
+            target->getAsMonster()->adjustThreat(player, std::max<long>((long)(target->hp.getMax()*0.1), 2));
+        }
+
+
+        squish = target->hp.getCur() * 2;
+
+        *player << ColorOn << "^YYou SMASHED " << target << " for " << player->customColorize("*CC:DAMAGE*") << damage.get() << "^Y damage!^x\n" << ColorOff;
+       
+        log_immort(false,player, "%s SMASHED %s for %d damage.\n", player->getCName(), target->getCName(), damage.get());
+
+        broadcast(player->getSock(), player->getParent(), "^Y%M SMASHED %M!^x", player.get(), target.get());
+
+        *target << ColorOn << "^Y" << player << " SMASHED you" << 
+                        (target->isBrittle() ? "r brittle body" : "") << " for " << 
+                                            target->customColorize("*CC:DAMAGE*") << damage.get() << "^Y damage!^x\n" << ColorOff;
+
+        broadcastGroup(false, target, "^Y%M SMASHED %N for *CC:DAMAGE*%d^Y damage!, %s%s^x\n",
+            player.get(), target.get(), damage.get(), target->heShe(), target->getStatusStr(damage.get()));
+
+        player->statistics.attackDamage(damage.get(), with);
+
+        
+        if( weapon && weapon->getMagicpower() &&
+            weapon->flagIsSet(O_WEAPON_CASTS) &&
+            Random::get(1,100) <= 10 && weapon->getChargesCur() > 0)
+        {
+             n += player->castWeapon(target, weapon, meKilled);
+        }
+
+        meKilled = player->doReflectionDamage(damage, target) || meKilled;
+
+        player->doDamage(target, damage.get(), NO_CHECK);
+        wasKilled = target->hp.getCur() < 1;
+
+        // If killed, check for squishy squish special output!
+        if(wasKilled && n > squish && Random::get(1,100) <= 50) {
+            switch(Random::get(1,4)) {
+            case 1:
+                *player << ColorOn << "^RYou completely pulverized " << target << "!\n" << ColorOff;
+                broadcast(player->getSock(), player->getParent(), "%M completely pulverized %N!",player.get(), target.get());
+                if(target->isPlayer())
+                    *target << ColorOn << "^R" << setf(CAP) << player << " completely pulverized you! You're dead!\n" << ColorOff;
+                break;
+            case 2:
+                *player << ColorOn << "^RYou battered " << target << " into a pulpy unrecognizeable mess!\n" << ColorOff;
+                broadcast(player->getSock(), player->getParent(), "^R%M battered %N into a pulpy unrecognizeable mess!^x",player.get(), target.get());
+                if(target->isPlayer())
+                    *target << ColorOn << "^R" << setf(CAP) << player << " battered you into a pulpy unrecognizeable mess! You're dead!\n" << ColorOff;
+
+                break;
+            case 3:
+                if(weapon) {
+                    *player << ColorOn << "^R" << setf(CAP) << weapon << " ^Rsmashed " << target << " into mush!\n" << ColorOff;
+                    broadcast(player->getSock(), player->getParent(), "^R%M's %s smashed %N into mush!^x", player.get(), weapon->getCName(), target.get());
+
+                    if(target->isPlayer())
+                        *target << ColorOn << "^R" << setf(CAP) << player << "'s " << weapon << " ^Rsmashed you into mush! You're dead!\n" << ColorOff;
+                }
+                else
+                {
+                    *player << ColorOn << "^RYou smashed " << target << " into mush!\n" << ColorOff;
+                    broadcast(player->getSock(), player->getParent(), "^R%M smashed %N into mush!^x",
+                        player.get(), target.get());
+
+                    if(target->isPlayer())
+                        *target << ColorOn << "^R" << setf(CAP) << player << " smashed you into mush! You're dead!\n" << ColorOff;
+                }
+
+                break;
+            case 4:
+                *player << ColorOn << "^RYou nearly flattened " << target << " into the ground!\n" << ColorOff;
+                broadcast(player->getSock(), player->getParent(), "^R%M nearly flattened %N into the ground!^x",player.get(), target.get());
+                if(target->isPlayer())
+                    *target << ColorOn << "^R" << setf(CAP) << player << " nearly flattened you into the ground! You're dead!\n" << ColorOff;
+                break;
+            }
+        }
+
+        player->checkImprove("smash", true);
+
+        if(weapon && Random::get(0,1))
+            weapon->decShotsCur();
+        Creature::simultaneousDeath(player, target, false, false);
+
+        // Stun chance here
+        if(!wasKilled && !meKilled && (result == ATTACK_HIT || result == ATTACK_CRITICAL || result == ATTACK_GLANCING)) {
+            int stunChance = (result == ATTACK_GLANCING?200:400); // base 20% glancing, 40% otherwise
+            
+            if(sizeDiff > 0)
+                stunChance += (sizeDiff * 100);
+
+            if(result == ATTACK_CRITICAL)
+                stunChance += 500;
+
+            if(target->isEffected("berserk"))
+                stunChance /= 3;
+
+            if(player->isCt())
+                stunChance = 1001;
+
+            int roll = Random::get(1,1000);
+            if(isPtester(player) || player->flagIsSet(P_PTEST_SMASH))
+                *player << ColorOn << "^DstunChance (1-1000): " << stunChance << "\nRoll: " << roll << "\n" << ColorOff;
+
+            if(roll <= stunChance) {
+                target->stun((result==ATTACK_GLANCING?Random::get(3,4):Random::get(6,8)));
+                *player << ColorOn << "^Y" << setf(CAP) << target << " is knocked senseless!\n" << ColorOff;
+                *target << ColorOn << "^YYou've been knocked senseless!\n" << ColorOff;
+                broadcast(player->getSock(), player->getParent(), "^Y%M is knocked senseless!^x", target.get());
+            }
+
+        }
+
+        // Only monsters flee, and not when their attacker was killed
+        if(!wasKilled && !meKilled && target->getAsMonster()) {
+            if(target->flee() == 2)
+                return(0);
+        }
+
+    } else if(result == ATTACK_MISS) {
+        player->statistics.miss();
+        if(target->isPlayer())
+            target->getAsPlayer()->statistics.wasMissed();
+        *player << ColorOn << "^yYour SMASH missed!\n" << ColorOff;
+        player->checkImprove("smash", false);
+        broadcast(player->getSock(), player->getParent(), "^y%M tried to SMASH %M!^x", player.get(), target.get());
+        player->setAttackDelay(Random::get(3,7));
+    
+    } else if(result == ATTACK_DODGE) {
+        *player << ColorOn << "^yYour SMASH missed!\n" << ColorOff;
+        broadcast(player->getSock(), player->getParent(), "^y%M tried to SMASH %M!^x", player.get(), target.get());
+        target->dodge(player);
+    } else if(result == ATTACK_FUMBLE) {
+        player->statistics.fumble();
+        *player << ColorOn << "^gYou FUMBLED " << ((weapon && !weapon->flagIsSet(O_NO_PREFIX))?"your ":" ") << (weapon?weapon->getName():"your attack") << ".\n" << ColorOff;
+        broadcast(player->getSock(), player->getParent(), "^g%M fumbled %s weapon.", player.get(), player->hisHer());
+
+        //While envenom usually requires piercing or slashing weapons, and smash is only for crushing or specifically
+        //flagged smashing weapons, the below check needs to be here for completeness in case envenom is ever changed,
+        //or if certain exotic or slashing/piercing weapons are flagged as able to use smash with.
+        if(weapon->flagIsSet(O_ENVENOMED)) {
+            if(!player->immuneToPoison() &&
+                !player->chkSave(POI, player, -5) && !induel(player, target->getAsPlayer())
+            ) {
+                *player << ColorOn << "^G^#You poisoned yourself!!\n" << ColorOff;
+                broadcast(player->getSock(), player->getParent(), "%M poisoned %sself!!",
+                    player.get(), player->himHer());
+
+                if(weapon->getEffectStrength()) {
+                    dmg = (Random::get(1,3) + (weapon->getEffectStrength()/10));
+                    player->hp.decrease(dmg);
+                    *player << ColorOn << "^gYou take ^G" << dmg << "^g damage as the poison takes effect!\n" << ColorOff;
+                }
+
+                weapon->clearFlag(O_ENVENOMED);
+
+                if(player->hp.getCur() < 1) {
+                    n = 0;
+                    player->addObj(weapon);
+                    weapon = nullptr;
+                    player->computeAttackPower();
+                    player->die(POISON_PLAYER);
+                    return(0);
+                }
+
+                dur = standardPoisonDuration(weapon->getEffectDuration(), player->constitution.getCur());
+                player->poison(player, weapon->getEffectStrength(), dur);
+
+            } else {
+                *player << "You almost poisoned yourself!\n";
+                broadcast(player->getSock(), player->getParent(), "%M almost poisoned %sself!", player.get(), player->himHer());
+            }
+        }
+
+        n = 0;
+        player->addObj(weapon);
+        player->ready[WIELD-1] = nullptr;
+        weapon = nullptr;
+        player->computeAttackPower();
+    } else {
+        *player << ColorOn << "^GError: Unhandled attack result! Result: " << result << "\n" << ColorOff;
+    }
+
+    // On miss, dodge, or fumble (if weapon was used) reset timer to 9s instead of the normal smashInterval based on skill
+    // Makes smash able to be used more often to help level the skill up
+    if(result == ATTACK_MISS || result == ATTACK_DODGE || result == ATTACK_FUMBLE) {
+        player->lasttime[LT_SMASH].ltime = t;
+        player->lasttime[LT_SMASH].interval = 9L;
+    }
+
+    return(0);
+}
 
 //*********************************************************************
 //                      cmdKick
@@ -919,7 +1661,7 @@ int cmdGore(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Creature> creature;
-    long    lt_kick,lt_gore,t;
+    long    i=0,t=0;
     int     chance;
 
 
@@ -941,11 +1683,11 @@ int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
 
 
-    lt_kick = LT(player, LT_KICK);
+    i = LT(player, LT_KICK);
     t = time(nullptr);
 
-    if(lt_kick > t && !player->isDm()) {
-        player->pleaseWait(lt_kick - t);
+    if(i > t && !player->isDm()) {
+        player->pleaseWait(i - t);
         return(0);
     }
 
@@ -962,13 +1704,32 @@ int cmdKick(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->lasttime[LT_DISARM].interval = 6;
     }
 
-    //For now, we're not going to be doing kick-gore combos
+    i = LT(player, LT_SPELL);
+    if (t >= i) 
+        player->lasttime[LT_SPELL].interval = 3L;
+
+    if(player->knowsSkill("slam")) {
+        i = LT(player, LT_SLAM);
+        if (t >= i) 
+            player->lasttime[LT_SLAM].interval = player->getPrimaryDelay()/10;
+    }
+
     if(player->knowsSkill("gore")) {
-        lt_gore = LT(player, LT_GORE);
-        if (lt_gore < t) {
-            player->lasttime[LT_GORE].ltime = t;
-            player->lasttime[LT_GORE].interval = std::max<long>(lt_gore - t, 3); 
-        }
+        i = LT(player, LT_GORE);
+        if (t >= i) 
+            player->lasttime[LT_GORE].interval = player->getPrimaryDelay()/10;
+    }
+
+    if(player->knowsSkill("smash")) {
+        i = LT(player, LT_SMASH);
+        if (t >= i) 
+            player->lasttime[LT_SMASH].interval = player->getPrimaryDelay()/10;
+    }
+
+    if(player->knowsSkill("bash")) {
+        i = LT(player, LT_BASH);
+        if (t >= i) 
+            player->lasttime[LT_BASH].interval = player->getPrimaryDelay()/10;
     }
 
     player->unhide();

@@ -95,14 +95,26 @@ bool Creature::canSeeRoom(const std::shared_ptr<BaseRoom>& room, bool p) const {
     // room is affected by normal darkness
     if(room->isNormalDark()) {
         // there are several sources of normal vision
-        bool    normal_sight = gConfig->getRace(race)->hasInfravision() ||
-            isUndead() || isEffected("lycanthropy") || (player && player->getLight());
+        bool    normal_sight = (
+                            gConfig->getRace(race)->hasInfravision() ||
+                                         isUndead() || isEffected("lycanthropy") || 
+                                                            (player && (player->getLight()))
+                                );
 
         // if they can't see, maybe someone else in the room has light for them
         if(!normal_sight) {
             for(const auto& pIt: room->players) {
                 if(auto ply = pIt.lock()) {
-                    if (ply->getAsPlayer()->getLight()) {
+                    if (ply->getAsPlayer()->getLight() || ply->getAsPlayer()->isEffected("light")) {
+                        normal_sight = true;
+                        break;
+                    }
+                }
+            }
+            //now check for any mobs with light effects
+            if (!normal_sight) {
+                for(const auto& mons: room->monsters) {
+                    if(mons->getAsMonster()->isEffected("light")) {
                         normal_sight = true;
                         break;
                     }
@@ -1054,6 +1066,9 @@ bool Monster::getEnchantmentImmunity(const std::shared_ptr<Creature>& caster, co
     if(monType::isImmuneEnchantments(getType())) 
         monsterImmune=true;
 
+    
+
+
     if (spell != "hold-undead" && getAsCreature()->isUndeadImmuneEnchantments())
         monsterImmune=true;
 
@@ -1241,12 +1256,10 @@ bool Creature::getRaceEnchantmentResist(const std::shared_ptr<Creature>& caster,
     case HALFELF:
         if (Random::get(1,100) <= (getRace()==HALFELF?30:90)) {
             if (print) {
-                *this << ColorOn << "^yYour " << (getRace()==HALFELF?"Elven half":"Fey ancestry") << " protected you from " << caster << "'s spell.\n" << ColorOff;
-                *caster << ColorOn << "^y" << setf(CAP) << this << " resisted your spell due to " << hisHer() << (getRace()==HALFELF?" Elven half":" Fey origins") << ".\n" << ColorOff;
-                if(caster->isStaff())
-                    *caster << "Race Number = " << getRace() << "\n";
+                *this << ColorOn << "^yYour " << (getRace()==HALFELF?"Elven half":"Elven ancestry") << " protected you from " << caster << "'s spell.\n" << ColorOff;
+                *caster << ColorOn << "^y" << setf(CAP) << this << " resisted your spell due to " << hisHer() << (getRace()==HALFELF?" Elven half":" Elven ancestry") << ".\n" << ColorOff;
                 broadcast(caster->getSock(), getSock(), caster->getParent(), "^y%M resisted %N's spell due to %s %s!^x", 
-                                                                        this, caster.get(), hisHer(), (getRace()==HALFELF?"Elven half":"Fey ancestry"));
+                                                                        this, caster.get(), hisHer(), (getRace()==HALFELF?"Elven half":"Elven ancestry"));
             }
             resist=true;
         }
@@ -1284,6 +1297,18 @@ bool Creature::getRaceEnchantmentResist(const std::shared_ptr<Creature>& caster,
             resist=true;
             if (isMonster() && getAdjustedAlignment() >= NEUTRAL && caster->getAdjustedAlignment() >= PINKISH) // Non-evil Seraph mobs will only attack failed casters if they are more evil than PINKISH
                 willAggro=false;
+        }
+        break;
+    case OGRE:
+    case OROG:
+    case DUERGAR:
+        if (spell == "fear" || spell == "scare") {
+            if (print) {
+                *this << ColorOn << "^y" << setf(CAP) << caster << "'s " << spell << " spell dissipated. Your vicious nature makes you immune!\n" << ColorOff;
+                *caster << ColorOn << "^y" << this << " is too vicious to be affected by " << spell << " spells. Your spell dissipated.\n" << ColorOff;
+                broadcast(caster->getSock(), caster->getParent(), "^y%M is immune to %s spells. %M's spell dissipated.^x", this, spell.c_str(), caster.get());
+            }
+            resist=true;
         }
         break;
     default:
@@ -1770,6 +1795,14 @@ int Creature::getElusiveness() {
 }
 
 //********************************************************************
+//                    getBrutality()
+//********************************************************************
+//Brutality combo stat
+int Creature::getBrutality() {
+    return((strength.getCur() + constitution.getCur())/2);
+}
+
+//********************************************************************
 //                    getWillpower()
 //********************************************************************
 //Willpower stat
@@ -1918,7 +1951,7 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
     case DWARF:
     case HILLDWARF:
         if (eRace==ORC || eRace==GOBLIN || eRace==OGRE ||
-            eRace==DUERGAR || eRace==TROLL || eRace==KOBOLD)
+            eRace==DUERGAR || eRace==TROLL || eRace==KOBOLD || eRace==OROG)
             return(true);
         if (eMtype == GIANTKIN || eMtype == GOBLINOID)
             return(true);
@@ -1934,10 +1967,17 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
         break;
     case ORC:
         if(eRace==DWARF || eRace==ELF || eRace==BUGBEAR || 
-           eRace==HALFELF || eRace==GNOME || eRace==HALFLING)
+           eRace==HALFELF || eRace==GNOME || eRace==HALFLING ||
+           eRace==GREYELF || eRace==WILDELF)
             return(true);
         //Orcs hate good fey
         if (eMtype == FAERIE && eAlign > 0)
+            return(true);
+        break;
+    case OROG:
+        if(eRace==DWARF || eRace==ELF || eRace==BUGBEAR || 
+           eRace==HALFELF || eRace==GNOME || eRace==HALFLING ||
+           eRace==GREYELF || eRace==WILDELF)
             return(true);
         break;
     case GNOME:
@@ -1963,14 +2003,15 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
         //A lot of the evil humanoid races tend to torture goblins and/or enslave them...
         //Plus, they're generally just hateful little bastards
         if(eRace==ELF || eRace==DWARF || eRace==HOBGOBLIN || eRace==BUGBEAR || 
-           eRace==OGRE || eRace==GNOME || eRace==TROLL || eRace==GNOLL || eRace == HALFLING)
+           eRace==OGRE || eRace==GNOME || eRace==TROLL || eRace==GNOLL || eRace == HALFLING ||
+           eRace==GREYELF || eRace==WILDELF || eRace==OROG)
             return(true);
         //Goblins hate good fey
         if (eMtype == FAERIE && eAlign > 0)
             return(true);
         break;
     case HALFLING:
-        if (eRace==ORC || eRace==GOBLIN || eRace==KOBOLD)
+        if (eRace==ORC || eRace==GOBLIN || eRace==KOBOLD || eRace==OGRE || eRace==OROG)
             return(true);
         break;
     case MINOTAUR:
@@ -1979,7 +2020,7 @@ bool Creature::hatesEnemy(std::shared_ptr<Creature> enemy) const {
             return(true);
         break;
     case KOBOLD:
-        if(eRace==OGRE || eRace==GNOME || eRace==HALFLING)
+        if(eRace==OGRE || eRace==GNOME || eRace==HALFLING || eRace==OROG)
             return(true);
         break;
     case KATARAN:
@@ -2233,6 +2274,27 @@ bool Creature::isIndoors() {
         return(false);
 
     return (room->flagIsSet(R_INDOORS));
+}
+
+int Creature::getDefenseSkillModifier() const {
+
+    int mod=0;
+
+    if(isEffected("protection")) {
+        if(isMonster())
+            mod += std::max<int>(10,getLevel());
+        else
+            mod += std::max<int>(10,getEffect("protection")->getStrength());
+    }
+
+    if(isEffected("shield")) {
+        if(isMonster())
+            mod += std::max<int>(10,getLevel());
+        else
+            mod += std::max<int>(10,getEffect("shield")->getStrength());
+    }
+
+    return(mod);
 }
 
 

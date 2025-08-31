@@ -367,6 +367,7 @@ void etherealTravel(std::shared_ptr<Player> player);
 
 
 void sendMail(const std::string &target, const std::string &message);
+void sendSystemNotice(const std::string &target, const std::string &message);
 
 
 // room.cpp

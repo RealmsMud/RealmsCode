@@ -192,9 +192,11 @@ protected:
     short           chargesMax;     // Maximum charges (Currently only used for casting weapons)
     short           chargesCur;
     short           magicpower;
+    unsigned short  castChance;
     short           level;
     int             requiredSkill;  // Required amount of skill gain to use this object
     short           minStrength;
+    unsigned short  permSpawnChance;
     short           clan;
     short           special;
     short           questnum;       // Quest fulfillment number
@@ -338,9 +340,11 @@ public:
     [[nodiscard]] short getChargesMax() const;
     [[nodiscard]] short getChargesCur() const;
     [[nodiscard]] short getMagicpower() const;
+    [[nodiscard]] unsigned short getCastChance() const;
     [[nodiscard]] short getLevel() const;
     [[nodiscard]] int getRequiredSkill() const;
     [[nodiscard]] short getMinStrength() const;
+    [[nodiscard]] unsigned short getPermSpawnChance() const;
     [[nodiscard]] short getClan() const;
     [[nodiscard]] short getSpecial() const;
     [[nodiscard]] short getQuestnum() const;
@@ -401,10 +405,12 @@ public:
     void setChargesMax(short s);
     void setChargesCur(short s);
     void setMagicpower(short m);
+    void setCastChance(unsigned short s);
     void setMagicrealm(short m);
     void setLevel(short l);
     void setRequiredSkill(int s);
     void setMinStrength(short s);
+    void setPermSpawnChance(unsigned short s);
     void setClan(short c);
     void setSpecial(short s);
     void setQuestnum(short q);
@@ -465,6 +471,12 @@ public:
     [[nodiscard]] bool isGemstone() const;
     [[nodiscard]] bool isSilver() const;
     [[nodiscard]] bool isDarkmetal() const;
+    [[nodiscard]] bool isMetal() const;
+    [[nodiscard]] bool isFerrousMetal() const;
+    [[nodiscard]] bool isNonFerrousMetal() const;
+    [[nodiscard]] bool isOrganic() const;
+    [[nodiscard]] bool isStone() const;
+    [[nodiscard]] bool isFlammable() const;
     [[nodiscard]] bool isTrashAtPawn(Money value) const;
 
     bool swap(const Swap& s);
