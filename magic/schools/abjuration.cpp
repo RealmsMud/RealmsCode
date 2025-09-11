@@ -768,10 +768,9 @@ int splArmor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
 //*********************************************************************
 //                      splShield
 //*********************************************************************
-// This spell allows a mage to cast an armor shield around themself which gives themself an
-// AC of 6. It sets a pool of virtual HP to effect.strength which is equal to the caster's
-// max HP. The armor can take that much damage before dispelling, or its time can run out.
-// This spell does NOT absorb damage, it only protects by giving better AC. -TC
+// This spell allows arcane casters and multi-class arcane casters to form a
+// magical shield around them which improves defense. It also provides 
+// immunity to all magic missile attacks.
 
 int splShield(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     std::shared_ptr<Player> pPlayer = player->getAsPlayer();

@@ -1199,7 +1199,7 @@ int cmdSmash(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         if(!player->flagIsSet(P_PTEST_SMASH)) {
-            *player << "The smash ability is only available for ptesting right now.\n";
+            *player << "The smash ability is only available for ptesters right now.\n";
             return(0);
         }
     }
@@ -1432,7 +1432,7 @@ int cmdSmash(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(result == ATTACK_HIT || result == ATTACK_CRITICAL || result == ATTACK_BLOCK || result == ATTACK_GLANCING) {
         
-        // Smash does base damage generally 1.2x-2.0x either what attacker's unarmed attack 
+        // Smash does base damage generally 1.5x-3.0x either what attacker's unarmed attack 
         // damage is (no weapon), or damage of the wielded weapon if a weapon is being used
         smashMod = Random::get(1.5,3.0);
 

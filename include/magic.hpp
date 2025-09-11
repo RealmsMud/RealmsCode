@@ -276,7 +276,7 @@ std::string realmSkill(Realm realm);
 #define S_HOLD_FEY              175 // hold-fey
 #define S_LIGHT                 176 // light spell
 #define S_SHIELD                177 // shield spell
-#define S_EMPATHY               178 // shield spell
+#define S_EMPATHY               178 // empathy spell
 
 
 #define MAXSPELL                179 // Increment when you add a spell

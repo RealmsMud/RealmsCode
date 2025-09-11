@@ -749,8 +749,7 @@ void Server::updateAction(long t) {
 
                     resp = act->response;
                     if(isdigit(*(resp))) {
-
-                        num = 10*(toNum<int>(resp));
+                        num = 10*std::stoi(resp);
                         ++resp;
                         num = (num == 0) ? 100:num;
 
