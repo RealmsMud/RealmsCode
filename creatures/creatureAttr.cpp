@@ -153,11 +153,14 @@ void Creature::addExperience(unsigned long e) {
         
         // Add account experience if player has an account
         if(player->hasAccount()) {
-            std::shared_ptr<Account> account;
-            if(Account::load(player->getAccountName(), account)) {
+            auto account = gServer->getOrLoadAccount(player->getAccountName());
+            if(account) {
                 // Calculate 1% of player experience gained
                 unsigned long accountExp = e / 100;
-                account->addExperience(accountExp);
+                if(accountExp > 0) {
+                    account->addExperience(accountExp);
+                    account->save();  // Save the shared account
+                }
             }
         }
     }
@@ -167,8 +170,9 @@ void Creature::subExperience(unsigned long e) {
     setExperience(e > experience ? 0 : experience - e);
     unsigned long lost = (e > experience ? 0 : e);
     if(isPlayer()) {
-        getAsPlayer()->checkLevel();
-        getAsPlayer()->statistics.experienceLost(lost);
+        auto player = getAsPlayer();
+        player->checkLevel();
+        player->statistics.experienceLost(lost);
     }
 }
 

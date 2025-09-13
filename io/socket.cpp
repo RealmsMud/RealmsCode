@@ -218,7 +218,7 @@ void Socket::reset() {
     outCompressBuf = nullptr;
     outCompress = nullptr;
     myPlayer = nullptr;
-    myAccount = nullptr;
+    currentAccountName.clear();
 
     tState = NEG_NONE;
     oneIAC = watchBrokenClient = false;
@@ -302,7 +302,7 @@ void Socket::cleanUp() {
         }
         myPlayer = nullptr;
     }
-    myAccount = nullptr;
+    currentAccountName.clear();
     endCompress();
     if(fd > -1) {
         close(fd);
@@ -1152,7 +1152,7 @@ void Socket::reconnect(bool pauseScreen) {
         gServer->clearPlayer(myPlayer->getName());
         myPlayer = nullptr;
     }
-    myAccount = nullptr;
+    currentAccountName.clear();
 
     if (pauseScreen) {
         setState(LOGIN_PAUSE_SCREEN);
@@ -2263,6 +2263,13 @@ void Socket::registerPlayer() {
     if(myPlayer) {
         registered = true;
         gServer->addPlayer(myPlayer);
+        
+        // Track account connection when player logs in
+        std::string accountName = getAccountName();
+        std::string characterName = myPlayer->getName();
+        if(!accountName.empty() && !characterName.empty()) {
+            gServer->trackAccountConnection(accountName, characterName);
+        }
     } else {
         registered = false;
     }
@@ -2273,19 +2280,65 @@ void Socket::registerPlayer() {
 //********************************************************************
 
 bool Socket::hasAccount() const {
-    return myAccount != nullptr;
+    // First try to get account name from player if available
+    if (myPlayer && !myPlayer->getAccountName().empty()) {
+        auto account = gServer->getOrLoadAccount(myPlayer->getAccountName());
+        return account != nullptr;
+    }
+    
+    // Fall back to temporary account name during login
+    if (!currentAccountName.empty()) {
+        auto account = gServer->getOrLoadAccount(currentAccountName);
+        return account != nullptr;
+    }
+    
+    return false;
 }
 
 std::shared_ptr<Account> Socket::getAccount() const {
-    return myAccount;
+    // First try to get account name from player if available
+    if (myPlayer && !myPlayer->getAccountName().empty()) {
+        return gServer->getOrLoadAccount(myPlayer->getAccountName());
+    }
+    
+    // Fall back to temporary account name during login
+    if (!currentAccountName.empty()) {
+        return gServer->getOrLoadAccount(currentAccountName);
+    }
+    
+    return nullptr;
+}
+
+std::string Socket::getAccountName() const {
+    // First try to get account name from player if available
+    if (myPlayer && !myPlayer->getAccountName().empty()) {
+        return myPlayer->getAccountName();
+    }
+    
+    // Fall back to temporary account name during login
+    return currentAccountName;
 }
 
 void Socket::setAccount(std::shared_ptr<Account> acc) {
-    myAccount = acc;
+    if (acc) {
+        currentAccountName = acc->getName();
+        // If we have a player, also set the account name there
+        if (myPlayer) {
+            myPlayer->setAccountName(acc->getName());
+        }
+    } else {
+        currentAccountName.clear();
+        if (myPlayer) {
+            myPlayer->setAccountName("");
+        }
+    }
 }
 
 void Socket::clearAccount() {
-    myAccount = nullptr;
+    currentAccountName.clear();
+    if (myPlayer) {
+        myPlayer->setAccountName("");
+    }
 }
 
 

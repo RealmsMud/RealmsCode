@@ -28,6 +28,7 @@ namespace odbc {
 
 #include <list>
 #include <map>
+#include <set>
 #include <vector>
 
 // C Includes
@@ -57,6 +58,7 @@ class Monster;
 class MsdpVariable;
 class Object;
 class Player;
+class Account;
 class PythonHandler;
 class ReportedMsdpVariable;
 class Socket;
@@ -171,6 +173,10 @@ public:
     RoomCache roomCache;
     MonsterCache monsterCache;
     ObjectCache objectCache;
+    
+    // Account management
+    std::map<std::string, std::shared_ptr<Account>> accountCache;  // Shared account instances
+    std::map<std::string, std::set<std::string>> accountConnections;  // Account -> Set of character names
 
 // ******************
 // Internal Variables
@@ -403,6 +409,13 @@ public:
     void saveAllPly();
     int getNumPlayers();
 
+    // Account management
+    std::shared_ptr<Account> getOrLoadAccount(const std::string& accountName);
+    void trackAccountConnection(const std::string& accountName, const std::string& characterName);
+    void untrackAccountConnection(const std::string& accountName, const std::string& characterName);
+    std::vector<std::string> getAccountCharacters(const std::string& accountName) const;
+    void releaseAccount(const std::string& accountName, const std::string& characterName);
+
     void disconnectAll();
     int processOutput(); // Send any buffered output
 
@@ -429,7 +442,7 @@ public:
 
     // Queries
     bool checkDuplicateName(std::shared_ptr<Socket> sock, bool dis);
-    bool checkDouble(std::shared_ptr<Socket> sock);
+    bool checkDouble(std::shared_ptr<Socket> sock, bool disconnectOnLimit = true);
 
     // Bans
     void checkBans();

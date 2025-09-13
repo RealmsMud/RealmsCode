@@ -511,6 +511,15 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
             showAccountMenu(sock, account);
             return;
         }
+        
+        // Check if IP has reached max connections (using refactored checkDouble without disconnecting)
+        if(gServer->checkDouble(sock, false)) {
+            sock->print("^RMaximum number of characters already connected.\n");
+            sock->print("Please disconnect one of your other characters first.\n");
+            sock->askFor("Press ^W<Enter>^x to continue: ");
+            showAccountMenu(sock, account);
+            return;
+        }
         sock->print("\nCreating new character...");
         sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command.");
         sock->askFor("\nHit return to continue: ");

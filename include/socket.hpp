@@ -278,6 +278,7 @@ public:
     // Account methods
     [[nodiscard]] bool hasAccount() const;
     [[nodiscard]] std::shared_ptr<Account> getAccount() const;
+    [[nodiscard]] std::string getAccountName() const;
     void setAccount(std::shared_ptr<Account> acc);
     void clearAccount();
 
@@ -350,7 +351,7 @@ protected:
 
     bool registered{};
     std::shared_ptr<Player>     myPlayer{};
-    std::shared_ptr<Account>    myAccount{};
+    std::string                 currentAccountName{};  // Account name for this socket
 
 
 // For MCCP

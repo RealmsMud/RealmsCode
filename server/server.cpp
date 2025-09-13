@@ -56,6 +56,7 @@
 #include "catRef.hpp"                               // for CatRef
 #include "color.hpp"                                // for stripColor
 #include "config.hpp"                               // for Config, gConfig
+#include "account.hpp"                              // for Account
 #include "delayedAction.hpp"                        // for DelayedAction
 #include "factions.hpp"                             // for Faction
 #include "flags.hpp"                                // for M_PERMANENT_MONSTER
@@ -638,6 +639,15 @@ void Server::disconnectAll() {
 
 bool isDisconnecting(const std::shared_ptr<Socket>& sock) {
     if(sock->getState() == CON_DISCONNECTING) {
+        // Handle account cleanup before disconnecting
+        if(sock->hasPlayer()) {
+            std::string accountName = sock->getAccountName();
+            std::string characterName = sock->getPlayer()->getName();
+            if(!accountName.empty() && !characterName.empty()) {
+                gServer->untrackAccountConnection(accountName, characterName);
+            }
+        }
+        
         // Flush any residual data
         sock->flush();
         return true;
@@ -1905,9 +1915,10 @@ bool Server::checkDuplicateName(std::shared_ptr<Socket> sock, bool dis) {
 //*********************************************************************
 //                      checkDouble
 //*********************************************************************
-// returning true will disconnect the connecting socket (sock)
+// returning true indicates the limit has been exceeded
+// if disconnectOnLimit is true, will disconnect the connecting socket
 
-bool Server::checkDouble(std::shared_ptr<Socket> sock) {
+bool Server::checkDouble(std::shared_ptr<Socket> sock, bool disconnectOnLimit) {
     if(!gConfig->getCheckDouble())
         return(false);
 
@@ -1934,8 +1945,10 @@ bool Server::checkDouble(std::shared_ptr<Socket> sock) {
         cnt++;
 
         if(cnt >= gConfig->getMaxDouble()) {
-            sock->write("\nMaximum number of connections has been exceeded!\n\n");
-            sock->disconnect();
+            if(disconnectOnLimit) {
+                sock->write("\nMaximum number of connections has been exceeded!\n\n");
+                sock->disconnect();
+            }
             return true;
         }
     }
@@ -2429,4 +2442,52 @@ int Server::saveStorage(const CatRef& cr) {
 void Server::stop() {
     if(httpServer) httpServer->stop();
 
+}
+
+//*********************************************************************
+//                      Account Management Methods
+//*********************************************************************
+
+std::shared_ptr<Account> Server::getOrLoadAccount(const std::string& accountName) {
+    auto it = accountCache.find(accountName);
+    if(it != accountCache.end()) {
+        return it->second;  // Return existing shared instance
+    }
+    
+    // Load from disk
+    std::shared_ptr<Account> account;
+    if(Account::load(accountName, account)) {
+        accountCache[accountName] = account;
+        return account;
+    }
+    
+    return nullptr;
+}
+
+void Server::trackAccountConnection(const std::string& accountName, const std::string& characterName) {
+    accountConnections[accountName].insert(characterName);
+}
+
+void Server::untrackAccountConnection(const std::string& accountName, const std::string& characterName) {
+    auto it = accountConnections.find(accountName);
+    if(it != accountConnections.end()) {
+        it->second.erase(characterName);
+        if(it->second.empty()) {
+            // No more connections, can remove from cache
+            accountCache.erase(accountName);
+            accountConnections.erase(it);
+        }
+    }
+}
+
+std::vector<std::string> Server::getAccountCharacters(const std::string& accountName) const {
+    auto it = accountConnections.find(accountName);
+    if(it != accountConnections.end()) {
+        return std::vector<std::string>(it->second.begin(), it->second.end());
+    }
+    return {};
+}
+
+void Server::releaseAccount(const std::string& accountName, const std::string& characterName) {
+    untrackAccountConnection(accountName, characterName);
 }
