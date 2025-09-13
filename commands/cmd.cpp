@@ -547,6 +547,7 @@ bool Config::initCommands() {
     playerCommands.emplace("statistics", 100, cmdStatistics, nullptr, "Show character-related statistics");
     playerCommands.emplace("information", 50, cmdInfo, nullptr, "Show extended information about your character");
     playerCommands.emplace("attributes", 100, cmdInfo, nullptr, "Show extended information about your character");
+    playerCommands.emplace("account", 100, cmdAccount, nullptr, "Display account information and perform account-related commands");
     playerCommands.emplace("skills", 100, cmdSkills, nullptr, "Show what skills your character knows");
     playerCommands.emplace("version", 100, cmdVersion, nullptr, "View RoH current version");
     playerCommands.emplace("age", 100, cmdAge, nullptr, "Show your character's age and time played");
