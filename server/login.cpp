@@ -506,17 +506,15 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
         if(!account->canCreateCharacter()) {
             sock->print("^RYou have reached your character limit (%d/%d).^x\n", 
                        account->getCharacterCount(), account->getCharacterLimit());
-            sock->print("You must delete a character before creating a new one.\n");
-            sock->askFor("Press ^W<Enter>^x to continue: ");
+            sock->print("You must delete a character before creating a new one.\n\n");
             showAccountMenu(sock, account);
             return;
         }
         
-        // Check if IP has reached max connections (using refactored checkDouble without disconnecting)
+        // Check if IP has reached max connections
         if(gServer->checkDouble(sock, false)) {
             sock->print("^RMaximum number of characters already connected.\n");
-            sock->print("Please disconnect one of your other characters first.\n");
-            sock->askFor("Press ^W<Enter>^x to continue: ");
+            sock->print("Please disconnect one of your other characters first.\n\n");
             showAccountMenu(sock, account);
             return;
         }
@@ -580,6 +578,14 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     }
     
     // Handle character name login
+    // First check if IP has reached max connections
+    if(gServer->checkDouble(sock, false)) {
+        sock->print("^RMaximum number of characters already connected.\n");
+        sock->print("Please disconnect one of your other characters first.\n\n");
+        showAccountMenu(sock, account);
+        return;
+    }
+
     std::string foundChar;
     for(const auto& accountChar : characters) {
         if(strcasecmp(accountChar.c_str(), input.c_str()) == 0) {
