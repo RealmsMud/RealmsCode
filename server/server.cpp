@@ -134,7 +134,7 @@ Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCach
     running = false;
     pulse = 0;
     webInterface = nullptr;
-    lastDnsPrune = lastUserUpdate = lastRoomPulseUpdate = lastRandomUpdate = lastActiveUpdate = 0;
+    lastDnsPrune = lastUserUpdate = lastRoomPulseUpdate = lastRandomUpdate = lastActiveUpdate = lastAccountSave = 0;
     maxPlayerId = maxObjectId = maxMonsterId = 0;
     loadDnsCache();
     pythonHandler = nullptr;
@@ -2490,4 +2490,12 @@ std::vector<std::string> Server::getAccountCharacters(const std::string& account
 
 void Server::releaseAccount(const std::string& accountName, const std::string& characterName) {
     untrackAccountConnection(accountName, characterName);
+}
+
+void Server::saveAllCachedAccounts() {
+    for(const auto& [accountName, account] : accountCache) {
+        if(account) {
+            account->save();
+        }
+    }
 }

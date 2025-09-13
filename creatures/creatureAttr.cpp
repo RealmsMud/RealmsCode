@@ -159,7 +159,6 @@ void Creature::addExperience(unsigned long e) {
                 unsigned long accountExp = e / 100;
                 if(accountExp > 0) {
                     account->addExperience(accountExp);
-                    account->save();  // Save the shared account
                 }
             }
         }

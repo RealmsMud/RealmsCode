@@ -226,6 +226,7 @@ private:
     long lastRoomPulseUpdate;
     long lastRandomUpdate;
     long lastActiveUpdate;
+    long lastAccountSave;
 
 public:
     std::list<std::shared_ptr<Area> > areas;
@@ -415,6 +416,7 @@ public:
     void untrackAccountConnection(const std::string& accountName, const std::string& characterName);
     std::vector<std::string> getAccountCharacters(const std::string& accountName) const;
     void releaseAccount(const std::string& accountName, const std::string& characterName);
+    void saveAllCachedAccounts();
 
     void disconnectAll();
     int processOutput(); // Send any buffered output
