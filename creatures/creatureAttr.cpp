@@ -155,8 +155,10 @@ void Creature::addExperience(unsigned long e) {
         if(player->hasAccount()) {
             auto account = gServer->getOrLoadAccount(player->getAccountName());
             if(account) {
-                // Calculate 1% of player experience gained
-                unsigned long accountExp = e / 100;
+                // Calculate 1% of player experience gained (rounded to nearest integer)
+                // This means players must earn at least 50 exp to gain account exp
+                double accountExpDouble = e * 0.01;
+                unsigned long accountExp = static_cast<unsigned long>(accountExpDouble + 0.5);
                 if(accountExp > 0) {
                     account->addExperience(accountExp);
                 }
