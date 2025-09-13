@@ -603,6 +603,15 @@ int Monster::doHarmfulAuras() {
                     dmg /=2;
                 player->printColor("^W%M's turbulent winds buff you about for %s%d^W damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
                 break;
+            case M_ELECTRICAL_AURA:
+                if(player->isEffected("static-field"))
+                    continue;
+
+                saved = player->chkSave(BRE, cThis, 0);
+                if(saved)
+                    dmg /=2;
+                player->printColor("^c%M's highly charged aura electrocutes you for %s%d^c damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
+                break;
             }
 
             player->hp.decrease(dmg);

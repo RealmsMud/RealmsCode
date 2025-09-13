@@ -566,7 +566,7 @@
 #define M_NAUSEATING_AURA           207      // Monster has a nauseating aura
 #define M_NEGATIVE_LIFE_AURA        208      // Monster has a negative life-draining aura
 #define M_TURBULENT_WIND_AURA       209      // Monster has a turbulent wind aura
-// free                             210
+#define M_ELECTRICAL_AURA           210		 // Monster has a charged electrical aura
 // free                             211
 // free                             212
 #define M_WOUNDING                  213      // Monster has wounding attack
