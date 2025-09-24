@@ -38,6 +38,7 @@
 #include "mudObjects/creatures.hpp"  // for Creature
 #include "mudObjects/monsters.hpp"   // for Monster
 #include "mudObjects/players.hpp"    // for Player
+#include "mudObjects/objects.hpp"    // for Object
 #include "mudObjects/rooms.hpp"      // for BaseRoom
 #include "proto.hpp"                 // for broadcast, bonus, dec_daily, dice
 #include "random.hpp"                // for Random
@@ -862,6 +863,13 @@ int splHeal(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spell
             creature->print("%M casts a heal spell on you.\n", player.get());
             broadcast(player->getSock(), creature->getSock(), player->getRoomParent(), "%M casts a heal spell on %N.", player.get(), creature.get());
 
+            // Heal also removes wounded (bleeding) effect, diseases, and poisons
+            creature->curePoison();
+            creature->cureDisease();
+            creature->removeCurse();
+            creature->removeEffect("blindness");
+            creature->removeEffect("deafness");
+
             logCast(player, creature, "heal");
             return(1);
         }
@@ -1163,21 +1171,27 @@ int splBloodfusion(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
 
 int splRestore(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     std::shared_ptr<Creature> target=nullptr;
+    int strength = 0;
 
     if(spellData->how == CastType::CAST && player->isPlayer() && !player->isStaff()) {
-        player->print("You may not cast that spell.\n");
+        *player << "The intricate casting of restore eludes you and is left to the gods.\nOnly wands or scrolls can cast it, or when imbibed, certain potions can.\n";
         return(0);
     }
+
+    if (spellData->object) 
+        strength = (spellData->object->getLevel()>0?spellData->object->getLevel():10);
+    else
+        strength = player->getLevel();
 
     // Cast restore on self
     if(cmnd->num == 2) {
         target = player;
 
-        if(spellData->how == CastType::CAST || spellData->how == CastType::WAND) {
-            player->print("Restore spell cast.\n");
+        if(spellData->how == CastType::CAST || spellData->how == CastType::WAND || spellData->how == CastType::SCROLL) {
+            *player << "Restore spell cast.\n";
             broadcast(player->getSock(), player->getParent(), "%M casts restore on %sself.", player.get(), player->himHer());
         } else if(spellData->how == CastType::POTION)
-            player->print("You feel restored.\n");
+            *player << "You feel restored.\n";
 
     // Cast restore on another player
     } else {
@@ -1188,27 +1202,53 @@ int splRestore(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* sp
         target = player->getParent()->findCreature(player, cmnd->str[2], cmnd->val[2], false);
 
         if(!target) {
-            player->print("That person is not here.\n");
+            *player << "That person is not here.\n";
             return(0);
         }
 
 
-        player->print("Restore spell cast on %N.\n", target.get());
-        target->print("%M casts a restore spell on you.\n", player.get());
+        *player << "Restore spell cast on " << target << ".\n";
+        *target << setf(CAP) << player << " casts a restore spell on you.\n";
         broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a restore spell on %N.", player.get(), target.get());
 
         logCast(player, target, "restore");
     }
-    player->doHeal(target, dice(2, 10, 0));
-    player->removeEffect("death-sickness");
 
-    if(Random::get<bool>(.34))
-        target->mp.restore();
+    const bool isStaff = player->isStaff();
 
-    if(player->isStaff()) {
+    // Helper for 34% rolls
+    auto roll34 = []() { return Random::get<bool>(0.34); };
+
+    if (isStaff) {
         target->mp.restore();
         target->hp.restore();
+        target->cureDisease();
+        target->curePoison();
+        target->removeCurse();
+    } else {
+        if (roll34()) target->mp.restore();
+        if (roll34()) target->cureDisease();
+        if (roll34()) target->curePoison();
+        if (roll34()) target->removeCurse();
     }
+
+    // Effects via removeEffect(string)
+    static const std::vector<std::string> kRestorableEffects = {
+        "death-sickness", "silence", "deafness", "blindness", "petrification"
+    };
+    for (const auto& e : kRestorableEffects) {
+        if (isStaff || roll34()) {
+            target->removeEffect(e);
+        }
+    }
+
+    // Healing for non-staff casters
+    if (!isStaff) {
+        player->doHeal(target, dice(4, strength, std::max<int>(2, strength / 2)));
+    }
+    
+    // Always removes death-sickness
+    target->removeEffect("death-sickness");
 
     return(1);
 }
