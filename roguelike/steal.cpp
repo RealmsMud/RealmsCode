@@ -551,7 +551,8 @@ int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     // A roll of 100 always fails
     if(!cantSteal && ((roll <= chance && roll < 100) || player->isCt()) ) {
-        player->print("You succeeded.\n");
+        //player->print("You succeeded.\n");
+        *player << "Success! You stole " << object << " from " << target << "!\n";
         player->checkImprove("steal", true);
         player->statistics.steal();
 
@@ -610,7 +611,7 @@ int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
             if(roll <= caught || isCt(bystander)) {
                 // If roll is less than 10% of chance, bystander will see
                 // what was trying to be stolen.
-                if(roll <= chance/10 || isCt(bystander))
+                if(roll <= chance/10 || isCt(bystander)) 
                     bystander->printColor("%M tried to steal %1P from %N.\n", player.get(), object.get(), target.get());
                 else
                     bystander->print("%M tried to steal something from %N.\n", player.get(), target.get());
@@ -693,7 +694,7 @@ int cmdSteal(const std::shared_ptr<Player>& player, cmd* cmnd) {
         broadcast(player->getSock(), target->getSock(), room, "%M tried to steal from %N.", player.get(), target.get());
 
         if(!mTarget) {
-            if(!player->isEffected("blindness"))
+            if(!target->isEffected("blindness"))
                 target->printColor("%M tried to steal %1P from you.\n", player.get(), object.get());
             else
                 target->print("Someone tried to steal something from you.\n");

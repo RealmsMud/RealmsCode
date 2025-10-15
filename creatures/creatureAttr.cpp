@@ -201,7 +201,7 @@ void Creature::setClan(unsigned short c) { clan = c; }
 
 void Creature::setLevel(unsigned short l, bool isDm) { level = std::max(1, std::min<int>(l, isDm ? 127 : MAXALVL)); }
 
-void Creature::setAlignment(short a) { alignment = std::max<short>(-1000, std::min<short>(1000, a)); }
+void Creature::setAlignment(short a) { alignment = std::max<short>(MIN_ALIGN, std::min<short>(MAX_ALIGN, a)); }
 
 
 void Creature::subAlignment(unsigned short a) { setAlignment(alignment - a); }
@@ -299,6 +299,7 @@ int Monster::getSkillLevel() const { return(skillLevel); }
 int Monster::getMaxLevel() const { return(maxLevel); }
 
 unsigned short Monster::getNumWander() const { return(numwander); }
+unsigned short Monster::getPermSpawnChance() const { return(permSpawnChance); }
 unsigned short Monster::getLoadAggro() const { return(loadAggro); }
 unsigned short Monster::getUpdateAggro() const { return(updateAggro); }
 unsigned short Monster::getCastChance() const { return(cast); }
@@ -313,6 +314,7 @@ void Monster::setMagicResistance(unsigned short m) { magicResistance = std::max<
 void Monster::setLoadAggro(unsigned short a) { loadAggro = std::max<unsigned short>(0, std::min<unsigned short>(a, 99)); }
 void Monster::setUpdateAggro(unsigned short a) { updateAggro = std::max<unsigned short>(1, std::min<unsigned short>(a, 99)); }
 void Monster::setNumWander(unsigned short n) { numwander = std::max<unsigned short>(0, std::min<unsigned short>(6, n)); }
+void Monster::setPermSpawnChance(unsigned short n) { permSpawnChance = std::max<unsigned short>(0, std::min<unsigned short>(1000, n)); }
 void Monster::setSkillLevel(int l) { skillLevel = std::max(0, std::min(100, l)); }
 void Monster::setMobTrade(unsigned short t) { mobTrade = std::max<unsigned short>(0,std::min<unsigned short>(MOBTRADE_COUNT-1, t)); }
 void Monster::setPrimeFaction(std::string_view f) { primeFaction = f; }
@@ -575,7 +577,7 @@ void Monster::monReset() {
     baseRealm = NO_REALM;
     defenseSkill = weaponSkill = attackPower = 0;
 
-    numwander = loadAggro = 0;
+    numwander = loadAggro = permSpawnChance = 0;
     memset(last_mod, 0, sizeof(last_mod));
 
     mobTrade = 0;
@@ -962,6 +964,8 @@ void Monster::monCopy(const Monster& cr, bool assign) {
 
     updateAggro = cr.updateAggro;
     numwander = cr.numwander;
+    permSpawnChance = cr.permSpawnChance;
+
 
     for(i=0; i<10; i++)
         carry[i] = cr.carry[i];

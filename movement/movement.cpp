@@ -409,9 +409,7 @@ bool Move::canEnter(const std::shared_ptr<Player>& player, const std::shared_ptr
         }
     }
 
-    if( (exit->flagIsSet(X_NEEDS_CLIMBING_GEAR) || exit->flagIsSet(X_CLIMBING_GEAR_TO_REPEL)) &&
-        !player->isEffected("levitate") &&
-        !player->isEffected("mist"))
+    if( (exit->flagIsSet(X_NEEDS_CLIMBING_GEAR) || exit->flagIsSet(X_CLIMBING_GEAR_TO_REPEL)) && !player->checkClimbing())
     {
         int fall = (exit->flagIsSet(X_DIFFICULT_CLIMB) ? 50 : 0) + 50 - player->getFallBonus();
 
@@ -431,7 +429,7 @@ bool Move::canEnter(const std::shared_ptr<Player>& player, const std::shared_ptr
                 return(false);
             }
 
-            if(exit->flagIsSet(X_NEEDS_CLIMBING_GEAR)) {
+            if((exit->flagIsSet(X_NEEDS_CLIMBING_GEAR) || X_CLIMBING_GEAR_TO_REPEL))  {
                 player->print("You need climbing gear to go that way.\n");
                 return(false);
             }

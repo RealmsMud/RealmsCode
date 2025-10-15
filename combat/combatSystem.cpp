@@ -448,11 +448,11 @@ int Player::getRacialWeaponskillBonus(const std::shared_ptr<Object>  weapon) con
             rBonus=10;
         break;
     case GREYELF:
-        if (weaponType=="arcane-weapon" || weaponType=="bow")
+        if (weaponType=="arcane-weapon" || weaponType=="dagger" || weaponType=="staff")
             rBonus=10;
         break;
     case WILDELF:
-        if (weaponType=="sword" || weaponType=="bow" || weaponType=="spear")
+        if (weaponType=="dagger" || weaponType=="bow" || weaponType=="spear")
             rBonus=10;
         break;
     case AQUATICELF:
@@ -473,7 +473,11 @@ int Player::getRacialWeaponskillBonus(const std::shared_ptr<Object>  weapon) con
         break;
     case OGRE:
         if (weaponType=="club")
-            rBonus=10;
+            rBonus=20;
+        break;
+    case OROG:
+        if(weapon->needsTwoHands())
+            rBonus=20;
         break;
     case DARKELF:
         if ( !isPureArcaneCaster() && !isPureDivineCaster() && 
@@ -526,7 +530,7 @@ int Player::getWeaponSkill(const std::shared_ptr<Object>  weapon) const {
 
     // Bless improves your chance to hit
     if(isEffected("bless"))
-        bonus += 10;
+        bonus += std::max<int>(10,getEffect("bless")->getStrength());
 
     if (weapon)
         bonus += (getClassWeaponskillBonus(weapon) + getRacialWeaponskillBonus(weapon));
@@ -554,7 +558,8 @@ int Player::getWeaponSkill(const std::shared_ptr<Object>  weapon) const {
 //**********************************************************************
 
 int Monster::getDefenseSkill() const {
-    return(defenseSkill);
+
+    return(defenseSkill + getDefenseSkillModifier());
 }
 
 //**********************************************************************
@@ -562,15 +567,20 @@ int Monster::getDefenseSkill() const {
 //**********************************************************************
 
 int Player::getDefenseSkill() const {
+    
+    /*
     int bonus = 0;
     // Protection makes you harder to hit
     if(isEffected("protection"))
         bonus += 10;
+    if(isEffected("shield"))
+        bonus += 40; */
+
     Skill* defenseSkill = getSkill("defense");
     if(!defenseSkill)
         return(-1);
     else
-        return(defenseSkill->getGained() + bonus);
+        return(defenseSkill->getGained() + getDefenseSkillModifier());
 }
 
 double Creature::getMisschanceModifier(const std::shared_ptr<Creature>& victim, double& missChance) {
@@ -586,6 +596,8 @@ double Creature::getMisschanceModifier(const std::shared_ptr<Creature>& victim, 
 
     if(victim->isEffected("blur") && !isEffected("true-sight"))
         mod += victim->getEffect("blur")->getStrength();
+
+
 
     if (victim->isEffected("faerie-fire"))
         mod -= victim->getEffect("faerie-fire")->getStrength();
@@ -1077,6 +1089,27 @@ double Creature::getDodgeChance(const std::shared_ptr<Creature>& attacker, const
             default:
                 break;
         }
+
+        // Racial adjustments!
+        switch(race) {
+        case HALFLING:
+        case KOBOLD:
+            chance += 4;
+            break;
+        case KATARAN:
+            chance += 3;
+            break;
+        case KENKU:
+            chance += 2;
+            break;
+        case OGRE:
+            chance -= 3;
+            break;
+        default:
+            break;
+        }
+
+        
     } else {
         // Not a player
         chance = 5.0;
@@ -1254,20 +1287,26 @@ bool Creature::canHit(const std::shared_ptr<Creature>& victim, std::shared_ptr<O
             // Check if we can hit the monster
             if( victim->flagIsSet(M_ENCHANTED_WEAPONS_ONLY) ||
                 victim->flagIsSet(M_PLUS_TWO) ||
-                victim->flagIsSet(M_PLUS_THREE)
+                victim->flagIsSet(M_PLUS_THREE) ||
+                victim->flagIsSet(M_PLUS_FOUR) 
             ) {
-                // At night level 19+ wolves can hit
+                // At night level 10+ wolves can hit
                 if( isEffected("lycanthropy") &&
                     !isDay() &&
-                    level > 19 &&
-                    victim->flagIsSet(M_ENCHANTED_WEAPONS_ONLY)
+                    ( (level >= 10 && victim->flagIsSet(M_ENCHANTED_WEAPONS_ONLY)) ||
+                            (level >= 16 && victim->flagIsSet(M_PLUS_TWO)) ||
+                            (level >= 35 && victim->flagIsSet(M_PLUS_THREE)) ||
+                            (level >= 50 && victim->flagIsSet(M_PLUS_FOUR))
+                    )
                 ) {
-                    if(glow) printColor("^WYour claws glow radiantly in the night against %N.\n", victim.get());
+                    if(glow) printColor("^RYour claws throw magical red sparks as they strike %N.^x\n", victim.get());
                 }
                 else if(cClass == CreatureClass::MONK &&
                     flagIsSet(P_FOCUSED) &&
-                    ( (level >= 16 && victim->flagIsSet(M_ENCHANTED_WEAPONS_ONLY)) ||
-                            (level >= 16 && victim->flagIsSet(M_PLUS_TWO))
+                    ( (level >= 10 && victim->flagIsSet(M_ENCHANTED_WEAPONS_ONLY)) ||
+                            (level >= 16 && victim->flagIsSet(M_PLUS_TWO)) ||
+                            (level >= 35 && victim->flagIsSet(M_PLUS_THREE)) ||
+                            (level >= 50 && victim->flagIsSet(M_PLUS_FOUR))
                     )
                 ) {
                     if(glow) *this << ColorOn << "^WYour fists glow with power against " << victim << ".\n" << ColorOff;
@@ -1275,7 +1314,8 @@ bool Creature::canHit(const std::shared_ptr<Creature>& victim, std::shared_ptr<O
                 else if(weapon && (
                         (victim->flagIsSet(M_ENCHANTED_WEAPONS_ONLY) && enchant > 0) ||
                         (victim->flagIsSet(M_PLUS_TWO) && enchant > 1) ||
-                        (victim->flagIsSet(M_PLUS_THREE) && enchant > 2)
+                        (victim->flagIsSet(M_PLUS_THREE) && enchant > 2) ||
+                         (victim->flagIsSet(M_PLUS_FOUR) && enchant > 3) 
                     )
                 ) {
                     if(glow && weapon) {
@@ -1386,12 +1426,31 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         else
             attackDamage.add((int)(getSkillLevel("gore") / 5));
 
-    } else if(attackType == ATTACK_MAUL) {
+    }
+    else if(attackType == ATTACK_MAUL) {
         if(computeBonus)
             bonusDamage.set(getBaseDamage()/2);
         attackDamage.set((Random::get(level / 2, level + 1) + (strength.getCur() / 10)));
         attackDamage.add(Random::get(2, 4));
-    } 
+    }
+    else if(attackType == ATTACK_BASH) {
+       if(computeBonus)
+            bonusDamage.set(getBaseDamage()/2);
+        attackDamage.set(Random::get(3,5));
+        if(getAsCreature()->isMartial())
+            attackDamage.add((strength.getCur() / 15) + (int)(getSkillLevel("bash") / 4));
+        else
+            attackDamage.add((int)(getSkillLevel("bash") / 5));
+    }
+    else if(attackType == ATTACK_SLAM) {
+       if(computeBonus)
+            bonusDamage.set(getBaseDamage()/4);
+        attackDamage.set(Random::get(2,3));
+        if(getAsCreature()->isMartial())
+            attackDamage.add((strength.getCur() / 15) + (int)(getSkillLevel("slam") / 5));
+        else
+            attackDamage.add((int)(getSkillLevel("slam") / 6));
+    }  
     else {
         // Any non kick attack for now
         if(computeBonus)
@@ -1407,6 +1466,8 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
             } else {
                 attackDamage.set(damage.roll());
                 bonusDamage.set(bonusDamage.get() * 3 / 4);
+                
+
             }
         }
         // TODO: Add in modifier based on weapon skill
@@ -1420,6 +1481,11 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         // At night, clercis of Mara do +25% damage with bows
         if (cClass == CreatureClass::CLERIC && getDeity() == MARA && !isDay() && weapon->getWeaponType() == "bow")
             attackDamage.set(attackDamage.get() + (attackDamage.get())/4);
+
+        //Half-giants do +10% damage with large weapons, so long as they are as large or larger than the weapon
+        if(race == HALFGIANT && getSize() >= weapon->getSize() && weapon->getSize() >= SIZE_LARGE)
+            attackDamage.set(attackDamage.get() + (attackDamage.get())/10);
+
     }
 
     if(isEffected("lycanthropy"))
@@ -1482,7 +1548,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
     // Or this is a werewolf, and we're not wielding a werewolf weapon or a claw weapon****
     //  **** Although I'm pretty sure werewolves can only use claw weapons now...but put here
     //      in case this changes in the future
-    if(attackType != ATTACK_KICK && (cClass == CreatureClass::MONK || isEffected("lycanthropy"))) {
+    if(attackType != ATTACK_KICK && attackType != ATTACK_GORE && (cClass == CreatureClass::MONK || isEffected("lycanthropy"))) {
         if( weapon && (
                 (cClass == CreatureClass::MONK && !weapon->flagIsSet(O_SEL_MONK)) ||
                 (isEffected("lycanthropy") && (
@@ -1502,7 +1568,7 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
     if(multiplier > 0.0) {
         attackDamage.set((int) ((float)attackDamage.get() * multiplier));
         if(computeBonus) {
-            if(attackType != ATTACK_BACKSTAB)
+            if(attackType != ATTACK_BACKSTAB && attackType != ATTACK_SMASH)
                 bonusDamage.set((int)((float)bonusDamage.get() * multiplier));
 //          else
 //              bonus = static_cast<int>(static_cast<float>(bonus) * (multiplier/2.0));
@@ -1515,21 +1581,33 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         char atk[25];
         switch(attackType) {
             case ATTACK_BASH:
-                strcpy(atk, "bash");
+                strcpy(atk, "BASH");
+                break;
+            case ATTACK_MAUL:
+                strcpy(atk, "MAUL");
                 break;
             case ATTACK_KICK:
-                strcpy(atk, "kick");
+                strcpy(atk, "KICK");
                 break;
             case ATTACK_GORE:
-                strcpy(atk, "gore");
+                strcpy(atk, "GORE");
+                break;
+            case ATTACK_BACKSTAB:
+                strcpy(atk, "BACKSTAB");
+                break;
+            case ATTACK_SMASH:
+                strcpy(atk, "SMASH");
+                break;
+            case ATTACK_SLAM:
+                strcpy(atk, "SLAM");
                 break;
             default:
-                strcpy(atk, "hit");
+                strcpy(atk, "HIT");
                 break;
         }
 
         printColor("^gCRITICAL %s!\n", atk);
-        broadcast(getSock(), getRoomParent(), "^g%M made a critical %s.", this, atk);
+        broadcast(getSock(), getRoomParent(), "^g%M made a CRITICAL %s!", this, atk);
         mult = Random::get(3, 5);
         attackDamage.set(attackDamage.get() * mult);
         drain *= mult;
@@ -1538,8 +1616,8 @@ int Player::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obje
         // if the first of a series of hits is a critical
         if(computeBonus)
             bonusDamage.set(bonusDamage.get() * mult);
-        broadcastGroup(false, victim, "^g%M made a critical %s!\n", this, atk);
-        if( attackType != ATTACK_KICK && attackType != ATTACK_GORE && weapon && !isDm() && weapon->flagIsSet(O_ALWAYS_CRITICAL) && !weapon->flagIsSet(O_NEVER_SHATTER)) {
+        broadcastGroup(false, victim, "^g%M made a CRITICAL %s!\n", this, atk);
+        if( attackType != ATTACK_KICK && attackType != ATTACK_GORE && attackType != ATTACK_SLAM && attackType != ATTACK_BASH && weapon && !isDm() && weapon->flagIsSet(O_ALWAYS_CRITICAL) && !weapon->flagIsSet(O_NEVER_SHATTER)) {
             printColor("^YYour %s shatters.\n", weapon->getCName());
             broadcast(getSock(), getRoomParent(),"^Y%s %s shattered.", upHisHer(), weapon->getCName());
             retVal = 1;
@@ -1611,7 +1689,7 @@ int Monster::computeDamage(std::shared_ptr<Creature> victim, std::shared_ptr<Obj
     attackDamage.add(::bonus(strength.getCur()));
 
     if(result == ATTACK_CRITICAL) {
-        broadcast((std::shared_ptr<Socket>)nullptr, getRoomParent(), "%M made a critical hit.", this);
+        broadcast((std::shared_ptr<Socket>)nullptr, getRoomParent(), "%M made a CRITICAL HIT!", this);
         int mult = Random::get(2, 5);
         attackDamage.set(attackDamage.get() * mult);
         drain *= mult;

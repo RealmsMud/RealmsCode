@@ -34,6 +34,9 @@
 #include "random.hpp"                // for Random
 #include "socket.hpp"                // for Socket
 #include "stats.hpp"                 // for Stat
+#include "playerClass.hpp"                          // for PlayerClass
+#include "raceData.hpp"                             // for RaceData
+#include "config.hpp" 
 
 
 bool Player::operator <(const Player& t) const {
@@ -102,6 +105,7 @@ void Player::pulseTick(long t) {
             hpTickAmt = std::max(1, 3 + bonus(constitution.getCur()) + (cClass == CreatureClass::BERSERKER ? 2:0));
             if(!ill && !deathSickness) {
                 if(!isEffected("bloodsac")) {
+
                     if(flagIsSet(P_SITTING))
                         hpTickAmt += 1;
                     else if(flagIsSet(P_SLEEPING))
@@ -291,6 +295,16 @@ int Player::getHpTickBonus() const {
         bonus = 0;
         break;
     }
+
+    // Trolls have natural regeneration so they get additional hp tick bonus
+    if(getRace() == TROLL && !isEffected("burning") && 
+                             !isEffected("magical-burning") &&
+                             !isEffected("death-sickness") &&
+                             !isEffected("bloodsac"))
+        bonus += Random::get(1,3);
+
+
+
     return(bonus);
 }
 
@@ -337,6 +351,26 @@ int Player::getMpTickBonus() const {
         break;
     }
     return(bonus);
+}
+
+int Player::getXPModifiers() const {
+
+    PlayerClass* pClass = gConfig->classes[getClassString()];
+    const RaceData* rData = gConfig->getRace(getRace());
+
+    if(!pClass || !rData)
+        return(0);
+
+    int raceXPAdjust = rData->getXPAdjustment();
+    int classXPAdjust = pClass->getXPAdjustment();
+
+    if (isCt()) {
+        if (raceXPAdjust) printColor("^DRace XP Mod........%s%d%% (%s)^x\n", (raceXPAdjust>0?"+":""), raceXPAdjust, rData->getName().c_str());
+        if (classXPAdjust) printColor("^DClass XP Mod.......%s%d%% (%s)^x\n", (classXPAdjust>0?"+":""), classXPAdjust, getClassString().c_str());
+    }
+
+    return(raceXPAdjust + classXPAdjust);
+
 }
 
 //*********************************************************************
@@ -462,9 +496,14 @@ bool Player::doPlayerHarmRooms() {
             && !isEffected("heat-protection") && !isEffected("alwayswarm")
         ) {
             wake("You awaken suddenly");
-            printColor("^rThe searing heat burns your flesh.\n");
+            printColor("^rThe searing heat %sburns your flesh.\n", ((getRace()==TROLL && room->flagIsSet(R_FIRE_BONUS))?"severely ":""));
             dt = BURNED;
             prot = false;
+
+            //Trolls receive +20% from burn damage, but not from desert weather, only fire rooms
+            if(room->flagIsSet(R_FIRE_BONUS) && getRace() == TROLL)
+                dmg += (dmg*20)/100;
+
         } else if(  !isEffected("breathe-water") &&
                     !doesntBreathe() && (
                         room->flagIsSet(R_WATER_BONUS) ||(

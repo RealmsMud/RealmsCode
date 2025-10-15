@@ -60,6 +60,8 @@ enum AttackType {
     ATTACK_MAUL,
     ATTACK_KICK,
     ATTACK_GORE,
+    ATTACK_SMASH,
+    ATTACK_SLAM,
 
     ATTACK_TYPE_MAX
 };
@@ -598,6 +600,10 @@ public:
     void makeWerewolf();
     bool willBecomeWerewolf() const;
     bool addLycanthropy(const std::shared_ptr<Creature>&killer, int chance);
+    bool resistantToPoison() const;
+    bool resistantToDisease() const;
+    bool isSimpleMinded() const;
+    int getWoundingChance();
 
 
 // Get
@@ -629,6 +635,8 @@ public:
     int getWisdom();
     int getAgility();
     int getElusiveness();
+    int getBrutality();
+    int getDefenseSkillModifier() const;
 
 // Set
     void setClass(CreatureClass c); // *

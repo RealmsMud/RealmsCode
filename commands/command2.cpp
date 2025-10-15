@@ -1347,6 +1347,9 @@ int cmdBreak(const std::shared_ptr<Player>& player, cmd* cmnd) {
             if(player->immuneToPoison())
                 chance = 101;
 
+            if(player->resistantToPoison())
+                chance /= 2;
+
             if(Random::get(1,100) <= chance) {
                 player->printColor("^r^#You accidentally poisoned yourself!\n");
                 broadcast(player->getSock(), player->getParent(), "%M accidentally poisoned %sself!",

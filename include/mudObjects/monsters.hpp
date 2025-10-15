@@ -58,6 +58,7 @@ protected:
     unsigned short updateAggro{};
     unsigned short loadAggro{};
     unsigned short numwander{};
+    unsigned short permSpawnChance{};
     unsigned short magicResistance{};
     unsigned short mobTrade{};
     int skillLevel{};
@@ -181,6 +182,7 @@ public:
     unsigned short getUpdateAggro() const;
     unsigned short getCastChance() const;
     unsigned short getMagicResistance() const;
+    unsigned short getPermSpawnChance() const;
     std::string getPrimeFaction() const;
     std::string getTalk() const;
     int getWeaponSkill(const std::shared_ptr<Object>  weapon = nullptr) const;
@@ -189,8 +191,10 @@ public:
     bool getEnchantmentVsMontype(const std::shared_ptr<Creature>& caster, const std::string spell, bool print=false);
     void doCheckFailedCastAggro(const std::shared_ptr<Creature>& caster, bool willAggro, bool print);
     std::shared_ptr<Object> findScavengedObject();
+    std::shared_ptr<Object> findObjectToDissolve();
     std::shared_ptr<Object> findObjectToScavenge();
     int countScavengedObjects();
+    bool hasAcidDissolveAttack() const;
 
 // Set
     void setMaxLevel(unsigned short l);
@@ -199,6 +203,7 @@ public:
     void setLoadAggro(unsigned short a);
     void setUpdateAggro(unsigned short a);
     void setNumWander(unsigned short n);
+    void setPermSpawnChance(unsigned short n);
     void setSkillLevel(int l);
     void setMobTrade(unsigned short t);
     void setPrimeFaction(std::string_view f);
@@ -219,7 +224,8 @@ public:
     void checkSpellWearoff();
     void checkScavange(long t);
     int checkWander(long t);
-    bool canScavange(const std::shared_ptr<Object>&  object);
+    bool canScavange(const std::shared_ptr<Object>&  object, bool scavengeHiddenObjects=false);
+    void printAuraDmgMsg(const std::shared_ptr<Creature>& player, const char* color, const char* text, int dmg);
 
 
     bool doTalkAction(const std::shared_ptr<Player>& target, std::string action, QuestInfo* quest = nullptr);

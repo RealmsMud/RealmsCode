@@ -65,6 +65,19 @@ bool Config::loadEffects() {
     );
     addToSet(
       EffectBuilder()
+        .name("shield")
+        .display("^MShield^x")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^MA magical energy shield forms around you.^x")
+        .roomAddStr("^MA magical energy shield forms around *LOW-ACTOR*.^x")
+        .selfDelStr("^MYour magical energy shield has faded.^x")
+        .roomDelStr("^M*ACTOR*'s magical energy shield has faded.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
         .name("avianaria")
         .addBaseEffect("fly")
         .addBaseEffect("levitate")
@@ -118,7 +131,25 @@ bool Config::loadEffects() {
         .roomAddStr("^WA halo appears over *LOW-ACTOR*'s head.^x")
         .selfDelStr("^YYou feel less holy.^x")
         .roomDelStr("^Y*ACTOR* is no longer blessed.^x")
-        .isSpellEffect(true),
+        .isSpellEffect(true)
+        .useVariableStrength(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
+        .name("light")
+        .addBaseEffect("light")
+        .oppositeEffect("darkness")
+        .display("^CLight^x")
+        .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^CBright light pierces the darkness.^x")
+        .roomAddStr("^CA bright orb of light appears above *LOW-ACTOR*, pushing away the darkness.^x")
+        .selfDelStr("^CYour magical light has winked out.^x")
+        .roomDelStr("^C*ACTOR*'s orb of magical light has winked out.^x")
+        .isSpellEffect(true)
+        .useStrength(true),
       effects
     );
     addToSet(
@@ -295,6 +326,7 @@ bool Config::loadEffects() {
       EffectBuilder()
         .name("darkness")
         .addBaseEffect("darkness")
+        .oppositeEffect("light")
         .display("^DDarkness^x")
         .computeScript("effectLib.computeDarkInfra(actor, effect, applier)")
         .preApplyScript("actor.getRoom().setTempNoKillDarkmetal(True)")
@@ -306,7 +338,8 @@ bool Config::loadEffects() {
         .roomAddStr("^D*ACTOR* is engulfed in darkness.^x")
         .selfDelStr("^YThe globe of darkness around you fades.^x")
         .roomDelStr("^YThe globe of darkness around *LOW-ACTOR* fades.^x")
-        .isSpellEffect(true),
+        .isSpellEffect(true)
+        .useStrength(true),
       effects
     );
     addToSet(
@@ -320,7 +353,7 @@ bool Config::loadEffects() {
         .selfAddStr("^yYou lose your hearing!^x")
         .roomAddStr("^y*ACTOR* has gone deaf.^x")
         .selfDelStr("^yYou can hear again!^x")
-        .roomDelStr("^yYou can hear again!^x"),
+        .roomDelStr("^y*ACTOR* can hear again.^x"),
       effects
     );
     addToSet(
@@ -684,7 +717,8 @@ bool Config::loadEffects() {
         .roomAddStr("^M*ACTOR*'s skin toughens.^x")
         .selfDelStr("^yYou are no longer protected from fire.^x")
         .roomDelStr("^y*ACTOR*'s skin softens.^x")
-        .isSpellEffect(true),
+        .isSpellEffect(true)
+        .useVariableStrength(true),
       effects
     );
     addToSet(
@@ -1005,6 +1039,21 @@ bool Config::loadEffects() {
     );
     addToSet(
       EffectBuilder()
+        .name("empathy")
+        .addBaseEffect("empathy")
+        .display("^bEmpathy^x")
+        .computeScript("effectLib.computeDetect(actor, effect, applier)")
+        .pulsed(false)
+        .type("Positive")
+        .selfAddStr("^bYou suddenly feel very empathic.^x")
+        .roomAddStr("^b*ACTOR* seems more empathic.^x")
+        .selfDelStr("^bYour magical empathy has dissipated.^x")
+        .roomDelStr("^b*ACTOR*'s empathy has faded.^x")
+        .isSpellEffect(true),
+      effects
+    );
+    addToSet(
+      EffectBuilder()
         .name("levitate")
         .addBaseEffect("levitate")
         .display("^cLevitate^x")
@@ -1155,13 +1204,14 @@ bool Config::loadEffects() {
         .roomAddStr("^W*ACTOR* is surrounded by a faint magical aura.^x")
         .selfDelStr("^yYour aura of protection fades.^x")
         .roomDelStr("^y*ACTOR* is no longer protected.^x")
-        .isSpellEffect(true),
+        .isSpellEffect(true)
+        .useVariableStrength(true),
       effects
     );
     addToSet(
       EffectBuilder()
         .name("benediction")
-        .addBaseEffect("benediction")
+        .oppositeEffect("malediction")
         .display("^BBenediction^x")
         .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
         .pulsed(false)
@@ -1176,7 +1226,7 @@ bool Config::loadEffects() {
     addToSet(
       EffectBuilder()
         .name("malediction")
-        .addBaseEffect("malediction")
+        .oppositeEffect("benediction")
         .display("^RMalediction^x")
         .computeScript("effectLib.computeBeneficial(actor, effect, applier)")
         .pulsed(false)

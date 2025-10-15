@@ -67,6 +67,7 @@
 #include "xml.hpp"                               // for loadObject
 
 
+
 class Property;
 
 //********************************************************************
@@ -223,10 +224,22 @@ void Monster::dropCorpse(const std::shared_ptr<Creature>& killer) {
     }
     checkDarkness();
 
+
     if(!destroy) {
         if(!coins.isZero()) {
             loadObject(MONEY_OBJ, object);
-            object->value.set(coins);
+
+            Money tempCoins = coins;
+
+            // Human players get +10% to gold drops, but not if their pet did the killing!
+            // Can re-adjust this later if we add the rest of the coins -TC
+            if(player && player->getRace()==HUMAN && tempCoins[GOLD]>0 && !killer->isPet()) {
+                unsigned long goldBonus = (tempCoins[GOLD]*10)/100;
+                goldBonus = std::max<unsigned long>(1,goldBonus);
+                tempCoins.add(goldBonus,GOLD);
+            }
+
+            object->value.set(tempCoins);
 
             object->setDroppedBy(Containable::downcasted_shared_from_this<Monster>(), "MobDeath");
 
@@ -832,7 +845,7 @@ int Player::clanKill(const std::shared_ptr<Player>& killer) {
 // Checks for doctor killers
 
 void Creature::checkDoctorKill(const std::shared_ptr<Creature>& victim) {
-    if(victim->getName() == "doctor") {
+    if(victim->flagIsSet(M_BENEVOLENT_SPELLCASTER)) {
         if( (isPlayer() && !isStaff()) ||
             (isMonster() && isPet() && !getMaster()->isStaff()))
         {
@@ -840,7 +853,7 @@ void Creature::checkDoctorKill(const std::shared_ptr<Creature>& victim) {
 
             target->setFlag(P_DOCTOR_KILLER);
             if(!target->flagIsSet(P_DOCTOR_KILLER))
-                broadcast("### %s is a doctor this!", target->getCName());
+                broadcast("### %s is a doctor killer!", target->getCName());
             target->lasttime[LT_KILL_DOCTOR].ltime = time(nullptr);
             target->lasttime[LT_KILL_DOCTOR].interval = 72000L;
         }
@@ -1532,6 +1545,7 @@ void Monster::distributeExperience(const std::shared_ptr<Creature>&killer) {
     }
 }
 
+
 //********************************************************************
 //                      adjustExperience
 //********************************************************************
@@ -1550,9 +1564,13 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
         return;
     }
 
-    if(player->getRace() == HUMAN && expAmount)
-        expAmount += std::max(Random::get(4,6),expAmount/3/10);
+    //Adjust xp amount based on any racial or class XP modifiers
+    int xpmod = player->getXPModifiers(); 
+    
+    if(xpmod)   
+        expAmount += std::max(Random::get(1,2), (expAmount * (100 + xpmod)) / 100);
 
+    //Multi-class receives exp penalty based on their level range
     if(player->hasSecondClass()) {
         // Penalty is 12.5% at level 30 and above
         if(player->level >= 30)
@@ -1560,9 +1578,6 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
         else // and 25% below 30
             expAmount = (expAmount*3)/4;
     }
-//  // All experience is multiplied by 3/4 for a multi-classed player
-//  if(player->hasSecondClass())
-//      expAmount = (expAmount*3)/4;
 
     int levelDiff = abs((int)player->getLevel() - (int)victim->getLevel());
     float multiplier=1.0;
@@ -1585,7 +1600,6 @@ void Creature::adjustExperience(const std::shared_ptr<Monster>&  victim, int& ex
     else
         multiplier = 0.10;
     if(multiplier < 1.0) {
-//      player->printColor("^YExp Adjustment: %d%% (%d level difference) %d -> %d\n", (int)(multiplier*100), levelDiff, expAmount, (int)(expAmount*multiplier));
         expAmount = (int)(expAmount * multiplier);
         expAmount = std::max(1, expAmount);
     }

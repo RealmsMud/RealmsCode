@@ -116,6 +116,7 @@ bool Config::loadSkills() {
     addToMap(SkillInfoBuilder()
         .name("charm").displayName("Charm")
         .group("general")    
+        .gainType(SkillGainType::HARD)
     , skills);
     addToMap(SkillInfoBuilder()
         .name("sing").displayName("Sing")
@@ -145,6 +146,7 @@ bool Config::loadSkills() {
     addToMap(SkillInfoBuilder()
         .name("steal").displayName("Steal")
         .group("general")
+        .gainType(SkillGainType::HARD)
     , skills);
     addToMap(SkillInfoBuilder()
         .name("search").displayName("Search")
@@ -312,6 +314,16 @@ bool Config::loadSkills() {
         .gainType(SkillGainType::MEDIUM)
     , skills);
     addToMap(SkillInfoBuilder()
+        .name("day").displayName("Day")
+        .group("divine")
+        .gainType(SkillGainType::HARD)
+    , skills);
+    addToMap(SkillInfoBuilder()
+        .name("night").displayName("Night")
+        .group("divine")
+        .gainType(SkillGainType::HARD)
+    , skills);
+    addToMap(SkillInfoBuilder()
         .name("protection").displayName("Protection")
         .group("divine")
         .gainType(SkillGainType::MEDIUM)
@@ -359,6 +371,14 @@ bool Config::loadSkills() {
     , skills);
     addToMap(SkillInfoBuilder()
         .name("gore").displayName("Gore")
+        .group("offensive")
+    , skills);
+    addToMap(SkillInfoBuilder()
+        .name("smash").displayName("Smash")
+        .group("offensive")
+    , skills);
+    addToMap(SkillInfoBuilder()
+        .name("slam").displayName("Slam")
         .group("offensive")
     , skills);
     addToMap(SkillInfoBuilder()

@@ -46,9 +46,10 @@ void Player::hasNewMudmail() const {
         return;
 
     const auto filename = (Path::Post / getName()).replace_extension("txt");
+    const auto notification = (Path::Post / getName()).replace_extension("notify");
 
-    if(fs::exists(filename)) 
-         printColor("\n^W*** You have new mudmail in the post office.^x\n");
+    if(fs::exists(filename) || fs::exists(notification)) 
+         printColor("\n^W*** You have %s mudmail in the post office.^x\n", (fs::exists(notification)?"important":"new"));
     
 }
 
@@ -200,7 +201,7 @@ void sendMail(const std::string &target, const std::string &message) {
     time(&t);
     strcpy(datestr, (char *) ctime(&t));
     datestr[strlen(datestr) - 1] = 0;
-    auto header = fmt::format("\n--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--\n\nMail from System ({}):\n\n", datestr);
+    auto header = fmt::format("\n--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--\n\nMail from RoH-System ({}):\n\n", datestr);
     
     write(ff, header.c_str(), header.length());
     write(ff, message.data(), message.length());
@@ -214,6 +215,49 @@ void sendMail(const std::string &target, const std::string &message) {
     if(online)
         player->printColor("^c### You have new mudmail.\n");
 
+}
+
+void sendSystemNotice(const std::string &target, const std::string &message) {
+    char datestr[40];
+    time_t t = time(nullptr);
+    int ff = 0;
+
+    // Construct the file path
+    std::string filePath = (Path::Post / target).replace_extension("notify").c_str();
+
+    // Attempt to open the file
+    ff = open(filePath.c_str(), O_CREAT | O_APPEND | O_RDWR, ACC);
+    if (ff < 0) {
+        std::cerr << "Error: Unable to open notification file '" << filePath
+                  << "' for " << target << " - " << strerror(errno) << std::endl;
+        return; // Exit gracefully without throwing an exception
+    }
+
+    // Get current time string safely and strip newline
+    strncpy(datestr, ctime(&t), sizeof(datestr) - 1);
+    datestr[sizeof(datestr) - 1] = '\0'; // Ensure null termination
+
+    // Remove trailing newline from ctime()
+    size_t len = strlen(datestr);
+    if (len > 0 && datestr[len - 1] == '\n') {
+         datestr[len - 1] = '\0';
+    }
+
+    // Format the header and footer
+    std::string header = fmt::format(
+        "\n^#!!!!********************************************************************!!!!^x\n"
+        "\n^cRoH System Notification ({}):^x\n\n", datestr);
+
+    constexpr const char* footer =
+        "\n^#!!!!********************************************************************!!!!^x\n\n";
+
+    // Write to file
+    write(ff, header.c_str(), header.length());
+    write(ff, message.data(), message.length());
+    write(ff, footer, strlen(footer));
+
+    // Close file
+    close(ff);
 }
 
 
@@ -306,15 +350,21 @@ int cmdReadMail(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!canPost(player))
         return(0);
 
-    player->clearFlag(P_UNREAD_MAIL);
-    const auto filename = (Path::Post / player->getName()).replace_extension("txt");
+    
+    const auto notification = (Path::Post / player->getName()).replace_extension("notify");
+    std::error_code ec;
+    if(fs::exists(notification)) {
+        player->getSock()->viewFile(notification, false);
+        fs::remove((Path::Post / player->getName()).replace_extension("notify"), ec);
+    }
 
-    if(!fs::exists(filename)) {
+    player->clearFlag(P_UNREAD_MAIL);
+    const auto mailfile = (Path::Post / player->getName()).replace_extension("txt");
+    if(!fs::exists(mailfile)) {
         player->print("You have no mail.\n");
         return(0);
     }
-
-    player->getSock()->viewFile(filename, true);
+    player->getSock()->viewFile(mailfile, true);
     return(DOPROMPT);
 }
 

@@ -810,6 +810,8 @@ bool isUseableFilterString(std::shared_ptr<Creature> searcher, std::string fs, b
 }
 
 
+
+
 //*********************************************************************
 //                      findTarget
 //*********************************************************************
@@ -1013,4 +1015,23 @@ std::string stripNonDigits(std::string someString) {
     }
 
     return(digitString);
+}
+
+std::string stripSpaces(std::string someString) {
+
+    someString.erase(
+        std::remove_if(someString.begin(), someString.end(), [](unsigned char c) {
+            return std::isspace(c);
+        }),
+        someString.end()
+    );
+    return someString;
+
+}
+
+std::string toLower(const std::string& str) {
+    std::string lowerStr = str;
+    std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    return lowerStr;
 }

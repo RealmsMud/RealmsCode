@@ -2650,28 +2650,30 @@ int dmChangeStats(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     if(cmnd->num < 2) {
-        player->print("Allow whom to change their stats?\n");
+        *player << "Allow whom to change their stats?\n";
         return(0);
     }
 
     cmnd->str[1][0]=up(cmnd->str[1][0]);
     target = gServer->findPlayer(cmnd->str[1]);
     if(!target) {
-        player->print("Player not online.\n");
+        *player << "Player not online.\n";
         return(0);
     }
 
     if(target->flagIsSet(P_DM_INVIS) && !isDm(player)) {
-        player->print("Player not online.\n");
+        *player << "Player not online.\n";
         return(0);
     }
 
     if(!target->flagIsSet(P_CAN_CHANGE_STATS)) {
         target->setFlag(P_CAN_CHANGE_STATS);
-        player->print("%s can now choose new stats.\n", target->getCName());
+        *player << target->getCName() << " can now choose new stats with changestats.\n";
+        *target << ColorOn << "^yYou may now use the changestats command.^x\n" << ColorOff;
     } else {
         target->clearFlag(P_CAN_CHANGE_STATS);
-        player->print("%s can no longer choose new stats.\n", target->getCName());
+        *player << target->getCName() << " can no longer choose new stats with changestats.\n";
+        *target << ColorOn << "^yYou may no longer use the changestats command.^x\n" << ColorOff;
     }
 
     log_immort(false, player, "%s set %s to choose new stats\n", player->getCName(), target->getCName());

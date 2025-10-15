@@ -749,8 +749,7 @@ void Server::updateAction(long t) {
 
                     resp = act->response;
                     if(isdigit(*(resp))) {
-
-                        num = 10*(toNum<int>(resp));
+                        num = 10*std::stoi(resp);
                         ++resp;
                         num = (num == 0) ? 100:num;
 
@@ -772,26 +771,12 @@ void Server::updateAction(long t) {
                             broadcast((std::shared_ptr<Socket> )nullptr, monster->getRoomParent(), "%M says, \"%s\"", monster.get(), resp);
                         break;
                     case 'T':   // Mob Trash-talk
-                        if(Random::get(1,100) <= 10) {
-
-                            if(countTotalEnemies(monster) > 0 && !monster->getAsMonster()->nearEnemy()) {
-                                if(monster->daily[DL_BROAD].cur > 0) {
-                                    broadcast("### %M broadcasted, \"%s\"", monster.get(), resp);
-                                    subtractMobBroadcast(monster, 0);
-                                }
-                            }
-                        }
+                        if(countTotalEnemies(monster) > 0 && !monster->getAsMonster()->nearEnemy() && thresh <= num) 
+                            broadcast("### %M broadcasted, \"%s\"", monster.get(), resp);
                         break;
-                    case 'B':   // Mob general random broadcasts
-                        if(Random::get(1,100) <= 10) {
-
-                            if(countTotalEnemies(monster) < 1 && thresh <= num) {
-                                if(monster->daily[DL_BROAD].cur > 0) {
-                                    broadcast("### %M broadcasted, \"%s\"", monster.get(), resp);
-                                    subtractMobBroadcast(monster, 0);
-                                }
-                            }
-                        }
+                    case 'B':   // Mob general random broadcasts - if has no enemies
+                        if(countTotalEnemies(monster) < 1 && thresh <= num)
+                            broadcast("### %M broadcasted, \"%s\"", monster.get(), resp);
                         break;
                     case 'A': // attack monster in target string
                         if(monster->first_tlk->target && !monster->getAsMonster()->hasEnemy()) {

@@ -82,6 +82,30 @@ int splKnowAura(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
 }
 
 //*********************************************************************
+//                      splEmpathy
+//*********************************************************************
+// This spell, combined with a know-aura effect, allows a cleric, druid, bard,
+// or paladin to see the actual alignment number on the alignment scale that they are, 
+// or their target is.
+
+int splEmpathy(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+
+    if(!player->isCt() && player->getClass() != CreatureClass::CLERIC && player->getClass() != CreatureClass::DRUID &&
+        player->getClass() != CreatureClass::PALADIN && player->getClass() != CreatureClass::BARD)
+     {
+
+        if(spellData->how != CastType::POTION) {
+            *player << (spellData->how==CastType::WAND?"Nothing happens":"You are unable to cast that spell") << ".\n";
+            return(0);
+        }
+
+    }
+
+    return(splGeneric(player, cmnd, spellData, "an", "empathy", "empathy"));
+}
+
+
+//*********************************************************************
 //                      splFortune
 //*********************************************************************
 // This allows bards to tell the luck of a given player.

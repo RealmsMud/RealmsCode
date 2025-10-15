@@ -1748,11 +1748,24 @@ bool dmGlobalSpells(const std::shared_ptr<Player>& player, int splno, bool check
         player->hp.restore();
         player->mp.restore();
         player->removeEffect("death-sickness");
+        player->curePoison();
+        player->cureDisease();
+        player->removeCurse();
+        player->removeEffect("blindness");
+        player->removeEffect("deafness");
+        player->removeEffect("silence");
+        player->removeEffect("petrification");
         break;
     case S_HEAL:
         if(check) return(true);
-        if(player->getClass() !=  CreatureClass::LICH)
+        if(player->getClass() !=  CreatureClass::LICH) {
             player->hp.restore();
+            player->curePoison();
+            player->cureDisease();
+            player->removeCurse();
+            player->removeEffect("blindness");
+            player->removeEffect("deafness");
+        }
         break;
     case S_BLESS:
         if(check) return(true);

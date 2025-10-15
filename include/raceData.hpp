@@ -40,6 +40,7 @@ protected:
     int startAge;
 
     bool playable;
+    int  xpAdjustment;
     bool isParentRace;
     bool gendered;
     int parentRace;
@@ -75,6 +76,7 @@ public:
     [[nodiscard]] bool bonusStat() const;
     [[nodiscard]] Size getSize() const;
     [[nodiscard]] int getStartAge() const;
+    [[nodiscard]] int getXPAdjustment() const;
     [[nodiscard]] int getStatAdj(int stat) const;
     [[nodiscard]] int getSave(int save) const;
     [[nodiscard]] short getPorphyriaResistance() const;

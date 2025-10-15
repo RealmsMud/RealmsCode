@@ -228,6 +228,10 @@ bool Exit::raceRestrict(const std::shared_ptr<const Creature> & creature) const 
         !flagIsSet(X_SEL_KATARAN) &&
         !flagIsSet(X_SEL_TIEFLING) &&
         !flagIsSet(X_SEL_KENKU) &&
+        !flagIsSet(X_SEL_GREYELF) &&
+        !flagIsSet(X_SEL_WILDELF) &&
+        !flagIsSet(X_SEL_DUERGAR) &&
+        !flagIsSet(X_SEL_OROG) &&
         !flagIsSet(X_RSEL_INVERT) )
         return(false);
 
@@ -253,7 +257,11 @@ bool Exit::raceRestrict(const std::shared_ptr<const Creature> & creature) const 
         (flagIsSet(X_SEL_BARBARIAN) && creature->isRace(BARBARIAN)) ||
         (flagIsSet(X_SEL_KATARAN) && creature->isRace(KATARAN)) ||
         (flagIsSet(X_SEL_TIEFLING) && creature->isRace(TIEFLING)) ||
-        (flagIsSet(X_SEL_KENKU) && creature->isRace(KENKU))
+        (flagIsSet(X_SEL_KENKU) && creature->isRace(KENKU)) ||
+        (flagIsSet(X_SEL_GREYELF) && creature->isRace(GREYELF)) ||
+        (flagIsSet(X_SEL_WILDELF) && creature->isRace(WILDELF)) ||
+        (flagIsSet(X_SEL_DUERGAR) && creature->isRace(DUERGAR)) ||
+        (flagIsSet(X_SEL_OROG) && creature->isRace(OROG))
     );
 
     if(flagIsSet(X_RSEL_INVERT)) pass = !pass;

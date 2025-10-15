@@ -84,7 +84,7 @@ void init_module_mudObject(py::module &m) {
         .def("setFlag", &BaseRoom::setFlag)
         .def("findCreature", &BaseRoom::findCreaturePython, py::return_value_policy::reference)
         .def("hasMagicBonus", &BaseRoom::magicBonus)
-        .def("killMortalObjects", &BaseRoom::killMortalObjects)
+        .def("killMortalObjects", &BaseRoom::killMortalObjects, "floor"_a=(bool)(true) )
         .def("isForest", &BaseRoom::isForest)
         .def("setTempNoKillDarkmetal", &BaseRoom::setTempNoKillDarkmetal)
         .def("isSunlight", &BaseRoom::isSunlight)

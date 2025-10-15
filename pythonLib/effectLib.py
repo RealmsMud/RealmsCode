@@ -110,6 +110,13 @@ def computeDetect(actor: MudObject, effect: EffectInfo, applier: Optional[MudObj
 			duration += (applier.intelligence.getCur()-140) * 9
 			if applier.getRoom().hasMagicBonus():
 				duration += 400
+		elif effect.getName() == "empathy":
+			duration = 300
+			duration += (applier.piety.getCur()-140) * 9
+			if applier.getClass() == mud.crtClasses.CLERIC:
+				duration += applier.getLevel() * 30
+			if applier.getRoom().hasMagicBonus():
+				duration += 400
 		else:
 			duration = 1200
 			duration += ((applier.intelligence.getCur() - 140) * 18)

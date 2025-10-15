@@ -163,12 +163,17 @@ void Player::init() {
 
         daily[DL_RESURRECT].max = 1;
         daily[DL_SILENCE].max = 3;
+        daily[DL_DEAFNESS].max = 3;
         daily[DL_HARM].max = 2;
         daily[DL_SCARES].max = 5;
         if (race == DARKELF)
             daily[DL_LEVITATE].max = 2;
         else
             daily[DL_LEVITATE].max = 1;
+
+        if (race == DUERGAR)
+            daily[DL_INVISIBLE].max = 1;
+
     } else {
         daily[DL_DEFEC].max = 100;
     }
@@ -227,10 +232,18 @@ void Player::init() {
     if(level >=1 && (cClass == CreatureClass::LICH || cClass == CreatureClass::MAGE) ) {
         learnSpell(S_ARMOR);
         learnSpell(S_MAGIC_MISSILE);
+        learnSpell(S_PROTECTION);
+        learnSpell(S_LIGHT);
     }
 
-    if(level >= 1 && (cClass == CreatureClass::CLERIC || cClass == CreatureClass::DRUID) )
+    if(level >= 1 && (cClass == CreatureClass::CLERIC || cClass == CreatureClass::DRUID) ) {
         learnSpell(S_VIGOR);
+        learnSpell(S_LIGHT);
+        learnSpell(S_BLESS);
+    }
+
+    if(level >=1 && cClass == CreatureClass::PALADIN)
+        learnSpell(S_LIGHT);
 
     if(cClass == CreatureClass::CLERIC && deity == CERIS && level >= 13)
         learnSpell(S_REJUVENATE);
@@ -812,6 +825,30 @@ int Player::getArmorWeight() const {
     return(weight);
 }
 
+//*********************************************************************
+//                      checkClimbing
+//*********************************************************************
+// This function determines if a player is wearing an object flagged as
+// climbing equipment in the arms, legs, hands, wielded, or held.
+
+bool Player::checkClimbing() {
+
+    if(isCt() || isEffected("fly") || isEffected("levitate") || isEffected("mist"))
+        return(true);
+
+    //Do we have climbing gear object equppied in hands, arms, legs, held, or wielded?
+    for(auto & x : ready) {
+        if(x) {
+            if(x->flagIsSet(O_CLIMBING_GEAR) &&
+                (x->getWearflag() == HANDS || x->getWearflag() == ARMS || x->getWearflag() == LEGS ||
+                     x->getWearflag() == HELD || x->getWearflag() == WIELD))
+                return(true);
+        }
+    }
+
+    return(false);
+}
+
 
 //*********************************************************************
 //                      getFallBonus
@@ -824,7 +861,9 @@ int Player::getFallBonus()  {
 
     for(auto & j : ready)
         if(j)
-            if(j->flagIsSet(O_CLIMBING_GEAR))
+            if(j->flagIsSet(O_CLIMBING_GEAR) &&
+                (j->getWearflag() == HANDS || j->getWearflag() == ARMS || j->getWearflag() == LEGS ||
+                     j->getWearflag() == HELD || j->getWearflag() == WIELD))
                 fall += j->damage.getPlus()*3;
     return(fall);
 }
@@ -882,6 +921,9 @@ std::shared_ptr<Player> lowest_piety(const std::shared_ptr<BaseRoom>& room, bool
 
 int Player::getLight() const {
     int i=0, light=0;
+
+    if(isStaff())
+        return(0);
 
     for(i = 0; i < MAXWEAR; i++) {
         if (!ready[i])
@@ -1143,10 +1185,34 @@ void Player::initLanguages() {
             learnLanguage(LGOBLINOID);
             learnLanguage(LORCISH);
             break;
+        case DUERGAR:
+            learnLanguage(LDUERGAR);
+            learnLanguage(LDWARVEN);
+            learnLanguage(LDARKELVEN);
+            learnLanguage(LKOBOLD);
+            learnLanguage(LGOBLINOID);
+            learnLanguage(LORCISH);
+            learnLanguage(LUNDERCOMMON);
+            learnLanguage(LSVIRFNEBLIN);
+            break;
         case ELF:
             learnLanguage(LELVEN);
             learnLanguage(LGOBLINOID);
             learnLanguage(LORCISH);
+            break;
+        case GREYELF:
+            learnLanguage(LELVEN);
+            learnLanguage(LGOBLINOID);
+            learnLanguage(LORCISH);
+            learnLanguage(LGNOMISH);
+            learnLanguage(LHALFLING);
+            break;
+        case WILDELF:
+            learnLanguage(LELVEN);
+            learnLanguage(LGRUGACH);
+            learnLanguage(LFEY);
+            learnLanguage(LSYLVAN);
+            learnLanguage(LGOBLINOID);
             break;
         case HALFELF:
             learnLanguage(LELVEN);
@@ -1158,6 +1224,11 @@ void Player::initLanguages() {
         case ORC:
             learnLanguage(LORCISH);
             learnLanguage(LGIANTKIN);
+            break;
+        case OROG:
+            learnLanguage(LORCISH);
+            learnLanguage(LGIANTKIN);
+            learnLanguage(LOGRISH);
             break;
         case HALFGIANT:
             learnLanguage(LGIANTKIN);
@@ -1172,6 +1243,7 @@ void Player::initLanguages() {
             break;
         case TROLL:
             learnLanguage(LTROLL);
+            learnLanguage(LBUGBEAR);
             break;
         case HALFORC:
             learnLanguage(LORCISH);
@@ -1179,6 +1251,7 @@ void Player::initLanguages() {
         case OGRE:
             learnLanguage(LOGRISH);
             learnLanguage(LGIANTKIN);
+            learnLanguage(LBUGBEAR);
             break;
         case DARKELF:
             learnLanguage(LDARKELVEN);
@@ -1188,10 +1261,16 @@ void Player::initLanguages() {
             learnLanguage(LGNOMISH);
             learnLanguage(LKOBOLD);
             learnLanguage(LGOBLINOID);
+            learnLanguage(LUNDERCOMMON);
+            learnLanguage(LDUERGAR);
+            learnLanguage(LSVIRFNEBLIN);
             break;
         case GOBLIN:
             learnLanguage(LGOBLINOID);
             learnLanguage(LORCISH);
+            learnLanguage(LUNDERCOMMON);
+            learnLanguage(LHOBGOBLIN);
+            learnLanguage(LBUGBEAR);
             break;
         case MINOTAUR:
             learnLanguage(LMINOTAUR);
@@ -1213,9 +1292,10 @@ void Player::initLanguages() {
             learnLanguage(LDARKELVEN);
             learnLanguage(LOGRISH);
             learnLanguage(LGIANTKIN);
+            learnLanguage(LUNDERCOMMON);
             break;
         case CAMBION:
-            learnLanguage(LINFERNAL);
+            learnLanguage(LABYSSAL);
             learnLanguage(LDARKELVEN);
             learnLanguage(LELVEN);
             learnLanguage(LCELESTIAL);
@@ -1230,7 +1310,7 @@ void Player::initLanguages() {
             learnLanguage(LKATARAN);
             break;
         case TIEFLING:
-            learnLanguage(LINFERNAL);
+            learnLanguage(LABYSSAL);
             learnLanguage(LORCISH);
             learnLanguage(LGOBLINOID);
             learnLanguage(LTIEFLING);
@@ -1496,12 +1576,21 @@ int Player::getSneakChance()  {
     }
 
     //Racial bonuses -------------------------
-    if(getRace() == ELF && getConstRoomParent()->isForest())
-        chance += chance/4;
-    if((getRace() == DARKELF && getConstRoomParent()->flagIsSet(R_UNDERGROUND)) || getRace()==KOBOLD)
-        chance += chance/10;
-    if(getRace() == HALFLING || getRace() == KENKU)
-        chance += chance/5;
+    if((getRace() == ELF && getConstRoomParent()->isForest()) ||
+        (getRace() == DARKELF && getConstRoomParent()->flagIsSet(R_UNDERGROUND)))
+        chance += (chance*25)/100;
+    else if((getRace() == WILDELF) && getConstRoomParent()->isForest())
+        chance += (chance*35)/100;
+    else if(getRace()==KOBOLD || getRace() == KATARAN || getRace() == WILDELF || getRace() == ELF)
+        chance += (chance*10)/100;
+    else if (getRace() == DARKELF && getConstRoomParent()->flagIsSet(R_UNDERGROUND))
+        chance += (chance*25)/100;
+    else if(getRace() == HALFLING)
+        chance += (chance*20)/100;
+    else if(getRace() == KENKU)
+        chance += (chance*15)/100;
+
+
     //----------------------------------------
 
     if(isBlind())

@@ -60,8 +60,8 @@ struct {
     { "zephyr",             S_ZEPHYR,               (int (*)(SpellFn))splOffensive, -1,     EVOCATION,          DESTRUCTION },
     { "infravision",        S_INFRAVISION,          splInfravision,             -1,         TRANSMUTATION,      AUGMENTATION},
     { "slow-poison",        S_SLOW_POISON,          splSlowPoison,              8,          NO_SCHOOL,          HEALING     },
-    { "bless",              S_BLESS,                splBless,                   10,         ABJURATION,         PROTECTION  },
-    { "protection",         S_PROTECTION,           splProtection,              10,         ABJURATION,         PROTECTION  },
+    { "bless",              S_BLESS,                splBless,                   -1,         ABJURATION,         PROTECTION  },
+    { "protection",         S_PROTECTION,           splProtection,              -1,         ABJURATION,         PROTECTION  },
     { "fireball",           S_FIREBALL,             (int (*)(SpellFn))splOffensive, -1,     EVOCATION,          DESTRUCTION },
     { "invisibility",       S_INVISIBILITY,         splInvisibility,            15,         ILLUSION,           TRICKERY    },
     { "restore",            S_RESTORE,              splRestore,                 -1,         SCHOOL_CANNOT_CAST, DOMAIN_CANNOT_CAST, },
@@ -180,7 +180,7 @@ struct {
     { "reduce",             S_REDUCE,               splReduce,                  15,         TRANSMUTATION,      AUGMENTATION},
     { "insight",            S_INSIGHT,              splInsight,                 30,         TRANSMUTATION,      AUGMENTATION},
     { "feeblemind",         S_FEEBLEMIND,           splFeeblemind,              30,         TRANSMUTATION,      AUGMENTATION},
-    { "prayer",             S_PRAYER,               splPrayer,                  30,         TRANSMUTATION,      AUGMENTATION},
+    { "prayer",             S_PRAYER,               splPrayer,                  30,         SCHOOL_CANNOT_CAST,      AUGMENTATION},
     { "damnation",          S_DAMNATION,            splDamnation,               30,         TRANSMUTATION,      AUGMENTATION},
     { "fortitude",          S_FORTITUDE,            splFortitude,               30,         TRANSMUTATION,      AUGMENTATION},
     { "weakness",           S_WEAKNESS,             splWeakness,                30,         TRANSMUTATION,      AUGMENTATION},
@@ -233,6 +233,9 @@ struct {
     { "hold-plant",         S_HOLD_PLANT,           splHoldPlant,               15,         ENCHANTMENT,        TRICKERY    },
     { "hold-elemental",     S_HOLD_ELEMENTAL,       splHoldElemental,           35,         ENCHANTMENT,        TRICKERY    },
     { "hold-fey",           S_HOLD_FEY,             splHoldFey,                 30,         ENCHANTMENT,        TRICKERY    },
+    { "light",              S_LIGHT,                splLight,                   7,          EVOCATION,          DAY         },
+    { "shield",             S_SHIELD,               splShield,                  15,         ABJURATION,         NO_DOMAIN   },
+    { "empathy",            S_EMPATHY,              splEmpathy,                 15,         DIVINATION,         KNOWLEDGE   },
     { "@",                  -1,                     nullptr,                          0,          NO_SCHOOL,          NO_DOMAIN   }
 };
 int spllist_size = sizeof(spllist)/sizeof(*spllist);
@@ -595,58 +598,102 @@ bool checkRefusingMagic(const std::shared_ptr<Creature>& player, const std::shar
 
 bool replaceCancelingEffects(const std::shared_ptr<Creature>& player, const std::shared_ptr<Creature>& target, const std::string &effect) {
 
+    if (!player || !target || effect.empty())
+        return(false);
+
     bool self = (player == target);
-    
-    // benediction vs malediction
+
+    EffectInfo* tgtEffectInfo=nullptr;
+
+    long effDuration = 0;
+    int effStrength = 0;
+    bool replace = false;
+
+    std::string effect1, effect2;
+
     if ((effect == "benediction" && target->isEffected("malediction")) ||
         (effect == "malediction" && target->isEffected("benediction"))) {
+        effect1 = "benediction";
+        effect2 = "malediction";
+        replace = true;
+    }
+    else if ((effect == "light" && target->isEffected("darkness")) ||
+             (effect == "darkness" && target->isEffected("light"))) {
+             effect1 = "light";
+             effect2 = "darkness";
+             replace = true;
+    }
+    
 
-        EffectInfo* alignEffect=nullptr;
-        if (effect == "benediction")
-            alignEffect = target->getEffect("malediction");
+    if (replace) {
+
+        if(effect1.empty() || effect2.empty()) {
+            if(effect1.empty()) *player << ColorOn << "^GERROR: effect1 is empty/undefined.\n";
+            if(effect2.empty()) *player << ColorOn << "^GERROR: effect2 is empty/undefined.\n";
+
+            *player << "Aborting replacement routine.^x\n" << ColorOff;
+
+            return(false);
+        }
+    
+        if (effect == effect1)
+            tgtEffectInfo = target->getEffect(effect2);
         else
-            alignEffect = target->getEffect("benediction");
-        
-        int duration = alignEffect->getDuration();
-        int strength = alignEffect->getStrength();
+            tgtEffectInfo = target->getEffect(effect1);
+
+        effDuration = tgtEffectInfo->getDuration();
+        effStrength = tgtEffectInfo->getStrength();
+
+        if(tgtEffectInfo->isPermanent()) {
+            *player << "Permanent effects cannot be replaced.\n";
+            return(true);
+        }
 
         if(self) {
-            *player << "Your " << ((effect == "benediction") ? "malediction":"benediction") << " was canceled by your " << ((effect == "benediction") ? "benediction":"malediction") << " spell.\n";
-            broadcast(player->getSock(), player->getRoomParent(), "%M's %s spell has replaced %s %s.", player.get(), ((effect == "benediction") ? "malediction":"benediction"), player->hisHer(), ((effect == "benediction") ? "benediction":"malediction"));
 
-            player->removeEffect(((effect == "benediction") ? "malediction":"benediction"));
+            if (player->getLevel() < effStrength && player->getName() != tgtEffectInfo->getOwner() && !player->isCt()) {
+                *player << ColorOn << "^yYou are not powerful enough to replace the " << ((effect == effect1) ? effect2:effect1) << " spell effect on you.\nYour spell did not take hold.\n" << ColorOff;
+                broadcast(player->getSock(), target->getSock(), player->getRoomParent(), "%M's cast attempt failed.", player.get());
+                return(true);
+            }
+
+            *player << "The " << ((effect == effect1) ? effect2:effect1) << " effect on you was canceled by your " << ((effect == effect1) ? effect1:effect2) << " spell.\n";
+            broadcast(player->getSock(), player->getRoomParent(), "%M's %s spell has replaced %s %s effect.", 
+                        player.get(), ((effect == effect1) ? effect2.c_str():effect1.c_str()), player->hisHer(), ((effect == effect1) ? effect1.c_str():effect2.c_str()));
+
+            player->removeEffect(((effect == effect1) ? effect2:effect1));
             //If under one, it is replaced by the other with the existing same duration and strength
-            player->addEffect(((effect == "benediction") ? "benediction":"malediction"),duration,strength,player,true);
+            player->addEffect(((effect == effect1) ? effect1:effect2),effDuration,effStrength,player,true,player);
             return(true);
             }
         else 
         {
+            // Depending on effects involved, specific situational checks can go here
             // Can't allow people to remove somebody's room damage protection in the middle of fighting...That's just not nice....
-            if (target->inCombat(true) && player->getRoomParent()->flagIsSet(((effect == "benediction") ? R_EVIL_DAMAGE:R_GOOD_DAMAGE))) {
+            if ((effect=="benediction" || effect=="malediction") && (target->inCombat(true) && player->getRoomParent()->flagIsSet(((effect == effect1) ? R_EVIL_DAMAGE:R_GOOD_DAMAGE)))) {
                 *player << setf(CAP) << target << "'s erratic movements while fighting caused your spell to not take hold.\n";
                 return(true);   
             }
             // Will use level difference check for now. Will change when put in more effect strength functionality for all the generic spells
+            // TODO: modify this section to account for opposing effects with useStrength() or useVariableStrength()
             if (player->getLevel() < target->getLevel() && !player->isCt()) {
-                *player << ColorOn << "^yYou must at least the same level as " << target << " to replace " << target->hisHer() << " " << ((effect == "benediction") ? "malediction":"benediction") << ".\nYour spell did not take hold.\n" << ColorOff;
+                *player << ColorOn << "^yYou must at least the same level as " << target << " to replace " << target->hisHer() << " " << ((effect == effect1) ? effect2:effect1) << ".\nYour spell did not take hold.\n" << ColorOff;
                 *target << setf(CAP) << player << "'s spell did not do anything to you.\n";
                 broadcast(player->getSock(), target->getSock(), player->getRoomParent(), "%M's spell did not do anything to %N.", player.get(), target.get());
                 return(true);
             }
 
-            *player << "Your " << ((effect == "benediction") ? "benediction":"malediction") << " spell has replaced " << target << "'s " << ((effect == "benediction") ? "malediction":"benediction") << ".\n";
-            *target << setf(CAP) << player << "'s " << ((effect == "benediction") ? "benediction":"malediction") << " spell has replaced your " << ((effect == "benediction") ? "malediction":"benediction") << ".\n";
+            *player << "Your " << ((effect == effect1) ? effect1:effect2) << " spell has replaced " << target << "'s " << ((effect == effect1) ? effect2:effect1) << " effect.\n";
+            *target << setf(CAP) << player << "'s " << ((effect == effect1) ? effect1:effect2) << " spell has replaced your " << ((effect == effect1) ? effect2:effect1) << " effect.\n";
             broadcast(player->getSock(), target->getSock(), player->getRoomParent(), "%M's %s spell has replaced %N's %s effect.",player.get(), 
-                                                ((effect == "benediction") ? "benediction":"malediction"), target.get(), ((effect == "benediction") ? "malediction":"benediction"));
-            target->removeEffect(((effect == "benediction") ? "malediction":"benediction"));
+                                                ((effect == effect1) ? effect1.c_str():effect2.c_str()), target.get(), ((effect == effect1) ? effect2.c_str():effect1.c_str()));
+            target->removeEffect(((effect == effect1) ? effect2:effect1));
             //If under one, it is replaced by the other with the existing same duration and strength
-            target->addEffect(((effect == "benediction") ? "benediction":"malediction"),duration,strength,player,true);
+            target->addEffect(((effect == effect1) ? effect1:effect2),effDuration,effStrength,player,true,player);
             return(true);  
         }
-
     }
 
-    //TODO: Add other canceling effects that replace here if necessary
 
     return(false);
 }

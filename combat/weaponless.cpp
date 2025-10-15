@@ -294,8 +294,8 @@ int cmdFocus(const std::shared_ptr<Player>& player, cmd* cmnd) {
     i = player->lasttime[LT_FOCUS].ltime;
     t = time(nullptr);
 
-    if(t - i < 600L) {
-        player->pleaseWait(600L-t+i);
+    if(t - i < 360L) {
+        player->pleaseWait(360L-t+i);
         return(0);
     }
     chance = std::min(80, (int)(player->getSkillLevel("focus") * 20) + bonus(player->piety.getCur()));
@@ -321,7 +321,7 @@ int cmdFocus(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->checkImprove("focus", false);
         broadcast(player->getSock(), player->getParent(), "%M tried to focus %s energy.",
             player.get(), player->hisHer());
-        player->lasttime[LT_FOCUS].ltime = t - 590L;
+        player->lasttime[LT_FOCUS].ltime = t - 360L;
     }
 
     return(0);
@@ -467,13 +467,6 @@ int cmdMaul(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->unhide();
     player->smashInvis();
 
-    //Wwolves can only wield claw weapons now...ok to maul with them. - TC
-/*      if(player->ready[WIELD - 1]) {
-        player->print("How can you do that with your claws full?\n");
-        return(0);
-    }
-*/
-
     player->lasttime[LT_MAUL].ltime = t;
     if(creature->isMonster())
         player->lasttime[LT_MAUL].interval = 15L;
@@ -508,7 +501,10 @@ int cmdMaul(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isBlind())
         chance = std::min(20, chance);
 
-    if((creature->flagIsSet(M_ENCHANTED_WEAPONS_ONLY) || creature->flagIsSet(M_PLUS_TWO) || creature->flagIsSet(M_PLUS_THREE)) && (not_initial==1)) {
+    if(( (creature->flagIsSet(M_ENCHANTED_WEAPONS_ONLY) && (int)level < 10) || 
+         (creature->flagIsSet(M_PLUS_TWO) && (int)level < 16) || 
+         (creature->flagIsSet(M_PLUS_THREE) && (int)level < 35) || 
+         (creature->flagIsSet(M_PLUS_FOUR) && (int)level < 50)) && (not_initial==1)) {
         chance /= 2;
         chance = std::min(chance, 50);
     }
@@ -516,15 +512,13 @@ int cmdMaul(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(player->isDm())
         chance = 101;
 
-    if(Random::get(1, 100) > player->getLuck() + (int)(level * 2))
-        chance = 5;
-
     if(Random::get(1, 100) <= chance) {
         player->attackCreature(creature, ATTACK_MAUL);
+        /* TODO: re-enable/re-consider this for later
         if(!induel(player, pCreature)) {
-            // 5% chance to get lycanthropy when mauled by a werewolf
             creature->addLycanthropy(player, 5);
         }
+        */
     } else {
         player->print("You failed to maul %N.\n", creature.get());
         player->checkImprove("maul", false);

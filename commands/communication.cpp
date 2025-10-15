@@ -143,6 +143,8 @@ channelInfo channelList[] = {
 };
 
 
+
+
 //*********************************************************************
 //                      confusionChar
 //*********************************************************************
@@ -659,10 +661,9 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         strcpy(speak, "recite");
     else if(chan->type == COM_GT)
         strcpy(speak, "group mentioned");
-    else if(chan->type == COM_YELL) {
+    else if(chan->type == COM_YELL)
         strcpy(speak, "yell");
-        text += "!";
-    } else
+    else
         strcpy(speak, get_language_verb(lang));
 
 
@@ -712,8 +713,12 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
             else
                 sprintf(intro, "You %s in %s,", speak, get_language_adj(lang));
 
-            creature->printColor("%s%s \"%s%s\".\n^x", ((!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS)) ? get_lang_color(lang) : ""),
-                    intro, ooc_str, text.c_str());
+            // Append punctuation if needed, but not if already there
+            if (text.back() != '.' && text.back() != '?' && text.back() != '!')
+                text += (chan->type == COM_YELL) ? "!" : ".";
+                
+            creature->printColor("%s%s \"%s%s\"\n^x", 
+                        ((!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS)) ? get_lang_color(lang) : ""), intro, ooc_str, text.c_str());
 
         }
 
@@ -1120,288 +1125,124 @@ void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &tex
     }
 }
 
+const std::map<std::string, Languages> languageMap = {
+        {"abyssal", LABYSSAL},
+        {"arcanic", LARCANIC},
+        {"schnai", LBARBARIAN},
+        {"barbarian", LBARBARIAN},
+        {"brownie", LBROWNIE},
+        {"bugbear", LBUGBEAR},
+        {"cambion", LABYSSAL},
+        {"celestial", LCELESTIAL},
+        {"seraph", LCELESTIAL},
+        {"centaur", LCENTAUR},
+        {"common", LCOMMON},
+        {"dark-elf", LDARKELVEN},
+        {"deepgnome", LSVIRFNEBLIN},
+        {"demonic", LABYSSAL},
+        {"devil", LINFERNAL},
+        {"drow", LDARKELVEN},
+        {"draconic", LDRACONIC},
+        {"druidic", LDRUIDIC},
+        {"duergar", LDUERGAR},
+        {"dwarvish", LDWARVEN},
+        {"elvish", LELVEN},
+        {"elf", LELVEN},
+        {"fey", LFEY},
+        {"firbolg", LFIRBOLG},
+        {"giantkin",LGIANTKIN},
+        {"greydwarf",LDUERGAR},
+        {"half-giant", LGIANTKIN},
+        {"gith", LGITH},
+        {"gnoll", LGNOLL},
+        {"gnomish", LGNOMISH},
+        {"goblinoid", LGOBLINOID},
+        {"grugach", LGRUGACH},
+        {"halfling", LHALFLING},
+        {"hobgoblin", LHOBGOBLIN},
+        {"infernal", LINFERNAL},
+        {"kataran", LKATARAN},
+        {"kenku", LKENKU},
+        {"kobold", LKOBOLD},
+        {"leprechaun", LLEPRECHAUN},
+        {"lizardman", LLIZARDMAN},
+        {"minotaur", LMINOTAUR},
+        {"modron", LMODRON},
+        {"necril", LNECRIL},
+        {"noctis", LNOCTIS},
+        {"ogrish", LOGRISH},
+        {"orcish", LORCISH},
+        {"pixie", LPIXIE},
+        {"primordial", LPRIMORDIAL},
+        {"quickling", LQUICKLING},
+        {"satyr", LSATYR},
+        {"sphinx", LSPHINX},
+        {"svirfneblin", LSVIRFNEBLIN},
+        {"sylvan", LSYLVAN},
+        {"thieves' cant", LTHIEFCANT}, 
+        {"thri-kreen", LTHRIKREEN},
+        {"tiefling", LTIEFLING},
+        {"trollish", LTROLL},
+        {"undercommon", LUNDERCOMMON},
+        {"wild-elf", LGRUGACH},
+        {"wolfen", LWOLFEN}
+    };
+
 
 //*********************************************************************
 //                      cmdSpeak
 //*********************************************************************
 
 int cmdSpeak(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    int     lang=0;
-
-    if(!player->ableToDoCommand())
+    if (!player->ableToDoCommand())
         return(0);
 
-    if(cmnd->num < 2 ) {
-        player->print("Speak what?\n");
+    if (cmnd->num < 2) {
+        *player << "Speak in what language?\n";
         return(0);
     }
 
-    lowercize(cmnd->str[1],0);
+    std::string inputLang = toLower(cmnd->str[1]);
 
-    switch (cmnd->str[1][0]) {
-
-    case 'a':
-        switch (cmnd->str[1][1]) {
-        case 'b':
-            lang = LABYSSAL;
-            break;
-        case 'l':
-            lang = 0;
-            break;
-        case 'r':
-            lang = LARCANIC;
-            break;
-        default:
-            player->print("You do not know that language.\n");
-            return(0);
-            break;
-        }
-        break;
-    case 'b':
-        switch (cmnd->str[1][1]) {
-        case 'a':
-            lang = LBARBARIAN;
-            break;
-        case 'r':
-            lang = LBROWNIE;
-            break;
-        case 'u':
-            lang = LBUGBEAR;
-            break;
-        default:
-            player->print("You do not know that language.\n");
-            return(0);
-            break;
-        }
-        break;
-    case 'c':
-        switch (cmnd->str[1][1]) {
-        case 'a':
-            lang = LINFERNAL;
-            break;
-        case 'e':
-            switch (cmnd->str[1][2]) {
-            case 'l':
-                lang = LCELESTIAL;
-                break;
-            case 'n':
-                lang = LCENTAUR;
-                break;
-            default:
-                player->print("You do not know that language.\n");
-                return(0);
-                break;        
-            }
-        break;
-        case 'o':
-            lang = LCOMMON;
-            break;
-        default:
-            player->print("You do not know that language.\n");
-            return(0);
-            break;
-        }
-        break;
-    case 'd':
-        switch (cmnd->str[1][1]) {
-        case 'a':
-            lang = LDARKELVEN;
-            break;
-        case 'r':
-            lang = LDRUIDIC;
-            break;
-        case 'u':
-            lang = LDUERGAR;
-            break;
-        case 'w':
-            lang = LDWARVEN;
-            break;
-        default:
-            player->print("You do not know that language.\n");
-            return(0);
-            break;
-        }
-        break;
-    case 'e':
-        lang = LELVEN;
-        break;
-    case 'f':
-        switch (cmnd->str[1][1]) {
-        case 'e':
-            lang = LFEY;
-            break;
-        case 'i':
-            lang = LFIRBOLG;
-            break;
-        default:
-            player->print("You do not know that language.\n");
-            return(0);
-            break;
-        }
-        break;
-    case 'g':
-        switch (cmnd->str[1][1]) {
-        case 'i':
-            lang = LGIANTKIN;
-            break;
-        case 'n':
-            switch (cmnd->str[1][2]) {
-            case 'o':
-                switch (cmnd->str[1][3]) {
-                case 'l':
-                    lang = LGNOLL;
-                    break;
-                case 'm':
-                    lang = LGNOMISH;
-                    break;
-                default:
-                    player->print("You do not know that language.\n");
-                    return(0);
-                    break;
-                }
-            break;
-            default:
-                player->print("You do not know that language.\n");
-                return(0);
-                break;
-            }
-        break;
-        case 'o':
-            lang = LGOBLINOID;
-            break;
-        default:
-            player->print("You do not know that language.\n");
-            return(0);
-            break;
-        }
-        break;
-    case 'h':
-        switch (cmnd->str[1][1]) {
-        case 'o':
-            lang = LHOBGOBLIN;
-            break;
-        case 'u':
-            lang = LCOMMON;
-            break;
-        default:
-            switch (cmnd->str[1][4]) {
-            case 'e':
-                player->print("Half elves have no language of their own.\n");
-                player->print("They speak the elven or common tongues.\n");
-                return(0);
-                break;
-            case 'o':
-                player->print("Half orcs have no language of their own.\n");
-                player->print("They speak the orcish or common tongues.\n");
-                return(0);
-                break;
-            case 'l':
-                lang = LHALFLING;
-                break;
-            case 'g':
-                lang = LGIANTKIN;
-                break;
-            default:
-                player->print("You do not know that language.\n");
-                return(0);
-                break;
-            }
-            break;
-        }
-        break;
-    case 'i':
-        lang = LINFERNAL;
-        break;
-    case 'k':
-        switch (cmnd->str[1][1]) {
-        case 'a':
-            lang = LKATARAN;
-            break;
-        case 'e':
-            lang = LKENKU;
-            break;
-        case 'o':
-            lang = LKOBOLD;
-            break;
-        default:
-            player->print("You do not know that language.\n");
-            return(0);
-            break;
-        }
-        break;
-    case 'l':
-        lang = LLIZARDMAN;
-        break;
-    case 'm':
-        lang = LMINOTAUR;
-        break;
-    case 'o':
-        switch (cmnd->str[1][1]) {
-        case 'g':
-            lang = LOGRISH;
-            break;
-        case 'r':
-            lang = LORCISH;
-            break;
-        default:
-            player->print("You do not know that language.\n");
-            return(0);
-            break;
-        }
-        break;
-    case 'q':
-        lang = LQUICKLING;
-        break;
-    case 's':
-        switch (cmnd->str[1][1]) {
-        case 'a':
-            lang = LSATYR;
-            break;
-        case 'e':
-            lang = LCELESTIAL;
-            break;
-        default:
-            player->print("You do not know that language.\n");
-            return(0);
-            break;
-        }
-        break;
-    case 't':
-        switch (cmnd->str[1][1]) {
-        case 'i':
-            lang = LTIEFLING;
-            break;
-        case 'r':
-            lang = LTROLL;
-            break;
-        case 'h':
-            lang = LTHIEFCANT;
-            break;
-        default:
-            player->print("You do not know that language.\n");
-            return(0);
-            break;
-        }
-        break;
-    case 'w':
-        lang = LWOLFEN;
-        break;
-    default:
-        player->print("You do not know that language.\n");
-        return(0);
-        break;
-    }
-
-    if(lang == player->current_language) {
-        player->print("You're already speaking %s!\n", get_language_adj(lang));
+    //We want a string of at least 2 characters for the language
+    if (inputLang.length() < 2) {
+        *player << "Speak in what language?\n";
         return(0);
     }
 
-    if(!player->isEffected("tongues") && !player->languageIsKnown(LUNKNOWN+lang) && !player->isStaff()) {
-        player->print("You do not know how to speak %s.\n", get_language_adj(lang));
+    std::vector<std::pair<std::string, Languages>> matches;
+
+    // Find all languages that start with the input
+    for (const auto& pair : languageMap) {
+        if (toLower(pair.first).find(inputLang) == 0) {
+            matches.push_back(pair);
+        }
+    }
+
+    if (matches.empty()) {
+        player->print("Nobody knows that language.\n");
+        return(0);
+    } else if (matches.size() > 1) {
+        *player << "Language is not unique. Did you mean one of these?\n";
+        for (const auto& match : matches) {
+            *player << " - " << match.first << "\n";
+        }
+        return(0);
+    }
+
+    // At this point, we have exactly one match
+    const auto& [langName, lang] = matches.front();
+
+    if (lang == player->current_language) {
+        *player << "You're already speaking " << get_lang_color(lang) << get_language_adj(lang) << "^x.\n";
+        return(0);
+    }
+
+    if (!player->isEffected("tongues") && !player->languageIsKnown(lang) && !player->isStaff()) {
+        *player << "You do not know how to speak " << get_lang_color(lang) << get_language_adj(lang) << "^x.\n";
         return(0);
     } else {
-        player->print("You will now speak in %s.\n", get_language_adj(lang));
+        *player << "You will now speak in " << get_lang_color(lang) << get_language_adj(lang) << "^x.\n";
         player->current_language = lang;
     }
 

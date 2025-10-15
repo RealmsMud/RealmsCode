@@ -90,6 +90,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
     size = NO_SIZE;
     isParentRace = false;
     playable = gendered = true;
+    xpAdjustment = 0;
     zero(stats, sizeof(stats));
     zero(saves, sizeof(saves));
     zero(classes, sizeof(classes));
@@ -108,6 +109,7 @@ RaceData::RaceData(xmlNodePtr rootNode) {
              if(NODE_NAME(curNode, "Adjective")) xml::copyToString(adjective, curNode);
         else if(NODE_NAME(curNode, "Abbr")) xml::copyToString(abbr, curNode);
         else if(NODE_NAME(curNode, "NotPlayable")) playable = false;
+        else if(NODE_NAME(curNode, "XPAdjustment")) xml::copyToNum(xpAdjustment, curNode);
         else if(NODE_NAME(curNode, "ParentRace")) {
             xml::copyToNum(parentRace, curNode);
             if(gConfig->races.find(parentRace) != gConfig->races.end())
@@ -259,7 +261,7 @@ int Config::stattoNum(std::string_view str) {
     if(str == "Con") return(CON);
     if(str == "Dex") return(DEX);
     if(str == "Int") return(INT);
-    if(str == "Pty") return(PTY);
+    if(str == "Pty" || str == "Pie") return(PTY);
     return(0);
 }
 
@@ -563,6 +565,12 @@ Size RaceData::getSize() const { return(size); }
 //*********************************************************************
 
 int RaceData::getStartAge() const { return(startAge); }
+
+//*********************************************************************
+//                      getXPAdjustment
+//*********************************************************************
+
+int RaceData::getXPAdjustment() const { return(xpAdjustment); }
 
 //*********************************************************************
 //                      getStatAdj

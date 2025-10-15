@@ -382,10 +382,12 @@ int cmdHypnotize(const std::shared_ptr<Player>& player, cmd* cmnd) {
             target->getAsMonster()->addEnemy(player);
             if(player->flagIsSet(P_LAG_PROTECTION_SET)) {    // Activates lag protection.
                 player->setFlag(P_LAG_PROTECTION_ACTIVE);
-            }
+            }     
             return(0);
         }
         target->printColor("^m%M tried to hypnotize you.\n", player.get());
+        //Less time to recover for failed hypnotize attempt
+        player->lasttime[LT_HYPNOTIZE].interval = 30L;
         return(0);
     }
 
@@ -400,6 +402,7 @@ int cmdHypnotize(const std::shared_ptr<Player>& player, cmd* cmnd) {
             player->print("%M avoided your hypnotizing gaze.\n", target.get());
             player->checkImprove("hypnotize", false);
             target->print("You avoided %s's hypnotizing gaze.\n", player->getCName());
+            player->lasttime[LT_HYPNOTIZE].interval = 30L;
             return(0);
         }
     }

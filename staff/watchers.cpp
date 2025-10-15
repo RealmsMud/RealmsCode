@@ -119,7 +119,7 @@ int dmWatcherBroad(const std::shared_ptr<Player>& admin, cmd* cmnd) {
 
     text = getFullstrText(cmnd->fullstr, 1);
     if(text.empty()) {
-        admin->print("Broadcast what?\n");
+        admin->print("Force a watcher to gossip what?\n");
         return(0);
     }
 
@@ -139,17 +139,17 @@ int dmWatcherBroad(const std::shared_ptr<Player>& admin, cmd* cmnd) {
     }
 
     if(!found) {
-        admin->print("No watchers were found to broadcast your message.\n");
+        admin->print("No watchers were found to gossip your message.\n");
         return(0);
     }
-    broadcast(isDm, "^g*** %s forced %s to broadcast", admin->getCName(), watcher->getCName());
+    broadcast(isDm, "^g*** %s forced %s to gossip", admin->getCName(), watcher->getCName());
 
-    text = "broadcast " + text;
-    strcpy(cmnd->str[0], "broadcast");
+    text = "gossip " + text;
+    strcpy(cmnd->str[0], "gossip");
     cmnd->fullstr = text;
     cmdProcess(watcher, cmnd);
 
-    log_immort(true, admin, "%s made %s broadcast \"%s\"\n", admin->getCName(), watcher->getCName(), text.c_str());
+    log_immort(true, admin, "%s made %s gossip \"%s\"\n", admin->getCName(), watcher->getCName(), text.c_str());
     return(0);
 }
 

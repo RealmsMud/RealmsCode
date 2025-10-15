@@ -992,48 +992,59 @@ void Player::loseAll(bool destroyAll, std::string lostTo) {
 //*********************************************************************
 //                      dissolveItem
 //*********************************************************************
-// dissolve_item will randomly select one equipted (including held or
-// wield) items on the given player and then delete it. The player
+// dissolve_item will randomly select one equipped (including held or
+// wielded) item on the given player and then delete it. The player
 // receives a message that the item was destroyed as well as who is
 // responsible for the deed.
-
 void Player::dissolveItem(std::shared_ptr<Creature> creature) {
-    char    checklist[MAXWEAR];
-    int     numwear=0, i=0, n=0;
+   
+    if(!creature)
+        return;
 
-    for(i=0; i<MAXWEAR; i++) {
-        checklist[i] = 0;
-        // if(i==WIELD-1 || i==HELD-1) continue;
-        if(ready[i])
-            checklist[numwear++] = i+1;
-    }
+    std::vector<int> wearableSlots;
 
-    if(!numwear)
-        n = 0;
-    else {
-        i = Random::get(0, numwear-1);
-        n = (int) checklist[i];
-    }
-    if(n) {
-        if(ready[n-1]) {
-            if(ready[n - 1]->flagIsSet(O_RESIST_DISOLVE)) {
-                printColor("%M tried to dissolve your %s.\n", creature.get(), ready[n-1]->getCName());
-                n = 0;
-                return;
-            }
+    // Collect valid wearable slots
+    for (int i = 0; i < MAXWEAR; i++) {
+        if (!ready[i]) continue;  // Skip empty slots
+
+        if (creature->flagIsSet(M_DISSOLVES_ALL)) {
+            wearableSlots.push_back(i);
+            continue;  // No need to check other dissolve flags
+        }
+
+        if ((creature->flagIsSet(M_DISSOLVES_ALL_METAL) && ready[i]->isMetal()) ||
+            (creature->flagIsSet(M_DISSOLVES_FERROUS_METAL) && ready[i]->isFerrousMetal()) ||
+            (creature->flagIsSet(M_DISSOLVES_NONFERROUS_METAL) && ready[i]->isNonFerrousMetal()) ||
+            (creature->flagIsSet(M_DISSOLVES_ORGANIC) && ready[i]->isOrganic()) ||
+            (creature->flagIsSet(M_DISSOLVES_STONE) && ready[i]->isStone())) {
+            wearableSlots.push_back(i);
         }
     }
 
-
-    if(n) {
-        broadcast(getSock(), getRoomParent(),"%M destroys %N's %s.", creature.get(), this, ready[n-1]->getCName());
-        printColor("%M destroys your %s.\n",creature.get(), ready[n-1]->getCName());
-        logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
-                getCName(), level, ready[n-1]->getCName(), getRoomParent()->fullName().c_str());
-        // Unequip it and don't add it to the inventory, delete it
-        unequip(n, UNEQUIP_DELETE);
-        computeAC();
+    // If no items to dissolve, exit
+    if (wearableSlots.empty()) {
+        return;
     }
+
+    // Pick a random item from the list
+    int index = (wearableSlots.size() == 1) ? 0 : Random::get(0, static_cast<int>(wearableSlots.size() - 1));
+    int slot = wearableSlots[index];
+
+    // Check for dissolve resistance + we do not want to dissolve bags somebody might be holding
+    if (ready[slot] && (ready[slot]->flagIsSet(O_RESIST_DISOLVE) || ready[slot]->getType() == ObjectType::CONTAINER)) {
+        printColor("^g%M tried to dissolve your %s.^x\n", creature.get(), ready[slot]->getCName());
+        return;
+    }
+
+    // Broadcast destruction
+    broadcast(getSock(), getRoomParent(), "^g%M dissolved %N's %s.^x", creature.get(), this, ready[slot]->getCName());
+    printColor("^g%M dissolved your %s.^x\n", creature.get(), ready[slot]->getCName());
+    logn("log.dissolve", "%s(L%d) lost %s to acid in room %s.\n",
+         getCName(), level, ready[slot]->getCName(), getRoomParent()->fullName().c_str());
+
+    // Unequip the item and remove it permanently
+    unequip(slot + 1, UNEQUIP_DELETE);
+    computeAC();
 }
 
 //*********************************************************************

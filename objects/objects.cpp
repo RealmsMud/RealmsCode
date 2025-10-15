@@ -199,7 +199,7 @@ Object::Object() {
         lotteryNumbers[i] = 0;
 
     material = NO_MATERIAL;
-    keyVal = minStrength = 0;
+    keyVal = minStrength = permSpawnChance = castChance = 0;
     compass = nullptr;
     increase = nullptr;
     recipe = 0;
@@ -289,6 +289,7 @@ void Object::objCopy(const Object& o) {
     armor = o.armor;
     wearflag = o.wearflag;
     magicpower = o.magicpower;
+    castChance = o.castChance;
     info = o.info;
     level = o.level;
     quality = o.quality;
@@ -325,6 +326,7 @@ void Object::objCopy(const Object& o) {
     questOwner = o.questOwner;
 
     minStrength = o.minStrength;
+    permSpawnChance = o.permSpawnChance;
     material = o.material;
 
     for(i=0; i<6; i++)
@@ -403,6 +405,7 @@ bool Object::operator==(const Object& o) const {
         armor != o.armor ||
         wearflag != o.wearflag ||
         magicpower != o.magicpower ||
+        castChance != o.castChance ||
         info != o.info ||
         level != o.level ||
         quality != o.quality ||
@@ -424,6 +427,7 @@ bool Object::operator==(const Object& o) const {
         extra != o.extra ||
         questOwner != o.questOwner ||
         minStrength != o.minStrength ||
+        permSpawnChance != o.permSpawnChance ||
         material != o.material ||
         size != o.size ||
         recipe != o.recipe ||
@@ -750,6 +754,10 @@ bool Object::raceRestrict(const std::shared_ptr<const Creature> & creature) cons
         !flagIsSet(O_SEL_KATARAN) &&
         !flagIsSet(O_SEL_TIEFLING) &&
         !flagIsSet(O_SEL_KENKU) &&
+        !flagIsSet(O_SEL_GREYELF) &&
+        !flagIsSet(O_SEL_WILDELF) &&
+        !flagIsSet(O_SEL_DUERGAR) &&
+        !flagIsSet(O_SEL_OROG) &&
         !flagIsSet(O_RSEL_INVERT)
     )
         return(false);
@@ -776,7 +784,11 @@ bool Object::raceRestrict(const std::shared_ptr<const Creature> & creature) cons
         (flagIsSet(O_SEL_BARBARIAN) && creature->isRace(BARBARIAN)) ||
         (flagIsSet(O_SEL_KATARAN) && creature->isRace(KATARAN)) ||
         (flagIsSet(O_SEL_TIEFLING) && creature->isRace(TIEFLING)) ||
-        (flagIsSet(O_SEL_KENKU) && creature->isRace(KENKU))
+        (flagIsSet(O_SEL_KENKU) && creature->isRace(KENKU)) ||
+        (flagIsSet(O_SEL_GREYELF) && creature->isRace(GREYELF)) ||
+        (flagIsSet(O_SEL_WILDELF) && creature->isRace(WILDELF)) ||
+        (flagIsSet(O_SEL_DUERGAR) && creature->isRace(DUERGAR)) ||
+        (flagIsSet(O_SEL_OROG) && creature->isRace(OROG))
     );
 
     if(flagIsSet(O_RSEL_INVERT)) 
@@ -1318,6 +1330,72 @@ bool Object::isTrashAtPawn(Money value) const {
     return(false);
 
 }
+
+bool Object::isMetal() const {
+    return(isFerrousMetal() || isNonFerrousMetal());
+}
+
+bool Object::isFerrousMetal() const {
+
+    Material mat = getMaterial();
+
+    if(mat == IRON || mat == STEEL || mat == METEORIC_IRON || mat == SHADOW_IRON || mat == NEGATIVE_STEEL)
+        return(true);
+
+    return(false);
+}
+
+bool Object::isNonFerrousMetal() const {
+    Material mat = getMaterial();
+
+    if(isSilver())
+        return(true);
+
+    if (mat == MITHRIL || mat == ADAMANTIUM || mat == MCOPPER || mat == MGOLD ||
+        mat == MPLATINUM || mat == MALANTHIUM || mat == MELECTRUM || mat == BRONZE ||
+        mat == ARGENTINE || mat == ELECTRITE || mat == ORICHALCUM || mat == AMARANTHIUM ||
+        mat == INFERNITE || mat == CELESTITE || mat == NEGATIVE_MITHRIL)
+        return(true);
+
+    return(false);
+}
+
+bool Object::isOrganic() const {
+
+    Material mat = getMaterial();
+
+    if(mat == WOOD || mat == CLOTH || mat == PAPER || mat == ORGANIC ||
+       mat == BONE || mat == LEATHER || mat == HARDLEATHER)
+        return(true);
+
+    return(false);
+}
+
+bool Object::isStone() const {
+
+    Material mat = getMaterial();
+
+    if(isGemstone())
+        return(true);
+
+    if(mat == GLASS || mat == STONE || mat == CRYSTAL || mat == CERAMIC ||
+       mat == CLAY || mat == SOFTSTONE)
+        return(true);
+
+    return(false);
+}
+
+bool Object::isFlammable() const {
+
+    if(isOrganic())
+        return(true);
+
+    // Check for any other non-organic, if any, here in future
+
+    return(false);
+}
+
+
 
 //*********************************************************************
 //                      spawnObjects

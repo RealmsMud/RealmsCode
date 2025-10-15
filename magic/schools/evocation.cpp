@@ -110,6 +110,7 @@ int splMagicMissile(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
     if(!player->canAttack(target))
         return(0);
 
+
     if(spellData->how == CastType::CAST) {
         maxMissiles = spellData->level / 2;
     } else {
@@ -170,13 +171,15 @@ int splMagicMissile(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellDat
     while(a < num) {
         a++;
         missileDmg = Random::get(2,5) + bonus(player->intelligence.getCur())/2;
-        if(Random::get(1,100) <= 25 && target->isEffected("resist-magic")) {
-            player->print("Your magic-missile deflects off of %N.\n", target.get());
-            broadcast(player->getSock(), target->getSock(), player->getParent(), "%M's magic-missile deflects off of %N.", player.get(), target.get());
-            target->print("%M's magic-missile deflects off of you.\n", player.get());
+
+        colorCh = getRandColor();
+
+        if((Random::get(1,100) <= 25 && target->isEffected("resist-magic")) || target->isEffected("shield")) {
+            player->printColor("^@^%cYour magic-missile deflects off of %N%s.^x\n", colorCh,target.get(), target->isEffected("shield")?"'s magical shield":"");
+            broadcast(player->getSock(), target->getSock(), player->getParent(), "^@^%c%M's magic-missile deflects off of %N%s.^x", colorCh, player.get(), target.get(),target->isEffected("shield")?"'s magical shield":"");
+            target->print("^@^%c%M's magic-missile deflects off of you%s.^x\n", colorCh,player.get(),target->isEffected("shield")?"r magical shield":"");
             continue;
         }
-        colorCh = getRandColor();
 
         player->printColor("^@^%cYour magic-missile strikes %N for %d damage.\n", colorCh, target.get(), missileDmg);
         target->printColor("^@^%c%M's magic-missile strikes you for %d damage!\n", colorCh, player.get(), missileDmg);
@@ -396,6 +399,10 @@ int doOffensive(std::shared_ptr<Creature>caster, std::shared_ptr<Creature> targe
 
         damage.set(osp->damage.roll() + bns);
         target->modifyDamage(caster, dmgType, damage, osp->realm);
+
+        if(osp->realm == FIRE && target->getRace() == TROLL)
+            damage.set((damage.get())*120/100);
+
         damage.set(std::max<int>(0, damage.get()));
 
         m = std::min<int>(target->hp.getCur(), damage.get());
@@ -713,6 +720,9 @@ int splDarkness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
         if(spellData->how == CastType::CAST)
             player->subMp(15);
 
+        if (replaceCancelingEffects(player,target,"darkness"))
+            return(0);
+
     } else {
         if(player->noPotion( spellData))
             return(0);
@@ -759,12 +769,16 @@ int splDarkness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
                 }
             }
 
+
             player->print("You cast a darkness spell on %N.\n", target.get());
             broadcast(player->getSock(), target->getSock(), player->getParent(), "%M casts a darkness spell on %N.", player.get(), target.get());
             target->print("%M casts a darkness spell on you.\n", player.get());
 
             if(spellData->how == CastType::CAST)
                 player->subMp(20);
+
+            if (replaceCancelingEffects(player,target,"darkness"))
+                return(0);
 
             if(!player->isStaff() || target->isStaff()) {
                 if(target->isStaff() || target->chkSave(SPL, player, -25)) {
@@ -826,17 +840,123 @@ int splDarkness(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* s
 
     }
 
+    long duration = 300L;
+    int strength = 0;
+
     // final routines for creatures only
     if(target) {
+
+        if(spellData->how == CastType::WAND || spellData->how == CastType::POTION) {
+            duration = std::max<long>(10, spellData->object->getLevel()) * 30;
+            strength = std::max<int>(10, spellData->object->getLevel());
+        }
+        else
+        {
+            switch(player->getCastingType()) {
+            case MagicType::Divine:
+                strength = (int)player->getSkillLevel("day");
+                duration = 600L + ((long)player->getSkillLevel("day") * 30);
+                break;
+            case MagicType::Arcane:
+                strength = (int)player->getSkillLevel("evocation");
+                duration = 600L + ((long)player->getSkillLevel("evocation") * 30);
+                break;
+            default:
+                strength = (int)player->getSkillLevel("evocation");
+                duration = 180L + ((long)player->getSkillLevel("evocation") * 5);
+                break;
+            }
+        }
+
+        *player << "Strength: " << strength << "\nDuration: " << duration << "\n";
+
         if(spellData->how == CastType::CAST) {
             if(player->getRoomParent()->magicBonus()) {
                 player->print("The room's magical properties increase the power of your spell.\n");
+                duration += (duration*30)/100;
             }
-            target->addEffect("darkness", -2, -2, player, true, player);
+            target->addEffect("darkness", duration, strength, player, true, player);
         } else {
-            target->addEffect("darkness");
+            target->addEffect("darkness", duration, strength);
         }
     }
 
     return(1);
+}
+
+
+//*********************************************************************
+//                      splLight
+//*********************************************************************
+// This spell allows a player to cast a light spell either on themselves
+// or on a target creature. Only mages, druids, liches, bards, paladins, 
+// and clerics are able to cast this spell, as well as some specific races, 
+// regardless of class.
+
+int splLight(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+
+
+    bool canCast=false;
+
+    switch(player->getClass()) {
+    case CreatureClass::CLERIC:
+    case CreatureClass::PALADIN:
+    case CreatureClass::DRUID:
+    case CreatureClass::BARD:
+    case CreatureClass::LICH:
+    case CreatureClass::MAGE:
+        canCast=true;
+        break;
+    case CreatureClass::FIGHTER:
+    case CreatureClass::THIEF:
+        if(player->getAsPlayer()->getSecondClass() == CreatureClass::MAGE)
+            canCast=true;
+        break;
+    default:
+        break;
+    }
+
+    switch (player->getRace()) {
+    case ELF:
+    case GREYELF:
+    case TIEFLING:
+    case CAMBION:
+    case SERAPH:
+        canCast=true;
+        break;
+    default:
+        break;
+    }
+
+    if(!canCast && !player->isStaff()) {
+        *player << "You are unable to cast that spell.\n";
+        return(0);
+    }
+
+    long duration = 300L;
+    int strength = 0;
+
+    if(spellData->how == CastType::WAND || spellData->how == CastType::POTION) {
+        duration = std::max<long>(10, spellData->object->getLevel()) * 30;
+        strength = std::max<int>(10, spellData->object->getLevel());
+    }
+    else
+    {
+        switch(player->getCastingType()) {
+        case MagicType::Divine:
+            strength = (int)player->getSkillLevel("day");
+            duration = 600L + ((long)player->getSkillLevel("day") * 30);
+            break;
+        case MagicType::Arcane:
+            strength = (int)player->getSkillLevel("evocation");
+            duration = 600L + ((long)player->getSkillLevel("evocation") * 30);
+            break;
+        default:
+            strength = (int)player->getSkillLevel("evocation");
+            duration = 180L + ((long)player->getSkillLevel("evocation") * 5);
+            break;
+        }
+    }
+
+    return(splGeneric(player, cmnd, spellData, "a", "light", "light", strength, duration));
 }

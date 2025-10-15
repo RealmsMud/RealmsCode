@@ -193,6 +193,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
         else if(NODE_NAME(curNode, "Armor")) xml::copyToNum(armor, curNode);
         else if(NODE_NAME(curNode, "WearFlag")) xml::copyToNum(wearflag, curNode);
         else if(NODE_NAME(curNode, "MagicPower")) xml::copyToNum(magicpower, curNode);
+        else if(NODE_NAME(curNode, "CastChance")) xml::copyToNum(castChance, curNode);
         else if(NODE_NAME(curNode, "Effect")) xml::copyToString(effect, curNode);
         else if(NODE_NAME(curNode, "EffectDuration")) xml::copyToNum(effectDuration, curNode);
         else if(NODE_NAME(curNode, "EffectStrength")) xml::copyToNum(effectStrength, curNode);
@@ -215,6 +216,7 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
         else if(NODE_NAME(curNode, "KeyVal")) xml::copyToNum(keyVal, curNode);
         else if(NODE_NAME(curNode, "Material")) material = (Material)xml::toNum<int>(curNode);
         else if(NODE_NAME(curNode, "MinStrength")) xml::copyToNum(minStrength, curNode);
+        else if(NODE_NAME(curNode, "PermSpawnChance")) xml::copyToNum(permSpawnChance, curNode);
         else if(NODE_NAME(curNode, "NumAttacks")) xml::copyToNum(numAttacks, curNode);
         else if(NODE_NAME(curNode, "Delay")) xml::copyToNum(delay, curNode);
         else if(NODE_NAME(curNode, "Extra")) xml::copyToNum(extra, curNode);
@@ -607,6 +609,7 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
 
         xml::saveNonZeroNum(rootNode, "WearFlag", wearflag);
         xml::saveNonZeroNum(rootNode, "MagicPower", magicpower);
+        xml::saveNonZeroNum(rootNode, "CastChance", castChance);
 
         xml::saveNonZeroNum(rootNode, "Level", level);
         xml::saveNonZeroNum(rootNode, "Quality", quality);
@@ -626,6 +629,8 @@ int Object::saveToXml(xmlNodePtr rootNode, int permOnly, LoadType saveType, int 
         xml::saveNonZeroNum(rootNode, "KeyVal", keyVal);
         xml::saveNonZeroNum(rootNode, "Material", (int)material);
         xml::saveNonZeroNum(rootNode, "MinStrength", minStrength);
+        xml::saveNonZeroNum(rootNode, "PermSpawnChance", permSpawnChance);
+
 
         saveCatRefArray(rootNode, "InBag", "Obj", in_bag, 3);
 

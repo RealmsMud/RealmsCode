@@ -124,6 +124,10 @@ std::string spellSkill(DomainOfMagic domain) {
         return("travel");
     case CREATION:
         return("creation");
+    case DAY:
+        return("day");
+    case NIGHT:
+        return("night");
     default:
         return("");
     }

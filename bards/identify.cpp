@@ -131,19 +131,18 @@ int cmdIdentify(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->checkImprove("identify", false);
         broadcast(player->getSock(), player->getParent(), "%M carefully studies %P.",player.get(), object.get());
         player->lasttime[LT_IDENTIFY].ltime = t;
-        player->lasttime[LT_IDENTIFY].interval = 45L;
+        player->lasttime[LT_IDENTIFY].interval = 15L;
         return(0);
     } else {
         broadcast(player->getSock(), player->getParent(), "%M carefully studies %P.", player.get(), object.get());
         broadcast(player->getSock(), player->getParent(), "%s successfully identifies it!", player->upHeShe());
-        player->printColor("You carefully study %P.\n",object.get());
-        player->printColor("You manage to learn about %P!\n", object.get());
+        player->printColor("You managed to learn about %P !\n\n", object.get());
         player->checkImprove("identify", true);
 
         object->clearFlag(O_JUST_BOUGHT);
 
         player->lasttime[LT_IDENTIFY].ltime = t;
-        player->lasttime[LT_IDENTIFY].interval = 45L;
+        player->lasttime[LT_IDENTIFY].interval = 60L;
 
         if(object->increase) {
             
@@ -168,6 +167,11 @@ int cmdIdentify(const std::shared_ptr<Player>& player, cmd* cmnd) {
         } else if(object->getType() == ObjectType::WEAPON) {
             player->printColor("%O is a %s, with an average damage of %d.\n", object.get(), object->getTypeName().c_str(),
                   std::max(1, object->damage.average() + object->getAdjustment()));
+
+            if(object->getMagicpower() && object->flagIsSet(O_WEAPON_CASTS)) {
+                player->printColor("%O will %s the ^W%s^x spell on its enemies.\n", object.get(), object->getCastChance()?"sometimes cast":"cast", get_spell_name(object->getMagicpower()-1));
+            }
+
         } else if(object->getType() == ObjectType::POISON) {
             player->printColor("%O is a poison.\n", object.get());
             player->print("It has a maximum duration of %d seconds.\n", object->getEffectDuration());
@@ -395,7 +399,7 @@ int cmdIdentify(const std::shared_ptr<Player>& player, cmd* cmnd) {
         output = object->value.str();
         player->print("It is worth %s", output.c_str());
         if(object->getType() != ObjectType::CONTAINER && object->getType() != ObjectType::MONEY) {
-            player->print(", and is ", object.get());
+            player->print(", and it is ", object.get());
             if(object->getShotsCur() >= object->getShotsMax() * .99)
                 player->print("brand new");
             else if(object->getShotsCur() >= object->getShotsMax() * .90)

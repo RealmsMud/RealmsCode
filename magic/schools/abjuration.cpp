@@ -39,11 +39,13 @@
 #include "mudObjects/monsters.hpp"   // for Monster
 #include "mudObjects/players.hpp"    // for Player
 #include "mudObjects/rooms.hpp"      // for BaseRoom
+#include "mudObjects/objects.hpp"    // for Object, ObjectType, ObjectType...
 #include "proto.hpp"                 // for broadcast, bonus, up, broadcastG...
 #include "random.hpp"                // for Random
 #include "server.hpp"                // for Server, gServer
 #include "statistics.hpp"            // for Statistics
 #include "stats.hpp"                 // for Stat
+#include "commands.hpp"              // for isPtester()
 
 //*********************************************************************
 //                      protection from room damage spells
@@ -74,11 +76,99 @@ int splStaticField(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData
 //                      splProtection
 //*********************************************************************
 // This function allows a spellcaster to cast a protection spell either
-// on themself or on another player, improving the armor class by a
-// score of 10.
+// on themself or on another player, improving defense depending on the
+// strength of the caster. Duration and strength of the "protection"
+// effect scale with abjuration skill, level of the caster, and either
+// piety or intelligence, depending on what class is casting it.
 
 int splProtection(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
-    return(splGeneric(player, cmnd, spellData, "a", "protection", "protection"));
+
+
+    int mpNeeded=0;
+    double multiplier=1.0;
+
+    int level = player->isMonster()?player->getLevel():player->getAsPlayer()->getSkillLevel("abjuration");
+
+    if(level <= 10)
+        mpNeeded = 10;
+    else if (level <= 20)
+        mpNeeded = 15;
+    else if (level <= 30)
+        mpNeeded = 20;
+    else if (level <= 40)
+        mpNeeded = 25;
+
+    if(!player->isMonster() && player->spellFail(spellData->how)) {
+        if(spellData->how == CastType::CAST) 
+            player->subMp(mpNeeded/2);
+        return(0);
+    }
+
+    if(spellData->how == CastType::CAST && !player->checkMp(mpNeeded))
+        return(0);
+
+    int attrib = (player->piety.getCur()>player->intelligence.getCur()?player->piety.getCur():player->intelligence.getCur());
+
+    switch(player->getClass()) {
+        case CreatureClass::CLERIC:
+        case CreatureClass::DRUID:
+            multiplier += 0.15;
+            attrib = player->piety.getCur();
+            break;
+        case CreatureClass::LICH:
+        case CreatureClass::MAGE:
+            multiplier += 0.25;
+            attrib = player->intelligence.getCur();
+            break;
+        case CreatureClass::PALADIN:
+        case CreatureClass::DEATHKNIGHT:
+            multiplier += 0.1;
+            attrib = player->piety.getCur();
+            break;
+        case CreatureClass::FIGHTER:
+        case CreatureClass::THIEF:
+            if(player->isPlayer() && player->getAsPlayer()->getSecondClass() == CreatureClass::MAGE) {
+                multiplier += 0.125;
+                attrib = player->intelligence.getCur();
+            }
+            break;
+        default:
+            break;
+        }
+
+    switch(player->getRace()) {
+    case GREYELF:
+    case ELF:
+    case SERAPH:
+    case TIEFLING:
+    case CAMBION:
+        multiplier += 0.05;
+        break;
+    default:
+        break;
+    }
+
+    int abjuration = (player->isPlayer()?(int)player->getAsPlayer()->getSkillGained("abjuration"):(player->getLevel()*10));
+
+    int minStr = ((abjuration * 8) + attrib) / 160 + 10;
+    int maxStr = ((abjuration * 6) + attrib) / 90 + 10;
+    int strength = static_cast<int>(Random::get(minStr,maxStr) * multiplier);
+    strength = std::max(10,strength);
+
+    long minDur = (((level * 60) + (attrib * 3) + (abjuration * 2)) / 120) + 10;
+    long maxDur = (((level * 2) + (attrib / 7) + (abjuration / 7)) / 3) + 10;
+    long duration = static_cast<long>(Random::get(minDur, maxDur) * multiplier);
+    duration = 60*std::min(duration, 75L);
+
+    if(isPtester(player)) {
+        *player << ColorOn << "^Dabjuration = " << abjuration << ", attrib = " << attrib;
+        *player << ", multiplier = " << multiplier << "\n";
+        *player << "minStr = " << minStr << ", maxStr = " << maxStr << "\n";
+        *player << "minDur = " << minDur << ", maxDur = " << maxDur << "\n\n";
+        *player << "Strength: " << strength << ", Duration: " << duration << "^x\n" << ColorOff;
+    }
+
+    return(splGeneric(player, cmnd, spellData, "a", "protection", "protection", strength, duration, maxStr));
 }
 
 //*********************************************************************
@@ -133,10 +223,92 @@ int splUndeadWard(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData*
 //                      splBless
 //*********************************************************************
 // This function allows a player to cast a bless spell on themself or
-// on another player, reducing the target's thaco by 1.
+// on another player, increasing their chance to hit based on "bless"
+// effect strength. The MP needed scales with abjuration skill level for
+// players, and it uses level for monsters
 
 int splBless(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
-    return(splGeneric(player, cmnd, spellData, "a", "bless", "bless"));
+
+    int mpNeeded=0;
+    double multiplier=1.0;
+
+    int level = player->isMonster()?player->getLevel():player->getAsPlayer()->getSkillLevel("abjuration");
+
+    if(level <= 10)
+        mpNeeded = 10;
+    else if (level <= 20)
+        mpNeeded = 15;
+    else if (level <= 30)
+        mpNeeded = 20;
+    else if (level <= 40)
+        mpNeeded = 25;
+
+    if(!player->isMonster() && player->spellFail(spellData->how)) {
+        if(spellData->how == CastType::CAST) 
+            player->subMp(mpNeeded/2);
+        return(0);
+    }
+
+    if(spellData->how == CastType::CAST && !player->checkMp(mpNeeded))
+        return(0);
+    
+
+    switch(player->getClass()) {
+        case CreatureClass::CLERIC:
+        case CreatureClass::DRUID:
+            multiplier += 0.2;
+            break;
+        case CreatureClass::LICH:
+        case CreatureClass::MAGE:
+            multiplier += 0.15;
+            break;
+        case CreatureClass::PALADIN:
+        case CreatureClass::DEATHKNIGHT:
+            multiplier += 0.1;
+            break;
+        case CreatureClass::FIGHTER:
+        case CreatureClass::THIEF:
+            if(player->isPlayer() && player->getAsPlayer()->getSecondClass() == CreatureClass::MAGE)
+                multiplier += 0.1;
+            break;
+        default:
+            break;
+        }
+
+    switch(player->getRace()) {
+    case SERAPH:
+    case CAMBION:
+    case TIEFLING:
+        multiplier += 0.05;
+        break;
+    default:
+        break;
+    }
+
+    int abjuration = (player->isPlayer()?(int)player->getAsPlayer()->getSkillGained("abjuration"):(player->getLevel()*10));
+    int piety = player->piety.getCur();
+
+    int minStr = ((abjuration * 8) + piety) / 160 + 10;
+    int maxStr = ((abjuration * 6) + piety) / 90 + 10;
+
+    int strength = static_cast<int>(Random::get(minStr,maxStr) * multiplier);
+
+    strength = std::max(10,strength);
+
+    long minDur = (((level * 60) + (piety * 3) + (abjuration * 2)) / 120) + 10;
+    long maxDur = (((level * 2) + (piety / 7) + (abjuration / 7)) / 3) + 10;
+    long duration = static_cast<long>(Random::get(minDur, maxDur) * multiplier);
+    duration = 60*std::min(duration, 75L);
+
+    if(isPtester(player)) {
+        *player << ColorOn << "^Dabjuration = " << abjuration << ", piety = " << piety;
+        *player << ", multiplier = " << multiplier << "\n";
+        *player << "minStr = " << minStr << ", maxStr = " << maxStr << "\n";
+        *player << "minDur = " << minDur << ", maxDur = " << maxDur << "\n\n";
+        *player << "Strength: " << strength << ", Duration: " << duration << "^x\n" << ColorOff;
+    }
+
+    return(splGeneric(player, cmnd, spellData, "a", "bless", "bless", strength, duration, maxStr));
 }
 
 //*********************************************************************
@@ -526,9 +698,6 @@ int splArmor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
 
     mpNeeded = spellData->level;
 
-    if(spellData->how == CastType::CAST && !pPlayer->checkMp(mpNeeded))
-        return(0);
-
     if(!pPlayer->isCt()) {
         if(pPlayer->getClass() !=  CreatureClass::MAGE && pPlayer->getClass() != CreatureClass::LICH && pPlayer->getSecondClass() != CreatureClass::MAGE) {
             if(spellData->how == CastType::CAST) {
@@ -541,6 +710,14 @@ int splArmor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
         }
     }
 
+    if(pPlayer->spellFail( spellData->how)) {
+        if(spellData->how == CastType::CAST) 
+            pPlayer->subMp(mpNeeded);
+        return(0);
+    }
+
+    if(spellData->how == CastType::CAST && !pPlayer->checkMp(mpNeeded))
+        return(0);
 
     bool multi=false;
 
@@ -548,23 +725,14 @@ int splArmor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
          (pPlayer->getClass() == CreatureClass::FIGHTER && pPlayer->getSecondClass() == CreatureClass::MAGE) ||
          (pPlayer->getClass() == CreatureClass::THIEF && pPlayer->getSecondClass() == CreatureClass::MAGE) );
         
-
-
-    if(pPlayer->spellFail( spellData->how)) {
-        if(spellData->how == CastType::CAST)
-            pPlayer->subMp(mpNeeded);
-        return(0);
-    }
-
     // Cast armor on self
 
     int strength = 0;
     int duration = 0;
     if(spellData->how == CastType::CAST) {
         duration = 1800 + bonus(pPlayer->intelligence.getCur());
+        pPlayer->subMp(mpNeeded);
 
-        if(spellData->how == CastType::CAST)
-            pPlayer->subMp(mpNeeded);
         if(pPlayer->getRoomParent()->magicBonus()) {
             player->print("The room's magical properties increase the power of your spell.\n");
             duration += 600L;
@@ -585,17 +753,85 @@ int splArmor(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spel
         strength = pPlayer->hp.getCur();
     }
 
-    pPlayer->addEffect("armor", duration, strength, player, true, player);
-    pPlayer->computeAC();
-    pPlayer->printColor("^BYour magical armor will remain until it takes ^C%d^B damage.\n", strength);
-
     if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
         player->print("Armor spell cast.\n");
         broadcast(pPlayer->getSock(), pPlayer->getRoomParent(),"%M casts an armor spell on %sself.", pPlayer.get(), pPlayer->himHer());
     }
 
+    pPlayer->addEffect("armor", duration, strength, player, true, player);
+    pPlayer->computeAC();
+    pPlayer->printColor("^BYour magical armor will remain until it takes ^C%d^B damage.\n", strength);
+
     return(1);
 }
+
+//*********************************************************************
+//                      splShield
+//*********************************************************************
+// This spell allows arcane casters and multi-class arcane casters to form a
+// magical shield around them which improves defense. It also provides 
+// immunity to all magic missile attacks.
+
+int splShield(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
+    std::shared_ptr<Player> pPlayer = player->getAsPlayer();
+    int mpNeeded=0;
+
+    if(!pPlayer)
+        return(0);
+
+    mpNeeded = 15;
+
+    
+    if(!pPlayer->isCt()) {
+        if(pPlayer->getClass() !=  CreatureClass::MAGE && pPlayer->getClass() != CreatureClass::LICH && pPlayer->getSecondClass() != CreatureClass::MAGE) {
+            if(spellData->how == CastType::CAST) {
+                player->print("Only mages, multi-class mages, and liches can cast the shield spell.\n");
+                return(0);
+            } else {
+                player->print("Nothing happens.\n");
+                return(0);
+            }
+        }
+    }
+
+    if(pPlayer->spellFail(spellData->how)) {
+        if(spellData->how == CastType::CAST) 
+            pPlayer->subMp(mpNeeded);
+        return(0);
+    }
+
+    if(spellData->how == CastType::CAST && !pPlayer->checkMp(mpNeeded))
+        return(0);
+
+    // Cast shield on self
+    int strength = 10;
+    int duration = 0;
+    if(spellData->how == CastType::CAST) {
+        duration = 90L;
+        if(pPlayer->getRoomParent()->magicBonus()) {
+            player->print("The room's magical properties increase the power of your spell.\n");
+            duration += 30L;
+        }
+
+        strength = std::max<int>(10,pPlayer->getSkillLevel("abjuration"));
+
+    } else  {
+        duration = 25L;
+        if (spellData->object) 
+            strength = (spellData->object->getLevel()>0?spellData->object->getLevel():10);
+    }
+
+    if(spellData->how == CastType::CAST || spellData->how == CastType::SCROLL || spellData->how == CastType::WAND) {
+        player->print("Shield spell cast.\n");
+        broadcast(pPlayer->getSock(), pPlayer->getRoomParent(),"%M casts a shield spell on %sself.", pPlayer.get(), pPlayer->himHer());
+    }
+
+    pPlayer->addEffect("shield", duration, strength, player, true, player);
+    pPlayer->computeAC();
+
+    return(1);
+}
+
 
 //*********************************************************************
 //                      splStoneskin

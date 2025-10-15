@@ -100,9 +100,16 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
 
     // set race equal to their parent race, use player->getRace() if checking
     // for subraces
-    const RaceData *r = gConfig->getRace(race);
-    if (r && r->getParentRace())
-        race = r->getParentRace();
+    
+    //**********************************************
+    // Not sure why we wanted subraces to always have same startloc options as parent race.
+    // Doesn't make sense when subraces are very often not even close to the same as
+    // their parent race. i.e. Dwarf vs Duergar or Elf vs Aquatic Elf. Removing this for now. -TC
+
+    //const RaceData *r = gConfig->getRace(race);
+    //if (r && r->getParentRace())
+    //    race = r->getParentRace();
+    //**********************************************
 
     if (player->getClass() == CreatureClass::DRUID) {
 
@@ -118,10 +125,14 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
         // religious states
         options.emplace_back("sigil");
 
-    } else if (player->getDeity() == ARAMON || player->getRace() == CAMBION) {
+    } else if (player->getDeity() == ARAMON) {
 
         // religious states
         options.emplace_back("caladon");
+
+    } else if (player->getDeity() == LINOTHAN || player->getDeity() == MARA) {
+
+        options.emplace_back("eldinwood");
 
     } else if (race == HUMAN && player->getClass() == CreatureClass::CLERIC) {
 
@@ -142,7 +153,8 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
 
         options.emplace_back("schnai");
 
-    } else if (race == DWARF) {
+    // When duergar city built, and/or Ironguard is expanded, this will change
+    } else if (race == DWARF || race == DUERGAR) {
 
         options.emplace_back("highport");
 
@@ -176,11 +188,12 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
         options.emplace_back("caladon");
         options.emplace_back("orc");
 
-    } else if (race == ORC) {
+    } else if (race == ORC || race == OROG) {
 
         options.emplace_back("orc");
 
-    } else if (race == ELF || player->getDeity() == LINOTHAN) {
+    } else if (race == ELF || 
+               race == GREYELF || race == WILDELF) {
 
         options.emplace_back("eldinwood");
 
@@ -201,6 +214,7 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
     switch (player->getClass()) {
         case CreatureClass::RANGER:
             options.emplace_back("druidwood");
+            options.emplace_back("highport");
             break;
             // even seraphs of these classes cannot start in Sigil
         case CreatureClass::ASSASSIN:

@@ -56,6 +56,7 @@
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for StatsContainer
 #include "web.hpp"                     // for updateRecentActivity, webUnass...
+#include "levelGain.hpp"               // for statStr[]
 
 //*********************************************************************
 //                      who
@@ -646,6 +647,21 @@ int cmdQuit(const std::shared_ptr<Player>& player, cmd* cmnd) {
 }
 
 
+std::string getFullStatName(int stat, bool cap) {
+    std::string fullStatName[7] = { "noStat", "strength", "dexterity", "constitution", "intelligence", "piety", "charisma"};
+
+    if (stat < 0 || stat >= 7) 
+        return fullStatName[0];
+
+    std::string statName = fullStatName[stat];
+
+    if (cap) {
+        statName[0] = std::toupper(statName[0]); // Capitalize first letter
+    }
+
+    return statName;
+}
+
 //*********************************************************************
 //                      changeStats
 //*********************************************************************
@@ -688,12 +704,13 @@ void Player::changingStats(std::string str) {
     std::vector<int> statInput;
     std::shared_ptr<Socket> sock = getSock();
     std::shared_ptr<Player> player = sock->getPlayer();
+    short statAdjustment=0;
 
     switch(sock->getState()) {
     case CON_CHANGING_STATS:
         // empty input would cause crash here
         if (str.length() < 1) {
-            sock->print("Aborted.\n");
+            sock->print("Aborting. Please try changestats again.\n");
             sock->setState(CON_PLAYING);
             return;
         }
@@ -703,29 +720,45 @@ void Player::changingStats(std::string str) {
             std::transform(inputArgs.begin(), inputArgs.end(), std::back_inserter(statInput), [](const std::string &s) { return std::stoi(s); });
         } catch (std::invalid_argument &) {
             sock->print("Invalid input\n");
-            sock->print("Aborted.\n");
+            sock->print("Aborting. Please try changestats again.\n");
             sock->setState(CON_PLAYING);
             return;
         }
 
         if(statInput.size() < 5) {
             sock->print("Please enter all 5 numbers.\n");
-            sock->print("Aborted.\n");
+            sock->print("Aborting. Please try changestats again.\n");
             sock->setState(CON_PLAYING);
             return;
         }
 
         if (std::any_of(statInput.begin(), statInput.end(), [](int i){ return i < 3 || i > 18; })){
             sock->print("No stats < 3 or > 18 please.\n");
-            sock->print("Aborted.\n");
+            sock->print("Aborting. Please try changestats again.\n");
             sock->setState(CON_PLAYING);
             return;
+        }
+
+        //Validate that no initially chosen stats would be adjusted below 1 due to possible large racial adjustments of -3 or less
+        //This is also checked during initial character creation
+        for(int x=0; x<5; x++) {
+            statAdjustment = gConfig->getRace(player->getRace())->getStatAdj(x+1);
+            if(((statInput[x]*10)+statAdjustment) < 10) {
+                sock->printColor("\nThe initial stat adjustments for your race (^W%s^x) are: %s\n", 
+                        gConfig->getRace(player->getRace())->getName().c_str(),getRacialBonusesString(player->getRace()).c_str());
+                sock->printColor("After adjustments for race ^W%s^x are applied to those initial stats, the value of %s would be adjusted to 0.\n", 
+                                                                    gConfig->getRace(player->getRace())->getName().c_str(), getFullStatName(x+1).c_str());
+                sock->printColor("The initially chosen value for %s cannot be less than %d.\n", getFullStatName(x+1).c_str(), abs(statAdjustment/10)+1);
+                sock->print("Aborting. Please try changestats again.\n");
+                sock->setState(CON_PLAYING);
+                return;
+            }
         }
 
         sum = std::accumulate(statInput.begin(), statInput.end(), 0);
         if(sum != 56) {
             sock->print("Stat total must equal 56 points.\n");
-            sock->print("Aborted.\n");
+            sock->print("Aborting. Please try changestats again.\n");
             sock->setState(CON_PLAYING);
             return;
         }
@@ -808,7 +841,7 @@ void Player::changingStats(std::string str) {
             );
 
             broadcast(::isCt,"^y### %s aborted choosing new stats.", getCName());
-            sock->print("Aborted.\n");
+            sock->print("Changestats aborted.\n");
             sock->setState(CON_PLAYING);
             return;
         }
@@ -1025,9 +1058,9 @@ int cmdTime(const std::shared_ptr<Player>& player, cmd* cmnd) {
             if(pet->isMonster() && pet->isPet()) {
                 i = 1;
                 if(pet->isUndead())
-                    *player << "Time left before creature following you leaves/fades: " << (timestr(pet->lasttime[LT_ANIMATE].ltime+pet->lasttime[LT_ANIMATE].interval-t)) << "\n";
+                    *player << "Time left before creature following you leaves/fades: " << (timestr(std::max<long>(0,(pet->lasttime[LT_ANIMATE].ltime+pet->lasttime[LT_ANIMATE].interval-t)))) << "\n";
                 else
-                    *player << "Time left before creature following you leaves/fades: " << (timestr(pet->lasttime[LT_INVOKE].ltime+pet->lasttime[LT_INVOKE].interval-t)) << "\n";
+                    *player << "Time left before creature following you leaves/fades: " << (timestr(std::max<long>(0,(pet->lasttime[LT_INVOKE].ltime+pet->lasttime[LT_INVOKE].interval-t)))) << "\n";
 
             }
         }

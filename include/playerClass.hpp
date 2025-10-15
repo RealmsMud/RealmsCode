@@ -40,6 +40,7 @@ public:
     short getBaseMp();
     bool needsDeity();
     short numProfs();
+    int getXPAdjustment();
     std::list<SkillGain*>::const_iterator getSkillBegin();
     std::list<SkillGain*>::const_iterator getSkillEnd();
     std::map<int, LevelGain*>::const_iterator getLevelBegin();
@@ -71,6 +72,7 @@ protected:
 
     bool needDeity;
     short numProf;
+    short xpAdjust;
     // Skills they start with
     std::list<SkillGain*> baseSkills;
     // Stuff gained on each additional level
