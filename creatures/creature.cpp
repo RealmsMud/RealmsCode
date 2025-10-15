@@ -898,7 +898,8 @@ int Player::displayCreature(const std::shared_ptr<Creature>& target)  {
              << target->coins[GOLD] << " gold coin"
              << (target->coins[GOLD] != 1 ? "s" : "") << ".^x\n";
 
-    if(isEffected("know-aura") || cClass==CreatureClass::PALADIN) {
+    if(isEffected("know-aura") || cClass==CreatureClass::PALADIN ||
+                                        (getRace()==SERAPH && target->isEvil())) {
         space = true;
         oStr << target->getCrtStr(pThis, flags | CAP, 0) << " ";
         oStr << "has a " << target->alignColor() << target->alignString() << "^x aura.";

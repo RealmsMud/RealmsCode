@@ -225,6 +225,7 @@ public:
     void checkScavange(long t);
     int checkWander(long t);
     bool canScavange(const std::shared_ptr<Object>&  object, bool scavengeHiddenObjects=false);
+    void printAuraDmgMsg(const std::shared_ptr<Creature>& player, const char* color, const char* text, int dmg);
 
 
     bool doTalkAction(const std::shared_ptr<Player>& target, std::string action, QuestInfo* quest = nullptr);

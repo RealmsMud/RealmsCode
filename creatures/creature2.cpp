@@ -501,128 +501,165 @@ void Monster::validateAc() {
     if(armor > ac)
         armor = ac;
 }
+//**********************************************************************
+//                      Monster::printAuraDmgMsg
+//**********************************************************************
+// Standardized aura damage message - for doHarmfulAuras() below
+void Monster::printAuraDmgMsg(const std::shared_ptr<Creature>& player,
+                              const char* color,
+                              const char* text,   // e.g. "fiery aura singes you"
+                              int dmg) {
+    *player << ColorOn << color << setf(CAP) << this
+            << "'s " << text << " for "
+            << player->customColorize("*CC:DAMAGE*") << dmg
+            << color << " damage!\n" << ColorOff;
+}
 
 //***********************************************************************
 //                      doHarmfulAuras
 //***********************************************************************
 
 int Monster::doHarmfulAuras() {
-    int         a=0,dmg=0,aura=0, saved=0;
+    int         dmg=0, saved=0;
     long        i=0,t=0;
     std::shared_ptr<BaseRoom> inRoom=nullptr;
     std::shared_ptr<Creature> player=nullptr;
 
-    if(isPet())
-        return(0);
-    if(hp.getCur() < hp.getMax()/10)
-        return(0);
-    if(flagIsSet(M_CHARMED))
-        return(0);
+    if (isPet()) 
+        return 0;
+    if (hp.getCur() < hp.getMax()/10) 
+        return 0;
+    if (flagIsSet(M_CHARMED)) 
+        return 0;
 
-    for(a=0;a<MAX_AURAS;a++) {
-        if(flagIsSet(M_FIRE_AURA + a))
-            aura++;
+    // List the aura flags explicitly (order doesn’t matter)
+    static const std::array<long, 8> kAuraFlags = {
+        M_FIRE_AURA,
+        M_COLD_AURA,
+        M_NAUSEATING_AURA,
+        M_NEGATIVE_LIFE_AURA,
+        M_TURBULENT_WIND_AURA,
+        M_ELECTRICAL_AURA,
+        M_WATERY_AURA,
+        M_EARTHY_AURA
+    };
+
+    // Any aura set?
+    bool anyAura = false;
+    for (auto flag : kAuraFlags) {
+        if (flagIsSet(flag)) { anyAura = true; break; }
     }
-
-    if(!aura)
-        return(0);
+    if (!anyAura) 
+        return 0;
 
     i = lasttime[LT_M_AURA_ATTACK].ltime;
     t = time(nullptr);
-
-    if(t - i < 20L) // Mob has to wait 20 seconds.
-        return(0);
-    else {
-        lasttime[LT_M_AURA_ATTACK].ltime = t;
-        lasttime[LT_M_AURA_ATTACK].interval = 20L;
-    }
+    if (t - i < 20L) // Mob has to wait 20 seconds.
+        return 0;
+    lasttime[LT_M_AURA_ATTACK].ltime = t;
+    lasttime[LT_M_AURA_ATTACK].interval = 20L;
 
     inRoom = getRoomParent();
-    if(!inRoom)
-        return(0);
+    if (!inRoom) 
+        return 0;
+
     auto cThis = Containable::downcasted_shared_from_this<Creature>();
-    for(a=0;a<MAX_AURAS;a++) {
 
-        if(!flagIsSet(M_FIRE_AURA + a))
+    // Iterate the auras we actually have
+    for (auto flag : kAuraFlags) {
+        if (!flagIsSet(flag))
             continue;
-        auto pIt = inRoom->players.begin();
-        auto pEnd = inRoom->players.end();
-        while(pIt != pEnd) {
-            player = (*pIt++).lock();
 
-            if(!player || player->isEffected("petrification") || player->isCt())
+        // Iterate players (same as before)
+        auto pIt  = inRoom->players.begin();
+        auto pEnd = inRoom->players.end();
+        while (pIt != pEnd) {
+            player = (*pIt++).lock();
+            if (!player || player->isEffected("petrification") || player->isCt())
                 continue;
 
             dmg = Random::get(level/2, (level*3)/2);
+            dmg = std::max(2, dmg);
 
-            dmg = std::max(2,dmg);
+            switch (flag) {
+                case M_FIRE_AURA:
+                    if (player->isEffected("heat-protection") || player->isEffected("alwayswarm"))
+                        continue;
+                    if (player->chkSave(BRE, cThis, 0))
+                        dmg /= 2;
+                    printAuraDmgMsg(player, "^R", "fiery aura singes you", dmg);
+                    break;
 
-            switch(a+M_FIRE_AURA) {
-            case M_FIRE_AURA:
-                if(player->isEffected("heat-protection") || player->isEffected("alwayswarm"))
-                    continue;
+                case M_COLD_AURA:
+                    if (player->isEffected("warmth") || player->isEffected("alwayscold"))
+                        continue;
+                    if (player->chkSave(BRE, cThis, 0))
+                        dmg /= 2;
+                    printAuraDmgMsg(player, "^C", "freezing aura chills you", dmg);
+                    break;
 
-                saved = player->chkSave(BRE, cThis, 0);
-                if(saved)
-                    dmg /=2;
-                player->printColor("^R%M's firey aura singes you for %s%d^R damage!\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
-                break;
-            case M_COLD_AURA:
-                if(player->isEffected("warmth") || player->isEffected("alwayscold"))
-                    continue;
+                case M_NAUSEATING_AURA:
+                    if (player->immuneToPoison())
+                        continue;
+                    else if (player->resistantToPoison() && Random::get(1,100) <= 15)
+                        continue;
+                    if (player->chkSave(POI, cThis, 0))
+                        dmg /= 2;
+                    else
+                        player->stun(Random::get(1,2));
+                    printAuraDmgMsg(player, "^g", "foul stench causes you to choke and retch", dmg);
+                    break;
 
-                saved = player->chkSave(BRE, cThis, 0);
-                if(saved)
-                    dmg /=2;
-                player->printColor("^C%M's freezing aura chills you for %s%d^C damage!\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
-                break;
-            case M_NAUSEATING_AURA:
-                if(player->immuneToPoison())
-                    continue;
+                case M_NEGATIVE_LIFE_AURA:
+                    if (player->isUndead() || player->isEffected("drain-shield"))
+                        continue;
+                    if (player->chkSave(DEA, cThis, 0))
+                        dmg /= 2;
+                    printAuraDmgMsg(player, "^m", "negative aura taps your life", dmg);
+                    break;
 
-                saved = player->chkSave(POI, cThis, 0);
-                if(saved)
-                    dmg /=2;
-                player->printColor("^g%M's foul stench chokes and nauseates you for %s%d^g damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
-                break;
-            case M_NEGATIVE_LIFE_AURA:
-                if(player->isUndead() || player->isEffected("drain-shield"))
-                    continue;
+                case M_TURBULENT_WIND_AURA:
+                    if (player->isEffected("wind-protection"))
+                        continue;
+                    if (player->chkSave(BRE, cThis, 0))
+                        dmg /= 2;
+                    printAuraDmgMsg(player, "^W", "turbulent winds buff you about", dmg);
+                    break;
 
-                saved = player->chkSave(DEA, cThis, 0);
-                if(saved)
-                    dmg /=2;
-                player->printColor("^m%M's negative aura taps your life for %s%d^m damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
-                break;
-            case M_TURBULENT_WIND_AURA:
-                if(player->isEffected("wind-protection"))
-                    continue;
+                case M_ELECTRICAL_AURA:
+                    if (player->isEffected("static-field"))
+                        continue;
+                    if (player->chkSave(BRE, cThis, 0))
+                        dmg /= 2;
+                    printAuraDmgMsg(player, "^c", "highly charged electrical aura zaps you", dmg);
+                    break;
 
-                saved = player->chkSave(BRE, cThis, 0);
-                if(saved)
-                    dmg /=2;
-                player->printColor("^W%M's turbulent winds buff you about for %s%d^W damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
-                break;
-            case M_ELECTRICAL_AURA:
-                if(player->isEffected("static-field"))
-                    continue;
+                case M_WATERY_AURA:
+                    if (player->isEffected("breathe-water"))
+                        continue;
+                    if (player->chkSave(BRE, cThis, 0))
+                        dmg /= 2;
+                    printAuraDmgMsg(player, "^B", "watery aura causes you to cough and sputter", dmg);
+                    break;
 
-                saved = player->chkSave(BRE, cThis, 0);
-                if(saved)
-                    dmg /=2;
-                player->printColor("^c%M's highly charged aura electrocutes you for %s%d^c damage.\n", this, player->customColorize("*CC:DAMAGE*").c_str(), dmg);
-                break;
+                case M_EARTHY_AURA:
+                    if (player->isEffected("earth-shield"))
+                        continue;
+                    if (player->chkSave(BRE, cThis, 0))
+                        dmg /= 2;
+                    printAuraDmgMsg(player, "^y", "earthy aura pelts you with flying debris and jagged detritus", dmg);
+                    break;
             }
 
             player->hp.decrease(dmg);
-            if(player->checkDie(cThis))
-                return(1);
+            if (player->checkDie(cThis))
+                return 1;
+        }
+    }
 
-        }// End while
-    }// End for
-
-    return(0);
+    return 0;
 }
+
 
 
 //***********************************************************************

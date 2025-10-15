@@ -1196,7 +1196,29 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
             }
         }
 
-        // players take less damage while berserked
+        if (enemy && enemy.get() != this) {
+            int num = 1, den = 1;
+
+            // defender (this) takes less damage while berserked
+            if (isEffected("berserk")) {
+                if (cClass == CreatureClass::BERSERKER) { num *= 4; den *= 5; }   // -20%  => 4/5
+                else                                    { num *= 6; den *= 7; }   // ~-14% => 6/7
+            }
+
+            // attacker (enemy) deals more damage while berserking
+            if (enemy->isEffected("berserk")) {
+                num *= 3; den *= 2; // +50% => 3/2
+            }
+
+            if (num != den) {
+                int dmg = attackDamage.get();
+                dmg = (dmg * num) / den;          // single rounding point
+                attackDamage.set(std::max(1, dmg));
+            }
+        }
+
+/*
+        // target takes less damage while berserked
         if(enemy && isEffected("berserk")) {
             // zerkers: 1/5
             // everyone else: 1/7
@@ -1204,10 +1226,10 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
             attackDamage.set(std::max<int>(1, attackDamage.get()));
         }
 
-        // monsters do more damage while berserked
-        if(enemy && isEffected("berserk"))
+        // target takes more damage if attacker berserked
+        if(enemy && enemy->isEffected("berserk"))
             attackDamage.set(attackDamage.get() * 3 / 2);
-
+*/
         // armor damage reduction
         if(enemy) {
             const float damageReduction = enemy->getDamageReduction(Containable::downcasted_shared_from_this<Creature>());
@@ -1217,6 +1239,12 @@ void Creature::modifyDamage(const std::shared_ptr<Creature>& enemy, int dmgType,
         // Werewolf silver vulnerability
         if(weapon && weapon->isSilver() && isEffected("lycanthropy"))
             attackDamage.set(attackDamage.get() * 2);
+
+
+        // IRON material does extra damage to mtypes FAERIE and DEMON and DEVIL
+        if(weapon && isMonster() && (type == FAERIE || type == DEMON || type == DEVIL) && 
+                    (weapon->getMaterial() == IRON || weapon->getMaterial() == METEORIC_IRON))
+            attackDamage.set(attackDamage.get()*115/100);
     }
 
     // if it's a pet, check elemental pRealm resistance

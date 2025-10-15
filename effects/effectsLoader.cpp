@@ -353,7 +353,7 @@ bool Config::loadEffects() {
         .selfAddStr("^yYou lose your hearing!^x")
         .roomAddStr("^y*ACTOR* has gone deaf.^x")
         .selfDelStr("^yYou can hear again!^x")
-        .roomDelStr("^yYou can hear again!^x"),
+        .roomDelStr("^y*ACTOR* can hear again.^x"),
       effects
     );
     addToSet(
