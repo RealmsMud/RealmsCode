@@ -79,8 +79,6 @@ public:
     bool isPassword(const std::string& password) const;
     void updateLastLogin();
 
-    // Validation
-    static bool isValidAccountName(const std::string& name);
     static bool isValidPassword(const std::string& password);
 
 private:

@@ -145,7 +145,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 sock->disconnect();
                 return;
             }
-            sock->askFor("\n\nLogin Options:\n  ^WA^x) Enter account name to create or login\n  ^WB^x) Skip accounts and login with a character name\n\nEnter choice (A/B): ");
+            sock->askFor("\n\nLogin Options:\n  ^Wa^x) Enter account name to create or login\n  ^Wb^x) Skip accounts and login with a legacy character name\n\nEnter choice (a/b): ");
             sock->setState(LOGIN_ENTRY_CHOICE);
             return;
             // End LOGIN_GET_LOCKOUT_PASSWORD
@@ -176,8 +176,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             if(str.length() >= 25)
                 str[25] = 0;
                 
-            if(!Account::isValidAccountName(str)) {
-                sock->askFor("Invalid account name. Please enter account name: ");
+            if(!nameIsAllowed(str, sock)) {
+                sock->askFor("Please enter account name: ");
                 return;
             }
             

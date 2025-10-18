@@ -252,38 +252,6 @@ int Account::getCharacterCount() const {
 //                      Validation Functions
 //*********************************************************************
 
-bool Account::isValidAccountName(const std::string& name) {
-    if (name.empty() || name.length() < 3 || name.length() > 20) {
-        return false;
-    }
-
-    // First character must be alphabetic
-    if (!std::isalpha(name[0])) {
-        return false;
-    }
-
-    // Check for valid characters (alphanumeric and limited special chars)
-    int nonAlphaCount = 0;
-    for (char c : name) {
-        if (!std::isalnum(c)) {
-            if (c == '-' || c == '_') {
-                nonAlphaCount++;
-                if (nonAlphaCount > 1) {
-                    return false;  // Only allow one special character
-                }
-            } else {
-                return false;  // Invalid character
-            }
-        }
-    }
-
-    // If it has special characters, name must be at least 6 characters
-    if (nonAlphaCount > 0 && name.length() < 6) {
-        return false;
-    }
-
-    return true;
-}
 
 bool Account::isValidPassword(const std::string& password) {
     // Same validation as used elsewhere in the codebase
