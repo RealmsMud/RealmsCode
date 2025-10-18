@@ -527,8 +527,8 @@ std::string Socket::stripTelnet(std::string_view inStr) {
 void Socket::checkLockOut() {
     int lockStatus = gConfig->isLockedOut(shared_from_this());
     if (lockStatus == 0) {
-        askFor("\n\nPlease enter account name\n(or legacy <character name> to login without an account): ");
-        setState(LOGIN_GET_ACCOUNT_NAME);
+        askFor("\n\nLogin Options:\n  ^Wa^x) Enter account name to create or login\n  ^Wb^x) Skip accounts and login with a character name\n\nEnter choice (a/b): ");
+        setState(LOGIN_ENTRY_CHOICE);
     } else if (lockStatus == 2) {
         print("\n\nA password is required to play from your site: ");
         setState(LOGIN_GET_LOCKOUT_PASSWORD);
@@ -1889,7 +1889,7 @@ const char EOR_STR[] = {(char) IAC, (char) EOR, '\0' };
 const char GA_STR[] = {(char) IAC, (char) GA, '\0' };
 
 void Socket::askFor(const char *str) {
-    printColor(str);
+        printColor(str);
 
     if (eorEnabled()) {
         print(EOR_STR);

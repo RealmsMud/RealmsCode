@@ -145,60 +145,39 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 sock->disconnect();
                 return;
             }
-            sock->askFor("Please enter account name: ");
-            
-            sock->setState(LOGIN_GET_ACCOUNT_NAME);
+            sock->askFor("\n\nLogin Options:\n  ^WA^x) Enter account name to create or login\n  ^WB^x) Skip accounts and login with a character name\n\nEnter choice (A/B): ");
+            sock->setState(LOGIN_ENTRY_CHOICE);
             return;
             // End LOGIN_GET_LOCKOUT_PASSWORD
         }
-        case LOGIN_GET_ACCOUNT_NAME: {
-            // Check for legacy login format: "legacy <character name>"
-            if(str.length() >= 7 && str.substr(0, 7) == "legacy ") {
-                std::string charName = str.substr(7);
-                boost::trim(charName);
-                
-                if(charName.empty()) {
-                    sock->print("Please specify a character name.\n");
-                    sock->askFor("Please enter account name (or legacy <character name>): ");
-                    return;
-                }
-                
-                lowercize(charName, 1);
-                if(charName.length() >= 25)
-                    charName[25] = 0;
-                
-                // Check if character exists and is not already claimed by an account
-                std::shared_ptr<Player> player;
-                if(!loadPlayer(charName, player)) {
-                    sock->print("Character '%s' does not exist.\n", charName.c_str());
-                    sock->askFor("Please enter account name (or legacy <character name>): ");
-                    return;
-                }
-                
-                // Check if character is already claimed by an account
-                if(!player->getAccountName().empty()) {
-                    sock->print("Character '%s' is already claimed by an account.\n", charName.c_str());
-                    sock->print("Please login using the account system instead of legacy login.\n");
-                    sock->askFor("Please enter account name (or legacy <character name>): ");
-                    return;
-                }
-                
-                // Store character name for legacy login
-                strcpy(sock->tempstr[1], charName.c_str());
-                
-                sock->print("Legacy login for character '%s'.\n", charName.c_str());
-                sock->print("%s", echo_off);
-                sock->askFor("Please enter character password: ");
-                sock->setState(LOGIN_LEGACY_PASSWORD);
+        case LOGIN_ENTRY_CHOICE: {
+            std::string choice = str;
+            boost::trim(choice);
+            if(choice.empty()) {
+                sock->askFor("Enter choice (a/b): ");
                 return;
             }
-            
+            char c = std::tolower(choice[0]);
+            if(c == 'a') {
+                sock->askFor("Please enter account name: ");
+                sock->setState(LOGIN_GET_ACCOUNT_NAME);
+                return;
+            } else if(c == 'b') {
+                sock->askFor("Please enter character name for legacy login: ");
+                sock->setState(LOGIN_GET_LEGACY_NAME);
+                return;
+            } else {
+                sock->askFor("Please enter A or B: ");
+                return;
+            }
+        }
+        case LOGIN_GET_ACCOUNT_NAME: {
             lowercize(str, 1);
             if(str.length() >= 25)
                 str[25] = 0;
                 
             if(!Account::isValidAccountName(str)) {
-                sock->askFor("Invalid account name. Please enter account name (or legacy <character name>): ");
+                sock->askFor("Invalid account name. Please enter account name: ");
                 return;
             }
             
@@ -221,6 +200,36 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 return;
             }
             // End LOGIN_GET_ACCOUNT_NAME
+        }
+        case LOGIN_GET_LEGACY_NAME: {
+            std::string charName = str;
+            boost::trim(charName);
+            if(charName.empty()) {
+                sock->askFor("Please enter character name for legacy login: ");
+                return;
+            }
+            lowercize(charName, 1);
+            if(charName.length() >= 25) charName[25] = 0;
+
+            std::shared_ptr<Player> player;
+            if(!loadPlayer(charName, player)) {
+                sock->print("Character '%s' does not exist.\n", charName.c_str());
+                sock->askFor("Please enter character name for legacy login: ");
+                return;
+            }
+            if(!player->getAccountName().empty()) {
+                sock->print("Character '%s' is already claimed by an account.\n", charName.c_str());
+                sock->print("Please login using the account system instead of legacy login.\n");
+                sock->askFor("Please enter account name: ");
+                sock->setState(LOGIN_GET_ACCOUNT_NAME);
+                return;
+            }
+            strcpy(sock->tempstr[1], charName.c_str());
+            sock->print("Legacy login for character '%s'.\n", charName.c_str());
+            sock->print("%s", echo_off);
+            sock->askFor("Please enter character password: ");
+            sock->setState(LOGIN_LEGACY_PASSWORD);
+            return;
         }
         case LOGIN_CHECK_CREATE_ACCOUNT: {
             if(str[0] != 'y' && str[0] != 'Y') {
@@ -403,8 +412,8 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             std::shared_ptr<Player> player;
             if(!loadPlayer(charName, player)) {
                 sock->print("\n^RCharacter '%s' does not exist.^x\n", charName.c_str());
-                sock->askFor("Please enter account name (or legacy <character name>): ");
-                sock->setState(LOGIN_GET_ACCOUNT_NAME);
+                sock->askFor("Please enter character name for legacy login: ");
+                sock->setState(LOGIN_GET_LEGACY_NAME);
                 return;
             }
             
