@@ -239,7 +239,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 return;
             } else {
                 sock->print("\nCreating new account...\n");
-                sock->askFor("Please enter a password for your account: ");
+                sock->print("Please set a password for new account '%s': \n", sock->tempstr[0]);
                 sock->setState(LOGIN_GET_ACCOUNT_CREATE_PASSWORD);
                 return;
             }
@@ -266,7 +266,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             
             if(!Account::isValidPassword(str)) {
                 sock->print("\nPassword must be between 5 and 35 characters.\n");
-                sock->print("Please enter a password for your account: ");
+                sock->print("Please set a password for new account '%s': \n", sock->tempstr[0]);
                 sock->print("%s", echo_off);
                 sock->setState(LOGIN_GET_ACCOUNT_CREATE_PASSWORD);
                 return;
