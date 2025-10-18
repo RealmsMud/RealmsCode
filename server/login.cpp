@@ -454,7 +454,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 //*********************************************************************
 
 void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account) {
-    sock->print("\n\n^W~~~~~~~ Menu ~~~~~~~^x\n\n");
+    sock->print("\n\n^W~~~~~~~ Account Menu ~~~~~~~^x\n\n");
     sock->print("^W%-12s^C%s^x\n", "Account:", account->getName().c_str());
     if(!account->getEmail().empty()) {
         sock->print("^W%-12s^x%s\n", "Email:", account->getEmail().c_str());
@@ -464,24 +464,25 @@ void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> acco
     
     // Show command options
     sock->print("^WCommands:^x\n");
-    sock->print("  ^W%-9s^x - Create a new character", "(c)reate");
+    sock->print("  ^W%-15s^x - Create a new character", "^c(c)^Wreate^x");
     if(account->canCreateCharacter()) {
         sock->print("\n");
     } else {
         sock->print(" ^R(limit reached)^x\n");
     }
 
-    sock->print("  ^W%-9s^x - List your characters\n", "(l)ist");
-    sock->print("  ^W%-9s^x - Claim a legacy character\n", "(cl)aim");
-    sock->print("  ^W%-9s^x - Set email address\n", "(e)mail");
-    sock->print("  ^W%-9s^x - Disconnect\n", "(q)uit");
+    sock->print("  ^W%-15s^x - List your characters\n", "^c(l)^Wist^x");
+    sock->print("  ^W%-15s^x - Claim a legacy character\n", "^c(cl)^Waim^x");
+    sock->print("  ^W%-15s^x - Set email address\n", "^c(e)^Wmail^x");
+    sock->print("  ^W%-15s^x - Disconnect\n", "^c(q)^Wuit^x");
     
     const auto& characters = account->getCharacterNames();
-    if(!characters.empty()) {
-        sock->print("\n^KOr enter a character name to play.^x\n");
+    if (characters.empty()) {
+        sock->askFor("\nEnter a command: ");
+    } else {
+        sock->askFor("\nEnter a command, or a character name to play: ");
     }
-    
-    sock->askFor("\nEnter a command: ");
+
     sock->setState(LOGIN_ACCOUNT_MENU);
 }
 
@@ -651,8 +652,8 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     }
     
     // Invalid command
-    sock->print("Invalid command. Available commands: (c)reate, (l)ist, (cl)aim, (e)mail, (q)uit");
-    sock->askFor("\nOr enter a character name to play.\n");
+    sock->print("Invalid command or character name '%s'.\n", input.c_str());
+    showAccountMenu(sock, account);
 }
 
 //*********************************************************************
