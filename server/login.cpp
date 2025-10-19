@@ -541,13 +541,14 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
         
         if(characters.empty()) {
             sock->print("^KYou have no characters.^x\n");
+            sock->askFor("\nEnter a command: ");
         } else {
             sock->print("^WYour Characters:^x\n");
             for(const auto& charName : characters) {
                 sock->print("  ^C%s^x\n", charName.c_str());
             }
+            sock->askFor("\nEnter a command, or a character name to play: ");
         }
-        sock->askFor("\nEnter a command: ");
         // Stay in LOGIN_ACCOUNT_MENU state to return to menu
         return;
     }
