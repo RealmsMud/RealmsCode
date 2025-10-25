@@ -1670,6 +1670,17 @@ static int dmAccountRemovePlayer(const std::shared_ptr<Player>& invoker, const s
     return(0);
 }
 
+static int dmAccountInfo(const std::shared_ptr<Player>& invoker, const std::string& accountName) {
+    std::shared_ptr<Account> account = gServer->getOrLoadAccount(accountName);
+    if(!account) {
+        invoker->print("Account '%s' does not exist.\n", accountName.c_str());
+        return(0);
+    }
+    invoker->print("\n^W~~~~~~~ Account Information ~~~~~~~^x\n\n");
+    account->printInfoFields(invoker);
+    return(0);
+}
+
 //*********************************************************************
 //                      dmAccount (dispatcher)
 //*********************************************************************
@@ -1679,19 +1690,28 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->isDm())
         return(cmdNoAuth(player));
 
-    const char* syntax = "\nSyntax:\n  *account <accountName> add <playerName>\n  *account <accountName> remove <playerName>\n";
+    const char* syntax = "\nSyntax:\n  *account <accountName> info\n  *account <accountName> add <playerName>\n  *account <accountName> remove <playerName>\n";
 
-    if(cmnd->num < 4) {
+    if(cmnd->num < 3) {
         player->print("%s", syntax);
         return(0);
     }
 
     std::string accountName = cmnd->str[1];
     std::string action = cmnd->str[2];
-    std::string targetName = cmnd->str[3];
+    std::string targetName = (cmnd->num >= 4) ? cmnd->str[3] : std::string();
     lowercize(action, 0);
     lowercize(accountName, 1);
-    lowercize(targetName, 1);
+    if(!targetName.empty()) lowercize(targetName, 1);
+
+    if(action == "info") {
+        return dmAccountInfo(player, accountName);
+    }
+
+    if(cmnd->num < 4) {
+        player->print("%s", syntax);
+        return(0);
+    }
 
     struct Subcommand { const char* name; int (*fn)(const std::shared_ptr<Player>&, const std::string&, const std::string&); };
     static const Subcommand subcommands[] = {
