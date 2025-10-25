@@ -39,6 +39,7 @@ int orderPet(const std::shared_ptr<Player>& player, cmd* cmnd);
 // Effects.cpp
 int dmEffectList(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmShowEffectsIndex(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // songs.cpp
 int cmdPlay(const std::shared_ptr<Player>& player, cmd* cmnd);

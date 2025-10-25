@@ -64,6 +64,7 @@
 #include "unique.hpp"                // for addOwner, deleteOwner
 #include "web.hpp"                   // for callWebserver
 #include "xml.hpp"                   // for loadPlayer, loadRoom
+#include "account.hpp"              // for Account
 #include "toNum.hpp"
 
 class UniqueRoom;
@@ -1594,6 +1595,117 @@ int dmWarn(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //*********************************************************************
 int dmBugPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
     return(dmGeneric(player, cmnd, "*bug", DM_GEN_BUG));
+}
+
+//*********************************************************************
+//                      dmAccount helpers
+//*********************************************************************
+
+static int dmAccountAddPlayer(const std::shared_ptr<Player>& invoker, const std::string& accountName, const std::string& targetName) {
+    std::shared_ptr<Account> account = gServer->getOrLoadAccount(accountName);
+    if(!account) {
+        invoker->print("Account '%s' does not exist.\n", accountName.c_str());
+        return(0);
+    }
+
+    std::shared_ptr<Player> target = gServer->findPlayer(targetName);
+    bool online = true;
+    if(!target) {
+        online = false;
+        if(!loadPlayer(targetName, target)) {
+            invoker->print("Player '%s' does not exist.\n", targetName.c_str());
+            return(0);
+        }
+    }
+
+    if(!target->getAccountName().empty() && target->getAccountName() != account->getName()) {
+        invoker->print("Player '%s' already belongs to account '%s'.\n", target->getCName(), target->getAccountName().c_str());
+        return(0);
+    }
+
+    if(account->hasCharacter(target->getName())) {
+        invoker->print("Account '%s' already contains '%s'.\n", account->getName().c_str(), target->getCName());
+        return(0);
+    }
+
+    target->setAccountName(account->getName());
+    if(account->addCharacter(target->getName()))
+        account->save();
+    target->save(online);
+    invoker->print("Added '%s' to account '%s'.\n", target->getCName(), account->getName().c_str());
+    return(0);
+}
+
+static int dmAccountRemovePlayer(const std::shared_ptr<Player>& invoker, const std::string& accountName, const std::string& targetName) {
+    std::shared_ptr<Account> account = gServer->getOrLoadAccount(accountName);
+    if(!account) {
+        invoker->print("Account '%s' does not exist.\n", accountName.c_str());
+        return(0);
+    }
+
+    std::shared_ptr<Player> target = gServer->findPlayer(targetName);
+    bool online = true;
+    if(!target) {
+        online = false;
+        if(!loadPlayer(targetName, target)) {
+            invoker->print("Player '%s' does not exist.\n", targetName.c_str());
+            return(0);
+        }
+    }
+
+    if(!account->hasCharacter(target->getName())) {
+        invoker->print("Account '%s' does not contain '%s'.\n", account->getName().c_str(), target->getCName());
+        return(0);
+    }
+    if(account->removeCharacter(target->getName()))
+        account->save();
+    target->setAccountName("");
+    target->save(online);
+    if(online) {
+        auto sock = target->getSock();
+        if(sock && sock->hasAccount())
+            sock->clearAccount();
+    }
+    invoker->print("Removed '%s' from account '%s'.\n", target->getCName(), account->getName().c_str());
+    return(0);
+}
+
+//*********************************************************************
+//                      dmAccount (dispatcher)
+//*********************************************************************
+// *account <accountName> <action> <playerName>
+
+int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    if(!player->isDm())
+        return(cmdNoAuth(player));
+
+    const char* syntax = "\nSyntax:\n  *account <accountName> add <playerName>\n  *account <accountName> remove <playerName>\n";
+
+    if(cmnd->num < 4) {
+        player->print("%s", syntax);
+        return(0);
+    }
+
+    std::string accountName = cmnd->str[1];
+    std::string action = cmnd->str[2];
+    std::string targetName = cmnd->str[3];
+    lowercize(action, 0);
+    lowercize(accountName, 1);
+    lowercize(targetName, 1);
+
+    struct Subcommand { const char* name; int (*fn)(const std::shared_ptr<Player>&, const std::string&, const std::string&); };
+    static const Subcommand subcommands[] = {
+        {"add", dmAccountAddPlayer},
+        {"remove", dmAccountRemovePlayer},
+    };
+
+    for(const auto& sc : subcommands) {
+        if(!strcmp(action.c_str(), sc.name))
+            return sc.fn(player, accountName, targetName);
+    }
+
+    player->print("Unknown subcommand '%s'.%s", action.c_str(), syntax);
+    return(0);
 }
 
 
