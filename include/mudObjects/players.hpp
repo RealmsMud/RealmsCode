@@ -19,6 +19,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 #include "mudObjects/creatures.hpp"
 
@@ -121,6 +122,7 @@ protected:
 
 public:
     std::string getFlagList(std::string_view sep=", ") const override;
+    void setName(std::string_view newName);
     void hardcoreDeath();
     void deletePlayer();
 

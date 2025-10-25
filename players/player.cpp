@@ -79,7 +79,7 @@
 #include "unique.hpp"                       // for remove, deleteOwner
 #include "xml.hpp"                          // for loadRoom
 #include "toNum.hpp"
-
+#include "account.hpp"
 
 //********************************************************************
 //              init
@@ -566,6 +566,27 @@ void Player::uninit() {
     if(alias_crt) {
         alias_crt->clearFlag(M_DM_FOLLOW);
         alias_crt = nullptr;
+    }
+}
+
+void Player::setName(std::string_view newName) {
+    std::string oldName = getName();
+    MudObject::setName(newName);
+
+    auto account = getAccount();
+    if(account) {
+        if(account->removeCharacter(oldName)) {
+            account->addCharacter(std::string(newName));
+            account->save();
+        }
+    } else {
+        std::shared_ptr<Account> diskAccount;
+        if(Account::load(getAccountName(), diskAccount)) {
+            if(diskAccount->removeCharacter(oldName)) {
+                diskAccount->addCharacter(std::string(newName));
+                diskAccount->save();
+            }
+        }
     }
 }
 
