@@ -28,6 +28,8 @@
 #include "paths.hpp"
 #include "mudObjects/players.hpp"
 #include "socket.hpp"
+#include "server.hpp"
+#include "xml.hpp"
 
 namespace fs = std::filesystem;
 
@@ -194,7 +196,53 @@ unsigned long Account::getExperience() const { return experience; }
 //                      Setters
 //*********************************************************************
 
-void Account::setName(const std::string& name) { accountName = name; }
+void Account::setName(const std::string& name) {
+    if(name == accountName)
+        return;
+
+    std::string oldName = accountName;
+    accountName = name;
+
+    // Update server caches and connected players' account mapping
+    if(gServer) {
+        // Move accountConnections entry
+        auto itConn = gServer->accountConnections.find(oldName);
+        if(itConn != gServer->accountConnections.end()) {
+            gServer->accountConnections[name] = itConn->second;
+            gServer->accountConnections.erase(itConn);
+        }
+
+        // Fix accountCache key if present
+        for(auto it = gServer->accountCache.begin(); it != gServer->accountCache.end(); ++it) {
+            if(it->second.get() == this) {
+                if(it->first != name) {
+                    auto accPtr = it->second;
+                    gServer->accountCache.erase(it);
+                    gServer->accountCache.emplace(name, accPtr);
+                }
+                break;
+            }
+        }
+    }
+
+    // Update all characters linked to this account (online and offline)
+    for(const auto& charName : characterNames) {
+        std::shared_ptr<Player> player = nullptr;
+        if(gServer) player = gServer->findPlayer(charName);
+        if(player) {
+            player->setAccountName(accountName);
+            player->save(true);
+        } else {
+            // Load from disk, update, and save
+            std::shared_ptr<Player> diskPlayer;
+            if(loadPlayer(charName, diskPlayer)) {
+                diskPlayer->setAccountName(accountName);
+                diskPlayer->save(true);
+            }
+        }
+    }
+}
+
 void Account::setPassword(const std::string& pass) { password = hashPassword(pass); }
 void Account::setEmail(const std::string& mail) { email = mail; }
 void Account::setCreated(time_t time) { created = time; }
