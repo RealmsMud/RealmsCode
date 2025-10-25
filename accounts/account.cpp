@@ -316,6 +316,30 @@ bool Account::isValidPassword(const std::string& password) {
 } 
 
 //*********************************************************************
+//                      UI Helpers
+//*********************************************************************
+
+void Account::printInfoFields(const std::shared_ptr<Player>& player) const {
+    if(!player) return;
+    player->print("^W%-12s^C%s^x\n", "Account:", getName().c_str());
+    if(!getEmail().empty()) {
+        player->print("^W%-12s^x%s\n", "Email:", getEmail().c_str());
+    }
+    player->print("^W%-12s^x%d/%d\n", "Characters:", getCharacterCount(), getCharacterLimit());
+    player->print("^W%-12s^G%lu^x\n\n", "Experience:", getExperience());
+}
+
+void Account::printInfoFields(const std::shared_ptr<Socket>& sock) const {
+    if(!sock) return;
+    sock->print("^W%-12s^C%s^x\n", "Account:", getName().c_str());
+    if(!getEmail().empty()) {
+        sock->print("^W%-12s^x%s\n", "Email:", getEmail().c_str());
+    }
+    sock->print("^W%-12s^x%d/%d\n", "Characters:", getCharacterCount(), getCharacterLimit());
+    sock->print("^W%-12s^G%lu^x\n\n", "Experience:", getExperience());
+}
+
+//*********************************************************************
 //                      Player Account Functions
 //*********************************************************************
 

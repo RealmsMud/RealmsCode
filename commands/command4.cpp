@@ -247,12 +247,7 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         player->print("\n^W~~~~~~~ Account Information ~~~~~~~^x\n\n");
-        player->print("^W%-12s^C%s^x\n", "Account:", account->getName().c_str());
-        if(!account->getEmail().empty()) {
-            player->print("^W%-12s^x%s\n", "Email:", account->getEmail().c_str());
-        }
-        player->print("^W%-12s^x%d/%d\n", "Characters:", account->getCharacterCount(), account->getCharacterLimit());
-        player->print("^W%-12s^G%lu^x\n\n", "Experience:", account->getExperience());
+        account->printInfoFields(player);
         
         return(0);
     }

@@ -455,12 +455,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 
 void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account) {
     sock->print("\n\n^W~~~~~~~ Account Menu ~~~~~~~^x\n\n");
-    sock->print("^W%-12s^C%s^x\n", "Account:", account->getName().c_str());
-    if(!account->getEmail().empty()) {
-        sock->print("^W%-12s^x%s\n", "Email:", account->getEmail().c_str());
-    }
-    sock->print("^W%-12s^x%d/%d\n", "Characters:", account->getCharacterCount(), account->getCharacterLimit());
-    sock->print("^W%-12s^G%lu^x\n\n", "Experience:", account->getExperience());
+    account->printInfoFields(sock);
     
     // Show command options
     sock->print("^WCommands:^x\n");

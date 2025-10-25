@@ -25,6 +25,7 @@
 #include <memory>
 
 class Player;
+class Socket;
 
 class Account {
 public:
@@ -80,6 +81,10 @@ public:
     void updateLastLogin();
 
     static bool isValidPassword(const std::string& password);
+
+    // UI helpers
+    void printInfoFields(const std::shared_ptr<Player>& player) const;
+    void printInfoFields(const std::shared_ptr<Socket>& sock) const;
 
 private:
     std::string accountName;        // Unique account identifier
