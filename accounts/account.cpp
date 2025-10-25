@@ -272,6 +272,15 @@ bool Account::addCharacter(const std::string& characterName) {
     }
 
     characterNames.push_back(characterName);
+    // Keep list sorted alphabetically (case-insensitive)
+    std::sort(characterNames.begin(), characterNames.end(), [](const std::string& a, const std::string& b) {
+        return std::lexicographical_compare(
+            a.begin(), a.end(), b.begin(), b.end(),
+            [](unsigned char ac, unsigned char bc) {
+                return std::tolower(ac) < std::tolower(bc);
+            }
+        );
+    });
     return true;
 }
 
