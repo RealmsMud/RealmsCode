@@ -85,6 +85,8 @@ public:
     // UI helpers
     void printInfoFields(const std::shared_ptr<Player>& player) const;
     void printInfoFields(const std::shared_ptr<Socket>& sock) const;
+    void printCharacterList(const std::shared_ptr<Player>& player) const;
+    void printCharacterList(const std::shared_ptr<Socket>& sock) const;
 
 private:
     std::string accountName;        // Unique account identifier

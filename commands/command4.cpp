@@ -232,6 +232,7 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(cmnd->num < 2) {
         player->print("Account command options:\n");
         player->print("  ^Waccount (i)nfo^x - Display account information\n");
+        player->print("  ^Waccount (c)haracters^x - List your characters\n");
         return(0);
     }
 
@@ -249,6 +250,17 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("\n^W~~~~~~~ Account Information ~~~~~~~^x\n\n");
         account->printInfoFields(player);
         
+        return(0);
+    }
+
+    // Handle "characters" with partial matching
+    if(subcommand.length() >= 1 && !strncasecmp(subcommand.c_str(), "characters", std::min(subcommand.length(), 10UL))) {
+        auto account = gServer->getOrLoadAccount(player->getAccountName());
+        if(!account) {
+            player->print("Unable to load your account information.\n");
+            return(0);
+        }
+        account->printCharacterList(player);
         return(0);
     }
 

@@ -1681,6 +1681,18 @@ static int dmAccountInfo(const std::shared_ptr<Player>& invoker, const std::stri
     return(0);
 }
 
+static int dmAccountCharacters(const std::shared_ptr<Player>& invoker, const std::string& accountName) {
+    std::shared_ptr<Account> account = gServer->getOrLoadAccount(accountName);
+    if(!account) {
+        invoker->print("Account '%s' does not exist.\n", accountName.c_str());
+        return(0);
+    }
+    invoker->print("\n^W~~~~~~~ Account Characters ~~~~~~~^x\n\n");
+    invoker->print("^WTotal:^x %d/%d\n", account->getCharacterCount(), account->getCharacterLimit());
+    account->printCharacterList(invoker);
+    return(0);
+}
+
 //*********************************************************************
 //                      dmAccount (dispatcher)
 //*********************************************************************
@@ -1690,7 +1702,7 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!player->isDm())
         return(cmdNoAuth(player));
 
-    const char* syntax = "\nSyntax:\n  *account <accountName> info\n  *account <accountName> add <playerName>\n  *account <accountName> remove <playerName>\n";
+    const char* syntax = "\nSyntax:\n  *account <accountName> info\n  *account <accountName> characters\n  *account <accountName> add <playerName>\n  *account <accountName> remove <playerName>\n";
 
     if(cmnd->num < 3) {
         player->print("%s", syntax);
@@ -1704,8 +1716,12 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     lowercize(accountName, 1);
     if(!targetName.empty()) lowercize(targetName, 1);
 
-    if(action == "info") {
+    // Partial matching for subcommands
+    if(action.size() >= 1 && action.size() <= 4 && action.compare(0, action.size(), "info", 0, action.size()) == 0) {
         return dmAccountInfo(player, accountName);
+    }
+    if(action.size() >= 1 && action.size() <= 10 && action.compare(0, action.size(), "characters", 0, action.size()) == 0) {
+        return dmAccountCharacters(player, accountName);
     }
 
     if(cmnd->num < 4) {
@@ -1714,15 +1730,11 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     struct Subcommand { const char* name; int (*fn)(const std::shared_ptr<Player>&, const std::string&, const std::string&); };
-    static const Subcommand subcommands[] = {
-        {"add", dmAccountAddPlayer},
-        {"remove", dmAccountRemovePlayer},
-    };
-
-    for(const auto& sc : subcommands) {
-        if(!strcmp(action.c_str(), sc.name))
-            return sc.fn(player, accountName, targetName);
-    }
+    // add/remove require a targetName; allow partial matching
+    if(action.size() >= 1 && action.size() <= 3 && action.compare(0, action.size(), "add", 0, action.size()) == 0)
+        return dmAccountAddPlayer(player, accountName, targetName);
+    if(action.size() >= 1 && action.size() <= 6 && action.compare(0, action.size(), "remove", 0, action.size()) == 0)
+        return dmAccountRemovePlayer(player, accountName, targetName);
 
     player->print("Unknown subcommand '%s'.%s", action.c_str(), syntax);
     return(0);

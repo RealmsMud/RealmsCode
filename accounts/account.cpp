@@ -339,6 +339,32 @@ void Account::printInfoFields(const std::shared_ptr<Socket>& sock) const {
     sock->print("^W%-12s^G%lu^x\n\n", "Experience:", getExperience());
 }
 
+void Account::printCharacterList(const std::shared_ptr<Player>& player) const {
+    if(!player) return;
+    const auto& chars = getCharacterNames();
+    if(chars.empty()) {
+        player->print("No characters.\n");
+        return;
+    }
+    player->print("^WYour Characters:^x\n");
+    for(const auto& name : chars) {
+        player->print("  ^C%s^x\n", name.c_str());
+    }
+}
+
+void Account::printCharacterList(const std::shared_ptr<Socket>& sock) const {
+    if(!sock) return;
+    const auto& chars = getCharacterNames();
+    if(chars.empty()) {
+        sock->print("^KYou have no characters.^x\n");
+        return;
+    }
+    sock->print("^WYour Characters:^x\n");
+    for(const auto& name : chars) {
+        sock->print("  ^C%s^x\n", name.c_str());
+    }
+}
+
 //*********************************************************************
 //                      Player Account Functions
 //*********************************************************************

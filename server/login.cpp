@@ -532,18 +532,11 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
     
     // Handle "list" command with partial matching
     if(command.length() >= 1 && !strncasecmp(command.c_str(), "list", std::min(command.length(), 4UL))) {
-        const auto& characters = account->getCharacterNames();
-        
-        if(characters.empty()) {
-            sock->print("^KYou have no characters.^x\n");
+        account->printCharacterList(sock);
+        if(account->getCharacterNames().empty())
             sock->askFor("\nEnter a command: ");
-        } else {
-            sock->print("^WYour Characters:^x\n");
-            for(const auto& charName : characters) {
-                sock->print("  ^C%s^x\n", charName.c_str());
-            }
+        else
             sock->askFor("\nEnter a command, or a character name to play: ");
-        }
         // Stay in LOGIN_ACCOUNT_MENU state to return to menu
         return;
     }
