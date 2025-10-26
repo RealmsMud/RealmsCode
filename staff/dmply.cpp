@@ -1717,10 +1717,10 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(!targetName.empty()) lowercize(targetName, 1);
 
     // Partial matching for subcommands
-    if(action.size() >= 1 && action.size() <= 4 && action.compare(0, action.size(), "info", 0, action.size()) == 0) {
+    if(partialMatch(action, "info", 4)) {
         return dmAccountInfo(player, accountName);
     }
-    if(action.size() >= 1 && action.size() <= 10 && action.compare(0, action.size(), "characters", 0, action.size()) == 0) {
+    if(partialMatch(action, "characters", 10)) {
         return dmAccountCharacters(player, accountName);
     }
 
@@ -1731,9 +1731,9 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     struct Subcommand { const char* name; int (*fn)(const std::shared_ptr<Player>&, const std::string&, const std::string&); };
     // add/remove require a targetName; allow partial matching
-    if(action.size() >= 1 && action.size() <= 3 && action.compare(0, action.size(), "add", 0, action.size()) == 0)
+    if(partialMatch(action, "add", 3))
         return dmAccountAddPlayer(player, accountName, targetName);
-    if(action.size() >= 1 && action.size() <= 6 && action.compare(0, action.size(), "remove", 0, action.size()) == 0)
+    if(partialMatch(action, "remove", 6))
         return dmAccountRemovePlayer(player, accountName, targetName);
 
     player->print("Unknown subcommand '%s'.%s", action.c_str(), syntax);

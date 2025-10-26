@@ -88,6 +88,7 @@ public:
     void printCharacterList(const std::shared_ptr<Player>& player) const;
     void printCharacterList(const std::shared_ptr<Socket>& sock) const;
 
+
 private:
     std::string accountName;        // Unique account identifier
     std::string password;           // Hashed password

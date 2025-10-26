@@ -240,7 +240,7 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     boost::to_lower(subcommand);
 
     // Handle "info" command with partial matching
-    if(subcommand.length() >= 1 && !strncasecmp(subcommand.c_str(), "info", std::min(subcommand.length(), 4UL))) {
+    if(partialMatch(subcommand, "info", 4)) {
         auto account = gServer->getOrLoadAccount(player->getAccountName());
         if(!account) {
             player->print("Unable to load your account information.\n");
@@ -254,7 +254,7 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     // Handle "characters" with partial matching
-    if(subcommand.length() >= 1 && !strncasecmp(subcommand.c_str(), "characters", std::min(subcommand.length(), 10UL))) {
+    if(partialMatch(subcommand, "characters", 10)) {
         auto account = gServer->getOrLoadAccount(player->getAccountName());
         if(!account) {
             player->print("Unable to load your account information.\n");

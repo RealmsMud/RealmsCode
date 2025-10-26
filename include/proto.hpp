@@ -333,6 +333,7 @@ bool parse_name(std::string_view name);
 int dmIson(void);
 int strPrefix(const char *haystack, const char *needle);
 int strSuffix(const char *haystack, const char *needle);
+bool partialMatch(const std::string& got, const char* full, size_t maxLen);
 int pkillPercent(int pkillsWon, int pkillsIn);
 int getLastDigit(int n, int digits);
 
