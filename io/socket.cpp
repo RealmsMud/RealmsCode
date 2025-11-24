@@ -291,6 +291,18 @@ void Socket::cleanUp() {
     clearSpiedOn();
     msdpClearReporting();
 
+	// Ensure account connection is untracked before player/account state is cleared
+	std::string accountName = getAccountName();
+	if (myPlayer) {
+		std::string characterName = myPlayer->getName();
+		if(!accountName.empty() && !characterName.empty() && gServer) {
+			gServer->untrackAccountConnection(accountName, characterName);
+		}
+	} else if(!accountName.empty() && gServer) {
+		// If we are at the account menu (no player), release the cached account
+		gServer->releaseAccount(accountName, "");
+	}
+
     if (myPlayer) {
         if (myPlayer->fd > -1) {
             myPlayer->save(true);

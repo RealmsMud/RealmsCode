@@ -2489,13 +2489,40 @@ std::vector<std::string> Server::getAccountCharacters(const std::string& account
 }
 
 void Server::releaseAccount(const std::string& accountName, const std::string& characterName) {
-    untrackAccountConnection(accountName, characterName);
+	// If a specific character is provided, untrack it first
+	if(!characterName.empty()) {
+		untrackAccountConnection(accountName, characterName);
+		return;
+	}
+	// No character provided: if there are no active character connections
+	// for this account, evict the account from cache.
+	auto it = accountConnections.find(accountName);
+	if(it == accountConnections.end() || it->second.empty()) {
+		accountCache.erase(accountName);
+		if(it != accountConnections.end()) {
+			accountConnections.erase(it);
+		}
+	}
 }
 
 void Server::saveAllCachedAccounts() {
-    for(const auto& [accountName, account] : accountCache) {
-        if(account) {
-            account->save();
-        }
-    }
+	// Only save accounts that have at least one active character connection.
+	// Also prune any accounts that linger in cache without connections.
+	std::vector<std::string> toErase;
+	for(const auto& [accountName, account] : accountCache) {
+		auto it = accountConnections.find(accountName);
+		bool hasConnections = (it != accountConnections.end() && !it->second.empty());
+		if(!hasConnections) {
+			toErase.push_back(accountName);
+			continue;
+		}
+		if(account) {
+			account->save();
+		}
+	}
+	// Erase after iterating to avoid invalidating iterators
+	for(const auto& name : toErase) {
+		accountCache.erase(name);
+		accountConnections.erase(name);
+	}
 }
