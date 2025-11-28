@@ -1699,10 +1699,15 @@ static int dmAccountCharacters(const std::shared_ptr<Player>& invoker, const std
 // *account <accountName> <action> <playerName>
 
 int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    if(!player->isDm())
+    if(!player->isDm()) {
         return(cmdNoAuth(player));
+    }
 
-    const char* syntax = "\nSyntax:\n  *account <accountName> info\n  *account <accountName> characters\n  *account <accountName> add <playerName>\n  *account <accountName> remove <playerName>\n";
+	const char* syntax = "\nSyntax:\n"
+	                     "  *account <accountName> info\n"
+	                     "  *account <accountName> characters\n"
+	                     "  *account <accountName> characters add <playerName>\n"
+	                     "  *account <accountName> characters remove <playerName>\n";
 
     if(cmnd->num < 3) {
         player->print("%s", syntax);
@@ -1711,30 +1716,38 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     std::string accountName = cmnd->str[1];
     std::string action = cmnd->str[2];
-    std::string targetName = (cmnd->num >= 4) ? cmnd->str[3] : std::string();
     lowercize(action, 0);
     lowercize(accountName, 1);
-    if(!targetName.empty()) lowercize(targetName, 1);
 
     // Partial matching for subcommands
     if(partialMatch(action, "info", 4)) {
         return dmAccountInfo(player, accountName);
     }
     if(partialMatch(action, "characters", 10)) {
-        return dmAccountCharacters(player, accountName);
-    }
+		// Bare "characters" -> just list characters
+		if(cmnd->num == 3) {
+			return dmAccountCharacters(player, accountName);
+		}
 
-    if(cmnd->num < 4) {
-        player->print("%s", syntax);
-        return(0);
-    }
+		// Expect: *account <accountName> characters <add|remove> <playerName>
+		if(cmnd->num < 5) {
+			player->print("%s", syntax);
+			return(0);
+		}
 
-    struct Subcommand { const char* name; int (*fn)(const std::shared_ptr<Player>&, const std::string&, const std::string&); };
-    // add/remove require a targetName; allow partial matching
-    if(partialMatch(action, "add", 3))
-        return dmAccountAddPlayer(player, accountName, targetName);
-    if(partialMatch(action, "remove", 6))
-        return dmAccountRemovePlayer(player, accountName, targetName);
+		std::string subAction = cmnd->str[3];
+		std::string targetName = cmnd->str[4];
+		lowercize(subAction, 0);
+		lowercize(targetName, 1);
+
+		if(partialMatch(subAction, "add", 3))
+			return dmAccountAddPlayer(player, accountName, targetName);
+		if(partialMatch(subAction, "remove", 6))
+			return dmAccountRemovePlayer(player, accountName, targetName);
+
+		player->print("Unknown subcommand '%s'.%s", subAction.c_str(), syntax);
+		return(0);
+    }
 
     player->print("Unknown subcommand '%s'.%s", action.c_str(), syntax);
     return(0);
