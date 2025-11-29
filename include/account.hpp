@@ -57,6 +57,7 @@ public:
     bool isBanned() const;
     const std::string& getBanReason() const;
     unsigned long getExperience() const;
+    const std::string& getVersion() const;
 
     // Setters
     void setName(const std::string& name);
@@ -68,6 +69,7 @@ public:
     void setBanReason(const std::string& reason);
     void setExperience(unsigned long exp);
     void addExperience(unsigned long exp);
+    void setVersion(const std::string& v);
 
     // Character management
     bool addCharacter(const std::string& characterName);
@@ -100,6 +102,7 @@ private:
     bool banned;                    // Is account banned
     std::string banReason;          // Reason for ban if applicable
     unsigned long experience;       // Account experience points
+    std::string version;            // Last game version this account logged in with
 
     // Helper functions
     void copyFrom(const Account& other);

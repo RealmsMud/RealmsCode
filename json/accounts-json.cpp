@@ -26,6 +26,7 @@ void to_json(nlohmann::json &j, const Account &account) {
         {"email", account.getEmail()},
         {"created", account.getCreated()},
         {"lastLogin", account.getLastLogin()},
+        {"version", account.getVersion()},
         {"characterNames", account.getCharacterNames()},
         {"banned", account.isBanned()},
         {"banReason", account.getBanReason()},
@@ -52,6 +53,10 @@ void from_json(const nlohmann::json &j, Account &account) {
     
     if (j.contains("lastLogin")) {
         account.setLastLogin(j.at("lastLogin").get<time_t>());
+    }
+
+    if (j.contains("version")) {
+        account.setVersion(j.at("version").get<std::string>());
     }
     
     if (j.contains("characterNames")) {        

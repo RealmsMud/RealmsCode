@@ -30,6 +30,7 @@
 #include "socket.hpp"
 #include "server.hpp"
 #include "xml.hpp"
+#include "config.hpp"
 
 namespace fs = std::filesystem;
 
@@ -76,6 +77,7 @@ void Account::reset() {
     banned = false;
     banReason.clear();
     experience = 0;
+    version.clear();
 }
 
 void Account::copyFrom(const Account& other) {
@@ -89,6 +91,7 @@ void Account::copyFrom(const Account& other) {
     banned = other.banned;
     banReason = other.banReason;
     experience = other.experience;
+    version = other.version;
 }
 
 //*********************************************************************
@@ -175,6 +178,10 @@ bool Account::isPassword(const std::string& pass) const {
 
 void Account::updateLastLogin() {
     lastLogin = time(nullptr);
+    // Record the last game version this account logged in with
+    if(gConfig) {
+        setVersion(gConfig->getVersion());
+    }
 }
 
 //*********************************************************************
@@ -191,6 +198,7 @@ const std::vector<std::string>& Account::getCharacterNames() const { return char
 bool Account::isBanned() const { return banned; }
 const std::string& Account::getBanReason() const { return banReason; }
 unsigned long Account::getExperience() const { return experience; }
+const std::string& Account::getVersion() const { return version; }
 
 //*********************************************************************
 //                      Setters
@@ -251,6 +259,7 @@ void Account::setBanned(bool ban) { banned = ban; }
 void Account::setBanReason(const std::string& reason) { banReason = reason; }
 void Account::setExperience(unsigned long exp) { experience = exp; }
 void Account::addExperience(unsigned long exp) { experience += exp; }
+void Account::setVersion(const std::string& v) { version = v; }
 
 //*********************************************************************
 //                      Character Management
