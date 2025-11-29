@@ -13,15 +13,15 @@ constexpr AccountUpgradeDefinition kUpgradeData[] = {
     {AccountUpgradeId::ExperienceGain, std::string_view{"experience"}, std::string_view{"Experience Gain"},
      AccountUpgradeEffectType::PercentXp, 500000U, 10U, 1U},
     {AccountUpgradeId::Strength, std::string_view{"strength"}, std::string_view{"Strength"},
-     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 1U},
+     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 10U},
     {AccountUpgradeId::Dexterity, std::string_view{"dexterity"}, std::string_view{"Dexterity"},
-     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 1U},
+     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 10U},
     {AccountUpgradeId::Constitution, std::string_view{"constitution"}, std::string_view{"Constitution"},
-     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 1U},
+     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 10U},
     {AccountUpgradeId::Intelligence, std::string_view{"intelligence"}, std::string_view{"Intelligence"},
-     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 1U},
+     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 10U},
     {AccountUpgradeId::Piety, std::string_view{"piety"}, std::string_view{"Piety"},
-     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 1U},
+     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 10U},
 };
 
 const std::vector<AccountUpgradeDefinition>& getAccountUpgradeDefinitions() {
