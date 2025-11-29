@@ -62,6 +62,7 @@ public:
     bool isBanned() const;
     const std::string& getBanReason() const;
     unsigned long getExperience() const;
+    const std::string& getVersion() const;
 
     // Setters
     void setName(const std::string& name);
@@ -82,6 +83,7 @@ public:
     void clearUpgradeLevels();
     unsigned int getUpgradeValue(AccountUpgradeId id) const;
     unsigned int getExperienceBonusPercent() const;
+    void setVersion(const std::string& v);
 
     // Character management
     bool addCharacter(const std::string& characterName);
@@ -115,7 +117,8 @@ private:
     bool banned;                    // Is account banned
     std::string banReason;          // Reason for ban if applicable
     unsigned long experience;       // Account experience points
-    std::array<unsigned short, AccountUpgradeCount> upgradeLevels{};
+    std::string version;            // Last game version this account logged in with
+    std::array<unsigned short, AccountUpgradeCount> upgradeLevels{}; // Account upgrade levels
 
     // Helper functions
     void copyFrom(const Account& other);
