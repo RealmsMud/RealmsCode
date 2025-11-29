@@ -272,29 +272,29 @@ bool Account::spendExperience(unsigned long exp) {
 }
 
 unsigned short Account::getUpgradeLevel(AccountUpgradeId id) const {
-    auto index = static_cast<std::size_t>(id);
-    if(index >= upgradeLevels.size()) {
+    auto it = upgradeLevels.find(id);
+    if(it == upgradeLevels.end()) {
         return 0;
     }
-    return upgradeLevels[index];
+    return it->second;
 }
 
 void Account::setUpgradeLevel(AccountUpgradeId id, unsigned short level) {
-    auto index = static_cast<std::size_t>(id);
-    if(index >= upgradeLevels.size()) {
-        return;
-    }
     const auto& def = getAccountUpgrade(id);
     unsigned short clamped = static_cast<unsigned short>(std::min<unsigned int>(level, def.maxRank));
-    upgradeLevels[index] = clamped;
+    if(clamped == 0) {
+        upgradeLevels.erase(id);
+    } else {
+        upgradeLevels[id] = clamped;
+    }
 }
 
-const std::array<unsigned short, AccountUpgradeCount>& Account::getUpgradeLevels() const {
+const std::unordered_map<AccountUpgradeId, unsigned short>& Account::getUpgradeLevels() const {
     return upgradeLevels;
 }
 
 void Account::clearUpgradeLevels() {
-    upgradeLevels.fill(0);
+    upgradeLevels.clear();
 }
 
 unsigned int Account::getUpgradeValue(AccountUpgradeId id) const {

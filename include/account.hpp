@@ -19,15 +19,13 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include <array>
 #include <string>
 #include <vector>
 #include <ctime>
 #include <memory>
+#include <unordered_map>
 
 #include "accountUpgrades.hpp"
-
-constexpr std::size_t AccountUpgradeCount = static_cast<std::size_t>(AccountUpgradeId::COUNT);
 
 class Player;
 class Socket;
@@ -79,7 +77,7 @@ public:
     // Upgrades
     unsigned short getUpgradeLevel(AccountUpgradeId id) const;
     void setUpgradeLevel(AccountUpgradeId id, unsigned short level);
-    const std::array<unsigned short, AccountUpgradeCount>& getUpgradeLevels() const;
+    const std::unordered_map<AccountUpgradeId, unsigned short>& getUpgradeLevels() const;
     void clearUpgradeLevels();
     unsigned int getUpgradeValue(AccountUpgradeId id) const;
     unsigned int getExperienceBonusPercent() const;
@@ -118,7 +116,7 @@ private:
     std::string banReason;          // Reason for ban if applicable
     unsigned long experience;       // Account experience points
     std::string version;            // Last game version this account logged in with
-    std::array<unsigned short, AccountUpgradeCount> upgradeLevels{}; // Account upgrade levels
+    std::unordered_map<AccountUpgradeId, unsigned short> upgradeLevels; // Account upgrade levels
 
     // Helper functions
     void copyFrom(const Account& other);

@@ -1721,7 +1721,7 @@ static int dmAccountUpgradeModify(const std::shared_ptr<Player>& invoker,
 
     account->setUpgradeLevel(def->id, desiredRank);
     if(!account->save()) {
-        invoker->print("^RWarning:^x failed to save account '%s'.\n", accountName.c_str());
+        invoker->print("^RWarning:^x failed to save account '%s'.\n", account->getName().c_str());
     }
 
     applyUpgradeChangesToOnlinePlayers(account->getName());
@@ -1814,7 +1814,7 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
             std::string upgradeName = cmnd->str[4];
             std::string rankStr = getFullstrText(cmnd->fullstr, 5);
             if(rankStr.empty()) {
-                player->print("Please provide a rank (0-%u).\n", AccountUpgradeCount);
+                player->print("Please provide a rank (>= 0).\n");
                 return(0);
             }
             unsigned short rank = static_cast<unsigned short>(std::max(0, toNum<int>(rankStr)));
