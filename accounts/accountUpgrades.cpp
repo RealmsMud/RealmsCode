@@ -94,8 +94,7 @@ std::string_view getStatName(AccountUpgradeId id) {
     }
 }
 
-const AccountUpgradeDefinition* matchAccountUpgrade(std::string_view input, bool& ambiguous) {
-    ambiguous = false;
+const AccountUpgradeDefinition* matchAccountUpgrade(std::string_view input) {
     if(input.empty()) {
         return nullptr;
     }
@@ -105,16 +104,20 @@ const AccountUpgradeDefinition* matchAccountUpgrade(std::string_view input, bool
                    [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
 
     const AccountUpgradeDefinition* candidate = nullptr;
+    bool ambiguous = false;
     const auto& defs = getAccountUpgradeDefinitions();
     for(const auto& def : defs) {
         std::string token(def.token);
         if(partialMatch(lowered, token.c_str(), token.size())) {
             if(candidate) {
                 ambiguous = true;
-                return nullptr;
+                break;
             }
             candidate = &def;
         }
+    }
+    if(ambiguous) {
+        return nullptr;
     }
     return candidate;
 }

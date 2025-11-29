@@ -1698,12 +1698,7 @@ static int dmAccountUpgradeModify(const std::shared_ptr<Player>& invoker,
                                   const std::shared_ptr<Account>& account,
                                   const std::string& upgradeToken,
                                   unsigned short newRank) {
-    bool ambiguous = false;
-    const AccountUpgradeDefinition* def = matchAccountUpgrade(upgradeToken, ambiguous);
-    if(ambiguous) {
-        invoker->print("Upgrade '%s' is ambiguous. Please provide more letters.\n", upgradeToken.c_str());
-        return(0);
-    }
+    const AccountUpgradeDefinition* def = matchAccountUpgrade(upgradeToken);
     if(!def) {
         invoker->print("Unknown upgrade '%s'. Use '*account %s upgrade' to list options.\n",
                        upgradeToken.c_str(), account->getName().c_str());

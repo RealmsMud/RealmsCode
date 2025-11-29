@@ -287,12 +287,7 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         std::string upgradeName = cmnd->str[3];
-        bool ambiguous = false;
-        const AccountUpgradeDefinition* def = matchAccountUpgrade(upgradeName, ambiguous);
-        if(ambiguous) {
-            player->print("Upgrade name '%s' is ambiguous. Please provide more letters.\n", upgradeName.c_str());
-            return(0);
-        }
+        const AccountUpgradeDefinition* def = matchAccountUpgrade(upgradeName);
         if(!def) {
             player->print("Unknown upgrade '%s'. Type '^Waccount upgrade^x' for a list.\n", upgradeName.c_str());
             return(0);
