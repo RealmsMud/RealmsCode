@@ -19,10 +19,15 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include <array>
 #include <string>
 #include <vector>
 #include <ctime>
 #include <memory>
+
+#include "accountUpgrades.hpp"
+
+constexpr std::size_t AccountUpgradeCount = static_cast<std::size_t>(AccountUpgradeId::COUNT);
 
 class Player;
 class Socket;
@@ -68,6 +73,15 @@ public:
     void setBanReason(const std::string& reason);
     void setExperience(unsigned long exp);
     void addExperience(unsigned long exp);
+    bool spendExperience(unsigned long exp);
+
+    // Upgrades
+    unsigned short getUpgradeLevel(AccountUpgradeId id) const;
+    void setUpgradeLevel(AccountUpgradeId id, unsigned short level);
+    const std::array<unsigned short, AccountUpgradeCount>& getUpgradeLevels() const;
+    void clearUpgradeLevels();
+    unsigned int getUpgradeValue(AccountUpgradeId id) const;
+    unsigned int getExperienceBonusPercent() const;
 
     // Character management
     bool addCharacter(const std::string& characterName);
@@ -100,6 +114,7 @@ private:
     bool banned;                    // Is account banned
     std::string banReason;          // Reason for ban if applicable
     unsigned long experience;       // Account experience points
+    std::array<unsigned short, AccountUpgradeCount> upgradeLevels{};
 
     // Helper functions
     void copyFrom(const Account& other);

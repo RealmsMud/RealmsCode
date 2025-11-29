@@ -101,6 +101,7 @@ set(COMMON_HEADER_FILES
     include/mudObjects/uniqueRooms.hpp
 
     include/account.hpp
+    include/accountUpgrades.hpp
     include/alchemy.hpp
     include/anchor.hpp
     include/area.hpp
@@ -206,6 +207,7 @@ set(COMMON_HEADER_FILES
 
 set(COMMON_SOURCE_FILES
     accounts/account.cpp
+    accounts/accountUpgrades.cpp
 
     areas/area.cpp
     areas/catRef.cpp

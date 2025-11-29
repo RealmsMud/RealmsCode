@@ -76,6 +76,7 @@ void Account::reset() {
     banned = false;
     banReason.clear();
     experience = 0;
+    clearUpgradeLevels();
 }
 
 void Account::copyFrom(const Account& other) {
@@ -89,6 +90,7 @@ void Account::copyFrom(const Account& other) {
     banned = other.banned;
     banReason = other.banReason;
     experience = other.experience;
+    upgradeLevels = other.upgradeLevels;
 }
 
 //*********************************************************************
@@ -251,6 +253,48 @@ void Account::setBanned(bool ban) { banned = ban; }
 void Account::setBanReason(const std::string& reason) { banReason = reason; }
 void Account::setExperience(unsigned long exp) { experience = exp; }
 void Account::addExperience(unsigned long exp) { experience += exp; }
+bool Account::spendExperience(unsigned long exp) {
+    if(exp > experience) {
+        return false;
+    }
+    experience -= exp;
+    return true;
+}
+
+unsigned short Account::getUpgradeLevel(AccountUpgradeId id) const {
+    auto index = static_cast<std::size_t>(id);
+    if(index >= upgradeLevels.size()) {
+        return 0;
+    }
+    return upgradeLevels[index];
+}
+
+void Account::setUpgradeLevel(AccountUpgradeId id, unsigned short level) {
+    auto index = static_cast<std::size_t>(id);
+    if(index >= upgradeLevels.size()) {
+        return;
+    }
+    const auto& def = getAccountUpgrade(id);
+    unsigned short clamped = static_cast<unsigned short>(std::min<unsigned int>(level, def.maxRank));
+    upgradeLevels[index] = clamped;
+}
+
+const std::array<unsigned short, AccountUpgradeCount>& Account::getUpgradeLevels() const {
+    return upgradeLevels;
+}
+
+void Account::clearUpgradeLevels() {
+    upgradeLevels.fill(0);
+}
+
+unsigned int Account::getUpgradeValue(AccountUpgradeId id) const {
+    const auto& def = getAccountUpgrade(id);
+    return static_cast<unsigned int>(getUpgradeLevel(id)) * def.magnitudePerRank;
+}
+
+unsigned int Account::getExperienceBonusPercent() const {
+    return getUpgradeValue(AccountUpgradeId::ExperienceGain);
+}
 
 //*********************************************************************
 //                      Character Management
@@ -386,4 +430,43 @@ void Player::setAccountName(const std::string& name) {
 }
 
 std::string Player::getAccountName() const { return(accountName); }
+
+void Player::applyAccountUpgradeBonuses() {
+    std::shared_ptr<Account> accountPtr = nullptr;
+    if(hasAccount()) {
+        accountPtr = gServer->getOrLoadAccount(getAccountName());
+    }
+
+    bool modified = false;
+    const auto& definitions = getAccountUpgradeDefinitions();
+    for(const auto& def : definitions) {
+        if(!isStatUpgrade(def.id)) {
+            continue;
+        }
+
+        auto statName = getStatName(def.id);
+        if(statName.empty()) {
+            continue;
+        }
+
+        std::string modifierName = std::string("AccountUpgrade_") + std::string(def.token);
+        int bonus = 0;
+        if(accountPtr) {
+            bonus = static_cast<int>(accountPtr->getUpgradeValue(def.id));
+        }
+
+        Stat* stat = getStat(statName);
+        if(!stat) {
+            continue;
+        }
+
+        stat->setModifier(modifierName, bonus, MOD_CUR_MAX);
+        modified = true;
+    }
+
+    if(modified) {
+        computeAttackPower();
+        computeAC();
+    }
+}
  

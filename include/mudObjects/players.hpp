@@ -171,6 +171,7 @@ public:
     // Account utilities
     bool hasAccount() const;
     std::shared_ptr<Account> getAccount() const;
+    void applyAccountUpgradeBonuses();
 
     // Combat & Death
     int computeAttackPower();

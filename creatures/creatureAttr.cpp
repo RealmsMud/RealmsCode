@@ -146,18 +146,23 @@ bool Creature::inJail() const {
 }
 
 void Creature::addExperience(unsigned long e) {
-    setExperience(experience + e);
+    unsigned long totalGain = e;
+    std::shared_ptr<Account> account = nullptr;
+    std::shared_ptr<Player> player = nullptr;
+
     if(isPlayer()) {
-        auto player = getAsPlayer();
-        player->checkLevel();
-        
-        // Add account experience if player has an account
-        if(player->hasAccount()) {
-            auto account = gServer->getOrLoadAccount(player->getAccountName());
+        player = getAsPlayer();
+        if(player && player->hasAccount()) {
+            account = gServer->getOrLoadAccount(player->getAccountName());
             if(account) {
+                unsigned int bonusPercent = account->getExperienceBonusPercent();
+                if(bonusPercent > 0) {
+                    totalGain += static_cast<unsigned long>((totalGain * bonusPercent) / 100);
+                }
+
                 // Calculate 1% of player experience gained (rounded to nearest integer)
                 // This means players must earn at least 50 exp to gain account exp
-                double accountExpDouble = e * 0.01;
+                double accountExpDouble = totalGain * 0.01;
                 unsigned long accountExp = static_cast<unsigned long>(accountExpDouble + 0.5);
                 if(accountExp > 0) {
                     account->addExperience(accountExp);
@@ -165,6 +170,9 @@ void Creature::addExperience(unsigned long e) {
             }
         }
     }
+
+    setExperience(experience + totalGain);
+    if(player) player->checkLevel();
 }
 
 void Creature::subExperience(unsigned long e) {
