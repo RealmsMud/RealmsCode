@@ -37,3 +37,6 @@ const AccountUpgradeDefinition* findAccountUpgradeByToken(std::string_view token
 
 bool isStatUpgrade(AccountUpgradeId id);
 std::string_view getStatName(AccountUpgradeId id);
+
+const AccountUpgradeDefinition* matchAccountUpgrade(std::string_view input, bool& ambiguous);
+std::string describeAccountUpgradeBonus(const AccountUpgradeDefinition& def, unsigned value);

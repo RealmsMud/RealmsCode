@@ -409,6 +409,33 @@ void Account::printCharacterList(const std::shared_ptr<Socket>& sock) const {
     }
 }
 
+void Account::printUpgradeSummary(const std::shared_ptr<Player>& player) const {
+    if(!player) return;
+
+    player->print("\n^W~~~~~~~ Account Upgrades ~~~~~~~^x\n\n");
+    player->print("^WAccount Experience:^x ^G%lu^x\n\n", getExperience());
+
+    const auto& defs = getAccountUpgradeDefinitions();
+    for(const auto& def : defs) {
+        std::string name(def.displayName);
+        std::string token(def.token);
+        unsigned short rank = getUpgradeLevel(def.id);
+        bool maxed = rank >= def.maxRank;
+        auto totalBonus = describeAccountUpgradeBonus(def, getUpgradeValue(def.id));
+        auto perRankBonus = describeAccountUpgradeBonus(def, def.magnitudePerRank);
+
+        player->print("  ^W%-16s^x (^C%s^x) Rank ^G%u/%u^x  %s\n",
+                      name.c_str(), token.c_str(), rank, def.maxRank, totalBonus.c_str());
+        if(maxed) {
+            player->print("      ^BMAXED^x\n");
+        } else {
+            player->print("      Next rank: %s (Cost ^G%u^x account exp)\n",
+                          perRankBonus.c_str(), def.costPerRank);
+        }
+    }
+
+}
+
 //*********************************************************************
 //                      Player Account Functions
 //*********************************************************************

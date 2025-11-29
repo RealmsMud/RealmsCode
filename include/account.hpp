@@ -101,6 +101,7 @@ public:
     void printInfoFields(const std::shared_ptr<Socket>& sock) const;
     void printCharacterList(const std::shared_ptr<Player>& player) const;
     void printCharacterList(const std::shared_ptr<Socket>& sock) const;
+    void printUpgradeSummary(const std::shared_ptr<Player>& player) const;
 
 
 private:

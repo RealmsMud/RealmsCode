@@ -3,8 +3,11 @@
 #include <algorithm>
 #include <cctype>
 #include <iterator>
+#include <sstream>
 #include <stdexcept>
 #include <string>
+
+#include "proto.hpp"
 
 constexpr AccountUpgradeDefinition kUpgradeData[] = {
     {AccountUpgradeId::ExperienceGain, std::string_view{"experience"}, std::string_view{"Experience Gain"},
@@ -89,5 +92,47 @@ std::string_view getStatName(AccountUpgradeId id) {
         default:
             return {};
     }
+}
+
+const AccountUpgradeDefinition* matchAccountUpgrade(std::string_view input, bool& ambiguous) {
+    ambiguous = false;
+    if(input.empty()) {
+        return nullptr;
+    }
+
+    std::string lowered(input);
+    std::transform(lowered.begin(), lowered.end(), lowered.begin(),
+                   [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+
+    const AccountUpgradeDefinition* candidate = nullptr;
+    const auto& defs = getAccountUpgradeDefinitions();
+    for(const auto& def : defs) {
+        std::string token(def.token);
+        if(partialMatch(lowered, token.c_str(), token.size())) {
+            if(candidate) {
+                ambiguous = true;
+                return nullptr;
+            }
+            candidate = &def;
+        }
+    }
+    return candidate;
+}
+
+std::string describeAccountUpgradeBonus(const AccountUpgradeDefinition& def, unsigned value) {
+    std::ostringstream oss;
+    if(def.effectType == AccountUpgradeEffectType::PercentXp) {
+        oss << "+" << value << "% experience gain";
+        return oss.str();
+    }
+
+    auto statName = getStatName(def.id);
+    if(!statName.empty()) {
+        oss << "+" << value << " " << statName;
+        return oss.str();
+    }
+
+    oss << "+" << value;
+    return oss.str();
 }
 
