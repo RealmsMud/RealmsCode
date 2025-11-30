@@ -301,14 +301,14 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         unsigned long cost = def->costPerRank;
-        unsigned long currentExp = account->getExperience();
-        if(currentExp < cost) {
+        unsigned long availableExp = account->getAvailableExp();
+        if(availableExp < cost) {
             player->print("You need ^G%lu^x more account experience to purchase %s.\n",
-                          cost - currentExp, name.c_str());
+                          cost - availableExp, name.c_str());
             return(0);
         }
 
-        if(!account->spendExperience(cost)) {
+        if(!account->spendExp(cost)) {
             player->print("Unable to spend your account experience right now. Please try again.\n");
             return(0);
         }
@@ -324,7 +324,6 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
         auto bonusDesc = describeAccountUpgradeBonus(*def, account->getUpgradeValue(def->id));
         player->print("Purchased ^W%s^x rank ^G%u/%u^x. Bonus is now %s.\n",
                       name.c_str(), newRank, def->maxRank, bonusDesc.c_str());
-        player->print("Remaining account experience: ^G%lu^x.\n", account->getExperience());
         return(0);
     }
 

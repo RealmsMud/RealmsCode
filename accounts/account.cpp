@@ -298,14 +298,6 @@ void Account::setExpSpent(unsigned long long spent) {
 }
 void Account::setVersion(const std::string& v) { version = v; }
 
-bool Account::spendExperience(unsigned long exp) {
-    if(exp > experience) {
-        return false;
-    }
-    experience -= exp;
-    return true;
-}
-
 unsigned short Account::getUpgradeLevel(AccountUpgradeId id) const {
     auto it = upgradeLevels.find(id);
     if(it == upgradeLevels.end()) {
@@ -460,7 +452,7 @@ void Account::printUpgradeSummary(const std::shared_ptr<Player>& player) const {
     if(!player) return;
 
     player->print("\n^W~~~~~~~ Account Upgrades ~~~~~~~^x\n\n");
-    player->print("^WAccount Experience:^x ^G%lu^x\n\n", getExperience());
+    player->print("^Available Exp:^x ^G%lu^x\n\n", getAvailableExp());
 
     const auto& defs = getAccountUpgradeDefinitions();
     for(const auto& def : defs) {
