@@ -13,15 +13,19 @@ constexpr AccountUpgradeDefinition kUpgradeData[] = {
     {AccountUpgradeId::ExperienceGain, std::string_view{"experience"}, std::string_view{"Experience Gain"},
      AccountUpgradeEffectType::PercentXp, 500000U, 10U, 1U},
     {AccountUpgradeId::Strength, std::string_view{"strength"}, std::string_view{"Strength"},
-     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 10U},
+     AccountUpgradeEffectType::FlatStat, 1000000U, 3U, 10U},
     {AccountUpgradeId::Dexterity, std::string_view{"dexterity"}, std::string_view{"Dexterity"},
-     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 10U},
+     AccountUpgradeEffectType::FlatStat, 1000000U, 3U, 10U},
     {AccountUpgradeId::Constitution, std::string_view{"constitution"}, std::string_view{"Constitution"},
-     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 10U},
+     AccountUpgradeEffectType::FlatStat, 1000000U, 3U, 10U},
     {AccountUpgradeId::Intelligence, std::string_view{"intelligence"}, std::string_view{"Intelligence"},
-     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 10U},
+     AccountUpgradeEffectType::FlatStat, 1000000U, 3U, 10U},
     {AccountUpgradeId::Piety, std::string_view{"piety"}, std::string_view{"Piety"},
-     AccountUpgradeEffectType::FlatStat, 5000000U, 3U, 10U},
+     AccountUpgradeEffectType::FlatStat, 1000000U, 3U, 10U},
+    {AccountUpgradeId::HPMax, std::string_view{"hpmax"}, std::string_view{"HP Max"},
+     AccountUpgradeEffectType::FlatStat, 200000U, 10U, 1U},
+    {AccountUpgradeId::MPMax, std::string_view{"mpmax"}, std::string_view{"MP Max"},
+     AccountUpgradeEffectType::FlatStat, 200000U, 10U, 1U},
 };
 
 const std::vector<AccountUpgradeDefinition>& getAccountUpgradeDefinitions() {
@@ -69,6 +73,8 @@ bool isStatUpgrade(AccountUpgradeId id) {
         case AccountUpgradeId::Constitution:
         case AccountUpgradeId::Intelligence:
         case AccountUpgradeId::Piety:
+        case AccountUpgradeId::HPMax:
+        case AccountUpgradeId::MPMax:
             return true;
         case AccountUpgradeId::ExperienceGain:
             return false;
@@ -89,6 +95,10 @@ std::string_view getStatName(AccountUpgradeId id) {
             return "intelligence";
         case AccountUpgradeId::Piety:
             return "piety";
+        case AccountUpgradeId::HPMax:
+            return "hp";
+        case AccountUpgradeId::MPMax:
+            return "mp";
         default:
             return {};
     }

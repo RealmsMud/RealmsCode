@@ -11,7 +11,8 @@ enum class AccountUpgradeId {
     Constitution,
     Intelligence,
     Piety,
-    COUNT
+    HPMax,
+    MPMax
 };
 
 enum class AccountUpgradeEffectType {
