@@ -407,8 +407,8 @@ void Account::printInfoFields(const std::shared_ptr<Player>& player) const {
         player->print("^W%-12s^x%s\n", "Email:", getEmail().c_str());
     }
     player->print("^W%-12s^x%d/%d\n", "Characters:", getCharacterCount(), getCharacterLimit());
-    player->print("^W%-12s^G%llu^x\n", "Exp Earned:", getExpEarned());
-    player->print("^W%-12s^G%llu^x\n\n", "Exp Spent:", getExpSpent());
+    player->print("^W%-12s^G%15llu^x\n", "Exp Earned:", getExpEarned());
+    player->print("^W%-12s^G%15llu^x\n\n", "Exp Spent:", getExpSpent());
 }
 
 void Account::printInfoFields(const std::shared_ptr<Socket>& sock) const {
@@ -418,8 +418,8 @@ void Account::printInfoFields(const std::shared_ptr<Socket>& sock) const {
         sock->print("^W%-12s^x%s\n", "Email:", getEmail().c_str());
     }
     sock->print("^W%-12s^x%d/%d\n", "Characters:", getCharacterCount(), getCharacterLimit());
-    sock->print("^W%-12s^G%llu^x\n", "Exp Earned:", getExpEarned());
-    sock->print("^W%-12s^G%llu^x\n\n", "Exp Spent:", getExpSpent());
+    sock->print("^W%-12s^G%15llu^x\n", "Exp Earned:", getExpEarned());
+    sock->print("^W%-12s^G%15llu^x\n\n", "Exp Spent:", getExpSpent());
 }
 
 void Account::printCharacterList(const std::shared_ptr<Player>& player) const {
@@ -452,8 +452,8 @@ void Account::printUpgradeSummary(const std::shared_ptr<Player>& player) const {
     if(!player) return;
 
     player->print("\n^W~~~~~~~ Account Upgrades ~~~~~~~^x\n\n");
-    player->print("^W%-16s^G%llu^x\n", "Exp Spent:", getExpSpent());
-    player->print("^W%-16s^G%llu^x\n\n", "Exp Available:", getAvailableExp());
+    player->print("^W%-16s^G%15llu^x\n", "Exp Spent:", getExpSpent());
+    player->print("^W%-16s^G%15lu^x\n\n", "Exp Available:", getAvailableExp());
 
     const auto& defs = getAccountUpgradeDefinitions();
     for(const auto& def : defs) {
