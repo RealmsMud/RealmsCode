@@ -59,7 +59,9 @@ public:
     const std::vector<std::string>& getCharacterNames() const;
     bool isBanned() const;
     const std::string& getBanReason() const;
-    unsigned long getExperience() const;
+    unsigned long getAvailableExp() const;
+    unsigned long long getExpEarned() const;
+    unsigned long long getExpSpent() const;
     const std::string& getVersion() const;
 
     // Setters
@@ -70,9 +72,11 @@ public:
     void setLastLogin(time_t lastLogin);
     void setBanned(bool banned);
     void setBanReason(const std::string& reason);
-    void setExperience(unsigned long exp);
-    void addExperience(unsigned long exp);
-    bool spendExperience(unsigned long exp);
+    void addExp(unsigned long amount);
+    bool spendExp(unsigned long amount);
+    void setExpEarned(unsigned long long earned);
+    void setExpSpent(unsigned long long spent);
+    void setVersion(const std::string& v);
 
     // Upgrades
     unsigned short getUpgradeLevel(AccountUpgradeId id) const;
@@ -81,7 +85,6 @@ public:
     void clearUpgradeLevels();
     unsigned int getUpgradeValue(AccountUpgradeId id) const;
     unsigned int getExperienceBonusPercent() const;
-    void setVersion(const std::string& v);
 
     // Character management
     bool addCharacter(const std::string& characterName);
@@ -114,7 +117,8 @@ private:
     std::vector<std::string> characterNames; // List of character names
     bool banned;                    // Is account banned
     std::string banReason;          // Reason for ban if applicable
-    unsigned long experience;       // Account experience points
+    unsigned long long expEarned;   // Total account experience earned over lifetime
+    unsigned long long expSpent;    // Total account experience spent on upgrades, etc.
     std::string version;            // Last game version this account logged in with
     std::unordered_map<AccountUpgradeId, unsigned short> upgradeLevels; // Account upgrade levels
 

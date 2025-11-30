@@ -22,6 +22,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
 
 #include "account.hpp"
 #include "json.hpp"
@@ -76,7 +77,8 @@ void Account::reset() {
     characterNames.clear();
     banned = false;
     banReason.clear();
-    experience = 0;
+    expEarned = 0;
+    expSpent = 0;
     version.clear();
     clearUpgradeLevels();
 }
@@ -91,7 +93,8 @@ void Account::copyFrom(const Account& other) {
     characterNames = other.characterNames;
     banned = other.banned;
     banReason = other.banReason;
-    experience = other.experience;
+    expEarned = other.expEarned;
+    expSpent = other.expSpent;
     version = other.version;
     upgradeLevels = other.upgradeLevels;
 }
@@ -199,7 +202,19 @@ int Account::getCharacterLimit() const { return characterLimit; }
 const std::vector<std::string>& Account::getCharacterNames() const { return characterNames; }
 bool Account::isBanned() const { return banned; }
 const std::string& Account::getBanReason() const { return banReason; }
-unsigned long Account::getExperience() const { return experience; }
+unsigned long Account::getAvailableExp() const {
+    unsigned long long net = 0;
+    if(expEarned >= expSpent) {
+        net = expEarned - expSpent;
+    }
+    const unsigned long long cap = std::numeric_limits<unsigned long>::max();
+    if(net > cap)
+        net = cap;
+    return static_cast<unsigned long>(net);
+}
+
+unsigned long long Account::getExpEarned() const { return expEarned; }
+unsigned long long Account::getExpSpent() const { return expSpent; }
 const std::string& Account::getVersion() const { return version; }
 
 //*********************************************************************
@@ -259,8 +274,28 @@ void Account::setCreated(time_t time) { created = time; }
 void Account::setLastLogin(time_t time) { lastLogin = time; }
 void Account::setBanned(bool ban) { banned = ban; }
 void Account::setBanReason(const std::string& reason) { banReason = reason; }
-void Account::setExperience(unsigned long exp) { experience = exp; }
-void Account::addExperience(unsigned long exp) { experience += exp; }
+
+void Account::addExp(unsigned long amount) {
+    expEarned += amount;
+}
+
+bool Account::spendExp(unsigned long amount) {
+    if(getAvailableExp() < amount)
+        return false;
+    expSpent += amount;
+    return true;
+}
+
+void Account::setExpEarned(unsigned long long earned) {
+    expEarned = earned;
+    if(expSpent > expEarned) {
+        expSpent = expEarned;
+    }
+}
+
+void Account::setExpSpent(unsigned long long spent) {
+    expSpent = std::min(spent, expEarned);
+}
 void Account::setVersion(const std::string& v) { version = v; }
 
 bool Account::spendExperience(unsigned long exp) {
@@ -380,7 +415,8 @@ void Account::printInfoFields(const std::shared_ptr<Player>& player) const {
         player->print("^W%-12s^x%s\n", "Email:", getEmail().c_str());
     }
     player->print("^W%-12s^x%d/%d\n", "Characters:", getCharacterCount(), getCharacterLimit());
-    player->print("^W%-12s^G%lu^x\n\n", "Experience:", getExperience());
+    player->print("^W%-12s^G%llu^x\n", "Exp Earned:", getExpEarned());
+    player->print("^W%-12s^G%llu^x\n\n", "Exp Spent:", getExpSpent());
 }
 
 void Account::printInfoFields(const std::shared_ptr<Socket>& sock) const {
@@ -390,7 +426,8 @@ void Account::printInfoFields(const std::shared_ptr<Socket>& sock) const {
         sock->print("^W%-12s^x%s\n", "Email:", getEmail().c_str());
     }
     sock->print("^W%-12s^x%d/%d\n", "Characters:", getCharacterCount(), getCharacterLimit());
-    sock->print("^W%-12s^G%lu^x\n\n", "Experience:", getExperience());
+    sock->print("^W%-12s^G%llu^x\n", "Exp Earned:", getExpEarned());
+    sock->print("^W%-12s^G%llu^x\n\n", "Exp Spent:", getExpSpent());
 }
 
 void Account::printCharacterList(const std::shared_ptr<Player>& player) const {

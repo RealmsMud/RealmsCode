@@ -165,7 +165,7 @@ void Creature::addExperience(unsigned long e) {
                 double accountExpDouble = totalGain * 0.01;
                 unsigned long accountExp = static_cast<unsigned long>(accountExpDouble + 0.5);
                 if(accountExp > 0) {
-                    account->addExperience(accountExp);
+                    account->addExp(accountExp);
                 }
             }
         }

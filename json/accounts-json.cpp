@@ -30,7 +30,8 @@ void to_json(nlohmann::json &j, const Account &account) {
         {"characterNames", account.getCharacterNames()},
         {"banned", account.isBanned()},
         {"banReason", account.getBanReason()},
-        {"experience", account.getExperience()}
+        {"expEarned", account.getExpEarned()},
+        {"expSpent", account.getExpSpent()}
     };
 
     nlohmann::json upgrades = nlohmann::json::object();
@@ -86,8 +87,16 @@ void from_json(const nlohmann::json &j, Account &account) {
         account.setBanReason(j.at("banReason").get<std::string>());
     }
     
-    if (j.contains("experience")) {
-        account.setExperience(j.at("experience").get<unsigned long>());
+    if(j.contains("expEarned")) {
+        account.setExpEarned(j.at("expEarned").get<unsigned long long>());
+    } else {
+        account.setExpEarned(0);
+    }
+
+    if(j.contains("expSpent")) {
+        account.setExpSpent(j.at("expSpent").get<unsigned long long>());
+    } else {
+        account.setExpSpent(0);
     }
 
     account.clearUpgradeLevels();
