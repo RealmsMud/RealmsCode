@@ -452,7 +452,8 @@ void Account::printUpgradeSummary(const std::shared_ptr<Player>& player) const {
     if(!player) return;
 
     player->print("\n^W~~~~~~~ Account Upgrades ~~~~~~~^x\n\n");
-    player->print("^Available Exp:^x ^G%lu^x\n\n", getAvailableExp());
+    player->print("^W%-16s^G%llu^x\n", "Exp Spent:", getExpSpent());
+    player->print("^W%-16s^G%llu^x\n\n", "Exp Available:", getAvailableExp());
 
     const auto& defs = getAccountUpgradeDefinitions();
     for(const auto& def : defs) {
