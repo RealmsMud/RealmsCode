@@ -504,34 +504,31 @@ void Player::applyAccountUpgradeBonuses() {
         accountPtr = gServer->getOrLoadAccount(getAccountName());
     }
 
-    bool modified = false;
+    bool statModified = false;
     const auto& definitions = getAccountUpgradeDefinitions();
     for(const auto& def : definitions) {
-        if(!isStatUpgrade(def.id)) {
-            continue;
-        }
-
-        auto statName = getStatName(def.id);
-        if(statName.empty()) {
-            continue;
-        }
-
-        std::string modifierName = std::string("AccountUpgrade_") + std::string(def.token);
-        int bonus = 0;
+        int bonusValue = 0;
         if(accountPtr) {
-            bonus = static_cast<int>(accountPtr->getUpgradeValue(def.id));
+            bonusValue = static_cast<int>(accountPtr->getUpgradeValue(def.id));
         }
 
-        Stat* stat = getStat(statName);
-        if(!stat) {
-            continue;
-        }
+        if(def.effectType == AccountUpgradeEffectType::FlatStat) {
+            auto statName = getStatName(def.id);
+            if(statName.empty()) {
+                continue;
+            }
 
-        stat->setModifier(modifierName, bonus, MOD_CUR_MAX);
-        modified = true;
+            std::string modifierName = std::string("AccountUpgrade_") + std::string(def.token);
+            Stat* stat = getStat(statName);
+            if(!stat) {
+                continue;
+            }
+            stat->setModifier(modifierName, bonusValue, MOD_CUR_MAX);
+            statModified = true;
+        }
     }
 
-    if(modified) {
+    if(statModified) {
         computeAttackPower();
         computeAC();
     }

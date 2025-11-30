@@ -12,12 +12,14 @@ enum class AccountUpgradeId {
     Intelligence,
     Piety,
     HPMax,
-    MPMax
+    MPMax,
+    Armor
 };
 
 enum class AccountUpgradeEffectType {
-    PercentXp,
-    FlatStat
+    PercentExp,
+    FlatStat,
+    FlatArmor
 };
 
 struct AccountUpgradeDefinition {

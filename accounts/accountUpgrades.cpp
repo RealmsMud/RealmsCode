@@ -11,7 +11,7 @@
 
 constexpr AccountUpgradeDefinition kUpgradeData[] = {
     {AccountUpgradeId::ExperienceGain, std::string_view{"experience"}, std::string_view{"Experience Gain"},
-     AccountUpgradeEffectType::PercentXp, 500000U, 10U, 1U},
+     AccountUpgradeEffectType::PercentExp, 500000U, 10U, 1U},
     {AccountUpgradeId::Strength, std::string_view{"strength"}, std::string_view{"Strength"},
      AccountUpgradeEffectType::FlatStat, 1000000U, 3U, 10U},
     {AccountUpgradeId::Dexterity, std::string_view{"dexterity"}, std::string_view{"Dexterity"},
@@ -26,6 +26,8 @@ constexpr AccountUpgradeDefinition kUpgradeData[] = {
      AccountUpgradeEffectType::FlatStat, 200000U, 10U, 1U},
     {AccountUpgradeId::MPMax, std::string_view{"mpmax"}, std::string_view{"MP Max"},
      AccountUpgradeEffectType::FlatStat, 200000U, 10U, 1U},
+    {AccountUpgradeId::Armor, std::string_view{"armor"}, std::string_view{"Armor"},
+     AccountUpgradeEffectType::FlatArmor, 150000U, 10U, 10U},
 };
 
 const std::vector<AccountUpgradeDefinition>& getAccountUpgradeDefinitions() {
@@ -76,6 +78,8 @@ bool isStatUpgrade(AccountUpgradeId id) {
         case AccountUpgradeId::HPMax:
         case AccountUpgradeId::MPMax:
             return true;
+        case AccountUpgradeId::Armor:
+            return false;
         case AccountUpgradeId::ExperienceGain:
             return false;
         default:
@@ -134,8 +138,13 @@ const AccountUpgradeDefinition* matchAccountUpgrade(std::string_view input) {
 
 std::string describeAccountUpgradeBonus(const AccountUpgradeDefinition& def, unsigned value) {
     std::ostringstream oss;
-    if(def.effectType == AccountUpgradeEffectType::PercentXp) {
+    if(def.effectType == AccountUpgradeEffectType::PercentExp) {
         oss << "+" << value << "% experience gain";
+        return oss.str();
+    }
+
+    if(def.effectType == AccountUpgradeEffectType::FlatArmor) {
+        oss << "+" << value << " armor";
         return oss.str();
     }
 

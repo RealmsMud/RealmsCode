@@ -812,6 +812,13 @@ void Player::computeAC() {
     if(isEffected("weakness"))
         ac -= 100;
 
+    if(hasAccount()) {
+        auto account = gServer->getOrLoadAccount(getAccountName());
+        if(account) {
+            ac += static_cast<int>(account->getUpgradeValue(AccountUpgradeId::Armor));
+        }
+    }
+
     armor = std::max(0, ac);
 }
 
