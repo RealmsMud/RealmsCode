@@ -5,7 +5,7 @@
 #include <vector>
 
 enum class AccountUpgradeId {
-    ExperienceGain = 0,
+    ExpGain = 0,
     Strength,
     Dexterity,
     Constitution,
@@ -13,13 +13,15 @@ enum class AccountUpgradeId {
     Piety,
     HPMax,
     MPMax,
-    Armor
+    Armor,
+    BulkCapacity
 };
 
 enum class AccountUpgradeEffectType {
     PercentExp,
     FlatStat,
-    FlatArmor
+    FlatArmor,
+    FlatBulk
 };
 
 struct AccountUpgradeDefinition {

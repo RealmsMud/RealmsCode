@@ -9,8 +9,8 @@
 
 #include "proto.hpp"
 
-constexpr AccountUpgradeDefinition kUpgradeData[] = {
-    {AccountUpgradeId::ExperienceGain, std::string_view{"experience"}, std::string_view{"Experience Gain"},
+constexpr AccountUpgradeDefinition AccountUpgradeData[] = {
+    {AccountUpgradeId::ExpGain, std::string_view{"experience"}, std::string_view{"Experience Gain"},
      AccountUpgradeEffectType::PercentExp, 500000U, 10U, 1U},
     {AccountUpgradeId::Strength, std::string_view{"strength"}, std::string_view{"Strength"},
      AccountUpgradeEffectType::FlatStat, 1000000U, 3U, 10U},
@@ -28,13 +28,15 @@ constexpr AccountUpgradeDefinition kUpgradeData[] = {
      AccountUpgradeEffectType::FlatStat, 200000U, 10U, 1U},
     {AccountUpgradeId::Armor, std::string_view{"armor"}, std::string_view{"Armor"},
      AccountUpgradeEffectType::FlatArmor, 150000U, 10U, 10U},
+    {AccountUpgradeId::BulkCapacity, std::string_view{"bulk"}, std::string_view{"Bulk Capacity"},
+     AccountUpgradeEffectType::FlatBulk, 150000U, 5U, 10U},
 };
 
 const std::vector<AccountUpgradeDefinition>& getAccountUpgradeDefinitions() {
     static const std::vector<AccountUpgradeDefinition> definitions = [] {
         std::vector<AccountUpgradeDefinition> defs;
-        defs.reserve(std::size(kUpgradeData));
-        defs.insert(defs.end(), std::begin(kUpgradeData), std::end(kUpgradeData));
+        defs.reserve(std::size(AccountUpgradeData));
+        defs.insert(defs.end(), std::begin(AccountUpgradeData), std::end(AccountUpgradeData));
         return defs;
     }();
     return definitions;
@@ -66,25 +68,6 @@ const AccountUpgradeDefinition* findAccountUpgradeByToken(std::string_view token
         return nullptr;
     }
     return &(*it);
-}
-
-bool isStatUpgrade(AccountUpgradeId id) {
-    switch (id) {
-        case AccountUpgradeId::Strength:
-        case AccountUpgradeId::Dexterity:
-        case AccountUpgradeId::Constitution:
-        case AccountUpgradeId::Intelligence:
-        case AccountUpgradeId::Piety:
-        case AccountUpgradeId::HPMax:
-        case AccountUpgradeId::MPMax:
-            return true;
-        case AccountUpgradeId::Armor:
-            return false;
-        case AccountUpgradeId::ExperienceGain:
-            return false;
-        default:
-            return false;
-    }
 }
 
 std::string_view getStatName(AccountUpgradeId id) {
@@ -145,6 +128,11 @@ std::string describeAccountUpgradeBonus(const AccountUpgradeDefinition& def, uns
 
     if(def.effectType == AccountUpgradeEffectType::FlatArmor) {
         oss << "+" << value << " armor";
+        return oss.str();
+    }
+
+    if(def.effectType == AccountUpgradeEffectType::FlatBulk) {
+        oss << "+" << value << " bulk";
         return oss.str();
     }
 

@@ -84,7 +84,6 @@ public:
     const std::unordered_map<AccountUpgradeId, unsigned short>& getUpgradeLevels() const;
     void clearUpgradeLevels();
     unsigned int getUpgradeValue(AccountUpgradeId id) const;
-    unsigned int getExperienceBonusPercent() const;
 
     // Character management
     bool addCharacter(const std::string& characterName);

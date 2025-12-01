@@ -155,7 +155,7 @@ void Creature::addExperience(unsigned long e) {
         if(player && player->hasAccount()) {
             account = gServer->getOrLoadAccount(player->getAccountName());
             if(account) {
-                unsigned int bonusPercent = account->getExperienceBonusPercent();
+                unsigned int bonusPercent = account->getUpgradeValue(AccountUpgradeId::ExpGain);
                 if(bonusPercent > 0) {
                     totalGain += static_cast<unsigned long>((totalGain * bonusPercent) / 100);
                 }

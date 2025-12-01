@@ -329,10 +329,6 @@ unsigned int Account::getUpgradeValue(AccountUpgradeId id) const {
     return static_cast<unsigned int>(getUpgradeLevel(id)) * def.magnitudePerRank;
 }
 
-unsigned int Account::getExperienceBonusPercent() const {
-    return getUpgradeValue(AccountUpgradeId::ExperienceGain);
-}
-
 //*********************************************************************
 //                      Character Management
 //*********************************************************************
