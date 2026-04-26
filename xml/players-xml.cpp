@@ -120,6 +120,7 @@ void Player::readXml(xmlNodePtr curNode, bool offline) {
     else if(NODE_NAME(curNode, "Statistics")) statistics.load(curNode);
 
     else if(NODE_NAME(curNode, "Bank")) bank.load(curNode);
+    else if(NODE_NAME(curNode, "AccountName")) xml::copyToString(accountName, curNode);
     else if(NODE_NAME(curNode, "Surname")) xml::copyToString(surname, curNode);
     else if(NODE_NAME(curNode, "Wrap")) xml::copyToNum(wrap, curNode);
     else if(NODE_NAME(curNode, "Forum")) xml::copyToString(forum, curNode);
@@ -400,6 +401,7 @@ void Player::saveXml(xmlNodePtr curNode) const {
 
     bank.save("Bank", curNode);
     xml::saveNonZeroNum(curNode, "WeaponTrains", weaponTrains);
+    xml::saveNonNullString(curNode, "AccountName", accountName);
     xml::saveNonNullString(curNode, "Surname", surname);
     xml::saveNonNullString(curNode, "Forum", forum);
     xml::newNumChild(curNode, "Wrap", wrap);

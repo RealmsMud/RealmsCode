@@ -15,12 +15,16 @@
  *  Based on Mordor (C) Brooke Paul, Brett J. Vickers, John P. Freeman
  *
  */
+#include <algorithm>               // for std::min
 #include <cstdio>                  // for sprintf
 #include <cstdlib>                 // for abs
-#include <cstring>                 // for strchr
+#include <cstring>                 // for strchr, strncasecmp
 #include <ostream>                 // for operator<<, basic_ostream, ostring...
 #include <string>                  // for allocator, string, char_traits
 
+#include <boost/algorithm/string/case_conv.hpp>  // for to_lower
+
+#include "account.hpp"             // for Account
 #include "calendar.hpp"            // for cDay, Calendar, cMonth
 #include "cmd.hpp"                 // for cmd
 #include "commands.hpp"            // for cmdAge, cmdHelp, cmdInfo, cmdVersion
@@ -212,6 +216,56 @@ int cmdInfo(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     target->information();
+    return(0);
+}
+
+//*********************************************************************
+//                      cmdAccount
+//*********************************************************************
+
+int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
+    if(!player->hasAccount()) {
+        player->print("You do not have an account.\n");
+        return(0);
+    }
+
+    if(cmnd->num < 2) {
+        player->print("Account command options:\n");
+        player->print("  ^Waccount (i)nfo^x - Display account information\n");
+        player->print("  ^Waccount (c)haracters^x - List your characters\n");
+        return(0);
+    }
+
+    std::string subcommand = cmnd->str[1];
+    boost::to_lower(subcommand);
+
+    // Handle "info" command with partial matching
+    if(partialMatch(subcommand, "info", 4)) {
+        auto account = gServer->getOrLoadAccount(player->getAccountName());
+        if(!account) {
+            player->print("Unable to load your account information.\n");
+            return(0);
+        }
+
+        player->print("\n^W~~~~~~~ Account Information ~~~~~~~^x\n\n");
+        account->printInfoFields(player);
+        
+        return(0);
+    }
+
+    // Handle "characters" with partial matching
+    if(partialMatch(subcommand, "characters", 10)) {
+        auto account = gServer->getOrLoadAccount(player->getAccountName());
+        if(!account) {
+            player->print("Unable to load your account information.\n");
+            return(0);
+        }
+        account->printCharacterList(player);
+        return(0);
+    }
+
+    player->print("Unknown account option '%s'.\n", subcommand.c_str());
+    player->print("Type '^Waccount^x' for a list of available options.\n");
     return(0);
 }
 

@@ -56,6 +56,7 @@
 #include "catRef.hpp"                               // for CatRef
 #include "color.hpp"                                // for stripColor
 #include "config.hpp"                               // for Config, gConfig
+#include "account.hpp"                              // for Account
 #include "delayedAction.hpp"                        // for DelayedAction
 #include "factions.hpp"                             // for Faction
 #include "flags.hpp"                                // for M_PERMANENT_MONSTER
@@ -96,6 +97,9 @@ extern int Numplayers;
 extern long last_time_update;
 extern long last_weather_update;
 
+// Forward declaration
+void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
+
 // Function prototypes
 bool init_spelling();  // TODO: Move spelling stuff into server
 void initSpellList();
@@ -130,7 +134,7 @@ Server::Server(): roomCache(RQMAX, true), monsterCache(MQMAX, false), objectCach
     running = false;
     pulse = 0;
     webInterface = nullptr;
-    lastDnsPrune = lastUserUpdate = lastRoomPulseUpdate = lastRandomUpdate = lastActiveUpdate = 0;
+    lastDnsPrune = lastUserUpdate = lastRoomPulseUpdate = lastRandomUpdate = lastActiveUpdate = lastAccountSave = 0;
     maxPlayerId = maxObjectId = maxMonsterId = 0;
     loadDnsCache();
     pythonHandler = nullptr;
@@ -635,6 +639,15 @@ void Server::disconnectAll() {
 
 bool isDisconnecting(const std::shared_ptr<Socket>& sock) {
     if(sock->getState() == CON_DISCONNECTING) {
+        // Handle account cleanup before disconnecting
+        if(sock->hasPlayer()) {
+            std::string accountName = sock->getAccountName();
+            std::string characterName = sock->getPlayer()->getName();
+            if(!accountName.empty() && !characterName.empty()) {
+                gServer->untrackAccountConnection(accountName, characterName);
+            }
+        }
+        
         // Flush any residual data
         sock->flush();
         return true;
@@ -1882,7 +1895,14 @@ bool Server::checkDuplicateName(std::shared_ptr<Socket> sock, bool dis) {
         if(sock != s && s->hasPlayer() && s->getPlayer()->getName() ==  sock->getPlayer()->getName()) {
             if(!dis) {
                 sock->printColor("\n\n^ySorry, that character is already logged in.^x\n\n\n");
-                sock->reconnect();
+                // Return to account menu instead of reconnecting
+                auto account = sock->getAccount();
+                if(account) {
+                    sock->clearPlayer();
+                    showAccountMenu(sock, account);
+                } else {
+                    sock->reconnect();
+                }
             } else {
                 s->disconnect();
             }
@@ -1895,9 +1915,10 @@ bool Server::checkDuplicateName(std::shared_ptr<Socket> sock, bool dis) {
 //*********************************************************************
 //                      checkDouble
 //*********************************************************************
-// returning true will disconnect the connecting socket (sock)
+// returning true indicates the limit has been exceeded
+// if disconnectOnLimit is true, will disconnect the connecting socket
 
-bool Server::checkDouble(std::shared_ptr<Socket> sock) {
+bool Server::checkDouble(std::shared_ptr<Socket> sock, bool disconnectOnLimit) {
     if(!gConfig->getCheckDouble())
         return(false);
 
@@ -1924,8 +1945,10 @@ bool Server::checkDouble(std::shared_ptr<Socket> sock) {
         cnt++;
 
         if(cnt >= gConfig->getMaxDouble()) {
-            sock->write("\nMaximum number of connections has been exceeded!\n\n");
-            sock->disconnect();
+            if(disconnectOnLimit) {
+                sock->write("\nMaximum number of connections has been exceeded!\n\n");
+                sock->disconnect();
+            }
             return true;
         }
     }
@@ -2419,4 +2442,87 @@ int Server::saveStorage(const CatRef& cr) {
 void Server::stop() {
     if(httpServer) httpServer->stop();
 
+}
+
+//*********************************************************************
+//                      Account Management Methods
+//*********************************************************************
+
+std::shared_ptr<Account> Server::getOrLoadAccount(const std::string& accountName) {
+    auto it = accountCache.find(accountName);
+    if(it != accountCache.end()) {
+        return it->second;  // Return existing shared instance
+    }
+    
+    // Load from disk
+    std::shared_ptr<Account> account;
+    if(Account::load(accountName, account)) {
+        accountCache[accountName] = account;
+        return account;
+    }
+    
+    return nullptr;
+}
+
+void Server::trackAccountConnection(const std::string& accountName, const std::string& characterName) {
+    accountConnections[accountName].insert(characterName);
+}
+
+void Server::untrackAccountConnection(const std::string& accountName, const std::string& characterName) {
+    auto it = accountConnections.find(accountName);
+    if(it != accountConnections.end()) {
+        it->second.erase(characterName);
+        if(it->second.empty()) {
+            // No more connections, can remove from cache
+            accountCache.erase(accountName);
+            accountConnections.erase(it);
+        }
+    }
+}
+
+std::vector<std::string> Server::getAccountCharacters(const std::string& accountName) const {
+    auto it = accountConnections.find(accountName);
+    if(it != accountConnections.end()) {
+        return std::vector<std::string>(it->second.begin(), it->second.end());
+    }
+    return {};
+}
+
+void Server::releaseAccount(const std::string& accountName, const std::string& characterName) {
+	// If a specific character is provided, untrack it first
+	if(!characterName.empty()) {
+		untrackAccountConnection(accountName, characterName);
+		return;
+	}
+	// No character provided: if there are no active character connections
+	// for this account, evict the account from cache.
+	auto it = accountConnections.find(accountName);
+	if(it == accountConnections.end() || it->second.empty()) {
+		accountCache.erase(accountName);
+		if(it != accountConnections.end()) {
+			accountConnections.erase(it);
+		}
+	}
+}
+
+void Server::saveAllCachedAccounts() {
+	// Only save accounts that have at least one active character connection.
+	// Also prune any accounts that linger in cache without connections.
+	std::vector<std::string> toErase;
+	for(const auto& [accountName, account] : accountCache) {
+		auto it = accountConnections.find(accountName);
+		bool hasConnections = (it != accountConnections.end() && !it->second.empty());
+		if(!hasConnections) {
+			toErase.push_back(accountName);
+			continue;
+		}
+		if(account) {
+			account->save();
+		}
+	}
+	// Erase after iterating to avoid invalidating iterators
+	for(const auto& name : toErase) {
+		accountCache.erase(name);
+		accountConnections.erase(name);
+	}
 }

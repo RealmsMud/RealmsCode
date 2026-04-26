@@ -292,6 +292,7 @@ bool Config::initCommands() {
     staffCommands.emplace("*log", 100, dmLog, isCt, "View login log file");
     staffCommands.emplace("*list", 100, dmList, isCt, "");
     staffCommands.emplace("*info", 100, dmInfo, isCt, "Show game info (includes some memory)");
+    staffCommands.emplace("*account", 100, dmAccount, isDm, "Manage accounts");
     staffCommands.emplace("*md5", 100, dmMd5, isCt, "Show md5 of input string");
     staffCommands.emplace("*ids", 100, dmIds, isDm, "Shows registered ids");
     staffCommands.emplace("*status", 80, dmStat, nullptr, "Show info about a room/player/object/monster");
@@ -547,6 +548,7 @@ bool Config::initCommands() {
     playerCommands.emplace("statistics", 100, cmdStatistics, nullptr, "Show character-related statistics");
     playerCommands.emplace("information", 50, cmdInfo, nullptr, "Show extended information about your character");
     playerCommands.emplace("attributes", 100, cmdInfo, nullptr, "Show extended information about your character");
+    playerCommands.emplace("account", 100, cmdAccount, nullptr, "Display account information and perform account-related commands");
     playerCommands.emplace("skills", 100, cmdSkills, nullptr, "Show what skills your character knows");
     playerCommands.emplace("version", 100, cmdVersion, nullptr, "View RoH current version");
     playerCommands.emplace("age", 100, cmdAge, nullptr, "Show your character's age and time played");

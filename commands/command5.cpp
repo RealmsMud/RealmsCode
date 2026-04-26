@@ -56,6 +56,7 @@
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for StatsContainer
 #include "web.hpp"                     // for updateRecentActivity, webUnass...
+#include "account.hpp"                 // for Account
 
 //*********************************************************************
 //                      who
@@ -583,6 +584,24 @@ void Player::deletePlayer() {
                     break;
             }
             gConfig->saveGuilds();
+        }
+    }
+
+    // Remove player from account if they belong to one
+    if(hasAccount()) {
+        auto account = getAccount();
+        if(account) {
+            if(account->removeCharacter(name)) {
+                account->save();
+            }
+        } else {
+            // Fallback: load from disk if socket account not available
+            std::shared_ptr<Account> diskAccount;
+            if(Account::load(getAccountName(), diskAccount)) {
+                if(diskAccount->removeCharacter(name)) {
+                    diskAccount->save();
+                }
+            }
         }
     }
 

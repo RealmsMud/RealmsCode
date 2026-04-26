@@ -66,6 +66,11 @@ class MudObject;
 bool isClass(std::string_view str);
 bool isTitle(std::string_view str);
 
+bool partialMatch(const std::string& got, const char* full, size_t maxLen) {
+    size_t n = std::min(got.size(), maxLen);
+    if(n < 1) return false;
+    return ::strncasecmp(got.c_str(), full, n) == 0;
+}
 
 //*********************************************************************
 //                      validId functions

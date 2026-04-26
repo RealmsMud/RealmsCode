@@ -39,6 +39,7 @@ int orderPet(const std::shared_ptr<Player>& player, cmd* cmnd);
 // Effects.cpp
 int dmEffectList(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmShowEffectsIndex(const std::shared_ptr<Player>& player, cmd* cmnd);
+int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 // songs.cpp
 int cmdPlay(const std::shared_ptr<Player>& player, cmd* cmnd);
@@ -107,6 +108,7 @@ int cmdVersion(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdLevelHistory(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdStatistics(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdInfo(const std::shared_ptr<Player>& player, cmd* cmnd);
+int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdSpells(const std::shared_ptr<Creature>& player, cmd* cmnd);
 void spellsUnder(const std::shared_ptr<Player>& viewer, const std::shared_ptr<Creature> & target, bool notSelf);
 

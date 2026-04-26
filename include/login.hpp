@@ -67,15 +67,23 @@ typedef enum {
     LOGIN_GET_COLOR,
     LOGIN_PAUSE_SCREEN,
     LOGIN_GET_LOCKOUT_PASSWORD,
-    LOGIN_GET_NAME,
-    LOGIN_CHECK_CREATE_NEW,
-    LOGIN_GET_PASSWORD,
-    LOGIN_GET_PROXY_PASSWORD,
+    LOGIN_ENTRY_CHOICE,
+    LOGIN_GET_ACCOUNT_NAME,
+    LOGIN_CHECK_CREATE_ACCOUNT,
+    LOGIN_GET_ACCOUNT_PASSWORD,
+    LOGIN_GET_ACCOUNT_CREATE_PASSWORD,
+    LOGIN_GET_LEGACY_NAME,
+    LOGIN_ACCOUNT_MENU,
+    LOGIN_CLAIM_CHARACTER,
+    LOGIN_CLAIM_PASSWORD,
+    LOGIN_SET_EMAIL,
+    LOGIN_SET_EMAIL_CONFIRM,
+    LOGIN_LEGACY_PASSWORD,
     LOGIN_END,
 
     // Creation States
     CREATE_START,
-    CREATE_NEW,
+    CREATE_NEW_CHARACTER,
     CREATE_GET_DM_PASSWORD,
     CREATE_CHECK_LOCKED_OUT,
     CREATE_GET_SEX,
@@ -89,7 +97,7 @@ typedef enum {
     CREATE_GET_STATS,
     CREATE_GET_PROF,
     CREATE_GET_ALIGNMENT,
-    CREATE_GET_PASSWORD,
+    CREATE_GET_NAME,
     CREATE_BONUS_STAT,
     CREATE_PENALTY_STAT,
     CREATE_SECOND_PROF,
@@ -158,7 +166,7 @@ namespace Create {
     bool handleWeapon(const std::shared_ptr<Socket>& sock, int mode, char ch);
     bool getProf(const std::shared_ptr<Socket>& sock, std::string str, int mode);
     bool getSecondProf(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getPassword(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
+    bool getName(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
     void done(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
 
     // character customization functions

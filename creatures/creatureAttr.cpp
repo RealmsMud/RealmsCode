@@ -69,6 +69,7 @@
 #include "version.hpp"                         // for VERSION
 #include "xml.hpp"                             // for copyPropToString
 #include "server.hpp"
+#include "account.hpp"                         // for Account
 
 //*********************************************************************
 //                      getClass
@@ -146,16 +147,33 @@ bool Creature::inJail() const {
 
 void Creature::addExperience(unsigned long e) {
     setExperience(experience + e);
-    if(isPlayer())
-        getAsPlayer()->checkLevel();
+    if(isPlayer()) {
+        auto player = getAsPlayer();
+        player->checkLevel();
+        
+        // Add account experience if player has an account
+        if(player->hasAccount()) {
+            auto account = gServer->getOrLoadAccount(player->getAccountName());
+                if(account) {
+                // Calculate 1% of player experience gained (rounded to nearest integer)
+                // This means players must earn at least 50 exp to gain account exp
+                double accountExpDouble = e * 0.01;
+                unsigned long accountExp = static_cast<unsigned long>(accountExpDouble + 0.5);
+                if(accountExp > 0) {
+                    account->addExp(e);
+                }
+            }
+        }
+    }
 }
 
 void Creature::subExperience(unsigned long e) {
     setExperience(e > experience ? 0 : experience - e);
     unsigned long lost = (e > experience ? 0 : e);
     if(isPlayer()) {
-        getAsPlayer()->checkLevel();
-        getAsPlayer()->statistics.experienceLost(lost);
+        auto player = getAsPlayer();
+        player->checkLevel();
+        player->statistics.experienceLost(lost);
     }
 }
 
@@ -617,7 +635,7 @@ void Player::plyReset() {
     bank.zero();
     created = 0;
 
-    oldCreated = surname = lastCommand = lastCommunicate = password = title = tempTitle = "";
+    accountName = oldCreated = surname = lastCommand = lastCommunicate = password = title = tempTitle = "";
     lastPassword = afflictedBy = forum = "";
     tickDmg = pkwon = pkin = lastLogin = lastInterest = uniqueObjId = 0;
 
@@ -818,6 +836,7 @@ void Player::plyCopy(const Player& cr, bool assign) {
 
     wrap = cr.wrap;
 
+    accountName = cr.accountName;
     title = cr.title;
     password = cr.getPassword();
     surname = cr.surname;

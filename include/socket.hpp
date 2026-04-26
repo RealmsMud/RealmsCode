@@ -44,6 +44,7 @@ extern long UnCompressedBytes;
 extern long OutBytes;
 
 class Player;
+class Account;
 
 typedef struct _xmlNode xmlNode;
 typedef xmlNode *xmlNodePtr;
@@ -274,6 +275,12 @@ public:
     void setPlayer(std::shared_ptr<Player> ply);
     void clearPlayer();
 
+    // Account methods
+    [[nodiscard]] bool hasAccount() const;
+    [[nodiscard]] std::shared_ptr<Account> getAccount() const;
+    [[nodiscard]] std::string getAccountName() const;
+    void setAccount(std::shared_ptr<Account> acc);
+    void clearAccount();
 
     void clearSpying();
     void clearSpiedOn();
@@ -344,6 +351,7 @@ protected:
 
     bool registered{};
     std::shared_ptr<Player>     myPlayer{};
+    std::string                 currentAccountName{};  // Account name for this socket
 
 
 // For MCCP

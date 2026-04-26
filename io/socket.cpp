@@ -73,6 +73,7 @@
 #include "version.hpp"                              // for VERSION
 #include "xml.hpp"                                  // for copyToBool, newBo...
 #include "blackjack.hpp"                            // for interactive gambling
+#include "account.hpp"                              // for Account
 
 const int MIN_PAGES = 10;
 
@@ -217,6 +218,7 @@ void Socket::reset() {
     outCompressBuf = nullptr;
     outCompress = nullptr;
     myPlayer = nullptr;
+    currentAccountName.clear();
 
     tState = NEG_NONE;
     oneIAC = watchBrokenClient = false;
@@ -289,6 +291,18 @@ void Socket::cleanUp() {
     clearSpiedOn();
     msdpClearReporting();
 
+	// Ensure account connection is untracked before player/account state is cleared
+	std::string accountName = getAccountName();
+	if (myPlayer) {
+		std::string characterName = myPlayer->getName();
+		if(!accountName.empty() && !characterName.empty() && gServer) {
+			gServer->untrackAccountConnection(accountName, characterName);
+		}
+	} else if(!accountName.empty() && gServer) {
+		// If we are at the account menu (no player), release the cached account
+		gServer->releaseAccount(accountName, "");
+	}
+
     if (myPlayer) {
         if (myPlayer->fd > -1) {
             myPlayer->save(true);
@@ -300,6 +314,7 @@ void Socket::cleanUp() {
         }
         myPlayer = nullptr;
     }
+    currentAccountName.clear();
     endCompress();
     if(fd > -1) {
         close(fd);
@@ -524,8 +539,8 @@ std::string Socket::stripTelnet(std::string_view inStr) {
 void Socket::checkLockOut() {
     int lockStatus = gConfig->isLockedOut(shared_from_this());
     if (lockStatus == 0) {
-        askFor("\n\nPlease enter name: ");
-        setState(LOGIN_GET_NAME);
+        askFor("\n\nLogin Options:\n  ^Wa^x) Enter account name to create or login\n  ^Wb^x) Skip accounts and login with a character name\n\nEnter choice (a/b): ");
+        setState(LOGIN_ENTRY_CHOICE);
     } else if (lockStatus == 2) {
         print("\n\nA password is required to play from your site: ");
         setState(LOGIN_GET_LOCKOUT_PASSWORD);
@@ -1149,14 +1164,15 @@ void Socket::reconnect(bool pauseScreen) {
         gServer->clearPlayer(myPlayer->getName());
         myPlayer = nullptr;
     }
+    currentAccountName.clear();
 
     if (pauseScreen) {
         setState(LOGIN_PAUSE_SCREEN);
         printColor("\nPress ^W[RETURN]^x to reconnect or type ^Wquit^x to disconnect.\n: ");
     } else {
-        setState(LOGIN_GET_NAME);
         showLoginScreen();
-        askFor("\n\nPlease enter name: ");
+        askFor("\n\nPlease enter account name: ");
+        setState(LOGIN_GET_ACCOUNT_NAME);
     }
 }
 
@@ -1885,11 +1901,11 @@ const char EOR_STR[] = {(char) IAC, (char) EOR, '\0' };
 const char GA_STR[] = {(char) IAC, (char) GA, '\0' };
 
 void Socket::askFor(const char *str) {
-    if (eorEnabled()) {
         printColor(str);
+
+    if (eorEnabled()) {
         print(EOR_STR);
     } else {
-        printColor(str);
         print(GA_STR);
     }
 }
@@ -2259,9 +2275,84 @@ void Socket::registerPlayer() {
     if(myPlayer) {
         registered = true;
         gServer->addPlayer(myPlayer);
+        
+        // Track account connection when player logs in
+        std::string accountName = getAccountName();
+        std::string characterName = myPlayer->getName();
+        if(!accountName.empty() && !characterName.empty()) {
+            gServer->trackAccountConnection(accountName, characterName);
+        }
     } else {
         registered = false;
     }
 }
+
+//********************************************************************
+//                      Account Methods
+//********************************************************************
+
+bool Socket::hasAccount() const {
+    // First try to get account name from player if available
+    if (myPlayer && !myPlayer->getAccountName().empty()) {
+        auto account = gServer->getOrLoadAccount(myPlayer->getAccountName());
+        return account != nullptr;
+    }
+    
+    // Fall back to temporary account name during login
+    if (!currentAccountName.empty()) {
+        auto account = gServer->getOrLoadAccount(currentAccountName);
+        return account != nullptr;
+    }
+    
+    return false;
+}
+
+std::shared_ptr<Account> Socket::getAccount() const {
+    // First try to get account name from player if available
+    if (myPlayer && !myPlayer->getAccountName().empty()) {
+        return gServer->getOrLoadAccount(myPlayer->getAccountName());
+    }
+    
+    // Fall back to temporary account name during login
+    if (!currentAccountName.empty()) {
+        return gServer->getOrLoadAccount(currentAccountName);
+    }
+    
+    return nullptr;
+}
+
+std::string Socket::getAccountName() const {
+    // First try to get account name from player if available
+    if (myPlayer && !myPlayer->getAccountName().empty()) {
+        return myPlayer->getAccountName();
+    }
+    
+    // Fall back to temporary account name during login
+    return currentAccountName;
+}
+
+void Socket::setAccount(std::shared_ptr<Account> acc) {
+    if (acc) {
+        currentAccountName = acc->getName();
+        // If we have a player, also set the account name there
+        if (myPlayer) {
+            myPlayer->setAccountName(acc->getName());
+        }
+    } else {
+        currentAccountName.clear();
+        if (myPlayer) {
+            myPlayer->setAccountName("");
+        }
+    }
+}
+
+void Socket::clearAccount() {
+    currentAccountName.clear();
+    if (myPlayer) {
+        myPlayer->setAccountName("");
+    }
+}
+
+
 
 

@@ -59,7 +59,7 @@
 #include "size.hpp"                    // for getSizeName, SIZE_COLOSSAL
 #include "stats.hpp"                   // for Stat
 #include "structs.hpp"                 // for Command, SEX_FEMALE, SEX_MALE
-
+#include "account.hpp"                 // for Account
 
 //********************************************************************
 //                      canSee
@@ -987,6 +987,18 @@ int Player::save(bool updateTime, LoadType saveType) {
         return(1);
     if(saveToFile(saveType) < 0)
         std::clog << "*** ERROR: saveXml!\n";
+
+    // Save account if player has one
+    if(hasAccount()) {
+        auto account = getAccount();
+        if(account) {
+            if(!account->save()) {
+                std::clog << "*** ERROR: Failed to save account " << account->getName() << " for player " << getName() << "\n";
+            }
+        } else {
+            std::clog << "*** ERROR: Player has account name but no active account loaded for player " << getName() << "\n";
+        }
+    }
 
     return(0);
 }

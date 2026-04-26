@@ -135,6 +135,12 @@ void Server::updateGame() {
     if(t > gConfig->getLotteryRunTime())
         gConfig->runLottery();
 
+    // Save all cached accounts every 10 seconds
+    if(t - gServer->lastAccountSave >= 10) {
+        gServer->saveAllCachedAccounts();
+        gServer->lastAccountSave = t;
+    }
+
     if(Shutdown.ltime && t - last_shutdown_update >= 30)
         if(Shutdown.ltime + Shutdown.interval <= t+500)
             update_shutdown(t);

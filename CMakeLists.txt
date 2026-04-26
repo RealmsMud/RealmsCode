@@ -100,6 +100,7 @@ set(COMMON_HEADER_FILES
     include/mudObjects/rooms.hpp
     include/mudObjects/uniqueRooms.hpp
 
+    include/account.hpp
     include/alchemy.hpp
     include/anchor.hpp
     include/area.hpp
@@ -204,6 +205,8 @@ set(COMMON_HEADER_FILES
     )
 
 set(COMMON_SOURCE_FILES
+    accounts/account.cpp
+
     areas/area.cpp
     areas/catRef.cpp
     areas/catRefInfo.cpp
@@ -405,6 +408,7 @@ set(COMMON_SOURCE_FILES
     util/misc.cpp
     util/timer.cpp
 
+    json/accounts-json.cpp
     json/catref-json.cpp
     json/effects-json.cpp
     json/hooks-json.cpp

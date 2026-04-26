@@ -206,6 +206,13 @@ std::string Creature::statCrt(int statFlags) {
         crtStr << " size: " << sock->getTermCols() << " x " << sock->getTermRows() << "\n";
         crtStr << "Host: " << sock->getHostname() << " Ip: " << sock->getIp() << "\n";
 
+        // Show the owning account name if this player is linked to an account
+        if(!pTarget->getAccountName().empty()) {
+            crtStr << "Account: " << pTarget->getAccountName() << "\n";
+        } else {
+            crtStr << "Account: N/A\n";
+        }
+
         if(statFlags & ISDM) {
             crtStr << "Password: " << pTarget->getPassword();
             if(!pTarget->getLastPassword().empty())

@@ -459,6 +459,7 @@ bool Path::checkPaths() {
     fs::create_directory(Path::Object);
     fs::create_directory(Path::Player);
     fs::create_directory(Path::PlayerBackup);
+    fs::create_directory(Path::Account);
 
     fs::create_directory(Path::Config);
 
