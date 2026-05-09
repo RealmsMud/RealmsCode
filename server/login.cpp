@@ -145,7 +145,10 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 sock->disconnect();
                 return;
             }
-            sock->askFor("\n\nLogin Options:\n  ^Wa^x) Enter account name to create or login\n  ^Wb^x) Skip accounts and login with a legacy character name\n\nEnter choice (a/b): ");
+            sock->print("\n\nAn account can hold several characters.\nLegacy characters can be claimed by an account.\n\nLogin Options:");
+            sock->print("\n  ^Wa^x) Create or Login into an account");
+            sock->print("\n  ^Wb^x) Login in with a character name directly (Legacy)");
+            sock->askFor("\n\nEnter choice (a/b): ");
             sock->setState(LOGIN_ENTRY_CHOICE);
             return;
             // End LOGIN_GET_LOCKOUT_PASSWORD
