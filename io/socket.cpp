@@ -539,7 +539,10 @@ std::string Socket::stripTelnet(std::string_view inStr) {
 void Socket::checkLockOut() {
     int lockStatus = gConfig->isLockedOut(shared_from_this());
     if (lockStatus == 0) {
-        askFor("\n\nLogin Options:\n  ^Wa^x) Enter account name to create or login\n  ^Wb^x) Skip accounts and login with a character name\n\nEnter choice (a/b): ");
+        print("\n\nAn account can hold several characters.\nLegacy characters can be claimed by an account.\n\nLogin Options:");
+        print("\n  ^Wa^x) Create or Login into an account");
+        print("\n  ^Wb^x) Login in with a character name directly (Legacy)");
+        askFor("\n\nEnter choice (a/b): ");
         setState(LOGIN_ENTRY_CHOICE);
     } else if (lockStatus == 2) {
         print("\n\nA password is required to play from your site: ");

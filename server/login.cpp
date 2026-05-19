@@ -145,7 +145,10 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 sock->disconnect();
                 return;
             }
-            sock->askFor("\n\nLogin Options:\n  ^Wa^x) Enter account name to create or login\n  ^Wb^x) Skip accounts and login with a legacy character name\n\nEnter choice (a/b): ");
+            sock->print("\n\nAn account can hold several characters.\nLegacy characters can be claimed by an account.\n\nLogin Options:");
+            sock->print("\n  ^Wa^x) Create or Login into an account");
+            sock->print("\n  ^Wb^x) Login in with a character name directly (Legacy)");
+            sock->askFor("\n\nEnter choice (a/b): ");
             sock->setState(LOGIN_ENTRY_CHOICE);
             return;
             // End LOGIN_GET_LOCKOUT_PASSWORD
@@ -182,6 +185,14 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             }
             
             strcpy(sock->tempstr[0], str.c_str()); // Store account name
+
+            if(isdm(sock->tempstr[0])) {
+                sock->print("\nYou must enter a password to use that account name.\n");
+                sock->print("%s", echo_off);
+                sock->askFor("Please enter password: ");
+                sock->setState(LOGIN_GET_ACCOUNT_DM_PASSWORD);
+                return;
+            }
             
             if(!Account::load(str, account)) {
                 sock->print("\n%s? ", str.c_str());
@@ -200,6 +211,26 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 return;
             }
             // End LOGIN_GET_ACCOUNT_NAME
+        }
+        case LOGIN_GET_ACCOUNT_DM_PASSWORD: {
+            sock->print("%s", echo_on);
+            if(str != gConfig->getDmPass()) {
+                sock->disconnect();
+                return;
+            }
+
+            if(!Account::load(sock->tempstr[0], account)) {
+                sock->print("\n%s? ", sock->tempstr[0]);
+                sock->askFor("Did I get that right? (yes/no): ");
+                sock->setState(LOGIN_CHECK_CREATE_ACCOUNT);
+                return;
+            } else {
+                sock->print("%s", echo_off);
+                sock->askFor("Please enter account password: ");
+                sock->setState(LOGIN_GET_ACCOUNT_PASSWORD);
+                return;
+            }
+            // End LOGIN_GET_ACCOUNT_DM_PASSWORD
         }
         case LOGIN_GET_LEGACY_NAME: {
             std::string charName = str;
@@ -340,6 +371,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             // Update the character's account name
             player->setAccountName(account->getName());
             player->save();
+            account->save();
             
             sock->print("\n^GCharacter '%s' has been successfully claimed!^x\n", charName.c_str());
             sock->print("The character is now linked to your account.\n");
