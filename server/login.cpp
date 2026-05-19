@@ -185,16 +185,15 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             }
             
             strcpy(sock->tempstr[0], str.c_str()); // Store account name
-
-            if(isdm(sock->tempstr[0])) {
-                sock->print("\nYou must enter a password to use that account name.\n");
-                sock->print("%s", echo_off);
-                sock->askFor("Please enter password: ");
-                sock->setState(LOGIN_GET_ACCOUNT_DM_PASSWORD);
-                return;
-            }
             
             if(!Account::load(str, account)) {
+                if(isdm(sock->tempstr[0])) {
+                    sock->print("\nYou must enter a password to create that account.\n");
+                    sock->print("%s", echo_off);
+                    sock->askFor("Please enter password: ");
+                    sock->setState(LOGIN_GET_ACCOUNT_DM_PASSWORD);
+                    return;
+                }
                 sock->print("\n%s? ", str.c_str());
                 sock->askFor("Did I get that right? (yes/no): ");
                 sock->setState(LOGIN_CHECK_CREATE_ACCOUNT);
@@ -219,17 +218,10 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                 return;
             }
 
-            if(!Account::load(sock->tempstr[0], account)) {
-                sock->print("\n%s? ", sock->tempstr[0]);
-                sock->askFor("Did I get that right? (yes/no): ");
-                sock->setState(LOGIN_CHECK_CREATE_ACCOUNT);
-                return;
-            } else {
-                sock->print("%s", echo_off);
-                sock->askFor("Please enter account password: ");
-                sock->setState(LOGIN_GET_ACCOUNT_PASSWORD);
-                return;
-            }
+            sock->print("\n%s? ", sock->tempstr[0]);
+            sock->askFor("Did I get that right? (yes/no): ");
+            sock->setState(LOGIN_CHECK_CREATE_ACCOUNT);
+            return;
             // End LOGIN_GET_ACCOUNT_DM_PASSWORD
         }
         case LOGIN_GET_LEGACY_NAME: {
