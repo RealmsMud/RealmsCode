@@ -20,6 +20,7 @@
 
 class Player;
 class Socket;
+class Account;
 
 #define PASSWORD_MIN_LENGTH     5
 #define PASSWORD_MAX_LENGTH     35
@@ -188,5 +189,6 @@ namespace Create {
 void convertNewWeaponSkills(std::shared_ptr<Socket> sock, const std::string& str);
 void login(std::shared_ptr<Socket> sock, const std::string& inStr);
 void createPlayer(std::shared_ptr<Socket> sock, const std::string& str);
+void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
 void doSurname(std::shared_ptr<Socket> sock, const std::string& str);
 void doTitle(std::shared_ptr<Socket> sock, const std::string& str);

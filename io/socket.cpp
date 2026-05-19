@@ -2334,6 +2334,17 @@ std::string Socket::getAccountName() const {
     return currentAccountName;
 }
 
+std::shared_ptr<Account> Socket::getSessionAccount() const {
+    if(currentAccountName.empty()) {
+        return nullptr;
+    }
+    return gServer->getOrLoadAccount(currentAccountName);
+}
+
+std::string Socket::getSessionAccountName() const {
+    return currentAccountName;
+}
+
 void Socket::setAccount(std::shared_ptr<Account> acc) {
     if (acc) {
         currentAccountName = acc->getName();

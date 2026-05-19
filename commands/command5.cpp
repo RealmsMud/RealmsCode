@@ -659,7 +659,31 @@ int cmdQuit(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
     player->update();
+    auto sock = player->getSock();
+    if(!sock) {
+        return(DISCONNECT);
+    }
 
+    auto account = sock->getSessionAccount();
+    const std::string characterName = player->getName();
+    const std::string trackedAccountName = player->getAccountName();
+
+    player->save(true);
+    player->uninit();
+
+    if(gServer) {
+        if(!trackedAccountName.empty() && !characterName.empty()) {
+            gServer->untrackAccountConnection(trackedAccountName, characterName);
+        }
+        gServer->clearPlayer(characterName);
+    }
+    sock->clearPlayer();
+
+    if(account) {
+        sock->setAccount(account);
+        showAccountMenu(sock, account);
+        return(0);
+    }
 
     return(DISCONNECT);
 }
