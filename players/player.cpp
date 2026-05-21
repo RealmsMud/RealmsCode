@@ -1612,7 +1612,7 @@ bool Player::breakObject(const std::shared_ptr<Object>&  object, int loc) {
 //              getWhoString
 //********************************************************************
 
-std::string Player::getWhoString(bool whois, bool color, bool ignoreIllusion) const {
+std::string Player::getWhoString(bool whois, bool color, bool ignoreIllusion, bool showAccount) const {
     std::ostringstream whoStr;
 
     if(whois) {
@@ -1670,6 +1670,10 @@ std::string Player::getWhoString(bool whois, bool color, bool ignoreIllusion) co
 
     if(guild && guildRank >= GUILD_PEON) {
         whoStr << (color ? "^y" : "") << " [" << getGuildName(guild) << "]";
+    }
+
+    if(showAccount && !getAccountName().empty()) {
+        whoStr << " (" << getAccountName() << ")";
     }
 
     whoStr << (color ? "^x" : "") << "\n";

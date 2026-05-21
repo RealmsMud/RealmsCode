@@ -426,7 +426,7 @@ int cmdWho(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         found = true;
 
-        curStr = target->getWhoString(false, true, player->willIgnoreIllusion());
+        curStr = target->getWhoString(false, true, player->willIgnoreIllusion(), player->isCt() || player->isDm());
         whoStr << curStr;
     }
     if(!found)
@@ -483,7 +483,7 @@ int cmdWhois(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    player->printColor("%s", target->getWhoString(true, true, player->willIgnoreIllusion()).c_str());
+    player->printColor("%s", target->getWhoString(true, true, player->willIgnoreIllusion(), player->isCt() || player->isDm()).c_str());
     return(0);
 }
 
