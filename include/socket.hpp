@@ -279,6 +279,8 @@ public:
     [[nodiscard]] bool hasAccount() const;
     [[nodiscard]] std::shared_ptr<Account> getAccount() const;
     [[nodiscard]] std::string getAccountName() const;
+    [[nodiscard]] std::shared_ptr<Account> getSessionAccount() const;
+    [[nodiscard]] std::string getSessionAccountName() const;
     void setAccount(std::shared_ptr<Account> acc);
     void clearAccount();
 

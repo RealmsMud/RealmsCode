@@ -418,7 +418,7 @@ public:
     bool canDefecate() const;
 
 // Formating
-    std::string getWhoString(bool whois=false, bool color=true, bool ignoreIllusion=false) const;
+    std::string getWhoString(bool whois=false, bool color=true, bool ignoreIllusion=false, bool showAccount=false) const;
     std::string getTimePlayed() const;
     std::string consider(const std::shared_ptr<Creature>& creature) const;
     int displayCreature(const std::shared_ptr<Creature>& target);

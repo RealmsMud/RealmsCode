@@ -434,7 +434,6 @@ void Player::information(const std::shared_ptr<Player> viewer, bool online) {
             numItems++;
     numItems += countBagInv();
 
-
     oStr << " " << std::setw(13) << txt << "^W| \\_|^x Total Experience : " << std::setw(11) << experience << "^W|^x  +\n"
         << "|  ^W|^x Time Played:                    ^W|   |^x Experience Needed: "
         << std::setw(11) << expToLevel(false) << "^W|^x  |\n"
@@ -504,6 +503,9 @@ void Player::information(const std::shared_ptr<Player> viewer, bool online) {
 
     if(auth) {
         showAge(viewer);
+        std::string accountName = getAccountName();
+        viewer->printColor("^gAccount:^x %s\n", accountName.empty() ? "None" : accountName.c_str());
+
         viewer->print("Bank: %-10lu  \n", bank[GOLD]);
         if(getRoomParent())
             viewer->print("Room: %s  \n", getRoomParent()->fullName().c_str());
