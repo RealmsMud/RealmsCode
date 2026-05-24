@@ -23,6 +23,9 @@
 
 #include "structs.hpp"
 
+#include <sstream>
+#include <locale>
+
 namespace fs = std::filesystem;
 
 class cmd;
@@ -130,11 +133,13 @@ void link_rom(const std::shared_ptr<BaseRoom> &room, const MapMarker& mapmarker,
 
 int room_track(const std::shared_ptr<Creature>& player);
 
-
-
-
-
-
+template<typename T>
+std::string commaNum(T value) {
+    std::stringstream oStr;
+    oStr.imbue(std::locale(""));
+    oStr << value;
+    return oStr.str();
+}
 
 // access.cp
 std::string intToText(int nNumber, bool cap=false);
