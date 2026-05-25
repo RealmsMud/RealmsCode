@@ -32,6 +32,7 @@
 #include "server.hpp"
 #include "xml.hpp"
 #include "config.hpp"
+#include "proto.hpp"
 
 namespace fs = std::filesystem;
 
@@ -398,24 +399,25 @@ bool Account::isValidPassword(const std::string& password) {
 
 void Account::printInfoFields(const std::shared_ptr<Player>& player) const {
     if(!player) return;
-    player->print("^W%-12s^C%s^x\n", "Account:", getName().c_str());
+    player->print("^W%-20s^C%s^x\n", "Account:", getName().c_str());
     if(!getEmail().empty()) {
-        player->print("^W%-12s^x%s\n", "Email:", getEmail().c_str());
+        player->print("^W%-20s^x%s\n", "Email:", getEmail().c_str());
     }
-    player->print("^W%-12s^x%d/%d\n", "Characters:", getCharacterCount(), getCharacterLimit());
-    player->print("^W%-12s^G%15llu^x\n", "Exp Earned:", getExpEarned());
-    player->print("^W%-12s^G%15llu^x\n\n", "Exp Spent:", getExpSpent());
+    player->print("^W%-20s^x%d/%d\n", "Characters:", getCharacterCount(), getCharacterLimit());
+
+    player->print("^W%-20s^G%s^x\n","Legacy XP Earned: ",commaNum(getExpEarned()).c_str());
+    player->print("^W%-20s^G%s^x\n\n","Legacy XP Spent: ",commaNum(getExpSpent()).c_str());
 }
 
 void Account::printInfoFields(const std::shared_ptr<Socket>& sock) const {
     if(!sock) return;
-    sock->print("^W%-12s^C%s^x\n", "Account:", getName().c_str());
+    sock->print("^W%-20s^C%s^x\n", "Account:", getName().c_str());
     if(!getEmail().empty()) {
-        sock->print("^W%-12s^x%s\n", "Email:", getEmail().c_str());
+        sock->print("^W%-20s^x%s\n", "Email:", getEmail().c_str());
     }
-    sock->print("^W%-12s^x%d/%d\n", "Characters:", getCharacterCount(), getCharacterLimit());
-    sock->print("^W%-12s^G%15llu^x\n", "Exp Earned:", getExpEarned());
-    sock->print("^W%-12s^G%15llu^x\n\n", "Exp Spent:", getExpSpent());
+    sock->print("^W%-20s^x%d/%d\n", "Characters:", getCharacterCount(), getCharacterLimit());
+    sock->print("^W%-20s^G%s^x\n","Legacy XP Earned: ",commaNum(getExpEarned()).c_str());
+    sock->print("^W%-20s^G%s^x\n\n","Legacy XP Spent: ",commaNum(getExpSpent()).c_str());
 }
 
 void Account::printCharacterList(const std::shared_ptr<Player>& player) const {

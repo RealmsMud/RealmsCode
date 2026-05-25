@@ -1602,7 +1602,13 @@ int dmBugPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //                      dmAccount helpers
 //*********************************************************************
 
-static int dmAccountAddPlayer(const std::shared_ptr<Player>& invoker, const std::shared_ptr<Account>& account, const std::string& targetName) {
+static int dmAccountAddPlayer(const std::shared_ptr<Player>& invoker, const std::string& accountName, const std::string& targetName) {
+    std::shared_ptr<Account> account = gServer->getOrLoadAccount(accountName);
+    if(!account) {
+        invoker->print("Account '%s' does not exist.\n", accountName.c_str());
+        return(0);
+    }
+
     std::shared_ptr<Player> target = gServer->findPlayer(targetName);
     bool online = true;
     if(!target) {
@@ -1631,7 +1637,13 @@ static int dmAccountAddPlayer(const std::shared_ptr<Player>& invoker, const std:
     return(0);
 }
 
-static int dmAccountRemovePlayer(const std::shared_ptr<Player>& invoker, const std::shared_ptr<Account>& account, const std::string& targetName) {
+static int dmAccountRemovePlayer(const std::shared_ptr<Player>& invoker, const std::string& accountName, const std::string& targetName) {
+    std::shared_ptr<Account> account = gServer->getOrLoadAccount(accountName);
+    if(!account) {
+        invoker->print("Account '%s' does not exist.\n", accountName.c_str());
+        return(0);
+    }
+
     std::shared_ptr<Player> target = gServer->findPlayer(targetName);
     bool online = true;
     if(!target) {
@@ -1659,13 +1671,23 @@ static int dmAccountRemovePlayer(const std::shared_ptr<Player>& invoker, const s
     return(0);
 }
 
-static int dmAccountInfo(const std::shared_ptr<Player>& invoker, const std::shared_ptr<Account>& account) {
+static int dmAccountInfo(const std::shared_ptr<Player>& invoker, const std::string& accountName) {
+    std::shared_ptr<Account> account = gServer->getOrLoadAccount(accountName);
+    if(!account) {
+        invoker->print("Account '%s' does not exist.\n", accountName.c_str());
+        return(0);
+    }
     invoker->print("\n^W~~~~~~~ Account Information ~~~~~~~^x\n\n");
     account->printInfoFields(invoker);
     return(0);
 }
 
-static int dmAccountCharacters(const std::shared_ptr<Player>& invoker, const std::shared_ptr<Account>& account) {
+static int dmAccountCharacters(const std::shared_ptr<Player>& invoker, const std::string& accountName) {
+    std::shared_ptr<Account> account = gServer->getOrLoadAccount(accountName);
+    if(!account) {
+        invoker->print("Account '%s' does not exist.\n", accountName.c_str());
+        return(0);
+    }
     invoker->print("\n^W~~~~~~~ Account Characters ~~~~~~~^x\n\n");
     invoker->print("^WTotal:^x %d/%d\n", account->getCharacterCount(), account->getCharacterLimit());
     account->printCharacterList(invoker);
@@ -1769,7 +1791,7 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     if(partialMatch(action, "characters", 10)) {
 		// Bare "characters" -> just list characters
 		if(cmnd->num == 3) {
-			return dmAccountCharacters(player, account);
+			return dmAccountCharacters(player, accountName);
 		}
 
 		// Expect: *account <accountName> characters <add|remove> <playerName>
@@ -1784,9 +1806,9 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
 		lowercize(targetName, 1);
 
 		if(partialMatch(subAction, "add", 3))
-			return dmAccountAddPlayer(player, account, targetName);
+			return dmAccountAddPlayer(player, accountName, targetName);
 		if(partialMatch(subAction, "remove", 6))
-			return dmAccountRemovePlayer(player, account, targetName);
+			return dmAccountRemovePlayer(player, accountName, targetName);
 
 		player->print("Unknown subcommand '%s'.%s", subAction.c_str(), syntax);
 		return(0);

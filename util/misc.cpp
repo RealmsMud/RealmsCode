@@ -36,6 +36,7 @@
 #include <string_view>                           // for string_view, basic_s...
 #include <utility>                               // for pair
 
+
 #include "catRef.hpp"                            // for CatRef
 #include "config.hpp"                            // for Config, gConfig
 #include "flags.hpp"                             // for P_STUNNED
@@ -61,10 +62,18 @@
 
 #include <boost/algorithm/string.hpp>            // split, join
 
+
 class MudObject;
 
 bool isClass(std::string_view str);
 bool isTitle(std::string_view str);
+
+bool partialMatch(const std::string& got, const char* full, size_t maxLen) {
+    size_t n = std::min(got.size(), maxLen);
+    if(n < 1) return false;
+    return ::strncasecmp(got.c_str(), full, n) == 0;
+}
+
 
 bool partialMatch(const std::string& got, const char* full, size_t maxLen) {
     size_t n = std::min(got.size(), maxLen);
