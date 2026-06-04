@@ -459,11 +459,6 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             sock->setPlayer(player);
             player->fd = -1;
             
-            // Check for duplicate names
-            if(gServer->checkDuplicateName(sock, false)) {
-                return;
-            }
-            
             // Complete the login process
             sock->finishLogin();
             
@@ -653,11 +648,6 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
             player->fd = -1;
             sock->setPlayer(player);
             
-            // Check for duplicate names
-            if(gServer->checkDuplicateName(sock, false)) {
-                return;
-            }
-            
             sock->print("Loading %s (using %s as proxy)...\n", player->getName().c_str(), proxyGranter->getName().c_str());
             sock->finishLogin();
             return;
@@ -695,10 +685,6 @@ bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account>
     // Load character for login
     sock->setPlayer(player);
     player->fd = -1;
-    
-    if(gServer->checkDuplicateName(sock, false)) {
-        return false;
-    }
     
     return true;
 }
