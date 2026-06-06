@@ -111,6 +111,8 @@ void Deck::shuffle() {
 }
 
 Card Deck::takeCard() {
+  if(cards.empty())
+    return Card();
   Card card = cards.back();
   cards.pop_back();
   return card;

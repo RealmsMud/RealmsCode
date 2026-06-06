@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <iosfwd>           // for ostream

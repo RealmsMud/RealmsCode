@@ -1138,7 +1138,7 @@ std::string Object::getObjStr(const std::shared_ptr<const Creature> & viewer, in
             else {
                 // handle articles even when the item starts with a color
                 int pos=0;
-                while(getName()[pos] == '^') pos += 2;
+                while(pos + 1 < (int)getName().length() && getName()[pos] == '^') pos += 2;
                 ch = low(getName()[pos]);
 
                 if(ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u')
@@ -1226,7 +1226,7 @@ std::string Object::getObjStr(const std::shared_ptr<const Creature> & viewer, in
     if(ioFlags & CAP) {
         int pos = 0;
         // don't capitalize colors
-        while(toReturn[pos] == '^') pos += 2;
+        while(pos + 1 < (int)toReturn.length() && toReturn[pos] == '^') pos += 2;
         toReturn[pos] = up(toReturn[pos]);
     }
 

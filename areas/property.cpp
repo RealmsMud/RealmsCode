@@ -614,7 +614,7 @@ CatRef Config::getSingleProperty(const std::shared_ptr<const Player>& player, Pr
 
         if(cr.id)
             cr.id = -1;
-        else
+        else if(!it->ranges.empty())
             cr = it->ranges.front().low;
     }
     return(cr);
@@ -645,7 +645,7 @@ void Property::expelToExit(const std::shared_ptr<Player>& player, bool offline) 
     std::shared_ptr<UniqueRoom> uRoom=nullptr;
     std::shared_ptr<BaseRoom> newRoom=nullptr;
 
-    if(loadRoom(ranges.front().low, uRoom)) {
+    if(!ranges.empty() && loadRoom(ranges.front().low, uRoom)) {
         for(const auto& ext : uRoom->exits ) {
             if(!ext->target.room.id || !belongs(ext->target.room)) {
                 newRoom = ext->target.loadRoom(player);
@@ -1399,7 +1399,7 @@ void Config::showProperties(const std::shared_ptr<Player>& viewer, const std::sh
 
         if(!player) {
             oStr << "^c#" << std::setw(3) << i << "^x Name: ^y" << std::setw(50) << p->getName()
-                 << "^x Range: ^c" << p->ranges.front().str() << "^x\n";
+                 << "^x Range: ^c" << (p->ranges.empty() ? std::string("none") : p->ranges.front().str()) << "^x\n";
             continue;
         }
 
@@ -1519,12 +1519,12 @@ void Property::rename(const std::shared_ptr<Player>& player) {
     setOwner(player->getName());
 
     if(type == PROP_STORAGE) {
-        if(loadRoom(ranges.front().low, storage)) {
+        if(!ranges.empty() && loadRoom(ranges.front().low, storage)) {
             storageName(storage, player);
             setName(storage->getName());
             storage->saveToFile(0);
         }
-    } else if(type == PROP_SHOP) {
+    } else if(type == PROP_SHOP && !ranges.empty()) {
         CatRef cr = ranges.front().low;
         if(loadRoom(cr, shop)) {
             cr.id++;
@@ -2068,7 +2068,7 @@ void Property::manageFound(const std::shared_ptr<Player>& player, cmd* cmnd, Pro
         req = 4;
     } else if(layout.ends_with("tower")) {
         // 5 room tower
-        layout = layout.substr(layout.length() - 12);
+        layout = layout.length() >= 12 ? layout.substr(layout.length() - 12) : layout;
         req = toNum<int>(layout.substr(0, 1));
         layout = layout.substr(layout.length() - 5);
     } else if(layout.ends_with("small house")) {
@@ -2346,7 +2346,7 @@ void Property::manageExtend(const std::shared_ptr<Player>& player, cmd* cmnd, Pr
             obj.get(), getTypeStr(propType).c_str(), getTypeStr(propType).c_str());
         return;
     }
-    layout = layout.substr(21);
+    layout = layout.length() >= 21 ? layout.substr(21) : std::string();
 
 
 
@@ -2655,14 +2655,16 @@ void Property::found(const std::shared_ptr<Player>& player, PropType propType, s
             // load the guild entrance, look for the out exit, load that room, get the area
             Property* p = gConfig->getProperty(player->getConstUniqueRoomParent()->info);
 
-            CatRef cr = p->ranges.front().low;
-            std::shared_ptr<UniqueRoom> room=nullptr;
-            if(loadRoom(cr, room)) {
-                // Look for the first exit not linking to the shop
-                for(const auto& ext : room->exits) {
-                    if(!ext->target.room.isArea("guild")) {
-                        pArea = ext->target.room.area;
-                        break;
+            if(p && !p->ranges.empty()) {
+                CatRef cr = p->ranges.front().low;
+                std::shared_ptr<UniqueRoom> room=nullptr;
+                if(loadRoom(cr, room)) {
+                    // Look for the first exit not linking to the shop
+                    for(const auto& ext : room->exits) {
+                        if(!ext->target.room.isArea("guild")) {
+                            pArea = ext->target.room.area;
+                            break;
+                        }
                     }
                 }
             }

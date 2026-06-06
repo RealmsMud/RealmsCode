@@ -29,7 +29,6 @@ find_package(ASPELL REQUIRED)
 find_package(PythonInterp)
 find_package(PythonLibs)
 find_package(OpenSSL REQUIRED)
-find_package(Boost COMPONENTS system REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost CONFIG REQUIRED COMPONENTS regex)
 
@@ -38,7 +37,7 @@ message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
 message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++ -fmodules")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
 
 if($ENV{LEAK})
@@ -50,16 +49,16 @@ ENDIF()
 
 message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
 
-FetchContent_Declare(json        URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz       )
-FetchContent_Declare(fmt         GIT_REPOSITORY https://github.com/fmtlib/fmt.git          GIT_TAG 10.0.0         )
-FetchContent_Declare(pybind11    GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v2.10.4        )
-FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.0+5         )
-FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.0.23       )
-FetchContent_Declare(jwt-cpp     GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git  GIT_TAG v0.6.0         )
-FetchContent_Declare(googletest  GIT_REPOSITORY https://github.com/google/googletest.git   GIT_TAG release-1.11.0 )
+FetchContent_Declare(nlohmann_json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz    SYSTEM)
+FetchContent_Declare(fmt         GIT_REPOSITORY https://github.com/fmtlib/fmt.git          GIT_TAG 11.2.0   SYSTEM)
+FetchContent_Declare(pybind11    GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v3.0.4   SYSTEM)
+FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.2.1.2 SYSTEM)
+FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.1.5  SYSTEM)
+FetchContent_Declare(jwt-cpp     GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git  GIT_TAG v0.7.2   SYSTEM)
+FetchContent_Declare(googletest  GIT_REPOSITORY https://github.com/google/googletest.git   GIT_TAG v1.17.0  SYSTEM)
 
 
-FetchContent_MakeAvailable(pybind11 fmt json crow dpp jwt-cpp googletest)
+FetchContent_MakeAvailable(pybind11 fmt nlohmann_json crow dpp jwt-cpp googletest)
 set(FMT_INCLUDE_DIR "${FMT_SOURCE_DIR}/${FMT_INC_DIR}")
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR} ${FMT_INCLUDE_DIR} "include")
@@ -491,3 +490,15 @@ target_link_libraries(List RealmsLib)
 
 add_executable(Updater ${UPDATER_SOURCE_FILES})
 target_link_libraries(Updater RealmsLib)
+
+# Enable with -DREALMS_BUILD_TESTS=ON, then `ctest` or ./RealmsTests.
+option(REALMS_BUILD_TESTS "Build unit tests (gtest)" OFF)
+if(REALMS_BUILD_TESTS)
+    enable_testing()
+    add_executable(RealmsTests
+        test/range_test.cpp
+        test/commandBase_test.cpp
+    )
+    target_link_libraries(RealmsTests RealmsLib gtest_main pybind11::embed)
+    add_test(NAME RealmsTests COMMAND RealmsTests)
+endif()

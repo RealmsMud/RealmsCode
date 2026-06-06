@@ -187,7 +187,7 @@ int dmBan(const std::shared_ptr<Player>& player, cmd* cmnd) {
     i = i+j;
     j=0;
 
-    len = strlen(&cmnd->fullstr[i+1]);
+    len = (i + 1 <= strLen) ? strlen(&cmnd->fullstr[i+1]) : 0;
     if(!len)
         dur = 0;
     else {
@@ -202,7 +202,7 @@ int dmBan(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 pass++;
             // Kill trailing whitespace
             len = strlen(pass);
-            while(isspace(pass[len-1]))
+            while(len > 0 && isspace(pass[len-1]))
                 len--;
             pass[len] = '\0';
         }
@@ -239,7 +239,7 @@ int dmBan(const std::shared_ptr<Player>& player, cmd* cmnd) {
     strcpy(comment, &cmnd->fullstr[i]);
     // Kill trailling whitespace on comment
     len = strlen(comment);
-    while(isspace(comment[len-1]))
+    while(len > 0 && isspace(comment[len-1]))
         len--;
     comment[len] = '\0';
     if(target) {
@@ -364,7 +364,7 @@ int dmUnban(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     // Kill any trailing white space in the fullstr
     i = cmnd->fullstr.length();
-    while(isspace(cmnd->fullstr[i-1]))
+    while(i > 0 && isspace(cmnd->fullstr[i-1]))
         i--;
     cmnd->fullstr[i] = '\0';
     // We need a number with the command!

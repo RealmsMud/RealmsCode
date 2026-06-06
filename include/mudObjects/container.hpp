@@ -19,6 +19,8 @@
 #ifndef CONTAINER_H_
 #define CONTAINER_H_
 
+#include <memory>
+
 #include "mudObject.hpp"
 
 #include <set>

@@ -19,6 +19,7 @@
 #pragma once
 
 #include <map>
+#include <memory>           // for shared_ptr
 
 #include "stats.hpp"
 

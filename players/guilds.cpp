@@ -314,6 +314,10 @@ void Guild::create(const std::shared_ptr<Player>& player, cmd* cmnd) {
         i++;
     }
 
+    if(i >= len) {
+        player->print("What would you like to call your guild?\n");
+        return;
+    }
     len = strlen(&cmnd->fullstr[i+1]);
     if(!len) {
         player->print("What would you like to call your guild?\n");
@@ -457,6 +461,10 @@ void Guild::support(const std::shared_ptr<Player>& player, cmd* cmnd) {
         i++;
     }
 
+    if(i >= len) {
+        player->print("Which guild would you like to support?\n");
+        return;
+    }
     len = strlen(&cmnd->fullstr[i+1]);
     if(!len) {
         player->print("Which guild would you like to support?\n");
@@ -860,7 +868,7 @@ void Guild::abdicate(std::shared_ptr<Player> player, std::shared_ptr<Player> tar
                 (*pt)->setOwner(target->getName());
                 player->print("%s assumes ownership of the guildhall in %s.\n", target->getCName(), pName.c_str());
                 target->print("You assume ownership of the guildhall in %s.\n", pName.c_str());
-            } else if((*pt)->getType() == PROP_SHOP) {
+            } else if((*pt)->getType() == PROP_SHOP && !(*pt)->ranges.empty()) {
                 // shops located inside the guild transfer ownership to the new guildmaster
                 CatRef cr = (*pt)->ranges.front().low;
                 std::shared_ptr<UniqueRoom> room=nullptr;
@@ -1098,6 +1106,10 @@ int dmApproveGuild(const std::shared_ptr<Player>& player, cmd* cmnd) {
         i++;
     }
 
+    if(i >= len) {
+        player->print("Approve what guild?\n");
+        return(0);
+    }
     len = strlen(&cmnd->fullstr[i+1]);
     if(!len) {
         player->print("Approve what guild?\n");
@@ -1168,13 +1180,13 @@ int dmRejectGuild(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("Reject what guild?\n");
         return(0);
     }
-    while(isspace(guildName[len-1]))
+    while(len > 0 && isspace(guildName[len-1]))
         len--;
     guildName[len] = '\0';
     player->print("Trying to reject '%s'\n", guildName);
     i = i+j;
     j=0;
-    len = strlen(&cmnd->fullstr[i+1]);
+    len = (i + 1 <= strLen) ? strlen(&cmnd->fullstr[i+1]) : 0;
 
     reason = strstr(&cmnd->fullstr[i], "-r ");
     if(reason) { // There is a reason string then
@@ -1186,7 +1198,7 @@ int dmRejectGuild(const std::shared_ptr<Player>& player, cmd* cmnd) {
             reason++;
         // Kill trailing whitespace
         len = strlen(reason);
-        while(isspace(reason[len-1]))
+        while(len > 0 && isspace(reason[len-1]))
             len--;
         reason[len] = '\0';
     }
@@ -1269,7 +1281,8 @@ void Guild::viewMembers(const std::shared_ptr<Player>& player, cmd* cmnd) {
         toPrint += (*it);
         toPrint += ", ";
     }
-    toPrint[toPrint.length() - 2] = '.';
+    if(toPrint.length() >= 2)
+        toPrint[toPrint.length() - 2] = '.';
     player->printColor("^g%s^x\n", toPrint.c_str());
 
     if(player->isCt() || guild->getNum() == player->getGuild())
@@ -1348,7 +1361,8 @@ int dmListGuilds(const std::shared_ptr<Player>& player, cmd* cmnd) {
             toPrint += (*mIt);
             toPrint += ", ";
         }
-        toPrint[toPrint.length() - 2] = '.';
+        if(toPrint.length() >= 2)
+            toPrint[toPrint.length() - 2] = '.';
         player->printColor("%s\n", toPrint.c_str());
 
         player->print("  Pkills: %d/%d (%d%%) ", guild->getPkillsWon(), guild->getPkillsIn(), pkillPercent(guild->getPkillsWon(), guild->getPkillsIn()));
@@ -1615,7 +1629,8 @@ void updateGuild(std::shared_ptr<Player> player, int what) {
         if(player->getGuildRank() == GUILD_MASTER) {
             std::shared_ptr<Player> leader=nullptr;
 
-            do {
+            // delMember above may have emptied the list
+            while(!guild->members.empty()) {
                 guild->setLeader(guild->members.front());
 
                 leader = gServer->findPlayer(guild->getLeader().c_str());
@@ -1638,7 +1653,7 @@ void updateGuild(std::shared_ptr<Player> player, int what) {
                 guild->setLeader("");
                 guild->incNumMembers(-1);
                 guild->members.pop_front();
-            } while(!guild->members.empty());
+            }
         }
 
         // If we're removing, find the forum account. If any remaining members are associated
@@ -1967,7 +1982,7 @@ bool Config::deleteGuild(int guildId) {
                 continue;
             }
 
-            if((*it)->getType() == PROP_SHOP) {
+            if((*it)->getType() == PROP_SHOP && !(*it)->ranges.empty()) {
                 // If the shop is located inside the guildhall, then destroy it.
                 // If it isn't, then unlink it.
                 CatRef cr = (*it)->ranges.front().low;

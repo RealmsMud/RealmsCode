@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 class cmd;
 class Player;

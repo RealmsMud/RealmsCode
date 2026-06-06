@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 #ifdef SQL_LOGGER
 

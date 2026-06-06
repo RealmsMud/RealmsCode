@@ -20,6 +20,7 @@
 
 #include <libxml/parser.h>  // for xmlNodePtr
 #include <list>             // for list
+#include <memory>           // for shared_ptr
 #include <string>           // for string
 #include <string_view>      // for string_view
 

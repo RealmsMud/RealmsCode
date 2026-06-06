@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 #include "catRef.hpp"
 #include "range.hpp"

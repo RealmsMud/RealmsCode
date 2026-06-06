@@ -66,7 +66,7 @@ void Ship::load(xmlNodePtr curNode) {
     }
 
     // now move what stop we're at to the front of the list
-    while(stop < at_stop) {
+    while(stop < at_stop && !stops.empty()) {
         stop++;
         stops.push_back(stops.front());
         stops.pop_front();
@@ -175,7 +175,7 @@ bool Config::loadShips() {
     // exits have all been deleted - go and set the current ones
     for(auto& aShip : ships) {
         // if at a stop, make the exits
-        if(aShip.inPort)
+        if(aShip.inPort && !aShip.stops.empty())
             shipSetExits(aShip, aShip.stops.front());
     }
 

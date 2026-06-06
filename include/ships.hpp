@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 #include <list>
 #include <boost/dynamic_bitset.hpp>

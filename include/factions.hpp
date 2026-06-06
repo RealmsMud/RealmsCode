@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 // adjusted faction = base + gained
 // We have to make this distinction: if the max you can gain is 1k (numerical limit),

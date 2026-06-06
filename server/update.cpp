@@ -1076,6 +1076,8 @@ void Server::updateShips(long n) {
     gConfig->calendar->shipUpdates++;
 
     for(auto& ship : gConfig->ships) {
+        if(ship.stops.empty())
+            continue;
         ship.timeLeft--;
         stop = ship.stops.front();
         // only do last call if we're in port

@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <memory>
 
 class Player;
 class Object;
