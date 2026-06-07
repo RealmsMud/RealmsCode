@@ -19,11 +19,14 @@
 #pragma once
 
 #include <libxml/parser.h>  // for xmlNodePtr
+#include <nlohmann/json_fwd.hpp>
 
 #include "size.hpp"
 
 class Track {
 public:
+    friend void to_json(nlohmann::json &j, const Track &track);
+
     Track();
     void    load(xmlNodePtr curNode);
     void    save(xmlNodePtr curNode) const;

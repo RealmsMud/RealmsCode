@@ -179,6 +179,9 @@ typedef std::map<std::string, Skill*> SkillMap;
 //*********************************************************************
 
 class Creature: public virtual MudObject, public Streamable, public Container, public Containable {
+public:
+    friend void to_json(nlohmann::json &j, const Creature &cr);
+    friend void to_json(nlohmann::json &j, const Creature &cr, LoadType mode);
 
 protected:
     void crtReset();

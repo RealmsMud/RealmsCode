@@ -101,12 +101,13 @@ void to_json(nlohmann::json &j, const Object &obj, bool permOnly, LoadType saveT
         if(!obj.randomObjects.empty()) {
             j["randomObjects"] = obj.randomObjects;
         }
-        if(obj.compass) {
-            j["compass"] = *obj.compass;
-        }
-        if(obj.increase) {
-            j["increase"] = *obj.increase;
-        }
+    }
+
+    if(obj.compass) {
+        j["compass"] = *obj.compass;
+    }
+    if(obj.increase) {
+        j["increase"] = *obj.increase;
     }
 
     if(obj.type == ObjectType::LOTTERYTICKET) {

@@ -266,6 +266,8 @@ std::string Object::statObj(int statFlags) {
             if(magicpower > 0 && magicpower < gConfig->getMaxSong())
                 objStr << "Song #" << magicpower << "(Song of " << get_song_name(magicpower-1) << ")\n";
             break;
+        default:
+            break;
         }
     }
 

@@ -26,6 +26,9 @@
 
 class UniqueRoom: public BaseRoom {
 public:
+    friend void to_json(nlohmann::json &j, const UniqueRoom &room);
+    friend void to_json(nlohmann::json &j, const UniqueRoom &room, LoadType mode);
+
     UniqueRoom();
     ~UniqueRoom();
     bool operator< (const UniqueRoom& t) const;

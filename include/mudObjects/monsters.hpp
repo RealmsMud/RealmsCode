@@ -30,6 +30,9 @@
 
 class Monster : public Creature {
 public:
+    friend void to_json(nlohmann::json &j, const Monster &mon);
+    friend void to_json(nlohmann::json &j, const Monster &mon, LoadType mode);
+
     static char mob_trade_str[][16];
 
 

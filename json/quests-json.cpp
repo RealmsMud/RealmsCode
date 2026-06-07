@@ -28,7 +28,6 @@ void to_json(nlohmann::json &j, const QuestInfo &quest) {
         {"id", quest.questId},
         {"name", quest.name},
         {"description", quest.description},
-        {"description", quest.description},
         { "receiveString", quest.receiveString },
         { "completionString", quest.completionString },
         { "revision", quest.revision },
@@ -38,7 +37,7 @@ void to_json(nlohmann::json &j, const QuestInfo &quest) {
         { "minLevel", quest.minLevel },
         { "minFaction", quest.minFaction },
         { "level", quest.level },
-
+        { "disabled", quest.disabled },
     };
 
     if(!quest.preRequisites.empty()) j["preRequisites"] = quest.preRequisites;
@@ -76,14 +75,17 @@ void from_json(const nlohmann::json &j, QuestInfo &quest) {
     quest.minLevel = j.at("minLevel").get<int>();
     quest.minFaction = j.at("minFaction").get<int>();
     quest.level = j.at("level").get<int>();
+    if(j.contains("disabled")) quest.disabled = j.at("disabled").get<bool>();
 
-    j.at("preRequisites").get_to(quest.preRequisites);
+    if(j.contains("preRequisites")) j.at("preRequisites").get_to(quest.preRequisites);
 
-    auto &req = j.at("requirements");
-    if(req.contains("initialItems")) req.at("initialItems").get_to(quest.initialItems);
-    if(req.contains("mobsToKill")) req.at("mobsToKill").get_to(quest.mobsToKill);
-    if(req.contains("itemsToGet")) req.at("itemsToGet").get_to(quest.itemsToGet);
-    if(req.contains("roomsToVisit")) req.at("roomsToVisit").get_to(quest.roomsToVisit);
+    if(j.contains("requirements")) {
+        auto &req = j.at("requirements");
+        if(req.contains("initialItems")) req.at("initialItems").get_to(quest.initialItems);
+        if(req.contains("mobsToKill")) req.at("mobsToKill").get_to(quest.mobsToKill);
+        if(req.contains("itemsToGet")) req.at("itemsToGet").get_to(quest.itemsToGet);
+        if(req.contains("roomsToVisit")) req.at("roomsToVisit").get_to(quest.roomsToVisit);
+    }
 
     j.at("turnInMob").get_to(quest.turnInMob);
 
@@ -92,8 +94,8 @@ void from_json(const nlohmann::json &j, QuestInfo &quest) {
     quest.expReward = rewards.at("expReward").get<long>();
     quest.alignmentChange = rewards.at("alignmentChange").get<short>();
     quest.alignmentShift = rewards.at("alignmentShift").get<short>();
-    if(req.contains("itemRewards")) rewards.at("itemRewards").get_to(quest.itemRewards);
-    if(req.contains("factionRewards")) rewards.at("factionRewards").get_to(quest.factionRewards);
+    if(rewards.contains("itemRewards")) rewards.at("itemRewards").get_to(quest.itemRewards);
+    if(rewards.contains("factionRewards")) rewards.at("factionRewards").get_to(quest.factionRewards);
 
     if (quest.repeatFrequency != QuestRepeatFrequency::REPEAT_NEVER)
         quest.repeatable = true;

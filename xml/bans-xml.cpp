@@ -95,7 +95,6 @@ Ban::Ban(xmlNodePtr curNode) {
 //*********************************************************************
 
 bool Config::saveBans() const {
-    int found=0;
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
@@ -109,7 +108,6 @@ bool Config::saveBans() const {
     Ban* ban;
 
     for(it = bans.begin() ; it != bans.end() ; it++) {
-        found++;
         ban = (*it);
 
         curNode = xmlNewChild(rootNode, nullptr, BAD_CAST "Ban", nullptr);

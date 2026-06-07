@@ -16,6 +16,7 @@
  *
  */
 
+#include <filesystem>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -39,20 +40,30 @@ Zone::~Zone() {
 
 
 bool Config::loadZones() {
-    auto zoneIndex = Path::Zone / "zones.json";
-    std::ifstream ifs(zoneIndex);
-    json j = json::parse(ifs);
+    namespace fs = std::filesystem;
+    fs::path zoneRoot = Path::Zone;
+    zones.clear();
 
-    for (const auto& [key, zoneJson] : j.items()) {
-        zones.emplace(key, zoneJson);
+    std::error_code ec;
+    if(!fs::is_directory(zoneRoot, ec))
+        return true;
+
+    for(const auto& entry : fs::directory_iterator(zoneRoot)) {
+        if(!entry.is_directory())
+            continue;
+        fs::path zfile = entry.path() / "zone.json";
+        if(!fs::exists(zfile))
+            continue;
+        try {
+            std::ifstream ifs(zfile);
+            json j = json::parse(ifs);
+            Zone zone;
+            from_json(j, zone);
+            zones.emplace(entry.path().filename().string(), std::move(zone));
+        } catch(const std::exception& e) {
+            std::clog << "Zone load failed for " << zfile << ": " << e.what() << std::endl;
+        }
     }
-
-    for (const auto& [name, zone] : zones) {
-        std::clog << "Zone: <" << name << ">: " << zone << std::endl;
-    }
-
-    json blah = zones;
-    std::clog << blah["hp"] << std::endl;
     return true;
 }
 

@@ -21,10 +21,10 @@
 #include "catRef.hpp"
 
 void to_json(nlohmann::json &j, const CatRef &cr) {
-    j = json{{
+    j = json{
         {"area", cr.area},
         {"id", cr.id},
-    }};
+    };
 }
 
 void from_json(const nlohmann::json &j, CatRef &cr) {

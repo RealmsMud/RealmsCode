@@ -269,8 +269,9 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             // End LOGIN_CHECK_CREATE_ACCOUNT
         }
         case LOGIN_GET_ACCOUNT_PASSWORD: {
+            sock->print("%s", echo_on);
             if(!Account::load(sock->tempstr[0], account) || !account->isPassword(str)) {
-                sock->write("\255\252\1\n\rIncorrect.\n\r");
+                sock->write("\n\rIncorrect.\n\r");
                 logn("log.incorrect", fmt::format("Invalid account password({}) for {} from {}\n", str, sock->tempstr[0], sock->getHostname()).c_str());
                 sock->disconnect();
                 return;
@@ -332,9 +333,10 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             // End LOGIN_CLAIM_CHARACTER
         }
         case LOGIN_CLAIM_PASSWORD: {
+            sock->print("%s", echo_on);
             account = validateAndGetAccount(sock);
             if(!account) return;
-            
+
             std::string charName = sock->tempstr[1];
             
             // Load the character to verify password

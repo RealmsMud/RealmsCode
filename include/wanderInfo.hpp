@@ -21,12 +21,15 @@
 
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
+#include <nlohmann/json_fwd.hpp>
 
 class CatRef;
 class Player;
 
 class WanderInfo {
 public:
+    friend void to_json(nlohmann::json &j, const WanderInfo &wander);
+
     WanderInfo();
     CatRef  getRandom() const;
     void    load(xmlNodePtr curNode);

@@ -42,6 +42,8 @@ namespace odbc {
 #include "swap.hpp"
 #include "weather.hpp"
 #include "lru/lru.hpp"
+#include "zoneIndex.hpp"
+#include "zoneIndexBuilder.hpp"
 
 namespace pybind11 {
     class object;
@@ -174,7 +176,10 @@ public:
     RoomCache roomCache;
     MonsterCache monsterCache;
     ObjectCache objectCache;
-    
+
+    ZoneIndex zoneIndex; // REST API per-zone summary index (rooms/objects/monsters)
+    ZoneIndexBuilder zoneIndexBuilder{zoneIndex}; // incremental builder, pumped by run()
+
     // Account management
     std::map<std::string, std::shared_ptr<Account>> accountCache;  // Shared account instances
     std::map<std::string, std::set<std::string>> accountConnections;  // Account -> Set of character names
@@ -217,7 +222,11 @@ private:
     std::list<dnsCache> cachedDns; // Cache of DNS lookups
     WebInterface* webInterface;
     dpp::cluster *discordBot{};
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    // TODO: migrate off deprecated dpp::commandhandler
     dpp::commandhandler *commandHandler{};
+#pragma GCC diagnostic pop
 
     // Game Updates
     WeakMonsterList activeList; // The new active list
@@ -322,6 +331,8 @@ public:
     std::shared_ptr<Creature> lookupCrtId(const std::string &toLookup);
     std::shared_ptr<Object>  lookupObjId(const std::string &toLookup);
     std::shared_ptr<Player> lookupPlyId(const std::string &toLookup);
+
+    void invalidateApiAuth(const std::string& id, const std::string& name);
 
     void loadIds();
     void saveIds();

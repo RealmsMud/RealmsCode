@@ -31,7 +31,7 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const CatRef& group);
 
     CatRef();
-    CatRef(std::string& pArea, short pId);
+    CatRef(const std::string& pArea, short pId);
     void    setDefault(const std::shared_ptr<Creature> & target);
     void    clear();
     void    load(xmlNodePtr curNode);

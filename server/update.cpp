@@ -290,7 +290,7 @@ void Server::weather(WeatherString w) {
         weather = gConfig->weatherize(w, player->getRoomParent());
         if(!weather.empty()) {
             player->printColor("^%c%s\n", color, weather.c_str());
-            player->hooks.execute(event, nullptr, season);
+            (void)player->hooks.execute(event, nullptr, season);
         }
     }
 
@@ -316,7 +316,7 @@ void Server::weather(WeatherString w) {
         // as that will decide whether or not we tell them to execute a hook
         weather = gConfig->weatherize(w, monster->getRoomParent());
         if(!weather.empty())
-            monster->hooks.execute(event, nullptr, season);
+            (void)monster->hooks.execute(event, nullptr, season);
     }
 }
 

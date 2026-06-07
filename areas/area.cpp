@@ -953,7 +953,7 @@ std::string Area::showGrid(const std::shared_ptr<Player>& player, const MapMarke
     int     yVision = xVision * 2 / 3;
     bool    staff = player->isStaff();
     int     my = yVision*2+1, mx = xVision*2+1, y=0, x=0, i=0;
-    int     zx=0, zy=0, zi=0;
+    int     zx=0, zy=0;
     char    gridText[my][80];
     char    seasonFlags;
     Season  season = gConfig->getCalendar()->whatSeason();
@@ -988,7 +988,6 @@ std::string Area::showGrid(const std::shared_ptr<Player>& player, const MapMarke
             zy = y;
             zx = x;
             if(!staff && losPower < losGrid[zy+yVision][zx+xVision]) {
-                zi++;
                 losCloser(&zy, &zx, 0, 0, 0);
             }
 

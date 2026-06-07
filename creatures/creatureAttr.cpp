@@ -1149,7 +1149,7 @@ bool Creature::isWatcher() const {
 bool Creature::isStaff() const {
     if(isMonster())
         return(false);
-    return(cClass >= CreatureClass::BUILDER);
+    return(isStaffClass(cClass));
 }
 
 //*********************************************************************
@@ -1169,7 +1169,7 @@ bool Creature::isCt() const {
 bool Creature::isDm() const {
     if(isMonster())
         return(false);
-    return(cClass == CreatureClass::DUNGEONMASTER);
+    return(isDmClass(cClass));
 }
 
 //*********************************************************************

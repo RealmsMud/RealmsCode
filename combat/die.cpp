@@ -89,7 +89,7 @@ void Player::hardcoreDeath() {
         return;
     auto pThis = Containable::downcasted_shared_from_this<Player>();
     bool factionCanRecycle = !inUniqueRoom() || Faction::willDoBusinessWith(pThis, getUniqueRoomParent()->getFaction());
-    hooks.execute("preHardcoreDeath");
+    (void)hooks.execute("preHardcoreDeath");
 
     for(int i=0; i<MAXWEAR; i++) {
         if(ready[i] && (!(ready[i]->flagIsSet(O_CURSED) && ready[i]->getShotsCur() > 0))) {
@@ -134,7 +134,7 @@ void Player::hardcoreDeath() {
     statistics.display(pThis, true);
     print("\n");
     broadcast("^#^R### %s's soul is lost forever.", getCName());
-    hooks.execute("postHardcoreDeath");
+    (void)hooks.execute("postHardcoreDeath");
     deletePlayer();
 }
 
@@ -1212,8 +1212,8 @@ void Player::resetPlayer(const std::shared_ptr<Creature>& killer) {
         courageous();
     }
 
-    killer->hooks.execute("postKill", Containable::downcasted_shared_from_this<Player>(), std::to_string(duel));
-    hooks.execute("postDeath", killer, std::to_string(duel), std::to_string(same));
+    (void)killer->hooks.execute("postKill", Containable::downcasted_shared_from_this<Player>(), std::to_string(duel));
+    (void)hooks.execute("postDeath", killer, std::to_string(duel), std::to_string(same));
 }
 
 //********************************************************************

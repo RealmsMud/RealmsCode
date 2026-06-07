@@ -383,6 +383,9 @@ int Player::saveToFile(LoadType saveType) {
 
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
+
+    if(gServer)
+        gServer->invalidateApiAuth(getId(), getName());
     return(0);
 }
 

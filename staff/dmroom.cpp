@@ -3006,7 +3006,7 @@ int dmFind(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         std::cout << "^YNext available " << type << " in area " << cr.area << "^x\n";
         if(cr.id == -1)
-            std::cout << "No empty %ss found.", type.c_str();
+            std::cout << "No empty " << type << "s found.\n";
         else {
             std::cout << cr.str();
         }

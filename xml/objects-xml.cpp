@@ -462,6 +462,9 @@ int Object::saveToFile() {
     auto filename = Path::objectPath(info);
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
+
+    if(gServer && info.id > 0)
+        gServer->zoneIndex.upsert(ZoneIndex::Type::Object, info.area, info.id, getName());
     return(0);
 }
 

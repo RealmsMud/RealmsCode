@@ -31,4 +31,5 @@ public:
     void start();
     void end();
     void sleep();
+    [[nodiscard]] long passedMicros() const { return timePassed.tv_sec * 1000000L + timePassed.tv_usec; }
 };

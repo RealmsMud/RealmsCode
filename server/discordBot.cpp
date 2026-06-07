@@ -82,7 +82,11 @@ bool Server::initDiscordBot() {
     discordBot = new dpp::cluster(gConfig->getBotToken(), dpp::i_message_content | dpp::i_default_intents | dpp::i_guild_members | dpp::i_default_intents);
 
     /* Create command handler, and specify prefixes */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    // TODO: migrate off deprecated dpp::commandhandler -> slash commands
     commandHandler = new dpp::commandhandler (discordBot);
+#pragma GCC diagnostic pop
 
     /* Specifying a prefix of "/" tells the command handler it should also expect slash commands */
     commandHandler->add_prefix(".").add_prefix("/");

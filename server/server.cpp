@@ -31,6 +31,7 @@
 #include <sys/wait.h>                               // for wait3, waitpid
 #include <unistd.h>                                 // for close, unlink, read
 #include <algorithm>                                // for find
+#include <chrono>                                   // for the index-build time budget
 #include <boost/algorithm/string/replace.hpp>       // for replace_all
 #include <boost/iterator/iterator_traits.hpp>       // for iterator_value<>:...
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
@@ -388,10 +389,22 @@ void Server::run() {
 
         checkWebInterface();
 
+        if(httpServer)
+            httpServer->processApiQueue();
+
+        if(pulse % 100 == 0)
+            zoneIndex.flushDirty();
+
         delete vSockets;
         vSockets = nullptr;
 
-        timer.end(); // End the timer
+        timer.end(); // measure this tick's work
+        if(zoneIndexBuilder.hasWork()) {
+            long spareUs = 100000 - timer.passedMicros();
+            long budgetUs = std::min<long>(std::max<long>(spareUs, 0) / 2, 30000);
+            zoneIndexBuilder.pump(std::chrono::microseconds(budgetUs), 10);
+            timer.end(); // re-measure so sleep keeps cadence
+        }
         timer.sleep();
     }
 
