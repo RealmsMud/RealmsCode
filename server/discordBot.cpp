@@ -41,7 +41,7 @@ void Config::clearWebhookTokens() {
 
 std::string getUsername(dpp::guild *guild, const dpp::user& author) {
     const auto member = guild->members.find(author.id);
-    return ((member != guild->members.end() && !member->second.nickname.empty()) ? member->second.nickname : author.username);
+    return ((member != guild->members.end() && !member->second.get_nickname().empty()) ? member->second.get_nickname() : author.username);
 }
 
 
@@ -120,7 +120,7 @@ bool Server::initDiscordBot() {
                 const auto &content = event.msg.content;
                 std::unordered_map<dpp::snowflake, std::string> userMentions;
                 for (auto &[user, guildMember]: event.msg.mentions) {
-                    const auto &mentionName = !guildMember.nickname.empty() ? guildMember.nickname : user.username;
+                    const auto &mentionName = !guildMember.get_nickname().empty() ? guildMember.get_nickname() : user.username;
                     userMentions.emplace(guildMember.user_id, mentionName);
                 }
 
@@ -179,7 +179,7 @@ bool Server::initDiscordBot() {
             }
         }
     });
-    discordBot->start(true);
+    discordBot->start(dpp::st_return);
 
     return (true);
 }

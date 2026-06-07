@@ -749,6 +749,10 @@ int dmQueryShips(const std::shared_ptr<Player>& player, cmd* cmnd) {
     player->print("Information on %s:\n", ship.name.c_str());
     player->printColor("^b-------------------------------------------------------------------------------\n");
 
+    if(ship.stops.empty()) {
+        player->print("That ship has no stops defined.\n");
+        return(0);
+    }
     stop = ship.stops.front();
     player->print("In Port:   %s\n", ship.inPort ? "Yes" : "No");
     player->print("Time Left: %d minutes\n", ship.timeLeft);

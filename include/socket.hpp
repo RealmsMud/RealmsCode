@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 // C Includes
 #include <zlib.h>

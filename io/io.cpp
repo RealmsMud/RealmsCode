@@ -586,16 +586,15 @@ std::string unxsc(std::string_view txt) {
     for(size_t i=0; i<len; i++) {
         c = txt.at(i);
 
-        if(c == '&' && txt[i+1] == '#') {
+        if(c == '&' && i + 1 < len && txt[i+1] == '#') {
             // get the number from the string
-            c = toNum<int>(&txt[i+2]);
-            // advance i appropriately
+            c = toNumSV<int>(txt.substr(i+2));
+            // advance past "&#" to the terminating ';'
             i += 2;
-            while(txt[i] != ';') {
+            while(i < len && txt[i] != ';')
                 i++;
-                if(i >= len)
-                    return("");
-            }
+            if(i >= len)
+                return("");
         }
 
         ret << (char)c;

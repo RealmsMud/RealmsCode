@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 // define some limits
 #define NUM_RANDOM_SLOTS    50

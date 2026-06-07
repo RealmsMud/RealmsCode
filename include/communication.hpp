@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 #include "commands.hpp"
 #include "flags.hpp"

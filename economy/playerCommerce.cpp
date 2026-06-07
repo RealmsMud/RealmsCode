@@ -238,7 +238,7 @@ void shopRemoveGuild(Property *p, std::shared_ptr<Player> player, std::shared_pt
     p->setGuild(0);
     p->appendLog("", "This property is no longer associated with a guild.");
 
-    if(!shop || !storage) {
+    if((!shop || !storage) && !p->ranges.empty()) {
         CatRef cr = p->ranges.front().low;
         if(loadRoom(cr, shop)) {
             cr.id++;

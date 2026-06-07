@@ -2911,7 +2911,7 @@ int dmJailPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
             reason++;
         // Kill trailing whitespace
         len = strlen(reason);
-        while(isspace(reason[len-1]))
+        while(len > 0 && isspace(reason[len-1]))
             len--;
         reason[len] = '\0';
     }

@@ -19,6 +19,7 @@
 #pragma once
 
 #include <map>
+#include <memory>           // for shared_ptr
 #include <libxml/parser.h>  // for xmlNodePtr
 
 #include "alphanum.hpp"

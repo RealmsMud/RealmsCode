@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 #include <cstdarg>
 #include <filesystem>

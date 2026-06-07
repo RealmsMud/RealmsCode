@@ -2055,7 +2055,7 @@ int dmReplace(const std::shared_ptr<Player>& player, cmd* cmnd) {
     //strcpy(cmnd->fullstr, &cmnd->fullstr[pos+1]);
     cmnd->fullstr = cmnd->fullstr.substr(pos+1);
     if(delim != ' ') {
-        if(cmnd->fullstr[cmnd->fullstr.length()-1] != delim) {
+        if(cmnd->fullstr.empty() || cmnd->fullstr[cmnd->fullstr.length()-1] != delim) {
             player->print("Deliminators do not match up.\n");
             return(0);
         }

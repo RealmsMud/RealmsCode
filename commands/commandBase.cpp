@@ -173,11 +173,11 @@ void parse(std::string_view str, cmd *cmnd) {
     for(i=0; i<=j; i++) {
 
         // look for first non space or comment
-        if(str[i] == ' ')
+        if(i < j && str[i] == ' ')
             continue;
 
         // ok we at first non space
-        if(str[i] == '\"') {
+        if(i < j && str[i] == '\"') {
             isquote = 1;
             // skip quote char
             i++;
@@ -187,18 +187,11 @@ void parse(std::string_view str, cmd *cmnd) {
 
         // now find the end of the token
         if(isquote) {
-            while(str[i] != '\0' && str[i] != '\"')
+            while(i < j && str[i] != '\"')
                 i++;
-
-//          // terminate the token
-//          if(str[i] == '\"')
-//              str[i] = '\0';
         } else {
-            while(str[i] != '\0' && str[i] != ' ')
+            while(i < j && str[i] != ' ')
                 i++;
-
-            // terminate the token
-//          str[i] = '\0';
         }
 
         // don't overflow the buffers

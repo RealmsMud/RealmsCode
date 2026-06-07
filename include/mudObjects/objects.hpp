@@ -18,6 +18,8 @@
 #ifndef OBJECTS_H_
 #define OBJECTS_H_
 
+#include <memory>
+
 #define OBJ_KEY_LENGTH          20
 
 #include <list>

@@ -18,6 +18,8 @@
 #ifndef BLACKJACK_H
 #define BLACKJACK_H
 
+#include <memory>
+
 #include <cards.hpp>              // Card, Deck
 
 class Blackjack {

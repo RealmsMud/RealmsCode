@@ -1,20 +1,13 @@
-FROM ubuntu:22.04 as BUILD
+FROM ubuntu:26.04 AS base
 ENV TZ=US
 ENV CC=/usr/bin/clang
 ENV CXX=/usr/bin/clang++
-
 
 # Update
 RUN apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-certificates && \
-#    # LLVM/Clang
-#    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key 2>/dev/null | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn apt-key add - && \
-#    echo "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main" | tee /etc/apt/sources.list.d/llvm.list && \
-#    # CMake
-#    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn apt-key add - && \
-#    echo "deb https://apt.kitware.com/ubuntu/ focal main" | tee /etc/apt/sources.list.d/cmake.list && \
     # TZ Stupidity
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     apt-get update && apt-get install -y --no-install-recommends \
@@ -22,22 +15,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     cmake \
     make \
     git \
-    clang-14 \
-    lldb-14 \
-    lld-14 \
+    clang-21 \
+    lldb-21 \
+    lld-21 \
+    libclang-rt-21-dev \
     gcc \
     g++ \
     gdb \
     libsodium23 \
     libopus0 \
     libxml2-dev \
-    libssl3 \
+    libssl3t64 \
     libssl-dev \
+    libasio-dev \
     libboost-filesystem-dev \
     libboost-date-time-dev \
     libboost-regex-dev \
-    libpython3.10 \
-    libpython3.10-dev \
+    libpython3.14 \
+    libpython3.14-dev \
     python3-dev \
     libaspell-dev \
     libpspell-dev  \
@@ -45,8 +40,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg2 ca-
     aspell-en \
     zlib1g-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    ln -s /usr/bin/clang-14 /usr/bin/clang && \
-    ln -s /usr/bin/clang++-14 /usr/bin/clang++
+    ln -s /usr/bin/clang-21 /usr/bin/clang && \
+    ln -s /usr/bin/clang++-21 /usr/bin/clang++
+
+# Prod build: bakes the source in and compiles from scratch.
+FROM base AS build
 
 WORKDIR /build
 
@@ -57,24 +55,34 @@ ARG PARALLEL=12
 ARG LEAK
 RUN cmake . && make -j ${PARALLEL}
 
-FROM ubuntu:22.04 as RUN
+# Dev sandbox: toolchain only, no source baked in. Source is bind-mounted at /src and the
+# out-of-tree build dir (/build, holding .o files + _deps) is a persistent named volume,
+# both supplied at `docker run` time. Stays alive to be exec'd into for incremental builds.
+# See docker/dev/*.sh.
+FROM base AS dev
+
+WORKDIR /build
+ARG PARALLEL=12
+CMD ["sleep", "infinity"]
+
+FROM ubuntu:26.04 AS run
 
 # Update
 RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libxml2 \
+    libxml2-16 \
     python3 \
-    libssl3 \
-    clang-14 \
-    lldb-14 \
-    lld-14 \
-    libpython3.10 \
-    libboost-python1.74.0 \
-    libboost-filesystem1.74.0 \
-    libboost-system1.74.0 \
-    libboost-date-time1.74.0 \
+    libssl3t64 \
+    clang-21 \
+    lldb-21 \
+    lld-21 \
+    libpython3.14 \
+    libboost-python1.90.0 \
+    libboost-filesystem1.90.0 \
+    libboost-date-time1.90.0 \
+    libboost-regex1.90.0 \
     libsodium23 \
     libopus0 \
     aspell \
@@ -98,14 +106,14 @@ WORKDIR /mud
 EXPOSE 3333
 ENV HOME /home/realms/
 
-COPY --from=BUILD /build/RealmsCode .
-COPY --from=BUILD /build/List .
-COPY --from=BUILD /build/Updater .
+COPY --from=build /build/RealmsCode .
+COPY --from=build /build/List .
+COPY --from=build /build/Updater .
 
 # Temporary Workaround
-COPY --from=BUILD /build/libRealmsLib.so .
-COPY --from=build /build/_deps/dpp-build/library/libdpp.so.2.10.4 .
-COPY --from=BUILD /build/MyLSan.supp .
+COPY --from=build /build/libRealmsLib.so .
+COPY --from=build /build/_deps/dpp-build/library/libdpp.so.* .
+COPY --from=build /build/MyLSan.supp .
 
 ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8
@@ -118,4 +126,3 @@ ENV ASAN_OPTIONS="detect_odr_violation=0,detect_leaks=0"
 ENV LSAN_OPTIONS="LSAN_OPTIONS=suppressions=../MyLSan.supp"
 
 CMD ["/mud/RealmsCode"]
-

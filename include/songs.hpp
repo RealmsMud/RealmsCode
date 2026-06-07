@@ -17,6 +17,7 @@
  */
 
 #pragma once
+#include <memory>
 
 #include <set>
 #include <libxml/parser.h>  // for xmlNodePtr

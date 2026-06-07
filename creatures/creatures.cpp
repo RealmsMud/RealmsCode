@@ -1749,7 +1749,7 @@ std::string Creature::getCrtStr(const std::shared_ptr<const Creature> & viewer, 
     if(ioFlags & CAP) {
         int pos = 0;
         // don't capitalize colors
-        while(toReturn[pos] == '^') pos += 2;
+        while(pos + 1 < (int)toReturn.length() && toReturn[pos] == '^') pos += 2;
         toReturn[pos] = up(toReturn[pos]);
     }
 

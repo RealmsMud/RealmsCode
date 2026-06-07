@@ -19,6 +19,8 @@
 #ifndef _EXITS_H
 #define _EXITS_H
 
+#include <memory>
+
 #include <boost/dynamic_bitset.hpp>
 #include "lasttime.hpp"
 #include "location.hpp"
