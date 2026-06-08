@@ -558,7 +558,9 @@ if(REALMS_BUILD_TESTS)
         test/range_test.cpp
         test/commandBase_test.cpp
         test/vprintFormat_test.cpp
+        test/protocol_test.cpp
     )
+    set_property(SOURCE io/socket.cpp APPEND PROPERTY COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS)
     target_link_libraries(RealmsTests PRIVATE RealmsLib gtest_main realms_flags)
     add_test(NAME RealmsTests COMMAND RealmsTests)
 endif()

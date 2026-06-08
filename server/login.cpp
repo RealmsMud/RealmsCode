@@ -122,8 +122,6 @@ bool Player::checkProxyAccess(const std::shared_ptr<Player>& proxy) {
 // This function is the first function that gets input from a player when
 // they log in. It asks for the player's name and password, and performs
 // the according function calls.
-unsigned const char echo_off[] = {255, 251, 1, 0};
-unsigned const char echo_on[] = {255, 252, 1, 0};
 
 void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
     std::shared_ptr<Player> player=nullptr;
@@ -189,7 +187,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             if(!Account::load(str, account)) {
                 if(isdm(sock->tempstr[0])) {
                     sock->print("\nYou must enter a password to create that account.\n");
-                    sock->print("%s", echo_off);
+                    sock->echoOff();
                     sock->askFor("Please enter password: ");
                     sock->setState(LOGIN_GET_ACCOUNT_DM_PASSWORD);
                     return;
@@ -204,7 +202,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
                     sock->disconnect();
                     return;
                 }
-                sock->print("%s", echo_off);
+                sock->echoOff();
                 sock->askFor("Please enter account password: ");
                 sock->setState(LOGIN_GET_ACCOUNT_PASSWORD);
                 return;
@@ -212,7 +210,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             // End LOGIN_GET_ACCOUNT_NAME
         }
         case LOGIN_GET_ACCOUNT_DM_PASSWORD: {
-            sock->print("%s", echo_on);
+            sock->echoOn();
             if(str != gConfig->getDmPass()) {
                 sock->disconnect();
                 return;
@@ -249,7 +247,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             }
             strcpy(sock->tempstr[1], charName.c_str());
             sock->print("Legacy login for character '%s'.\n", charName.c_str());
-            sock->print("%s", echo_off);
+            sock->echoOff();
             sock->askFor("Please enter character password: ");
             sock->setState(LOGIN_LEGACY_PASSWORD);
             return;
@@ -269,7 +267,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             // End LOGIN_CHECK_CREATE_ACCOUNT
         }
         case LOGIN_GET_ACCOUNT_PASSWORD: {
-            sock->print("%s", echo_on);
+            sock->echoOn();
             if(!Account::load(sock->tempstr[0], account) || !account->isPassword(str)) {
                 sock->write("\n\rIncorrect.\n\r");
                 logn("log.incorrect", fmt::format("Invalid account password({}) for {} from {}\n", str, sock->tempstr[0], sock->getHostname()).c_str());
@@ -286,12 +284,12 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             // End LOGIN_GET_ACCOUNT_PASSWORD
         }
         case LOGIN_GET_ACCOUNT_CREATE_PASSWORD: {
-            sock->print("%s", echo_on);
+            sock->echoOn();
             
             if(!Account::isValidPassword(str)) {
                 sock->print("\nPassword must be between 5 and 35 characters.\n");
                 sock->print("Please set a password for new account '%s': \n", sock->tempstr[0]);
-                sock->print("%s", echo_off);
+                sock->echoOff();
                 sock->setState(LOGIN_GET_ACCOUNT_CREATE_PASSWORD);
                 return;
             }
@@ -333,7 +331,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             // End LOGIN_CLAIM_CHARACTER
         }
         case LOGIN_CLAIM_PASSWORD: {
-            sock->print("%s", echo_on);
+            sock->echoOn();
             account = validateAndGetAccount(sock);
             if(!account) return;
 
@@ -431,7 +429,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
             // End LOGIN_SET_EMAIL_CONFIRM
         }
         case LOGIN_LEGACY_PASSWORD: {
-            sock->print("%s", echo_on);
+            sock->echoOn();
             std::string charName = sock->tempstr[1];
             
             // Load the character
@@ -2878,7 +2876,7 @@ void handleCharacterClaim(std::shared_ptr<Socket> sock, std::shared_ptr<Account>
     strcpy(sock->tempstr[1], charName.c_str());
     
     sock->print("\nTo claim character '%s', you must verify ownership by entering the character's password.\n", charName.c_str());
-    sock->print("%s", echo_off);
+    sock->echoOff();
     sock->askFor("Character password: ");
     sock->setState(LOGIN_CLAIM_PASSWORD);
 }

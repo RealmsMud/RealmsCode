@@ -138,15 +138,12 @@ unsigned const char start_mxp[] = { IAC, SB, TELOPT_MXP, IAC, SE, '\0' };
 
 // MCCP V2 support
 unsigned const char will_comp2[] = { IAC, WILL, TELOPT_COMPRESS2, '\0' };
-// MCCP V1 support
-unsigned const char will_comp1[] = { IAC, WILL, TELOPT_COMPRESS, '\0' };
 // Start string for compress2
 unsigned const char start_mccp2[] = { IAC, SB, TELOPT_COMPRESS2, IAC, SE, '\0' };
-// start string for compress1
-unsigned const char start_mccp[] = { IAC, SB, TELOPT_COMPRESS, WILL, SE, '\0' };
 
 // Echo input
 unsigned const char will_echo[] = { IAC, WILL, TELOPT_ECHO, '\0' };
+unsigned const char wont_echo[] = { IAC, WONT, TELOPT_ECHO, '\0' };
 
 // EOR After every prompt
 unsigned const char will_eor[] = { IAC, WILL, TELOPT_EOR, '\0' };
@@ -179,6 +176,7 @@ unsigned const char do_naws[] = { IAC, DO, TELOPT_NAWS, '\0' };
 
 // End of line string
 unsigned const char eor_str[] = { IAC, EOR, '\0' };
+unsigned const char ga_str[] = { IAC, GA, '\0' };
 
 // MCCP Hooks
 void *zlib_alloc(void *opaque, unsigned int items, unsigned int size) {
@@ -186,6 +184,25 @@ void *zlib_alloc(void *opaque, unsigned int items, unsigned int size) {
 }
 void zlib_free(void *opaque, void *address) {
     free(address);
+}
+
+std::string promptGoAhead(bool eor, bool dumb) {
+    if(eor) return std::string(reinterpret_cast<const char*>(eor_str));
+    if(!dumb) return std::string(reinterpret_cast<const char*>(ga_str));
+    return std::string();
+}
+
+std::string escapeIAC(std::string_view in) {
+    if(in.find((char) IAC) == std::string_view::npos)
+        return std::string(in);
+    std::string out;
+    out.reserve(in.size() + 8);
+    for(char c : in) {
+        out += c;
+        if((unsigned char) c == IAC)
+            out += (char) IAC;
+    }
+    return out;
 }
 }
 
@@ -423,7 +440,8 @@ void Socket::resolveIp(const sockaddr_in &addr, std::string& ip) {
 std::string Socket::parseForOutput(std::string_view outBuf) {
     int i = 0;
     auto n = outBuf.size();
-    std::ostringstream oStr;
+    std::string oStr;
+    oStr.reserve(n);
     bool inTag = false;
     unsigned char ch = 0;
     while(i < n) {
@@ -432,63 +450,75 @@ std::string Socket::parseForOutput(std::string_view outBuf) {
             if(ch == CH_MXP_END) {
                 inTag = false;
                 if(opts.mxp)
-                    oStr << ">" << MXP_LOCK_CLOSE;
+                    oStr += ">" MXP_LOCK_CLOSE;
             } else if(opts.mxp)
-                oStr << ch;
+                oStr += (char) ch;
 
             continue;
         } else {
             if(ch == CH_MXP_BEG) {
                 inTag = true;
                 if(opts.mxp)
-                    oStr << MXP_SECURE_OPEN << "<";
+                    oStr += MXP_SECURE_OPEN "<";
                 continue;
             } else {
                 if(ch == '^') {
+                    if(i >= n) // dangling caret at end of buffer: nothing to escape
+                        break;
                     ch = outBuf[i++];
-                    oStr << getColorCode(ch);
+                    oStr += getColorCode(ch);
                 } else if(ch == '\n') {
-                    oStr << "\r\n";
+                    oStr += "\r\n";
+                } else if(ch == CH_GO_AHEAD) {
+                    // Prompt go-ahead: emit the raw telnet marker in place (never doubled).
+                    oStr += telnet::promptGoAhead(opts.eor, opts.dumb);
+                } else if(ch == IAC) {
+                    // RFC 854: a literal 0xFF in the data stream must be doubled.
+                    oStr += (char) IAC;
+                    oStr += (char) IAC;
                 } else {
-                    oStr << ch;
+                    oStr += (char) ch;
                 }
                 continue;
             }
         }
     }
-    return(oStr.str());
+    return oStr;
+}
 
+std::size_t Socket::skipTelnetSeq(std::string_view in, std::size_t i) {
+    auto n = in.size();
+    if(i + 1 >= n)  // dangling IAC: incomplete command
+        return n;
+    switch((unsigned char) in[i+1]) {
+        case WILL:
+        case WONT:
+        case DO:
+            return i + telnet::TELNET_OPT_CMD_LEN;
+        case EOR:
+            return i + telnet::TELNET_CMD_LEN;
+        case SB:
+            i += telnet::TELNET_CMD_LEN; // past IAC SB
+            while(i + 1 < n) {
+                if((unsigned char) in[i] == IAC && (unsigned char) in[i+1] == SE)
+                    return i + telnet::TELNET_CMD_LEN;   // past IAC SE
+                i++;
+            }
+            return n; // unterminated SB: consume the rest
+    }
+    return i + 1; // IAC + unknown byte: skip the IAC only
 }
 
 bool Socket::needsPrompt(std::string_view inStr) {
-    int i = 0;
+    std::size_t i = 0;
     auto n = inStr.size();
 
     while(i < n) {
-        if((unsigned char)inStr[i] == IAC) {
-            switch((unsigned char)inStr[i+1]) {
-                case WILL:
-                case WONT:
-                case DO:
-                    // Skip 3
-                    i+=3;
-                    continue;
-                case EOR:
-                    // Skip 2
-                    i+=2;
-                    continue;
-                case SB:
-                    // Skip until we find IAC SE
-                    while(i < n) {
-                        if((unsigned char)inStr[i] == IAC && (unsigned char)inStr[i+1] == SE) {
-                            // Skip two more
-                            i += 2;
-                            break;
-                        }
-                        i++;
-                    }
-                    continue;
-            }
+        if((unsigned char) inStr[i] == IAC) {
+            i = skipTelnetSeq(inStr, i);
+            if(i >= n)   // only (possibly truncated) telnet: no real output
+                return false;
+            continue;
         }
         return true;
     }
@@ -496,39 +526,19 @@ bool Socket::needsPrompt(std::string_view inStr) {
 }
 
 std::string Socket::stripTelnet(std::string_view inStr) {
-    int i = 0;
+    std::size_t i = 0;
     auto n = inStr.size();
-    std::ostringstream oStr;
+    std::string oStr;
+    oStr.reserve(n);
 
     while(i < n) {
-        if((unsigned char)inStr[i] == IAC) {
-            switch((unsigned char)inStr[i+1]) {
-            case WILL:
-            case WONT:
-            case DO:
-                // Skip 3
-                i+=3;
-                continue;
-            case EOR:
-                // Skip 2
-                i+=2;
-                continue;
-            case SB:
-                // Skip until we find IAC SE
-                while(i < n) {
-                    if((unsigned char)inStr[i] == IAC && (unsigned char)inStr[i+1] == SE) {
-                        // Skip two more
-                        i += 2;
-                        break;
-                    }
-                    i++;
-                }
-                continue;
-            }
+        if((unsigned char) inStr[i] == IAC) {
+            i = skipTelnetSeq(inStr, i);    // drop the telnet command (truncated -> consumes rest)
+            continue;
         }
-        oStr << inStr[i++];
+        oStr += inStr[i++];
     }
-    return(oStr.str());
+    return oStr;
 }
 
 //********************************************************************
@@ -564,25 +574,24 @@ void Socket::startTelnetNeg() {
     // other protocols if the client responds with IAC WILL TTYPE or IAC WONT
     // TTYPE.  Thanks go to Donky on MudBytes for the suggestion.
 
-    write(reinterpret_cast<const char *>(telnet::do_ttype), false);
+    writeRaw(telnet::do_ttype);
 
 }
 void Socket::continueTelnetNeg(bool queryTType) {
     if (queryTType)
-        write(reinterpret_cast<const char *>(telnet::query_ttype), false);
+        writeRaw(telnet::query_ttype);
 
     // Not a dumb client if we've gotten a response
     opts.dumb = false;
-    write(reinterpret_cast<const char *>(telnet::will_comp2), false);
-    write(reinterpret_cast<const char *>(telnet::will_comp1), false);
+    writeRaw(telnet::will_comp2);
 
-    write(reinterpret_cast<const char *>(telnet::do_naws), false);
-    write(reinterpret_cast<const char *>(telnet::will_msdp), false);
-    write(reinterpret_cast<const char *>(telnet::will_mssp), false);
-    write(reinterpret_cast<const char *>(telnet::will_msp), false);
-//  write(reinterpret_cast<const char *>(telnet::do_charset), false);  // Not implemented yet
-    write(reinterpret_cast<const char *>(telnet::will_mxp), false);
-    write(reinterpret_cast<const char *>(telnet::will_eor), false);
+    writeRaw(telnet::do_naws);
+    writeRaw(telnet::will_msdp);
+    writeRaw(telnet::will_mssp);
+    writeRaw(telnet::will_msp);
+//  writeRaw(telnet::do_charset);  // Not implemented yet
+    writeRaw(telnet::will_mxp);
+    writeRaw(telnet::will_eor);
 }
 
 //********************************************************************
@@ -643,6 +652,9 @@ int Socket::processInput() {
                     break;
                 } else if((unsigned char)tmpBuf[i] == '\033') {
                     tState = NEG_MXP_SECURE;
+                    break;
+                } else if((unsigned char)tmpBuf[i] == CH_GO_AHEAD) {
+                    // Internal-only output sentinel; never accept it from a client.
                     break;
                 } else {
                     tmp += tmpBuf[i];
@@ -854,7 +866,7 @@ int Socket::processInput() {
                         }
 
                         // Request another!
-                        write(reinterpret_cast<const char *>(telnet::query_ttype), false);
+                        writeRaw(telnet::query_ttype);
                     }
                     if (term.firstType.empty()) {
                         term.firstType = term.type;
@@ -960,7 +972,7 @@ bool Socket::negotiate(unsigned char ch) {
         case TELOPT_CHARSET:
             if (tState == NEG_WILL) {
                 opts.charset = true;
-                write(reinterpret_cast<const char *>(telnet::charset_utf8), false);
+                writeRaw(telnet::charset_utf8);
                 std::clog << "Charset On" << std::endl;
             } else if (tState == NEG_WONT) {
                 opts.charset = false;
@@ -984,7 +996,7 @@ bool Socket::negotiate(unsigned char ch) {
                     // If they respond to something here they know how to negotiate,
                     // so continue and ask for the rest of the options, except term type
                     // which they have just indicated they won't do
-                    write(reinterpret_cast<const char *>(telnet::wont_ttype));
+                    writeRaw(telnet::wont_ttype);
                     continueTelnetNeg(false);
 
                 }
@@ -993,7 +1005,7 @@ bool Socket::negotiate(unsigned char ch) {
             break;
         case TELOPT_MXP:
             if (tState == NEG_WILL || tState == NEG_DO) {
-                write(reinterpret_cast<const char *>(telnet::start_mxp));
+                writeRaw(telnet::start_mxp);
                 // Start off in MXP LOCKED CLOSED
                 //TODO: send elements we're using for mxp
                 opts.mxp = true;
@@ -1007,22 +1019,10 @@ bool Socket::negotiate(unsigned char ch) {
             break;
         case TELOPT_COMPRESS2:
             if (tState == NEG_WILL || tState == NEG_DO) {
-                opts.mccp = 2;
+                opts.mccp = telnet::MCCP_V2;
                 startCompress();
             } else if (tState == NEG_WONT || tState == NEG_DONT) {
-                if (opts.mccp == 2) {
-                    opts.mccp = 0;
-                    endCompress();
-                }
-            }
-            tState = NEG_NONE;
-            break;
-        case TELOPT_COMPRESS:
-            if (tState == NEG_WILL || tState == NEG_DO) {
-                opts.mccp = 1;
-                startCompress();
-            } else if (tState == NEG_WONT || tState == NEG_DONT) {
-                if (opts.mccp == 1) {
+                if (opts.mccp == telnet::MCCP_V2) {
                     opts.mccp = 0;
                     endCompress();
                 }
@@ -1475,7 +1475,7 @@ void Socket::flush() {
 
     ssize_t n;
     if(!processedOutput.empty()) {
-        n = write(processedOutput, false, false);
+        n = writeInternal(processedOutput, false, false);
     } else {
         if ((n = write(output.str())) == 0)
             return;
@@ -1492,7 +1492,27 @@ void Socket::flush() {
 //********************************************************************
 // Write a string of data to the socket's file descriptor
 
-ssize_t Socket::write(std::string_view toWrite, bool pSpy, bool process) {
+ssize_t Socket::write(std::string_view text, bool pSpy) {
+    return writeInternal(text, pSpy, true);
+}
+
+ssize_t Socket::writeRaw(std::string_view bytes) {
+    return writeInternal(bytes, false, false);
+}
+
+ssize_t Socket::writeRaw(const unsigned char* bytes) {
+    return writeRaw(std::string_view(reinterpret_cast<const char*>(bytes)));
+}
+
+void Socket::echoOff() {
+    writeRaw(telnet::will_echo);
+}
+
+void Socket::echoOn() {
+    writeRaw(telnet::wont_echo);
+}
+
+ssize_t Socket::writeInternal(std::string_view toWrite, bool pSpy, bool process) {
     ssize_t written = 0;
     ssize_t n = 0;
     size_t total = 0;
@@ -1558,6 +1578,7 @@ ssize_t Socket::write(std::string_view toWrite, bool pSpy, bool process) {
     if (pSpy && !spying.empty()) {
         std::string forSpy = Socket::stripTelnet(toWrite);
 
+        boost::replace_all(forSpy, GO_AHEAD, "");   // drop the internal go-ahead sentinel
         boost::replace_all(forSpy, "\n", "\n<Spy> ");
         if(!forSpy.empty()) {
             for(const auto &sIt : spying) {
@@ -1608,12 +1629,8 @@ int Socket::startCompress(bool silent) {
         return (-1);
     }
 
-    if (!silent) {
-        if (opts.mccp == 2)
-            write(reinterpret_cast<const char *>(telnet::start_mccp2), false);
-        else
-            write(reinterpret_cast<const char *>(telnet::start_mccp), false);
-    }
+    if (!silent)
+        writeRaw(telnet::start_mccp2);
     // We're compressing now
     opts.compressing = true;
 
@@ -1709,7 +1726,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
             int mccp = 0;
             xml::copyToNum(mccp, curNode);
             if (mccp) {
-                write(reinterpret_cast<const char *>(telnet::will_comp2), false);
+                writeRaw(telnet::will_comp2);
             }
         }
         else if (NODE_NAME(curNode, "MXP")) xml::copyToBool(opts.mxp, curNode);
@@ -1728,7 +1745,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
 
     if (opts.msdp) {
         // Re-negotiate MSDP after a reboot
-        write(reinterpret_cast<const char *>(telnet::will_msdp), false);
+        writeRaw(telnet::will_msdp);
     }
 
     return (true);
@@ -1899,17 +1916,9 @@ void Socket::showLoginScreen() {
 //********************************************************************
 //                      askFor
 //********************************************************************
-const char EOR_STR[] = {(char) IAC, (char) EOR, '\0' };
-const char GA_STR[] = {(char) IAC, (char) GA, '\0' };
-
 void Socket::askFor(const char *str) {
-        printColor(str);
-
-    if (eorEnabled()) {
-        print(EOR_STR);
-    } else {
-        print(GA_STR);
-    }
+    printColor(str);
+    bprint(GO_AHEAD);
 }
 
 unsigned const char mssp_val[] = { MSSP_VAL, '\0' };
@@ -1924,182 +1933,92 @@ void addMSSPVal(std::ostringstream& msspStr, T val) {
     msspStr << mssp_val << val;
 }
 
-int Socket::sendMSSP() {
-    std::clog << "Sending MSSP string\n";
+template<class T>
+void addMSSP(std::ostringstream& msspStr, std::string_view var, T val) {
+    addMSSPVar(msspStr, var);
+    addMSSPVal<T>(msspStr, val);
+}
 
+std::string telnet::buildMsspPayload(int players, long startTime, short port, std::size_t numClasses, unsigned short raceCount, std::size_t numSkills) {
     std::ostringstream msspStr;
 
     msspStr << telnet::sb_mssp_start;
-    addMSSPVar(msspStr, "NAME");
-    addMSSPVal<std::string>(msspStr, "The Realms of Hell");
+    addMSSP(msspStr, "NAME", "The Realms of Hell");
+    addMSSP(msspStr, "PLAYERS", players);
 
-    addMSSPVar(msspStr, "PLAYERS");
-    addMSSPVal<int>(msspStr, gServer->getNumPlayers());
+    addMSSP(msspStr, "UPTIME", startTime);
+    addMSSP(msspStr, "HOSTNAME", "mud.rohonline.net");
+    addMSSP(msspStr, "PORT", port);
 
-    addMSSPVar(msspStr, "UPTIME");
-    addMSSPVal<long>(msspStr, StartTime);
-
-    addMSSPVar(msspStr, "HOSTNAME");
-    addMSSPVal<std::string>(msspStr, "mud.rohonline.net");
-
-    addMSSPVar(msspStr, "PORT");
-    addMSSPVal<std::string>(msspStr, "23");
-    addMSSPVal<std::string>(msspStr, "3333");
-
-    addMSSPVar(msspStr, "CODEBASE");
-    addMSSPVal<std::string>(msspStr, "RoH beta v" VERSION);
-
-    addMSSPVar(msspStr, "VERSION");
-    addMSSPVal<std::string>(msspStr, "RoH beta v" VERSION);
-
-    addMSSPVar(msspStr, "CREATED");
-    addMSSPVal<std::string>(msspStr, "1998");
-
-    addMSSPVar(msspStr, "LANGUAGE");
-    addMSSPVal<std::string>(msspStr, "English");
-
-    addMSSPVar(msspStr, "LOCATION");
-    addMSSPVal<std::string>(msspStr, "United States");
-
-    addMSSPVar(msspStr, "WEBSITE");
-    addMSSPVal<std::string>(msspStr, "http://www.rohonline.net");
-
-    addMSSPVar(msspStr, "FAMILY");
-    addMSSPVal<std::string>(msspStr, "Mordor");
-
-    addMSSPVar(msspStr, "GENRE");
-    addMSSPVal<std::string>(msspStr, "Fantasy");
+    addMSSP(msspStr, "CODEBASE", "RoH beta v" VERSION);
+    addMSSP(msspStr, "VERSION", "RoH beta v" VERSION);
+    addMSSP(msspStr, "CREATED", "1998");
+    addMSSP(msspStr, "LANGUAGE", "English");
+    addMSSP(msspStr, "LOCATION", "United States");
+    addMSSP(msspStr, "WEBSITE", "http://www.rohonline.net");
+    addMSSP(msspStr, "FAMILY", "Mordor");
+    addMSSP(msspStr, "GENRE", "Fantasy");
 
     addMSSPVar(msspStr, "GAMEPLAY");
     addMSSPVal<std::string>(msspStr, "Roleplaying");
     addMSSPVal<std::string>(msspStr, "Hack and Slash");
     addMSSPVal<std::string>(msspStr, "Adventure");
 
-    addMSSPVar(msspStr, "STATUS");
-    addMSSPVal<std::string>(msspStr, "Live");
+    addMSSP(msspStr, "STATUS", "Live");
+    addMSSP(msspStr, "GAMESYSTEM", "Custom");
+    addMSSP(msspStr, "AREAS", -1);
+    addMSSP(msspStr, "HELPFILES", 1000);
+    addMSSP(msspStr, "MOBILES", 5100);
+    addMSSP(msspStr, "OBJECTS", 7500);
+    addMSSP(msspStr, "ROOMS", 15000);
+    addMSSP(msspStr, "CLASSES", numClasses);
+    addMSSP(msspStr, "LEVELS", MAXALVL);
+    addMSSP(msspStr, "RACES", raceCount);
+    addMSSP(msspStr, "SKILLS", numSkills);
 
-    addMSSPVar(msspStr, "GAMESYSTEM");
-    addMSSPVal<std::string>(msspStr, "Custom");
+    addMSSP(msspStr, "GMCP", "0");
+    addMSSP(msspStr, "ATCP", "0");
+    addMSSP(msspStr, "SSL", "0");
+    addMSSP(msspStr, "ZMP", "0");
+    addMSSP(msspStr, "PUEBLO", "0");
+    addMSSP(msspStr, "MSDP", "1");
 
-    addMSSPVar(msspStr, "AREAS");
-    addMSSPVal<int>(msspStr, -1);
-
-    addMSSPVar(msspStr, "HELPFILES");
-    addMSSPVal<int>(msspStr, 1000);
-
-    addMSSPVar(msspStr, "MOBILES");
-    addMSSPVal<int>(msspStr, 5100);
-
-    addMSSPVar(msspStr, "OBJECTS");
-    addMSSPVal<int>(msspStr, 7500);
-
-    addMSSPVar(msspStr, "ROOMS");
-    addMSSPVal<int>(msspStr, 15000);
-
-    addMSSPVar(msspStr, "CLASSES");
-    addMSSPVal<size_t>(msspStr, gConfig->classes.size());
-
-    addMSSPVar(msspStr, "LEVELS");
-    addMSSPVal<int>(msspStr, MAXALVL);
-
-    addMSSPVar(msspStr, "RACES");
-    addMSSPVal<int>(msspStr, gConfig->getPlayableRaceCount());
-
-    addMSSPVar(msspStr, "SKILLS");
-    addMSSPVal<size_t>(msspStr, gConfig->skills.size());
-
-    addMSSPVar(msspStr, "GMCP");
-    addMSSPVal<std::string>(msspStr, "0");
-
-    addMSSPVar(msspStr, "ATCP");
-    addMSSPVal<std::string>(msspStr, "0");
-
-    addMSSPVar(msspStr, "SSL");
-    addMSSPVal<std::string>(msspStr, "0");
-
-    addMSSPVar(msspStr, "ZMP");
-    addMSSPVal<std::string>(msspStr, "0");
-
-    addMSSPVar(msspStr, "PUEBLO");
-    addMSSPVal<std::string>(msspStr, "0");
-
-    addMSSPVar(msspStr, "MSDP");
-    addMSSPVal<std::string>(msspStr, "1");
-
-    addMSSPVar(msspStr, "MSP");
-    addMSSPVal<std::string>(msspStr, "1");
+    addMSSP(msspStr, "MSP", "1");
 
     // TODO: UTF-8: Change to 1
-    addMSSPVar(msspStr, "UTF-8");
-    addMSSPVal<std::string>(msspStr, "0");
-
-    addMSSPVar(msspStr, "VT100");
-    addMSSPVal<std::string>(msspStr, "0");
-
+    addMSSP(msspStr, "UTF-8", "0");
+    addMSSP(msspStr, "VT100", "0");
     // TODO: XTERM 256: Change to 1
-    addMSSPVar(msspStr, "XTERM 256 COLORS");
-    addMSSPVal<std::string>(msspStr, "0");
+    addMSSP(msspStr, "XTERM 256 COLORS", "0");
+    addMSSP(msspStr, "ANSI", "1");
+    addMSSP(msspStr, "MCCP", "1");
+    addMSSP(msspStr, "MXP", "1");
 
-    addMSSPVar(msspStr, "ANSI");
-    addMSSPVal<std::string>(msspStr, "1");
-
-    addMSSPVar(msspStr, "MCCP");
-    addMSSPVal<std::string>(msspStr, "1");
-
-    addMSSPVar(msspStr, "MXP");
-    addMSSPVal<std::string>(msspStr, "1");
-
-    addMSSPVar(msspStr, "PAY TO PLAY");
-    addMSSPVal<std::string>(msspStr, "0");
-
-    addMSSPVar(msspStr, "PAY FOR PERKS");
-    addMSSPVal<std::string>(msspStr, "0");
-
-    addMSSPVar(msspStr, "HIRING BUILDERS");
-    addMSSPVal<std::string>(msspStr, "1");
-
-    addMSSPVar(msspStr, "HIRING CODERS");
-    addMSSPVal<std::string>(msspStr, "1");
-
-    addMSSPVar(msspStr, "MULTICLASSING");
-    addMSSPVal<std::string>(msspStr, "1");
-
-    addMSSPVar(msspStr, "NEWBIE FRIENDLY");
-    addMSSPVal<std::string>(msspStr, "1");
-
-    addMSSPVar(msspStr, "PLAYER CLANS");
-    addMSSPVal<std::string>(msspStr, "0");
-
-    addMSSPVar(msspStr, "PLAYER CRAFTING");
-    addMSSPVal<std::string>(msspStr, "1");
-
-    addMSSPVar(msspStr, "PLAYER GUILDS");
-    addMSSPVal<std::string>(msspStr, "1");
-
-    addMSSPVar(msspStr, "EQUIPMENT SYSTEM");
-    addMSSPVal<std::string>(msspStr, "Both");
-
-    addMSSPVar(msspStr, "MULTIPLAYING");
-    addMSSPVal<std::string>(msspStr, "Restricted");
-
-    addMSSPVar(msspStr, "PLAYERKILLING");
-    addMSSPVal<std::string>(msspStr, "Restricted");
-
-    addMSSPVar(msspStr, "QUEST SYSTEM");
-    addMSSPVal<std::string>(msspStr, "Integrated");
-
-    addMSSPVar(msspStr, "ROLEPLAYING");
-    addMSSPVal<std::string>(msspStr, "Encouraged");
-
-    addMSSPVar(msspStr, "TRAINING SYSTEM");
-    addMSSPVal<std::string>(msspStr, "Both");
-
-    addMSSPVar(msspStr, "WORLD ORIGINALITY");
-    addMSSPVal<std::string>(msspStr, "All Original");
+    addMSSP(msspStr, "PAY TO PLAY", "0");
+    addMSSP(msspStr, "PAY FOR PERKS", "0");
+    addMSSP(msspStr, "HIRING BUILDERS", "1");
+    addMSSP(msspStr, "HIRING CODERS", "1");
+    addMSSP(msspStr, "MULTICLASSING", "1");
+    addMSSP(msspStr, "NEWBIE FRIENDLY", "1");
+    addMSSP(msspStr, "PLAYER CLANS", "0");
+    addMSSP(msspStr, "PLAYER CRAFTING", "1");
+    addMSSP(msspStr, "PLAYER GUILDS", "1");
+    addMSSP(msspStr, "EQUIPMENT SYSTEM", "Both");
+    addMSSP(msspStr, "MULTIPLAYING", "Restricted");
+    addMSSP(msspStr, "PLAYERKILLING", "Restricted");
+    addMSSP(msspStr, "QUEST SYSTEM", "Integrated");
+    addMSSP(msspStr, "ROLEPLAYING", "Encouraged");
+    addMSSP(msspStr, "TRAINING SYSTEM", "Both");
+    addMSSP(msspStr, "WORLD ORIGINALITY", "All Original");
 
     msspStr << telnet::sb_mssp_end;
 
-    return (write(msspStr.str()));
+    return msspStr.str();
+}
+
+int Socket::sendMSSP() {
+    std::clog << "Sending MSSP string\n";
+    return writeRaw(telnet::buildMsspPayload(gServer->getNumPlayers(), StartTime, gConfig->getPortNum(), gConfig->classes.size(), gConfig->getPlayableRaceCount(), gConfig->skills.size()));
 }
 
 int Socket::getNumSockets() {

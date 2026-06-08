@@ -129,7 +129,8 @@ int cmdPassword(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     // do not flash output until player hits return
     player->setFlag(P_READING_FILE);
-    player->print("%c%c%c\n\r", 255, 251, 1);
+    player->getSock()->echoOff();
+    player->print("\n\r");
     player->print("Current password: ");
     gServer->processOutput();
     //    sock->intrpt &= ~1;
@@ -154,7 +155,8 @@ void changePassword(std::shared_ptr<Socket> sock, const std::string& str) {
     switch (sock->getState()) {
     case CON_CHANGE_PASSWORD:
         if(player->isPassword(str)) {
-            sock->print("%c%c%c\n\r", 255, 251, 1);
+            sock->echoOff();
+            sock->print("\n\r");
             sock->print("New password: ");
             gServer->processOutput();
             sock->intrpt &= ~1;
@@ -162,7 +164,8 @@ void changePassword(std::shared_ptr<Socket> sock, const std::string& str) {
             return;
             //          (fd,changePassword,2);
         } else {
-            sock->print("%c%c%c\n\r", 255, 252, 1);
+            sock->echoOn();
+            sock->print("\n\r");
             sock->print("Incorrect password.\n");
             sock->print("Aborting.\n");
             player->clearFlag(P_READING_FILE);
@@ -171,7 +174,8 @@ void changePassword(std::shared_ptr<Socket> sock, const std::string& str) {
         }
     case CON_CHANGE_PASSWORD_GET_NEW:
         if(!isValidPassword(sock, str)) {
-            sock->print("%c%c%c\n\r", 255, 252, 1);
+            sock->echoOn();
+            sock->print("\n\r");
             sock->print("Aborting.\n");
             player->clearFlag(P_READING_FILE);
             player->getSock()->setState(CON_PLAYING);
@@ -179,7 +183,8 @@ void changePassword(std::shared_ptr<Socket> sock, const std::string& str) {
         } else {
             strncpy(sock->tempstr[1], str.c_str(), 255);
             sock->tempstr[1][255] = '\0';
-            sock->print("%c%c%c\n\r", 255, 251, 1);
+            sock->echoOff();
+            sock->print("\n\r");
             sock->print("Re-enter password: ");
             gServer->processOutput();
             sock->intrpt &= ~1;
@@ -187,7 +192,8 @@ void changePassword(std::shared_ptr<Socket> sock, const std::string& str) {
             return;
         }
     case CON_CHANGE_PASSWORD_FINISH:
-        sock->print("%c%c%c\n\r", 255, 252, 1);
+        sock->echoOn();
+        sock->print("\n\r");
         if(str == sock->tempstr[1]) {
 
             if(!player->isCt())

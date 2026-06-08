@@ -764,8 +764,7 @@
 #define O_KEEP                      159      // Object is being kept - cannot be dropped or sole on accident
 #define O_NO_BACKSTAB               160      // Cannot backstab with this weapon
 #define O_SAVE_FULL                 161      // Save the entire object to pfile/roomfile instead of just a reference.
-// Mainly used when a ct/dm has changed an item, cleared when *saving
-// or for custom
+// Mainly used when a ct/dm has changed an item, cleared when *saving or for custom
 #define O_BODYPART                  162      // Object cannot be peeked/stolen, unset when monster dies
 #define O_DARKMETAL                 163      // Object is a darkmetal item (destroyed in sunlight)
 #define O_SEL_TIEFLING              164      // race selective: tiefling

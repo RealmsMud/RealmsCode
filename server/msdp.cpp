@@ -53,17 +53,15 @@ void Server::processMsdp() {
         if(sock->getState() == CON_DISCONNECTING)
             continue;
 
-        if(sock->mccpEnabled()) {
-            for(auto& [vName, var] : sock->msdpReporting) {
-                if(var.getRequiresPlayer() && (!sock->getPlayer() || sock->getState() != CON_PLAYING)) continue;
-                if(!var.checkTimer()) continue;
+        for(auto& [vName, var] : sock->msdpReporting) {
+            if(var.getRequiresPlayer() && (!sock->getPlayer() || sock->getState() != CON_PLAYING)) continue;
+            if(!var.checkTimer()) continue;
 
-                var.update();
-                if(!var.isDirty()) continue;
+            var.update();
+            if(!var.isDirty()) continue;
 
-                var.send(*sock);
-                var.setDirty(false);
-            }
+            var.send(*sock);
+            var.setDirty(false);
         }
     }
 }
@@ -275,13 +273,13 @@ void Socket::msdpSendList(std::string_view variable, const std::vector<std::stri
                 << (unsigned char) MSDP_ARRAY_OPEN;
 
         for( auto& value : values ) {
-            oStr << (unsigned char) MSDP_VAL << value;
+            oStr << (unsigned char) MSDP_VAL << telnet::escapeIAC(value);
         }
 
         oStr << (unsigned char) MSDP_ARRAY_CLOSE << (unsigned char) IAC << (unsigned char) SE;
     }
 
-    write(oStr.str());
+    writeRaw(oStr.str());
 
 }
 
@@ -348,7 +346,7 @@ bool Socket::msdpSendPair(std::string_view variable, std::string_view value) {
         oStr
                 << (unsigned char) IAC << (unsigned char) SB << (unsigned char) TELOPT_MSDP
                 << (unsigned char) MSDP_VAR << variable
-                << (unsigned char) MSDP_VAL << value
+                << (unsigned char) MSDP_VAL << telnet::escapeIAC(value)
                 << (unsigned char) IAC << (unsigned char) SE;
     }
     std::string toSend = oStr.str();
@@ -357,7 +355,7 @@ bool Socket::msdpSendPair(std::string_view variable, std::string_view value) {
     debugMsdp(toSend);
 #endif
 
-    write(toSend);
+    writeRaw(toSend);
     return true;
 }
 

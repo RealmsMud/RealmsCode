@@ -24,6 +24,7 @@
 #include <netinet/in.h>
 
 // C++ Includes
+#include <cstddef>
 #include <list>
 #include <map>
 #include <queue>
@@ -55,7 +56,6 @@ namespace telnet {
     #define TELOPT_CHARSET      42
     #define TELOPT_MSDP         69
     #define TELOPT_MSSP         70
-    #define TELOPT_COMPRESS     85
     #define TELOPT_COMPRESS2    86
     #define TELOPT_MSP          90
     #define TELOPT_MXP          91
@@ -87,8 +87,15 @@ namespace telnet {
     #define MXP_AMP             "\x06"
     #define CH_MXP_AMP          '\x06'
 
+    #define GO_AHEAD            "\x01"
+    #define CH_GO_AHEAD         '\x01'
+
     #define MXP_SECURE_OPEN "\033[1z"
     #define MXP_LOCK_CLOSE "\033[7z"
+
+    constexpr int TELNET_OPT_CMD_LEN = 3;  // IAC <WILL|WONT|DO> <opt>
+    constexpr int TELNET_CMD_LEN     = 2;  // IAC <cmd>
+    constexpr int MCCP_V2            = 2;  // opts.mccp value when MCCP2 is active
 
 
     extern unsigned const char will_msdp[];     // Mud Server Data Protocol support
@@ -101,11 +108,10 @@ namespace telnet {
     extern unsigned const char start_mxp[];     // Start MPX string
 
     extern unsigned const char will_comp2[];    // MCCP V2 support
-    extern unsigned const char will_comp1[];    // MCCP V1 support
-    extern unsigned const char start_mccp[];    // Start compress
     extern unsigned const char start_mccp2[];   // Start compress2
 
-    extern unsigned const char will_echo[];     // Echo input
+    extern unsigned const char will_echo[];     // IAC WILL ECHO (server echoes -> client masks input)
+    extern unsigned const char wont_echo[];     // IAC WONT ECHO (return echo to the client)
 
     extern unsigned const char will_eor[];      // EOR After every prompt
 
@@ -123,12 +129,17 @@ namespace telnet {
     extern unsigned const char charset_utf8[];  // Negotiate UTF-8
 
 
-    extern unsigned const char eor_str[];
+    extern unsigned const char eor_str[];       // IAC EOR end-of-prompt marker
+    extern unsigned const char ga_str[];        // IAC GA end-of-prompt marker
 
 
     // For MCCP
     void *zlib_alloc(void *opaque, unsigned int items, unsigned int size);
     void zlib_free(void *opaque, void *address);
+
+    std::string escapeIAC(std::string_view in);
+    std::string promptGoAhead(bool eor, bool dumb);
+    std::string buildMsspPayload(int players, long startTime, short port, std::size_t numClasses, unsigned short raceCount, std::size_t numSkills);
 }
 
 class Socket : public std::enable_shared_from_this<Socket> {
@@ -164,12 +175,14 @@ class Socket : public std::enable_shared_from_this<Socket> {
 
 private:
     static int numSockets;
+    ssize_t writeInternal(std::string_view bytes, bool pSpy, bool process);
 
 public:
     // Static Methods
     static void resolveIp(const sockaddr_in &addr, std::string& ip);
     static std::string stripTelnet(std::string_view inStr);
     static bool needsPrompt(std::string_view inStr);
+    static std::size_t skipTelnetSeq(std::string_view inStr, std::size_t i);
     void viewFile(const std::string& str, bool shouldPage=false);
     void viewFileReverse(const std::string& str);
     void viewFileReverseReal(const std::string& str);
@@ -190,7 +203,11 @@ public:
     void finishLogin();
 
 
-    ssize_t write(std::string_view toWrite, bool pSpy = true, bool process = true);
+    ssize_t write(std::string_view text, bool pSpy = true);  // game text: color/MXP/newline + IAC-escaped
+    ssize_t writeRaw(std::string_view bytes);                // protocol bytes: verbatim, never spied/processed
+    ssize_t writeRaw(const unsigned char* bytes);            // convenience for the NUL-terminated telnet:: arrays
+    void echoOff();                                          // mask client input (e.g. passwords)
+    void echoOn();                                           // restore client-side echo
     void askFor(const char *str);
 
     void vprint(const char *fmt, va_list ap);
