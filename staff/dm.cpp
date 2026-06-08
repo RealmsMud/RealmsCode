@@ -1283,7 +1283,7 @@ int dmGameStatus(const std::shared_ptr<Player>& player, cmd* cmnd) {
         d++;
     }
     strcpy(buf+strlen(buf)-2, ".\n");
-    player->printColor(buf);
+    player->printColor("%s", buf);
     player->printColor("^cDM password: ^x%s\n", gConfig->getDmPass().c_str());
     player->printColor("^cWebserver:   ^x%s\n", gConfig->getWebserver().c_str());
     player->printColor("^cUser Agent:  ^x%s\n", gConfig->getUserAgent().c_str());

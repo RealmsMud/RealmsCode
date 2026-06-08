@@ -22,6 +22,7 @@
 #include <list>                        // for operator==, _List_iterator, list
 #include <string>                      // for string
 
+#include "creatureStreams.hpp"
 #include "cmd.hpp"                     // for cmd, COMMANDMAX
 #include "mudObjects/exits.hpp"        // for Exit
 #include "mudObjects/players.hpp"      // for Player
@@ -210,7 +211,7 @@ static void forget_spelling(std::shared_ptr<Player> player,cmd* cmnd) {
            wordlists.  If it doesn't, we should tell the player
            that we never knew how to spell that in the first place. */
         player->print("Oh, no!  I've just forgotten how to spell ");
-        player->print(cmnd->str[i]);
+        *player << cmnd->str[i];        // player-supplied word: never a format string
         player->print("!\n");
 
         /* But for now, we use the crude method of obtaining the
@@ -251,7 +252,7 @@ static void do_spelling_check(std::shared_ptr<Player> player, int mode, const st
 
                     if(mode & SP_MODE_LIST) {
                         player->print("\t");
-                        player->print(word);
+                        *player << word;
 
                         if(mode & SP_MODE_ADVISE) {
                             player->print(" -> ");
@@ -284,7 +285,7 @@ static void print_word_list(std::shared_ptr<Player> player,const PspellWordList 
         const char      *word;
 
         while((word = pspell_string_emulation_next(emu)) != nullptr) {
-            player->print((char *) word);
+            *player << word;
             player->print(" ");
         }
     } else {
