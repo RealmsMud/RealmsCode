@@ -61,6 +61,8 @@
 #include "global.hpp"                               // for MAXALVL
 #include "login.hpp"                                // for createPlayer, CON...
 #include "msdp.hpp"                                 // for ReportedMsdpVariable
+#include "gmcp.hpp"                                 // for the pure GMCP conversion layer
+#include "gmcpEvents.hpp"                            // for gmcp::commChannelList
 #include "mud.hpp"                                  // for StartTime
 #include "mudObjects/players.hpp"                   // for Player
 #include "paths.hpp"                                // for Config
@@ -239,6 +241,31 @@ std::string escapeIAC(std::string_view in) {
     }
     return out;
 }
+
+std::string unescapeIAC(std::string_view in) {
+    std::string out;
+    out.reserve(in.size());
+    for(size_t i = 0; i < in.size(); ++i) {
+        unsigned char c = (unsigned char) in[i];
+        out += (char) c;
+        if(c == IAC && i + 1 < in.size() && (unsigned char) in[i + 1] == IAC)
+            ++i;
+    }
+    return out;
+}
+
+std::string subnegotiate(unsigned char telopt, std::string_view payload, bool escapePayload) {
+    std::string esc = escapePayload ? escapeIAC(payload) : std::string(payload);
+    std::string out;
+    out.reserve(esc.size() + 5);
+    out.push_back((char) IAC);
+    out.push_back((char) SB);
+    out.push_back((char) telopt);
+    out += esc;
+    out.push_back((char) IAC);
+    out.push_back((char) SE);
+    return out;
+}
 }
 
 //--------------------------------------------------------------------
@@ -257,6 +284,7 @@ void Socket::reset() {
     opts.msp = false;
     opts.eor = false;
     opts.msdp = false;
+    opts.gmcp = false;
     opts.charset = false;
     opts.utf8 = false;
     opts.mxpClientSecure = false;
@@ -622,6 +650,7 @@ void Socket::continueTelnetNeg(bool queryTType) {
 
     writeRaw(telnet::do_naws);
     writeRaw(telnet::will_msdp);
+    writeRaw(telnet::will_gmcp);
     writeRaw(telnet::will_mssp);
     writeRaw(telnet::will_msp);
     writeRaw(telnet::do_charset);
@@ -828,7 +857,7 @@ int Socket::processInput() {
                 }
                 break;
             case NEG_SB_GMCP:
-                // We don't handle this right now, but ignoring it because Mudlet likes to send it anyway
+                cmdInBuf.push_back(tmpBuf[i]);
                 if(tmpBuf[i] == IAC) {
                     tState = NEG_SB_GMCP_END;
                     break;
@@ -836,11 +865,10 @@ int Socket::processInput() {
                 break;
             case NEG_SB_GMCP_END:
                 if (tmpBuf[i] == SE) {
-                    // We should have a full GMCP command now, let's ignore it
+                    parseGmcp();
                     tState = NEG_NONE;
                     break;
                 } else {
-                    // Not an SE: The last input was an IAC, so keep going
                     cmdInBuf.push_back(tmpBuf[i]);
                     tState = NEG_SB_GMCP;
                     break;
@@ -1137,10 +1165,20 @@ bool Socket::negotiate(unsigned char ch) {
                 opts.msdp = true;
                 msdpSend("SERVER_ID");
 
-                std::clog << "Enabled MSDP" << std::endl;
+                if (gConfig->getLogTelnet()) std::clog << "Enabled MSDP" << std::endl;
             } else {
-                std::clog << "Disabled MSDP" << std::endl;
+                if (gConfig->getLogTelnet()) std::clog << "Disabled MSDP" << std::endl;
                 opts.msdp = false;
+            }
+            tState = NEG_NONE;
+            break;
+        case TELOPT_GMCP:
+            if (tState == NEG_DO) {
+                opts.gmcp = true;
+                if (gConfig->getLogTelnet()) std::clog << "Enabled GMCP" << std::endl;
+            } else {
+                if (gConfig->getLogTelnet()) std::clog << "Disabled GMCP" << std::endl;
+                opts.gmcp = false;
             }
             tState = NEG_NONE;
             break;
@@ -1431,6 +1469,197 @@ bool Socket::parseMsdp() {
     }
     cmdInBuf.clear();
 
+    return (true);
+}
+
+// True if package is token itself or a dotted sub-package of it ("Char" covers "Char.Vitals").
+static bool gmcpPackageUnder(const std::string& token, const std::string& package) {
+    return package == token ||
+           (package.size() > token.size() && package.compare(0, token.size(), token) == 0
+            && package[token.size()] == '.');
+}
+
+bool Socket::gmcpSend(std::string_view package, const nlohmann::json& body) {
+    if (!gmcpEnabled()) return false;
+    std::string payload(package);
+    if (!body.is_null()) {
+        payload += ' ';
+        payload += body.dump();
+    }
+    writeRaw(telnet::subnegotiate(TELOPT_GMCP, payload));
+    return true;
+}
+
+bool Socket::gmcpSendPackage(const std::string& package) {
+    if (package == "Char.Group") {
+        nlohmann::json j = gmcpCharGroup();
+        if (j.is_null())
+            return false;
+        return gmcpSend(package, j);
+    }
+    if (package == "Room.Info") {
+        nlohmann::json j = gmcpRoomInfo();
+        if (!j.is_object() || j.empty())
+            return false;
+        bool sent = gmcpSend(package, j);
+        if (gmcpSupports("Room.Players")) gmcpSend("Room.Players", gmcpRoomPlayers());
+        return sent;
+    }
+
+    std::vector<gmcp::GmcpField> fields;
+    for (const auto& m : gmcp::mappings()) {
+        if (m.package != package) continue;
+        ReportedMsdpVariable* rv = getReportedMsdpVariable(m.msdpVar);
+        if (!rv) continue;
+        const std::string& value = rv->getValue();
+        if (value == "unknown") continue;
+        if (m.structured) return gmcpSend(package, gmcp::msdpValueToJson(value));
+        fields.push_back({m.key, value, m.numeric});
+    }
+    if (fields.empty()) return false;
+    return gmcpSend(package, gmcp::buildPackageBody(fields));
+}
+
+void Socket::enableGmcpPackage(const std::string& token) {
+    std::string pkg = gmcp::stripSupportsVersion(token);
+    gmcpStdPackages.insert(pkg);
+    int reported = 0;
+    for (const auto& m : gmcp::mappings())
+        if (gmcpPackageUnder(pkg, m.package)) {
+            msdpReport(m.msdpVar);
+            reported++;
+        }
+    if (gmcpPackageUnder(pkg, "Char.StatusVars"))
+        gmcpSend("Char.StatusVars", gmcp::charStatusVars());
+
+    if (gConfig->getLogTelnet())
+        std::clog << "GMCP subscribe: " << pkg << " (" << reported << " vars)" << std::endl;
+}
+
+void Socket::gmcpMsdpList(const std::string& which) {
+    std::string label;
+    std::vector<std::string> values = msdpListValues(which, label);
+    if (label.empty()) return;
+    nlohmann::json body;
+    body[label] = values;
+    gmcpSend("MSDP", body);
+}
+
+void Socket::gmcpMsdpSendNow(const std::vector<std::string>& vars) {
+    nlohmann::json body = nlohmann::json::object();
+    for (const auto& var : vars) {
+        MsdpVariable* mv = gConfig->getMsdpVariable(var);
+        if (!mv) continue;
+        std::string value = mv->currentValue(*this);
+        if (value.empty()) continue;
+        body[var] = gmcp::msdpValueToJson(value);
+    }
+    if (!body.empty()) gmcpSend("MSDP", body);
+}
+
+void Socket::gmcpMsdpHandle(const nlohmann::json& body) {
+    if (!body.is_object()) return;
+    for (auto it = body.begin(); it != body.end(); ++it) {
+        const std::string& key = it.key();
+        const auto& v = it.value();
+
+        std::vector<std::string> args;
+        if (v.is_string())
+            args.push_back(v.get<std::string>());
+        else if (v.is_array()) {
+            for (const auto& e : v)
+                args.push_back(e.is_string() ? e.get<std::string>() : e.dump());
+        } else if (!v.is_null())
+            args.push_back(v.dump());
+
+        if (key == "LIST") {
+            for (const auto& a : args) gmcpMsdpList(a);
+        } else if (key == "REPORT") {
+            for (const auto& a : args) { msdpReport(a); gmcpMsdpVars.insert(a); }
+        } else if (key == "UNREPORT") {
+            for (const auto& a : args) {
+                gmcpMsdpVars.erase(a);
+                std::string pkg = gmcp::packageForVar(a);
+                if (pkg.empty() || !gmcpSupports(pkg))
+                    msdpUnReport(a);
+            }
+        } else if (key == "SEND") {
+            gmcpMsdpSendNow(args);
+        } else if (key == "RESET") {
+            for (const auto& a : args) { std::string s = a; msdpReset(s); }
+        } else {
+            for (const auto& a : args) processMsdpVarVal(key, a);
+        }
+    }
+}
+
+bool Socket::parseGmcp() {
+    if (gmcpEnabled() && !cmdInBuf.empty()) {
+        std::string raw(cmdInBuf.begin(), cmdInBuf.end());
+        if (!raw.empty() && static_cast<unsigned char>(raw.back()) == IAC)
+            raw.pop_back();
+        std::string payload = telnet::unescapeIAC(raw);
+        try {
+            auto msg = gmcp::parseMessage(payload);
+            if (gConfig->getLogTelnet())
+                std::clog << "GMCP recv: " << msg.package << (msg.data.is_null() ? "" : " " + msg.data.dump()) << std::endl;
+            if (msg.package == "Core.Hello") {
+                if (msg.data.is_object()) {
+                    if (msg.data.contains("client") && msg.data["client"].is_string())
+                        processMsdpVarVal("CLIENT_ID", msg.data["client"].get<std::string>());
+                    if (msg.data.contains("version") && msg.data["version"].is_string())
+                        processMsdpVarVal("CLIENT_VERSION", msg.data["version"].get<std::string>());
+                }
+            } else if (msg.package == "Core.Supports.Set" || msg.package == "Core.Supports.Add") {
+                if (msg.package == "Core.Supports.Set") {
+                    // Reset channel-2 subscriptions only; channel-1 (MSDP package) stays.
+                    for (const auto& m : gmcp::mappings())
+                        if (gmcpSupports(m.package) && gmcpMsdpVars.find(m.msdpVar) == gmcpMsdpVars.end())
+                            msdpUnReport(m.msdpVar);
+                    gmcpStdPackages.clear();
+                }
+                for (const auto& tok : gmcp::parseSupports(msg.data))
+                    enableGmcpPackage(tok);
+            } else if (msg.package == "Core.Supports.Remove") {
+                if (msg.data.is_array())
+                    for (const auto& entry : msg.data) {
+                        if (!entry.is_string()) continue;
+                        std::string pkg = gmcp::stripSupportsVersion(entry.get<std::string>());
+                        gmcpStdPackages.erase(pkg);
+                        for (const auto& m : gmcp::mappings())
+                            if (gmcpPackageUnder(pkg, m.package) && gmcpMsdpVars.find(m.msdpVar) == gmcpMsdpVars.end())
+                                msdpUnReport(m.msdpVar);
+                    }
+            } else if (msg.package == "Core.Ping") {
+                gmcpSend("Core.Ping", nullptr);
+            } else if (msg.package == "MSDP") {
+                gmcpMsdpHandle(msg.data);
+            } else if (msg.package == "Char.Skills.Get") {
+                std::string group;
+                if (msg.data.is_object() && msg.data.contains("group") && msg.data["group"].is_string())
+                    group = msg.data["group"].get<std::string>();
+                if (group.empty())
+                    gmcpSend("Char.Skills.Groups", gmcpSkillGroups());
+                else
+                    gmcpSend("Char.Skills.List", gmcpSkillList(group));
+            } else if (msg.package == "Char.Items.Inv") {
+                gmcpSend("Char.Items.List", gmcpItemsList("inv"));
+            } else if (msg.package == "Char.Items.Room") {
+                gmcpSend("Char.Items.List", gmcpItemsList("room"));
+            } else if (msg.package == "Char.Afflictions.Get") {
+                gmcpSend("Char.Afflictions.List", gmcpEffectList(false));
+            } else if (msg.package == "Char.Defences.Get") {
+                gmcpSend("Char.Defences.List", gmcpEffectList(true));
+            } else if (msg.package == "Comm.Channel.Get") {
+                gmcpSend("Comm.Channel.List", gmcp::commChannelList(getPlayer()));
+            } else if (gConfig->getLogTelnet()) {
+                std::clog << "Unhandled GMCP package: " << msg.package << std::endl;
+            }
+        } catch (const std::exception& e) {
+            std::clog << "GMCP parse error: " << e.what() << std::endl;
+        }
+    }
+    cmdInBuf.clear();
     return (true);
 }
 
@@ -1818,6 +2047,7 @@ bool Socket::saveTelopts(xmlNodePtr rootNode) {
     rootNode = xml::newStringChild(rootNode, "Telopts");
     xml::newNumChild(rootNode, "MCCP", mccpEnabled());
     xml::newNumChild(rootNode, "MSDP", msdpEnabled());
+    xml::newBoolChild(rootNode, "GMCP", gmcpEnabled());
     xml::newBoolChild(rootNode, "MXP", mxpEnabled());
     xml::newBoolChild(rootNode, "DumbClient", isDumbClient());
     xml::newStringChild(rootNode, "Term", getTermType());
@@ -1845,6 +2075,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
         else if (NODE_NAME(curNode, "MXP")) xml::copyToBool(opts.mxp, curNode);
         else if (NODE_NAME(curNode, "Color")) xml::copyToNum(opts.color, curNode);
         else if (NODE_NAME(curNode, "MSDP"))  xml::copyToBool(opts.msdp, curNode);
+        else if (NODE_NAME(curNode, "GMCP"))  xml::copyToBool(opts.gmcp, curNode);
         else if (NODE_NAME(curNode, "Term")) xml::copyToString(term.type, curNode);
         else if (NODE_NAME(curNode, "DumbClient")) xml::copyToBool(opts.dumb, curNode);
         else if (NODE_NAME(curNode, "TermCols")) xml::copyToNum(term.cols, curNode);
@@ -1860,6 +2091,9 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
     if (opts.msdp) {
         // Re-negotiate MSDP after a reboot
         writeRaw(telnet::will_msdp);
+    }
+    if (opts.gmcp) {
+        writeRaw(telnet::will_gmcp);
     }
 
     return (true);
@@ -1922,6 +2156,17 @@ int Socket::mccpEnabled() const {
 }
 bool Socket::msdpEnabled() const {
     return (opts.msdp);
+}
+
+bool Socket::gmcpEnabled() const {
+    return (opts.gmcp);
+}
+
+bool Socket::gmcpSupports(const std::string& pkg) const {
+    for (const auto& token : gmcpStdPackages)
+        if (token == pkg || (pkg.size() > token.size() && pkg.compare(0, token.size(), token) == 0 && pkg[token.size()] == '.'))
+            return true;
+    return false;
 }
 
 bool Socket::mspEnabled() const {
@@ -2106,7 +2351,7 @@ std::string telnet::buildMsspPayload(int players, long startTime, short port, st
     addMSSP(msspStr, "RACES", raceCount);
     addMSSP(msspStr, "SKILLS", numSkills);
 
-    addMSSP(msspStr, "GMCP", "0");
+    addMSSP(msspStr, "GMCP", "1");
     addMSSP(msspStr, "ATCP", "0");
     addMSSP(msspStr, "SSL", "0");
     addMSSP(msspStr, "ZMP", "0");

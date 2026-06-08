@@ -270,7 +270,7 @@ private:
 
     // Updates
     void updateGame();
-    void processMsdp();
+    void processReporting();
     void pulseTicks(long t);
     void pulseCreatureEffects(long t);
     void pulseRoomEffects(long t);

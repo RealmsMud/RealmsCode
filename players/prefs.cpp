@@ -211,6 +211,10 @@ int cmdTelOpts(const std::shared_ptr<Player>& player, cmd* cmnd) {
             oStr << "\t MSDP Reporting: " << sock->getMsdpReporting() << "\n";
 
         }
+        oStr << formatWithDesc % "GMCP" % "Generic MUD Communication Protocol" % (sock->gmcpEnabled() ? "^gon^x" : "^roff^x");
+        if (sock->gmcpEnabled()) {
+            oStr << "\t GMCP Packages: " << sock->getGmcpPackages() << "\n";
+        }
         oStr << formatWithDesc % "Charset" % "Charset Negotiation" % (sock->charsetEnabled() ? "^gon^x" : "^roff^x");
         oStr << formatWithDesc % "UTF-8" % "UTF-8 Support" % (sock->utf8Enabled() ? "^gon^x" : "^roff^x");
         long mtts = sock->getMtts();

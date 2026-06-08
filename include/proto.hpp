@@ -204,6 +204,8 @@ bool induel(const std::shared_ptr<const Player>& player, const std::shared_ptr<c
 // equipment.cpp
 int doGetObject(const std::shared_ptr<Object>&  object, const std::shared_ptr<Creature>& player, bool doLimited=true, bool noSplit=false, bool noQuest=false, bool noMessage=false, bool saveOnLimited=true);
 void wearAll(const std::shared_ptr<Player>& player, bool login = false);
+bool listObjectSee(const std::shared_ptr<const Player> player, std::shared_ptr<Object> object, bool showAll);
+bool roomPlayerVisible(const std::shared_ptr<const Creature>& viewer, const std::shared_ptr<Player>& target, int magicShowHidden = 0);
 CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd);
 
 void give_money(const std::shared_ptr<Player>& player, cmd* cmnd);

@@ -130,8 +130,10 @@ public:
     void print(std::shared_ptr<Socket> ignore, const char *fmt, ...);
     void print(std::shared_ptr<Socket> ignore1, std::shared_ptr<Socket> ignore2, const char *fmt, ...);
 
-    virtual std::string getMsdp(bool showExits = true) const { return ""; };
-    [[nodiscard]] std::string getExitsMsdp() const;
+    virtual std::string getMsdp(const std::shared_ptr<const Player>& viewer, bool showExits = true) const { return ""; };
+    // viewer gates exit visibility via Player::showExit (secret/concealed/invis exits). A null
+    // viewer disables filtering; pass the real viewer whenever exits are serialized.
+    [[nodiscard]] std::string getExitsMsdp(const std::shared_ptr<const Player>& viewer) const;
 private:
     void doPrint(bool showTo(std::shared_ptr<Socket>), std::shared_ptr<Socket> ignore1, std::shared_ptr<Socket> ignore2, const char *fmt, va_list ap);
 };

@@ -32,6 +32,7 @@ class Container;
 class EffectInfo;
 class Monster;
 class MudObject;
+class Creature;
 class Object;
 class Player;
 class Socket;
@@ -72,6 +73,10 @@ public:
     bool purgeObjects();
 
     std::list<std::shared_ptr<Player>> getPlayers();
+    // Pre-filtered views so callers (room/inventory listings, GMCP) never re-implement the
+    // visibility gate. getVisiblePlayers includes viewer itself (callers exclude self if needed).
+    [[nodiscard]] std::list<std::shared_ptr<Player>> getVisiblePlayers(const std::shared_ptr<const Creature>& viewer) const;
+    [[nodiscard]] std::list<std::shared_ptr<Object>> getVisibleObjects(const std::shared_ptr<const Player>& viewer, bool showAll = false) const;
 
 
     std::shared_ptr<Container> remove(Containable* toRemove);

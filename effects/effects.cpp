@@ -41,6 +41,7 @@
 #include "effects.hpp"                              // for EffectInfo, Effect
 #include "flags.hpp"                                // for O_WORN
 #include "global.hpp"                               // for CAP, DT_NONE, BURNED
+#include "gmcpEvents.hpp"                           // for gmcp::onEffect*
 #include "join.hpp"                                 // for join
 #include "mudObjects/container.hpp"                 // for Container, PlayerSet
 #include "mudObjects/creatures.hpp"                 // for Creature
@@ -468,6 +469,8 @@ EffectInfo* Effects::addEffect(EffectInfo* newEffect, bool show, MudObject* pPar
     // post-apply gets run after everything is done
     newEffect->postApply(keepApplier);
 
+    gmcp::onEffectAdd(newEffect->getParent(), newEffect);
+
     return(newEffect);
 }
 
@@ -506,6 +509,7 @@ bool Effects::removeEffect(EffectInfo* toDel, bool show) {
     if(!toDel)
         return(false);
 
+    gmcp::onEffectRemove(toDel->getParent(), toDel);
     effectList.remove(toDel);
     toDel->remove(show);
     delete toDel;
@@ -657,6 +661,7 @@ bool Creature::pulseEffects(time_t t) {
 
         // If pulse returns false, purge this effect
         if(!pulsed) {
+            gmcp::onEffectRemove(effect->getParent(), effect);
             effect->remove();
             if(poison || effect->isPoison())
                 poison = true;

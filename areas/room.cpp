@@ -33,6 +33,7 @@
 #include "effects.hpp"                 // for EffectInfo
 #include "flags.hpp"                   // for M_PERMANENT_MONSTER, O_JUST_BO...
 #include "global.hpp"                  // for MAG, CreatureClass, CAP, Creat...
+#include "gmcpEvents.hpp"              // for gmcp::onRoom*
 #include "hooks.hpp"                   // for Hooks
 #include "lasttime.hpp"                // for crlasttime, lasttime
 #include "location.hpp"                // for Location
@@ -147,6 +148,8 @@ void Player::finishAddPlayer(const std::shared_ptr<BaseRoom>& room) {
     display_rom(Containable::downcasted_shared_from_this<Player>());
 
     Hooks::run(room, "afterAddCreature", Containable::downcasted_shared_from_this<Player>(), "afterAddToRoom");
+
+    gmcp::onRoomEnter(room, Containable::downcasted_shared_from_this<Player>());
 }
 
 void Player::addToRoom(const std::shared_ptr<BaseRoom>& room) {
@@ -324,6 +327,8 @@ int Player::doDeleteFromRoom(std::shared_ptr<BaseRoom> room, bool delPortal) {
     }
 
     Hooks::run(room, "afterRemoveCreature", Containable::downcasted_shared_from_this<Player>(), "afterRemoveFromRoom");
+
+    gmcp::onRoomLeave(room, Containable::downcasted_shared_from_this<Player>());
     return(i);
 }
 
@@ -341,6 +346,7 @@ void Object::addToRoom(const std::shared_ptr<BaseRoom>& room) {
     clearFlag(O_KEEP);
     room->add(Containable::downcasted_shared_from_this<Object>());
     Hooks::run(room, "afterAddObject", Containable::downcasted_shared_from_this<Object>(), "afterAddToRoom");
+    gmcp::onRoomItemAdd(room, Containable::downcasted_shared_from_this<Object>());
     room->killMortalObjects();
 }
 
@@ -358,6 +364,7 @@ void Object::deleteFromRoom() {
     Hooks::run(room, "beforeRemoveObject", Containable::downcasted_shared_from_this<Object>(), "beforeRemoveFromRoom");
     removeFrom();
     Hooks::run(room, "afterRemoveObject", Containable::downcasted_shared_from_this<Object>(), "afterRemoveFromRoom");
+    gmcp::onRoomItemRemove(room, Containable::downcasted_shared_from_this<Object>());
 }
 
 //*********************************************************************
@@ -597,6 +604,22 @@ std::string roomEffStr(const std::string& effect, std::string str, const std::sh
 // and all the exits in a room.  That is, unless they are not visible
 // or the room is dark.
 
+bool roomPlayerVisible(const std::shared_ptr<const Creature>& viewer, const std::shared_ptr<Player>& target, int magicShowHidden) {
+    if(!viewer || !target) return false;
+    if(!viewer->canSee(target)) return false;
+    if(viewer->isStaff()) return true;
+    if(target->flagIsSet(P_HIDDEN)) {
+        if(!magicShowHidden) return false;
+        // resisting magic: spell strength must beat the resist to reveal a hidden player
+        if(target->isEffected("resist-magic")) {
+            EffectInfo* effect = target->getEffect("resist-magic");
+            if(effect && effect->getStrength() >= magicShowHidden)
+                return false;
+        }
+    }
+    return true;
+}
+
 void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<BaseRoom>& room, int magicShowHidden) {
     std::shared_ptr<UniqueRoom> target=nullptr;
     char    name[256];
@@ -774,24 +797,7 @@ void displayRoom(const std::shared_ptr<Player>& player, const std::shared_ptr<Ba
         }
         pIt++;
 
-        if(ply != player && player->canSee(ply)) {
-
-            // other non-vis rules
-            if(!staff) {
-                if(ply->flagIsSet(P_HIDDEN)) {
-                    // if we're using magic to see hidden creatures
-                    if(!magicShowHidden)
-                        continue;
-                    if(ply->isEffected("resist-magic")) {
-                        // if resisting magic, we use the strength of each spell to
-                        // determine if they are seen
-                        EffectInfo* effect = ply->getEffect("resist-magic");
-                        if(effect->getStrength() >= magicShowHidden)
-                            continue;
-                    }
-                }
-            }
-
+        if(ply != player && roomPlayerVisible(player, ply, magicShowHidden)) {
 
             if(n)
                 oStr << ", ";

@@ -168,6 +168,8 @@ set(COMMON_HEADER_FILES
     include/monType.hpp
     include/money.hpp
     include/move.hpp
+    include/gmcp.hpp
+    include/gmcpEvents.hpp
     include/msdp.hpp
     include/mud.hpp
     include/mxp.hpp
@@ -385,6 +387,8 @@ set(COMMON_SOURCE_FILES
     server/log.cpp
     server/login.cpp
     server/mccp.cpp
+    server/gmcp.cpp
+    server/gmcpEvents.cpp
     server/memory.cpp
     server/msdp.cpp
     server/msdpLoader.cpp
@@ -561,6 +565,7 @@ if(REALMS_BUILD_TESTS)
         test/io/protocol_test.cpp
         test/io/colorWidth_test.cpp
         test/io/vprintFormat_test.cpp
+        test/io/gmcp_test.cpp
         # General utilities (util/)
         test/util/csv_test.cpp
         test/util/range_test.cpp

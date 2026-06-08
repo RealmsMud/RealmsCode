@@ -28,10 +28,12 @@
 #include <list>
 #include <map>
 #include <queue>
+#include <set>
 #include <vector>
 #include <string>
 #include <string_view>
 #include <fmt/format.h>
+#include <nlohmann/json_fwd.hpp>
 
 #include "msdp.hpp"                                 // for ReportedMsdpVariable
 
@@ -116,8 +118,8 @@ namespace telnet {
     extern unsigned const char will_msdp[];     // Mud Server Data Protocol support
     extern unsigned const char wont_msdp[];     // Stop MSDP support
 
-    extern unsigned const char will_msdp[];     // Generic Mud Communication Protocol
-    extern unsigned const char wont_msdp[];     // Stop GMCP support
+    extern unsigned const char will_gmcp[];     // Generic Mud Communication Protocol
+    extern unsigned const char wont_gmcp[];     // Stop GMCP support
 
     extern unsigned const char will_mxp[];      // MXP Support
     extern unsigned const char start_mxp[];     // Start MPX string
@@ -160,6 +162,8 @@ namespace telnet {
     void zlib_free(void *opaque, void *address);
 
     std::string escapeIAC(std::string_view in);
+    std::string unescapeIAC(std::string_view in);
+    std::string subnegotiate(unsigned char telopt, std::string_view payload, bool escapePayload = true);
     std::string promptGoAhead(bool eor, bool dumb);
     std::string buildMsspPayload(int players, long startTime, short port, std::size_t numClasses, unsigned short raceCount, std::size_t numSkills);
 }
@@ -187,6 +191,7 @@ class Socket : public std::enable_shared_from_this<Socket> {
         bool            mxpClientSecure;
         unsigned char   lastColor;
         bool            msdp;
+        bool            gmcp;
         bool            eor;
         bool            msp;
         bool            compressing;
@@ -295,6 +300,8 @@ public:
     [[nodiscard]] bool mxpEnabled() const;
     [[nodiscard]] bool getMxpClientSecure() const;
     [[nodiscard]] bool msdpEnabled() const;
+    [[nodiscard]] bool gmcpEnabled() const;
+    [[nodiscard]] bool gmcpSupports(const std::string& pkg) const;
     [[nodiscard]] bool canForce() const;
     [[nodiscard]] bool eorEnabled() const;
     [[nodiscard]] bool isDumbClient() const;
@@ -343,6 +350,8 @@ public:
     void msdpSendList(std::string_view variable, const std::vector<std::string>& values);
     void msdpClearReporting();
     std::string getMsdpReporting();
+    std::string getGmcpPackages();
+    bool gmcpSend(std::string_view package, const nlohmann::json& body);
 
 protected:
     // Telopt related
@@ -361,9 +370,25 @@ protected:
     bool processMsdpVarVal(const std::string &variable, const std::string &value);
     bool msdpSend(const std::string &variable);
     bool msdpList(const std::string &value);
+    std::vector<std::string> msdpListValues(const std::string &which, std::string &label);
     ReportedMsdpVariable* msdpReport(const std::string &value);
     bool msdpReset(std::string& value);
     bool msdpUnReport(const std::string &value);
+
+    // GMCP Support Functions
+    bool parseGmcp();
+    bool gmcpSendPackage(const std::string& package);
+    nlohmann::json gmcpRoomInfo();
+    nlohmann::json gmcpCharGroup();
+    nlohmann::json gmcpRoomPlayers();
+    nlohmann::json gmcpSkillGroups();
+    nlohmann::json gmcpSkillList(const std::string& group);
+    nlohmann::json gmcpEffectList(bool defences);
+    nlohmann::json gmcpItemsList(const std::string& location);
+    void enableGmcpPackage(const std::string& token);
+    void gmcpMsdpHandle(const nlohmann::json& body);
+    void gmcpMsdpList(const std::string& which);
+    void gmcpMsdpSendNow(const std::vector<std::string>& vars);
 
 // TODO - Retool so they can be moved to protected
 public:
@@ -414,6 +439,8 @@ protected:
     std::weak_ptr<Socket> spyingOn{};      // Socket we are spying on
     std::list<std::weak_ptr<Socket>> spying;    // Sockets spying on us
     std::map<std::string, ReportedMsdpVariable> msdpReporting;
+    std::set<std::string> gmcpStdPackages;          // channel-2 packages from Core.Supports
+    std::set<std::string> gmcpMsdpVars;             // channel-1 vars REPORTed via the MSDP package
     std::map<std::string, std::string> clientEnv;   // NEW-ENVIRON/MNES client vars
 // TEMP
 public:

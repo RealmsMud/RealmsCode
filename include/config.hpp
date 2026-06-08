@@ -506,6 +506,7 @@ private:
     short   minBroadcastLevel{};
     bool    saveOnDrop{};
     bool    logDeath{};
+    bool    logTelnet{};
     short   crashes{};
     short   supportRequiredForGuild{};
     int     numGuilds{};
@@ -514,6 +515,7 @@ private:
 public:
     [[nodiscard]] int getNextGuildId() const;
     [[nodiscard]] bool getCheckDouble() const;
+    [[nodiscard]] bool getLogTelnet() const;
 
     void setNextGuildId(int pNextGuildId);
 

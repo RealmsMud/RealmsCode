@@ -378,7 +378,7 @@ void Server::run() {
         // Update game here
         updateGame();
 
-        processMsdp();
+        processReporting();
 
         processOutput();
 

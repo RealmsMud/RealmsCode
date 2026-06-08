@@ -27,6 +27,8 @@ void addToSet(MsdpVariable &&msdpVar, MsdpVariableMap &msdpVariables) {
     msdpVariables.emplace(msdpVar.getName(), std::move(msdpVar));
 }
 
+static constexpr int ROOM_UPDATE_INTERVAL = 10;
+
 bool Config::initMsdp() {
     addToSet(MsdpBuilder().name("SERVER_ID").valueFn(msdp::getServerId)
         .reportable(false).requiresPlayer(false).configurable(false)
@@ -76,6 +78,18 @@ bool Config::initMsdp() {
         .reportable(true).requiresPlayer(true).configurable(false)
         .writeOnce(false).updateInterval(10).updateable(true).isGroup(false)
       , msdpVariables);
+    addToSet(MsdpBuilder().name("LEVEL").valueFn(msdp::getLevel)
+        .reportable(true).requiresPlayer(true).configurable(false)
+        .writeOnce(false).updateInterval(30).updateable(true).isGroup(false)
+      , msdpVariables);
+    addToSet(MsdpBuilder().name("CLASS").valueFn(msdp::getClassName)
+        .reportable(true).requiresPlayer(true).configurable(false)
+        .writeOnce(false).updateInterval(30).updateable(true).isGroup(false)
+      , msdpVariables);
+    addToSet(MsdpBuilder().name("RACE").valueFn(msdp::getRaceName)
+        .reportable(true).requiresPlayer(true).configurable(false)
+        .writeOnce(false).updateInterval(30).updateable(true).isGroup(false)
+      , msdpVariables);
     addToSet(MsdpBuilder().name("MONEY").valueFn(msdp::getMoney)
         .reportable(true).requiresPlayer(true).configurable(false)
         .writeOnce(false).updateInterval(10).updateable(true).isGroup(false)
@@ -118,7 +132,7 @@ bool Config::initMsdp() {
       , msdpVariables);
     addToSet(MsdpBuilder().name("ROOM").valueFn(msdp::getRoom)
         .reportable(true).requiresPlayer(true).configurable(false)
-        .writeOnce(false).updateInterval(5).updateable(true).isGroup(false)
+        .writeOnce(false).updateInterval(ROOM_UPDATE_INTERVAL).updateable(true).isGroup(false)
       , msdpVariables);
     addToSet(MsdpBuilder().name("CLIENT_ID")
         .reportable(true).requiresPlayer(false).configurable(true)
