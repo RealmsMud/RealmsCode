@@ -30,6 +30,7 @@
 #include <queue>
 #include <vector>
 #include <string>
+#include <string_view>
 #include <fmt/format.h>
 
 #include "msdp.hpp"                                 // for ReportedMsdpVariable
@@ -60,6 +61,20 @@ namespace telnet {
     #define TELOPT_MSP          90
     #define TELOPT_MXP          91
     #define TELOPT_GMCP         201
+
+    // MTTS capability bits (https://tintin.mudhalla.net/protocols/mtts)
+    #define MTTS_ANSI           1
+    #define MTTS_VT100          2
+    #define MTTS_UTF8           4
+    #define MTTS_256COLOR       8
+    #define MTTS_MOUSE          16
+    #define MTTS_COLORPALETTE   32
+    #define MTTS_SCREENREADER   64
+    #define MTTS_PROXY          128
+    #define MTTS_TRUECOLOR      256
+    #define MTTS_MNES           512
+    #define MTTS_MSLP           1024
+    #define MTTS_SSL            2048
 
     #define SEND                1
     #define ACCEPTED            2
@@ -128,9 +143,16 @@ namespace telnet {
     extern unsigned const char do_charset[];    // Window size negotation NAWS
     extern unsigned const char charset_utf8[];  // Negotiate UTF-8
 
+    extern unsigned const char do_new_environ[];     // DO NEW-ENVIRON (opt 39)
+    extern unsigned const char sb_new_environ_send[]; // SB NEW-ENVIRON SEND (request all vars)
+
 
     extern unsigned const char eor_str[];       // IAC EOR end-of-prompt marker
     extern unsigned const char ga_str[];        // IAC GA end-of-prompt marker
+
+    long parseMtts(std::string_view ttype);
+    std::string mttsCaps(long bits);
+    std::map<std::string, std::string> decodeNewEnviron(const std::vector<unsigned char>& sb);
 
 
     // For MCCP
@@ -280,8 +302,11 @@ public:
     [[nodiscard]] bool nawsEnabled() const;
     [[nodiscard]] bool charsetEnabled() const;
     [[nodiscard]] bool utf8Enabled() const;
+    [[nodiscard]] long getMtts() const;
+    [[nodiscard]] const std::map<std::string, std::string>& getClientEnv() const;
 
     [[nodiscard]] std::string getTermType() const;
+    [[nodiscard]] std::string getClientVersion() const;
     [[nodiscard]] int getColorOpt() const;
     [[nodiscard]] int getTermCols() const;
     [[nodiscard]] int getTermRows() const;
@@ -328,6 +353,9 @@ protected:
 
     bool parseMXPSecure();
 
+    void applyMtts(long bits);
+    bool parseNewEnviron();
+
     // MSDP Support Functions
     bool parseMsdp();
     bool processMsdpVarVal(const std::string &variable, const std::string &value);
@@ -358,6 +386,7 @@ protected:
     int         tState{};
     bool        oneIAC{};
     bool        watchBrokenClient{};
+    long        mtts{};             // MTTS capability bitvector (TTYPE/MNES)
 
     std::stringstream output;
     std::string       processedOutput;   // Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
@@ -385,6 +414,7 @@ protected:
     std::weak_ptr<Socket> spyingOn{};      // Socket we are spying on
     std::list<std::weak_ptr<Socket>> spying;    // Sockets spying on us
     std::map<std::string, ReportedMsdpVariable> msdpReporting;
+    std::map<std::string, std::string> clientEnv;   // NEW-ENVIRON/MNES client vars
 // TEMP
 public:
     long        ltime{};

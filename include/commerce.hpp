@@ -32,7 +32,7 @@ class UniqueRoom;
 const char* cannotUseMarker(const std::shared_ptr<Player>& player, const std::shared_ptr<Object>&  object);
 
 bool doFilter(const std::shared_ptr<Object>&  object, std::string_view filter);
-std::string objShopName(const std::shared_ptr<Object>&  object, int m, int flags, int pad);
+std::string objShopName(const std::shared_ptr<Object>&  object, int m, int flags, int pad, bool utf8 = false);
 
 void playerShopList(const std::shared_ptr<Player>& player, Property* p, std::string& filter, std::shared_ptr<UniqueRoom>& storage);
 void shopList(const std::shared_ptr<Player>& player, Property* p, std::string& filter, std::shared_ptr<UniqueRoom>& storage);

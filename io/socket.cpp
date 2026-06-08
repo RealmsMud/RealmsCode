@@ -35,6 +35,7 @@
 #include <boost/token_iterator.hpp>                 // for token_iterator
 #include <boost/tokenizer.hpp>                      // for tokenizer
 #include <cctype>                                   // for isalpha, isdigit
+#include <charconv>                                 // for from_chars
 #include <cerrno>                                   // for EWOULDBLOCK, errno
 #include <cstdarg>                                  // for va_end, va_list
 #include <cstdio>                                   // for fseek, size_t, ftell
@@ -105,6 +106,9 @@ enum telnetNegotiation {
     NEG_SB_GMCP,
     NEG_SB_GMCP_END,
 
+    NEG_SB_NEW_ENVIRON,
+    NEG_SB_NEW_ENVIRON_END,
+
     NEG_SB_CHARSET,
     NEG_SB_CHARSET_LOOK_FOR_IAC,
     NEG_SB_CHARSET_END,
@@ -174,9 +178,40 @@ unsigned const char query_ttype[] = { IAC, SB, TELOPT_TTYPE, TELQUAL_SEND, IAC, 
 // Window size negotation NAWS
 unsigned const char do_naws[] = { IAC, DO, TELOPT_NAWS, '\0' };
 
+unsigned const char do_new_environ[] = { IAC, DO, TELOPT_NEW_ENVIRON, '\0' };
+unsigned const char sb_new_environ_send[] = { IAC, SB, TELOPT_NEW_ENVIRON, TELQUAL_SEND, IAC, SE, '\0' };
+
 // End of line string
 unsigned const char eor_str[] = { IAC, EOR, '\0' };
 unsigned const char ga_str[] = { IAC, GA, '\0' };
+
+long parseMtts(std::string_view ttype) {
+    constexpr std::string_view prefix = "MTTS ";
+    if (ttype.substr(0, prefix.size()) != prefix) return 0;
+    auto rest = ttype.substr(prefix.size());
+    long bits = 0;
+    auto [ptr, ec] = std::from_chars(rest.data(), rest.data() + rest.size(), bits);
+    if (ec != std::errc{} || ptr == rest.data()) return 0;
+    return bits;
+}
+
+std::string mttsCaps(long bits) {
+    std::string out;
+    if (bits & MTTS_ANSI) out += "ANSI ";
+    if (bits & MTTS_VT100) out += "VT100 ";
+    if (bits & MTTS_UTF8) out += "UTF8 ";
+    if (bits & MTTS_256COLOR) out += "256COLOR ";
+    if (bits & MTTS_MOUSE) out += "MOUSE ";
+    if (bits & MTTS_COLORPALETTE) out += "COLORPALETTE ";
+    if (bits & MTTS_SCREENREADER) out += "SCREENREADER ";
+    if (bits & MTTS_PROXY) out += "PROXY ";
+    if (bits & MTTS_TRUECOLOR) out += "TRUECOLOR ";
+    if (bits & MTTS_MNES) out += "MNES ";
+    if (bits & MTTS_MSLP) out += "MSLP ";
+    if (bits & MTTS_SSL) out += "SSL ";
+    if (!out.empty()) out.pop_back();   // drop trailing space
+    return out;
+}
 
 // MCCP Hooks
 void *zlib_alloc(void *opaque, unsigned int items, unsigned int size) {
@@ -589,7 +624,8 @@ void Socket::continueTelnetNeg(bool queryTType) {
     writeRaw(telnet::will_msdp);
     writeRaw(telnet::will_mssp);
     writeRaw(telnet::will_msp);
-//  writeRaw(telnet::do_charset);  // Not implemented yet
+    writeRaw(telnet::do_charset);
+    writeRaw(telnet::do_new_environ);
     writeRaw(telnet::will_mxp);
     writeRaw(telnet::will_eor);
 }
@@ -760,6 +796,10 @@ int Socket::processInput() {
                     case TELOPT_GMCP:
                         tState = NEG_SB_GMCP;
                         break;
+                    case TELOPT_NEW_ENVIRON:
+                        cmdInBuf.clear();
+                        tState = NEG_SB_NEW_ENVIRON;
+                        break;
                     default:
                         std::clog << "Unknown Sub Negotiation: " << (int)tmpBuf[i] << std::endl;
                         tState = NEG_NONE;
@@ -806,6 +846,24 @@ int Socket::processInput() {
                     break;
                 }
                 break;
+            case NEG_SB_NEW_ENVIRON:
+                if (tmpBuf[i] == IAC) {
+                    tState = NEG_SB_NEW_ENVIRON_END;
+                    break;
+                }
+                cmdInBuf.push_back(tmpBuf[i]);
+                break;
+            case NEG_SB_NEW_ENVIRON_END:
+                if (tmpBuf[i] == SE) {
+                    parseNewEnviron();
+                    tState = NEG_NONE;
+                    break;
+                }
+                // Doubled IAC inside the data
+                cmdInBuf.push_back(IAC);
+                cmdInBuf.push_back(tmpBuf[i]);
+                tState = NEG_SB_NEW_ENVIRON;
+                break;
             case NEG_SB_CHARSET:
                 // We've only asked for UTF-8, so assume if they respond it's for that and just eat the rest of the input
                 //
@@ -815,7 +873,8 @@ int Socket::processInput() {
                     opts.utf8 = true;
                     tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
                 } else if (tmpBuf[i] == REJECTED) {
-                    opts.utf8 = false;
+                    // Don't downgrade UTF-8 the client already proved via MTTS bit 4.
+                    opts.utf8 = (mtts & MTTS_UTF8) != 0;
                     tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
                 } else {
                     tState = NEG_SB_CHARSET_LOOK_FOR_IAC;
@@ -877,6 +936,10 @@ int Socket::processInput() {
                     } else if(boost::iequals(term.type, "EMACS-RINZAI") || term.type.find("DecafMUD") != std::string::npos) {
                         opts.xterm256 = true;
                     }
+
+                    // MTTS: clients send "MTTS <bits>" as a later TTYPE IS in the cycle.
+                    if (long bits = telnet::parseMtts(term.type))
+                        applyMtts(bits);
 
                 } else if (tmpBuf[i] == IAC) {
                     // I doubt this will happen
@@ -1044,8 +1107,14 @@ bool Socket::negotiate(unsigned char ch) {
             tState = NEG_NONE;
             break;
         case TELOPT_ECHO:
+            // TODO: remote echo unimplemented
+            tState = NEG_NONE;
+            break;
         case TELOPT_NEW_ENVIRON:
-            // TODO: Echo/New Environ
+            if (tState == NEG_WILL) {
+                writeRaw(telnet::sb_new_environ_send);
+                std::clog << "NEW-ENVIRON: requesting client vars" << std::endl;
+            }
             tState = NEG_NONE;
             break;
         case TELOPT_MSSP:
@@ -1362,6 +1431,49 @@ bool Socket::parseMsdp() {
     }
     cmdInBuf.clear();
 
+    return (true);
+}
+
+std::map<std::string, std::string> telnet::decodeNewEnviron(const std::vector<unsigned char>& sb) {
+    std::map<std::string, std::string> out;
+    const size_t n = sb.size();
+    if (n == 0 || (sb[0] != TELQUAL_IS && sb[0] != TELQUAL_INFO)) return out;
+    std::string name, val;
+    int field = -1;                       // -1 none, 0 name, 1 value
+    auto flush = [&]() {
+        if (field == 1 && !name.empty()) out[name] = val;
+        name.clear(); val.clear();
+    };
+    for (size_t i = 1; i < n; i++) {
+        const unsigned char c = sb[i];
+        if (c == NEW_ENV_VAR || c == ENV_USERVAR) { flush(); field = 0; }
+        else if (c == NEW_ENV_VALUE) { field = 1; val.clear(); }
+        else if (c == ENV_ESC) { if (i + 1 < n) { ++i; (field == 1 ? val : name).push_back(static_cast<char>(sb[i])); } }
+        else { (field == 1 ? val : name).push_back(static_cast<char>(c)); }
+    }
+    flush();
+    return out;
+}
+
+bool Socket::parseNewEnviron() {
+    auto vars = telnet::decodeNewEnviron(cmdInBuf);
+    cmdInBuf.clear();
+    if (vars.empty()) return (false);
+
+    for (const auto &kv : vars) {
+        clientEnv[kv.first] = kv.second;
+        std::clog << "NEW-ENVIRON: " << kv.first << "=" << kv.second << std::endl;
+    }
+
+    if (auto it = vars.find("MTTS"); it != vars.end())
+        if (long bits = telnet::parseMtts("MTTS " + it->second))
+            applyMtts(bits);
+    if (auto it = vars.find("CHARSET"); it != vars.end()) {
+        std::string cs = it->second;
+        for (auto &ch : cs) ch = static_cast<char>(::toupper((unsigned char)ch));
+        if (cs.find("UTF-8") != std::string::npos || cs.find("UTF8") != std::string::npos)
+            opts.utf8 = true;
+    }
     return (true);
 }
 
@@ -1715,6 +1827,7 @@ bool Socket::saveTelopts(xmlNodePtr rootNode) {
     xml::newBoolChild(rootNode, "EOR", eorEnabled());
     xml::newBoolChild(rootNode, "Charset", charsetEnabled());
     xml::newBoolChild(rootNode, "UTF8", utf8Enabled());
+    xml::newNumChild(rootNode, "MTTS", mtts);
 
     return (true);
 }
@@ -1739,6 +1852,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
         else if (NODE_NAME(curNode, "EOR")) xml::copyToBool(opts.eor, curNode);
         else if (NODE_NAME(curNode, "Charset")) xml::copyToBool(opts.charset, curNode);
         else if (NODE_NAME(curNode, "UTF8")) xml::copyToBool(opts.utf8, curNode);
+        else if (NODE_NAME(curNode, "MTTS")) xml::copyToNum(mtts, curNode);
 
         curNode = curNode->next;
     }
@@ -1821,6 +1935,19 @@ bool Socket::charsetEnabled() const {
 bool Socket::utf8Enabled() const {
     return (opts.utf8);
 }
+long Socket::getMtts() const {
+    return (mtts);
+}
+const std::map<std::string, std::string>& Socket::getClientEnv() const {
+    return (clientEnv);
+}
+void Socket::applyMtts(long bits) {
+    mtts = bits;
+    if (bits & MTTS_ANSI)     opts.color = ANSI_COLOR;
+    if (bits & MTTS_256COLOR) opts.xterm256 = true;
+    if (bits & MTTS_UTF8)     opts.utf8 = true;   // latched baseline
+    std::clog << "MTTS bits: " << bits << std::endl;
+}
 bool Socket::eorEnabled() const {
     return (opts.eor);
 }
@@ -1841,6 +1968,9 @@ std::string_view Socket::getHostname() const {
 }
 std::string Socket::getTermType() const {
     return (term.type);
+}
+std::string Socket::getClientVersion() const {
+    return (term.version);
 }
 int Socket::getColorOpt() const {
     return(opts.color);

@@ -54,6 +54,7 @@
 #include "proto.hpp"                 // for log_immort, broadcast, low, doGe...
 #include "random.hpp"                // for Random
 #include "size.hpp"                  // for Size, getSize, NO_SIZE
+#include "socket.hpp"                // for Socket::utf8Enabled
 #include "statistics.hpp"            // for Statistics
 #include "structs.hpp"               // for Command
 #include "unique.hpp"                // for Lore, Unique
@@ -263,7 +264,7 @@ bool Recipe::check(std::list<CatRef>* list, const std::list<CatRef>* require, in
 //                      listIngredients
 //**********************************************************************
 
-std::string Recipe::listIngredients(const std::list<CatRef>* list) const {
+std::string Recipe::listIngredients(const std::list<CatRef>* list, bool utf8) const {
     std::shared_ptr<Object>  object=nullptr;
     std::list<CatRef>::const_iterator it;
     std::ostringstream oStr;
@@ -286,7 +287,7 @@ std::string Recipe::listIngredients(const std::list<CatRef>* list) const {
 
         oStr << "   |   ";
         if(loadObject(lastObject, object)) {
-            oStr << padColor(object->getObjStr(nullptr, INV | MAG, num), RECIPE_WIDTH);
+            oStr << padColor(object->getObjStr(nullptr, INV | MAG, num), RECIPE_WIDTH, utf8);
             object.reset();
         } else {
             oStr << std::setw(RECIPE_WIDTH) << "<unknown item>";
@@ -300,7 +301,7 @@ std::string Recipe::listIngredients(const std::list<CatRef>* list) const {
     // we offset by one, so do the last one now
     oStr << "   |   ";
     if(loadObject(lastObject, object)) {
-        oStr << padColor(object->getObjStr(nullptr, INV | MAG, num), RECIPE_WIDTH);
+        oStr << padColor(object->getObjStr(nullptr, INV | MAG, num), RECIPE_WIDTH, utf8);
         object.reset();
     } else {
         oStr << std::setw(RECIPE_WIDTH) << "<unknown item>";
@@ -326,7 +327,7 @@ std::ostream& operator<<(std::ostream& out, Recipe* recipe) {
     return(out);
 }
 
-std::string Recipe::display() {
+std::string Recipe::display(bool utf8) {
     std::ostringstream oStr;
 
     if(!isValid()) {
@@ -347,26 +348,26 @@ std::string Recipe::display() {
         oStr << " \\_| ^WIngredients:^x                              |\n";
     }
 
-    oStr << listIngredients(&ingredients);
+    oStr << listIngredients(&ingredients, utf8);
 
     if(!reusables.empty()) {
         oStr << "   |                                           |\n"
              << "   | ^WReusable Items:^x                           |\n"
-             << listIngredients(&reusables);
+             << listIngredients(&reusables, utf8);
     }
 
     if(!equipment.empty() || skill == "cooking") {
         oStr << "   |                                           |\n"
              << "   | ^WEquipment:^x                                |\n";
         if(!equipment.empty())
-            oStr << listIngredients(&equipment);
+            oStr << listIngredients(&equipment, utf8);
         else if(skill == "cooking")
             oStr << "   |   any sufficiently hot object             |\n";
     }
 
     oStr << "   |                                           |\n"
          << "   | ^WResult:^x                                   |\n"
-         << "   |   " << padColor( getResultName(), RECIPE_WIDTH) << "|\n";
+         << "   |   " << padColor( getResultName(), RECIPE_WIDTH, utf8) << "|\n";
 
     if(isSizable()) {
         oStr << "   |                                           |\n"
@@ -590,7 +591,7 @@ int cmdRecipes(const std::shared_ptr<Player>& player, cmd* cmnd) {
             bool ignore=false;
             recipe = player->findRecipe(cmnd, "", &ignore);
             if(recipe)
-                oStr << recipe;
+                oStr << recipe->display(player->getSock() && player->getSock()->utf8Enabled());
             player->printColor("%s\n", oStr.str().c_str());
             return(0);
         }
@@ -885,7 +886,7 @@ int dmRecipes(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
 
-        oStr << recipe;
+        oStr << recipe->display(player->getSock() && player->getSock()->utf8Enabled());
 
 
         oStr << "Recipe: ^c" << recipe->getId() << "^w"

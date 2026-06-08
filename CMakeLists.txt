@@ -559,6 +559,7 @@ if(REALMS_BUILD_TESTS)
         test/xml/xmlReader_test.cpp
         # Telnet protocol + output (server/, io/)
         test/io/protocol_test.cpp
+        test/io/colorWidth_test.cpp
         test/io/vprintFormat_test.cpp
         # General utilities (util/)
         test/util/csv_test.cpp

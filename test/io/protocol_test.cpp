@@ -154,3 +154,57 @@ TEST(Mssp, PayloadIsWrappedInSubnegotiation) {
     EXPECT_EQ(static_cast<unsigned char>(p[p.size()-2]), static_cast<unsigned char>(IAC));
     EXPECT_EQ(static_cast<unsigned char>(p.back()),      static_cast<unsigned char>(SE));
 }
+
+TEST(ParseMtts, ExtractsBits) {
+    EXPECT_EQ(telnet::parseMtts("MTTS 13"), 13);
+    EXPECT_EQ(telnet::parseMtts("MTTS 4"), MTTS_UTF8);
+}
+
+TEST(ParseMtts, BitTests) {
+    long b = telnet::parseMtts("MTTS 13");
+    EXPECT_TRUE(b & MTTS_ANSI);
+    EXPECT_TRUE(b & MTTS_UTF8);
+    EXPECT_TRUE(b & MTTS_256COLOR);
+    EXPECT_FALSE(b & MTTS_TRUECOLOR);
+}
+
+TEST(ParseMtts, RejectsNonMtts) {
+    EXPECT_EQ(telnet::parseMtts("xterm-256color"), 0);
+    EXPECT_EQ(telnet::parseMtts("MTTS"), 0);
+    EXPECT_EQ(telnet::parseMtts("MTTS abc"), 0);
+    EXPECT_EQ(telnet::parseMtts(""), 0);
+}
+
+TEST(MttsCaps, DecodesSetBits) {
+    EXPECT_EQ(telnet::mttsCaps(MTTS_ANSI | MTTS_UTF8 | MTTS_256COLOR), "ANSI UTF8 256COLOR");
+    EXPECT_EQ(telnet::mttsCaps(0), "");
+    EXPECT_EQ(telnet::mttsCaps(MTTS_UTF8), "UTF8");
+}
+
+TEST(CharsetFrame, RequestBytesExact) {
+    const unsigned char expected[] = {
+        IAC, SB, TELOPT_CHARSET, 1, ' ', 'U', 'T', 'F', '-', '8', IAC, SE, '\0'
+    };
+    for (size_t i = 0; i < sizeof(expected); i++)
+        EXPECT_EQ(telnet::charset_utf8[i], expected[i]) << "byte " << i;
+}
+
+TEST(NewEnvironFrame, SendAllBytesExact) {
+    const unsigned char expected[] = { IAC, SB, TELOPT_NEW_ENVIRON, TELQUAL_SEND, IAC, SE, '\0' };
+    for (size_t i = 0; i < sizeof(expected); i++)
+        EXPECT_EQ(telnet::sb_new_environ_send[i], expected[i]) << "byte " << i;
+}
+
+TEST(NewEnviron, DecodesMnesUservars) {
+    std::vector<unsigned char> sb = { TELQUAL_IS };
+    auto put = [&](unsigned char tag, const std::string& s) {
+        sb.push_back(tag);
+        for (char c : s) sb.push_back(static_cast<unsigned char>(c));
+    };
+    put(ENV_USERVAR, "CLIENT_NAME"); put(NEW_ENV_VALUE, "MUDLET");
+    put(ENV_USERVAR, "MTTS");        put(NEW_ENV_VALUE, "271");
+    auto m = telnet::decodeNewEnviron(sb);
+    EXPECT_EQ(m["CLIENT_NAME"], "MUDLET");
+    EXPECT_EQ(m["MTTS"], "271");
+    EXPECT_EQ(telnet::parseMtts("MTTS " + m["MTTS"]), 271);
+}
