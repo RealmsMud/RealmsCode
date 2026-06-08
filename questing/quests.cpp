@@ -16,7 +16,6 @@
  *
  */
 
-#include <bits/types/struct_tm.h>                   // for tm
 #include <fmt/format.h>                             // for format
 #include <libxml/parser.h>                          // for xmlCleanupParser
 #include <strings.h>                                // for strncasecmp

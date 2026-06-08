@@ -18,7 +18,6 @@
 
 
 #include <arpa/telnet.h>                            // for IAC, SE, WILL, SB
-#include <ext/alloc_traits.h>                       // for __alloc_traits<>:...
 #include <fcntl.h>                                  // for fcntl, F_GETFL
 #include <fmt/format.h>                             // for format
 #include <netinet/in.h>                             // for htonl, sockaddr_in
@@ -1372,7 +1371,7 @@ bool Socket::parseMsdp() {
 // Append a string to the socket's paged output queue
 void Socket::printPaged(std::string_view toPrint) {
     boost::char_separator<char> sep("\n");
-    boost::tokenizer<boost::char_separator<char> > tokens(toPrint, sep);
+    boost::tokenizer<boost::char_separator<char>, std::string_view::const_iterator> tokens(toPrint, sep);
     for(const auto& line : tokens) {
         pagerOutput.emplace_back(line);
     }

@@ -242,6 +242,7 @@ bool yes(std::shared_ptr<Socket> sock);
 bool yes(std::shared_ptr<Creature> player);
 bool wantsPermDeaths(std::shared_ptr<Socket> sock);
 void doBroadCast(bool showTo(std::shared_ptr<Socket>), bool showAlso(std::shared_ptr<Socket>), const char *fmt, va_list ap, const std::shared_ptr<Creature>& player = nullptr);
+std::string realmsFormat(const char *fmt, va_list ap);
 void broadcast(const char *fmt, ...);
 void broadcast(int color, const char *fmt,...);
 void broadcast(bool showTo(std::shared_ptr<Socket>), bool showAlso(std::shared_ptr<Socket>), const char *fmt,...);

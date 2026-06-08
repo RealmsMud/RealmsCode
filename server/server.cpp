@@ -17,7 +17,6 @@
  */
 
 #include <cassert>                                  // for assert
-#include <bits/types/struct_tm.h>                   // for tm
 #include <libxml/parser.h>                          // for xmlFreeDoc, xmlDo...
 #include <netdb.h>                                  // for getnameinfo, EAI_...
 #include <netinet/in.h>                             // for sockaddr_in, htons

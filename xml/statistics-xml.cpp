@@ -16,7 +16,7 @@
  *
  */
 
-#include <bits/exception.h>                         // for exception
+#include <exception>                                // for exception
 #include <sys/types.h>                              // for time_t
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <map>                                      // for operator==, map<>...

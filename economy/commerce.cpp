@@ -1487,7 +1487,7 @@ int cmdAuction(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 void Player::setLastPawn(const std::shared_ptr<Object>&  object) {
     // uniques and quests cannot be reclaimed
-    if(object && (object->flagIsSet(O_UNIQUE) || object->getQuestnum())) {
+    if(object && (object->flagIsSet(O_UNIQUE_OBJ) || object->getQuestnum())) {
         return;
     }
     lastPawn = object;

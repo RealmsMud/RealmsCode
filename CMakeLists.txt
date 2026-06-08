@@ -3,6 +3,16 @@ cmake_minimum_required(VERSION 3.16...3.26)
 project(RealmsCode)
 include(FetchContent)
 
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+if(APPLE AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    execute_process(COMMAND sw_vers -productVersion
+        OUTPUT_VARIABLE REALMS_MACOS_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REGEX MATCH "^[0-9]+" REALMS_MACOS_MAJOR "${REALMS_MACOS_VERSION}")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "${REALMS_MACOS_MAJOR}" CACHE STRING "macOS deployment target" FORCE)
+    message(STATUS "macOS deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+endif()
+
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -34,7 +44,10 @@ message(STATUS "Python_INCLUDE_DIRS = ${Python_INCLUDE_DIRS}")
 
 # -stdlib is an ABI choice and must match the fetched deps, so it stays global. Everything
 # else (-g/-O0/-Wall/sanitizer) lives on the realms_flags target below so it hits only our code.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+# macOS clang has no libstdc++; it defaults to libc++
+if(NOT APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+endif()
 
 # Warning flags for our code only - applied via realms_flags below
 #  -Wall                                baseline.
@@ -162,6 +175,7 @@ set(COMMON_HEADER_FILES
     include/objIncrease.hpp
     include/oldquest.hpp
     include/paths.hpp
+    include/platform.hpp
     include/playerClass.hpp
     include/playerTitle.hpp
     include/post.hpp
@@ -420,6 +434,7 @@ set(COMMON_SOURCE_FILES
     util/help.cpp
     util/md5.cpp
     util/misc.cpp
+    util/platform.cpp
     util/timer.cpp
 
     json/accounts-json.cpp
@@ -484,6 +499,12 @@ set(COMMON_SOURCE_FILES
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 
 target_include_directories(RealmsLib PUBLIC include)
+target_include_directories(RealmsLib PRIVATE ${ASPELL_INCLUDE_DIRS})
+target_compile_definitions(RealmsLib PUBLIC REALMS_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+
+if(APPLE)
+    target_compile_definitions(RealmsLib PUBLIC BOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED)
+endif()
 
 target_link_libraries(
     RealmsLib
@@ -511,6 +532,10 @@ target_link_libraries(List PRIVATE RealmsLib realms_flags)
 add_executable(Updater ${UPDATER_SOURCE_FILES})
 target_link_libraries(Updater PRIVATE RealmsLib realms_flags)
 
+if(APPLE)
+    set_target_properties(RealmsCode List Updater PROPERTIES BUILD_RPATH "@loader_path")
+endif()
+
 # Enable with -DREALMS_BUILD_TESTS=ON, then `ctest` or ./RealmsTests.
 option(REALMS_BUILD_TESTS "Build unit tests (gtest)" OFF)
 if(REALMS_BUILD_TESTS)
@@ -532,6 +557,7 @@ if(REALMS_BUILD_TESTS)
         test/xmlReader_test.cpp
         test/range_test.cpp
         test/commandBase_test.cpp
+        test/vprintFormat_test.cpp
     )
     target_link_libraries(RealmsTests PRIVATE RealmsLib gtest_main realms_flags)
     add_test(NAME RealmsTests COMMAND RealmsTests)

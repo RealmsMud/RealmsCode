@@ -1,0 +1,46 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "linux",
+      "displayName": "Linux / Docker (default)",
+      "description": "Reproduces the historical bare `cmake .` build: clang + libstdc++.",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "REALMS_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "default",
+      "inherits": "linux",
+      "displayName": "Default (alias for linux)"
+    },
+    {
+      "name": "macos",
+      "displayName": "macOS (Apple Clang + Homebrew deps)",
+      "description": "Native macOS build. Uses Apple Clang (SDK libc++) and Homebrew-provided libraries. Requires HOMEBREW_PREFIX (set by `brew shellenv`).",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "REALMS_BUILD_TESTS": "ON",
+        "CMAKE_PREFIX_PATH": "$env{HOMEBREW_PREFIX}",
+        "OPENSSL_ROOT_DIR": "$env{HOMEBREW_PREFIX}/opt/openssl@3",
+        "Python_EXECUTABLE": "$env{HOMEBREW_PREFIX}/bin/python3"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "linux",
+      "configurePreset": "linux"
+    },
+    {
+      "name": "macos",
+      "configurePreset": "macos"
+    }
+  ]
+}

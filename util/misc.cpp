@@ -16,7 +16,6 @@
  *
  */
 
-#include <bits/types/struct_tm.h>                // for tm
 #include <fcntl.h>                               // for open, O_RDONLY
 #include <fmt/format.h>                          // for format
 #include <unistd.h>                              // for close

@@ -16,7 +16,6 @@
  *
  */
 
-#include <ext/alloc_traits.h>                    // for __alloc_traits<>::va...
 #include <fcntl.h>                               // for open, O_APPEND, O_CREAT
 #include <unistd.h>                              // for close, write
 #include <boost/algorithm/string/case_conv.hpp>  // for to_lower

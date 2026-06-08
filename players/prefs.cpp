@@ -16,7 +16,7 @@
  *
  */
 
-#include <bits/exception.h>                        // for exception
+#include <exception>                               // for exception
 #include <fmt/format.h>                            // for format
 #include <strings.h>                               // for strcasecmp
 #include <boost/algorithm/string/predicate.hpp>    // for istarts_with

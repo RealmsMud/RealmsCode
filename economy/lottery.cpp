@@ -16,7 +16,6 @@
  *
  */
 
-#include <bits/types/struct_tm.h>                   // for tm
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cstdio>                                   // for sprintf
 #include <cstring>                                  // for memset, strcmp

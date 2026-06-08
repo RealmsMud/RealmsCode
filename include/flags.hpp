@@ -749,13 +749,13 @@
 #define O_ALLOW_TOUCH_OF_DEATH      144      // Monks can use touch-of-death with this weapon wielded
 #define O_JUST_BOUGHT               145      // Object was just bought and is refundable
 #define O_NO_DROP                   146      // Can't drop or otherwise get rid of this object
-#define O_UNPAGED_FILE                147      // Display file all at once
+#define O_UNPAGED_FILE              147      // Display file all at once
 #define O_BROKEN_BY_CMD             148      // Object is broken by break command
 #define O_SMALL_BOW                 149      // Objext is a small bow
 #define O_COIN_OPERATED_OBJECT      150      // Coin operated object
 #define O_BEING_PREPARED            151      // Object is being prepared
 #define O_MISSLE_USE_STRENGTH       152      // Missile weapon uses strength bonus
-#define O_UNIQUE                    153      // Object is unique or limited
+#define O_UNIQUE_OBJ                153      // Object is unique or limited
 #define O_BULKLESS_CONTAINER        154      // Bulkless container object
 #define O_BULKLESS_OBJECT           155      // Bulkless object
 #define O_WAS_SCAVENGED	            156      // Object was scavenged by monster

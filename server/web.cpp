@@ -1104,7 +1104,7 @@ int cmdWiki(const std::shared_ptr<Player>& player, cmd* cmnd) {
     auto file = (Path::Wiki / entry).replace_extension("txt");
 
     // If the file exists and was modified within the last hour, use the local cache
-    if(!stat(file.c_str(), &f_stat) && (time(nullptr) - f_stat.st_mtim.tv_sec) < 3600) {
+    if(!stat(file.c_str(), &f_stat) && (time(nullptr) - f_stat.st_mtime) < 3600) {
         player->getSock()->viewFile(file, true);
         return(0);
     }
