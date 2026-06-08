@@ -471,7 +471,7 @@ int dmDust(const std::shared_ptr<Player>& player, cmd* cmnd) {
     logn("log.dust", "%s was dusted by %s.\n", target->getCName(), player->getCName());
 
     // TODO: Handle guild creations
-    sprintf(buf, "\n%c[35mLightning comes down from on high! You have angered the gods!%c[35m\n", 27, 27);
+    snprintf(buf, sizeof(buf), "\n%c[35mLightning comes down from on high! You have angered the gods!%c[35m\n", 27, 27);
     target->getSock()->write(buf);
 
     if(!strcmp(cmnd->str[2], "-n")) {
@@ -574,7 +574,7 @@ int dmAward(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(temp, "%s", target->getCName());
+    snprintf(temp, sizeof(temp), "%s", target->getCName());
 
     if(!target->getSock()->canForce()) {
         player->print("You can't award %s right now.\n", cmnd->str[1]);
@@ -753,7 +753,7 @@ int dmFinger(const std::shared_ptr<Player>& player, cmd* cmnd) {
         target->information(player, true);
     }
 
-    sprintf(tmp, "%s/%s", Path::Post.c_str(), cmnd->str[1]);
+    snprintf(tmp, sizeof(tmp), "%s/%s", Path::Post.c_str(), cmnd->str[1]);
     if(stat(tmp, &f_stat)) {
         player->print("No mail.\n");
         return(PROMPT);
@@ -1305,7 +1305,7 @@ int dmRename(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
     // See if a player with the new name exists
-    sprintf(file, "%s/%s.xml", Path::Player.c_str(), newName.c_str());
+    snprintf(file, sizeof(file), "%s/%s.xml", Path::Player.c_str(), newName.c_str());
     fp = fopen(file, "r");
     if(fp) {
         player->print("A player with that name already exists.\n");
@@ -2731,8 +2731,8 @@ int dmBackupPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(cmnd->num > 2 && !strcmp(cmnd->str[2], "-r")) {
         cmnd->str[1][0] = up(cmnd->str[1][0]);
-        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup.c_str(), cmnd->str[1]);
-        sprintf(restoredFile, "%s/%s.xml", Path::Player.c_str(), cmnd->str[1]);
+        snprintf(filename, sizeof(filename), "%s/%s.bak.xml", Path::PlayerBackup.c_str(), cmnd->str[1]);
+        snprintf(restoredFile, sizeof(restoredFile), "%s/%s.xml", Path::Player.c_str(), cmnd->str[1]);
 
         if(fs::exists(filename)) {
 
@@ -2769,7 +2769,7 @@ int dmBackupPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 
     if(cmnd->num > 2 && !strcmp(cmnd->str[2], "-d")) {
-        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup.c_str(), target->getCName());
+        snprintf(filename, sizeof(filename), "%s/%s.bak.xml", Path::PlayerBackup.c_str(), target->getCName());
         if(fs::exists(filename)) {
             unlink(filename);
             broadcast(isDm, "^g*** %s deleted %s's backup file.", player->getCName(), target->getCName());

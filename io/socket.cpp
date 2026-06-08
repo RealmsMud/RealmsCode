@@ -2155,7 +2155,7 @@ void Socket::viewFileReverseReal(const std::string& str) {
     if(oldpos < 3)
         more_file = 0;
 
-    sprintf(tempstr[2], "%ld", (long) oldpos);
+    snprintf(tempstr[2], sizeof(tempstr[2]), "%ld", (long) oldpos);
 
 
     if(more_file && count == 0)

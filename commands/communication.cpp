@@ -708,9 +708,9 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         } else {
             char intro[2046];
             if(chan->ooc || lang == LCOMMON)
-                sprintf(intro, "You %s,", speak);
+                snprintf(intro, sizeof(intro), "You %s,", speak);
             else
-                sprintf(intro, "You %s in %s,", speak, get_language_adj(lang));
+                snprintf(intro, sizeof(intro), "You %s in %s,", speak, get_language_adj(lang));
 
             creature->printColor("%s%s \"%s%s\".\n^x", ((!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS)) ? get_lang_color(lang) : ""),
                     intro, ooc_str, text.c_str());

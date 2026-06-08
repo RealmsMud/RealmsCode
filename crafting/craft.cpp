@@ -1069,7 +1069,7 @@ bool Config::saveRecipes() const {
     for(it = recipes.begin() ; it != recipes.end() ; it++)
         (*it).second->save(rootNode);
 
-    sprintf(filename, "%s/recipes.xml", Path::Game.c_str());
+    snprintf(filename, sizeof(filename), "%s/recipes.xml", Path::Game.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);

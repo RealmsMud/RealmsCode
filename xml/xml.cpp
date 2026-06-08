@@ -235,9 +235,9 @@ char *iToYesNo(int fromInt) {
     static char toReturn[8];
 
     if(fromInt == 0)
-        sprintf(toReturn, "No");
+        snprintf(toReturn, sizeof(toReturn), "No");
     else
-        sprintf(toReturn, "Yes");
+        snprintf(toReturn, sizeof(toReturn), "Yes");
     return(toReturn);
 }
 

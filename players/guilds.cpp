@@ -1844,13 +1844,13 @@ void rejectGuild(GuildCreation * toReject, char *reason) {
 
         if(!online) {
             // Send them a mudmail
-            sprintf(file, "%s/%s.txt", Path::Post.c_str(), leader->getCName());
+            snprintf(file, sizeof(file), "%s/%s.txt", Path::Post.c_str(), leader->getCName());
             ff = open(file, O_CREAT | O_APPEND | O_RDWR, ACC);
             if(ff > 0) {
                 time(&t);
                 strcpy(datestr, (char *) ctime(&t));
                 datestr[strlen(datestr) - 1] = 0;
-                sprintf(outStr, "\n--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--\n\nMail from System (%s):\n\nYour guild '%s' has been rejected.\nReason: %s\n", datestr, toReject->name.c_str(), Reason);
+                snprintf(outStr, sizeof(outStr), "\n--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--\n\nMail from System (%s):\n\nYour guild '%s' has been rejected.\nReason: %s\n", datestr, toReject->name.c_str(), Reason);
                 write(ff, outStr, strlen(outStr));
                 close(ff);
                 leader->setFlag(P_UNREAD_MAIL);

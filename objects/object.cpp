@@ -505,7 +505,7 @@ int displayObject(const std::shared_ptr<const Player> &player, const std::shared
         for(i=0; i<strlen(str); i++)
             if(str[i] == ' ')
                 str[i] = '_';
-        sprintf(filename, "%s/%s.txt", Path::Sign.c_str(), str);
+        snprintf(filename, sizeof(filename), "%s/%s.txt", Path::Sign.c_str(), str);
         player->getSock()->viewFile(filename, !target->flagIsSet(O_UNPAGED_FILE));
         return(0);
     }

@@ -142,7 +142,7 @@ int cmdSendMail(const std::shared_ptr<Player>& player, cmd* cmnd) {
     target->save(online);
 
     player->print("Enter your message now. Type '.' or '*' on a line by itself to finish or '\\' to\ncancel. Each line should be NO LONGER THAN 80 CHARACTERS.\n-: ");
-    sprintf(player->getSock()->tempstr[0], "%s", cmnd->str[1]);
+    snprintf(player->getSock()->tempstr[0], sizeof(player->getSock()->tempstr[0]), "%s", cmnd->str[1]);
 
     std::error_code ec;
     fs::remove(Path::Post / (player->getName() + "_to_" + player->getSock()->tempstr[0] + ".txt"), ec );
@@ -233,7 +233,7 @@ void postedit(std::shared_ptr<Socket> sock, const std::string& str) {
     std::shared_ptr<Player> ply = sock->getPlayer();
     
     // use a temp file while we're editting it
-    sprintf(filename, "%s/%s_to_%s.txt", Path::Post.c_str(), ply->getCName(), sock->tempstr[0]);
+    snprintf(filename, sizeof(filename), "%s/%s_to_%s.txt", Path::Post.c_str(), ply->getCName(), sock->tempstr[0]);
 
     if((str[0] == '.' || str[0] == '*') && !str[1]) {
         // time to copy the temp file to the real file!
@@ -247,7 +247,7 @@ void postedit(std::shared_ptr<Socket> sock, const std::string& str) {
             return;
         }
 
-        sprintf(postfile, "%s/%s.txt", Path::Post.c_str(), sock->tempstr[0]);
+        snprintf(postfile, sizeof(postfile), "%s/%s.txt", Path::Post.c_str(), sock->tempstr[0]);
         ff = open(postfile, O_CREAT | O_APPEND | O_RDWR, ACC);
         if(ff < 0)
             throw std::runtime_error("postEdit");
@@ -255,7 +255,7 @@ void postedit(std::shared_ptr<Socket> sock, const std::string& str) {
         time(&t);
         strcpy(datestr, (char *) ctime(&t));
         datestr[strlen(datestr) - 1] = 0;
-        sprintf(outcstr, "\n--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--\n\nMail from %s (%s):\n\n",
+        snprintf(outcstr, sizeof(outcstr), "\n--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--..__..--\n\nMail from %s (%s):\n\n",
             ply->getCName(), datestr);
         write(ff, outcstr, strlen(outcstr));
 
@@ -417,7 +417,7 @@ int cmdEditHistory(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(file, "%s/%s.txt", Path::History.c_str(), player->getCName());
+    snprintf(file, sizeof(file), "%s/%s.txt", Path::History.c_str(), player->getCName());
 
     ff = open(file, O_RDONLY, 0);
     close(ff);

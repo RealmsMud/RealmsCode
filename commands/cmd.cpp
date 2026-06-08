@@ -133,8 +133,8 @@ bool Config::writeSocialFile() const {
     std::map<std::string,std::string> list;
     std::map<std::string,std::string>::iterator it;
 
-    sprintf(file, "%s/socials.txt", Path::Help.c_str());
-    sprintf(fileLink, "%s/social.txt", Path::Help.c_str());
+    snprintf(file, sizeof(file), "%s/socials.txt", Path::Help.c_str());
+    snprintf(fileLink, sizeof(fileLink), "%s/social.txt", Path::Help.c_str());
 
     // prepare to write the help file
     std::ofstream out(file);

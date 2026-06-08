@@ -1286,11 +1286,11 @@ bool Create::getRace(const std::shared_ptr<Socket>& sock, std::string str, int m
         int ff=0;
 
         // show them the race menu header
-        sprintf(file, "%s/race_menu.0.txt", Path::Config.c_str());
+        snprintf(file, sizeof(file), "%s/race_menu.0.txt", Path::Config.c_str());
         sock->viewFile(file);
 
         // show them the main race menu
-        sprintf(file, "%s/race_menu.1.txt", Path::Config.c_str());
+        snprintf(file, sizeof(file), "%s/race_menu.1.txt", Path::Config.c_str());
         char    buf[FBUF + 1];
 
         ff = open(file, O_RDONLY, 0);
@@ -1599,13 +1599,13 @@ bool Create::getDeity(const std::shared_ptr<Socket>& sock, std::string str, int 
 //*********************************************************************
 
 // from startlocs.cpp
-bool startingChoices(std::shared_ptr<Player> player, std::string str, char* location, bool choose);
+bool startingChoices(std::shared_ptr<Player> player, std::string str, char* location, size_t locationSize, bool choose);
 
 bool Create::getLocation(const std::shared_ptr<Socket>& sock, const std::string &str, int mode) {
     char location[256];
     if(mode == Create::doPrint) {
 
-        if(!startingChoices(sock->getPlayer(), str, location, false)) {
+        if(!startingChoices(sock->getPlayer(), str, location, sizeof(location), false)) {
             sock->print("\n\nPlease choose a starting location:");
             sock->printColor("\n   %s\n\n", location);
 
@@ -1621,7 +1621,7 @@ bool Create::getLocation(const std::shared_ptr<Socket>& sock, const std::string 
 
     } else if(mode == Create::doWork) {
 
-        if(!startingChoices(sock->getPlayer(), str, location, true)) {
+        if(!startingChoices(sock->getPlayer(), str, location, sizeof(location), true)) {
             sock->print("Invalid selection.\n");
             sock->askFor(": ");
 
@@ -2180,7 +2180,7 @@ void Create::done(const std::shared_ptr<Socket>& sock, const std::string &str, i
     if(mode == Create::doPrint) {
 
         char file[80];
-        sprintf(file, "%s/policy_login.txt", Path::Config.c_str());
+        snprintf(file, sizeof(file), "%s/policy_login.txt", Path::Config.c_str());
         sock->viewFile(file);
 
         sock->print("[Press Enter to Continue]");

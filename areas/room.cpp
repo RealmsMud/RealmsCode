@@ -385,10 +385,10 @@ void Monster::addToRoom(const std::shared_ptr<BaseRoom>& room, int num) {
         if(!flagIsSet(M_NO_SHOW_ARRIVE) && !isInvisible()
             && !flagIsSet(M_WAS_PORTED) )
         {
-            sprintf(str, "%%%dM just arrived.", num);
+            snprintf(str, sizeof(str), "%%%dM just arrived.", num);
             broadcast(getSock(), room, str, this);
         } else {
-            sprintf(str, "*DM* %%%dM just arrived.", num);
+            snprintf(str, sizeof(str), "*DM* %%%dM just arrived.", num);
             broadcast(::isStaff, getSock(), room, str, this);
         }
     }

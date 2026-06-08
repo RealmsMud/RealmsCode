@@ -1516,7 +1516,7 @@ void Server::saveDnsCache() {
         xml::newNumChild(curNode, "Time", (long)(*it).time);
     }
 
-    sprintf(filename, "%s/dns.xml", Path::Config.c_str());
+    snprintf(filename, sizeof(filename), "%s/dns.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }
@@ -2295,7 +2295,7 @@ void Server::saveIds() {
     xml::newNumChild(rootNode, "MaxPlayerId",  maxPlayerId);
     xml::newNumChild(rootNode, "MaxObjectId",  maxObjectId);
 
-    sprintf(filename, "%s/ids.xml", Path::Game.c_str());
+    snprintf(filename, sizeof(filename), "%s/ids.xml", Path::Game.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 
@@ -2358,7 +2358,7 @@ bool Server::reloadRoom(const std::shared_ptr<BaseRoom>& room) {
         auto aRoom = room->getAsAreaRoom();
         auto area = aRoom->area.lock();
         char    filename[256];
-        sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), area->id, aRoom->mapmarker.filename().c_str());
+        snprintf(filename, sizeof(filename), "%s/%d/%s", Path::AreaRoom.c_str(), area->id, aRoom->mapmarker.filename().c_str());
 
         if(fs::exists(filename)) {
             xmlDocPtr   xmlDoc;

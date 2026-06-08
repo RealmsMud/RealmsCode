@@ -132,7 +132,7 @@ bool Config::saveBans() const {
         // Prefix
         xmlNewChild(curNode, nullptr, BAD_CAST "Prefix", BAD_CAST iToYesNo(ban->isPrefix));
     }
-    sprintf(filename, "%s/bans.xml", Path::Config.c_str());
+    snprintf(filename, sizeof(filename), "%s/bans.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);

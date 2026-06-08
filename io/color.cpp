@@ -207,9 +207,9 @@ const char* colorSection(bool staff, const char* color, char colorChar = 0) {
 
     // staff get to see the color code
     if(staff)
-        sprintf(code, "^x^^%c: ", colorChar);
+        snprintf(code, sizeof(code), "^x^^%c: ", colorChar);
 
-    sprintf(str, "%s^%c%-10s", code, colorChar, color);
+    snprintf(str, sizeof(str), "%s^%c%-10s", code, colorChar, color);
     return(str);
 }
 

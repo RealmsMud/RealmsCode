@@ -973,7 +973,7 @@ void callWebserver(std::string url, bool questionMark, bool silent) {
 
     // build command here incase we ever want to audit
     char command[512];
-    sprintf(command, "wget \"%s%s\" -q -O /dev/null", gConfig->getWebserver().c_str(), url.c_str());
+    snprintf(command, sizeof(command), "wget \"%s%s\" -q -O /dev/null", gConfig->getWebserver().c_str(), url.c_str());
 
     // set the user agent, if applicable
     if(!gConfig->getUserAgent().empty()) {

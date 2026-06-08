@@ -402,7 +402,7 @@ void wearAll(const std::shared_ptr<Player>& player, bool login) {
 
             object->clearFlag(O_JUST_BOUGHT);
             if(!login) {
-                sprintf(str2, "%s, ", object->getObjStr(nullptr, 0, 1).c_str());
+                snprintf(str2, sizeof(str2), "%s, ", object->getObjStr(nullptr, 0, 1).c_str());
                 strcat(str, str2);
             }
             player->equip(object, false);
@@ -598,7 +598,7 @@ void remove_all(const std::shared_ptr<Player>& player) {
 
     for(i=0; i<MAXWEAR; i++) {
         if(player->ready[i] && (!(player->ready[i]->flagIsSet(O_CURSED) && player->ready[i]->getShotsCur() > 0))) {
-            sprintf(str2,"%s, ", player->ready[i]->getObjStr(nullptr, 0, 1).c_str());
+            snprintf(str2, sizeof(str2),"%s, ", player->ready[i]->getObjStr(nullptr, 0, 1).c_str());
             strcat(str, str2);
             player->ready[i]->clearFlag(O_WORN);
             player->doRemove(i);

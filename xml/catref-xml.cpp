@@ -189,7 +189,7 @@ void Config::saveCatRefInfo() const {
     for(it = catRefInfo.begin() ; it != catRefInfo.end() ; it++)
         (*it)->save(rootNode);
 
-    sprintf(filename, "%s/catRefInfo.xml", Path::Game.c_str());
+    snprintf(filename, sizeof(filename), "%s/catRefInfo.xml", Path::Game.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }

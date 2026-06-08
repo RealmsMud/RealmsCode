@@ -541,26 +541,35 @@ option(REALMS_BUILD_TESTS "Build unit tests (gtest)" OFF)
 if(REALMS_BUILD_TESTS)
     enable_testing()
     add_executable(RealmsTests
-        test/apiQueue_test.cpp
-        test/endpoint_test.cpp
-        test/authCache_test.cpp
-        test/questsJson_test.cpp
-        test/monstersJson_test.cpp
-        test/roomsJson_test.cpp
-        test/objectsJson_test.cpp
-        test/zoneIndex_test.cpp
-        test/zoneIndexBuilder_test.cpp
-        test/questRemap_test.cpp
-        test/csv_test.cpp
-        test/apiQuests_test.cpp
-        test/xmlNum_test.cpp
-        test/xmlReader_test.cpp
-        test/range_test.cpp
-        test/commandBase_test.cpp
-        test/vprintFormat_test.cpp
-        test/protocol_test.cpp
+        # REST API (server/http)
+        test/api/apiQuests_test.cpp
+        test/api/apiQueue_test.cpp
+        test/api/authCache_test.cpp
+        test/api/endpoint_test.cpp
+        # JSON persistence (json/)
+        test/json/questsJson_test.cpp
+        test/json/monstersJson_test.cpp
+        test/json/roomsJson_test.cpp
+        test/json/objectsJson_test.cpp
+        test/json/zoneIndex_test.cpp
+        test/json/zoneIndexBuilder_test.cpp
+        test/json/questRemap_test.cpp
+        # XML helpers (xml/)
+        test/xml/xmlNum_test.cpp
+        test/xml/xmlReader_test.cpp
+        # Telnet protocol + output (server/, io/)
+        test/io/protocol_test.cpp
+        test/io/vprintFormat_test.cpp
+        # General utilities (util/)
+        test/util/csv_test.cpp
+        test/util/range_test.cpp
+        test/util/md5_test.cpp
+        # Game logic
+        test/game/commandBase_test.cpp
+        test/game/startlocs_test.cpp
     )
     set_property(SOURCE io/socket.cpp APPEND PROPERTY COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS)
+    target_include_directories(RealmsTests PRIVATE ${CMAKE_SOURCE_DIR}/test)
     target_link_libraries(RealmsTests PRIVATE RealmsLib gtest_main realms_flags)
     add_test(NAME RealmsTests COMMAND RealmsTests)
 endif()

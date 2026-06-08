@@ -120,7 +120,7 @@ void Server::showMemory(std::shared_ptr<Socket> sock, bool extended) {
                             act_mem += strlen(tlk->target);
                     }
                 } else {
-                    sprintf(buf, "%s has a talk and should not.", mons->getCName());
+                    snprintf(buf, sizeof(buf), "%s has a talk and should not.", mons->getCName());
                     loge(buf);
                     for(; tlk; tlk = tlk->next_tag) {
                         badtalk++;

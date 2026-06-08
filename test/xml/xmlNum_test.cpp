@@ -69,3 +69,9 @@ TEST(XmlToNum, GatedDiagnostic) {
     // ...plus a stacktrace: more output than the message line alone.
     EXPECT_GT(out.size(), std::string("xml parse: bad numeric 'notanumber'\n").size());
 }
+
+TEST(IToYesNo, ZeroIsNoElseYes) {
+    EXPECT_STREQ(iToYesNo(0), "No");
+    EXPECT_STREQ(iToYesNo(1), "Yes");
+    EXPECT_STREQ(iToYesNo(-5), "Yes");
+}

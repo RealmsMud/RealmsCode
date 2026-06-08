@@ -463,7 +463,7 @@ bool Config::loadQuests() {
     xmlDocPtr   xmlDoc;
     char filename[256];
 
-    sprintf(filename, "%s/quests.xml", Path::Game.c_str());
+    snprintf(filename, sizeof(filename), "%s/quests.xml", Path::Game.c_str());
     if((xmlDoc = xml::loadFile(filename, "Quests")) == nullptr)
         return(false);
 
@@ -1765,10 +1765,10 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(str, "^WLegacy RoH Quests Completed:^x\n");
+    snprintf(str, sizeof(str), "^WLegacy RoH Quests Completed:^x\n");
     for(i=1, j=0; i<MAX_QUEST; i++)
         if(player->questIsSet(i)) {
-            sprintf(str2, "%s, ", get_quest_name(i));
+            snprintf(str2, sizeof(str2), "%s, ", get_quest_name(i));
             strcat(str, str2);
             j++;
         }

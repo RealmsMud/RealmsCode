@@ -65,7 +65,7 @@ int log_immort(int broad, std::shared_ptr<Player> player, const char *fmt,...) {
     }
 
     // trick logn to use Path::StaffLog
-    sprintf(name, "staff/%s", player->getCName());  // Path::StaffLog
+    snprintf(name, sizeof(name), "staff/%s", player->getCName());  // Path::StaffLog
     logn(name, "%s\n", txt.c_str());
 
     if(broad) {

@@ -830,7 +830,7 @@ bool Config::loadLimited() {
     char        filename[80];
 
     // build an XML tree from a the file
-    sprintf(filename, "%s/limited.xml", Path::PlayerData.c_str());
+    snprintf(filename, sizeof(filename), "%s/limited.xml", Path::PlayerData.c_str());
     clearLimited();
 
     xmlDoc = xml::loadFile(filename, "Limited");
@@ -894,7 +894,7 @@ void Config::saveLimited() const {
         (*lt)->save(curNode);
     }
 
-    sprintf(filename, "%s/limited.xml", Path::PlayerData.c_str());
+    snprintf(filename, sizeof(filename), "%s/limited.xml", Path::PlayerData.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }

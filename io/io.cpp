@@ -413,7 +413,7 @@ char *inetname(struct in_addr in) {
     else {
         in.s_addr = ntohl(in.s_addr);
 
-        sprintf(line, "%u.%u.%u.%u",
+        snprintf(line, sizeof(line), "%u.%u.%u.%u",
             (int)(in.s_addr >> 24) & 0xff,
             (int)(in.s_addr >> 16) & 0xff,
             (int)(in.s_addr >> 8) & 0xff,

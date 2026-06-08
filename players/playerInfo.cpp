@@ -329,7 +329,7 @@ std::string showSavingThrow(const std::shared_ptr<Player> viewer, const std::sha
     if( (viewer && viewer->isCt()) ||
         player->isCt()
     ) {
-        sprintf(str, "(%3d%%)", player->saves[st].chance);
+        snprintf(str, sizeof(str), "(%3d%%)", player->saves[st].chance);
         text += str;
     }
     if( st==POI &&
@@ -339,7 +339,7 @@ std::string showSavingThrow(const std::shared_ptr<Player> viewer, const std::sha
         text += "^WN/A^x";
     } else {
         int save = std::min((1+player->saves[st].chance)/10, MAX_SAVE_COLOR-1);
-        sprintf(str, "^%c%s^x", get_save_color(save), get_save_string(save));
+        snprintf(str, sizeof(str), "^%c%s^x", get_save_color(save), get_save_string(save));
         text += str;
     }
     return(text);

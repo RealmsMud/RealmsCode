@@ -550,7 +550,7 @@ std::string Creature::statCrt(int statFlags) {
         for(i=1; i<static_cast<int>(STAFF); i++) {
             if(mTarget->isClassAggro(i, false)) {
                 str += getClassAbbrev(i);
-                sprintf(tmp, "(%d), ", i);
+                snprintf(tmp, sizeof(tmp), "(%d), ", i);
                 str += tmp;
             }
         }
@@ -558,7 +558,7 @@ std::string Creature::statCrt(int statFlags) {
         for(i=1; i<RACE_COUNT; i++) {
             if(mTarget->isRaceAggro(i, false)) {
                 str += gConfig->getRace(i)->getName();
-                sprintf(tmp, "(%d), ", i);
+                snprintf(tmp, sizeof(tmp), "(%d), ", i);
                 str += tmp;
             }
         }
@@ -566,7 +566,7 @@ std::string Creature::statCrt(int statFlags) {
         for(i=1; i<DEITY_COUNT; i++) {
             if(mTarget->isDeityAggro(i, false)) {
                 str += gConfig->getDeity(i)->getName();
-                sprintf(tmp, "(%d), ", i);
+                snprintf(tmp, sizeof(tmp), "(%d), ", i);
                 str += tmp;
             }
         }
@@ -611,7 +611,7 @@ std::string Creature::statCrt(int statFlags) {
 
         for(i=1, n=0; i<65; i++) {
             if(pTarget->questIsSet(i)) {
-                sprintf(tmp, "(%d) - (", i+1);
+                snprintf(tmp, sizeof(tmp), "(%d) - (", i+1);
                 str += tmp;
                 str += get_quest_name(i);
                 str += "), ";
