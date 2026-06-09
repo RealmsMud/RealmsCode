@@ -255,8 +255,10 @@ static void appendStandardSpec(std::string &out, const std::string &spec, const 
 
 // Portable replacement for glibc's register_printf_specifier + vasprintf: walk the format, rendering our custom
 // specifiers and delegating standard ones to snprintf, consuming va_args in lockstep.
-std::string realmsFormat(const char *fmt, va_list ap) {
+std::string realmsFormat(const char *fmt, va_list ap_in) {
     std::string out;
+    va_list ap;
+    va_copy(ap, ap_in);
     for(const char *p = fmt; *p; ) {
         if(*p != '%') { out.push_back(*p++); continue; }
         const char *start = p++;
@@ -302,6 +304,7 @@ std::string realmsFormat(const char *fmt, va_list ap) {
         spec += conv;
         appendStandardSpec(out, spec, length, conv, ap);
     }
+    va_end(ap);
     return out;
 }
 
