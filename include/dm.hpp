@@ -94,7 +94,6 @@ int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd);
 // dm.c
 int dmCache(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmTxtOnCrash(const std::shared_ptr<Player>& player, cmd* cmnd);
-int dmReboot(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmCheckInventory(const std::shared_ptr<Player>& player, cmd* cmnd);
 int dmGetPlyInventory(const std::shared_ptr<Player>& player, const std::shared_ptr<Player>& target, cmd* cmnd);
 int dmGetMobInventory(const std::shared_ptr<Player>& player, const std::shared_ptr<Monster>& monster, cmd* cmnd);

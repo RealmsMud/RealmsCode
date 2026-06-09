@@ -75,10 +75,11 @@ void startup_mordor() {
 
     gServer->run();
 
+    cleanUpMemory();
 }
 
 void usage(char *szName) {
-    printf(" %s [port number] [-r]\n", szName);
+    printf(" %s [port number]\n", szName);
 }
 
 void handle_args(int argc, char *argv[]) {
@@ -94,10 +95,6 @@ void handle_args(int argc, char *argv[]) {
             case 'g':
             case 'G':
                 gServer->setGDB();
-                break;
-            case 'r':
-            case 'R':
-                gServer->setRebooting();
                 break;
             case 'v':
             case 'V':

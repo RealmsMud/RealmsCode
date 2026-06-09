@@ -93,7 +93,7 @@ AsyncResult Async::branch(const std::shared_ptr<const Player>& player, ChildType
 //                      runList
 //********************************************************************
 
-int Server::runList(std::shared_ptr<Socket> sock, cmd* cmnd) {
+int Server::runList(const std::shared_ptr<Socket>& sock, cmd* cmnd) {
     Async async;
     if(async.branch(sock->getPlayer(), ChildType::LISTER) == AsyncExternal) {
 

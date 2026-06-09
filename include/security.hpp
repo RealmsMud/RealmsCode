@@ -8,5 +8,5 @@
 
 class Socket;
 
-void changePassword(std::shared_ptr<Socket> sock, const std::string& str);
+void changePassword(const std::shared_ptr<Socket>& sock, const std::string& str);
 

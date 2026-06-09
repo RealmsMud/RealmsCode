@@ -566,7 +566,7 @@ MsdpVariable* Config::getMsdpVariable(const std::string &name) {
         return &(it->second);
 }
 
-ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, std::shared_ptr<Socket> sock) {
+ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, const std::shared_ptr<Socket>& sock) {
     name = mv->getName();
     parentSock = sock;
     configurable = mv->isConfigurable();

@@ -187,9 +187,9 @@ namespace Create {
 }
 
 // Various login functions
-void convertNewWeaponSkills(std::shared_ptr<Socket> sock, const std::string& str);
-void login(std::shared_ptr<Socket> sock, const std::string& inStr);
-void createPlayer(std::shared_ptr<Socket> sock, const std::string& str);
-void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
-void doSurname(std::shared_ptr<Socket> sock, const std::string& str);
-void doTitle(std::shared_ptr<Socket> sock, const std::string& str);
+void convertNewWeaponSkills(const std::shared_ptr<Socket>& sock, const std::string& str);
+void login(const std::shared_ptr<Socket>& sock, const std::string& inStr);
+void createPlayer(const std::shared_ptr<Socket>& sock, const std::string& str);
+void showAccountMenu(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account);
+void doSurname(const std::shared_ptr<Socket>& sock, const std::string& str);
+void doTitle(const std::shared_ptr<Socket>& sock, const std::string& str);

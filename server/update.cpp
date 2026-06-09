@@ -403,12 +403,8 @@ void update_shutdown(long t) {
         gConfig->swapAbort();
         gServer->resaveAllRooms(1);
         gServer->saveAllPly();
-        gServer->disconnectAll();
         gConfig->save();
-        cleanUpMemory();
-
-        std::clog << "Goodbye.\n";
-        exit(0);
+        gServer->stop();
     }
 }
 

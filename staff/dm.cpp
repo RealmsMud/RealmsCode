@@ -75,39 +75,6 @@ extern long last_weather_update;
 
 
 
-//*********************************************************************
-//                      dmReboot
-//*********************************************************************
-
-int dmReboot(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    bool    resetShips=false;
-
-
-    if( !player->isDm() &&
-        !(player->flagIsSet(P_CAN_REBOOT) &&
-        player->getClass() == CreatureClass::CARETAKER)
-    )
-        return(cmdNoAuth(player));
-
-    if(cmnd->num==2 && !strcmp(cmnd->str[1], "-ships"))
-        resetShips = true;
-
-    player->print("Rebooting now!\n");
-    gConfig->swapAbort();
-    logn("log.bane", "Reboot by %s.\n", player->getCName());
-    broadcast("### Going for a reboot, hang onto your seats!");
-    if(resetShips)
-        player->print("Resetting game time to midnight, updating ships...\n");
-    gServer->processOutput();
-    loge("--- Attempting game reboot ---\n");
-    gServer->resaveAllRooms(0);
-
-    gServer->startReboot(resetShips);
-
-    throw std::runtime_error("dmReboot failed!!!");
-    return(0);
-
-}
 
 int dmCheckInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Monster> mTarget=nullptr;

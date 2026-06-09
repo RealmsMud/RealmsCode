@@ -77,7 +77,7 @@ protected:
 
 public:
     ReportedMsdpVariable(const ReportedMsdpVariable&) = default;
-    ReportedMsdpVariable(const MsdpVariable *mv, std::shared_ptr<Socket> sock);
+    ReportedMsdpVariable(const MsdpVariable *mv, const std::shared_ptr<Socket>& sock);
 
     [[nodiscard]] const std::string& getValue() const;
     void setValue(std::string_view newValue);

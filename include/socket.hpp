@@ -35,8 +35,16 @@
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <deque>
+#include <array>
 #include <fmt/format.h>
 #include <nlohmann/json_fwd.hpp>
+
+// standalone asio (ASIO_STANDALONE is supplied by the asio::asio interface target via Crow)
+#ifndef ASIO_STANDALONE
+#define ASIO_STANDALONE
+#endif
+#include <asio/ip/tcp.hpp>
 
 #include "msdp.hpp"                                 // for ReportedMsdpVariable
 
@@ -263,8 +271,8 @@ public:
     void viewFileReverseReal(const std::string& str);
     void registerPlayer();
 public:
-    explicit Socket(int pFd);
-    Socket(int pFd, sockaddr_in pAddr);
+    explicit Socket(asio::ip::tcp::socket pSock);   // production: owns the accepted asio socket
+    explicit Socket(int pFd);                        // tests: bare fd, synchronous write fallback
     ~Socket();
 
     void cleanUp();
@@ -402,6 +410,13 @@ public:
     bool gmcpSend(std::string_view package, const nlohmann::json& body);
 
 protected:
+    // asio I/O seams (protected so the io tests can drive them directly)
+    void startRead();                  // arm an async read on the asio socket
+    void resumeRead();                 // re-arm reads paused by input backpressure, once drained
+    void doWrite();                    // drive the async_write queue (one write in flight)
+    void enqueue(std::string bytes);   // queue outbound bytes and kick the writer
+    void drainAndClose();              // best-effort flush of the queue, then close
+
     // Telopt related
     void decodeBytes(std::span<const unsigned char> data, std::string& out); // telnet FSM, no I/O
     void extractCommands(std::string decoded);                               // CR/LF + backspace + line split
@@ -409,7 +424,6 @@ protected:
     //bool subNegotiate(unsigned char ch);
     bool handleNaws(int& colRow, unsigned char chr, bool high);
     ssize_t processCompressed();
-    bool compressedPending() const;
 
     bool parseMXPSecure();
 
@@ -450,7 +464,8 @@ public:
     void setParam(int newParam);
 
 protected:
-    int         fd;                 // File Descriptor of this socket
+    std::unique_ptr<asio::ip::tcp::socket> sock;
+    int         fd;
     Host        host;
     bool        dnsDone{};
     Term        term;
@@ -465,7 +480,11 @@ protected:
     long        mtts{};             // MTTS capability bitvector (TTYPE/MNES)
 
     std::stringstream output;
-    std::string       processedOutput;   // Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
+    std::deque<std::string> writeQueue;        // outbound bytes awaiting async_write
+    size_t                  queuedBytes{};     // running total of writeQueue sizes (backlog cap)
+    bool                    writeInFlight{};   // true while an async_write is outstanding
+    bool                    readPaused{};      // reads suspended while the input queue is full
+    std::array<unsigned char, 1024> readBuf{}; // scratch for async_read_some
 
     std::queue<std::string> input;      // Processed Input buffer
 
@@ -475,6 +494,7 @@ protected:
     std::string     inLast;             // Last command
 
     bool registered{};
+    bool cleanedUp{};                  // teardown runs once; ~Socket re-entry is a no-op
     std::shared_ptr<Player>     myPlayer{};
     std::string                 currentAccountName{};  // Account name for this socket
 
@@ -485,7 +505,7 @@ protected:
     std::unique_ptr<z_stream, ZStreamDeleter>  outCompress;     // null unless compressing
 
 // Old items from IOBUF that we might keep
-    using CmdFn = void(*)(std::shared_ptr<Socket>, const std::string&);
+    using CmdFn = void(*)(const std::shared_ptr<Socket>&, const std::string&);
     CmdFn       fn{};
     char        fnparam{};
     char        commands{};

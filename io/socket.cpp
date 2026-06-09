@@ -53,6 +53,10 @@
 #include <utility>
 #include <vector>                                   // for vector
 
+#include <asio/buffer.hpp>                          // for asio::buffer
+#include <asio/read.hpp>                            // for async_read_some (via tcp::socket)
+#include <asio/write.hpp>                           // for asio::async_write / asio::write
+
 #include "color.hpp"                                // for stripColor
 #include "commands.hpp"                             // for command, changing...
 #include "config.hpp"                               // for Config, gConfig
@@ -226,41 +230,178 @@ void Socket::reset() {
 //                      Socket
 //********************************************************************
 
+Socket::Socket(asio::ip::tcp::socket pSock) {
+    reset();
+    sock = std::make_unique<asio::ip::tcp::socket>(std::move(pSock));
+    fd = static_cast<int>(sock->native_handle());
+
+    // Rebuild a sockaddr_in from the peer endpoint for resolveIp + the DNS resolver fork.
+    sockaddr_in addr{};
+    asio::error_code ec;
+    auto ep = sock->remote_endpoint(ec);
+    const bool haveEndpoint = !ec;
+    if(haveEndpoint) {
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(ep.port());
+        addr.sin_addr.s_addr = htonl(ep.address().to_v4().to_uint());
+    }
+
+    resolveIp(addr, host.ip);
+    resolveIp(addr, host.hostName); // start off with the hostname as the ip, then do an asynchronous lookup
+
+    asio::error_code lec;
+    sock->set_option(asio::socket_base::linger(false, 0), lec);
+
+    numSockets++;
+
+    // If we're running under valgrind, we don't resolve dns.  The child process tends to mess with proper memory leak detection.
+    // With no peer endpoint (remote_endpoint failed) there's nothing to resolve -- proceed on the ip string.
+    if (!haveEndpoint || gServer->getDnsCache(host.ip, host.hostName) || gServer->isValgrind()) {
+        dnsDone = true;
+    } else {
+        dnsDone = false;
+        setState(LOGIN_DNS_LOOKUP);
+        gServer->startDnsLookup(this, addr);
+    }
+}
+
 Socket::Socket(int pFd) {
     reset();
     fd = pFd;
     numSockets++;
 }
 
-Socket::Socket(int pFd, sockaddr_in pAddr) {
-    reset();
+//********************************************************************
+//                      startRead / doWrite / enqueue (asio I/O)
+//********************************************************************
 
-    struct linger ling{};
-    fd = pFd;
+// A client that can't keep up must not balloon memory: cap queued output bytes,
+// and cap unprocessed input commands (pausing reads applies TCP backpressure).
+static constexpr size_t kMaxQueuedBytes = 1u << 20;   // 1 MB of outbound backlog
+static constexpr size_t kMaxQueuedCommands = 1024;    // pending input commands before we pause reads
 
-    resolveIp(pAddr, host.ip);
-    resolveIp(pAddr, host.hostName); // Start off with the hostname as the ip, then do an asyncronous lookup
+void Socket::startRead() {
+    if(!sock || !sock->is_open()) return;
+    auto self = shared_from_this();
+    sock->async_read_some(asio::buffer(readBuf),
+        [this, self](const asio::error_code& ec, std::size_t n) {
+            if(ec) {
+                setState(CON_DISCONNECTING);
+                return;
+            }
+            InBytes += static_cast<long>(n);
+            std::string decoded;
+            decoded.reserve(n);
+            decodeBytes(std::span(readBuf.data(), n), decoded);
+            extractCommands(std::move(decoded));
+            ltime = time(nullptr);
+            // Pause reads when the command backlog is high; resumeRead() re-arms once the
+            // game loop drains it. Leaving the socket unarmed backpressures the sender via TCP.
+            if(input.size() >= kMaxQueuedCommands)
+                readPaused = true;
+            else
+                startRead();
+        });
+}
 
-    // Make this socket non blocking
-    nonBlock(fd);
+void Socket::resumeRead() {
+    if(readPaused && input.size() < kMaxQueuedCommands) {
+        readPaused = false;
+        startRead();
+    }
+}
 
-    // Set Linger behavior
-    ling.l_onoff = ling.l_linger = 0;
-    setsockopt(fd, SOL_SOCKET, SO_LINGER, reinterpret_cast<char *>(&ling), sizeof(struct linger));
+void Socket::enqueue(std::string bytes) {
+    if(bytes.empty())
+        return;
+    if(queuedBytes + bytes.size() > kMaxQueuedBytes) {
+        std::clog << "Socket " << fd << ": output backlog exceeded " << kMaxQueuedBytes << " bytes, disconnecting\n";
+        if(writeInFlight)
+            writeQueue.erase(std::next(writeQueue.begin()), writeQueue.end());
+        else
+            writeQueue.clear();
+        queuedBytes = writeQueue.empty() ? 0 : writeQueue.front().size();
+        setState(CON_DISCONNECTING);
+        return;
+    }
+    queuedBytes += bytes.size();
+    writeQueue.emplace_back(std::move(bytes));
+    doWrite();
+}
 
-    numSockets++;
-    std::clog << "Constructing socket (" << fd << ") from " << host.ip << " Socket #" << numSockets << std::endl;
+void Socket::doWrite() {
+    if(writeQueue.empty())
+        return;
 
-    // If we're running under valgrind, we don't resolve dns.  The child process tends to mess with proper memory leak detection
-    if (gServer->getDnsCache(host.ip, host.hostName) || gServer->isValgrind()) {
-        dnsDone = true;
-    } else {
-        dnsDone = false;
-        setState(LOGIN_DNS_LOOKUP);
-        gServer->startDnsLookup(this, pAddr);
+    if(sock) {
+        if(writeInFlight || !sock->is_open())
+            return;
+        auto self = weak_from_this().lock();
+        if(!self)
+            return;
+        writeInFlight = true;
+        asio::async_write(*sock, asio::buffer(writeQueue.front()),
+            [this, self](const asio::error_code& ec, std::size_t /*n*/) {
+                writeInFlight = false;
+                if(ec) {
+                    setState(CON_DISCONNECTING);
+                    return;
+                }
+                if(writeQueue.empty()) return;
+                queuedBytes -= writeQueue.front().size();
+                writeQueue.pop_front();
+                if(!writeQueue.empty())
+                    doWrite();
+            });
+        return;
     }
 
-    startTelnetNeg();
+    if(fd < 0)
+        return;
+    while(!writeQueue.empty()) {
+        std::string& front = writeQueue.front();
+        const ssize_t n = ::write(fd, front.data(), front.size());
+        if(n < 0) {
+            if(errno != EWOULDBLOCK)
+                setState(CON_DISCONNECTING);
+            break;
+        }
+        if(static_cast<size_t>(n) < front.size()) {
+            queuedBytes -= static_cast<size_t>(n);
+            front.erase(0, static_cast<size_t>(n));
+            break;
+        }
+        queuedBytes -= front.size();
+        writeQueue.pop_front();
+    }
+}
+
+void Socket::drainAndClose() {
+    if(sock) {
+        asio::error_code ec;
+        if(!writeInFlight) {
+            asio::error_code nbec;
+            sock->non_blocking(true, nbec);
+            while(!writeQueue.empty()) {
+                const std::size_t w = sock->write_some(asio::buffer(writeQueue.front()), ec);
+                if(ec || w < writeQueue.front().size())
+                    break;
+                writeQueue.pop_front();
+            }
+        }
+        sock->close(ec);
+    } else if(fd >= 0) {
+        while(!writeQueue.empty()) {
+            const std::string& front = writeQueue.front();
+            [[maybe_unused]] ssize_t n = ::write(fd, front.data(), front.size());
+            writeQueue.pop_front();
+        }
+        close(fd);
+    }
+    writeQueue.clear();
+    queuedBytes = 0;
+    writeInFlight = false;
+    fd = -1;
 }
 
 //********************************************************************
@@ -268,50 +409,50 @@ Socket::Socket(int pFd, sockaddr_in pAddr) {
 //********************************************************************
 // Disconnect the underlying file descriptor
 void Socket::cleanUp() {
+    if(cleanedUp) return;
+    cleanedUp = true;
+
     clearSpying();
     clearSpiedOn();
     msdpClearReporting();
 
-	// Ensure account connection is untracked before player/account state is cleared
-	const std::string accountName = getAccountName();
-	if (myPlayer) {
-		const std::string characterName = myPlayer->getName();
-		if(!accountName.empty() && !characterName.empty() && gServer) {
-			gServer->untrackAccountConnection(accountName, characterName);
-		}
-	} else if(!accountName.empty() && gServer) {
-		// If we are at the account menu (no player), release the cached account
-		gServer->releaseAccount(accountName, "");
-	}
-
+    const std::string accountName = getAccountName();
     if (myPlayer) {
+        // Save the player before untracking the account: untrackAccountConnection can evict the
+        // account from gServer's cache, after which getAccount() returns null and the save is lost.
         if (myPlayer->fd > -1) {
             myPlayer->save(true);
             myPlayer->uninit();
+        }
+        const std::string characterName = myPlayer->getName();
+        if(!accountName.empty() && !characterName.empty() && gServer) {
+            gServer->untrackAccountConnection(accountName, characterName);
         }
         if(registered) {
             gServer->clearPlayer(myPlayer->getName());
             registered=false;
         }
         myPlayer = nullptr;
+    } else if(!accountName.empty() && gServer) {
+        // If we are at the account menu (no player), release the cached account
+        gServer->releaseAccount(accountName, "");
     }
     currentAccountName.clear();
     endCompress();
-    if(fd > -1) {
-        close(fd);
-        fd = -1;
-    }
-
+    drainAndClose();
 }
 //********************************************************************
 //                      ~Socket
 //********************************************************************
 
 Socket::~Socket() {
-    std::cout << "Deconstructing socket , ";
     numSockets--;
-    std::cout << "Num sockets: " << numSockets << std::endl;
-    cleanUp();
+    if(!cleanedUp) {
+        std::clog << "Socket destroyed without prior cleanUp (teardown invariant violated)\n";
+        cleanedUp = true;
+        endCompress();
+        drainAndClose();
+    }
 }
 
 // End - Constructors, Destructors, etc
@@ -1156,7 +1297,7 @@ void Socket::restoreState() {
 //                      pauseScreen
 //*********************************************************************
 
-void pauseScreen(std::shared_ptr<Socket> sock, const std::string &str) {
+void pauseScreen(const std::shared_ptr<Socket>& sock, const std::string &str) {
     if(str == "quit")
         sock->disconnect();
     else
@@ -1174,6 +1315,7 @@ void Socket::reconnect(bool pauseScreen) {
 
     if(myPlayer) {
         // TODO: Only clear if we're the one who registered the player
+        myPlayer->uninit();   // remove from room/group/pets; clearPlayer alone leaves it dangling
         gServer->clearPlayer(myPlayer->getName());
         myPlayer = nullptr;
     }
@@ -1190,7 +1332,7 @@ void Socket::reconnect(bool pauseScreen) {
 }
 
 
-void viewFileReverse(std::shared_ptr<Socket> sock, const std::string& file) {
+void viewFileReverse(const std::shared_ptr<Socket>& sock, const std::string& file) {
     sock->viewFileReverse(file);
 }
 
@@ -1718,21 +1860,15 @@ void Socket::printColor(const char* fmt, ...) {
 void Socket::flush() {
     if (fd == -1) return;
 
-    ssize_t n;
-    if(!processedOutput.empty()) {
-        n = writeInternal(processedOutput, false, false);
-    } else if(compressedPending()) {
-        // drain EWOULDBLOCK leftover before new output; no prompt yet
-        processCompressed();
-        n = -2;
-    } else {
-        if ((n = write(output.str())) == 0)
-            return;
-        output = std::stringstream();
-    }
-    // If we only wrote OOB data or partial data was written because of EWOULDBLOCK,
-    // then n is -2, don't send a prompt in that case
-    if (n != -2 && myPlayer && connState != CON_CHOSING_WEAPONS && pagerOutput.empty())
+    // Drain this tick's accumulated output into the send queue.
+    const ssize_t n = write(output.str());
+    output = std::stringstream();
+
+    if (!writeQueue.empty())
+        doWrite();
+
+    // n == -2 means we only emitted OOB/protocol bytes (no prompt-worthy content).
+    if (n != -2 && n != 0 && myPlayer && connState != CON_CHOSING_WEAPONS && pagerOutput.empty())
         myPlayer->sendPrompt();
 }
 
@@ -1763,7 +1899,6 @@ void Socket::echoOn() {
 
 ssize_t Socket::writeInternal(std::string_view toWrite, bool pSpy, bool process) {
     ssize_t written = 0;
-    ssize_t n = 0;
     size_t total = 0;
 
     // Parse any color, unicode, etc here
@@ -1776,43 +1911,20 @@ ssize_t Socket::writeInternal(std::string_view toWrite, bool pSpy, bool process)
 
     total = toOutput.length();
 
-    const char *str = toOutput.c_str();
-    // Write directly to the socket, otherwise compress it and send it
+    // Queue for async send; asio's async_write handles partial writes, so there's no
+    // EWOULDBLOCK/leftover bookkeeping. Compressing path deflates first, then queues.
     if (!opts.compressing) {
-        do {
-            n = ::write(fd, str + written, total - written);
-            if (n < 0) {
-                if(errno != EWOULDBLOCK)
-                    return (n);
-                else  {
-                    // The write would have blocked
-                    n = -2;
-                    // If we haven't written the total number of bytes planned save the remaining string for the next go around
-                    if(written < total) {
-                        processedOutput = str + written;
-                    }
-                    break;
-                }
-            }
-            written += n;
-        } while (written < total);
-
-        UnCompressedBytes += written;
-
-        if(n == -2)
-            written = -2;
-
-        if(written >= total && !processedOutput.empty() && !process) {
-            processedOutput.erase();
-        }
+        UnCompressedBytes += static_cast<long>(total);
+        written = static_cast<ssize_t>(total);
+        enqueue(std::move(toOutput));
     } else {
         UnCompressedBytes += total;
 
-        outCompress->next_in = (Bytef*) str;
+        outCompress->next_in = reinterpret_cast<Bytef*>(toOutput.data());
         outCompress->avail_in = total;
-        // Grow the scratch buffer under backpressure so input is never dropped; leftover stays
-        // buffered (compressedPending()) and flush() retries it. Loop until the Z_SYNC_FLUSH
-        // fully drained zlib (avail_in==0 AND avail_out>0), else pending output is left unflushed.
+        // Grow the scratch buffer under backpressure so input is never dropped; each chunk is
+        // queued by processCompressed(). Loop until Z_SYNC_FLUSH drained zlib (avail_in==0 AND
+        // avail_out>0).
         bool more = true;
         while (more) {
             const size_t used = outCompress->next_out - reinterpret_cast<Bytef*>(outCompressBuf.data());
@@ -1924,34 +2036,11 @@ int Socket::endCompress() {
 ssize_t Socket::processCompressed() {
     char* base = outCompressBuf.data();
     auto len = static_cast<size_t>(reinterpret_cast<char*>(outCompress->next_out) - base);
-    ssize_t written = 0;
-    size_t i = 0;
-
     if (len > 0) {
-        while (i < len) {
-            const size_t block = std::min<size_t>(len - i, 4096);
-            const ssize_t n = ::write(fd, base + i, block);
-            if (n < 0) {
-                if (errno == EWOULDBLOCK) break;
-                return -1;
-            }
-            if (n == 0)
-                break;
-            i += static_cast<size_t>(n);
-            written += n;
-        }
-        // compact unsent tail to the front so next_out stays consistent for further deflate()
-        if (i) {
-            if (i < len)
-                memmove(base, base + i, len - i);
-            outCompress->next_out = reinterpret_cast<Bytef*>(base) + (len - i);
-        }
+        enqueue(std::string(base, len));
+        outCompress->next_out = reinterpret_cast<Bytef*>(base); // scratch consumed, reset for next deflate
     }
-    return (written);
-}
-
-bool Socket::compressedPending() const {
-    return outCompress && (reinterpret_cast<char*>(outCompress->next_out) - outCompressBuf.data()) > 0;
+    return static_cast<ssize_t>(len);
 }
 // End - MCCP
 //--------------------------------------------------------------------
@@ -2018,7 +2107,7 @@ bool Socket::loadTelopts(xmlNodePtr rootNode) {
 //********************************************************************
 
 bool Socket::hasOutput() const {
-    return !processedOutput.empty() || compressedPending() || output.rdbuf()->in_avail();
+    return !writeQueue.empty() || output.rdbuf()->in_avail();
 }
 
 //********************************************************************

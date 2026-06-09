@@ -1220,7 +1220,7 @@ void Player::resetPlayer(const std::shared_ptr<Creature>& killer) {
 //                      hearMobDeath
 //********************************************************************
 
-bool hearMobDeath(std::shared_ptr<Socket> sock) {
+bool hearMobDeath(const std::shared_ptr<Socket>& sock) {
     if(!sock->getPlayer() || !isCt(sock))
         return(false);
     return(!sock->getPlayer()->flagIsSet(P_NO_DEATH_MSG));

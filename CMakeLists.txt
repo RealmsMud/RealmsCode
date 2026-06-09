@@ -561,6 +561,11 @@ if(REALMS_BUILD_TESTS)
         # XML helpers (xml/)
         test/xml/xmlNum_test.cpp
         test/xml/xmlReader_test.cpp
+        # Server engine (server/)
+        test/server/serverIds_test.cpp
+        test/server/serverDns_test.cpp
+        test/server/serverAccount_test.cpp
+        test/server/serverActiveList_test.cpp
         # Telnet protocol + output (server/, io/)
         test/io/protocol_test.cpp
         test/io/processInput_test.cpp
@@ -570,6 +575,7 @@ if(REALMS_BUILD_TESTS)
         test/io/spy_test.cpp
         test/io/mccp_test.cpp
         test/io/viewFileReverse_test.cpp
+        test/io/socketAsyncBackpressure_test.cpp
         # General utilities (util/)
         test/util/csv_test.cpp
         test/util/range_test.cpp

@@ -259,7 +259,7 @@ std::ostream& operator<<(std::ostream& os, const Blackjack& game) {
   return os;
 }
 
-void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str) {
+void playBlackjack(const std::shared_ptr<Socket>& sock, const std::string& str) {
   std::ostringstream os;
   short decksInShoe = 6;
   std::shared_ptr<Player> player = sock->getPlayer();
