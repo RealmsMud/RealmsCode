@@ -579,7 +579,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
 
-        sprintf(objname, "%s's ", creature->getCName());
+        snprintf(objname, sizeof(objname), "%s's ", creature->getCName());
     }
 
     // because float variables suck
@@ -847,7 +847,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 player->print("Error: flag out of range.\n");
                 return(PROMPT);
             }
-            if(num-1 == O_UNIQUE) {
+            if(num-1 == O_UNIQUE_OBJ) {
                 if(player->getClass() == CreatureClass::BUILDER)
                     player->printColor("You will need to get a CT to set this object as unique using the ^y*unique^x command.\n");
                 else
@@ -1283,7 +1283,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
         *player << ColorOn << fmt::format("^yUnique status of {}^y has been removed.\n", object->getName()) << ColorOff
                 << "If the object is saved to a new index, the unique flag will be removed.\n"
                 << "If the object is resaved to the unique range, it will become unique again.\n";
-        object->clearFlag(O_UNIQUE);
+        object->clearFlag(O_UNIQUE_OBJ);
     }
 
     if(Lore::isLore(object)) {

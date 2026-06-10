@@ -3,6 +3,16 @@ cmake_minimum_required(VERSION 3.16...3.26)
 project(RealmsCode)
 include(FetchContent)
 
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+if(APPLE AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    execute_process(COMMAND sw_vers -productVersion
+        OUTPUT_VARIABLE REALMS_MACOS_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REGEX MATCH "^[0-9]+" REALMS_MACOS_MAJOR "${REALMS_MACOS_VERSION}")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "${REALMS_MACOS_MAJOR}" CACHE STRING "macOS deployment target" FORCE)
+    message(STATUS "macOS deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+endif()
+
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -34,7 +44,10 @@ message(STATUS "Python_INCLUDE_DIRS = ${Python_INCLUDE_DIRS}")
 
 # -stdlib is an ABI choice and must match the fetched deps, so it stays global. Everything
 # else (-g/-O0/-Wall/sanitizer) lives on the realms_flags target below so it hits only our code.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+# macOS clang has no libstdc++; it defaults to libc++
+if(NOT APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+endif()
 
 # Warning flags for our code only - applied via realms_flags below
 #  -Wall                                baseline.
@@ -58,7 +71,7 @@ if($ENV{LEAK})
 endif()
 
 FetchContent_Declare(nlohmann_json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz    SYSTEM)
-FetchContent_Declare(fmt         GIT_REPOSITORY https://github.com/fmtlib/fmt.git          GIT_TAG 11.2.0   SYSTEM)
+FetchContent_Declare(fmt         GIT_REPOSITORY https://github.com/fmtlib/fmt.git          GIT_TAG 12.1.0   SYSTEM)
 FetchContent_Declare(pybind11    GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v3.0.4   SYSTEM)
 FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.2.1.2 SYSTEM)
 FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.1.5  SYSTEM)
@@ -155,6 +168,8 @@ set(COMMON_HEADER_FILES
     include/monType.hpp
     include/money.hpp
     include/move.hpp
+    include/gmcp.hpp
+    include/gmcpEvents.hpp
     include/msdp.hpp
     include/mud.hpp
     include/mxp.hpp
@@ -162,6 +177,7 @@ set(COMMON_HEADER_FILES
     include/objIncrease.hpp
     include/oldquest.hpp
     include/paths.hpp
+    include/platform.hpp
     include/playerClass.hpp
     include/playerTitle.hpp
     include/post.hpp
@@ -371,6 +387,8 @@ set(COMMON_SOURCE_FILES
     server/log.cpp
     server/login.cpp
     server/mccp.cpp
+    server/gmcp.cpp
+    server/gmcpEvents.cpp
     server/memory.cpp
     server/msdp.cpp
     server/msdpLoader.cpp
@@ -420,6 +438,7 @@ set(COMMON_SOURCE_FILES
     util/help.cpp
     util/md5.cpp
     util/misc.cpp
+    util/platform.cpp
     util/timer.cpp
 
     json/accounts-json.cpp
@@ -484,6 +503,12 @@ set(COMMON_SOURCE_FILES
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 
 target_include_directories(RealmsLib PUBLIC include)
+target_include_directories(RealmsLib PRIVATE ${ASPELL_INCLUDE_DIRS})
+target_compile_definitions(RealmsLib PUBLIC REALMS_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+
+if(APPLE)
+    target_compile_definitions(RealmsLib PUBLIC BOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED)
+endif()
 
 target_link_libraries(
     RealmsLib
@@ -511,28 +536,56 @@ target_link_libraries(List PRIVATE RealmsLib realms_flags)
 add_executable(Updater ${UPDATER_SOURCE_FILES})
 target_link_libraries(Updater PRIVATE RealmsLib realms_flags)
 
+if(APPLE)
+    set_target_properties(RealmsCode List Updater PROPERTIES BUILD_RPATH "@loader_path")
+endif()
+
 # Enable with -DREALMS_BUILD_TESTS=ON, then `ctest` or ./RealmsTests.
 option(REALMS_BUILD_TESTS "Build unit tests (gtest)" OFF)
 if(REALMS_BUILD_TESTS)
     enable_testing()
     add_executable(RealmsTests
-        test/apiQueue_test.cpp
-        test/endpoint_test.cpp
-        test/authCache_test.cpp
-        test/questsJson_test.cpp
-        test/monstersJson_test.cpp
-        test/roomsJson_test.cpp
-        test/objectsJson_test.cpp
-        test/zoneIndex_test.cpp
-        test/zoneIndexBuilder_test.cpp
-        test/questRemap_test.cpp
-        test/csv_test.cpp
-        test/apiQuests_test.cpp
-        test/xmlNum_test.cpp
-        test/xmlReader_test.cpp
-        test/range_test.cpp
-        test/commandBase_test.cpp
+        # REST API (server/http)
+        test/api/apiQuests_test.cpp
+        test/api/apiQueue_test.cpp
+        test/api/authCache_test.cpp
+        test/api/endpoint_test.cpp
+        # JSON persistence (json/)
+        test/json/questsJson_test.cpp
+        test/json/monstersJson_test.cpp
+        test/json/roomsJson_test.cpp
+        test/json/objectsJson_test.cpp
+        test/json/zoneIndex_test.cpp
+        test/json/zoneIndexBuilder_test.cpp
+        test/json/questRemap_test.cpp
+        # XML helpers (xml/)
+        test/xml/xmlNum_test.cpp
+        test/xml/xmlReader_test.cpp
+        # Server engine (server/)
+        test/server/serverIds_test.cpp
+        test/server/serverDns_test.cpp
+        test/server/serverAccount_test.cpp
+        test/server/serverActiveList_test.cpp
+        # Telnet protocol + output (server/, io/)
+        test/io/protocol_test.cpp
+        test/io/processInput_test.cpp
+        test/io/colorWidth_test.cpp
+        test/io/vprintFormat_test.cpp
+        test/io/gmcp_test.cpp
+        test/io/spy_test.cpp
+        test/io/mccp_test.cpp
+        test/io/viewFileReverse_test.cpp
+        test/io/socketAsyncBackpressure_test.cpp
+        # General utilities (util/)
+        test/util/csv_test.cpp
+        test/util/range_test.cpp
+        test/util/md5_test.cpp
+        # Game logic
+        test/game/commandBase_test.cpp
+        test/game/startlocs_test.cpp
     )
+    set_property(SOURCE io/socket.cpp APPEND PROPERTY COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS)
+    target_include_directories(RealmsTests PRIVATE ${CMAKE_SOURCE_DIR}/test)
     target_link_libraries(RealmsTests PRIVATE RealmsLib gtest_main realms_flags)
     add_test(NAME RealmsTests COMMAND RealmsTests)
 endif()

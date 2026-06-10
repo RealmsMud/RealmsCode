@@ -32,6 +32,7 @@ class Container;
 class EffectInfo;
 class Monster;
 class MudObject;
+class Creature;
 class Object;
 class Player;
 class Socket;
@@ -72,6 +73,10 @@ public:
     bool purgeObjects();
 
     std::list<std::shared_ptr<Player>> getPlayers();
+    // Pre-filtered views so callers (room/inventory listings, GMCP) never re-implement the
+    // visibility gate. getVisiblePlayers includes viewer itself (callers exclude self if needed).
+    [[nodiscard]] std::list<std::shared_ptr<Player>> getVisiblePlayers(const std::shared_ptr<const Creature>& viewer) const;
+    [[nodiscard]] std::list<std::shared_ptr<Object>> getVisibleObjects(const std::shared_ptr<const Player>& viewer, bool showAll = false) const;
 
 
     std::shared_ptr<Container> remove(Containable* toRemove);
@@ -86,7 +91,7 @@ public:
 
     void doSocialEcho(std::string str, const std::shared_ptr<Creature> & actor, const std::shared_ptr<Creature> & target = nullptr);
 
-    void effectEcho(const std::string &fmt, const std::shared_ptr<MudObject>& actor = nullptr, const std::shared_ptr<MudObject>& applier = nullptr, std::shared_ptr<Socket> ignore = nullptr);
+    void effectEcho(const std::string &fmt, const std::shared_ptr<MudObject>& actor = nullptr, const std::shared_ptr<MudObject>& applier = nullptr, const std::shared_ptr<Socket>& ignore = nullptr);
 
     void wake(const std::string &str, bool noise) const;
 

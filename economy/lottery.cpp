@@ -16,7 +16,6 @@
  *
  */
 
-#include <bits/types/struct_tm.h>                   // for tm
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
 #include <cstdio>                                   // for sprintf
 #include <cstring>                                  // for memset, strcmp
@@ -200,8 +199,7 @@ int createLotteryTicket(std::shared_ptr<Object>& object, const char *name) {
     bubblesort(numbers, 5);
     numbers[5] = Random::get(1,MAXBONE);
 
-    sprintf(
-            desc,
+    snprintf(desc, sizeof(desc),
             "A lottery ticket with the numbers: %02d %02d %02d %02d %02d  (%02d)",
             numbers[0], numbers[1], numbers[2], numbers[3], numbers[4], numbers[5]);
     object->description = desc;

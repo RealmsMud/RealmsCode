@@ -62,6 +62,7 @@
 #include "random.hpp"                  // for Random
 #include "range.hpp"                   // for Range
 #include "server.hpp"                  // for Server, GOLD_OUT, GOLD_IN, gSe...
+#include "socket.hpp"                  // for Socket::utf8Enabled
 #include "structs.hpp"                 // for saves
 #include "unique.hpp"                  // for Lore, addOwner, isLimited, Unique
 #include "xml.hpp"                     // for loadRoom, loadObject, loadPlayer
@@ -117,9 +118,9 @@ Money bailCost(const std::shared_ptr<Player>& player) {
 //                      objShopName
 //*********************************************************************
 
-std::string objShopName(const std::shared_ptr<Object>&  object, int m, int flags, int pad) {
+std::string objShopName(const std::shared_ptr<Object>&  object, int m, int flags, int pad, bool utf8) {
     std::string name = object->getObjStr(nullptr, flags, m);
-    return padColor(name, pad);
+    return padColor(name, pad, utf8);
 }
 
 //*********************************************************************
@@ -252,6 +253,7 @@ int cmdList(const std::shared_ptr<Player>& player, cmd* cmnd) {
 void shopList(const std::shared_ptr<Player>& player, Property* p, std::string& filter, std::shared_ptr<UniqueRoom>& storage) {
     Money cost;
     std::shared_ptr<Object>  object;
+    const bool u8 = player->getSock() && player->getSock()->utf8Enabled();
 
 
     if(!Faction::willDoBusinessWith(player, player->getUniqueRoomParent()->getFaction())) {
@@ -283,7 +285,7 @@ void shopList(const std::shared_ptr<Player>& player, Property* p, std::string& f
             }
 
             player->printColor("   %s   Cost: %s%s\n",
-                               objShopName(object, 1, CAP | (player->isEffected("detect-magic") ? MAG : 0), 52).c_str(),
+                               objShopName(object, 1, CAP | (player->isEffected("detect-magic") ? MAG : 0), 52, u8).c_str(),
                                cost.str().c_str(), cannotUseMarker(player, object));
 
         }
@@ -467,6 +469,7 @@ int cmdSelection(const std::shared_ptr<Player>& player, cmd* cmnd) {
     CatRef  obj_list[10];
     int     i=0, j=0, found=0, maxitem=0;
     std::string filter;
+    const bool u8 = player->getSock() && player->getSock()->utf8Enabled();
 
     // interchange list and selection
     if(cmnd->num == 1 || cmnd->str[1][0] == '-')
@@ -529,7 +532,7 @@ int cmdSelection(const std::shared_ptr<Player>& player, cmd* cmnd) {
             if(!doFilter(object, filter)) {
                 cost = buyAmount(player, creature, object, true);
 
-                player->printColor("%d) %s    %s\n", i+1, objShopName(object, 1, 0, 35).c_str(),
+                player->printColor("%d) %s    %s\n", i+1, objShopName(object, 1, 0, 35, u8).c_str(),
                                    cost.str().c_str());
             }
             object.reset();
@@ -1487,7 +1490,7 @@ int cmdAuction(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 void Player::setLastPawn(const std::shared_ptr<Object>&  object) {
     // uniques and quests cannot be reclaimed
-    if(object && (object->flagIsSet(O_UNIQUE) || object->getQuestnum())) {
+    if(object && (object->flagIsSet(O_UNIQUE_OBJ) || object->getQuestnum())) {
         return;
     }
     lastPawn = object;

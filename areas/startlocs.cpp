@@ -84,12 +84,12 @@ void initialBind(std::shared_ptr<Player> player, const std::string &str) {
 // choose = true    return true if they made a valid selection
 //                  return false if they made an invalid selection
 
-bool startingChoices(std::shared_ptr<Player> player, std::string str, char *location, bool choose) {
+bool startingChoices(std::shared_ptr<Player> player, std::string str, char *location, size_t locationSize, bool choose) {
 
     // if only one start location is defined, our choices are easy!
     if (gConfig->start.size() == 1) {
         auto s = gConfig->start.begin();
-        sprintf(location, "%s", (*s).first.c_str());
+        snprintf(location, locationSize, "%s", (*s).first.c_str());
         location[0] = up(location[0]);
         player->bind((*s).second);
         return (true);
@@ -237,7 +237,7 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
 
     // if they have no choice, we assign them a location and are done with it
     if (options.size() == 1) {
-        sprintf(location, "%s", options.front().c_str());
+        snprintf(location, locationSize, "%s", options.front().c_str());
         location[0] = up(location[0]);
 
         initialBind(player, options.front());
@@ -258,12 +258,12 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
                 oStr << "     ";
             i++;
 
-            sprintf(location, "%s", (*it).c_str());
+            snprintf(location, locationSize, "%s", (*it).c_str());
             location[0] = up(location[0]);
 
             oStr << "[^W" << (opt++) << "^x] " << location;
         }
-        sprintf(location, "%s", oStr.str().c_str());
+        snprintf(location, locationSize, "%s", oStr.str().c_str());
         return (false);
     }
 
@@ -272,7 +272,7 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
 
     for (it = options.begin(); it != options.end(); it++) {
         if (++i == choice) {
-            sprintf(location, "%s", (*it).c_str());
+            snprintf(location, locationSize, "%s", (*it).c_str());
             location[0] = up(location[0]);
 
             initialBind(player, *it);

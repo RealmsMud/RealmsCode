@@ -973,7 +973,7 @@ void callWebserver(std::string url, bool questionMark, bool silent) {
 
     // build command here incase we ever want to audit
     char command[512];
-    sprintf(command, "wget \"%s%s\" -q -O /dev/null", gConfig->getWebserver().c_str(), url.c_str());
+    snprintf(command, sizeof(command), "wget \"%s%s\" -q -O /dev/null", gConfig->getWebserver().c_str(), url.c_str());
 
     // set the user agent, if applicable
     if(!gConfig->getUserAgent().empty()) {
@@ -1104,7 +1104,7 @@ int cmdWiki(const std::shared_ptr<Player>& player, cmd* cmnd) {
     auto file = (Path::Wiki / entry).replace_extension("txt");
 
     // If the file exists and was modified within the last hour, use the local cache
-    if(!stat(file.c_str(), &f_stat) && (time(nullptr) - f_stat.st_mtim.tv_sec) < 3600) {
+    if(!stat(file.c_str(), &f_stat) && (time(nullptr) - f_stat.st_mtime) < 3600) {
         player->getSock()->viewFile(file, true);
         return(0);
     }

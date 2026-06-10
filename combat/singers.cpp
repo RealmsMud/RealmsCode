@@ -373,7 +373,7 @@ int songsKnown(const std::shared_ptr<Socket> &sock, const std::shared_ptr<Player
     int             i=0, j=0;
 
     if(test)
-        sprintf(str, "\n%s's Songs Known: ", player->getCName());
+        snprintf(str, sizeof(str), "\n%s's Songs Known: ", player->getCName());
     else
         strcpy(str, "\nSongs known: ");
 

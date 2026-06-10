@@ -63,6 +63,7 @@ public:
     [[nodiscard]] int getUpdateInterval() const;
 
     bool send(Socket &sock) const;
+    [[nodiscard]] std::string currentValue(Socket &sock) const;
 
 };
 
@@ -76,9 +77,9 @@ protected:
 
 public:
     ReportedMsdpVariable(const ReportedMsdpVariable&) = default;
-    ReportedMsdpVariable(const MsdpVariable *mv, std::shared_ptr<Socket> sock);
+    ReportedMsdpVariable(const MsdpVariable *mv, const std::shared_ptr<Socket>& sock);
 
-    [[nodiscard]] std::string getValue() const;
+    [[nodiscard]] const std::string& getValue() const;
     void setValue(std::string_view newValue);
     void setValue(int newValue);
     void setValue(long newValue);
@@ -115,4 +116,7 @@ namespace msdp {
     std::string getTargetHealthMax(Socket &sock, const std::shared_ptr<Player>& player);
     std::string getTargetStrength(Socket &sock, const std::shared_ptr<Player>& player);
     std::string getRoom(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getLevel(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getClassName(Socket &sock, const std::shared_ptr<Player>& player);
+    std::string getRaceName(Socket &sock, const std::shared_ptr<Player>& player);
 };

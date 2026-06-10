@@ -111,6 +111,7 @@ void Config::loadGeneral(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "LogDatabasePassword")) xml::copyToString(logDbPass, curNode);
         else if(NODE_NAME(curNode, "LogDatabaseDatabase")) xml::copyToString(logDbDatabase, curNode);
         else if(NODE_NAME(curNode, "LogDeath")) xml::copyToBool(logDeath, curNode);
+        else if(NODE_NAME(curNode, "LogTelnet")) xml::copyToBool(logTelnet, curNode);
         else if(NODE_NAME(curNode, "LogParseErrors")) xml::copyToBool(xml::logParseErrors, curNode);
         else if(NODE_NAME(curNode, "PkillInCombatDisabled")) xml::copyToBool(pkillInCombatDisabled, curNode);
         else if(NODE_NAME(curNode, "RecordAll")) xml::copyToBool(recordAll, curNode);
@@ -238,6 +239,7 @@ bool Config::saveConfig() const {
     xml::newBoolChild(curNode, "GetHostByName", getHostByName);
     xml::newBoolChild(curNode, "LessExpLoss", lessExpLoss);
     xml::newBoolChild(curNode, "LogDeath", logDeath);
+    xml::newBoolChild(curNode, "LogTelnet", logTelnet);
     xml::newBoolChild(curNode, "PkillInCombatDisabled", pkillInCombatDisabled);
     xml::newBoolChild(curNode, "RecordAll", recordAll);
     xml::newBoolChild(curNode, "LogSuicide", logSuicide);

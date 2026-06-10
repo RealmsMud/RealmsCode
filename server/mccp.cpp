@@ -17,7 +17,7 @@
  */
 
 #include "mudObjects/players.hpp"  // for Player
-#include "socket.hpp"              // for Socket, will_comp1, will_comp2
+#include "socket.hpp"              // for Socket, will_comp2
 
 class cmd;
 
@@ -27,8 +27,7 @@ int mccp(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     if(player->getSock()->mccpEnabled() == 0) {
         player->print("Attempting to enable MCCP.\n");
-        player->print("%s", telnet::will_comp2);
-        player->print("%s", telnet::will_comp1);
+        player->getSock()->writeRaw(telnet::will_comp2);
     } else {
         player->print("Ending compression.\n");
         player->getSock()->endCompress();

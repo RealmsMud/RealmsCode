@@ -1180,7 +1180,7 @@ void Area::loadTerrain(int pMinDepth) {
     char    storage[std::max(height, width)+1];
 
     while(k < depth) {
-        sprintf(filename, "%s/%s.%d.ter", Path::AreaData.c_str(), dataFile, k);
+        snprintf(filename, sizeof(filename), "%s/%s.%d.ter", Path::AreaData.c_str(), dataFile, k);
         if(!fs::exists(filename))
             return;
 
@@ -1203,7 +1203,7 @@ void Area::loadTerrain(int pMinDepth) {
         t.close();
         aTerrain.data.push_back(vTer);
 
-        sprintf(filename, "%s/%s.%d.map", Path::AreaData.c_str(), dataFile, k);
+        snprintf(filename, sizeof(filename), "%s/%s.%d.map", Path::AreaData.c_str(), dataFile, k);
         std::vector< std::vector<char> > vMap;
         if(fs::exists(filename)) {
             checkFileSize(size, filename);
@@ -1246,7 +1246,7 @@ void Area::loadTerrain(int pMinDepth) {
         }
         aMap.data.push_back(vMap);
 
-        sprintf(filename, "%s/%s.%d.sn", Path::AreaData.c_str(), dataFile, k);
+        snprintf(filename, sizeof(filename), "%s/%s.%d.sn", Path::AreaData.c_str(), dataFile, k);
         std::vector< std::vector<char> > vSn;
         if(fs::exists(filename)) {
             checkFileSize(size, filename);

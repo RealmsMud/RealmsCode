@@ -489,7 +489,7 @@ public:
     std::shared_ptr<Socket> getSock() const override;
     bool hasSock() const override;
     bool isConnected() const;
-    void setSock(std::shared_ptr<Socket> pSock);
+    void setSock(const std::shared_ptr<Socket>& pSock);
 
     bool songIsKnown(int song) const;
     void learnSong(int song);

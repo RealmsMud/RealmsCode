@@ -207,9 +207,9 @@ const char* colorSection(bool staff, const char* color, char colorChar = 0) {
 
     // staff get to see the color code
     if(staff)
-        sprintf(code, "^x^^%c: ", colorChar);
+        snprintf(code, sizeof(code), "^x^^%c: ", colorChar);
 
-    sprintf(str, "%s^%c%-10s", code, colorChar, color);
+    snprintf(str, sizeof(str), "%s^%c%-10s", code, colorChar, color);
     return(str);
 }
 
@@ -424,12 +424,14 @@ std::string stripColor(std::string_view colored) {
     return(str.str());
 }
 
-size_t lengthNoColor(std::string_view colored) {
+size_t lengthNoColor(std::string_view colored, bool utf8) {
     size_t len = 0;
-    unsigned int i=0, max = colored.length();
-    for(; i < max ; i++) {
-        if(colored.at(i) == '^')i++;
-        else len++;
+    const size_t max = colored.length();
+    for(size_t i = 0; i < max; i++) {
+        const auto c = static_cast<unsigned char>(colored[i]);
+        if(c == '^') { i++; continue; } // ^X code: skip code char too
+        if(utf8 && (c & 0xC0) == 0x80) continue; // UTF-8 continuation, not a glyph
+        len++;
     }
     return len;
 }
@@ -453,8 +455,8 @@ std::string escapeColor(std::string_view colored) {
 //***********************************************************************
 
 
-std::string padColor(const std::string &toPad, size_t pad) {
-    pad -= std::min(lengthNoColor(toPad), pad);
+std::string padColor(const std::string &toPad, size_t pad, bool utf8) {
+    pad -= std::min(lengthNoColor(toPad, utf8), pad);
     if(pad <= 0)
         return {toPad};
     else

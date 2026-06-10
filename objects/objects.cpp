@@ -74,7 +74,7 @@ int objRefSaveFlags[] =
         O_NO_DROP,
         O_BROKEN_BY_CMD,
         O_BEING_PREPARED,
-        O_UNIQUE,
+        O_UNIQUE_OBJ,
         O_KEEP,
         O_DARKNESS,
         O_RECLAIMED,

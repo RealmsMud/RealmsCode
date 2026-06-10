@@ -211,6 +211,9 @@ namespace xml {
 
     std::string readRootChildText(const fs::path& filename, const char *expectedRoot, const char *childName);
 
+    struct DocDeleter { void operator()(xmlDoc* doc) const { if(doc) xmlFreeDoc(doc); } };
+    using DocPtr = std::unique_ptr<xmlDoc, DocDeleter>;
+
 } // End xml namespace
 
 

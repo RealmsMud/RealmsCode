@@ -16,13 +16,22 @@
  *
  */
 
-#include <printf.h>                  // for register_printf_specifier, print...
+#ifndef __APPLE__
+#include <printf.h>                  // for register_printf_specifier, printf_info
+#endif
+#include <cctype>                    // for isdigit
 #include <cstdarg>                   // for va_list, va_end, va_start, va_copy
-#include <cstdio>                    // for asprintf, fprintf, vasprintf, FILE
-#include <cstdlib>                   // for free
-#include <ostream>                   // for operator<<, ostringstream, endl
+#include <cstddef>                   // for ptrdiff_t, size_t
+#include <cstdint>                   // for intmax_t, uintmax_t
+#include <cstdio>                    // for snprintf, fprintf, vasprintf, FILE
+#include <cstdlib>                   // for free, atoi
+#include <cstring>                   // for strchr, strdup
+#include <optional>                  // for optional
+#include <ostream>                   // for operator<<, endl
+#include <sstream>                   // for ostringstream
 #include <string>                    // for string, basic_string
 #include <string_view>               // for string_view
+#include <vector>                    // for vector
 
 #include "creatureStreams.hpp"       // for Streamable, ColorOff, ColorOn
 #include "global.hpp"                // for CAP
@@ -34,6 +43,7 @@
 
 // Function Prototypes
 std::string delimit(const char *str, int wrap);
+static int realmsVasprintf(char **out, const char *fmt, va_list ap);
 
 void Creature::printPaged(std::string_view toPrint) const {
     if(hasSock())
@@ -120,7 +130,7 @@ void Socket::vprint(const char *fmt, va_list ap) {
     // Incase vprint is called multiple times with the same ap
     // (in which case ap would be undefined, so make a copy of it
     va_copy(aq, ap);
-    int n = vasprintf(&msg, fmt, aq);
+    int n = realmsVasprintf(&msg, fmt, aq);
     va_end(aq);
 
     if(n == -1) {
@@ -141,63 +151,43 @@ void Socket::vprint(const char *fmt, va_list ap) {
     free(msg);
 }
 
+static std::optional<std::string> renderSpecifier(char spec, int width, const void *ptr) {
+    switch(spec) {
+        case 'B': {
+            const std::string *s = static_cast<const std::string *>(ptr);
+            return s ? *s : std::string();
+        }
+        case 'T': {
+            const std::ostringstream *s = static_cast<const std::ostringstream *>(ptr);
+            return s ? s->str() : std::string();
+        }
+        // M = Capital Monster; N = small monster
+        case 'M': case 'N': {
+            const Creature *crt = static_cast<const Creature *>(ptr);
+            if(!crt) return std::string();
+            return crt->getCrtStr(nullptr, VPRINT_flags | (spec == 'M' ? CAP : 0), width);
+        }
+        case 'R': {
+            const Creature *crt = static_cast<const Creature *>(ptr);
+            return crt ? std::string(crt->getCName()) : std::string();
+        }
+        // O = Capital Object; P = small object
+        case 'O': case 'P': {
+            const Object *obj = static_cast<const Object *>(ptr);
+            if(!obj) return std::string();
+            return obj->getObjStr(nullptr, VPRINT_flags | (spec == 'O' ? CAP : 0), width);
+        }
+        default:
+            return std::nullopt;
+    }
+}
+
+#ifndef __APPLE__
 int print_objcrt(FILE *stream, const struct printf_info *info, const void *const *args) {
-    char *buffer;
-    int len;
-
-    if(info->spec == 'B') {
-        const std::string *tmp = *((const std::string **) (args[0]));
-        len = asprintf(&buffer, "%s", tmp->c_str());
-    }
-    else if(info->spec == 'T') {
-        const std::ostringstream *tmp = *((const std::ostringstream **) (args[0]));
-        len = asprintf(&buffer, "%s", tmp->str().c_str());
-    }
-    // M = Capital Monster; N = small monster
-    else if(info->spec == 'M' || info->spec == 'N') {
-        const Creature *crt = *((const Creature **) (args[0]));
-        if(info->spec == 'M') {
-            std::string tmp = crt->getCrtStr(nullptr, VPRINT_flags | CAP, info->width);
-            len = asprintf(&buffer, "%s", tmp.c_str());
-        }
-        else {
-            std::string tmp = crt->getCrtStr(nullptr, VPRINT_flags, info->width);
-            len = asprintf(&buffer, "%s", tmp.c_str());
-        }
-        if(len == -1)
-            return(-1);
-    }
-    else if(info->spec == 'R') {
-        const Creature *crt = *((const Creature **) (args[0]));
-        len = asprintf(&buffer, "%s", crt->getCName());
-        if(len == -1)
-            return(-1);
-    }
-    // O = Capital Object; P = small object
-    else if(info->spec == 'O' || info->spec == 'P') {
-        const Object *obj = *((const Object **) (args[0]));
-        if(info->spec == 'O') {
-            std::string tmp = obj->getObjStr(nullptr, VPRINT_flags | CAP, info->width);
-            len = asprintf(&buffer, "%s", tmp.c_str());
-        }
-        else {
-            std::string tmp = obj->getObjStr(nullptr, VPRINT_flags, info->width);
-            len = asprintf(&buffer, "%s", tmp.c_str());
-        }
-
-        if(len == -1)
-            return(-1);
-    }
-    // Unhandled type
-    else {
+    auto rendered = renderSpecifier((char)info->spec, info->width, *((const void *const *) args[0]));
+    if(!rendered)
         return(-1);
-    }
-
-    len = fprintf(stream, "%s", buffer);
-
-    // Clean up and return.
-    free(buffer);
-    return(len);
+    return(fprintf(stream, "%s", rendered->c_str()));
 }
 
 int print_arginfo (const struct printf_info *info, size_t n, int *argtypes, int* size) {
@@ -211,8 +201,128 @@ int print_arginfo (const struct printf_info *info, size_t n, int *argtypes, int*
     }
     return(1);
 }
+#endif
+
+static const char CUSTOM_SPECS[] = "bTNMPOR";
+
+static void appendStandardSpec(std::string &out, const std::string &spec, const std::string &length, char conv, va_list &ap) {
+    char buf[256];
+    auto emit = [&](auto value) {
+        int need = snprintf(buf, sizeof(buf), spec.c_str(), value);
+        if(need < 0) return;
+        if((size_t) need < sizeof(buf)) {
+            out.append(buf, need);
+        } else {
+            std::vector<char> big(need + 1);
+            snprintf(big.data(), big.size(), spec.c_str(), value);
+            out.append(big.data(), need);
+        }
+    };
+    switch(conv) {
+        case 'd': case 'i':
+            if(length == "l") emit(va_arg(ap, long));
+            else if(length == "ll" || length == "q") emit(va_arg(ap, long long));
+            else if(length == "j") emit(va_arg(ap, intmax_t));
+            else if(length == "z") emit(va_arg(ap, long));
+            else if(length == "t") emit(va_arg(ap, ptrdiff_t));
+            else emit(va_arg(ap, int));
+            break;
+        case 'o': case 'u': case 'x': case 'X':
+            if(length == "l") emit(va_arg(ap, unsigned long));
+            else if(length == "ll" || length == "q") emit(va_arg(ap, unsigned long long));
+            else if(length == "j") emit(va_arg(ap, uintmax_t));
+            else if(length == "z") emit(va_arg(ap, size_t));
+            else emit(va_arg(ap, unsigned int));
+            break;
+        case 'e': case 'E': case 'f': case 'F': case 'g': case 'G': case 'a': case 'A':
+            if(length == "L") emit(va_arg(ap, long double));
+            else emit(va_arg(ap, double));
+            break;
+        case 'c':
+            emit(va_arg(ap, int));
+            break;
+        case 's':
+            emit(va_arg(ap, const char *));
+            break;
+        case 'p':
+            emit(va_arg(ap, void *));
+            break;
+        default:
+            out.append(spec);
+            break;
+    }
+}
+
+// Portable replacement for glibc's register_printf_specifier + vasprintf: walk the format, rendering our custom
+// specifiers and delegating standard ones to snprintf, consuming va_args in lockstep.
+std::string realmsFormat(const char *fmt, va_list ap_in) {
+    std::string out;
+    va_list ap;
+    va_copy(ap, ap_in);
+    for(const char *p = fmt; *p; ) {
+        if(*p != '%') { out.push_back(*p++); continue; }
+        const char *start = p++;
+        if(*p == '%') { out.push_back('%'); ++p; continue; }
+
+        std::string flags;
+        while(*p && strchr("-+ #0'", *p)) flags.push_back(*p++);
+
+        bool starWidth = false;
+        std::string width;
+        if(*p == '*') { starWidth = true; ++p; }
+        else while(isdigit((unsigned char) *p)) width.push_back(*p++);
+
+        bool hasPrec = false, starPrec = false;
+        std::string prec;
+        if(*p == '.') {
+            hasPrec = true; ++p;
+            if(*p == '*') { starPrec = true; ++p; }
+            else while(isdigit((unsigned char) *p)) prec.push_back(*p++);
+        }
+
+        std::string length;
+        while(*p && strchr("hlLqjzt", *p)) length.push_back(*p++);
+
+        if(!*p) { out.append(start, p - start); break; }
+        char conv = *p++;
+
+        int dynWidth = starWidth ? va_arg(ap, int) : 0;
+        int dynPrec = starPrec ? va_arg(ap, int) : 0;
+
+        if(strchr(CUSTOM_SPECS, conv)) {
+            int w = starWidth ? dynWidth : (width.empty() ? 0 : atoi(width.c_str()));
+            const void *ptr = va_arg(ap, void *);
+            if(auto rendered = renderSpecifier(conv, w, ptr))
+                out.append(*rendered);
+            continue;
+        }
+
+        std::string spec = "%" + flags;
+        spec += starWidth ? std::to_string(dynWidth) : width;
+        if(hasPrec) spec += "." + (starPrec ? std::to_string(dynPrec) : prec);
+        spec += length;
+        spec += conv;
+        appendStandardSpec(out, spec, length, conv, ap);
+    }
+    va_end(ap);
+    return out;
+}
+
+static int realmsVasprintf(char **out, const char *fmt, va_list ap) {
+#ifdef __APPLE__
+    std::string s = realmsFormat(fmt, ap);
+    *out = strdup(s.c_str());
+    return *out ? (int) s.size() : -1;
+#else
+    return vasprintf(out, fmt, ap);
+#endif
+}
 
 int Server::installPrintfHandlers() {
+#ifdef __APPLE__
+    // Custom specifiers are expanded by realmsFormat(); macOS has no register_printf_specifier.
+    return 1;
+#else
     int r = 1;
     // std::string
     r &= register_printf_specifier('b', print_objcrt, print_arginfo);
@@ -229,4 +339,5 @@ int Server::installPrintfHandlers() {
     // creature's real name
     r &= register_printf_specifier('R', print_objcrt, print_arginfo);
     return(r);
+#endif
 }

@@ -173,8 +173,7 @@ void Player::init() {
         daily[DL_DEFEC].max = 100;
     }
 
-    if(!gServer->isRebooting())
-        initBuilder();
+    initBuilder();
 
 
     if(isEffected("mist") && !canMistNow())
@@ -345,7 +344,7 @@ void Player::init() {
         }
 
 
-        if(uRoom && !isStaff() && !gServer->isRebooting()) {
+        if(uRoom && !isStaff()) {
             if( (   uRoom->flagIsSet(R_LOG_INTO_TRAP_ROOM) || uRoom->flagIsSet(R_SHOP_STORAGE) || uRoom->hasTraining()) &&
                 uRoom->getTrapExit().id && !loadRoom(uRoom->getTrapExit(), uRoom)) {
                 broadcast(::isCt, fmt::format("^y{}: {} ({}) Attempted logon to bad or missing room!", getName(), getSock()->getHostname(),
@@ -372,17 +371,15 @@ void Player::init() {
 
     //  str[0] = 0;
     if(!isDm()) {
-        loge(fmt::format("{}(L:{}) ({}) {}. Room - {} (Port-{})\n", getCName(), level, getSock()->getHostname(), gServer->isRebooting() ? "reloaded" : "logged on", newRoom->fullName().c_str(), Port).c_str());
+        loge(fmt::format("{}(L:{}) ({}) {}. Room - {} (Port-{})\n", getCName(), level, getSock()->getHostname(), "logged on", newRoom->fullName().c_str(), Port).c_str());
     }
     if(isStaff())
-        logn("log.imm", fmt::format("{}  ({}) {}.\n", getCName(), getSock()->getHostname(), gServer->isRebooting() ? "reloaded" : "logged on").c_str());
+        logn("log.imm", fmt::format("{}  ({}) {}.\n", getCName(), getSock()->getHostname(), "logged on").c_str());
 
 
     // broadcast
-    if(!gServer->isRebooting()) {
-        setSockColors();
-        broadcastLogin(pThis, newRoom, 1);
-    }
+    setSockColors();
+    broadcastLogin(pThis, newRoom, 1);
 
     // don't do the actual adding until after broadcast
     addToRoom(newRoom);
@@ -418,44 +415,42 @@ void Player::init() {
 
     std::shared_ptr<Socket> sock = getSock();
 
-    if(!gServer->isRebooting()) {
-        sock->viewFile(Path::Help / "news.txt");
+    sock->viewFile(Path::Help / "news.txt");
 
-        sock->viewFile(Path::Help / "newbie_news.txt");
+    sock->viewFile(Path::Help / "newbie_news.txt");
 
-        if(isCt()) {
-            sock->viewFile(Path::DMHelp / "news.txt");
-        }
-        if(isStaff() && getName() != "Bane") {
-            sock->viewFile(Path::BuilderHelp / "news.txt");
-        }
-        if(isCt() || flagIsSet(P_WATCHER)) {
-            sock->viewFile(Path::DMHelp / "watcher_news.txt");
-        }
-
-        sock->viewFile(Path::Help / "latest_post.txt", false);
-
-        hasNewMudmail();
-        if (flagIsSet(P_UNREAD_MAIL)) {
-            lasttime[LT_MAIL_ALERT].ltime = time(nullptr);
-            lasttime[LT_MAIL_ALERT].interval = 600L;
-        }
-
-        printColor("^yWatchers currently online: ");
-        std::list<std::string> watchers;
-        for(const auto& [pName, ply] : gServer->players) {
-            if(!ply->isConnected()) continue;
-            if(!ply->isPublicWatcher()) continue;
-            if(!canSee(ply)) continue;
-
-            watchers.emplace_back(ply->getName());
-        }
-
-        if(!watchers.empty()) {
-            printColor(fmt::format("{}.\n", boost::algorithm::join(watchers, ", ")).c_str());
-        } else
-            printColor("None.\n");
+    if(isCt()) {
+        sock->viewFile(Path::DMHelp / "news.txt");
     }
+    if(isStaff() && getName() != "Bane") {
+        sock->viewFile(Path::BuilderHelp / "news.txt");
+    }
+    if(isCt() || flagIsSet(P_WATCHER)) {
+        sock->viewFile(Path::DMHelp / "watcher_news.txt");
+    }
+
+    sock->viewFile(Path::Help / "latest_post.txt", false);
+
+    hasNewMudmail();
+    if (flagIsSet(P_UNREAD_MAIL)) {
+        lasttime[LT_MAIL_ALERT].ltime = time(nullptr);
+        lasttime[LT_MAIL_ALERT].interval = 600L;
+    }
+
+    printColor("^yWatchers currently online: ");
+    std::list<std::string> watchers;
+    for(const auto& [pName, ply] : gServer->players) {
+        if(!ply->isConnected()) continue;
+        if(!ply->isPublicWatcher()) continue;
+        if(!canSee(ply)) continue;
+
+        watchers.emplace_back(ply->getName());
+    }
+
+    if(!watchers.empty()) {
+        printColor(fmt::format("{}.\n", boost::algorithm::join(watchers, ", ")).c_str());
+    } else
+        printColor("None.\n");
 
     if(isCt())
         showGuildsNeedingApproval(pThis);
@@ -527,7 +522,7 @@ void Player::uninit() {
 
     courageous();
     clearMaybeDueling();
-    removeFromGroup(!gServer->isRebooting());
+    removeFromGroup(true);
 
     for(const auto& pet : pets) {
         if(pet->isPet()) {
@@ -546,7 +541,7 @@ void Player::uninit() {
         }
     }
 
-    if(!gServer->isRebooting() && Crash == 0)
+    if(Crash == 0)
         broadcastLogin(Containable::downcasted_shared_from_this<Player>(), this->getRoomParent(), 0);
 
     if(this->inRoom())
@@ -557,7 +552,7 @@ void Player::uninit() {
     t = time(nullptr);
     strcpy(str, (char *)ctime(&t));
     str[strlen(str)-1] = 0;
-    if(!isDm() && !gServer->isRebooting())
+    if(!isDm())
         loge("%s logged off.\n", getCName());
 
 
