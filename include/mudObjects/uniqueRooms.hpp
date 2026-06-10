@@ -26,6 +26,9 @@
 
 class UniqueRoom: public BaseRoom {
 public:
+    friend void to_json(nlohmann::json &j, const UniqueRoom &room);
+    friend void to_json(nlohmann::json &j, const UniqueRoom &room, LoadType mode);
+
     UniqueRoom();
     ~UniqueRoom();
     bool operator< (const UniqueRoom& t) const;
@@ -71,7 +74,7 @@ public:
     bool swap(const Swap& s);
     [[nodiscard]] bool swapIsInteresting(const Swap& s) const;
 
-    std::string getMsdp(bool showExits = true) const override;
+    std::string getMsdp(const std::shared_ptr<const Player>& viewer, bool showExits = true) const override;
 protected:
     boost::dynamic_bitset<> flags{128};
     std::string fishing;

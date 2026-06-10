@@ -16,7 +16,7 @@
  *
  */
 
-#include <bits/exception.h>                        // for exception
+#include <exception>                               // for exception
 #include <fmt/format.h>                            // for format
 #include <strings.h>                               // for strcasecmp
 #include <boost/algorithm/string/predicate.hpp>    // for istarts_with
@@ -186,6 +186,18 @@ int cmdTelOpts(const std::shared_ptr<Player>& player, cmd* cmnd) {
         oStr << "-------------------------------------------------------\n";
         oStr << formatNoDesc % "Term" % sock->getTermType();
         oStr << formatNoDesc % "Term Size" % std::string(std::to_string(sock->getTermCols()) + " x " + std::to_string(sock->getTermRows()));
+        const auto& env = sock->getClientEnv();
+        std::string client = "Unknown";
+        if (auto it = env.find("CLIENT_NAME"); it != env.end()) {
+            client = it->second;
+            // Prefer the MXP <VERSION> value
+            std::string version = sock->getClientVersion();
+            if (version.empty()) {
+                if (auto v = env.find("CLIENT_VERSION"); v != env.end()) version = v->second;
+            }
+            if (!version.empty()) client += " " + version;
+        }
+        oStr << formatNoDesc % "Client" % client;
         if(player->getWrap() == 0)
             oStr << formatNoDesc % "Server Linewrap" % "None";
         else if(player->getWrap() == -1)
@@ -199,8 +211,16 @@ int cmdTelOpts(const std::shared_ptr<Player>& player, cmd* cmnd) {
             oStr << "\t MSDP Reporting: " << sock->getMsdpReporting() << "\n";
 
         }
+        oStr << formatWithDesc % "GMCP" % "Generic MUD Communication Protocol" % (sock->gmcpEnabled() ? "^gon^x" : "^roff^x");
+        if (sock->gmcpEnabled()) {
+            oStr << "\t GMCP Packages: " << sock->getGmcpPackages() << "\n";
+        }
         oStr << formatWithDesc % "Charset" % "Charset Negotiation" % (sock->charsetEnabled() ? "^gon^x" : "^roff^x");
         oStr << formatWithDesc % "UTF-8" % "UTF-8 Support" % (sock->utf8Enabled() ? "^gon^x" : "^roff^x");
+        long mtts = sock->getMtts();
+        std::string mttsVal = mtts ? std::to_string(mtts) + " [" + telnet::mttsCaps(mtts) + "]"
+                                   : "^rnot reported^x";
+        oStr << formatWithDesc % "MTTS" % "Terminal capabilities" % mttsVal;
         oStr << formatWithDesc % "MSP" % "Mud Sound Protocol" % (sock->mspEnabled() ? "^gon^x" : "^roff^x");
         oStr << formatWithDesc % "EOR" % "End of Record" % (sock->eorEnabled() ? "^gon^x" : "^roff^x");
     } catch (std::exception &e) {

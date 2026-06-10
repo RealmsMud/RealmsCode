@@ -452,8 +452,6 @@ int cmdBrew(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     std::shared_ptr<Object>  potion = Object::getNewPotion();
 
-    double alchemySkillModifier = player->getSkillGained("alchemy");
-
     int i = 1;
     // Copy the alchemy effects to the potion
     for(const auto& aep : effects) {

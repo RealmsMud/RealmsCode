@@ -105,39 +105,9 @@ int dmMakeBuilder(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //*********************************************************************
 //                      checkRangeRestrict
 //*********************************************************************
-// also in:
-//  web sevrer - functions.inc - char_auth()
-//  web site - inc.inc - inRange()
-//  web server - editor.inc - isAuthorized()
 
 bool Player::checkRangeRestrict(const CatRef& cr, bool reading) const {
-    int     i=0;
-
-    if(cClass != CreatureClass::BUILDER)
-        return(false);
-
-    // 0 gets set in the ranges, but they can't modify that room
-    if(cr.id <= 0)
-        return(true);
-
-    // hardcode this range
-    if(cr.isArea("test"))
-        return(false);
-    // check readonly ranges
-    if(reading && (
-        cr.isArea("scroll") ||
-        cr.isArea("song") ||
-        cr.isArea("skill") ||
-        cr.isArea("potion")
-    ))
-        return(false);
-
-    for(; i<MAX_BUILDER_RANGE; i++) {
-        if(bRange[i].belongs(cr))
-            return(false);
-    }
-
-    return(true);
+    return(builderRangeRestricted(cClass, bRange, cr, reading));
 }
 
 

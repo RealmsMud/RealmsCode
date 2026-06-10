@@ -170,7 +170,7 @@ xmlNodePtr CatRef::save(xmlNodePtr curNode, const char* childName, bool saveNonZ
     return(curNode);
 }
 
-CatRef::CatRef(std::string& pArea, short pId) {
+CatRef::CatRef(const std::string& pArea, short pId) {
     area = pArea;
     id = pId;
 }

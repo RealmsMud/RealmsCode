@@ -21,6 +21,7 @@
 #include <map>
 #include <memory>           // for shared_ptr
 #include <libxml/parser.h>  // for xmlNodePtr
+#include <nlohmann/json_fwd.hpp>
 
 #include "alphanum.hpp"
 
@@ -59,6 +60,8 @@ typedef std::map<std::string, std::shared_ptr<StatModifier>, alphanum_less<std::
 class Stat
 {
 public:
+    friend void to_json(nlohmann::json &j, const Stat &stat);
+
     Stat();
     Stat& operator=(const Stat& cr);
     ~Stat();

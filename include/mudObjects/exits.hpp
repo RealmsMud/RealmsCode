@@ -22,6 +22,7 @@
 #include <memory>
 
 #include <boost/dynamic_bitset.hpp>
+#include "enums/loadType.hpp"
 #include "lasttime.hpp"
 #include "location.hpp"
 #include "mudObjects/mudObject.hpp"
@@ -48,6 +49,9 @@ std::string getDirName(Direction dir);
 
 class Exit : public virtual MudObject, public inheritable_enable_shared_from_this<Exit> {
 public:
+    friend void to_json(nlohmann::json &j, const Exit &exit);
+    friend void to_json(nlohmann::json &j, const Exit &exit, LoadType mode);
+
     Exit();
     ~Exit();
     bool operator<(const MudObject &t) const;

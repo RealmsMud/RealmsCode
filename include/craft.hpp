@@ -41,8 +41,8 @@ public:
     bool check(const std::shared_ptr<const Player> &player, const std::list<CatRef> *list, std::string_view type, int numIngredients) const;
     bool check(std::list<CatRef> *list, const std::list<CatRef> *require, int numIngredients) const;
     bool isSkilled(const std::shared_ptr<const Player> &player, Size recipeSize) const;
-    std::string listIngredients(const std::list<CatRef> *list) const;
-    std::string display();
+    std::string listIngredients(const std::list<CatRef> *list, bool utf8 = false) const;
+    std::string display(bool utf8 = false);
     bool canUseEquipment(const std::shared_ptr<const Player> &player, std::string_view pSkill) const;
     bool canBeEdittedBy(const std::shared_ptr<const Player> player) const;
 

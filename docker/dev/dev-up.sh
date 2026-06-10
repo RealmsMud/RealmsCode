@@ -30,6 +30,7 @@ docker run -d \
     -v realms-build:/build \
     -v "$REALMS_DATA":/home/realms/realms \
     -p 3333:3333 \
+    -p 8080:8080 \
     --security-opt seccomp=unconfined \
     --name realms-dev \
     realms-dev

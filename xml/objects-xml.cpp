@@ -35,7 +35,7 @@
 #include "config.hpp"                               // for Config, gConfig
 #include "dice.hpp"                                 // for Dice
 #include "enums/loadType.hpp"                       // for LoadType, LoadTyp...
-#include "flags.hpp"                                // for O_UNIQUE, O_PERM_...
+#include "flags.hpp"                                // for O_UNIQUE_OBJ, O_PERM_...
 #include "global.hpp"                               // for ALLITEMS, FATAL
 #include "hooks.hpp"                                // for Hooks
 #include "lasttime.hpp"                             // for lasttime
@@ -309,9 +309,9 @@ int Object::readFromXml(xmlNodePtr rootNode, std::list<std::string> *idList, boo
     }
 
     // make sure uniqueness stays intact
-    setFlag(O_UNIQUE);
+    setFlag(O_UNIQUE_OBJ);
     if(!gConfig->getUnique(getAsObject()))
-        clearFlag(O_UNIQUE);
+        clearFlag(O_UNIQUE_OBJ);
 
     escapeText();
     return(0);
@@ -449,9 +449,9 @@ int Object::saveToFile() {
     xmlDocSetRootElement(xmlDoc, rootNode);
 
     // make sure uniqueness stays intact
-    setFlag(O_UNIQUE);
+    setFlag(O_UNIQUE_OBJ);
     if(!gConfig->getUnique(getAsObject()))
-        clearFlag(O_UNIQUE);
+        clearFlag(O_UNIQUE_OBJ);
 
     escapeText();
     std::string idTemp = id;
@@ -462,6 +462,9 @@ int Object::saveToFile() {
     auto filename = Path::objectPath(info);
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
+
+    if(gServer && info.id > 0)
+        gServer->zoneIndex.upsert(ZoneIndex::Type::Object, info.area, info.id, getName());
     return(0);
 }
 

@@ -29,11 +29,19 @@ namespace odbc {
 
 #include <list>
 #include <map>
+#include <ranges>
 #include <set>
 #include <vector>
 
 // C Includes
 #include <netinet/in.h> // Needs: htons, htonl, INADDR_ANY, sockaddr_in
+
+#ifndef ASIO_STANDALONE
+#define ASIO_STANDALONE
+#endif
+#include <asio/io_context.hpp>
+#include <asio/ip/tcp.hpp>
+#include <asio/steady_timer.hpp>
 
 #include "catRef.hpp"
 #include "delayedAction.hpp"
@@ -42,6 +50,8 @@ namespace odbc {
 #include "swap.hpp"
 #include "weather.hpp"
 #include "lru/lru.hpp"
+#include "zoneIndex.hpp"
+#include "zoneIndexBuilder.hpp"
 
 namespace pybind11 {
     class object;
@@ -143,15 +153,6 @@ private:
 // *****************
 // Public Structures
 public:
-    struct controlSock {
-        int port;
-        int control;
-        controlSock(int port, int control) {
-            this->port = port;
-            this->control = control;
-        }
-    };
-
     struct dnsCache {
         std::string ip;
         std::string hostName;
@@ -169,12 +170,15 @@ public:
 public:
     PlayerMap players; // Map of all players
     SocketList sockets; // List of all connected sockets
-    SocketVector* vSockets = nullptr;
+    std::unique_ptr<SocketVector> vSockets;
 
     RoomCache roomCache;
     MonsterCache monsterCache;
     ObjectCache objectCache;
-    
+
+    ZoneIndex zoneIndex; // REST API per-zone summary index (rooms/objects/monsters)
+    ZoneIndexBuilder zoneIndexBuilder{zoneIndex}; // incremental builder, pumped by run()
+
     // Account management
     std::map<std::string, std::shared_ptr<Account>> accountCache;  // Shared account instances
     std::map<std::string, std::set<std::string>> accountConnections;  // Account -> Set of character names
@@ -190,14 +194,14 @@ private:
 
     std::list<std::weak_ptr<BaseRoom>> effectsIndex;
 
-    fd_set inSet{};
-    fd_set outSet{};
-    fd_set excSet{};
+    // asio I/O: single-threaded io_context drives accept/read/write + the game tick.
+    asio::io_context ioContext;
+    std::list<asio::ip::tcp::acceptor> acceptors;
+    asio::steady_timer tickTimer{ioContext};
 
     bool running; // True while the game is up and bound to a port
     long pulse; // Current pulse
 
-    bool rebooting;
     bool GDB;
     bool valgrind;
 
@@ -213,11 +217,14 @@ private:
     bool idDirty;
 
     std::list<childProcess> children; // List of child processes
-    std::list<controlSock> controlSocks; // List of control fds
     std::list<dnsCache> cachedDns; // Cache of DNS lookups
     WebInterface* webInterface;
     dpp::cluster *discordBot{};
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    // TODO: migrate off deprecated dpp::commandhandler
     dpp::commandhandler *commandHandler{};
+#pragma GCC diagnostic pop
 
     // Game Updates
     WeakMonsterList activeList; // The new active list
@@ -228,6 +235,7 @@ private:
     long lastRandomUpdate;
     long lastActiveUpdate;
     long lastAccountSave;
+    bool smackTalkReset{}; // true once the 7am mob smack-talk reset has fired today
 
 public:
     std::list<std::shared_ptr<Area> > areas;
@@ -244,10 +252,15 @@ private:
     size_t getNumSockets() const; // Get number of sockets in the sockets list
 
     // Game & Socket methods
-    int handleNewConnection(controlSock& control);
-    int poll(); // Poll all descriptors for input
-    int checkNew(); // Accept new connections
-    int processInput(); // Process input from users
+    void doAccept(asio::ip::tcp::acceptor& acc); // async accept loop for a listen port
+    void tick(); // one game-loop iteration, scheduled on tickTimer
+
+    auto liveSockets() {
+        return *vSockets
+            | std::views::filter([](const std::weak_ptr<Socket>& w){ return !w.expired(); })
+            | std::views::transform([](const std::weak_ptr<Socket>& w){ return w.lock(); });
+    }
+
     int processCommands(); // Process commands from users
     int updatePlayerCombat(); // Handle player auto attacks etc
     int processChildren();
@@ -256,12 +269,9 @@ private:
     // Child processes
     int reapChildren(); // Clean up after any dead children
 
-    // Reboot
-    bool saveRebootFile(bool resetShips = false);
-
     // Updates
     void updateGame();
-    void processMsdp();
+    void processReporting();
     void pulseTicks(long t);
     void pulseCreatureEffects(long t);
     void pulseRoomEffects(long t);
@@ -275,7 +285,6 @@ private:
     void updateAction(long t);
 
     // DNS
-    void addCache(std::string_view ip, std::string_view hostName, time_t t = -1);
     void saveDnsCache();
     void loadDnsCache();
     void pruneDns();
@@ -322,6 +331,8 @@ public:
     std::shared_ptr<Creature> lookupCrtId(const std::string &toLookup);
     std::shared_ptr<Object>  lookupObjId(const std::string &toLookup);
     std::shared_ptr<Player> lookupPlyId(const std::string &toLookup);
+
+    void invalidateApiAuth(const std::string& id, const std::string& name);
 
     void loadIds();
     void saveIds();
@@ -370,7 +381,7 @@ public:
 // *******************************
 // Public methods for server class
 public:
-    void showMemory(std::shared_ptr<Socket> sock, bool extended=false);
+    void showMemory(const std::shared_ptr<Socket>& sock, bool extended=false);
 
     // Child processes
     void addChild(int pid, ChildType pType, int pFd = -1, std::string_view pExtra = "");
@@ -380,7 +391,6 @@ public:
     bool init();    // Setup the server
 
     void setGDB();
-    void setRebooting();
     void setValgrind();
 
     void run(); // Run the server
@@ -390,15 +400,11 @@ public:
     // Status
     void sendCrash();
 
-    bool isRebooting();
-
     bool isValgrind();
 
-    // Reboot
-    bool startReboot(bool resetShips = false);
-    int finishReboot(); // Bring the mud back up from a reboot
-
     // DNS
+    void addCache(std::string_view ip, std::string_view hostName, time_t t = -1);
+    size_t expireDns(long now); // drop entries older than 15 days; returns count removed (pure, no I/O)
     std::string getDnsCacheString();
     bool getDnsCache(std::string &ip, std::string &hostName);
     int startDnsLookup(Socket *sock, sockaddr_in addr); // Start dns lookup on a socket
@@ -431,9 +437,10 @@ public:
     void addActive(const std::shared_ptr<Monster>&  monster);
     void delActive(Monster* monster);
     bool isActive(Monster* monster);
+    WeakMonsterList::iterator findActive(Monster* monster);
 
     // Child Processes
-    int runList(std::shared_ptr<Socket> sock, cmd* cmnd);
+    int runList(const std::shared_ptr<Socket>& sock, cmd* cmnd);
     std::string simpleChildRead(childProcess &child);
 
     // Swap functions - use children
@@ -444,8 +451,8 @@ public:
     void swapInfo(const std::shared_ptr<Player>& player);
 
     // Queries
-    bool checkDuplicateName(std::shared_ptr<Socket> sock, bool dis);
-    bool checkDouble(std::shared_ptr<Socket> sock, bool disconnectOnLimit = true);
+    bool checkDuplicateName(const std::shared_ptr<Socket>& sock, bool dis);
+    bool checkDouble(const std::shared_ptr<Socket>& sock, bool disconnectOnLimit = true);
 
     // Bans
     void checkBans();

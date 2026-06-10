@@ -412,6 +412,9 @@ public:
 
     [[nodiscard]] std::string getDmPass() const;
     [[nodiscard]] std::string getWebserver() const;
+    [[nodiscard]] int getHttpPort() const { return httpPort; }
+    [[nodiscard]] std::string getJwtSecret() const { return jwtSecret; }
+    [[nodiscard]] std::string getJwtIssuer() const { return jwtIssuer.empty() ? std::string("realms") : jwtIssuer; }
     [[nodiscard]] std::string getQS() const;
     [[nodiscard]] std::string getUserAgent() const;
     [[nodiscard]] std::string getReviewer() const;
@@ -503,6 +506,7 @@ private:
     short   minBroadcastLevel{};
     bool    saveOnDrop{};
     bool    logDeath{};
+    bool    logTelnet{};
     short   crashes{};
     short   supportRequiredForGuild{};
     int     numGuilds{};
@@ -511,6 +515,7 @@ private:
 public:
     [[nodiscard]] int getNextGuildId() const;
     [[nodiscard]] bool getCheckDouble() const;
+    [[nodiscard]] bool getLogTelnet() const;
 
     void setNextGuildId(int pNextGuildId);
 
@@ -519,6 +524,9 @@ private:
     std::string mudName;
     std::string dmPass;
     std::string webserver;
+    int httpPort = 8080;        // REST API (Crow) listen port; web editor backend
+    std::string jwtSecret;      // HS256 signing secret for editor JWTs (set in config.xml)
+    std::string jwtIssuer;      // JWT issuer claim; defaults to "realms"
     std::string qs;             // authorization query string
     std::string userAgent;
     std::string defaultArea;

@@ -16,8 +16,11 @@
  *
  */
 
+#include <fstream>
 #include <string>
 #include "json.hpp"
+#include "paths.hpp"      // Path::Zone (REST quest index)
+#include "catRef.hpp"     // must precede zone.hpp: std::less<CatRef> is specialized here
 #include "zone.hpp"
 
 
@@ -27,6 +30,17 @@ void to_json(nlohmann::json &j, const Zone &zone) {
         {"display", zone.display},
         {"flags", zone.flags},
     };
+
+    // quest list comes from the per-zone JSON index (REST store), not the in-game XML quests
+    json q = json::array();
+    std::ifstream idx(Path::Zone / zone.name / "quests.index.json");
+    if(idx) {
+        try {
+            for(const auto& e : nlohmann::json::parse(idx))
+                q.push_back({ {"area", zone.name}, {"id", e.value("id", 0)}, {"name", e.value("name", std::string())} });
+        } catch(...) {}
+    }
+    j["quests"] = q;
 }
 
 void from_json(const nlohmann::json &j, Zone &zone) {

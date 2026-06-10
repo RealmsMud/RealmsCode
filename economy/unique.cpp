@@ -33,7 +33,7 @@
 #include "commands.hpp"                             // for getFullstrText
 #include "config.hpp"                               // for Config, gConfig
 #include "dm.hpp"                                   // for dmHelp, dmResaveO...
-#include "flags.hpp"                                // for O_UNIQUE, O_LORE
+#include "flags.hpp"                                // for O_UNIQUE_OBJ, O_LORE
 #include "global.hpp"                               // for PROP_SHOP, PROP_S...
 #include <libxml/xmlstring.h>                       // for BAD_CAST
 #include "mudObjects/container.hpp"                 // for ObjectSet
@@ -163,7 +163,7 @@ void UniqueOwner::show(const std::shared_ptr<Player>& player) {
 
 void UniqueOwner::doRemove(std::shared_ptr<Player> player, const std::shared_ptr<Object>&  parent, std::shared_ptr<Object>  object, bool online, bool destroy) {
     if(!destroy)
-        object->clearFlag(O_UNIQUE);
+        object->clearFlag(O_UNIQUE_OBJ);
     else {
         // don't run remove, since that deletes the iterator;
         // just broadcast
@@ -524,7 +524,7 @@ bool Unique::is(const std::shared_ptr<const Object> &object) {
 //*********************************************************************
 
 bool Unique::isUnique(const std::shared_ptr<const Object>& object) {
-    return(object->getType() != ObjectType::MONEY && object->flagIsSet(O_UNIQUE));
+    return(object->getType() != ObjectType::MONEY && object->flagIsSet(O_UNIQUE_OBJ));
 }
 
 //*********************************************************************
@@ -830,7 +830,7 @@ bool Config::loadLimited() {
     char        filename[80];
 
     // build an XML tree from a the file
-    sprintf(filename, "%s/limited.xml", Path::PlayerData.c_str());
+    snprintf(filename, sizeof(filename), "%s/limited.xml", Path::PlayerData.c_str());
     clearLimited();
 
     xmlDoc = xml::loadFile(filename, "Limited");
@@ -894,7 +894,7 @@ void Config::saveLimited() const {
         (*lt)->save(curNode);
     }
 
-    sprintf(filename, "%s/limited.xml", Path::PlayerData.c_str());
+    snprintf(filename, sizeof(filename), "%s/limited.xml", Path::PlayerData.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }
@@ -1237,7 +1237,7 @@ int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         unique->addObject(object->info);
-        object->setFlag(O_UNIQUE);
+        object->setFlag(O_UNIQUE_OBJ);
         player->printColor("^yThis object is now unique.\n");
 
     } else if(!strncmp(cmnd->str[2], "create", len)) {
@@ -1251,7 +1251,7 @@ int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd) {
         unique->setGlobalLimit(1);
         unique->setDecay(12*30);
         unique->addObject(object->info);
-        object->setFlag(O_UNIQUE);
+        object->setFlag(O_UNIQUE_OBJ);
 
         gConfig->addUnique(unique);
         player->printColor("^yThis object is now unique.\n");
@@ -1270,7 +1270,7 @@ int dmUnique(const std::shared_ptr<Player>& player, cmd* cmnd) {
         }
 
         unique->deUnique(object->info);
-        object->clearFlag(O_UNIQUE);
+        object->clearFlag(O_UNIQUE_OBJ);
         player->printColor("^yThis object is no longer unique.\n");
 
     } else {

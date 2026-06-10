@@ -258,6 +258,9 @@ int Monster::saveToFile() {
 
     xml::saveFile(Path::monsterPath(info), xmlDoc);
     xmlFreeDoc(xmlDoc);
+
+    if(gServer && info.id > 0)
+        gServer->zoneIndex.upsert(ZoneIndex::Type::Monster, info.area, info.id, getName());
     return(0);
 }
 
@@ -306,7 +309,7 @@ void Monster::saveXml(xmlNodePtr curNode) const {
     xml::saveNonNullString(curNode, "AggroString", aggroString);
 
     jail.save(curNode, "Jail", false);
-    xml::saveNonZeroNum(curNode, "WeaponSkill", maxLevel);
+    xml::saveNonZeroNum(curNode, "MaxLevel", maxLevel);
     xml::saveNonZeroNum(curNode, "Cast", cast);
     saveCatRefArray(curNode, "Rescue", "Mob", rescue, NUM_RESCUE);
 

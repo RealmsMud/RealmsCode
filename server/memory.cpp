@@ -64,7 +64,7 @@ std::string sizeInfo(long size) {
 //                      showMemory
 //*********************************************************************
 
-void Server::showMemory(std::shared_ptr<Socket> sock, bool extended) {
+void Server::showMemory(const std::shared_ptr<Socket>& sock, bool extended) {
     char buf[80];
     int  crts    = 0;
     int  rooms   = 0;
@@ -120,7 +120,7 @@ void Server::showMemory(std::shared_ptr<Socket> sock, bool extended) {
                             act_mem += strlen(tlk->target);
                     }
                 } else {
-                    sprintf(buf, "%s has a talk and should not.", mons->getCName());
+                    snprintf(buf, sizeof(buf), "%s has a talk and should not.", mons->getCName());
                     loge(buf);
                     for(; tlk; tlk = tlk->next_tag) {
                         badtalk++;

@@ -251,7 +251,7 @@ int cmdCast(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
 void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creature>& target, std::string_view spell, int strength) {
     if(!caster || !target)
         return;
-    int c = 0, n = 0;
+    int c = 0;
     SpellData data;
     bool found = false, offensive = false;
 
@@ -292,9 +292,9 @@ void doCastPython(std::shared_ptr<MudObject> caster, const std::shared_ptr<Creat
         for(c=0; ospell[c].splno != get_spell_num(data.splno); c++)
             if(ospell[c].splno == -1)
                 return;
-        n = ((int(*)(SpellFn, const char*, osp_t*))*fn) (caster->getAsCreature(), &cmnd, &data, get_spell_name(data.splno), &ospell[c]);
+        ((int(*)(SpellFn, const char*, osp_t*))*fn) (caster->getAsCreature(), &cmnd, &data, get_spell_name(data.splno), &ospell[c]);
     } else {
-        n = ((int(*)(SpellFn))*fn) (caster->getAsCreature(), &cmnd, &data);
+        ((int(*)(SpellFn))*fn) (caster->getAsCreature(), &cmnd, &data);
     }
 }
 //*********************************************************************

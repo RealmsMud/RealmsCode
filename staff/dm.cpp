@@ -75,39 +75,6 @@ extern long last_weather_update;
 
 
 
-//*********************************************************************
-//                      dmReboot
-//*********************************************************************
-
-int dmReboot(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    bool    resetShips=false;
-
-
-    if( !player->isDm() &&
-        !(player->flagIsSet(P_CAN_REBOOT) &&
-        player->getClass() == CreatureClass::CARETAKER)
-    )
-        return(cmdNoAuth(player));
-
-    if(cmnd->num==2 && !strcmp(cmnd->str[1], "-ships"))
-        resetShips = true;
-
-    player->print("Rebooting now!\n");
-    gConfig->swapAbort();
-    logn("log.bane", "Reboot by %s.\n", player->getCName());
-    broadcast("### Going for a reboot, hang onto your seats!");
-    if(resetShips)
-        player->print("Resetting game time to midnight, updating ships...\n");
-    gServer->processOutput();
-    loge("--- Attempting game reboot ---\n");
-    gServer->resaveAllRooms(0);
-
-    gServer->startReboot(resetShips);
-
-    throw std::runtime_error("dmReboot failed!!!");
-    return(0);
-
-}
 
 int dmCheckInventory(const std::shared_ptr<Player>& player, cmd* cmnd) {
     std::shared_ptr<Monster> mTarget=nullptr;
@@ -790,13 +757,13 @@ int dmUsers(const std::shared_ptr<Player>& player, cmd* cmnd) {
             oStr << std::setw(10) << std::string(user->getName() + "(" + user->getProxyName() + ")").substr(0, 10) << "^w ";
 
         if(!sock->isConnected()) {
-            sprintf(str, "connecting (Fd: %d)", sock->getFd());
+            snprintf(str, sizeof(str), "connecting (Fd: %d)", sock->getFd());
             oStr << "^Y" << std::setw(20) << str << " ^c" << std::setw(37) << host.substr(0, 37);
         } else if(full) {
             oStr << "^m" << std::setw(58) << host.substr(0, 58);
         } else {
             if(user->inUniqueRoom()) {
-                sprintf(str, "%s: ^b%s", user->getUniqueRoomParent()->info.displayStr(cr, 'b').c_str(), stripColor(user->getUniqueRoomParent()->getCName()).c_str());
+                snprintf(str, sizeof(str), "%s: ^b%s", user->getUniqueRoomParent()->info.displayStr(cr, 'b').c_str(), stripColor(user->getUniqueRoomParent()->getCName()).c_str());
                 oStr << std::setw(22 + (str[0] == '^' ? 4 : 0)) << std::string(str).substr(0, 22 + (str[0] == '^' ? 4 : 0));
             } else if(user->inAreaRoom()){
                 //sprintf(str, "%s", user->area_room->mapmarker.str(true).c_str());
@@ -816,7 +783,7 @@ int dmUsers(const std::shared_ptr<Player>& player, cmd* cmnd) {
                 oStr << std::setw(17) << "l";
         }
 
-        sprintf(str, "%02ld:%02ld", (t-sock->ltime)/60L, (t-sock->ltime)%60L);
+        snprintf(str, sizeof(str), "%02ld:%02ld", (t-sock->ltime)/60L, (t-sock->ltime)%60L);
         oStr << " ^w" << str << "\n";
     }
 
@@ -1283,7 +1250,7 @@ int dmGameStatus(const std::shared_ptr<Player>& player, cmd* cmnd) {
         d++;
     }
     strcpy(buf+strlen(buf)-2, ".\n");
-    player->printColor(buf);
+    player->printColor("%s", buf);
     player->printColor("^cDM password: ^x%s\n", gConfig->getDmPass().c_str());
     player->printColor("^cWebserver:   ^x%s\n", gConfig->getWebserver().c_str());
     player->printColor("^cUser Agent:  ^x%s\n", gConfig->getUserAgent().c_str());
@@ -1516,11 +1483,11 @@ int dmParam(const std::shared_ptr<Player>& player, cmd* cmnd) {
         minutes %= 60;
 
         if(!days)
-            sprintf(szBuffer, "Uptime: %02ld:%02ld:%02ld\n", hours, minutes, (t-StartTime)%60L);
+            snprintf(szBuffer, sizeof(szBuffer), "Uptime: %02ld:%02ld:%02ld\n", hours, minutes, (t-StartTime)%60L);
         else if(days==1)
-            sprintf(szBuffer, "Uptime: %ld day %02ld:%02ld:%02ld\n", days, hours, minutes, (t-StartTime)%60L);
+            snprintf(szBuffer, sizeof(szBuffer), "Uptime: %ld day %02ld:%02ld:%02ld\n", days, hours, minutes, (t-StartTime)%60L);
         else
-            sprintf(szBuffer, "Uptime: %ld days %02ld:%02ld:%02ld\n", days, hours, minutes, (t-StartTime)%60L);
+            snprintf(szBuffer, sizeof(szBuffer), "Uptime: %ld days %02ld:%02ld:%02ld\n", days, hours, minutes, (t-StartTime)%60L);
 
         player->print(szBuffer);
 

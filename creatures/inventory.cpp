@@ -17,6 +17,7 @@
  */
 
 #include "flags.hpp"                        // for P_DM_INVIS, P_CHAOTIC, O_DARKNESS
+#include "gmcpEvents.hpp"                   // for gmcp::onInventory*
 #include "hooks.hpp"                        // for Hooks
 #include "mudObjects/creatures.hpp"         // for Creature, PetList
 #include "mudObjects/objects.hpp"           // for Object, ObjectType, ObjectType...
@@ -53,6 +54,8 @@ void Creature::addObj(const std::shared_ptr<Object>&  object) {
 
     Hooks::run(cThis, "afterAddObject", object, "afterAddToCreature");
 
+    if(pPlayer) gmcp::onInventoryAdd(pPlayer, object);
+
     killDarkmetal();
 }
 
@@ -86,6 +89,8 @@ void Creature::finishDelObj(const std::shared_ptr<Object>&  object, bool breakUn
         object->clearFlag(O_KEEP);
 
     Hooks::run(Containable::downcasted_shared_from_this<Creature>(), "afterRemoveObject", object, "afterRemoveFromCreature");
+
+    if(auto pPlayer = getAsPlayer()) gmcp::onInventoryRemove(pPlayer, object);
 }
 
 //*********************************************************************

@@ -21,6 +21,7 @@
 #include <functional>                  // for function, operator==
 #include <list>                        // for operator==, list, _List_const_...
 #include <map>                         // for operator==, map, _Rb_tree_iter...
+#include <set>                         // for set (dirty GMCP packages)
 #include <sstream>                     // for operator<<, basic_ostream, ost...
 #include <string>                      // for string, operator<<, char_traits
 #include <string_view>                 // for string_view, operator<<, basic...
@@ -31,14 +32,19 @@
 #include "catRef.hpp"                  // for CatRef
 #include "config.hpp"                  // for Config, gConfig, MsdpVariableMap
 #include "flags.hpp"                   // for P_NO_SHOW_STATS, P_DM_INVIS
+#include "gmcp.hpp"                    // for the GMCP conversion layer
 #include "group.hpp"                   // for Group, CreatureList, GROUP_INV...
 #include "location.hpp"                // for Location
 #include "login.hpp"                   // for CON_DISCONNECTING, CON_PLAYING
+#include "raceData.hpp"                // for RaceData
 #include "msdp.hpp"                    // for ReportedMsdpVariable, MsdpVari...
 #include "mudObjects/areaRooms.hpp"    // for AreaRoom
 #include "mudObjects/creatures.hpp"    // for Creature
+#include "effects.hpp"                 // for EffectInfo, Effect
 #include "mudObjects/exits.hpp"        // for Exit
+#include "mudObjects/objects.hpp"      // for Object
 #include "mudObjects/players.hpp"      // for Player
+#include "skills.hpp"                  // for Skill
 #include "mudObjects/rooms.hpp"        // for BaseRoom, ExitList
 #include "mudObjects/uniqueRooms.hpp"  // for UniqueRoom
 #include "server.hpp"                  // for Server, SocketList
@@ -46,24 +52,49 @@
 #include "stats.hpp"                   // for Stat
 #include "timer.hpp"                   // for Timer
 
-#define MSDP_DEBUG
+// Opt-in: build with -DMSDP_DEBUG to trace MSDP/GMCP traffic. Off by default --
+// these clogs sit on the per-tick report path.
 
-void Server::processMsdp() {
+void Server::processReporting() {
     for(const auto& sock : sockets) {
         if(sock->getState() == CON_DISCONNECTING)
             continue;
 
-        if(sock->mccpEnabled()) {
-            for(auto& [vName, var] : sock->msdpReporting) {
-                if(var.getRequiresPlayer() && (!sock->getPlayer() || sock->getState() != CON_PLAYING)) continue;
-                if(!var.checkTimer()) continue;
+        bool useMsdp = sock->msdpEnabled();
+        bool useGmcp = sock->gmcpEnabled();
+        if((!useMsdp && !useGmcp) || sock->msdpReporting.empty())
+            continue;
 
+        nlohmann::json gmcpMsdpBatch;        // channel 1: MSDP-over-GMCP
+        std::set<std::string> dirtyPackages; // channel 2: standard packages
+
+        for(auto& [vName, var] : sock->msdpReporting) {
+            if(var.getRequiresPlayer() && (!sock->getPlayer() || sock->getState() != CON_PLAYING)) continue;
+            // Recompute on the timer or when an event forced the var dirty
+            bool due = var.checkTimer();
+            if(due || var.isDirty())
                 var.update();
-                if(!var.isDirty()) continue;
+            if(!var.isDirty()) continue;
 
+            if(useMsdp)
                 var.send(*sock);
-                var.setDirty(false);
+
+            if(useGmcp) {
+                if(sock->gmcpMsdpVars.find(var.getName()) != sock->gmcpMsdpVars.end())
+                    gmcpMsdpBatch[var.getName()] = gmcp::msdpValueToJson(var.getValue());
+                std::string pkg = gmcp::packageForVar(var.getName());
+                if(!pkg.empty() && sock->gmcpSupports(pkg))
+                    dirtyPackages.insert(pkg);
             }
+
+            var.setDirty(false);
+        }
+
+        if(useGmcp) {
+            if(gmcpMsdpBatch.is_object() && !gmcpMsdpBatch.empty())
+                sock->gmcpSend("MSDP", gmcpMsdpBatch);
+            for(const auto& pkg : dirtyPackages)
+                sock->gmcpSendPackage(pkg);
         }
     }
 }
@@ -76,7 +107,9 @@ bool Socket::processMsdpVarVal(const std::string &variable, const std::string &v
         return (msdpList(value));
     }
     else if (variable == "REPORT") {
+#ifdef MSDP_DEBUG
         std::clog << "msdpReport(" << value << ")" << std::endl;
+#endif
         return (msdpReport(value) != nullptr);
     }
     else if (variable == "UNREPORT") {
@@ -125,58 +158,42 @@ bool Socket::processMsdpVarVal(const std::string &variable, const std::string &v
 const std::vector<std::string> MsdpCommandList = { "LIST", "REPORT", "RESET", "SEND", "UNREPORT" };
 const std::vector<std::string> MsdpLists = { "COMMANDS", "LISTS", "CONFIGURABLE_VARIABLES", "REPORTABLE_VARIABLES", "REPORTED_VARIABLES", "SENDABLE_VARIABLES" };
 
-bool Socket::msdpList(const std::string &value) {
-    if (value == "COMMANDS") {
-        msdpSendList(value, MsdpCommandList);
-        return (true);
-    }
-    else if (value == "LISTS") {
-        msdpSendList(value, MsdpLists);
-        return (true);
-    }
-    else if (value == "SENDABLE_VARIABLES") {
-        std::vector<std::string> sendable;
-        for (auto& [vName, var] : gConfig->msdpVariables) {
-            sendable.push_back(var.getName());
-        }
-        msdpSendList(value, sendable);
-        return (true);
-    }
-    else if (value == "REPORTABLE_VARIABLES") {
-        std::vector<std::string> reportable;
-        for (auto& [vName, var] : gConfig->msdpVariables) {
-            if(var.isReportable()) reportable.push_back(var.getName());
-        }
-        msdpSendList(value, reportable);
-        return (true);
-    }
-    else if (value == "CONFIGURABLE_VARIABLES") {
-        std::vector<std::string> configurable;
-        for (auto& [vName, var] : gConfig->msdpVariables) {
-            if (var.isConfigurable()) configurable.push_back(var.getName());
-        }
-        msdpSendList(value, configurable);
-        return (true);
-    }
-    else if (value == "REPORTED_VARIABLES") {
-        std::vector<std::string> reported;
-        for (auto& [vName, var] : msdpReporting) {
-            reported.push_back(var.getName());
-        }
-        msdpSendList("REPORTED_VARIABLES", reported);
-        return (true);
-    }
-    else if (value.empty()) {
-        // If we just get a LIST command, send off a list of all variables
-        std::vector<std::string> all;
-        for (auto& [vName, var] : gConfig->msdpVariables) {
-            all.push_back(var.getName());
-        }
-        msdpSendList("SENDABLE_VARIABLES", all);
-        return (true);
-    }
+std::vector<std::string> Socket::msdpListValues(const std::string &which, std::string &label) {
+    std::vector<std::string> out;
+    label = which;
 
-    return (false);
+    if (which == "COMMANDS") {
+        out = MsdpCommandList;
+    }
+    else if (which == "LISTS") {
+        out = MsdpLists;
+    }
+    else if (which == "SENDABLE_VARIABLES" || which.empty()) {
+        label = "SENDABLE_VARIABLES";
+        for (auto& [vName, var] : gConfig->msdpVariables) out.push_back(var.getName());
+    }
+    else if (which == "REPORTABLE_VARIABLES") {
+        for (auto& [vName, var] : gConfig->msdpVariables) if (var.isReportable()) out.push_back(var.getName());
+    }
+    else if (which == "CONFIGURABLE_VARIABLES") {
+        for (auto& [vName, var] : gConfig->msdpVariables) if (var.isConfigurable()) out.push_back(var.getName());
+    }
+    else if (which == "REPORTED_VARIABLES") {
+        for (auto& [vName, var] : msdpReporting) out.push_back(var.getName());
+    }
+    else {
+        label.clear();
+    }
+    return out;
+}
+
+bool Socket::msdpList(const std::string &value) {
+    std::string label;
+    std::vector<std::string> values = msdpListValues(value, label);
+    if (label.empty())
+        return (false);
+    msdpSendList(label, values);
+    return (true);
 }
 
 ReportedMsdpVariable* Socket::getReportedMsdpVariable(const std::string &value) {
@@ -194,6 +211,185 @@ std::string Socket::getMsdpReporting() {
         ostr << var.getName() << " ";
     }
     return ostr.str();
+}
+
+std::string Socket::getGmcpPackages() {
+    std::string out;
+    for(const auto& pkg : gmcpStdPackages) {
+        out += pkg;
+        out += ' ';
+    }
+    return out;
+}
+
+nlohmann::json Socket::gmcpRoomInfo() {
+    auto player = getPlayer();
+    if(!player)
+        return nlohmann::json(nullptr);
+    auto room = player->getRoomParent();
+    if(!room)
+        return nlohmann::json(nullptr);
+
+    nlohmann::json j = nlohmann::json::object();
+    if(auto uRoom = room->getAsUniqueRoom()) {
+        j["num"] = uRoom->info.id;
+        j["area"] = uRoom->info.area;
+    } else if(auto aRoom = room->getAsAreaRoom()) {
+        const MapMarker& mm = aRoom->mapmarker;
+        j["area"] = mm.getArea();
+        j["coords"] = {{"x", mm.getX()}, {"y", mm.getY()}, {"z", mm.getZ()}};
+    }
+    j["name"] = room->getName();
+
+    nlohmann::json exits = nlohmann::json::object();
+    for(const auto& exit : room->exits) {
+        // Hide secret/concealed/invisible exits the viewer can't perceive.
+        if(!player->showExit(exit))
+            continue;
+        // Unique-room targets carry a stable room number; area-room targets do not.
+        exits[exit->getName()] = exit->target.mapmarker.getArea() ? 0 : exit->target.room.id;
+    }
+    j["exits"] = exits;
+    return j;
+}
+
+nlohmann::json Socket::gmcpCharGroup() {
+    std::shared_ptr<Creature> viewer = getPlayer();
+    if(!viewer || !getPlayer()->getGroup())
+        return nlohmann::json(nullptr);
+    auto group = getPlayer()->getGroup();
+
+    nlohmann::json j = nlohmann::json::object();
+    j["name"] = group->getName();
+    j["type"] = group->getGroupTypeStr();
+
+    nlohmann::json members = nlohmann::json::array();
+    for(const auto& weakTarget : group->members) {
+        const auto& target = weakTarget.lock();
+        if(!target)
+            continue;
+        if(!viewer->isStaff() && (target->pFlagIsSet(P_DM_INVIS) || (target->isEffected("incognito") && !viewer->inSameRoom(target))))
+            continue;
+        if(target->getGroupStatus() == GROUP_INVITED)
+            continue;
+
+        auto master = target->getMaster();
+        bool isPet = target->isPet();
+        if(isPet && !master)  // pet outlived its master; nothing coherent to report
+            continue;
+        bool showStats = (viewer->isCt() ||
+            (isPet && !master->flagIsSet(P_NO_SHOW_STATS)) ||
+            (!isPet && !target->pFlagIsSet(P_NO_SHOW_STATS)) ||
+            (isPet && master == viewer) ||
+            (!isPet && target == viewer));
+
+        nlohmann::json m = nlohmann::json::object();
+        m["name"]  = isPet ? (master->getName() + "'s " + target->getName()) : target->getName();
+        m["hp"]    = showStats ? target->hp.getCur() : -1;
+        m["maxhp"] = showStats ? target->hp.getMax() : -1;
+        m["mp"]    = showStats ? target->mp.getCur() : -1;
+        m["maxmp"] = showStats ? target->mp.getMax() : -1;
+
+        nlohmann::json effects = nlohmann::json::array();
+        if(!isPet) {
+            if(target->isEffected("blindness"))    effects.push_back("Blind");
+            if(target->isEffected("drunkenness"))  effects.push_back("Drunk");
+            if(target->isEffected("confusion"))    effects.push_back("Confused");
+            if(target->isDiseased())               effects.push_back("Diseased");
+            if(target->isEffected("petrification"))effects.push_back("Petrified");
+            if(target->isPoisoned())               effects.push_back("Poisoned");
+            if(target->isEffected("silence"))      effects.push_back("Silenced");
+            if(target->flagIsSet(P_SLEEPING))      effects.push_back("Sleeping");
+            else if(target->flagIsSet(P_UNCONSCIOUS)) effects.push_back("Unconscious");
+            if(target->isEffected("wounded"))      effects.push_back("Wounded");
+        }
+        m["effects"] = effects;
+        m["room"] = (showStats && target->getRoomParent()) ? target->getRoomParent()->getName() : "";
+
+        members.push_back(m);
+    }
+    j["members"] = members;
+    return j;
+}
+
+nlohmann::json Socket::gmcpRoomPlayers() {
+    nlohmann::json arr = nlohmann::json::array();
+    auto player = getPlayer();
+    if(!player || !player->getRoomParent())
+        return arr;
+    for(const auto& p : player->getRoomParent()->getVisiblePlayers(player))
+        arr.push_back({{"name", p->getName()}, {"fullname", p->fullName()}});
+    return arr;
+}
+
+nlohmann::json Socket::gmcpSkillGroups() {
+    nlohmann::json arr = nlohmann::json::array();
+    auto player = getPlayer();
+    if(!player)
+        return arr;
+    std::set<std::string> groups;
+    for(const auto& [name, skill] : player->skills)
+        if(skill && !skill->getGroup().empty())
+            groups.insert(skill->getGroup());
+    for(const auto& g : groups)
+        arr.push_back(g);
+    return arr;
+}
+
+nlohmann::json Socket::gmcpSkillList(const std::string& group) {
+    nlohmann::json j = nlohmann::json::object();
+    j["group"] = group;
+    nlohmann::json list = nlohmann::json::array();
+    auto player = getPlayer();
+    if(player)
+        for(const auto& [name, skill] : player->skills) {
+            if(!skill)
+                continue;
+            if(!group.empty() && skill->getGroup() != group)
+                continue;
+            list.push_back({{"name", skill->getDisplayName()}, {"rank", skill->getGained()}});
+        }
+    j["list"] = list;
+    return j;
+}
+
+nlohmann::json Socket::gmcpEffectList(bool defences) {
+    nlohmann::json arr = nlohmann::json::array();
+    auto player = getPlayer();
+    if(!player)
+        return arr;
+    for(EffectInfo* ei : player->effects.effectList) {
+        if(!ei || !ei->getEffect())
+            continue;
+        if((ei->getEffect()->getType() == "Positive") != defences)
+            continue;
+        arr.push_back({
+            {"name",     ei->getDisplayName()},
+            {"duration", ei->getDuration()},
+            {"strength", ei->getStrength()},
+        });
+    }
+    return arr;
+}
+
+nlohmann::json Socket::gmcpItemsList(const std::string& location) {
+    nlohmann::json j = nlohmann::json::object();
+    j["location"] = location;
+    nlohmann::json items = nlohmann::json::array();
+    auto player = getPlayer();
+    if(player) {
+        if(location == "inv") {
+            // Own inventory: no visibility gate.
+            for(const auto& obj : player->objects)
+                if(obj)
+                    items.push_back({{"id", obj->getId()}, {"name", obj->getName()}});
+        } else if(location == "room" && player->getRoomParent()) {
+            for(const auto& obj : player->getRoomParent()->getVisibleObjects(player))
+                items.push_back({{"id", obj->getId()}, {"name", obj->getName()}});
+        }
+    }
+    j["items"] = items;
+    return j;
 }
 
 ReportedMsdpVariable* Socket::msdpReport(const std::string &value) {
@@ -267,22 +463,23 @@ bool Socket::msdpUnReport(const std::string &value) {
 }
 
 void Socket::msdpSendList(std::string_view variable, const std::vector<std::string>& values) {
-    std::ostringstream oStr;
+    if (!msdpEnabled())
+        return;
 
-    if (msdpEnabled()) {
-        oStr    << (unsigned char) IAC << (unsigned char) SB << (unsigned char) TELOPT_MSDP
-                << (unsigned char) MSDP_VAR << variable << (unsigned char) MSDP_VAL
-                << (unsigned char) MSDP_ARRAY_OPEN;
-
-        for( auto& value : values ) {
-            oStr << (unsigned char) MSDP_VAL << value;
-        }
-
-        oStr << (unsigned char) MSDP_ARRAY_CLOSE << (unsigned char) IAC << (unsigned char) SE;
+    std::string body;
+    body.push_back((char) MSDP_VAR);
+    body.append(variable);
+    body.push_back((char) MSDP_VAL);
+    body.push_back((char) MSDP_ARRAY_OPEN);
+    for (const auto& value : values) {
+        body.push_back((char) MSDP_VAL);
+        body.append(telnet::escapeIAC(value));
     }
+    body.push_back((char) MSDP_ARRAY_CLOSE);
+    // Values are pre-escaped above; do not re-escape the assembled MSDP body.
+    std::string toSend = telnet::subnegotiate(TELOPT_MSDP, body, false);
 
-    write(oStr.str());
-
+    writeRaw(toSend);
 }
 
 void debugMsdp(std::string_view str) {
@@ -341,23 +538,23 @@ bool Socket::msdpSendPair(std::string_view variable, std::string_view value) {
     if (variable.empty() || value.empty())
         return false;
 
-    std::ostringstream oStr;
+    if (!this->msdpEnabled())
+        return true;
 
-    if (this->msdpEnabled()) {
-        std::clog << "SendPair:MSDP" << std::endl;
-        oStr
-                << (unsigned char) IAC << (unsigned char) SB << (unsigned char) TELOPT_MSDP
-                << (unsigned char) MSDP_VAR << variable
-                << (unsigned char) MSDP_VAL << value
-                << (unsigned char) IAC << (unsigned char) SE;
-    }
-    std::string toSend = oStr.str();
+    std::string body;
+    body.reserve(variable.size() + value.size() + 2);
+    body.push_back((char) MSDP_VAR);
+    body.append(variable);
+    body.push_back((char) MSDP_VAL);
+    body.append(telnet::escapeIAC(value));
+    // Value is pre-escaped above; do not re-escape the assembled MSDP body.
+    std::string toSend = telnet::subnegotiate(TELOPT_MSDP, body, false);
 
 #ifdef MSDP_DEBUG
     debugMsdp(toSend);
 #endif
 
-    write(toSend);
+    writeRaw(toSend);
     return true;
 }
 
@@ -369,7 +566,7 @@ MsdpVariable* Config::getMsdpVariable(const std::string &name) {
         return &(it->second);
 }
 
-ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, std::shared_ptr<Socket> sock) {
+ReportedMsdpVariable::ReportedMsdpVariable(const MsdpVariable* mv, const std::shared_ptr<Socket>& sock) {
     name = mv->getName();
     parentSock = sock;
     configurable = mv->isConfigurable();
@@ -416,29 +613,29 @@ bool MsdpVariable::isUpdatable() const {
     return(updateable);
 }
 
-bool MsdpVariable::send(Socket &sock) const {
-    std::string value;
+std::string MsdpVariable::currentValue(Socket &sock) const {
+    if (!hasValueFn()) {
+        if (!isConfigurable()) return std::string();
+        ReportedMsdpVariable* reported = sock.getReportedMsdpVariable(name);
+        return reported != nullptr ? reported->getValue() : std::string();
+    }
+    if (requiresPlayer && !sock.hasPlayer()) return std::string();
+    return valueFn(sock, sock.getPlayer());
+}
 
+bool MsdpVariable::send(Socket &sock) const {
     if (!hasValueFn()) {
         // If there's no send function, and it's not configurable, there's nothing we can do
         if(!isConfigurable()) return false;
-
-        ReportedMsdpVariable* reported = sock.getReportedMsdpVariable(name);
-        if (reported != nullptr) {
-            value = reported->getValue();
-        }
-
-    } else {
-        if (requiresPlayer && !sock.hasPlayer()) return false;
-
-        value = valueFn(sock, sock.getPlayer());
+    } else if (requiresPlayer && !sock.hasPlayer()) {
+        return false;
     }
 
-    sock.msdpSendPair(getName(), value);
+    sock.msdpSendPair(getName(), currentValue(sock));
     return true;
 }
 
-std::string ReportedMsdpVariable::getValue() const {
+const std::string& ReportedMsdpVariable::getValue() const {
     return(value);
 }
 
@@ -475,7 +672,6 @@ void ReportedMsdpVariable::update() {
     auto sock = parentSock.lock();
     if(!sock) return;
 
-    std::string oldValue = value;
     setValue(MsdpVariable::valueFn(*sock, sock->getPlayer()));
 }
 
@@ -483,7 +679,7 @@ void ReportedMsdpVariable::setDirty(bool pDirty) {
     dirty = pDirty;
 }
 
-std::string BaseRoom::getExitsMsdp() const {
+std::string BaseRoom::getExitsMsdp(const std::shared_ptr<const Player>& viewer) const {
     std::ostringstream oStr;
 
     if (!exits.empty()) {
@@ -491,6 +687,9 @@ std::string BaseRoom::getExitsMsdp() const {
              << (unsigned char) MSDP_VAL << (unsigned char) MSDP_TABLE_OPEN;
 
         for (const auto& exit : exits ) {
+            // Hide secret/concealed/invisible exits the viewer can't perceive.
+            if(viewer && !viewer->showExit(exit))
+                continue;
             oStr << (unsigned char) MSDP_VAR << exit->getName()
                  << (unsigned char) MSDP_VAL << (unsigned char) MSDP_TABLE_OPEN;
 
@@ -521,7 +720,7 @@ std::string BaseRoom::getExitsMsdp() const {
     return oStr.str();
 }
 
-std::string UniqueRoom::getMsdp(bool showExits) const {
+std::string UniqueRoom::getMsdp(const std::shared_ptr<const Player>& viewer, bool showExits) const {
     std::ostringstream oStr;
 
     oStr << (unsigned char) MSDP_TABLE_OPEN
@@ -536,7 +735,7 @@ std::string UniqueRoom::getMsdp(bool showExits) const {
          << (unsigned char) MSDP_VAL << getName();
 
     if (showExits)
-        oStr << getExitsMsdp();
+        oStr << getExitsMsdp(viewer);
 
     oStr << (unsigned char) MSDP_TABLE_CLOSE;
 
@@ -544,7 +743,7 @@ std::string UniqueRoom::getMsdp(bool showExits) const {
 }
 
 
-std::string AreaRoom::getMsdp(bool showExits) const {
+std::string AreaRoom::getMsdp(const std::shared_ptr<const Player>& viewer, bool showExits) const {
     std::ostringstream oStr;
 
     oStr << (unsigned char) MSDP_TABLE_OPEN
@@ -568,7 +767,7 @@ std::string AreaRoom::getMsdp(bool showExits) const {
           << (unsigned char) MSDP_TABLE_CLOSE;
 
     if (showExits)
-        oStr << getExitsMsdp();
+        oStr << getExitsMsdp(viewer);
 
     oStr << (unsigned char) MSDP_TABLE_CLOSE;
     return oStr.str();
@@ -662,7 +861,7 @@ std::string Group::getMsdp(const std::shared_ptr<Creature>& viewer) const {
                 oStr << (unsigned char) MSDP_ARRAY_CLOSE;
 
             oStr  << (unsigned char) MSDP_VAR << "ROOM"
-                  << (unsigned char) MSDP_VAL << (showStats ? target->getRoomParent()->getMsdp(false) : "");
+                  << (unsigned char) MSDP_VAL << (showStats ? target->getRoomParent()->getMsdp(nullptr, false) : "");
 
             oStr << (unsigned char) MSDP_TABLE_CLOSE;  // Member
         }
@@ -778,9 +977,22 @@ namespace msdp {
     }
     std::string getRoom(Socket &sock, const std::shared_ptr<Player>& player) {
         if(player && player->getRoomParent()) {
-            return player->getRoomParent()->getMsdp();
+            return player->getRoomParent()->getMsdp(player);
         } else
             return UNKNOWN_STR;
+    }
+    std::string getLevel(Socket &sock, const std::shared_ptr<Player>& player) {
+        return (player ? std::to_string(player->getLevel()) : UNKNOWN_STR);
+    }
+    std::string getClassName(Socket &sock, const std::shared_ptr<Player>& player) {
+        return (player ? player->getClassString() : UNKNOWN_STR);
+    }
+    std::string getRaceName(Socket &sock, const std::shared_ptr<Player>& player) {
+        if(player) {
+            const RaceData* race = gConfig->getRace(player->getRace());
+            if(race) return race->getName();
+        }
+        return UNKNOWN_STR;
     }
 
 };

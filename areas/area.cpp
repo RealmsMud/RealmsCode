@@ -953,7 +953,7 @@ std::string Area::showGrid(const std::shared_ptr<Player>& player, const MapMarke
     int     yVision = xVision * 2 / 3;
     bool    staff = player->isStaff();
     int     my = yVision*2+1, mx = xVision*2+1, y=0, x=0, i=0;
-    int     zx=0, zy=0, zi=0;
+    int     zx=0, zy=0;
     char    gridText[my][80];
     char    seasonFlags;
     Season  season = gConfig->getCalendar()->whatSeason();
@@ -988,7 +988,6 @@ std::string Area::showGrid(const std::shared_ptr<Player>& player, const MapMarke
             zy = y;
             zx = x;
             if(!staff && losPower < losGrid[zy+yVision][zx+xVision]) {
-                zi++;
                 losCloser(&zy, &zx, 0, 0, 0);
             }
 
@@ -1181,7 +1180,7 @@ void Area::loadTerrain(int pMinDepth) {
     char    storage[std::max(height, width)+1];
 
     while(k < depth) {
-        sprintf(filename, "%s/%s.%d.ter", Path::AreaData.c_str(), dataFile, k);
+        snprintf(filename, sizeof(filename), "%s/%s.%d.ter", Path::AreaData.c_str(), dataFile, k);
         if(!fs::exists(filename))
             return;
 
@@ -1204,7 +1203,7 @@ void Area::loadTerrain(int pMinDepth) {
         t.close();
         aTerrain.data.push_back(vTer);
 
-        sprintf(filename, "%s/%s.%d.map", Path::AreaData.c_str(), dataFile, k);
+        snprintf(filename, sizeof(filename), "%s/%s.%d.map", Path::AreaData.c_str(), dataFile, k);
         std::vector< std::vector<char> > vMap;
         if(fs::exists(filename)) {
             checkFileSize(size, filename);
@@ -1247,7 +1246,7 @@ void Area::loadTerrain(int pMinDepth) {
         }
         aMap.data.push_back(vMap);
 
-        sprintf(filename, "%s/%s.%d.sn", Path::AreaData.c_str(), dataFile, k);
+        snprintf(filename, sizeof(filename), "%s/%s.%d.sn", Path::AreaData.c_str(), dataFile, k);
         std::vector< std::vector<char> > vSn;
         if(fs::exists(filename)) {
             checkFileSize(size, filename);

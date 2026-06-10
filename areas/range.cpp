@@ -18,6 +18,7 @@
 #include <sstream>  // for basic_ostream::operator<<, operator<<, basic_ostream
 #include <string>   // for char_traits, operator<<, string
 
+#include "global.hpp"   // for CreatureClass, MAX_BUILDER_RANGE
 #include "range.hpp"
 
 
@@ -73,4 +74,35 @@ std::string Range::str() const {
 
 bool Range::isArea(std::string_view c) const {
     return(low.isArea(c));
+}
+
+//*********************************************************************
+//                      builderRangeRestricted
+//*********************************************************************
+bool builderRangeRestricted(CreatureClass cClass, const Range* bRange, const CatRef& cr, bool reading) {
+    if(cClass != CreatureClass::BUILDER)
+        return(false);
+
+    // 0 gets set in the ranges, but they can't modify that room
+    if(cr.id <= 0)
+        return(true);
+
+    // hardcode this range
+    if(cr.isArea("test"))
+        return(false);
+    // check readonly ranges
+    if(reading && (
+        cr.isArea("scroll") ||
+        cr.isArea("song") ||
+        cr.isArea("skill") ||
+        cr.isArea("potion")
+    ))
+        return(false);
+
+    for(int i = 0; i < MAX_BUILDER_RANGE; i++) {
+        if(bRange[i].belongs(cr))
+            return(false);
+    }
+
+    return(true);
 }

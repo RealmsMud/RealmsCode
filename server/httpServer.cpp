@@ -35,7 +35,7 @@
 using json = nlohmann::json;
 
 bool Server::initHttpServer() {
-    httpServer = new HttpServer(8080);
+    httpServer = new HttpServer(gConfig->getHttpPort());
     if(!httpServer)
         throw std::runtime_error("WTF httpserver!");
     return true;
@@ -45,12 +45,17 @@ void Server::cleanupHttpServer() {
     delete httpServer;
 }
 
+void Server::invalidateApiAuth(const std::string& id, const std::string& name) {
+    if(httpServer)
+        httpServer->invalidateAuth(id, name);
+}
+
 
 HttpServer::HttpServer(int pPort) {
     app.signal_clear();
     port = pPort;
 
-    CROW_ROUTE(app, "/version").methods("GET"_method)
+    CROW_ROUTE(app, "/api/version").methods("GET"_method)
         ([](const crow::request& req){
             json j;
             j["status"] = 200;  
@@ -62,6 +67,7 @@ HttpServer::HttpServer(int pPort) {
 
     registerAuth();
     registerZones();
+    registerIndex();
 
 }
 

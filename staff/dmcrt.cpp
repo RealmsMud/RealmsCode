@@ -200,10 +200,11 @@ std::string Creature::statCrt(int statFlags) {
                << "                Toughness: " << Statistics::calcToughness(getAsCreature()) << "\n";
         crtStr.setf(std::ios::left, std::ios::adjustfield);
         //crtStr.setFill(' ');
-        crtStr << "Term(" << sock->getTermType() << ")";
-        if(sock->mxpEnabled())
-            crtStr << "MXP Enabled";
-        crtStr << " size: " << sock->getTermCols() << " x " << sock->getTermRows() << "\n";
+        crtStr << "Term(" << sock->getTermType() << ") ";
+        if(sock->mxpEnabled())  crtStr << "MXP ";
+        if(sock->msdpEnabled()) crtStr << "MSDP ";
+        if(sock->gmcpEnabled()) crtStr << "GMCP ";
+        crtStr << "size: " << sock->getTermCols() << " x " << sock->getTermRows() << "\n";
         crtStr << "Host: " << sock->getHostname() << " Ip: " << sock->getIp() << "\n";
 
         // Show the owning account name if this player is linked to an account
@@ -550,7 +551,7 @@ std::string Creature::statCrt(int statFlags) {
         for(i=1; i<static_cast<int>(STAFF); i++) {
             if(mTarget->isClassAggro(i, false)) {
                 str += getClassAbbrev(i);
-                sprintf(tmp, "(%d), ", i);
+                snprintf(tmp, sizeof(tmp), "(%d), ", i);
                 str += tmp;
             }
         }
@@ -558,7 +559,7 @@ std::string Creature::statCrt(int statFlags) {
         for(i=1; i<RACE_COUNT; i++) {
             if(mTarget->isRaceAggro(i, false)) {
                 str += gConfig->getRace(i)->getName();
-                sprintf(tmp, "(%d), ", i);
+                snprintf(tmp, sizeof(tmp), "(%d), ", i);
                 str += tmp;
             }
         }
@@ -566,7 +567,7 @@ std::string Creature::statCrt(int statFlags) {
         for(i=1; i<DEITY_COUNT; i++) {
             if(mTarget->isDeityAggro(i, false)) {
                 str += gConfig->getDeity(i)->getName();
-                sprintf(tmp, "(%d), ", i);
+                snprintf(tmp, sizeof(tmp), "(%d), ", i);
                 str += tmp;
             }
         }
@@ -611,7 +612,7 @@ std::string Creature::statCrt(int statFlags) {
 
         for(i=1, n=0; i<65; i++) {
             if(pTarget->questIsSet(i)) {
-                sprintf(tmp, "(%d) - (", i+1);
+                snprintf(tmp, sizeof(tmp), "(%d) - (", i+1);
                 str += tmp;
                 str += get_quest_name(i);
                 str += "), ";

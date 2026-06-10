@@ -491,7 +491,7 @@ int animate_dead(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* 
 int splNecroDrain(const std::shared_ptr<Creature>& player, cmd* cmnd, SpellData* spellData) {
     std::shared_ptr<Creature> target=nullptr;
     std::string spell = "";
-    int tier=0, c=0;
+    [[maybe_unused]] int tier=0, c=0;   // tier ladder below is computed but not yet used
     osp_t osp;
 
     for(c=0; ospell[c].splno != get_spell_num(spellData->splno); c++)

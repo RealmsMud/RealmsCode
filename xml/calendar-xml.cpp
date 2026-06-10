@@ -217,7 +217,7 @@ void Calendar::save() const {
         (*mt)->save(childNode);
     }
 
-    sprintf(filename, "%s/calendar.xml", Path::PlayerData.c_str());
+    snprintf(filename, sizeof(filename), "%s/calendar.xml", Path::PlayerData.c_str());
 
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
@@ -271,7 +271,7 @@ void Calendar::load() {
     xmlNodePtr  curNode;
     char        filename[80];
 
-    sprintf(filename, "%s/calendar.xml", Path::PlayerData.c_str());
+    snprintf(filename, sizeof(filename), "%s/calendar.xml", Path::PlayerData.c_str());
 
     if(!fs::exists(filename))
         throw std::runtime_error("Unable to find calendar file");

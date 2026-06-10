@@ -406,8 +406,9 @@ const RaceData* Config::getRace(std::string race) const {
 //**********************************************************************
 
 const RaceData* Config::getRace(int id) const {
-    auto it = races.find(id);
+    if(races.empty()) return nullptr;
 
+    auto it = races.find(id);
     if(it == races.end())
         it = races.begin();
 

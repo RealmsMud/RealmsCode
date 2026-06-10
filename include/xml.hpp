@@ -21,6 +21,8 @@
 
 #include <map>
 #include <filesystem>
+#include <charconv>
+#include <cstring>
 
 #include <libxml/parser.h>           // for xmlNodePtr
 #include <boost/lexical_cast.hpp>
@@ -62,6 +64,8 @@ class Stat;
 #define NODE_NAME(pNode, pName)         (!strcmp((char *)(pNode)->name, (pName) ))
 
 namespace xml {
+    inline bool logParseErrors = false;   // <LogParseErrors> in config
+
     // copyToString - will make store the string into a temp cstr, set the string
     // and then free the temp cstr
     void copyToString(std::string &to, xmlNodePtr node);
@@ -141,19 +145,23 @@ namespace xml {
     template <class Type>
     Type toNum(char *fromStr) {
         Type toReturn = static_cast<Type>(0);
-        if(!fromStr)
-            return(toReturn);
-
-        try {
-            toReturn = (lexical_cast<Type>(fromStr));
-        } catch (bad_lexical_cast &) {
-            // And do nothing
-            std::clog << "Error from lexical_cast `" << fromStr << "'\n";
-            std::clog << boost::stacktrace::stacktrace();
+        if(fromStr) {
+            const char* p = fromStr;
+            while(*p == ' ' || *p == '\t') ++p;
+            const char* end = fromStr + std::strlen(fromStr);
+            if(p != end) {
+                auto [ptr, ec] = std::from_chars(p, end, toReturn);
+                if(ec != std::errc{}) {
+                    toReturn = static_cast<Type>(0);
+                    if(logParseErrors) {
+                        std::clog << "xml parse: bad numeric '" << fromStr << "'\n";
+                        std::clog << boost::stacktrace::stacktrace();
+                    }
+                }
+            }
+            free(fromStr);
         }
-
-        free(fromStr);
-        return (toReturn);
+        return(toReturn);
     }
 
     template <class Type>
@@ -200,6 +208,11 @@ namespace xml {
     char *doStrDup(char *src);
     xmlDocPtr loadFile(const fs::path&, const char *expectedRoot);
     int saveFile(const fs::path& filename, xmlDocPtr cur);
+
+    std::string readRootChildText(const fs::path& filename, const char *expectedRoot, const char *childName);
+
+    struct DocDeleter { void operator()(xmlDoc* doc) const { if(doc) xmlFreeDoc(doc); } };
+    using DocPtr = std::unique_ptr<xmlDoc, DocDeleter>;
 
 } // End xml namespace
 

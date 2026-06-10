@@ -250,6 +250,9 @@ int UniqueRoom::saveToFile(int permOnly, LoadType saveType) {
         filename =Path::roomPath(info);
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
+
+    if(gServer && saveType != LoadType::LS_BACKUP && info.id > 0)
+        gServer->zoneIndex.upsert(ZoneIndex::Type::Room, info.area, info.id, getName());
     return(0);
 }
 

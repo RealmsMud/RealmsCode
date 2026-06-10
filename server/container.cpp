@@ -512,6 +512,25 @@ std::list<std::shared_ptr<Player>> Container::getPlayers() {
     return playerList;
 }
 
+std::list<std::shared_ptr<Player>> Container::getVisiblePlayers(const std::shared_ptr<const Creature>& viewer) const {
+    std::list<std::shared_ptr<Player>> out;
+    for(const auto& wp : players)
+        if(auto ply = wp.lock())
+            if(roomPlayerVisible(viewer, ply))
+                out.emplace_back(ply);
+    return out;
+}
+
+std::list<std::shared_ptr<Object>> Container::getVisibleObjects(const std::shared_ptr<const Player>& viewer, bool showAll) const {
+    std::list<std::shared_ptr<Object>> out;
+    if(!viewer)
+        return out;
+    for(const auto& obj : objects)
+        if(obj && listObjectSee(viewer, obj, showAll))
+            out.emplace_back(obj);
+    return out;
+}
+
 
 //################################################################################
 //# Containable

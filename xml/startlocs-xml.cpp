@@ -97,7 +97,7 @@ void Config::saveStartLocs() const {
     for(it = start.begin() ; it != start.end() ; it++)
         (*it).second->save(rootNode);
 
-    sprintf(filename, "%s/start.xml", Path::Game.c_str());
+    snprintf(filename, sizeof(filename), "%s/start.xml", Path::Game.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }

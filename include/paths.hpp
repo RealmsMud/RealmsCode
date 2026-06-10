@@ -18,14 +18,22 @@
 
 #pragma once
 
+#include <cstdlib>
 #include <filesystem>
 
 namespace fs = std::filesystem;
 
+#ifndef REALMS_SOURCE_DIR
+#define REALMS_SOURCE_DIR ""
+#endif
+
 class CatRef;
 
 struct Path {
-    static inline const fs::path BasePath = "/home/realms/realms";
+    static inline const fs::path BasePath = []{
+        const char* e = getenv("REALMS_BASE_PATH");
+        return e ? fs::path(e) : fs::path("/home/realms/realms");
+    }();
     static inline const fs::path Bin = BasePath / "bin";
     static inline const fs::path Log = BasePath / "log";
     static inline const fs::path BugLog = BasePath / "log/bug";
@@ -44,8 +52,8 @@ struct Path {
     static inline const fs::path Config = BasePath / "config";
 
     static inline const fs::path Code = Config / "code";
-// First check the docker install path; then the code directory, and finally fall back to the old place
-    static inline const fs::path Python = "/build/pythonLib/:" + BasePath.string() + "/RealmsCode/pythonLib:" + BasePath.string() + "/config/code/python/";
+    // First check the docker install path; then the code directory, and finally fall back to the old place
+    static inline const fs::path Python = "/build/pythonLib/:" + BasePath.string() + "/RealmsCode/pythonLib:" + BasePath.string() + "/config/code/python/:" REALMS_SOURCE_DIR "/pythonLib";
     static inline const fs::path Game = Config / "game";
     static inline const fs::path AreaData = Game / "area";
     static inline const fs::path Talk = Game / "talk";

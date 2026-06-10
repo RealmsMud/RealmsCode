@@ -95,7 +95,6 @@ Ban::Ban(xmlNodePtr curNode) {
 //*********************************************************************
 
 bool Config::saveBans() const {
-    int found=0;
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
@@ -109,7 +108,6 @@ bool Config::saveBans() const {
     Ban* ban;
 
     for(it = bans.begin() ; it != bans.end() ; it++) {
-        found++;
         ban = (*it);
 
         curNode = xmlNewChild(rootNode, nullptr, BAD_CAST "Ban", nullptr);
@@ -134,7 +132,7 @@ bool Config::saveBans() const {
         // Prefix
         xmlNewChild(curNode, nullptr, BAD_CAST "Prefix", BAD_CAST iToYesNo(ban->isPrefix));
     }
-    sprintf(filename, "%s/bans.xml", Path::Config.c_str());
+    snprintf(filename, sizeof(filename), "%s/bans.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);

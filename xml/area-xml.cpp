@@ -407,7 +407,7 @@ void Area::loadRooms() {
     xmlNodePtr  rootNode;
     char        filename[256];
 
-    sprintf(filename, "%s/%d", Path::AreaRoom.c_str(), id);
+    snprintf(filename, sizeof(filename), "%s/%d", Path::AreaRoom.c_str(), id);
 
     if((dir = opendir(filename)) == nullptr)
         return;
@@ -417,7 +417,7 @@ void Area::loadRooms() {
         if(dirp->d_name[0] == '.')
             continue;
 
-        sprintf(filename, "%s/%d/%s", Path::AreaRoom.c_str(), id, dirp->d_name);
+        snprintf(filename, sizeof(filename), "%s/%d/%s", Path::AreaRoom.c_str(), id, dirp->d_name);
 
         if((xmlDoc = xml::loadFile(filename, "AreaRoom")) == nullptr)
             continue;
@@ -484,7 +484,7 @@ bool Server::loadAreas() {
     xmlNodePtr  curNode;
     std::shared_ptr<Area> area;
 
-    sprintf(filename, "%s/areas.xml", Path::AreaData.c_str());
+    snprintf(filename, sizeof(filename), "%s/areas.xml", Path::AreaData.c_str());
 
     if(!fs::exists(filename))
         return(false);
@@ -529,7 +529,7 @@ void Server::saveAreas(bool saveRooms) const {
         (*it)->save(curNode, saveRooms);
     }
 
-    sprintf(filename, "%s/areas2.xml", Path::Config.c_str());
+    snprintf(filename, sizeof(filename), "%s/areas2.xml", Path::Config.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
 }

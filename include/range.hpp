@@ -28,6 +28,8 @@
 #include "json.hpp"
 
 
+enum class CreatureClass;   // defined in global.hpp
+
 class Range {
 public:
     Range();
@@ -46,4 +48,7 @@ public:
 public:
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(Range, low, high);
 };
+
+// true == RESTRICTED. bRange points at MAX_BUILDER_RANGE entries.
+[[nodiscard]] bool builderRangeRestricted(CreatureClass cClass, const Range* bRange, const CatRef& cr, bool reading);
 

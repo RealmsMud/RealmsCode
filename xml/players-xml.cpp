@@ -376,13 +376,16 @@ int Player::saveToFile(LoadType saveType) {
     saveToXml(rootNode, ALLITEMS, LoadType::LS_FULL);
 
     if(saveType == LoadType::LS_BACKUP) {
-        sprintf(filename, "%s/%s.bak.xml", Path::PlayerBackup.c_str(), getCName());
+        snprintf(filename, sizeof(filename), "%s/%s.bak.xml", Path::PlayerBackup.c_str(), getCName());
     } else {
-        sprintf(filename, "%s/%s.xml", Path::Player.c_str(), getCName());
+        snprintf(filename, sizeof(filename), "%s/%s.xml", Path::Player.c_str(), getCName());
     }
 
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
+
+    if(gServer)
+        gServer->invalidateApiAuth(getId(), getName());
     return(0);
 }
 
@@ -694,7 +697,7 @@ void ProxyManager::save() {
         p.second.save(rootNode);
     }
 
-    sprintf(filename, "%s/proxies.xml", Path::PlayerData.c_str());
+    snprintf(filename, sizeof(filename), "%s/proxies.xml", Path::PlayerData.c_str());
 
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
@@ -706,7 +709,7 @@ void ProxyManager::loadProxies() {
     xmlNodePtr  curNode;
     char        filename[80];
 
-    sprintf(filename, "%s/proxies.xml", Path::PlayerData.c_str());
+    snprintf(filename, sizeof(filename), "%s/proxies.xml", Path::PlayerData.c_str());
 
     if(!fs::exists(filename))
         return;

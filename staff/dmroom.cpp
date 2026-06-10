@@ -422,7 +422,7 @@ void stat_rom_exits(const std::shared_ptr<Creature>& player, const std::shared_p
 
         for(i=0; i<MAX_EXIT_FLAGS; i++) {
             if(exit->flagIsSet(i)) {
-                sprintf(tempstr, "%s(%d), ", gConfig->getXFlag(i).c_str(), i+1);
+                snprintf(tempstr, sizeof(tempstr), "%s(%d), ", gConfig->getXFlag(i).c_str(), i+1);
                 strcat(str, tempstr);
                 flagcount++;
             }
@@ -461,7 +461,7 @@ void stat_rom_exits(const std::shared_ptr<Creature>& player, const std::shared_p
         if(exit->flagIsSet(X_PLEDGE_ONLY)) {
             for(i=1; i<15; i++)
                 if(exit->flagIsSet(i+40)) {
-                    sprintf(temp, "Clan: %d, ",i);
+                    snprintf(temp, sizeof(temp), "Clan: %d, ",i);
                     strcat(str, temp);
                 }
             player->print("    Clan: %s\n", temp);
@@ -2933,7 +2933,7 @@ void findRoomsWithFlag(const std::shared_ptr<Player>& player, CatRef area, int f
                 if(dirp->d_name[0] == '.')
                     continue;
 
-                sprintf(filename, "%s/%s", path.c_str(), dirp->d_name);
+                snprintf(filename, sizeof(filename), "%s/%s", path.c_str(), dirp->d_name);
                 if(!loadRoomFromFile(area, room, filename))
                     continue;
 
@@ -3006,7 +3006,7 @@ int dmFind(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
         std::cout << "^YNext available " << type << " in area " << cr.area << "^x\n";
         if(cr.id == -1)
-            std::cout << "No empty %ss found.", type.c_str();
+            std::cout << "No empty " << type << "s found.\n";
         else {
             std::cout << cr.str();
         }

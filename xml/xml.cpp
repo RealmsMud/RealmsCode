@@ -18,6 +18,7 @@
 
 #include <libxml/entities.h>                        // for xmlEncodeSpecialC...
 #include <libxml/parser.h>                          // for xmlGetProp, xmlFr...
+#include <libxml/xmlreader.h>                        // for xmlTextReader (streaming name scan)
 #include <libxml/xmlstring.h>                       // for BAD_CAST, xmlChar
 #include <strings.h>                                // for strcasecmp
 #include <boost/lexical_cast/bad_lexical_cast.hpp>  // for bad_lexical_cast
@@ -182,6 +183,34 @@ namespace xml {
         return(xmlSaveFormatFile(filename.c_str(), cur, 1));
     }
 
+    std::string readRootChildText(const fs::path& filename, const char *expectedRoot, const char *childName) {
+        xmlTextReaderPtr reader = xmlReaderForFile(filename.c_str(), nullptr, XML_PARSE_NOERROR|XML_PARSE_NOWARNING|XML_PARSE_NOBLANKS);
+        if(reader == nullptr)
+            return("");
+
+        std::string toReturn;
+        while(xmlTextReaderRead(reader) == 1) {
+            if(xmlTextReaderNodeType(reader) != XML_READER_TYPE_ELEMENT)
+                continue;
+            int depth = xmlTextReaderDepth(reader);
+            const xmlChar* nodeName = xmlTextReaderConstName(reader);
+            if(depth == 0) {
+                if(xmlStrcmp(nodeName, BAD_CAST expectedRoot) != 0)
+                    break;
+            } else if(depth == 1 && xmlStrcmp(nodeName, BAD_CAST childName) == 0) {
+                xmlChar* value = xmlTextReaderReadString(reader);
+                if(value) {
+                    toReturn = reinterpret_cast<const char*>(value);
+                    xmlFree(value);
+                }
+                break;
+            }
+        }
+
+        xmlFreeTextReader(reader);
+        return(toReturn);
+    }
+
 } // End xml namespace
 
 /* toBoolean & toInt & toLong
@@ -206,9 +235,9 @@ char *iToYesNo(int fromInt) {
     static char toReturn[8];
 
     if(fromInt == 0)
-        sprintf(toReturn, "No");
+        snprintf(toReturn, sizeof(toReturn), "No");
     else
-        sprintf(toReturn, "Yes");
+        snprintf(toReturn, sizeof(toReturn), "Yes");
     return(toReturn);
 }
 

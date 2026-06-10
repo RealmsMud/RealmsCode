@@ -3,6 +3,16 @@ cmake_minimum_required(VERSION 3.16...3.26)
 project(RealmsCode)
 include(FetchContent)
 
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
+if(APPLE AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+    execute_process(COMMAND sw_vers -productVersion
+        OUTPUT_VARIABLE REALMS_MACOS_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REGEX MATCH "^[0-9]+" REALMS_MACOS_MAJOR "${REALMS_MACOS_VERSION}")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "${REALMS_MACOS_MAJOR}" CACHE STRING "macOS deployment target" FORCE)
+    message(STATUS "macOS deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+endif()
+
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,38 +29,49 @@ set(CROW_FEATURES ssl compression)
 
 set(JWT_LIB_NAME "jwt-cpp")
 
-set(Python_ADDITIONAL_VERSIONS 3.8)
-
 find_package(LibXml2 REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(Python COMPONENTS Interpreter Development REQUIRED)
-find_package(PythonLibs 3.8 REQUIRED)
+find_package(Python 3.8 COMPONENTS Interpreter Development REQUIRED)
 find_package(ASPELL REQUIRED)
-find_package(PythonInterp)
-find_package(PythonLibs)
 find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
 find_package(Boost CONFIG REQUIRED COMPONENTS regex)
 
-message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
-message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
-message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
+message(STATUS "Python_LIBRARIES = ${Python_LIBRARIES}")
+message(STATUS "Python_EXECUTABLE = ${Python_EXECUTABLE}")
+message(STATUS "Python_INCLUDE_DIRS = ${Python_INCLUDE_DIRS}")
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g -stdlib=libstdc++")
-set(CMAKE_CXX_FLAGS_DEBUG_INIT "-g")
+# -stdlib is an ABI choice and must match the fetched deps, so it stays global. Everything
+# else (-g/-O0/-Wall/sanitizer) lives on the realms_flags target below so it hits only our code.
+# macOS clang has no libstdc++; it defaults to libc++
+if(NOT APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+endif()
 
+# Warning flags for our code only - applied via realms_flags below
+#  -Wall                                baseline.
+#  -Wno-vla-cxx-extension               VLAs are a GCC/Clang extension; sizes used here are bounded.
+#  -Wno-undefined-bool-conversion       legacy null-`this` guards; UB on paper but they have caught
+#  -Wno-tautological-undefined-compare  real bugs, and at -O0 the compiler keeps them. Revisit if -O on.
+set(REALMS_WARNINGS -Wall -Wno-vla-cxx-extension -Wno-undefined-bool-conversion -Wno-tautological-undefined-compare)
+
+# Our compile/link flags. Linked PRIVATE into our four targets (below) so -g/-O0/-Wall and the
+# sanitizer never reach the fetched deps. Keep -O0/-g for debug visibility + core dumps for now.
+add_library(realms_flags INTERFACE)
+target_compile_options(realms_flags INTERFACE -g -O0 ${REALMS_WARNINGS})
 if($ENV{LEAK})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -fsanitize=address,signed-integer-overflow,null,alignment,undefined -fno-omit-frame-pointer -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/blacklist.txt")
-    message("-- Enabling address sanitizer")
-ELSE()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
-ENDIF()
-
-message(STATUS "USING CXX FLAGS = '${CMAKE_CXX_FLAGS}'")
+    target_compile_options(realms_flags INTERFACE
+        -fsanitize=address,signed-integer-overflow,null,alignment,undefined
+        -fno-omit-frame-pointer
+        -fsanitize-blacklist=${CMAKE_SOURCE_DIR}/blacklist.txt)
+    target_link_options(realms_flags INTERFACE
+        -fsanitize=address,signed-integer-overflow,null,alignment,undefined)
+    message(STATUS "Enabling address sanitizer")
+endif()
 
 FetchContent_Declare(nlohmann_json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz    SYSTEM)
-FetchContent_Declare(fmt         GIT_REPOSITORY https://github.com/fmtlib/fmt.git          GIT_TAG 11.2.0   SYSTEM)
+FetchContent_Declare(fmt         GIT_REPOSITORY https://github.com/fmtlib/fmt.git          GIT_TAG 12.1.0   SYSTEM)
 FetchContent_Declare(pybind11    GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v3.0.4   SYSTEM)
 FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.2.1.2 SYSTEM)
 FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.1.5  SYSTEM)
@@ -59,11 +80,12 @@ FetchContent_Declare(googletest  GIT_REPOSITORY https://github.com/google/google
 
 
 FetchContent_MakeAvailable(pybind11 fmt nlohmann_json crow dpp jwt-cpp googletest)
-set(FMT_INCLUDE_DIR "${FMT_SOURCE_DIR}/${FMT_INC_DIR}")
 
-include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR} ${FMT_INCLUDE_DIR} "include")
-
-SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -g" )
+# DPP's bundled nlohmann/json declares `operator "" _json` (old spelling), which DPP's own build
+# flags warn on under clang. Third-party noise; silence just that warning for the DPP target.
+if(TARGET dpp)
+    target_compile_options(dpp PRIVATE -Wno-deprecated-literal-operator)
+endif()
 
 SET(REALMS_SOURCE_FILES
     main/main.cpp
@@ -146,6 +168,8 @@ set(COMMON_HEADER_FILES
     include/monType.hpp
     include/money.hpp
     include/move.hpp
+    include/gmcp.hpp
+    include/gmcpEvents.hpp
     include/msdp.hpp
     include/mud.hpp
     include/mxp.hpp
@@ -153,6 +177,7 @@ set(COMMON_HEADER_FILES
     include/objIncrease.hpp
     include/oldquest.hpp
     include/paths.hpp
+    include/platform.hpp
     include/playerClass.hpp
     include/playerTitle.hpp
     include/post.hpp
@@ -163,7 +188,6 @@ set(COMMON_HEADER_FILES
     include/pythonHandler.hpp
     include/quests.hpp
     include/raceData.hpp
-    include/random.hpp
     include/random.hpp
     include/range.hpp
     include/realm.hpp
@@ -200,6 +224,7 @@ set(COMMON_HEADER_FILES
     include/xml.hpp
     include/zone.hpp
     include/httpServer.hpp
+    include/apiQueue.hpp
     include/commerce.hpp
     )
 
@@ -358,11 +383,12 @@ set(COMMON_SOURCE_FILES
     server/discordBot.cpp
     server/flags.cpp
     server/global.cpp
-    server/httpServer.cpp
     server/hooks.cpp
     server/log.cpp
     server/login.cpp
     server/mccp.cpp
+    server/gmcp.cpp
+    server/gmcpEvents.cpp
     server/memory.cpp
     server/msdp.cpp
     server/msdpLoader.cpp
@@ -380,7 +406,13 @@ set(COMMON_SOURCE_FILES
 
     server/web.cpp
     server/httpServer.cpp
+    server/apiQueue.cpp
+    server/apiAuthCache.cpp
+    server/apiQuests.cpp
+    server/zoneIndex.cpp
+    server/zoneIndexBuilder.cpp
     server/http/zones-http.cpp
+    server/http/index-http.cpp
     server/http/auth-http.cpp
 
 
@@ -401,10 +433,12 @@ set(COMMON_SOURCE_FILES
     staff/watchers.cpp
 
     util/alphanum.cpp
+    util/csv.cpp
     util/dice.cpp
     util/help.cpp
     util/md5.cpp
     util/misc.cpp
+    util/platform.cpp
     util/timer.cpp
 
     json/accounts-json.cpp
@@ -415,6 +449,8 @@ set(COMMON_SOURCE_FILES
     json/mudObject-json.cpp
     json/objects-json.cpp
     json/quests-json.cpp
+    json/rooms-json.cpp
+    json/monsters-json.cpp
     json/realms-json.cpp
     json/zones-json.cpp
 
@@ -466,11 +502,20 @@ set(COMMON_SOURCE_FILES
 
 add_library(RealmsLib ${COMMON_HEADER_FILES} ${COMMON_SOURCE_FILES})
 
+target_include_directories(RealmsLib PUBLIC include)
+target_include_directories(RealmsLib PRIVATE ${ASPELL_INCLUDE_DIRS})
+target_compile_definitions(RealmsLib PUBLIC REALMS_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+
+if(APPLE)
+    target_compile_definitions(RealmsLib PUBLIC BOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED)
+endif()
+
 target_link_libraries(
     RealmsLib
-    ${Boost_LIBRARIES}
-    ${PYTHON_LIBRARIES}
-    ${LIBXML2_LIBRARIES}
+    PUBLIC
+    Boost::regex
+    LibXml2::LibXml2
+    pybind11::embed
     ${OPENSSL_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${ASPELL_LIBRARIES}
@@ -480,25 +525,67 @@ target_link_libraries(
     ${JWT_LIB_NAME}
     ${FMT_LIB_NAME}
 )
+target_link_libraries(RealmsLib PRIVATE realms_flags)
 
 add_executable(RealmsCode ${REALMS_SOURCE_FILES})
-
-target_link_libraries(RealmsCode RealmsLib pybind11::embed)
+target_link_libraries(RealmsCode PRIVATE RealmsLib realms_flags)
 
 add_executable(List ${LIST_SOURCE_FILES})
-target_link_libraries(List RealmsLib)
+target_link_libraries(List PRIVATE RealmsLib realms_flags)
 
 add_executable(Updater ${UPDATER_SOURCE_FILES})
-target_link_libraries(Updater RealmsLib)
+target_link_libraries(Updater PRIVATE RealmsLib realms_flags)
+
+if(APPLE)
+    set_target_properties(RealmsCode List Updater PROPERTIES BUILD_RPATH "@loader_path")
+endif()
 
 # Enable with -DREALMS_BUILD_TESTS=ON, then `ctest` or ./RealmsTests.
 option(REALMS_BUILD_TESTS "Build unit tests (gtest)" OFF)
 if(REALMS_BUILD_TESTS)
     enable_testing()
     add_executable(RealmsTests
-        test/range_test.cpp
-        test/commandBase_test.cpp
+        # REST API (server/http)
+        test/api/apiQuests_test.cpp
+        test/api/apiQueue_test.cpp
+        test/api/authCache_test.cpp
+        test/api/endpoint_test.cpp
+        # JSON persistence (json/)
+        test/json/questsJson_test.cpp
+        test/json/monstersJson_test.cpp
+        test/json/roomsJson_test.cpp
+        test/json/objectsJson_test.cpp
+        test/json/zoneIndex_test.cpp
+        test/json/zoneIndexBuilder_test.cpp
+        test/json/questRemap_test.cpp
+        # XML helpers (xml/)
+        test/xml/xmlNum_test.cpp
+        test/xml/xmlReader_test.cpp
+        # Server engine (server/)
+        test/server/serverIds_test.cpp
+        test/server/serverDns_test.cpp
+        test/server/serverAccount_test.cpp
+        test/server/serverActiveList_test.cpp
+        # Telnet protocol + output (server/, io/)
+        test/io/protocol_test.cpp
+        test/io/processInput_test.cpp
+        test/io/colorWidth_test.cpp
+        test/io/vprintFormat_test.cpp
+        test/io/gmcp_test.cpp
+        test/io/spy_test.cpp
+        test/io/mccp_test.cpp
+        test/io/viewFileReverse_test.cpp
+        test/io/socketAsyncBackpressure_test.cpp
+        # General utilities (util/)
+        test/util/csv_test.cpp
+        test/util/range_test.cpp
+        test/util/md5_test.cpp
+        # Game logic
+        test/game/commandBase_test.cpp
+        test/game/startlocs_test.cpp
     )
-    target_link_libraries(RealmsTests RealmsLib gtest_main pybind11::embed)
+    set_property(SOURCE io/socket.cpp APPEND PROPERTY COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS)
+    target_include_directories(RealmsTests PRIVATE ${CMAKE_SOURCE_DIR}/test)
+    target_link_libraries(RealmsTests PRIVATE RealmsLib gtest_main realms_flags)
     add_test(NAME RealmsTests COMMAND RealmsTests)
 endif()

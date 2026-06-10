@@ -34,6 +34,7 @@
 #include <libxml/parser.h>  // for xmlNodePtr
 
 #include "dice.hpp"
+#include "json.hpp"
 #include "lasttime.hpp"
 #include "realm.hpp"
 
@@ -140,6 +141,8 @@ enum SpecialSaveType {
 };
 
 class SpecialAttack {
+public:
+    friend void to_json(nlohmann::json &j, const SpecialAttack &sa);
 private:
     std::string name;
 

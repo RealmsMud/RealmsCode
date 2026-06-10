@@ -71,3 +71,5 @@ docker/web/conf/*
 /lib/pybind11/pybind11.cbp
 _deps
 *.supp
+
+.cache/

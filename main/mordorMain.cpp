@@ -64,7 +64,7 @@ void startup_mordor() {
     std::clog << "--- Game Up: " << Port << " --- [" << VERSION << "]\n";
     loge("--- Game Up: %d --- [%s]\n", Port, VERSION);
     // record the process ID
-    sprintf(buf, "%s/mordor%d.pid", Path::Log.c_str(), Port);
+    snprintf(buf, sizeof(buf), "%s/mordor%d.pid", Path::Log.c_str(), Port);
     out = fopen(buf, "w");
     if(out != nullptr) {
         fprintf(out, "%d", getpid());
@@ -75,10 +75,11 @@ void startup_mordor() {
 
     gServer->run();
 
+    cleanUpMemory();
 }
 
 void usage(char *szName) {
-    printf(" %s [port number] [-r]\n", szName);
+    printf(" %s [port number]\n", szName);
 }
 
 void handle_args(int argc, char *argv[]) {
@@ -94,10 +95,6 @@ void handle_args(int argc, char *argv[]) {
             case 'g':
             case 'G':
                 gServer->setGDB();
-                break;
-            case 'r':
-            case 'R':
-                gServer->setRebooting();
                 break;
             case 'v':
             case 'V':

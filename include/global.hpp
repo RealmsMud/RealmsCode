@@ -348,6 +348,10 @@ enum class CreatureClass {
 // start of the staff
 const CreatureClass STAFF = (CreatureClass::BUILDER);
 
+// class-rank predicates (no monster guard; callers on Creature add that themselves)
+inline bool isStaffClass(CreatureClass c) { return c >= CreatureClass::BUILDER; }
+inline bool isDmClass(CreatureClass c) { return c == CreatureClass::DUNGEONMASTER; }
+
 
 const int MULTI_BASE = static_cast<int>(CreatureClass::BUILDER);
 

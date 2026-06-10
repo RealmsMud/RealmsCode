@@ -231,7 +231,7 @@ bool Config::saveProperties() const {
         (*it)->save(rootNode);
     }
 
-    sprintf(filename, "%s/properties.xml", Path::PlayerData.c_str());
+    snprintf(filename, sizeof(filename), "%s/properties.xml", Path::PlayerData.c_str());
     xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
     return(true);

@@ -21,6 +21,8 @@
 
 #include <list>
 #include <map>
+#include <utility>
+#include <vector>
 #include <nlohmann/json.hpp>
 
 #include "catRef.hpp"
@@ -30,6 +32,11 @@ class Player;
 class Monster;
 class Object;
 class UniqueRoom;
+
+// Per-zone dense renumbering for relocating the JSON quest store out of the flat "misc" area.
+// Input: each quest's current CatRef paired with its target zone. Output: old -> new CatRef,
+// numbered 1..K per zone in ascending old-id order.
+std::map<CatRef, CatRef> buildQuestRemap(const std::vector<std::pair<CatRef, std::string>>& questZones);
 
 enum class QuestRepeatFrequency {
     REPEAT_NEVER = 0,
@@ -82,6 +89,8 @@ public:
     [[nodiscard]] std::string getDisplayString() const;
     [[nodiscard]] bool isRepeatable() const;
     [[nodiscard]] int getTimesRepeatable() const;
+    [[nodiscard]] bool isDisabled() const;
+    void setDisabled(bool d);
     [[nodiscard]] QuestEligibility getEligibility(const std::shared_ptr<const Player> &player, const std::shared_ptr<const Monster> &giver) const;
     [[nodiscard]] const CatRef & getTurnInMob() const;
     [[nodiscard]] bool canGetQuest(const std::shared_ptr<const Player> &player, const std::shared_ptr<const Monster> &giver) const;
@@ -106,6 +115,7 @@ private:
     int minLevel{};                           // Minimum required level to get this quest
     int minFaction{};                         // Minimum required faction to get this quest (Based on mob's primeFaction)
     int level{};                              // Level of this quest, used to adjust rewards
+    bool disabled{};                          // Soft-deleted via the editor
 
     std::list<CatRef> preRequisites;        // A list of quests that must have been completed before someone is allowed
                                             // to get this quest

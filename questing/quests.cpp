@@ -16,7 +16,6 @@
  *
  */
 
-#include <bits/types/struct_tm.h>                   // for tm
 #include <fmt/format.h>                             // for format
 #include <libxml/parser.h>                          // for xmlCleanupParser
 #include <strings.h>                                // for strncasecmp
@@ -35,6 +34,8 @@
 #include <cstring>                                  // for strlen, strncmp
 #include <ctime>                                    // for time, localtime_r
 #include <deque>                                    // for _Deque_iterator
+#include <filesystem>                               // for per-zone quest store
+#include <fstream>                                  // for ifstream
 #include <limits>                                   // for numeric_limits
 #include <list>                                     // for list, operator==
 #include <locale>                                   // for locale
@@ -257,6 +258,12 @@ std::string QuestInfo::getName() const {
 CatRef QuestInfo::getId() const {
     return(questId);
 }
+bool QuestInfo::isDisabled() const {
+    return(disabled);
+}
+void QuestInfo::setDisabled(bool d) {
+    disabled = d;
+}
 std::string QuestInfo::getDisplayName() const {
     std::ostringstream displayStr;
     displayStr << "^Y#" << questId.str() << " - " << name << "^x";
@@ -425,6 +432,20 @@ std::string QuestInfo::getDisplayString() const {
 }
 
 
+std::map<CatRef, CatRef> buildQuestRemap(const std::vector<std::pair<CatRef, std::string>>& questZones) {
+    std::map<std::string, std::map<int, CatRef>> byZone;
+    for(const auto& [oldCr, zone] : questZones)
+        byZone[zone][oldCr.id] = oldCr;
+
+    std::map<CatRef, CatRef> remap;
+    for(const auto& [zone, idMap] : byZone) {
+        short next = 1;
+        for(const auto& [oldId, oldCr] : idMap)
+            remap[oldCr] = CatRef(zone, next++);
+    }
+    return remap;
+}
+
 void Config::clearQuests() {
     // Only to be used on cleanup
     for (auto const& [questId, quest] : quests) {
@@ -434,11 +455,15 @@ void Config::clearQuests() {
 }
 
 bool Config::loadQuests() {
+    // The in-game quest store (gConfig->quests) is XML. The per-zone JSON quest store under
+    // Path::Zone is for the REST API / web editor ONLY and is deliberately not loaded here; the
+    // game stays on XML until we explicitly cut it over to JSON (the REST layer reads the JSON
+    // files directly).
     // You can update quests, but you can't delete them!
     xmlDocPtr   xmlDoc;
     char filename[256];
 
-    sprintf(filename, "%s/quests.xml", Path::Game.c_str());
+    snprintf(filename, sizeof(filename), "%s/quests.xml", Path::Game.c_str());
     if((xmlDoc = xml::loadFile(filename, "Quests")) == nullptr)
         return(false);
 
@@ -1563,7 +1588,7 @@ QuestInfo::QuestInfo() {
 }
 
 void QuestInfo::reset() {
-    repeatable = sharable = false;
+    repeatable = sharable = disabled = false;
     expReward = minLevel = minFaction = alignmentChange = level = 0;
     repeatFrequency = QuestRepeatFrequency::REPEAT_NEVER;
 
@@ -1740,10 +1765,10 @@ int cmdQuests(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(str, "^WLegacy RoH Quests Completed:^x\n");
+    snprintf(str, sizeof(str), "^WLegacy RoH Quests Completed:^x\n");
     for(i=1, j=0; i<MAX_QUEST; i++)
         if(player->questIsSet(i)) {
-            sprintf(str2, "%s, ", get_quest_name(i));
+            snprintf(str2, sizeof(str2), "%s, ", get_quest_name(i));
             strcat(str, str2);
             j++;
         }
