@@ -1830,7 +1830,7 @@ std::shared_ptr<Socket> Player::getSock() const {
 //                      setSock
 //*********************************************************************
 
-void Player::setSock(std::shared_ptr<Socket> pSock) {
+void Player::setSock(const std::shared_ptr<Socket>& pSock) {
     mySock = pSock;
 }
 

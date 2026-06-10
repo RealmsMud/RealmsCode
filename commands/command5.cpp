@@ -721,7 +721,7 @@ void Player::changeStats() {
 //********************************************************************
 // This function allows a player to change their stats
 
-void changingStats(std::shared_ptr<Socket> sock, const std::string& str) {
+void changingStats(const std::shared_ptr<Socket>& sock, const std::string& str) {
     sock->getPlayer()->changingStats(str);
 }
 

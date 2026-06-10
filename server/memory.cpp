@@ -64,7 +64,7 @@ std::string sizeInfo(long size) {
 //                      showMemory
 //*********************************************************************
 
-void Server::showMemory(std::shared_ptr<Socket> sock, bool extended) {
+void Server::showMemory(const std::shared_ptr<Socket>& sock, bool extended) {
     char buf[80];
     int  crts    = 0;
     int  rooms   = 0;

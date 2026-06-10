@@ -72,11 +72,11 @@
 class StartLoc;
 
 // Forward declarations for account login functions
-std::shared_ptr<Account> validateAndGetAccount(std::shared_ptr<Socket> sock);
-void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account);
-void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
-void handleCharacterClaim(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str);
-bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& charName);
+std::shared_ptr<Account> validateAndGetAccount(const std::shared_ptr<Socket>& sock);
+void showAccountMenu(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account);
+void handleAccountMenuCommand(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& str);
+void handleCharacterClaim(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& str);
+bool loadCharacterForPlay(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& charName);
 
 char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16] =
     { "Assassin", "Berserker", "Cleric", "Fighter",
@@ -123,7 +123,7 @@ bool Player::checkProxyAccess(const std::shared_ptr<Player>& proxy) {
 // they log in. It asks for the player's name and password, and performs
 // the according function calls.
 
-void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
+void login(const std::shared_ptr<Socket>& sock, const std::string& inStr) {
     std::shared_ptr<Player> player=nullptr;
     std::shared_ptr<Account> account=nullptr;
     if(!sock) {
@@ -472,7 +472,7 @@ void login(std::shared_ptr<Socket> sock, const std::string& inStr) {
 //                    showAccountMenu
 //*********************************************************************
 
-void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account) {
+void showAccountMenu(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account) {
     sock->print("\n\n^W~~~~~~~ Account Menu ~~~~~~~^x\n\n");
     account->printInfoFields(sock);
     
@@ -504,7 +504,7 @@ void showAccountMenu(std::shared_ptr<Socket> sock, std::shared_ptr<Account> acco
 //                    handleAccountMenuCommand
 //*********************************************************************
 
-void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str) {
+void handleAccountMenuCommand(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& str) {
     if(str.empty()) {
         showAccountMenu(sock, account);
         return;
@@ -663,7 +663,7 @@ void handleAccountMenuCommand(std::shared_ptr<Socket> sock, std::shared_ptr<Acco
 //                    loadCharacterForPlay
 //*********************************************************************
 
-bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& charName) {
+bool loadCharacterForPlay(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& charName) {
     // Verify character still exists and belongs to this account
     std::shared_ptr<Player> player;
     if(!loadPlayer(charName, player)) {
@@ -690,7 +690,7 @@ bool loadCharacterForPlay(std::shared_ptr<Socket> sock, std::shared_ptr<Account>
 }
 
 // Helper function to validate account exists and is loaded, returns account or nullptr if invalid (handles error)
-std::shared_ptr<Account> validateAndGetAccount(std::shared_ptr<Socket> sock) {
+std::shared_ptr<Account> validateAndGetAccount(const std::shared_ptr<Socket>& sock) {
     std::shared_ptr<Account> account = sock->getAccount();
     if(!account) {
         sock->print("Error: No account found!\n");
@@ -878,7 +878,7 @@ void doCreateHelp(const std::shared_ptr<Socket>& sock, std::string_view str) {
 
 }
 
-void createPlayer(std::shared_ptr<Socket> sock, const std::string& str) {
+void createPlayer(const std::shared_ptr<Socket>& sock, const std::string& str) {
 
     switch(sock->getState()) {
     case CREATE_NEW_CHARACTER:
@@ -2018,7 +2018,7 @@ int cmdWeapons(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //                      convertNewWeaponSkills
 //*********************************************************************
 
-void convertNewWeaponSkills(std::shared_ptr<Socket> sock, const std::string& str) {
+void convertNewWeaponSkills(const std::shared_ptr<Socket>& sock, const std::string& str) {
     if(!isalpha(str[0])) {
         sock->setState(CON_PLAYING);
         return;
@@ -2836,7 +2836,7 @@ bool nameIsAllowed(std::string str, const std::shared_ptr<Socket>& sock) {
 //                    handleCharacterClaim
 //*********************************************************************
 
-void handleCharacterClaim(std::shared_ptr<Socket> sock, std::shared_ptr<Account> account, const std::string& str) {
+void handleCharacterClaim(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& str) {
     std::string charName = str;
     boost::trim(charName);
     

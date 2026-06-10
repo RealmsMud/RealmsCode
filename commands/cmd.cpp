@@ -256,7 +256,6 @@ bool Config::initCommands() {
     staffCommands.emplace("*msg", 100, channel, nullptr, "Use builder channel");
 
     // dm.c
-    staffCommands.emplace("*reboot", 100, dmReboot, isCt, "Reboot the mud");
     staffCommands.emplace("*inv", 100, dmCheckInventory, nullptr, "Inspect a monster or player's inventory");
     staffCommands.emplace("*sockets", 100, dmSockets, isDm, "Show all connected sockets");
     staffCommands.emplace("*dmload", 100, dmLoad, isDm, "Reload configuration files");

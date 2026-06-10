@@ -82,6 +82,6 @@ class Blackjack {
     friend std::ostream& operator<<(std::ostream& os, const Blackjack& game);
 };
 
-void playBlackjack(std::shared_ptr<Socket> sock, const std::string& str);
+void playBlackjack(const std::shared_ptr<Socket>& sock, const std::string& str);
 
 #endif

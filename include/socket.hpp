@@ -22,18 +22,29 @@
 // C Includes
 #include <zlib.h>
 #include <netinet/in.h>
+#include <arpa/telnet.h>   // IAC, WILL/WONT/DO, SB/SE, TELOPT_*; needed by the telnet:: byte arrays below
 
 // C++ Includes
 #include <cstddef>
 #include <list>
+#include <span>
 #include <map>
 #include <queue>
 #include <set>
 #include <vector>
 #include <string>
 #include <string_view>
+#include <sstream>
+#include <deque>
+#include <array>
 #include <fmt/format.h>
 #include <nlohmann/json_fwd.hpp>
+
+// standalone asio (ASIO_STANDALONE is supplied by the asio::asio interface target via Crow)
+#ifndef ASIO_STANDALONE
+#define ASIO_STANDALONE
+#endif
+#include <asio/ip/tcp.hpp>
 
 #include "msdp.hpp"                                 // for ReportedMsdpVariable
 
@@ -115,42 +126,46 @@ namespace telnet {
     constexpr int MCCP_V2            = 2;  // opts.mccp value when MCCP2 is active
 
 
-    extern unsigned const char will_msdp[];     // Mud Server Data Protocol support
-    extern unsigned const char wont_msdp[];     // Stop MSDP support
+    inline constexpr unsigned char will_msdp[] = { IAC, WILL, TELOPT_MSDP, '\0' }; // Mud Server Data Protocol support
+    inline constexpr unsigned char wont_msdp[] = { IAC, WONT, TELOPT_MSDP, '\0' }; // Stop MSDP support
 
-    extern unsigned const char will_gmcp[];     // Generic Mud Communication Protocol
-    extern unsigned const char wont_gmcp[];     // Stop GMCP support
+    inline constexpr unsigned char will_gmcp[] = { IAC, WILL, TELOPT_GMCP, '\0' }; // Generic Mud Communication Protocol
+    inline constexpr unsigned char wont_gmcp[] = { IAC, WONT, TELOPT_GMCP, '\0' }; // Stop GMCP support
 
-    extern unsigned const char will_mxp[];      // MXP Support
-    extern unsigned const char start_mxp[];     // Start MPX string
+    inline constexpr unsigned char will_mxp[] = { IAC, WILL, TELOPT_MXP, '\0' }; // MXP Support
+    inline constexpr unsigned char start_mxp[] = { IAC, SB, TELOPT_MXP, IAC, SE, '\0' }; // Start MXP string
 
-    extern unsigned const char will_comp2[];    // MCCP V2 support
-    extern unsigned const char start_mccp2[];   // Start compress2
+    inline constexpr unsigned char will_comp2[] = { IAC, WILL, TELOPT_COMPRESS2, '\0' }; // MCCP V2 support
+    inline constexpr unsigned char start_mccp2[] = { IAC, SB, TELOPT_COMPRESS2, IAC, SE, '\0' }; // Start compress2
 
-    extern unsigned const char will_echo[];     // IAC WILL ECHO (server echoes -> client masks input)
-    extern unsigned const char wont_echo[];     // IAC WONT ECHO (return echo to the client)
+    inline constexpr unsigned char will_echo[] = { IAC, WILL, TELOPT_ECHO, '\0' }; // IAC WILL ECHO (server echoes -> client masks input)
+    inline constexpr unsigned char wont_echo[] = { IAC, WONT, TELOPT_ECHO, '\0' }; // IAC WONT ECHO (return echo to the client)
 
-    extern unsigned const char will_eor[];      // EOR After every prompt
+    inline constexpr unsigned char will_eor[] = { IAC, WILL, TELOPT_EOR, '\0' }; // EOR after every prompt
 
-    extern unsigned const char will_mssp[];     // MSSP Support
-    extern unsigned const char sb_mssp_start[]; // Start MSSP String
-    extern unsigned const char sb_mssp_end[];   // End MSSP String
+    inline constexpr unsigned char will_msp[] = { IAC, WILL, TELOPT_MSP, '\0' }; // MSP Support
+    inline constexpr unsigned char wont_msp[] = { IAC, WONT, TELOPT_MSP, '\0' }; // Stop MSP support
 
-    extern unsigned const char do_ttype[];      // Terminal type negotation
-    extern unsigned const char wont_ttype[];    // Terminal type negotation
-    extern unsigned const char query_ttype[];   // Begin terminal type subnegotiations
+    inline constexpr unsigned char will_mssp[] = { IAC, WILL, TELOPT_MSSP, '\0' }; // MSSP Support
+    inline constexpr unsigned char sb_mssp_start[] = { IAC, SB, TELOPT_MSSP, '\0' }; // Start MSSP String
+    inline constexpr unsigned char sb_mssp_end[] = { IAC, SE, '\0' }; // End MSSP String
+    inline constexpr unsigned char mssp_val[] = { MSSP_VAL, '\0' }; // MSSP value marker
+    inline constexpr unsigned char mssp_var[] = { MSSP_VAR, '\0' }; // MSSP variable marker
 
-    extern unsigned const char do_naws[];       // Window size negotation NAWS
+    inline constexpr unsigned char do_ttype[] = { IAC, DO, TELOPT_TTYPE, '\0' }; // Terminal type negotiation
+    inline constexpr unsigned char wont_ttype[] = { IAC, WONT, TELOPT_TTYPE, '\0' }; // Refuse terminal type
+    inline constexpr unsigned char query_ttype[] = { IAC, SB, TELOPT_TTYPE, TELQUAL_SEND, IAC, SE, '\0' }; // Begin terminal type subnegotiations
 
-    extern unsigned const char do_charset[];    // Window size negotation NAWS
-    extern unsigned const char charset_utf8[];  // Negotiate UTF-8
+    inline constexpr unsigned char do_naws[] = { IAC, DO, TELOPT_NAWS, '\0' }; // Window size negotiation NAWS
 
-    extern unsigned const char do_new_environ[];     // DO NEW-ENVIRON (opt 39)
-    extern unsigned const char sb_new_environ_send[]; // SB NEW-ENVIRON SEND (request all vars)
+    inline constexpr unsigned char do_charset[] = { IAC, DO, TELOPT_CHARSET, '\0' }; // Charset negotiation
+    inline constexpr unsigned char charset_utf8[] = { IAC, SB, TELOPT_CHARSET, 1, ' ', 'U', 'T', 'F', '-', '8', IAC, SE, '\0' }; // Negotiate UTF-8
 
+    inline constexpr unsigned char do_new_environ[] = { IAC, DO, TELOPT_NEW_ENVIRON, '\0' }; // DO NEW-ENVIRON (opt 39)
+    inline constexpr unsigned char sb_new_environ_send[] = { IAC, SB, TELOPT_NEW_ENVIRON, TELQUAL_SEND, IAC, SE, '\0' }; // SB NEW-ENVIRON SEND (request all vars)
 
-    extern unsigned const char eor_str[];       // IAC EOR end-of-prompt marker
-    extern unsigned const char ga_str[];        // IAC GA end-of-prompt marker
+    inline constexpr unsigned char eor_str[] = { IAC, EOR, '\0' }; // IAC EOR end-of-prompt marker
+    inline constexpr unsigned char ga_str[] = { IAC, GA, '\0' }; // IAC GA end-of-prompt marker
 
     long parseMtts(std::string_view ttype);
     std::string mttsCaps(long bits);
@@ -205,6 +220,47 @@ private:
     ssize_t writeInternal(std::string_view bytes, bool pSpy, bool process);
 
 public:
+    enum class TelnetState {
+        NEG_NONE,
+        NEG_IAC,
+        NEG_WILL,
+        NEG_WONT,
+        NEG_DO,
+        NEG_DONT,
+
+        NEG_SB,
+        NEG_START_NAWS,
+        NEG_SB_NAWS_COL_HIGH,
+        NEG_SB_NAWS_COL_LOW,
+        NEG_SB_NAWS_ROW_HIGH,
+        NEG_SB_NAWS_ROW_LOW,
+        NEG_END_NAWS,
+
+        NEG_SB_TTYPE,
+        NEG_SB_TTYPE_END,
+
+        NEG_SB_MSDP,
+        NEG_SB_MSDP_END,
+
+        NEG_SB_GMCP,
+        NEG_SB_GMCP_END,
+
+        NEG_SB_NEW_ENVIRON,
+        NEG_SB_NEW_ENVIRON_END,
+
+        NEG_SB_CHARSET,
+        NEG_SB_CHARSET_LOOK_FOR_IAC,
+        NEG_SB_CHARSET_END,
+
+        NEG_MXP_SECURE,
+        NEG_MXP_SECURE_TWO,
+        NEG_MXP_SECURE_THREE,
+        NEG_MXP_SECURE_FINISH,
+        NEG_MXP_SECURE_CONSUME,
+
+        NEG_UNUSED
+    };
+
     // Static Methods
     static void resolveIp(const sockaddr_in &addr, std::string& ip);
     static std::string stripTelnet(std::string_view inStr);
@@ -215,8 +271,8 @@ public:
     void viewFileReverseReal(const std::string& str);
     void registerPlayer();
 public:
-    explicit Socket(int pFd);
-    Socket(int pFd, sockaddr_in pAddr);
+    explicit Socket(asio::ip::tcp::socket pSock);   // production: owns the accepted asio socket
+    explicit Socket(int pFd);                        // tests: bare fd, synchronous write fallback
     ~Socket();
 
     void cleanUp();
@@ -244,7 +300,7 @@ public:
 
     template <typename... Args>
     void bprint(std::string_view toPrint, Args &&... args) const {
-        return bprint(fmt::format(toPrint, std::forward<Args>(args)...));
+        return bprint(fmt::format(fmt::runtime(toPrint), std::forward<Args>(args)...));
     }
 
     void printPaged(std::string_view toPrint);
@@ -252,7 +308,7 @@ public:
 
     template <typename... Args>
     void printPaged(std::string_view toPrint, Args &&... args) const {
-        return printPaged(fmt::format(toPrint, std::forward<Args>(args)...));
+        return printPaged(fmt::format(fmt::runtime(toPrint), std::forward<Args>(args)...));
     }
     void println(std::string_view toPrint = "");
     void print(const char* format, ...);
@@ -331,7 +387,7 @@ public:
     [[nodiscard]] std::string getAccountName() const;
     [[nodiscard]] std::shared_ptr<Account> getSessionAccount() const;
     [[nodiscard]] std::string getSessionAccountName() const;
-    void setAccount(std::shared_ptr<Account> acc);
+    void setAccount(const std::shared_ptr<Account>& acc);
     void clearAccount();
 
     void clearSpying();
@@ -354,11 +410,20 @@ public:
     bool gmcpSend(std::string_view package, const nlohmann::json& body);
 
 protected:
+    // asio I/O seams (protected so the io tests can drive them directly)
+    void startRead();                  // arm an async read on the asio socket
+    void resumeRead();                 // re-arm reads paused by input backpressure, once drained
+    void doWrite();                    // drive the async_write queue (one write in flight)
+    void enqueue(std::string bytes);   // queue outbound bytes and kick the writer
+    void drainAndClose();              // best-effort flush of the queue, then close
+
     // Telopt related
+    void decodeBytes(std::span<const unsigned char> data, std::string& out); // telnet FSM, no I/O
+    void extractCommands(std::string decoded);                               // CR/LF + backspace + line split
     bool negotiate(unsigned char ch);
     //bool subNegotiate(unsigned char ch);
-    bool handleNaws(int& colRow, unsigned char& chr, bool high);
-    size_t processCompressed(); // Mccp
+    bool handleNaws(int& colRow, unsigned char chr, bool high);
+    ssize_t processCompressed();
 
     bool parseMXPSecure();
 
@@ -399,7 +464,8 @@ public:
     void setParam(int newParam);
 
 protected:
-    int         fd;                 // File Descriptor of this socket
+    std::unique_ptr<asio::ip::tcp::socket> sock;
+    int         fd;
     Host        host;
     bool        dnsDone{};
     Term        term;
@@ -408,13 +474,17 @@ protected:
     int         lastState{};
     int         connState{};
 
-    int         tState{};
+    TelnetState tState{};
     bool        oneIAC{};
     bool        watchBrokenClient{};
     long        mtts{};             // MTTS capability bitvector (TTYPE/MNES)
 
     std::stringstream output;
-    std::string       processedOutput;   // Output that has been processed but not fully sent (in the case of EWOULDBLOCK for example)
+    std::deque<std::string> writeQueue;        // outbound bytes awaiting async_write
+    size_t                  queuedBytes{};     // running total of writeQueue sizes (backlog cap)
+    bool                    writeInFlight{};   // true while an async_write is outstanding
+    bool                    readPaused{};      // reads suspended while the input queue is full
+    std::array<unsigned char, 1024> readBuf{}; // scratch for async_read_some
 
     std::queue<std::string> input;      // Processed Input buffer
 
@@ -424,16 +494,19 @@ protected:
     std::string     inLast;             // Last command
 
     bool registered{};
+    bool cleanedUp{};                  // teardown runs once; ~Socket re-entry is a no-op
     std::shared_ptr<Player>     myPlayer{};
     std::string                 currentAccountName{};  // Account name for this socket
 
 
 // For MCCP
-    char        *outCompressBuf{};
-    z_stream    *outCompress{};
+    struct ZStreamDeleter { void operator()(z_stream* z) const noexcept { deflateEnd(z); delete z; } };
+    std::vector<char>                          outCompressBuf;
+    std::unique_ptr<z_stream, ZStreamDeleter>  outCompress;     // null unless compressing
 
 // Old items from IOBUF that we might keep
-    void        (*fn)(std::shared_ptr<Socket>, const std::string&){};
+    using CmdFn = void(*)(const std::shared_ptr<Socket>&, const std::string&);
+    CmdFn       fn{};
     char        fnparam{};
     char        commands{};
     std::weak_ptr<Socket> spyingOn{};      // Socket we are spying on
@@ -451,7 +524,7 @@ private:
     std::deque<std::string> pagerOutput;
 
 public:
-    static const int COMPRESSED_OUTBUF_SIZE;
+    static constexpr int COMPRESSED_OUTBUF_SIZE = 8192;
 
 public:
     static int getNumSockets();

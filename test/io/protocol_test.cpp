@@ -195,6 +195,42 @@ TEST(NewEnvironFrame, SendAllBytesExact) {
         EXPECT_EQ(telnet::sb_new_environ_send[i], expected[i]) << "byte " << i;
 }
 
+TEST(SkipTelnetSeq, DanglingIacConsumesToEnd) {
+    std::string buf = "x";
+    buf.push_back(static_cast<char>(IAC));           // IAC at index 1, nothing after
+    EXPECT_EQ(Socket::skipTelnetSeq(buf, 1), buf.size());
+}
+
+TEST(SkipTelnetSeq, OptionCommandIsThreeBytes) {
+    std::string buf;
+    buf.push_back(static_cast<char>(IAC));
+    buf.push_back(static_cast<char>(WILL));
+    buf.push_back(static_cast<char>(TELOPT_MSDP));
+    buf += "tail";
+    EXPECT_EQ(Socket::skipTelnetSeq(buf, 0), 3u);     // past IAC WILL <opt>
+}
+
+TEST(SkipTelnetSeq, SubnegotiationRunsPastSe) {
+    std::string buf;
+    buf.push_back(static_cast<char>(IAC));
+    buf.push_back(static_cast<char>(SB));
+    buf.push_back(static_cast<char>(TELOPT_MSDP));
+    buf += "data";
+    buf.push_back(static_cast<char>(IAC));
+    buf.push_back(static_cast<char>(SE));
+    buf += "rest";
+    EXPECT_EQ(Socket::skipTelnetSeq(buf, 0), buf.size() - 4);  // index of 'r' in "rest"
+}
+
+TEST(SkipTelnetSeq, UnterminatedSubnegotiationConsumesToEnd) {
+    std::string buf;
+    buf.push_back(static_cast<char>(IAC));
+    buf.push_back(static_cast<char>(SB));
+    buf.push_back(static_cast<char>(TELOPT_MSDP));
+    buf += "never closed";
+    EXPECT_EQ(Socket::skipTelnetSeq(buf, 0), buf.size());
+}
+
 TEST(NewEnviron, DecodesMnesUservars) {
     std::vector<unsigned char> sb = { TELQUAL_IS };
     auto put = [&](unsigned char tag, const std::string& s) {

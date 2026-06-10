@@ -223,7 +223,7 @@ void sendMail(const std::string &target, const std::string &message) {
 // This function is called when a player is editing a message to send
 // to another player.
 
-void postedit(std::shared_ptr<Socket> sock, const std::string& str) {
+void postedit(const std::shared_ptr<Socket>& sock, const std::string& str) {
     char    outcstr[158], datestr[40], filename[80], postfile[80];
     long    t=0;
     int     ff=0;
@@ -446,7 +446,7 @@ int cmdEditHistory(const std::shared_ptr<Player>& player, cmd* cmnd) {
 //                      histedit
 //*********************************************************************
 
-void histedit(std::shared_ptr<Socket> sock, const std::string& str) {
+void histedit(const std::shared_ptr<Socket>& sock, const std::string& str) {
     std::string outstr = "";
     int     ff=0;
 

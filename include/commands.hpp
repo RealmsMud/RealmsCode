@@ -88,7 +88,7 @@ int cmdThrow(const std::shared_ptr<Creature>& creature, cmd* cmnd);
 // command1.c
 int cmdNoExist(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdNoAuth(const std::shared_ptr<Player>& player);
-void command(std::shared_ptr<Socket> sock, const std::string& str);
+void command(const std::shared_ptr<Socket>& sock, const std::string& str);
 void parse(std::string_view str, cmd* cmnd);
 
 int cmdPush(const std::shared_ptr<Player>& player, cmd* cmnd);
@@ -124,7 +124,7 @@ int cmdPrefs(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdTelOpts(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdQuit(const std::shared_ptr<Player>& player, cmd* cmnd);
 int cmdChangeStats(const std::shared_ptr<Player>& player, cmd* cmnd);
-void changingStats(std::shared_ptr<Socket> sock, const std::string& str );
+void changingStats(const std::shared_ptr<Socket>& sock, const std::string& str );
 
 
 // command7.c
@@ -208,7 +208,7 @@ int cmdReligion(const std::shared_ptr<Player>& player, cmd* cmnd);
 
 
 bool isPtester(const std::shared_ptr<Creature> & player);
-bool isPtester(std::shared_ptr<Socket> sock);
+bool isPtester(const std::shared_ptr<Socket>& sock);
 
 
 

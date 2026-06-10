@@ -78,25 +78,22 @@ void Player::finishAddPlayer(const std::shared_ptr<BaseRoom>& room) {
     wake("You awaken suddenly!");
     interruptDelayedActions();
 
-    if(!gServer->isRebooting()) {
+    if(!flagIsSet(P_DM_INVIS) && !flagIsSet(P_HIDDEN) && !isEffected("mist") ) {
+        broadcast(getSock(), room, "%M just arrived.", this);
+    } else if(isEffected("mist") && !flagIsSet(P_SNEAK_WHILE_MISTED)) {
+        broadcast(getSock(), room, "A light mist just arrived.");
+    } else {
+        if(isDm())
+            broadcast(::isDm, getSock(), room, "*DM* %M just arrived.", this);
+        if(cClass == CreatureClass::CARETAKER)
+            broadcast(::isCt, getSock(), room, "*DM* %M just arrived.", this);
+        if(!isCt())
+            broadcast(::isStaff, getSock(), room, "*DM* %M just arrived.", this);
+    }
 
-        if(!flagIsSet(P_DM_INVIS) && !flagIsSet(P_HIDDEN) && !isEffected("mist") ) {
-            broadcast(getSock(), room, "%M just arrived.", this);
-        } else if(isEffected("mist") && !flagIsSet(P_SNEAK_WHILE_MISTED)) {
-            broadcast(getSock(), room, "A light mist just arrived.");
-        } else {
-            if(isDm())
-                broadcast(::isDm, getSock(), room, "*DM* %M just arrived.", this);
-            if(cClass == CreatureClass::CARETAKER)
-                broadcast(::isCt, getSock(), room, "*DM* %M just arrived.", this);
-            if(!isCt())
-                broadcast(::isStaff, getSock(), room, "*DM* %M just arrived.", this);
-        }
-
-        if(!isStaff()) {
-            if((isEffected("darkness") || flagIsSet(P_DARKNESS)) && !room->flagIsSet(R_MAGIC_DARKNESS))
-                broadcast(getSock(), room, "^DA globe of darkness just arrived.");
-        }
+    if(!isStaff()) {
+        if((isEffected("darkness") || flagIsSet(P_DARKNESS)) && !room->flagIsSet(R_MAGIC_DARKNESS))
+            broadcast(getSock(), room, "^DA globe of darkness just arrived.");
     }
 
     if(flagIsSet(P_SNEAK_WHILE_MISTED))
@@ -133,8 +130,7 @@ void Player::finishAddPlayer(const std::shared_ptr<BaseRoom>& room) {
     }
 
 
-    // don't close exits if we're rebooting
-    if(!isCt() && !gServer->isRebooting())
+    if(!isCt())
         room->checkExits();
 
 

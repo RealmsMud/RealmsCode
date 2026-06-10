@@ -71,7 +71,7 @@ if($ENV{LEAK})
 endif()
 
 FetchContent_Declare(nlohmann_json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz    SYSTEM)
-FetchContent_Declare(fmt         GIT_REPOSITORY https://github.com/fmtlib/fmt.git          GIT_TAG 11.2.0   SYSTEM)
+FetchContent_Declare(fmt         GIT_REPOSITORY https://github.com/fmtlib/fmt.git          GIT_TAG 12.1.0   SYSTEM)
 FetchContent_Declare(pybind11    GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v3.0.4   SYSTEM)
 FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.2.1.2 SYSTEM)
 FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.1.5  SYSTEM)
@@ -561,11 +561,21 @@ if(REALMS_BUILD_TESTS)
         # XML helpers (xml/)
         test/xml/xmlNum_test.cpp
         test/xml/xmlReader_test.cpp
+        # Server engine (server/)
+        test/server/serverIds_test.cpp
+        test/server/serverDns_test.cpp
+        test/server/serverAccount_test.cpp
+        test/server/serverActiveList_test.cpp
         # Telnet protocol + output (server/, io/)
         test/io/protocol_test.cpp
+        test/io/processInput_test.cpp
         test/io/colorWidth_test.cpp
         test/io/vprintFormat_test.cpp
         test/io/gmcp_test.cpp
+        test/io/spy_test.cpp
+        test/io/mccp_test.cpp
+        test/io/viewFileReverse_test.cpp
+        test/io/socketAsyncBackpressure_test.cpp
         # General utilities (util/)
         test/util/csv_test.cpp
         test/util/range_test.cpp
