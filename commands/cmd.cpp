@@ -133,8 +133,8 @@ bool Config::writeSocialFile() const {
     std::map<std::string,std::string> list;
     std::map<std::string,std::string>::iterator it;
 
-    sprintf(file, "%s/socials.txt", Path::Help.c_str());
-    sprintf(fileLink, "%s/social.txt", Path::Help.c_str());
+    snprintf(file, sizeof(file), "%s/socials.txt", Path::Help.c_str());
+    snprintf(fileLink, sizeof(fileLink), "%s/social.txt", Path::Help.c_str());
 
     // prepare to write the help file
     std::ofstream out(file);
@@ -256,7 +256,6 @@ bool Config::initCommands() {
     staffCommands.emplace("*msg", 100, channel, nullptr, "Use builder channel");
 
     // dm.c
-    staffCommands.emplace("*reboot", 100, dmReboot, isCt, "Reboot the mud");
     staffCommands.emplace("*inv", 100, dmCheckInventory, nullptr, "Inspect a monster or player's inventory");
     staffCommands.emplace("*sockets", 100, dmSockets, isDm, "Show all connected sockets");
     staffCommands.emplace("*dmload", 100, dmLoad, isDm, "Reload configuration files");

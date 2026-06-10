@@ -131,7 +131,7 @@ bool failFishing(const std::shared_ptr<Player>& player, const std::string& admin
 //                      doFish
 //**********************************************************************
 
-bool hearMobAggro(std::shared_ptr<Socket> sock);
+bool hearMobAggro(const std::shared_ptr<Socket>& sock);
 
 bool Player::doFish() {
     const Fishing* list=nullptr;

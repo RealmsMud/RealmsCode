@@ -42,6 +42,7 @@
 #include "deityData.hpp"                         // for DeityData
 #include "flags.hpp"                             // for P_AFK, P_NO_BROADCASTS
 #include "global.hpp"                            // for CreatureClass, LCOMMON
+#include "gmcpEvents.hpp"                         // for gmcp::onChannelText
 #include "group.hpp"                             // for CreatureList, GROUP_...
 #include "move.hpp"                              // for getRoom
 #include "mudObjects/container.hpp"              // for PlayerSet
@@ -108,6 +109,8 @@ sayInfo sayList[] = {
 };
 
 const long IN_GAME_WEBHOOK = 886681065878605855;
+
+static const std::string incomprehensible = "<something incomprehensible>";
 
 channelInfo channelList[] = {
     //     Name         OOC     Color               Format                                              MIN MAX eaves   canSee                  canUse      canHear     flag    not flag                type
@@ -481,6 +484,7 @@ int communicateWith(const std::shared_ptr<Player>& player, cmd* cmnd) {
             chan->type == COM_WHISPER || chan->type == COM_SIGN ? com_text[chan->type] : "just flashed",
             chan->type == COM_WHISPER || chan->type == COM_SIGN ? " to you" : "",
             ooc_str, text.c_str());
+        gmcp::onChannelText(target, gmcp::commTypeChannel(chan->type), player->getName(), text);
     } else {
         if(!player->isDm() && !target->isDm())
             broadcast(watchingEaves, "^E--- %s TRIED sending to %s, \"%s\".",
@@ -589,6 +593,8 @@ void commTarget(const std::shared_ptr<Creature>& player, const std::shared_ptr<P
     }
     *target << ColorOn << out.str() << ColorOff;
 
+    bool understood = type == COM_EMOTE || ooc || target->languageIsKnown(LUNKNOWN+lang) || target->isStaff() || target->isEffected("comprehend-languages");
+    gmcp::onChannelText(target, gmcp::commTypeChannel(type), anon ? "Someone" : player->getName(), understood ? text : incomprehensible);
 }
 
 //*********************************************************************
@@ -708,9 +714,9 @@ int communicate(const std::shared_ptr<Creature>& creature, cmd* cmnd) {
         } else {
             char intro[2046];
             if(chan->ooc || lang == LCOMMON)
-                sprintf(intro, "You %s,", speak);
+                snprintf(intro, sizeof(intro), "You %s,", speak);
             else
-                sprintf(intro, "You %s in %s,", speak, get_language_adj(lang));
+                snprintf(intro, sizeof(intro), "You %s in %s,", speak, get_language_adj(lang));
 
             creature->printColor("%s%s \"%s%s\".\n^x", ((!chan->ooc && creature->flagIsSet(P_LANGUAGE_COLORS)) ? get_lang_color(lang) : ""),
                     intro, ooc_str, text.c_str());
@@ -1093,22 +1099,17 @@ void sendGlobalComm(const std::shared_ptr<Player> player, const std::string &tex
             boost::replace_all(toPrint, "*IC-NAME*", icNameRep);
             boost::replace_all(toPrint, "*OOC-NAME*", oocNameRep);
 
-            if(ply->isStaff() || !player
-                || (player->current_language && ply->isEffected("comprehend-languages"))
-                || ply->languageIsKnown(player->current_language))
-            {
-                // Listern speaks this language
-                boost::replace_all(toPrint, "*TEXT*", text);
-            } else {
-                // Listern doesn't speak this language
-                boost::replace_all(toPrint, "*TEXT*", "<something incomprehensible>");
-            }
+            // Listener only perceives the words if they comprehend the language
+            bool understood = ply->isStaff() || !player || (player->current_language && ply->isEffected("comprehend-languages")) || ply->languageIsKnown(player->current_language);
+            const std::string& heard = understood ? text : incomprehensible;
+            boost::replace_all(toPrint, "*TEXT*", heard);
 
 
             if(player && player->current_language != LCOMMON)
                 toPrint += std::string(" in ") + get_language_adj(player->current_language) + ".";
 
             *ply << ColorOn << ply->customColorize(chan->color) << toPrint << "\n" << ColorOff;
+            gmcp::onChannelText(ply, chan->channelName ? chan->channelName : "", player ? player->getName() : oocName, heard);
         }
 
 

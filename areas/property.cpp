@@ -1777,7 +1777,7 @@ bool Property::requireInside(const std::shared_ptr<Player>& player, const std::s
 
 std::string postText(const std::string &str);
 
-void Property::descEdit(std::shared_ptr<Socket> sock, const std::string& str) {
+void Property::descEdit(const std::shared_ptr<Socket>& sock, const std::string& str) {
     std::string outstr = "";
     char    outcstr[160];
     int     ff=0;
@@ -1874,10 +1874,10 @@ void Property::manageDesc(const std::shared_ptr<Player>& player, cmd* cmnd, Prop
 
     switch(propType) {
     case PROP_GUILDHALL:
-        sprintf(file, "%s/%s_guildhall.txt", Path::Post.c_str(), player->getCName());
+        snprintf(file, sizeof(file), "%s/%s_guildhall.txt", Path::Post.c_str(), player->getCName());
         break;
     case PROP_HOUSE:
-        sprintf(file, "%s/%s_house.txt", Path::Post.c_str(), player->getCName());
+        snprintf(file, sizeof(file), "%s/%s_house.txt", Path::Post.c_str(), player->getCName());
         break;
     default:
         player->print("Error: this property type is not supported.\n");

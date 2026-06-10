@@ -168,6 +168,7 @@ void Config::reset(bool reload) {
     logSuicide = true;
 
     logDeath = true;
+    logTelnet = true;
     autoShutdown = false;
     doAprilFools = false;
     doBonusXP = false;
@@ -560,6 +561,10 @@ void Config::setNextGuildId(int pNextGuildId) {
 
 bool Config::getCheckDouble() const {
     return checkDouble;
+}
+
+bool Config::getLogTelnet() const {
+    return logTelnet;
 }
 
 int Config::getMaxDouble() const {

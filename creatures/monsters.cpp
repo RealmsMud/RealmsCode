@@ -112,7 +112,7 @@ void Monster::validateId() {
 //                      pulseTick
 //*********************************************************************
 
-bool hearMobTick(std::shared_ptr<Socket> sock) {
+bool hearMobTick(const std::shared_ptr<Socket>& sock) {
     if(!sock->getPlayer() || !isCt(sock))
         return(false);
     return(!sock->getPlayer()->flagIsSet(P_NO_TICK_MSG));
@@ -835,7 +835,7 @@ bool Monster::petCaster() {
 // See if this monster will assist another monster,
 // or if they will be assisted by someone else
 
-bool hearMobAggro(std::shared_ptr<Socket> sock) {
+bool hearMobAggro(const std::shared_ptr<Socket>& sock) {
     if(!sock->getPlayer() || !isCt(sock))
         return(false);
     return(!sock->getPlayer()->flagIsSet(P_NO_AGGRO_MSG));

@@ -75,11 +75,11 @@ std::string writeFlagFile(std::string_view title, const char* file, int pad, boo
     char    bhfile[80], bhfileLink[80];
 
     // Figure out pathing information for the flags helpfiles we're working with
-    sprintf(dmfile, "%s/%ss.txt", Path::DMHelp.c_str(), file);
-    sprintf(dmfileLink, "%s/%s.txt", Path::DMHelp.c_str(), file);
+    snprintf(dmfile, sizeof(dmfile), "%s/%ss.txt", Path::DMHelp.c_str(), file);
+    snprintf(dmfileLink, sizeof(dmfileLink), "%s/%s.txt", Path::DMHelp.c_str(), file);
     if(builderLink) {
-        sprintf(bhfile, "%s/%ss.txt", Path::BuilderHelp.c_str(), file);
-        sprintf(bhfileLink, "%s/%s.txt", Path::BuilderHelp.c_str(), file);
+        snprintf(bhfile, sizeof(bhfile), "%s/%ss.txt", Path::BuilderHelp.c_str(), file);
+        snprintf(bhfileLink, sizeof(bhfileLink), "%s/%s.txt", Path::BuilderHelp.c_str(), file);
     }
     std::ofstream out(dmfile);
 
@@ -128,10 +128,10 @@ void writeFlagFiles() {
     int     pad=0;
 
     // Figure out pathing information for the general flags helpfiles
-    sprintf(dmfile, "%s/flags.txt", Path::DMHelp.c_str());
-    sprintf(dmfileLink, "%s/flag.txt", Path::DMHelp.c_str());
-    sprintf(bhfile, "%s/flags.txt", Path::BuilderHelp.c_str());
-    sprintf(bhfileLink, "%s/flag.txt", Path::BuilderHelp.c_str());
+    snprintf(dmfile, sizeof(dmfile), "%s/flags.txt", Path::DMHelp.c_str());
+    snprintf(dmfileLink, sizeof(dmfileLink), "%s/flag.txt", Path::DMHelp.c_str());
+    snprintf(bhfile, sizeof(bhfile), "%s/flags.txt", Path::BuilderHelp.c_str());
+    snprintf(bhfileLink, sizeof(bhfileLink), "%s/flag.txt", Path::BuilderHelp.c_str());
 
     pad = 15;
 

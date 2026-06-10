@@ -101,7 +101,7 @@ int getFailFd(const std::shared_ptr<Creature>&user) {
 // appropriate function, depending on what service is requested by the
 // player.
 
-void command(std::shared_ptr<Socket> sock, const std::string& inStr) {
+void command(const std::shared_ptr<Socket>& sock, const std::string& inStr) {
     if(sock->hasPagerOutput()) {
         return sock->handlePaging(inStr);
     }
@@ -403,7 +403,7 @@ std::string doFinger(const std::shared_ptr<Player>& player, std::string name, Cr
              << target->getTitle() << "\n";
     }
 
-    sprintf(tmp, "%s/%s.txt", Path::Post.c_str(), name.c_str());
+    snprintf(tmp, sizeof(tmp), "%s/%s.txt", Path::Post.c_str(), name.c_str());
     if(stat(tmp, &f_stat))
         oStr << "No mail.\n";
     else if(f_stat.st_atime > f_stat.st_mtime)

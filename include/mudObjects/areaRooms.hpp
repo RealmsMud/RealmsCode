@@ -72,7 +72,7 @@ public:
     bool swap(const Swap& s);
     bool swapIsInteresting(const Swap& s) const;
 
-    std::string getMsdp(bool showExits = true) const override;
+    std::string getMsdp(const std::shared_ptr<const Player>& viewer, bool showExits = true) const override;
 protected:
     bool    needsCompass{};
     bool    decCompass{};

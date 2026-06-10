@@ -70,7 +70,7 @@ int Numplayers;
 //                      broadcast
 //********************************************************************
 
-bool hearBroadcast(std::shared_ptr<Creature> target, const std::shared_ptr<Socket> ignore1, const std::shared_ptr<Socket> ignore2, bool showTo(std::shared_ptr<Socket>)) {
+bool hearBroadcast(std::shared_ptr<Creature> target, const std::shared_ptr<Socket>& ignore1, const std::shared_ptr<Socket>& ignore2, bool showTo(const std::shared_ptr<Socket>&)) {
     if(!target)
         return(false);
     if(target->getSock() == ignore1 || target->getSock() == ignore2)
@@ -98,7 +98,7 @@ bool hearBroadcast(std::shared_ptr<Creature> target, const std::shared_ptr<Socke
 
 
 // global broadcast
-void doBroadCast(bool showTo(std::shared_ptr<Socket>), bool showAlso(std::shared_ptr<Socket>), const char *fmt, va_list ap, const std::shared_ptr<Creature>& player) {
+void doBroadCast(bool showTo(const std::shared_ptr<Socket>&), bool showAlso(const std::shared_ptr<Socket>&), const char *fmt, va_list ap, const std::shared_ptr<Creature>& player) {
     for(const auto& sock : gServer->sockets) {
         const std::shared_ptr<Player> ply = sock->getPlayer();
 
@@ -121,7 +121,7 @@ void doBroadCast(bool showTo(std::shared_ptr<Socket>), bool showAlso(std::shared
 
 
 // room broadcast
-void doBroadcast(bool showTo(std::shared_ptr<Socket>), std::shared_ptr<Socket> ignore1, const std::shared_ptr<Socket> ignore2, const std::shared_ptr<const Container>& container, const char *fmt, va_list ap) {
+void doBroadcast(bool showTo(const std::shared_ptr<Socket>&), const std::shared_ptr<Socket>& ignore1, const std::shared_ptr<Socket>& ignore2, const std::shared_ptr<const Container>& container, const char *fmt, va_list ap) {
     if(!container)
         return;
 
@@ -141,7 +141,7 @@ void doBroadcast(bool showTo(std::shared_ptr<Socket>), std::shared_ptr<Socket> i
 
 
 // room broadcast, 1 ignore
-void broadcast(std::shared_ptr<Socket> ignore, const std::shared_ptr<const Container>& container, const char *fmt, ...) {
+void broadcast(const std::shared_ptr<Socket>& ignore, const std::shared_ptr<const Container>& container, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     doBroadcast(nullptr, ignore, nullptr, container, fmt, ap);
@@ -149,7 +149,7 @@ void broadcast(std::shared_ptr<Socket> ignore, const std::shared_ptr<const Conta
 }
 
 // room broadcast, 2 ignores
-void broadcast(std::shared_ptr<Socket> ignore1, std::shared_ptr<Socket> ignore2, const std::shared_ptr<const Container>& container, const char *fmt, ...) {
+void broadcast(const std::shared_ptr<Socket>& ignore1, const std::shared_ptr<Socket>& ignore2, const std::shared_ptr<const Container>& container, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     doBroadcast(nullptr, ignore1, ignore2, container, fmt, ap);
@@ -157,7 +157,7 @@ void broadcast(std::shared_ptr<Socket> ignore1, std::shared_ptr<Socket> ignore2,
 }
 
 // room broadcast, 1 ignore, showTo function
-void broadcast(bool showTo(std::shared_ptr<Socket>), std::shared_ptr<Socket> ignore, const std::shared_ptr<const Container>& container, const char *fmt, ...) {
+void broadcast(bool showTo(const std::shared_ptr<Socket>&), const std::shared_ptr<Socket>& ignore, const std::shared_ptr<const Container>& container, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     doBroadcast(showTo, ignore, nullptr, container, fmt, ap);
@@ -173,7 +173,7 @@ void broadcast(const char *fmt,...) {
 }
 
 // broadcast with showTo function
-void broadcast(bool showTo(std::shared_ptr<Socket>), bool showAlso(std::shared_ptr<Socket>), const char *fmt,...) {
+void broadcast(bool showTo(const std::shared_ptr<Socket>&), bool showAlso(const std::shared_ptr<Socket>&), const char *fmt,...) {
     va_list ap;
     va_start(ap, fmt);
     doBroadCast(showTo, showAlso, fmt, ap);
@@ -181,27 +181,27 @@ void broadcast(bool showTo(std::shared_ptr<Socket>), bool showAlso(std::shared_p
 }
 
 // broadcast with showTo function
-void broadcast(bool showTo(std::shared_ptr<Socket>), const char *fmt,...) {
+void broadcast(bool showTo(const std::shared_ptr<Socket>&), const char *fmt,...) {
     va_list ap;
     va_start(ap, fmt);
     doBroadCast(showTo, nullptr, fmt, ap);
     va_end(ap);
 }
 
-void broadcast(const std::shared_ptr<Creature>& player, bool showTo(std::shared_ptr<Socket>), int color, const char *fmt,...) {
+void broadcast(const std::shared_ptr<Creature>& player, bool showTo(const std::shared_ptr<Socket>&), int color, const char *fmt,...) {
     va_list ap;
     va_start(ap, fmt);
-    doBroadCast(showTo, (bool(*)(std::shared_ptr<Socket>))nullptr, fmt, ap, player);
+    doBroadCast(showTo, nullptr, fmt, ap, player);
     va_end(ap);
 }
 
 bool yes(std::shared_ptr<Creature> player) {
     return(true);
 }
-bool yes(std::shared_ptr<Socket> sock) {
+bool yes(const std::shared_ptr<Socket>& sock) {
     return(true);
 }
-bool wantsPermDeaths(std::shared_ptr<Socket> sock) {
+bool wantsPermDeaths(const std::shared_ptr<Socket>& sock) {
     std::shared_ptr<Player> ply = sock->getPlayer();
     return(ply != nullptr && !ply->flagIsSet(P_NO_BROADCASTS) && ply->flagIsSet(P_PERM_DEATH));
 }
@@ -303,7 +303,7 @@ void broadcastLogin(std::shared_ptr<Player> player, const std::shared_ptr<BaseRo
 // descriptor is present in the room, they are not given the message
 
 // TODO: Dom: remove
-void broadcast_rom_LangWc(int lang, std::shared_ptr<Socket> ignore, const Location& currentLocation, const char *fmt,...) {
+void broadcast_rom_LangWc(int lang, const std::shared_ptr<Socket>& ignore, const Location& currentLocation, const char *fmt,...) {
     char    fmt2[1024];
     va_list ap;
 
@@ -413,7 +413,7 @@ char *inetname(struct in_addr in) {
     else {
         in.s_addr = ntohl(in.s_addr);
 
-        sprintf(line, "%u.%u.%u.%u",
+        snprintf(line, sizeof(line), "%u.%u.%u.%u",
             (int)(in.s_addr >> 24) & 0xff,
             (int)(in.s_addr >> 16) & 0xff,
             (int)(in.s_addr >> 8) & 0xff,
@@ -467,16 +467,9 @@ void broadcastGuild(int guildNum, int showName, const char *fmt,...) {
 //                      shutdown_now
 //*********************************************************************
 
-void shutdown_now(int sig) {
-    broadcast("### Quick shutdown now!");
-    gServer->processOutput();
-    loge("--- Game shutdown via signal\n");
-    gServer->resaveAllRooms(1);
-    gServer->saveAllPly();
-    gServer->stop();
-
-    std::clog << "Goodbye." << std::endl;
-    exit(0);
+void shutdown_now(int /*sig*/) {
+    Shutdown.ltime = time(nullptr);   // time() is async-signal-safe (POSIX)
+    Shutdown.interval = 0;
 }
 
 //*********************************************************************

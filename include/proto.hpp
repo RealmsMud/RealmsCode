@@ -204,6 +204,8 @@ bool induel(const std::shared_ptr<const Player>& player, const std::shared_ptr<c
 // equipment.cpp
 int doGetObject(const std::shared_ptr<Object>&  object, const std::shared_ptr<Creature>& player, bool doLimited=true, bool noSplit=false, bool noQuest=false, bool noMessage=false, bool saveOnLimited=true);
 void wearAll(const std::shared_ptr<Player>& player, bool login = false);
+bool listObjectSee(const std::shared_ptr<const Player> player, std::shared_ptr<Object> object, bool showAll);
+bool roomPlayerVisible(const std::shared_ptr<const Creature>& viewer, const std::shared_ptr<Player>& target, int magicShowHidden = 0);
 CastResult doCast(const std::shared_ptr<Creature>& creature, cmd* cmnd);
 
 void give_money(const std::shared_ptr<Player>& player, cmd* cmnd);
@@ -234,26 +236,26 @@ std::string getFactionChangeAdverb(long factionChange);
 
 
 // io.cpp
-void broadcast(std::shared_ptr<Socket> ignore, const std::shared_ptr<const Container>& container, const char *fmt, ...);
-void broadcast(std::shared_ptr<Socket> ignore1, std::shared_ptr<Socket> ignore2, const std::shared_ptr<const Container>& container, const char *fmt, ...);
-void broadcast(bool showTo(std::shared_ptr<Socket>), std::shared_ptr<Socket>, const std::shared_ptr<const Container>& container, const char *fmt, ...);
+void broadcast(const std::shared_ptr<Socket>& ignore, const std::shared_ptr<const Container>& container, const char *fmt, ...);
+void broadcast(const std::shared_ptr<Socket>& ignore1, const std::shared_ptr<Socket>& ignore2, const std::shared_ptr<const Container>& container, const char *fmt, ...);
+void broadcast(bool showTo(const std::shared_ptr<Socket>&), const std::shared_ptr<Socket>&, const std::shared_ptr<const Container>& container, const char *fmt, ...);
 
-bool yes(std::shared_ptr<Socket> sock);
+bool yes(const std::shared_ptr<Socket>& sock);
 bool yes(std::shared_ptr<Creature> player);
-bool wantsPermDeaths(std::shared_ptr<Socket> sock);
-void doBroadCast(bool showTo(std::shared_ptr<Socket>), bool showAlso(std::shared_ptr<Socket>), const char *fmt, va_list ap, const std::shared_ptr<Creature>& player = nullptr);
+bool wantsPermDeaths(const std::shared_ptr<Socket>& sock);
+void doBroadCast(bool showTo(const std::shared_ptr<Socket>&), bool showAlso(const std::shared_ptr<Socket>&), const char *fmt, va_list ap, const std::shared_ptr<Creature>& player = nullptr);
 std::string realmsFormat(const char *fmt, va_list ap);
 void broadcast(const char *fmt, ...);
 void broadcast(int color, const char *fmt,...);
-void broadcast(bool showTo(std::shared_ptr<Socket>), bool showAlso(std::shared_ptr<Socket>), const char *fmt,...);
-void broadcast(bool showTo(std::shared_ptr<Socket>), const char *fmt,...);
-void broadcast(bool showTo(std::shared_ptr<Socket>), int color, const char *fmt,...);
-void broadcast(const std::shared_ptr<Creature>& player, bool showTo(std::shared_ptr<Socket>), int color, const char *fmt,...);
+void broadcast(bool showTo(const std::shared_ptr<Socket>&), bool showAlso(const std::shared_ptr<Socket>&), const char *fmt,...);
+void broadcast(bool showTo(const std::shared_ptr<Socket>&), const char *fmt,...);
+void broadcast(bool showTo(const std::shared_ptr<Socket>&), int color, const char *fmt,...);
+void broadcast(const std::shared_ptr<Creature>& player, bool showTo(const std::shared_ptr<Socket>&), int color, const char *fmt,...);
 
 void broadcast_wc(int color,const char *fmt, ...);
 void broadcastLogin(std::shared_ptr<Player> player, const std::shared_ptr<BaseRoom>& inRoom, int login);
 
-void broadcast_rom_LangWc(int lang, std::shared_ptr<Socket> ignore, const Location& currentLocation, const char *fmt,...);
+void broadcast_rom_LangWc(int lang, const std::shared_ptr<Socket>& ignore, const Location& currentLocation, const char *fmt,...);
 void broadcastGroup(bool dropLoot, const std::shared_ptr<Creature>& player, const char *fmt, ...);
 
 void broadcastGuild(int guildNum, int showName, const char *fmt,...);
@@ -389,7 +391,7 @@ Location getSpecialArea(int (CatRefInfo::*toCheck), const CatRef& cr);
 
 
 // security.cpp
-bool isValidPassword(std::shared_ptr<Socket> sock, const std::string &pass);
+bool isValidPassword(const std::shared_ptr<Socket>& sock, const std::string &pass);
 
 
 
@@ -426,19 +428,19 @@ bool isDay();
 
 
 // staff.cpp
-bool isWatcher(std::shared_ptr<Socket> sock);
+bool isWatcher(const std::shared_ptr<Socket>& sock);
 bool isWatcher(const std::shared_ptr<Creature> & player);
-bool isStaff(std::shared_ptr<Socket> sock);
+bool isStaff(const std::shared_ptr<Socket>& sock);
 bool isStaff(const std::shared_ptr<Creature> & player);
-bool isCt(std::shared_ptr<Socket> sock);
+bool isCt(const std::shared_ptr<Socket>& sock);
 bool isCt(const std::shared_ptr<Creature> & player);
-bool isDm(std::shared_ptr<Socket> sock);
+bool isDm(const std::shared_ptr<Socket>& sock);
 bool isDm(const std::shared_ptr<Creature> & player);
-bool isAdm(std::shared_ptr<Socket> sock);
+bool isAdm(const std::shared_ptr<Socket>& sock);
 bool isAdm(const std::shared_ptr<Creature> & player);
-bool watchingLog(std::shared_ptr<Socket> sock);
-bool watchingEaves(std::shared_ptr<Socket> sock);
-bool watchingSuperEaves(std::shared_ptr<Socket> sock);
+bool watchingLog(const std::shared_ptr<Socket>& sock);
+bool watchingEaves(const std::shared_ptr<Socket>& sock);
+bool watchingSuperEaves(const std::shared_ptr<Socket>& sock);
 
 
 AlcoholState getAlcoholState(const EffectInfo* effect);

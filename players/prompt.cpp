@@ -73,14 +73,6 @@ void Player::sendPrompt() {
         toPrint += "^r[AFK]^x ";
     if(flagIsSet(P_NEWLINE_AFTER_PROMPT))
         toPrint += "\n";
-
-    // Send EOR if they want it, otherwise send GA
-    if(getSock()->eorEnabled()) {
-        char eor_str[] = {(char)IAC, (char)EOR, '\0' };
-        toPrint.append(eor_str);
-    } else if(!getSock()->isDumbClient()){
-        char ga_str[] = {(char)IAC, (char)GA, '\0' };
-        toPrint.append(ga_str);
-    }
+    toPrint += GO_AHEAD;
     sock->write(toPrint);
 }

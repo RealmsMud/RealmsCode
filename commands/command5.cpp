@@ -721,7 +721,7 @@ void Player::changeStats() {
 //********************************************************************
 // This function allows a player to change their stats
 
-void changingStats(std::shared_ptr<Socket> sock, const std::string& str) {
+void changingStats(const std::shared_ptr<Socket>& sock, const std::string& str) {
     sock->getPlayer()->changingStats(str);
 }
 
@@ -918,9 +918,9 @@ void Player::changingStats(std::string str) {
 char *timestr(long t) {
     static char buf[BUFSIZ];
     if(t >= 60) {
-        sprintf(buf, "%01ld:%02ld", t / 60, t % 60);
+        snprintf(buf, sizeof(buf), "%01ld:%02ld", t / 60, t % 60);
     } else {
-        sprintf(buf, "%ld seconds", t);
+        snprintf(buf, sizeof(buf), "%ld seconds", t);
     }
     return(buf);
 }

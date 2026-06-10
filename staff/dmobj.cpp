@@ -579,7 +579,7 @@ int dmSetObj(const std::shared_ptr<Player>& player, cmd* cmnd) {
             return(0);
         }
 
-        sprintf(objname, "%s's ", creature->getCName());
+        snprintf(objname, sizeof(objname), "%s's ", creature->getCName());
     }
 
     // because float variables suck

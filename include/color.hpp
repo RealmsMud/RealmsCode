@@ -22,5 +22,5 @@
 // color.cpp
 std::string stripColor(std::string_view colored);
 std::string escapeColor(std::string_view colored);
-std::string padColor(const std::string &toPad, size_t pad);
-size_t lengthNoColor(std::string_view colored);
+std::string padColor(const std::string &toPad, size_t pad, bool utf8 = false);
+size_t lengthNoColor(std::string_view colored, bool utf8 = false);

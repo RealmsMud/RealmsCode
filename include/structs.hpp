@@ -198,7 +198,6 @@ public:
 
 typedef struct tagPlayer {
     std::shared_ptr<Player> ply;
-    std::shared_ptr<Socket> sock;
 //  iobuf   *io;
 //  extra   *extr;
 } plystruct;

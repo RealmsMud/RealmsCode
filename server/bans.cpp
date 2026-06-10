@@ -455,7 +455,7 @@ int Config::isLockedOut( const std::shared_ptr<Socket>& sock ) {
         return (2);
     } else {
         char buf[1024];
-        sprintf(buf, "\n\rYour site is locked out.\n\rSend questions to %s.\n\r", questions_to_email);
+        snprintf(buf, sizeof(buf), "\n\rYour site is locked out.\n\rSend questions to %s.\n\r", questions_to_email);
         sock->write(buf);
         broadcast(isCt, "^yDenying access to '%s(%s)'", sock->getHostname(), ban->site.c_str());
         return(1);

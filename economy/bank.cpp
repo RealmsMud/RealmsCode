@@ -542,9 +542,9 @@ void Bank::statement(std::shared_ptr<Player> player, bool isGuild) {
 
 
     if(isGuild)
-        sprintf(file, "%s/%d.txt", Path::GuildBank.c_str(), player->getGuild());
+        snprintf(file, sizeof(file), "%s/%d.txt", Path::GuildBank.c_str(), player->getGuild());
     else
-        sprintf(file, "%s/%s.txt", Path::Bank.c_str(), player->getCName());
+        snprintf(file, sizeof(file), "%s/%s.txt", Path::Bank.c_str(), player->getCName());
 
     if(fs::exists(file)) {
         strcpy(player->getSock()->tempstr[3], "\0");
@@ -583,9 +583,9 @@ void Bank::deleteStatement(std::shared_ptr<Player> player, bool isGuild) {
 
 
     if(isGuild)
-        sprintf(file, "%s/%d.txt", Path::GuildBank.c_str(), player->getGuild());
+        snprintf(file, sizeof(file), "%s/%d.txt", Path::GuildBank.c_str(), player->getGuild());
     else
-        sprintf(file, "%s/%s.txt", Path::Bank.c_str(), player->getCName());
+        snprintf(file, sizeof(file), "%s/%s.txt", Path::Bank.c_str(), player->getCName());
 
     player->print("Statement deleted.\n");
     unlink(file);
@@ -712,7 +712,7 @@ void Bank::log(const char *name, const char *fmt, ...) {
 
     va_start(ap, fmt);
 
-    sprintf(file, "%s/%s.txt", Path::Bank.c_str(), name);
+    snprintf(file, sizeof(file), "%s/%s.txt", Path::Bank.c_str(), name);
 
     strcpy(str, ctime(&t));
     str[24] = ':';
@@ -722,7 +722,7 @@ void Bank::log(const char *name, const char *fmt, ...) {
 
     Bank::doLog(file, str);
 
-    sprintf(file, "%s/%s.txt", Path::BankLog.c_str(), name);
+    snprintf(file, sizeof(file), "%s/%s.txt", Path::BankLog.c_str(), name);
     Bank::doLog(file, str);
 }
 
@@ -738,7 +738,7 @@ void Bank::guildLog(int guild, const char *fmt, ...) {
 
     va_start(ap, fmt);
 
-    sprintf(file, "%s/%d.txt", Path::GuildBank.c_str(), guild);
+    snprintf(file, sizeof(file), "%s/%d.txt", Path::GuildBank.c_str(), guild);
 
     strcpy(str, ctime(&t));
     str[24] = ':';
@@ -748,6 +748,6 @@ void Bank::guildLog(int guild, const char *fmt, ...) {
 
     Bank::doLog(file, str);
 
-    sprintf(file, "%s/%d.txt", Path::GuildBankLog.c_str(), guild);
+    snprintf(file, sizeof(file), "%s/%d.txt", Path::GuildBankLog.c_str(), guild);
     Bank::doLog(file, str);
 }

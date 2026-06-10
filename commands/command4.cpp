@@ -58,7 +58,7 @@ int cmdHelp(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
     if(cmnd->num < 2) {
-        sprintf(file, "%s/helpfile.txt", Path::Help.c_str());
+        snprintf(file, sizeof(file), "%s/helpfile.txt", Path::Help.c_str());
         player->getSock()->viewFile(file, true);
         return(DOPROMPT);
     }
@@ -66,7 +66,7 @@ int cmdHelp(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("You may not use backslashes.\n");
         return(0);
     }
-    sprintf(file, "%s/%s.txt", Path::Help.c_str(), cmnd->str[1]);
+    snprintf(file, sizeof(file), "%s/%s.txt", Path::Help.c_str(), cmnd->str[1]);
     player->getSock()->viewFile(file, true);
     return(DOPROMPT);
 }
@@ -86,7 +86,7 @@ int cmdWelcome(const std::shared_ptr<Player>& player, cmd* cmnd) {
         return(0);
     }
 
-    sprintf(file, "%s/welcomerealms.txt", Path::Help.c_str());
+    snprintf(file, sizeof(file), "%s/welcomerealms.txt", Path::Help.c_str());
 
     player->getSock()->viewFile(file, true);
     return(0);

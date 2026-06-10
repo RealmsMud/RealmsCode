@@ -71,7 +71,7 @@ if($ENV{LEAK})
 endif()
 
 FetchContent_Declare(nlohmann_json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz    SYSTEM)
-FetchContent_Declare(fmt         GIT_REPOSITORY https://github.com/fmtlib/fmt.git          GIT_TAG 11.2.0   SYSTEM)
+FetchContent_Declare(fmt         GIT_REPOSITORY https://github.com/fmtlib/fmt.git          GIT_TAG 12.1.0   SYSTEM)
 FetchContent_Declare(pybind11    GIT_REPOSITORY https://github.com/pybind/pybind11.git     GIT_TAG v3.0.4   SYSTEM)
 FetchContent_Declare(crow        GIT_REPOSITORY https://github.com/CrowCpp/Crow.git        GIT_TAG v1.2.1.2 SYSTEM)
 FetchContent_Declare(dpp         GIT_REPOSITORY https://github.com/brainboxdotcc/DPP.git   GIT_TAG v10.1.5  SYSTEM)
@@ -168,6 +168,8 @@ set(COMMON_HEADER_FILES
     include/monType.hpp
     include/money.hpp
     include/move.hpp
+    include/gmcp.hpp
+    include/gmcpEvents.hpp
     include/msdp.hpp
     include/mud.hpp
     include/mxp.hpp
@@ -385,6 +387,8 @@ set(COMMON_SOURCE_FILES
     server/log.cpp
     server/login.cpp
     server/mccp.cpp
+    server/gmcp.cpp
+    server/gmcpEvents.cpp
     server/memory.cpp
     server/msdp.cpp
     server/msdpLoader.cpp
@@ -541,24 +545,47 @@ option(REALMS_BUILD_TESTS "Build unit tests (gtest)" OFF)
 if(REALMS_BUILD_TESTS)
     enable_testing()
     add_executable(RealmsTests
-        test/apiQueue_test.cpp
-        test/endpoint_test.cpp
-        test/authCache_test.cpp
-        test/questsJson_test.cpp
-        test/monstersJson_test.cpp
-        test/roomsJson_test.cpp
-        test/objectsJson_test.cpp
-        test/zoneIndex_test.cpp
-        test/zoneIndexBuilder_test.cpp
-        test/questRemap_test.cpp
-        test/csv_test.cpp
-        test/apiQuests_test.cpp
-        test/xmlNum_test.cpp
-        test/xmlReader_test.cpp
-        test/range_test.cpp
-        test/commandBase_test.cpp
-        test/vprintFormat_test.cpp
+        # REST API (server/http)
+        test/api/apiQuests_test.cpp
+        test/api/apiQueue_test.cpp
+        test/api/authCache_test.cpp
+        test/api/endpoint_test.cpp
+        # JSON persistence (json/)
+        test/json/questsJson_test.cpp
+        test/json/monstersJson_test.cpp
+        test/json/roomsJson_test.cpp
+        test/json/objectsJson_test.cpp
+        test/json/zoneIndex_test.cpp
+        test/json/zoneIndexBuilder_test.cpp
+        test/json/questRemap_test.cpp
+        # XML helpers (xml/)
+        test/xml/xmlNum_test.cpp
+        test/xml/xmlReader_test.cpp
+        # Server engine (server/)
+        test/server/serverIds_test.cpp
+        test/server/serverDns_test.cpp
+        test/server/serverAccount_test.cpp
+        test/server/serverActiveList_test.cpp
+        # Telnet protocol + output (server/, io/)
+        test/io/protocol_test.cpp
+        test/io/processInput_test.cpp
+        test/io/colorWidth_test.cpp
+        test/io/vprintFormat_test.cpp
+        test/io/gmcp_test.cpp
+        test/io/spy_test.cpp
+        test/io/mccp_test.cpp
+        test/io/viewFileReverse_test.cpp
+        test/io/socketAsyncBackpressure_test.cpp
+        # General utilities (util/)
+        test/util/csv_test.cpp
+        test/util/range_test.cpp
+        test/util/md5_test.cpp
+        # Game logic
+        test/game/commandBase_test.cpp
+        test/game/startlocs_test.cpp
     )
+    set_property(SOURCE io/socket.cpp APPEND PROPERTY COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS)
+    target_include_directories(RealmsTests PRIVATE ${CMAKE_SOURCE_DIR}/test)
     target_link_libraries(RealmsTests PRIVATE RealmsLib gtest_main realms_flags)
     add_test(NAME RealmsTests COMMAND RealmsTests)
 endif()

@@ -63,6 +63,7 @@
 #include "random.hpp"                  // for Random
 #include "range.hpp"                   // for Range
 #include "server.hpp"                  // for Server, GOLD_OUT, GOLD_IN, gSe...
+#include "socket.hpp"                  // for Socket::utf8Enabled
 #include "structs.hpp"                 // for saves
 #include "unique.hpp"                  // for Lore, addOwner, isLimited, Unique
 #include "xml.hpp"                     // for loadRoom, loadObject, loadPlayer
@@ -758,6 +759,7 @@ void playerShopList(const std::shared_ptr<Player>& player, Property* p, std::str
     std::shared_ptr<Object>  object;
     int num = 0, flags = 0, m, n=0;
     bool owner=false;
+    const bool u8 = player->getSock() && player->getSock()->utf8Enabled();
 
     flags |= CAP;
     flags |= MAG;
@@ -798,7 +800,7 @@ void playerShopList(const std::shared_ptr<Player>& player, Property* p, std::str
 
         if(n == 1)
             player->printPaged("^WNum         Item                                       Price      Condition");
-        player->printPaged(fmt::format("{:2}> {} ${:<9} {:<12} {}", num, objShopName(object, m, flags, 50), object->getShopValue(),
+        player->printPaged(fmt::format("{:2}> {} ${:<9} {:<12} {}", num, objShopName(object, m, flags, 50, u8), object->getShopValue(),
                                        getCondition(object), cannotUseMarker(player, object), owner ? fmt::format(" Profit: {}", shopProfit(object)) : ""));
     }
     if(!n)
