@@ -25,6 +25,7 @@
 #include <boost/algorithm/string/case_conv.hpp>  // for to_lower
 
 #include "account.hpp"             // for Account
+#include "accountUpgrades.hpp"     // for AccountUpgradeDefinition
 #include "calendar.hpp"            // for cDay, Calendar, cMonth
 #include "cmd.hpp"                 // for cmd
 #include "commands.hpp"            // for cmdAge, cmdHelp, cmdInfo, cmdVersion
@@ -39,7 +40,6 @@
 #include "server.hpp"              // for Server, gServer
 #include "socket.hpp"              // for Socket
 #include "version.hpp"             // for VERSION
-
 
 //*********************************************************************
 //                      cmdHelp
@@ -233,6 +233,14 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
         player->print("Account command options:\n");
         player->print("  ^Waccount (i)nfo^x - Display account information\n");
         player->print("  ^Waccount (c)haracters^x - List your characters\n");
+        player->print("  ^Waccount (u)pgrade^x - View account upgrade options\n");
+        player->print("  ^Waccount (u)pgrade (b)uy <name>^x - Purchase an upgrade\n");
+        return(0);
+    }
+
+    auto account = gServer->getOrLoadAccount(player->getAccountName());
+    if(!account) {
+        player->print("Unable to load your account information.\n");
         return(0);
     }
 
@@ -241,12 +249,6 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     // Handle "info" command with partial matching
     if(partialMatch(subcommand, "info", 4)) {
-        auto account = gServer->getOrLoadAccount(player->getAccountName());
-        if(!account) {
-            player->print("Unable to load your account information.\n");
-            return(0);
-        }
-
         player->print("\n^W~~~~~~~ Account Information ~~~~~~~^x\n\n");
         account->printInfoFields(player);
         
@@ -255,12 +257,73 @@ int cmdAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
     // Handle "characters" with partial matching
     if(partialMatch(subcommand, "characters", 10)) {
-        auto account = gServer->getOrLoadAccount(player->getAccountName());
-        if(!account) {
-            player->print("Unable to load your account information.\n");
+        account->printCharacterList(player);
+        return(0);
+    }
+
+    if(partialMatch(subcommand, "upgrade", 7) && cmnd->num == 2) {
+        account->printUpgradeSummary(player);
+        player->print("\nUse '^Waccount upgrade buy <name>^x' to purchase upgrades.\n");
+        return(0);
+    }
+
+    if(partialMatch(subcommand, "upgrade", 7) && cmnd->num > 2) {
+        if(cmnd->num < 3) {
+            player->print("Usage: ^Waccount upgrade buy <upgradeName>^x\n");
             return(0);
         }
-        account->printCharacterList(player);
+
+        std::string action = cmnd->str[2];
+        boost::to_lower(action);
+
+        if(!partialMatch(action, "buy", 3)) {
+            player->print("Unknown account upgrade action '%s'. Try 'buy'.\n", action.c_str());
+            return(0);
+        }
+
+        if(cmnd->num < 4) {
+            player->print("Usage: ^Waccount upgrade buy <upgradeName>^x\n");
+            return(0);
+        }
+
+        std::string upgradeName = cmnd->str[3];
+        const AccountUpgradeDefinition* def = matchAccountUpgrade(upgradeName);
+        if(!def) {
+            player->print("Unknown upgrade '%s'. Type '^Waccount upgrade^x' for a list.\n", upgradeName.c_str());
+            return(0);
+        }
+
+        std::string name(def->displayName);
+        unsigned short currentRank = account->getUpgradeLevel(def->id);
+        if(currentRank >= def->maxRank) {
+            player->print("^W%s^x is already at maximum rank (%u).\n", name.c_str(), def->maxRank);
+            return(0);
+        }
+
+        unsigned long cost = def->costPerRank;
+        unsigned long availableExp = account->getAvailableExp();
+        if(availableExp < cost) {
+            player->print("You need ^G%lu^x more account experience to purchase %s.\n",
+                          cost - availableExp, name.c_str());
+            return(0);
+        }
+
+        if(!account->spendExp(cost)) {
+            player->print("Unable to spend your account experience right now. Please try again.\n");
+            return(0);
+        }
+
+        account->setUpgradeLevel(def->id, currentRank + 1);
+        if(!account->save()) {
+            player->print("^RWarning:^x failed to save your account. Please contact staff.\n");
+        }
+
+        player->applyAccountUpgradeBonuses();
+
+        unsigned short newRank = account->getUpgradeLevel(def->id);
+        auto bonusDesc = describeAccountUpgradeBonus(*def, account->getUpgradeValue(def->id));
+        player->print("Purchased ^W%s^x rank ^G%u/%u^x. Bonus is now %s.\n",
+                      name.c_str(), newRank, def->maxRank, bonusDesc.c_str());
         return(0);
     }
 

@@ -81,6 +81,7 @@ void Account::reset() {
     expEarned = 0;
     expSpent = 0;
     version.clear();
+    clearUpgradeLevels();
 }
 
 void Account::copyFrom(const Account& other) {
@@ -96,6 +97,7 @@ void Account::copyFrom(const Account& other) {
     expEarned = other.expEarned;
     expSpent = other.expSpent;
     version = other.version;
+    upgradeLevels = other.upgradeLevels;
 }
 
 //*********************************************************************
@@ -297,6 +299,37 @@ void Account::setExpSpent(unsigned long long spent) {
 }
 void Account::setVersion(const std::string& v) { version = v; }
 
+unsigned short Account::getUpgradeLevel(AccountUpgradeId id) const {
+    auto it = upgradeLevels.find(id);
+    if(it == upgradeLevels.end()) {
+        return 0;
+    }
+    return it->second;
+}
+
+void Account::setUpgradeLevel(AccountUpgradeId id, unsigned short level) {
+    const auto& def = getAccountUpgrade(id);
+    unsigned short clamped = static_cast<unsigned short>(std::min<unsigned int>(level, def.maxRank));
+    if(clamped == 0) {
+        upgradeLevels.erase(id);
+    } else {
+        upgradeLevels[id] = clamped;
+    }
+}
+
+const std::unordered_map<AccountUpgradeId, unsigned short>& Account::getUpgradeLevels() const {
+    return upgradeLevels;
+}
+
+void Account::clearUpgradeLevels() {
+    upgradeLevels.clear();
+}
+
+unsigned int Account::getUpgradeValue(AccountUpgradeId id) const {
+    const auto& def = getAccountUpgrade(id);
+    return static_cast<unsigned int>(getUpgradeLevel(id)) * def.magnitudePerRank;
+}
+
 //*********************************************************************
 //                      Character Management
 //*********************************************************************
@@ -413,6 +446,34 @@ void Account::printCharacterList(const std::shared_ptr<Socket>& sock) const {
     }
 }
 
+void Account::printUpgradeSummary(const std::shared_ptr<Player>& player) const {
+    if(!player) return;
+
+    player->print("\n^W~~~~~~~ Account Upgrades ~~~~~~~^x\n\n");
+    player->print("^W%-16s^G%15llu^x\n", "Exp Spent:", getExpSpent());
+    player->print("^W%-16s^G%15lu^x\n\n", "Exp Available:", getAvailableExp());
+
+    const auto& defs = getAccountUpgradeDefinitions();
+    for(const auto& def : defs) {
+        std::string name(def.displayName);
+        std::string token(def.token);
+        unsigned short rank = getUpgradeLevel(def.id);
+        bool maxed = rank >= def.maxRank;
+        auto totalBonus = describeAccountUpgradeBonus(def, getUpgradeValue(def.id));
+        auto perRankBonus = describeAccountUpgradeBonus(def, def.magnitudePerRank);
+
+        player->print("  ^W%-16s^x (^C%s^x) Rank ^G%u/%u^x  %s\n",
+                      name.c_str(), token.c_str(), rank, def.maxRank, totalBonus.c_str());
+        if(maxed) {
+            player->print("      ^BMAXED^x\n");
+        } else {
+            player->print("      Next rank: %s (Cost ^G%u^x account exp)\n",
+                          perRankBonus.c_str(), def.costPerRank);
+        }
+    }
+
+}
+
 //*********************************************************************
 //                      Player Account Functions
 //*********************************************************************
@@ -434,4 +495,40 @@ void Player::setAccountName(const std::string& name) {
 }
 
 std::string Player::getAccountName() const { return(accountName); }
+
+void Player::applyAccountUpgradeBonuses() {
+    std::shared_ptr<Account> accountPtr = nullptr;
+    if(hasAccount()) {
+        accountPtr = gServer->getOrLoadAccount(getAccountName());
+    }
+
+    bool statModified = false;
+    const auto& definitions = getAccountUpgradeDefinitions();
+    for(const auto& def : definitions) {
+        int bonusValue = 0;
+        if(accountPtr) {
+            bonusValue = static_cast<int>(accountPtr->getUpgradeValue(def.id));
+        }
+
+        if(def.effectType == AccountUpgradeEffectType::FlatStat) {
+            auto statName = getStatName(def.id);
+            if(statName.empty()) {
+                continue;
+            }
+
+            std::string modifierName = std::string("AccountUpgrade_") + std::string(def.token);
+            Stat* stat = getStat(statName);
+            if(!stat) {
+                continue;
+            }
+            stat->setModifier(modifierName, bonusValue, MOD_CUR_MAX);
+            statModified = true;
+        }
+    }
+
+    if(statModified) {
+        computeAttackPower();
+        computeAC();
+    }
+}
  

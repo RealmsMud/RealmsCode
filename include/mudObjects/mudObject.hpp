@@ -86,6 +86,7 @@ public:
     std::shared_ptr<MudObject> getAsMudObject();
     std::shared_ptr<Monster>  getAsMonster();
     std::shared_ptr<Player> getAsPlayer();
+    std::shared_ptr<const Player> getAsPlayer() const;
     std::shared_ptr<Creature> getAsCreature();
     std::shared_ptr<Object>  getAsObject();
     std::shared_ptr<UniqueRoom> getAsUniqueRoom();

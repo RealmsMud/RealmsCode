@@ -96,6 +96,8 @@ void Player::init() {
     auto pThis = Containable::downcasted_shared_from_this<Player>();
     statistics.setParent(pThis);
 
+    applyAccountUpgradeBonuses();
+
     // always make sure size matches up with race
     if(size == NO_SIZE) {
         size = gConfig->getRace(race)->getSize();
@@ -805,6 +807,13 @@ void Player::computeAC() {
     if(isEffected("weakness"))
         ac -= 100;
 
+    if(hasAccount()) {
+        auto account = gServer->getOrLoadAccount(getAccountName());
+        if(account) {
+            ac += static_cast<int>(account->getUpgradeValue(AccountUpgradeId::Armor));
+        }
+    }
+
     armor = std::max(0, ac);
 }
 
@@ -827,7 +836,6 @@ int Player::getArmorWeight() const {
 
     return(weight);
 }
-
 
 //*********************************************************************
 //                      getFallBonus
