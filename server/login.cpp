@@ -908,21 +908,8 @@ void createPlayer(std::shared_ptr<Socket> sock, const std::string& str) {
 
             target->defineColors();
         }
-        if(isdm(sock->tempstr[0])) {
-            sock->print("\nYou must enter a password to create that character.\n");
-            sock->print("Please enter password: ");
-            gServer->processOutput();
-            sock->setState(CREATE_GET_DM_PASSWORD);
-            return;
-        } else
-            goto no_pass;
+        goto no_pass;
         // End CREATE_NEW_CHARACTER
-    case CREATE_GET_DM_PASSWORD:
-        if(str != gConfig->getDmPass()) {
-            sock->disconnect();
-            return;
-        }
-
     case CREATE_CHECK_LOCKED_OUT:
 no_pass:
         if(gConfig->isLockedOut(sock) == 1) {
@@ -1046,6 +1033,22 @@ no_pass:
 
         if(!Create::getName(sock, str, Create::doWork))
             return;
+        if(isdm(sock->tempstr[0])) {
+            sock->print("\nYou must enter a password to create that character.\n");
+            sock->print("%s", echo_off);
+            sock->askFor("Please enter password: ");
+            sock->setState(CREATE_GET_DM_PASSWORD);
+            return;
+        }
+        Create::done(sock, str, Create::doPrint);
+        return;
+
+    case CREATE_GET_DM_PASSWORD:
+        sock->print("%s", echo_on);
+        if(str != gConfig->getDmPass()) {
+            sock->disconnect();
+            return;
+        }
         Create::done(sock, str, Create::doPrint);
         return;
 

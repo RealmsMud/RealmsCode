@@ -61,6 +61,20 @@ FetchContent_Declare(googletest  GIT_REPOSITORY https://github.com/google/google
 FetchContent_MakeAvailable(pybind11 fmt nlohmann_json crow dpp jwt-cpp googletest)
 set(FMT_INCLUDE_DIR "${FMT_SOURCE_DIR}/${FMT_INC_DIR}")
 
+set(REALMS_THIRD_PARTY_CLANG_WARNING_SUPPRESSIONS
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang>:-Wno-deprecated-literal-operator>
+)
+
+if(TARGET dpp)
+    target_compile_options(dpp PRIVATE ${REALMS_THIRD_PARTY_CLANG_WARNING_SUPPRESSIONS})
+endif()
+
+# nlohmann_json is header-only, so the suppression must be attached to its
+# interface target to cover warnings emitted while consumers parse its headers.
+if(TARGET nlohmann_json)
+    target_compile_options(nlohmann_json INTERFACE ${REALMS_THIRD_PARTY_CLANG_WARNING_SUPPRESSIONS})
+endif()
+
 include_directories(${PYTHON_INCLUDE_DIRS} ${LIBXML2_INCLUDE_DIR} ${PYBIND11_INCLUDE_DIR} ${FMT_INCLUDE_DIR} "include")
 
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -g" )

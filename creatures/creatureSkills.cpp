@@ -16,10 +16,51 @@
  *
  */
 
+#include <sstream>                          // for ostringstream
+#include <string>                           // for string, to_string
+
 #include "config.hpp"                       // for Config, gConfig
+#include "deityData.hpp"                    // for DeityData
 #include "mudObjects/creatures.hpp"         // for Creature, PetList
+#include "proto.hpp"                        // for broadcast, isDm, loge
+#include "raceData.hpp"                     // for RaceData
 #include "skillGain.hpp"                    // for SkillGain
 #include "login.hpp"                       // for addStartingWeapon
+
+namespace {
+
+const SkillInfo* getInitialWeaponSkillInfo(const Creature* creature, const SkillGain* sGain, const char* functionName, const char* source) {
+    const SkillInfo* skill = gConfig->getSkill(sGain->getName());
+    if(skill)
+        return(skill);
+
+    std::ostringstream context;
+    context << "source=" << source
+            << ", class=" << (creature ? creature->getClassString() : "<unknown>");
+
+    if(creature && creature->getRace()) {
+        const RaceData* race = gConfig->getRace(creature->getRace());
+        context << ", race=" << (race ? race->getName() : std::to_string(creature->getRace()));
+    } else {
+        context << ", race=<none>";
+    }
+
+    if(creature && creature->getDeity()) {
+        const DeityData* deity = gConfig->getDeity(creature->getDeity());
+        context << ", deity=" << (deity ? deity->getName() : std::to_string(creature->getDeity()));
+    } else {
+        context << ", deity=<none>";
+    }
+
+    const std::string message = "Bad config: " + std::string(functionName) +
+                                " missing skill '" + sGain->getName() + "' (" +
+                                context.str() + ")";
+    loge("%s\n", message.c_str());
+    broadcast(isDm, "^G%s^x", message.c_str());
+    return(nullptr);
+}
+
+}
 
 //*********************************************************************
 //                      checkSkillsGain
@@ -55,9 +96,9 @@ void Creature::getInitialRaceWeaponSkills(const std::list<SkillGain*>::const_ite
         sGain = (*sgIt);
         if(sGain->getName().empty())
             continue;
-      const SkillInfo* skill = gConfig->getSkill(sGain->getName());
-      if (!skill->getGroup().starts_with("weapons"))
-           continue;
+        const SkillInfo* skill = getInitialWeaponSkillInfo(this, sGain, __func__, "race");
+        if (!skill || !skill->getGroup().starts_with("weapons"))
+            continue;
 
         num++;
         if (num == 1)
@@ -87,8 +128,8 @@ void Creature::getInitialClassWeaponSkills(const std::list<SkillGain*>::const_it
         sGain = (*sgIt);
         if(sGain->getName().empty())
             continue;
-        const SkillInfo* skill = gConfig->getSkill(sGain->getName());
-        if (!skill->getGroup().starts_with("weapons"))
+        const SkillInfo* skill = getInitialWeaponSkillInfo(this, sGain, __func__, "class");
+        if (!skill || !skill->getGroup().starts_with("weapons"))
            continue;
 
         if (knowsSkill(sGain->getName()) || (deity && !sGain->deityIsAllowed(deity)))
@@ -114,4 +155,3 @@ void Creature::getInitialClassWeaponSkills(const std::list<SkillGain*>::const_it
     initSkillString = sStr.str();
     return;
 }
-
