@@ -105,7 +105,7 @@ void lowercize(std::string& str, int flag ) {
     n = str.length();
     for(i=0; i<n; i++)
         str[i] = (str[i] >= 'A' && str[i] <= 'Z') ? str[i]+32:str[i];
-    if(flag & 1)
+    if((flag & 1) && n > 0)
         str[0] = (str[0] >= 'a' && str[0] <= 'z') ? str[0]-32:str[0];
 }
 
@@ -115,7 +115,7 @@ void lowercize(char *str, int flag ) {
     n = str ? strlen(str) : 0 ;
     for(i=0; i<n; i++)
         str[i] = (str[i] >= 'A' && str[i] <= 'Z') ? str[i]+32:str[i];
-    if(flag & 1)
+    if((flag & 1) && n > 0)
         str[0] = (str[0] >= 'a' && str[0] <= 'z') ? str[0]-32:str[0];
 }
 

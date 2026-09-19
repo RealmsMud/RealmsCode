@@ -1942,6 +1942,11 @@ std::shared_ptr<Account> Server::getOrLoadAccount(const std::string& accountName
     return nullptr;
 }
 
+void Server::cacheAccount(const std::shared_ptr<Account>& account) {
+    if(account)
+        accountCache[account->getName()] = account;
+}
+
 void Server::trackAccountConnection(const std::string& accountName, const std::string& characterName) {
     accountConnections[accountName].insert(characterName);
 }

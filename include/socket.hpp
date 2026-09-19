@@ -25,6 +25,7 @@
 #include <arpa/telnet.h>   // IAC, WILL/WONT/DO, SB/SE, TELOPT_*; needed by the telnet:: byte arrays below
 
 // C++ Includes
+#include <chrono>
 #include <cstddef>
 #include <list>
 #include <span>
@@ -45,6 +46,7 @@
 #define ASIO_STANDALONE
 #endif
 #include <asio/ip/tcp.hpp>
+#include <asio/steady_timer.hpp>
 
 #include "msdp.hpp"                                 // for ReportedMsdpVariable
 
@@ -61,6 +63,9 @@ extern long OutBytes;
 
 class Player;
 class Account;
+struct CharacterDraft;
+struct LoginSession;
+struct CreationSession;
 
 typedef struct _xmlNode xmlNode;
 typedef xmlNode *xmlNodePtr;
@@ -142,6 +147,8 @@ namespace telnet {
     inline constexpr unsigned char wont_echo[] = { IAC, WONT, TELOPT_ECHO, '\0' }; // IAC WONT ECHO (return echo to the client)
 
     inline constexpr unsigned char will_eor[] = { IAC, WILL, TELOPT_EOR, '\0' }; // EOR after every prompt
+
+    inline constexpr unsigned char will_tm[] = { IAC, WILL, TELOPT_TM, '\0' }; // RFC 860 timing-mark ack; client (telnet Ctrl-C) discards output until it sees this
 
     inline constexpr unsigned char will_msp[] = { IAC, WILL, TELOPT_MSP, '\0' }; // MSP Support
     inline constexpr unsigned char wont_msp[] = { IAC, WONT, TELOPT_MSP, '\0' }; // Stop MSP support
@@ -416,6 +423,12 @@ protected:
     void doWrite();                    // drive the async_write queue (one write in flight)
     void enqueue(std::string bytes);   // queue outbound bytes and kick the writer
     void drainAndClose();              // best-effort flush of the queue, then close
+    void finishClose();                // close after the deferred drain (see closeAfterDrain)
+    void armCloseTimer();              // deadline for a deferred close (see drainCloseTimeout)
+
+    // A peer that stops reading would otherwise pin the in-flight write, its buffer and the
+    // Socket (captured by the write handler) forever. Tests shorten it.
+    static std::chrono::milliseconds drainCloseTimeout;
 
     // Telopt related
     void decodeBytes(std::span<const unsigned char> data, std::string& out); // telnet FSM, no I/O
@@ -463,8 +476,20 @@ public:
     int getParam();
     void setParam(int newParam);
 
+    // lazily created; reset when the wizard starts
+    CharacterDraft& getCreationDraft();
+    void resetCreationDraft();
+
+    // Cursor for the character-creation wizard (see CreationSession).
+    CreationSession& getCreationSession();
+    void resetCreationSession();
+
+    // Scratch state for the account/login state machine (see LoginSession).
+    LoginSession& getLoginSession();
+
 protected:
     std::unique_ptr<asio::ip::tcp::socket> sock;
+    std::unique_ptr<asio::steady_timer> closeTimer;
     int         fd;
     Host        host;
     bool        dnsDone{};
@@ -483,6 +508,7 @@ protected:
     std::deque<std::string> writeQueue;        // outbound bytes awaiting async_write
     size_t                  queuedBytes{};     // running total of writeQueue sizes (backlog cap)
     bool                    writeInFlight{};   // true while an async_write is outstanding
+    bool                    closeAfterDrain{}; // drainAndClose hit an in-flight write; the handler closes
     bool                    readPaused{};      // reads suspended while the input queue is full
     std::array<unsigned char, 1024> readBuf{}; // scratch for async_read_some
 
@@ -497,6 +523,9 @@ protected:
     bool cleanedUp{};                  // teardown runs once; ~Socket re-entry is a no-op
     std::shared_ptr<Player>     myPlayer{};
     std::string                 currentAccountName{};  // Account name for this socket
+    std::unique_ptr<CharacterDraft> creationDraft;
+    std::unique_ptr<CreationSession> creationSession;
+    std::unique_ptr<LoginSession> loginSession;
 
 
 // For MCCP

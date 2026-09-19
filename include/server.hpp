@@ -419,6 +419,7 @@ public:
 
     // Account management
     std::shared_ptr<Account> getOrLoadAccount(const std::string& accountName);
+    void cacheAccount(const std::shared_ptr<Account>& account);
     void trackAccountConnection(const std::string& accountName, const std::string& characterName);
     void untrackAccountConnection(const std::string& accountName, const std::string& characterName);
     std::vector<std::string> getAccountCharacters(const std::string& accountName) const;

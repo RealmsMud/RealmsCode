@@ -24,6 +24,14 @@ struct TestSocket : public Socket {
     using Socket::inBuf;
     using Socket::input;
     using Socket::opts;
+    using Socket::writeQueue;
+
+    // Concatenated outbound bytes (negotiation replies enqueued via writeRaw; doWrite() no-ops with no socket).
+    std::string outBytes() const {
+        std::string r;
+        for (const auto& chunk : writeQueue) r += chunk;
+        return r;
+    }
 
     std::string decode(const std::vector<unsigned char>& v) {
         std::string out;
@@ -199,6 +207,34 @@ TEST_F(ProcessInput, PureNegotiationProducesNoText) {
     EXPECT_TRUE(sock.drain().empty());
     EXPECT_TRUE(sock.inBuf.empty());
     EXPECT_TRUE(sock.nawsEnabled());
+}
+
+// RFC 860: a telnet client's Ctrl-C sends IAC DO TM and discards all server output
+// until it sees the reply. We must answer IAC WILL TM or the session goes output-dead.
+TEST_F(ProcessInput, TimingMarkDoIsAcked) {
+    sock.feed(B({IAC, DO, TELOPT_TM}));
+    EXPECT_TRUE(sock.drain().empty());
+    EXPECT_EQ(sock.tState, TS::NEG_NONE);
+    const std::string want{static_cast<char>(IAC), static_cast<char>(WILL), static_cast<char>(TELOPT_TM)};
+    EXPECT_NE(sock.outBytes().find(want), std::string::npos);
+}
+
+// TM is a per-request synch mark, not a tracked mode: every DO must be answered.
+TEST_F(ProcessInput, TimingMarkAckedEveryTime) {
+    sock.feed(B({IAC, DO, TELOPT_TM}));
+    sock.feed(B({IAC, DO, TELOPT_TM}));
+    const std::string want{static_cast<char>(IAC), static_cast<char>(WILL), static_cast<char>(TELOPT_TM)};
+    const std::string out = sock.outBytes();
+    const auto first = out.find(want);
+    ASSERT_NE(first, std::string::npos);
+    EXPECT_NE(out.find(want, first + want.size()), std::string::npos);
+}
+
+TEST_F(ProcessInput, TimingMarkWontAndDontProduceNoReply) {
+    sock.feed(B({IAC, WONT, TELOPT_TM}));
+    sock.feed(B({IAC, DONT, TELOPT_TM}));
+    EXPECT_EQ(sock.tState, TS::NEG_NONE);
+    EXPECT_TRUE(sock.outBytes().empty());
 }
 
 } // namespace

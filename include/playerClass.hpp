@@ -19,6 +19,7 @@
 #pragma once
 #include <memory>
 
+#include <array>
 #include <list>
 #include <map>
 #include <libxml/parser.h>  // for xmlNodePtr
@@ -52,6 +53,8 @@ public:
     std::map<int, PlayerTitle*> titles;
     bool hasDefaultStats();
     bool setDefaultStats(std::shared_ptr<Player> player);
+    // The class's predefined base stats in STR,DEX,CON,INT,PTY order (raw, un-scaled).
+    std::array<short, 5> getDefaultBaseStats() const;
 
     Dice damage;
 protected:

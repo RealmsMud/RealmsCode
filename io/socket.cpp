@@ -63,6 +63,9 @@
 #include "flags.hpp"                                // for P_READING_FILE
 #include "global.hpp"                               // for MAXALVL
 #include "login.hpp"                                // for createPlayer, CON...
+#include "login/characterDraft.hpp"                 // for CharacterDraft
+#include "login/creationSession.hpp"                // for CreationSession
+#include "login/loginSession.hpp"                   // for LoginSession
 #include "msdp.hpp"                                 // for ReportedMsdpVariable
 #include "gmcp.hpp"                                 // for the pure GMCP conversion layer
 #include "gmcpEvents.hpp"                            // for gmcp::commChannelList
@@ -279,6 +282,9 @@ Socket::Socket(int pFd) {
 // and cap unprocessed input commands (pausing reads applies TCP backpressure).
 static constexpr size_t kMaxQueuedBytes = 1u << 20;   // 1 MB of outbound backlog
 static constexpr size_t kMaxQueuedCommands = 1024;    // pending input commands before we pause reads
+static constexpr std::chrono::seconds kDrainCloseTimeout{5};   // deadline for a deferred close
+
+std::chrono::milliseconds Socket::drainCloseTimeout{kDrainCloseTimeout};
 
 void Socket::startRead() {
     if(!sock || !sock->is_open()) return;
@@ -344,14 +350,20 @@ void Socket::doWrite() {
             [this, self](const asio::error_code& ec, std::size_t /*n*/) {
                 writeInFlight = false;
                 if(ec) {
-                    setState(CON_DISCONNECTING);
+                    if(closeAfterDrain)
+                        finishClose();
+                    else
+                        setState(CON_DISCONNECTING);
                     return;
                 }
-                if(writeQueue.empty()) return;
-                queuedBytes -= writeQueue.front().size();
-                writeQueue.pop_front();
+                if(!writeQueue.empty()) {
+                    queuedBytes -= writeQueue.front().size();
+                    writeQueue.pop_front();
+                }
                 if(!writeQueue.empty())
                     doWrite();
+                else if(closeAfterDrain)
+                    finishClose();
             });
         return;
     }
@@ -376,18 +388,56 @@ void Socket::doWrite() {
     }
 }
 
+void Socket::armCloseTimer() {
+    auto self = weak_from_this().lock();
+    if(!self)
+        return;
+    closeTimer = std::make_unique<asio::steady_timer>(sock->get_executor());
+    closeTimer->expires_after(drainCloseTimeout);
+    closeTimer->async_wait([this, self](const asio::error_code& ec) {
+        if(ec || !closeAfterDrain)
+            return;
+        // The write never drained: abort it so its handler releases the buffer and self-ref.
+        asio::error_code cancelEc;
+        if(sock)
+            sock->cancel(cancelEc);
+        finishClose();
+    });
+}
+
+void Socket::finishClose() {
+    if(closeTimer)
+        closeTimer->cancel();
+    asio::error_code ec;
+    if(sock)
+        sock->close(ec);
+    closeAfterDrain = false;
+    writeQueue.clear();
+    queuedBytes = 0;
+    writeInFlight = false;
+    fd = -1;
+}
+
 void Socket::drainAndClose() {
     if(sock) {
         asio::error_code ec;
-        if(!writeInFlight) {
-            asio::error_code nbec;
-            sock->non_blocking(true, nbec);
-            while(!writeQueue.empty()) {
-                const std::size_t w = sock->write_some(asio::buffer(writeQueue.front()), ec);
-                if(ec || w < writeQueue.front().size())
-                    break;
-                writeQueue.pop_front();
-            }
+        if(writeInFlight) {
+            // async_write still owns writeQueue.front(): closing now drops it and everything
+            // queued behind it (e.g. "Incorrect." before a disconnect). Stop reading, let the
+            // completion handler flush the rest, and close from there.
+            closeAfterDrain = true;
+            sock->shutdown(asio::ip::tcp::socket::shutdown_receive, ec);
+            armCloseTimer();
+            fd = -1;
+            return;
+        }
+        asio::error_code nbec;
+        sock->non_blocking(true, nbec);
+        while(!writeQueue.empty()) {
+            const std::size_t w = sock->write_some(asio::buffer(writeQueue.front()), ec);
+            if(ec || w < writeQueue.front().size())
+                break;
+            writeQueue.pop_front();
         }
         sock->close(ec);
     } else if(fd >= 0) {
@@ -398,6 +448,9 @@ void Socket::drainAndClose() {
         }
         close(fd);
     }
+    if(closeTimer)
+        closeTimer->cancel();
+    closeAfterDrain = false;
     writeQueue.clear();
     queuedBytes = 0;
     writeInFlight = false;
@@ -658,10 +711,12 @@ void Socket::checkLockOut() {
         print("\n  ^Wa^x) Create or Login into an account");
         print("\n  ^Wb^x) Login in with a character name directly (Legacy)");
         askFor("\n\nEnter choice (a/b): ");
-        setState(LOGIN_ENTRY_CHOICE);
+        getLoginSession().step = LoginSession::Step::EntryChoice;
+        setState(LOGIN_ACCOUNT);
     } else if (lockStatus == 2) {
         print("\n\nA password is required to play from your site: ");
-        setState(LOGIN_GET_LOCKOUT_PASSWORD);
+        getLoginSession().step = LoginSession::Step::LockoutPassword;
+        setState(LOGIN_ACCOUNT);
     } else if (lockStatus == 1) {
         print("\n\nYou are not welcome here. Begone.\n");
         setState(CON_DISCONNECTING);
@@ -1179,6 +1234,12 @@ bool Socket::negotiate(unsigned char ch) {
             opts.naws = (tState == NEG_WILL);
             tState = NEG_NONE;
             break;
+        case TELOPT_TM:
+            // RFC 860: always ack DO TM with WILL TM; it is a per-request synch mark, not a tracked mode.
+            if (tState == NEG_DO)
+                writeRaw(telnet::will_tm);
+            tState = NEG_NONE;
+            break;
         case TELOPT_ECHO:
             // TODO: remote echo unimplemented
             tState = NEG_NONE;
@@ -1327,7 +1388,8 @@ void Socket::reconnect(bool pauseScreen) {
     } else {
         showLoginScreen();
         askFor("\n\nPlease enter account name: ");
-        setState(LOGIN_GET_ACCOUNT_NAME);
+        getLoginSession().step = LoginSession::Step::AccountName;
+        setState(LOGIN_ACCOUNT);
     }
 }
 
@@ -2609,6 +2671,32 @@ std::shared_ptr<Account> Socket::getSessionAccount() const {
 
 std::string Socket::getSessionAccountName() const {
     return currentAccountName;
+}
+
+CharacterDraft& Socket::getCreationDraft() {
+    if(!creationDraft)
+        creationDraft = std::make_unique<CharacterDraft>();
+    return *creationDraft;
+}
+
+void Socket::resetCreationDraft() {
+    creationDraft = std::make_unique<CharacterDraft>();
+}
+
+CreationSession& Socket::getCreationSession() {
+    if(!creationSession)
+        creationSession = std::make_unique<CreationSession>();
+    return *creationSession;
+}
+
+void Socket::resetCreationSession() {
+    creationSession = std::make_unique<CreationSession>();
+}
+
+LoginSession& Socket::getLoginSession() {
+    if(!loginSession)
+        loginSession = std::make_unique<LoginSession>();
+    return *loginSession;
 }
 
 void Socket::setAccount(const std::shared_ptr<Account>& acc) {

@@ -30,6 +30,38 @@ TEST(Endpoint, VersionIsPublic) {
     EXPECT_NE(res.body.find("version"), std::string::npos);
 }
 
+// Startup policy: what disables the REST listener, and what only warns.
+
+TEST(HttpConfigUsable, PortZeroIsDisabled) {
+    std::string why;
+    EXPECT_FALSE(apiHttpConfigUsable(0, "a-long-enough-secret-of-32-bytes!", why));
+    EXPECT_NE(why.find("disabled"), std::string::npos);
+}
+
+TEST(HttpConfigUsable, PortAboveRangeIsUnusable) {
+    std::string why;
+    EXPECT_FALSE(apiHttpConfigUsable(70000, "a-long-enough-secret-of-32-bytes!", why));
+    EXPECT_FALSE(why.empty());
+}
+
+TEST(HttpConfigUsable, EmptySecretIsUnusable) {
+    std::string why;
+    EXPECT_FALSE(apiHttpConfigUsable(8080, "", why));
+    EXPECT_NE(why.find("JwtSecret"), std::string::npos);
+}
+
+TEST(HttpConfigUsable, ShortSecretStartsWithWarning) {
+    std::string why;
+    EXPECT_TRUE(apiHttpConfigUsable(8080, "short", why));
+    EXPECT_FALSE(why.empty());
+}
+
+TEST(HttpConfigUsable, GoodConfigHasNoComplaint) {
+    std::string why;
+    EXPECT_TRUE(apiHttpConfigUsable(8080, "a-long-enough-secret-of-32-bytes!", why));
+    EXPECT_TRUE(why.empty());
+}
+
 TEST(Auth, VerifyRejectsMissingHeader) {
     std::string userId, name;
     EXPECT_FALSE(apiVerifyJwt("", userId, name));

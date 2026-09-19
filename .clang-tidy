@@ -1,0 +1,10 @@
+# Modernization checks for RealmsCode. See CLAUDE.md "Linting" for how to run.
+# These also surface in clangd/CLion project-wide; intended for targeted `clang-tidy --fix` runs.
+# NOTE: misc-const-correctness emits east-const; this codebase is west-const, so normalize after --fix.
+Checks: >
+  -*,
+  google-readability-casting,
+  misc-const-correctness,
+  readability-container-contains
+HeaderFilterRegex: ''
+WarningsAsErrors: ''

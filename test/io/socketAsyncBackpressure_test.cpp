@@ -29,6 +29,15 @@ struct TestSocket : public Socket {
     using Socket::writeInFlight;
     using Socket::readPaused;
     using Socket::input;
+    using Socket::sock;
+    using Socket::drainCloseTimeout;
+};
+
+// Restores the process-wide drain deadline the tests shorten.
+struct ScopedDrainTimeout {
+    std::chrono::milliseconds saved{TestSocket::drainCloseTimeout};
+    explicit ScopedDrainTimeout(std::chrono::milliseconds ms) { TestSocket::drainCloseTimeout = ms; }
+    ~ScopedDrainTimeout() { TestSocket::drainCloseTimeout = saved; }
 };
 
 // A loopback connection: the accepted server side wrapped in a shared TestSocket (so
@@ -119,4 +128,71 @@ TEST(SocketAsyncBackpressure, DrainAndCloseDoesNotBlock) {
     EXPECT_EQ(s.getFd(), -1);
     EXPECT_TRUE(s.writeQueue.empty());
     EXPECT_EQ(s.queuedBytes, 0u);
+}
+
+// disconnect() right after two writes: the first is in flight, the second queued behind it.
+// Both must reach the peer before the close (the "Incorrect." before a disconnect case).
+TEST(SocketAsyncBackpressure, CloseDeliversQueuedOutputFirst) {
+    Link link;
+    auto& s = *link.server;
+
+    s.enqueue("first");
+    s.enqueue("second");
+    ASSERT_TRUE(s.writeInFlight);
+    s.drainAndClose();
+
+    for (int i = 0; i < 20 && s.sock && s.sock->is_open(); i++)
+        link.pump(10);
+    EXPECT_FALSE(s.sock && s.sock->is_open());
+
+    std::string got;
+    asio::error_code ec;
+    char buf[64];
+    while (!ec) {
+        const std::size_t n = link.client.read_some(asio::buffer(buf), ec);
+        got.append(buf, n);
+    }
+    EXPECT_EQ(got, "firstsecond");
+    EXPECT_EQ(ec, asio::error::eof);
+}
+
+// A peer that stops reading stalls the in-flight write; without a deadline the deferred
+// close (and the Socket its handler holds) would live forever.
+TEST(SocketAsyncBackpressure, DeferredCloseIsBoundedByTimeout) {
+    constexpr std::chrono::milliseconds kTimeout{50};
+    Link link;
+    auto& s = *link.server;
+    const ScopedDrainTimeout timeout(kTimeout);
+
+    // Shrink both windows so a sub-cap payload cannot fit in kernel buffers.
+    asio::error_code optEc;
+    link.client.set_option(tcp::socket::receive_buffer_size(4096), optEc);
+    s.sock->set_option(tcp::socket::send_buffer_size(4096), optEc);
+
+    const std::size_t payload = 768 * 1024;   // under the 1 MB backlog cap
+    s.enqueue(std::string(payload, 'z'));
+    ASSERT_TRUE(s.writeInFlight);
+
+    s.drainAndClose();
+    ASSERT_TRUE(s.sock && s.sock->is_open());   // deferred, not closed yet
+
+    const auto started = std::chrono::steady_clock::now();
+    for (int i = 0; i < 40 && s.sock && s.sock->is_open(); i++)
+        link.pump(10);
+    const auto elapsed = std::chrono::steady_clock::now() - started;
+
+    ASSERT_FALSE(s.sock && s.sock->is_open());
+    EXPECT_GE(elapsed, kTimeout);               // the deadline closed it, not the write completing
+    EXPECT_FALSE(s.writeInFlight);
+    EXPECT_TRUE(s.writeQueue.empty());
+
+    std::string got;
+    asio::error_code ec;
+    char buf[4096];
+    while (!ec) {
+        const std::size_t n = link.client.read_some(asio::buffer(buf), ec);
+        got.append(buf, n);
+    }
+    EXPECT_TRUE(ec == asio::error::eof || ec == asio::error::connection_reset) << ec.message();
+    EXPECT_LT(got.size(), payload);             // the stalled write was aborted mid-stream
 }

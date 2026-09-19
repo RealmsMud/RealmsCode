@@ -31,11 +31,13 @@
 #include "xml.hpp"                                  // for NODE_NAME, copyTo...
 
 bool Config::loadConfig(bool reload) {
+    return loadConfigFile(Path::Config / "config.xml", reload);
+}
+
+bool Config::loadConfigFile(const fs::path& filename, bool reload) {
     xmlDocPtr   xmlDoc;
     xmlNodePtr  rootNode;
     xmlNodePtr  curNode;
-
-    auto filename = Path::Config / "config.xml";
 
     if(!fs::exists(filename))
         return(false);
@@ -134,6 +136,10 @@ void Config::loadGeneral(xmlNodePtr rootNode) {
         else if(NODE_NAME(curNode, "HttpPort")) xml::copyToNum(httpPort, curNode);
         else if(NODE_NAME(curNode, "JwtSecret")) xml::copyToString(jwtSecret, curNode);
         else if(NODE_NAME(curNode, "JwtIssuer")) xml::copyToString(jwtIssuer, curNode);
+        else if(NODE_NAME(curNode, "MaxLoginFailures")) xml::copyToNum(maxLoginFailures, curNode);
+        else if(NODE_NAME(curNode, "LoginFailureWindow")) xml::copyToNum(loginFailureWindow, curNode);
+        else if(NODE_NAME(curNode, "LoginLockoutTime")) xml::copyToNum(loginLockoutTime, curNode);
+        else if(NODE_NAME(curNode, "TrustXForwardedFor")) xml::copyToBool(trustXForwardedFor, curNode);
         else if(!bHavePort && NODE_NAME(curNode, "Port")) xml::copyToNum(portNum, curNode);
 
         curNode = curNode->next;
@@ -204,6 +210,10 @@ void Config::loadWebhookTokens(xmlNodePtr rootNode) {
 
 // Functions to get configured options
 bool Config::saveConfig() const {
+    return saveConfigFile(Path::Config / "config.xml");
+}
+
+bool Config::saveConfigFile(const fs::path& filename) const {
     xmlDocPtr   xmlDoc;
     xmlNodePtr      rootNode, curNode;
 
@@ -248,6 +258,14 @@ bool Config::saveConfig() const {
     xml::saveNonZeroNum(curNode, "ShopNumObjects", shopNumObjects);
     xml::saveNonZeroNum(curNode, "ShopNumLines", shopNumLines);
 
+    xml::newNumChild(curNode, "HttpPort", httpPort);   // 0 means "disabled" and must round-trip
+    xml::saveNonNullString(curNode, "JwtSecret", jwtSecret);
+    xml::saveNonNullString(curNode, "JwtIssuer", jwtIssuer);
+    xml::newNumChild(curNode, "MaxLoginFailures", maxLoginFailures);
+    xml::newNumChild(curNode, "LoginFailureWindow", loginFailureWindow);
+    xml::newNumChild(curNode, "LoginLockoutTime", loginLockoutTime);
+    xml::newBoolChild(curNode, "TrustXForwardedFor", trustXForwardedFor);
+
     // Lottery Section
     curNode = xmlNewChild(rootNode, nullptr, BAD_CAST "Lottery", nullptr);
     xml::saveNonZeroNum(curNode, "CurrentCycle", lotteryCycle);
@@ -264,7 +282,7 @@ bool Config::saveConfig() const {
         ticket->saveToXml(ticketsNode);
     }
 
-    xml::saveFile((Path::Config /"config.xml").c_str(), xmlDoc);
+    xml::saveFile(filename.c_str(), xmlDoc);
     xmlFreeDoc(xmlDoc);
 
     return(true);

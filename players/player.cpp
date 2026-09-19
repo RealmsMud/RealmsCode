@@ -82,6 +82,89 @@
 #include "account.hpp"
 
 //********************************************************************
+//              initSpellsEffects
+//********************************************************************
+// idempotent: init() re-runs every login; level-gated grants fire only at level
+void Player::initSpellsEffects() {
+    learnLanguage(LCOMMON); // All races speak common
+
+    //Barbarians get natural warmth. They're from the frozen tundra.
+    if(race == BARBARIAN) {
+       addPermEffect("warmth");
+    }
+    //Kenku can speak any language, acting like parrots, even though not understanding
+    if(race == KENKU) {
+       addPermEffect("tongues");
+    }
+
+    if(!current_language) {
+        initLanguages();
+        current_language = LCOMMON;
+        setFlag(P_LANGUAGE_COLORS);
+    }
+
+    //  Paladins get auto know-aura
+    if(cClass==CreatureClass::PALADIN)
+        addPermEffect("know-aura");
+
+    //  Mages get auto d-m
+    if( (   cClass==CreatureClass::MAGE || cClass2 == CreatureClass::MAGE) &&
+       !( cClass == CreatureClass::MAGE && cClass2 == CreatureClass::ASSASSIN)) {
+        addPermEffect("detect-magic");
+    }
+
+    if(cClass == CreatureClass::DRUID && level >= 7)
+        addPermEffect("pass-without-trace");
+
+    if(cClass == CreatureClass::THIEF && cClass2 == CreatureClass::MAGE)
+        addPermEffect("detect-magic");
+
+    if(level >=1 && (cClass == CreatureClass::LICH || cClass == CreatureClass::MAGE) ) {
+        learnSpell(S_ARMOR);
+        learnSpell(S_MAGIC_MISSILE);
+    }
+
+    if(level >= 1 && (cClass == CreatureClass::CLERIC || cClass == CreatureClass::DRUID) )
+        learnSpell(S_VIGOR);
+
+    if(cClass == CreatureClass::CLERIC && deity == CERIS && level >= 13)
+        learnSpell(S_REJUVENATE);
+
+    if(cClass == CreatureClass::CLERIC && deity == CERIS && level >= 19)
+        learnSpell(S_RESURRECT);
+
+    if(cClass == CreatureClass::CLERIC && !hasSecondClass() && deity == ARAMON && level >= 22)
+        learnSpell(S_BLOODFUSION);
+
+    if(level >=10 && ((cClass == CreatureClass::RANGER ||
+                                 cClass == CreatureClass::DRUID ||
+                                             (cClass == CreatureClass::CLERIC && getDeity() == MARA))))
+        learnSpell(S_TRACK);
+
+    // Druids and Clerics of Ares can cast both benediction and malediction. They get them both at level 7
+    if ((cClass == CreatureClass::DRUID || (cClass == CreatureClass::CLERIC && getDeity() == ARES)) && level >=7) {
+        learnSpell(S_BENEDICTION);
+        learnSpell(S_MALEDICTION);
+    }
+    // Paladins receive benediction spell at level 13. Clerics of good-aligned gods get it at level 7
+    if ((cClass == CreatureClass::PALADIN && level >= 13) || ((cClass == CreatureClass::CLERIC && getDeityAlignment() >= LIGHTBLUE) && level >=7)) {
+        learnSpell(S_BENEDICTION);
+    }
+    // Dknights receive malediction spell at level 13. Clerics of evil-aligned gods get it at level 7
+    if ((cClass == CreatureClass::DEATHKNIGHT && level >= 13) || ((cClass == CreatureClass::CLERIC && getDeityAlignment() <= PINKISH) && level >=7)) {
+        learnSpell(S_MALEDICTION);
+    }
+
+    //  Werewolves get auto Detect-Invisibility at level 7
+    if(isEffected("lycanthropy") && level >= 7)
+        addPermEffect("detect-invisible");
+
+    //  Rangers level 13+ can detect misted vampires.
+    if(cClass == CreatureClass::RANGER && level >= 13)
+        addPermEffect("true-sight");
+}
+
+//********************************************************************
 //              init
 //********************************************************************
 // This function initializes a player's stats and loads up the room he
@@ -190,82 +273,7 @@ void Player::init() {
     if(isDm())
         clearFlag(P_BUGGED);
 
-    learnLanguage(LCOMMON); // All races speak common
-
-    //Barbarians get natural warmth. They're from the frozen tundra.
-    if(race == BARBARIAN) {
-       addPermEffect("warmth"); 
-    }
-    //Kenku can speak any language, acting like parrots, even though not understanding
-    if(race == KENKU) {
-       addPermEffect("tongues");
-    }
-
-    if(!current_language) {
-        initLanguages();
-        current_language = LCOMMON;
-        setFlag(P_LANGUAGE_COLORS);
-    }
-
-    //  Paladins get auto know-aura
-    if(cClass==CreatureClass::PALADIN)
-        addPermEffect("know-aura");
-
-    //  Mages get auto d-m
-    if( (   cClass==CreatureClass::MAGE || cClass2 == CreatureClass::MAGE) &&
-       !( cClass == CreatureClass::MAGE && cClass2 == CreatureClass::ASSASSIN)) {
-        addPermEffect("detect-magic");
-    }
-
-    if(cClass == CreatureClass::DRUID && level >= 7)
-        addPermEffect("pass-without-trace");
-
-    if(cClass == CreatureClass::THIEF && cClass2 == CreatureClass::MAGE)
-        addPermEffect("detect-magic");
-
-    if(level >=1 && (cClass == CreatureClass::LICH || cClass == CreatureClass::MAGE) ) {
-        learnSpell(S_ARMOR);
-        learnSpell(S_MAGIC_MISSILE);
-    }
-
-    if(level >= 1 && (cClass == CreatureClass::CLERIC || cClass == CreatureClass::DRUID) )
-        learnSpell(S_VIGOR);
-
-    if(cClass == CreatureClass::CLERIC && deity == CERIS && level >= 13)
-        learnSpell(S_REJUVENATE);
-
-    if(cClass == CreatureClass::CLERIC && deity == CERIS && level >= 19)
-        learnSpell(S_RESURRECT);
-
-    if(cClass == CreatureClass::CLERIC && !hasSecondClass() && deity == ARAMON && level >= 22)
-        learnSpell(S_BLOODFUSION);
-
-    if(level >=10 && ((cClass == CreatureClass::RANGER || 
-                                 cClass == CreatureClass::DRUID ||
-                                             (cClass == CreatureClass::CLERIC && getDeity() == MARA))))
-        learnSpell(S_TRACK);
-
-    // Druids and Clerics of Ares can cast both benediction and malediction. They get them both at level 7
-    if ((cClass == CreatureClass::DRUID || (cClass == CreatureClass::CLERIC && getDeity() == ARES)) && level >=7) {
-        learnSpell(S_BENEDICTION);
-        learnSpell(S_MALEDICTION);
-    }
-    // Paladins receive benediction spell at level 13. Clerics of good-aligned gods get it at level 7
-    if ((cClass == CreatureClass::PALADIN && level >= 13) || ((cClass == CreatureClass::CLERIC && getDeityAlignment() >= LIGHTBLUE) && level >=7)) {
-        learnSpell(S_BENEDICTION);
-    }
-    // Dknights receive malediction spell at level 13. Clerics of evil-aligned gods get it at level 7
-    if ((cClass == CreatureClass::DEATHKNIGHT && level >= 13) || ((cClass == CreatureClass::CLERIC && getDeityAlignment() <= PINKISH) && level >=7)) {
-        learnSpell(S_MALEDICTION);
-    }
-
-    //  Werewolves get auto Detect-Invisibility at level 7
-    if(isEffected("lycanthropy") && level >= 7)
-        addPermEffect("detect-invisible");
-
-    //  Rangers level 13+ can detect misted vampires.
-    if(cClass == CreatureClass::RANGER && level >= 13)
-        addPermEffect("true-sight");
+    initSpellsEffects();
 
     // clear ignore flags
     clearFlag(P_IGNORE_CLASS_SEND);

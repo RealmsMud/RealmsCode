@@ -19,6 +19,7 @@
 #pragma once
 #include <memory>
 
+#include <filesystem>
 #include <list>
 #include <map>
 #include <set>
@@ -232,6 +233,11 @@ public:
     bool deleteBan(int toDel);
     bool isBanned(std::string_view site);
     int isLockedOut(const std::shared_ptr<Socket>& sock);
+    // Socket-free lockout check (for the HTTP API): 0 not locked, 1 locked, 2
+    // password-locked. On a match outPassword/outSite receive the ban's password and
+    // site. hostname may be empty (HTTP does no reverse DNS). isLockedOut(sock) wraps this.
+    int isSiteLockedOut(std::string_view ip, std::string_view hostname = "",
+                        std::string* outPassword = nullptr, std::string* outSite = nullptr);
 
 
 // Guilds
@@ -415,6 +421,12 @@ public:
     [[nodiscard]] int getHttpPort() const { return httpPort; }
     [[nodiscard]] std::string getJwtSecret() const { return jwtSecret; }
     [[nodiscard]] std::string getJwtIssuer() const { return jwtIssuer.empty() ? std::string("realms") : jwtIssuer; }
+    [[nodiscard]] int getMaxLoginFailures() const { return maxLoginFailures; }
+    [[nodiscard]] int getLoginFailureWindow() const { return loginFailureWindow; }
+    [[nodiscard]] int getLoginLockoutTime() const { return loginLockoutTime; }
+    [[nodiscard]] bool getTrustXForwardedFor() const { return trustXForwardedFor; }
+    void setTrustXForwardedFor(bool pTrust) { trustXForwardedFor = pTrust; }
+    void setCharCreationDisabled(bool pDisabled) { charCreationDisabled = pDisabled; }
     [[nodiscard]] std::string getQS() const;
     [[nodiscard]] std::string getUserAgent() const;
     [[nodiscard]] std::string getReviewer() const;
@@ -451,14 +463,17 @@ protected:
     void loadWebhookTokens(xmlNodePtr rootNode);
 
     void clearSkills();
+
+public:
     bool loadSkillGroups();
     bool loadSkills();
 
-
-public:
     bool loadConfig(bool reload=false);
     bool loadDiscordConfig();
     bool saveConfig() const;
+    // Path-taking forms; the two above delegate with Path::Config / "config.xml".
+    bool loadConfigFile(const std::filesystem::path& filename, bool reload);
+    bool saveConfigFile(const std::filesystem::path& filename) const;
 
 // Player Classes
     bool loadClasses();
@@ -515,6 +530,7 @@ private:
 public:
     [[nodiscard]] int getNextGuildId() const;
     [[nodiscard]] bool getCheckDouble() const;
+    [[nodiscard]] bool isCharCreationDisabled() const { return charCreationDisabled; }
     [[nodiscard]] bool getLogTelnet() const;
 
     void setNextGuildId(int pNextGuildId);
@@ -527,6 +543,10 @@ private:
     int httpPort = 8080;        // REST API (Crow) listen port; web editor backend
     std::string jwtSecret;      // HS256 signing secret for editor JWTs (set in config.xml)
     std::string jwtIssuer;      // JWT issuer claim; defaults to "realms"
+    int maxLoginFailures = 10;      // REST credential failures per window before lockout; 0 disables
+    int loginFailureWindow = 300;   // seconds
+    int loginLockoutTime = 600;     // seconds
+    bool trustXForwardedFor = false;
     std::string qs;             // authorization query string
     std::string userAgent;
     std::string defaultArea;
