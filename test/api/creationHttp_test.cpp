@@ -26,33 +26,27 @@ bool gameConfigReady() {
     static const bool ready = [] {
         ensureConfig();
         ensureServer();
-        const bool ok = gConfig->loadConfig()
-            && gConfig->loadStartLoc()
-            && gConfig->loadSkillGroups() && gConfig->loadSkills()
-            && gConfig->loadDeities()
-            && gConfig->loadClasses()
-            && gConfig->loadRaces();
+        const bool ok = gConfig->loadConfig() && gConfig->loadStartLoc() && gConfig->loadSkillGroups() && gConfig->loadSkills() && gConfig->loadDeities() && gConfig->loadClasses() && gConfig->loadRaces();
         gConfig->loadCalendar();
         return ok;
     }();
     return ready;
 }
 
-crow::response post(HttpServer& server, const std::string& url, const std::string& body,
-                    const std::string& token = "", const std::string& remoteIp = "10.0.0.1") {
+crow::response post(HttpServer &server, const std::string &url, const std::string &body, const std::string &token = "", const std::string &remoteIp = "10.0.0.1") {
     crow::request req;
     req.url = url;
     req.method = crow::HTTPMethod::Post;
     req.body = body;
     req.remote_ip_address = remoteIp;
-    if(!token.empty())
+    if (!token.empty())
         req.headers.emplace("Authorization", "Bearer " + token);
     crow::response res;
     server.handle(req, res);
     return res;
 }
 
-std::shared_ptr<Account> seedAccount(const std::string& properName, const std::string& pw, bool banned = false) {
+std::shared_ptr<Account> seedAccount(const std::string &properName, const std::string &pw, bool banned = false) {
     ensureConfig();
     ensureServer();
     auto acct = std::make_shared<Account>(properName);
@@ -62,15 +56,15 @@ std::shared_ptr<Account> seedAccount(const std::string& properName, const std::s
     return acct;
 }
 
-void removeAccountFile(const std::string& properName) {
-    std::filesystem::remove((Path::Account / properName).replace_extension("json"));
-}
+void removeAccountFile(const std::string &properName) { std::filesystem::remove((Path::Account / properName).replace_extension("json")); }
 
-std::string makeAccountToken(const std::string& subject) {
+std::string makeAccountToken(const std::string &subject) {
     auto now = std::chrono::system_clock::now();
     return jwt::create()
-            .set_type("JWT").set_issuer(gConfig->getJwtIssuer())
-            .set_issued_at(now).set_expires_at(now + std::chrono::hours(1))
+            .set_type("JWT")
+            .set_issuer(gConfig->getJwtIssuer())
+            .set_issued_at(now)
+            .set_expires_at(now + std::chrono::hours(1))
             .set_subject(subject)
             .set_payload_claim("type", jwt::claim(std::string("account")))
             .sign(jwt::algorithm::hs256{gConfig->getJwtSecret()});
@@ -79,8 +73,10 @@ std::string makeAccountToken(const std::string& subject) {
 std::string makeStaffToken() {
     auto now = std::chrono::system_clock::now();
     return jwt::create()
-            .set_type("JWT").set_issuer(gConfig->getJwtIssuer())
-            .set_issued_at(now).set_expires_at(now + std::chrono::hours(1))
+            .set_type("JWT")
+            .set_issuer(gConfig->getJwtIssuer())
+            .set_issued_at(now)
+            .set_expires_at(now + std::chrono::hours(1))
             .set_payload_claim("userId", jwt::claim(std::string("1")))
             .sign(jwt::algorithm::hs256{gConfig->getJwtSecret()});
 }
@@ -94,22 +90,14 @@ struct CreationHttp : ::testing::Test {
         ensureServer();
         server.prepareForTesting();
     }
-    void TearDown() override {
-        gConfig->setTrustXForwardedFor(false);
-    }
+    void TearDown() override { gConfig->setTrustXForwardedFor(false); }
 };
 
-TEST_F(CreationHttp, AccountCreateRejectsMalformedJson) {
-    EXPECT_EQ(post(server, "/api/account/create", "not json").code, 400);
-}
+TEST_F(CreationHttp, AccountCreateRejectsMalformedJson) { EXPECT_EQ(post(server, "/api/account/create", "not json").code, 400); }
 
-TEST_F(CreationHttp, AccountCreateRejectsWeakPassword) {
-    EXPECT_EQ(post(server, "/api/account/create", R"({"name":"weakpwacct","pw":"x"})").code, 400);
-}
+TEST_F(CreationHttp, AccountCreateRejectsWeakPassword) { EXPECT_EQ(post(server, "/api/account/create", R"({"name":"weakpwacct","pw":"x"})").code, 400); }
 
-TEST_F(CreationHttp, AccountCreateRefusesDmName) {
-    EXPECT_EQ(post(server, "/api/account/create", R"({"name":"bane","pw":"goodpass"})").code, 403);
-}
+TEST_F(CreationHttp, AccountCreateRefusesDmName) { EXPECT_EQ(post(server, "/api/account/create", R"({"name":"bane","pw":"goodpass"})").code, 403); }
 
 // The middleware 401 path needs the per-connection pipeline that handle_full() lacks
 // (see endpoint_test.cpp), so the account-token verifier is unit-tested directly.
@@ -128,7 +116,7 @@ TEST_F(CreationHttp, JwtRejectsGarbageToken) {
 TEST_F(CreationHttp, JwtRejectsStaffToken) {
     ensureConfig();
     std::string acct;
-    EXPECT_FALSE(apiVerifyAccountJwt("Bearer " + makeStaffToken(), acct));   // no type=account
+    EXPECT_FALSE(apiVerifyAccountJwt("Bearer " + makeStaffToken(), acct)); // no type=account
 }
 
 TEST_F(CreationHttp, JwtAcceptsAccountToken) {
@@ -139,7 +127,7 @@ TEST_F(CreationHttp, JwtAcceptsAccountToken) {
 }
 
 TEST_F(CreationHttp, AccountCreateAndDuplicate) {
-    if(!gameConfigReady())
+    if (!gameConfigReady())
         GTEST_SKIP() << "createAccount persists + checkName needs data (set REALMS_BASE_PATH)";
 
     const std::string name = "Httpcreateacct";
@@ -163,7 +151,7 @@ TEST_F(CreationHttp, AccountCreateNonStringFieldsAre400) {
 TEST_F(CreationHttp, AccountCreateThrottlesOn409) {
     seedAccount("Existsacct", "goodpass");
     const std::string body = R"({"name":"existsacct","pw":"goodpass"})";
-    for(int i = 0; i < kTestMaxFailures; i++)
+    for (int i = 0; i < kTestMaxFailures; i++)
         EXPECT_EQ(post(server, "/api/account/create", body, "", "10.9.9.1").code, 409) << "attempt " << i;
 
     auto res = post(server, "/api/account/create", body, "", "10.9.9.1");
@@ -171,13 +159,11 @@ TEST_F(CreationHttp, AccountCreateThrottlesOn409) {
     EXPECT_FALSE(res.get_header_value("Retry-After").empty());
 }
 
-TEST_F(CreationHttp, LegacyLoginRejectsNonStringName) {
-    EXPECT_EQ(post(server, "/api/account/legacy-login", R"({"name":[],"pw":"goodpass"})").code, 400);
-}
+TEST_F(CreationHttp, LegacyLoginRejectsNonStringName) { EXPECT_EQ(post(server, "/api/account/legacy-login", R"({"name":[],"pw":"goodpass"})").code, 400); }
 
 TEST_F(CreationHttp, LegacyLoginThrottlesOn404) {
     const std::string body = R"({"name":"nosuchlegacychar","pw":"whatever"})";
-    for(int i = 0; i < kTestMaxFailures; i++)
+    for (int i = 0; i < kTestMaxFailures; i++)
         EXPECT_EQ(post(server, "/api/account/legacy-login", body, "", "10.9.9.2").code, 404) << "attempt " << i;
 
     EXPECT_EQ(post(server, "/api/account/legacy-login", body, "", "10.9.9.2").code, 429);
@@ -241,22 +227,18 @@ TEST_F(CreationHttp, ParsePathMissingIsEmpty) {
     EXPECT_TRUE(path->empty());
 }
 
-TEST_F(CreationHttp, ParsePathRejectsNonArray) {
-    EXPECT_FALSE(apiParseCreationPath(nlohmann::json::parse(R"({"path":"race"})")));
-}
+TEST_F(CreationHttp, ParsePathRejectsNonArray) { EXPECT_FALSE(apiParseCreationPath(nlohmann::json::parse(R"({"path":"race"})"))); }
 
 TEST_F(CreationHttp, ParsePathRejectsOverlongPath) {
     nlohmann::json entry{{"step", "race"}, {"value", "1"}};
     nlohmann::json in;
     in["path"] = nlohmann::json::array();
-    for(std::size_t i = 0; i <= kMaxPathLen; i++)
+    for (std::size_t i = 0; i <= kMaxPathLen; i++)
         in["path"].push_back(entry);
 
     EXPECT_FALSE(apiParseCreationPath(in));
 }
 
-TEST_F(CreationHttp, ParsePathRejectsUnknownStepToken) {
-    EXPECT_FALSE(apiParseCreationPath(nlohmann::json::parse(R"({"path":[{"step":"nosuchstep","value":"1"}]})")));
-}
+TEST_F(CreationHttp, ParsePathRejectsUnknownStepToken) { EXPECT_FALSE(apiParseCreationPath(nlohmann::json::parse(R"({"path":[{"step":"nosuchstep","value":"1"}]})"))); }
 
 } // namespace

@@ -236,8 +236,7 @@ public:
     // Socket-free lockout check (for the HTTP API): 0 not locked, 1 locked, 2
     // password-locked. On a match outPassword/outSite receive the ban's password and
     // site. hostname may be empty (HTTP does no reverse DNS). isLockedOut(sock) wraps this.
-    int isSiteLockedOut(std::string_view ip, std::string_view hostname = "",
-                        std::string* outPassword = nullptr, std::string* outSite = nullptr);
+    int isSiteLockedOut(std::string_view ip, std::string_view hostname = "", std::string* outPassword = nullptr, std::string* outSite = nullptr);
 
 
 // Guilds

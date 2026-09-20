@@ -170,12 +170,9 @@ private:
     crow::response zoneListEndpoint(const crow::request& req, const std::string& zone, int type);
 
     // capture by value: a timed-out job still runs after submitAuthorized returns
-    crow::response submitAuthorized(const crow::request& req,
-                                    std::function<int(const AuthContext&)> authorize,
-                                    std::function<crow::response(const AuthContext&)> work);
+    crow::response submitAuthorized(const crow::request& req, std::function<int(const AuthContext&)> authorize, std::function<crow::response(const AuthContext&)> work);
 
     // Crow thread. Rejects locked-out peers before the job takes a queue slot, then records
     // the outcome; isFailure decides which status codes count against the peer.
-    crow::response submitThrottled(const crow::request& req, ApiRequestQueue::Job job,
-                                   bool (*isFailure)(int code));
+    crow::response submitThrottled(const crow::request& req, ApiRequestQueue::Job job, bool (*isFailure)(int code));
 };

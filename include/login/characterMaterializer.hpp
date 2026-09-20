@@ -25,19 +25,19 @@ class Player;
 class Account;
 
 namespace Create {
-    std::shared_ptr<Player> materialize(const CharacterDraft& draft, const Account& account);
+std::shared_ptr<Player> materialize(const CharacterDraft &draft, const Account &account);
 
-    struct PersistResult {
-        bool ok = false;
-        std::string error;
-    };
-    PersistResult persistNewCharacter(const std::shared_ptr<Player>& player, Account& account);
+struct PersistResult {
+    bool ok = false;
+    std::string error;
+};
+PersistResult persistNewCharacter(const std::shared_ptr<Player> &player, Account &account);
 
-    struct CommitResult {
-        bool ok = false;
-        bool nameTaken = false;
-        std::string error;
-        std::shared_ptr<Player> player;
-    };
-    CommitResult commitCharacter(const CharacterDraft& draft, Account& account);
-}
+struct CommitResult {
+    bool ok = false;
+    bool nameTaken = false;
+    std::string error;
+    std::shared_ptr<Player> player;
+};
+CommitResult commitCharacter(const CharacterDraft &draft, Account &account);
+} // namespace Create

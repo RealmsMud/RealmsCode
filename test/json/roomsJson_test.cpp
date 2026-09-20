@@ -26,7 +26,7 @@ TEST(RoomJson, BlankRoomHasExpectedShape) {
     ASSERT_TRUE(j.is_object());
     EXPECT_EQ(j.at("name").get<std::string>(), "Test Room");
     EXPECT_TRUE(j.contains("info"));
-    EXPECT_FALSE(j.contains("area"));            // dropped; info already carries area
+    EXPECT_FALSE(j.contains("area")); // dropped; info already carries area
     EXPECT_TRUE(j.at("exits").is_array());
     EXPECT_TRUE(j.contains("flags"));
 }
@@ -39,7 +39,7 @@ TEST(RoomJson, ExitTargetCarriesRoomAndMapmarker) {
     auto exit = std::make_shared<Exit>();
     exit->setName("north");
     exit->target.room = mkCr("test", 42);
-    exit->target.mapmarker.set(1, 5, 6, 7);     // nonzero overland coords
+    exit->target.mapmarker.set(1, 5, 6, 7); // nonzero overland coords
 
     json j;
     to_json(j, *exit, LoadType::LS_FULL);
@@ -49,7 +49,7 @@ TEST(RoomJson, ExitTargetCarriesRoomAndMapmarker) {
     EXPECT_TRUE(j.at("target").contains("room"));
     EXPECT_TRUE(j.at("target").contains("mapmarker"));
     // MapMarker NLOHMANN_DEFINE keys: area, x, y, z
-    const json& mm = j.at("target").at("mapmarker");
+    const json &mm = j.at("target").at("mapmarker");
     EXPECT_EQ(mm.at("area").get<int>(), 1);
     EXPECT_EQ(mm.at("x").get<int>(), 5);
     EXPECT_EQ(mm.at("y").get<int>(), 6);
@@ -62,10 +62,10 @@ TEST(RoomJson, AuthoredKeysPresentInBothModes) {
     ensureServer();
     auto room = std::make_shared<UniqueRoom>();
 
-    for(LoadType mode : {LoadType::LS_FULL, LoadType::LS_PROTOTYPE}) {
+    for (LoadType mode: {LoadType::LS_FULL, LoadType::LS_PROTOTYPE}) {
         json j;
         to_json(j, *room, mode);
-        EXPECT_TRUE(j.contains("version"))     << "mode=" << static_cast<int>(mode);
+        EXPECT_TRUE(j.contains("version")) << "mode=" << static_cast<int>(mode);
         EXPECT_TRUE(j.contains("lastModTime")) << "mode=" << static_cast<int>(mode);
     }
 }

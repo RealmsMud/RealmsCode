@@ -11,10 +11,8 @@
 #include "apiTestSupport.hpp"
 
 namespace {
-bool has(const std::vector<std::string>& v, const std::string& s) {
-    return std::find(v.begin(), v.end(), s) != v.end();
-}
-}
+bool has(const std::vector<std::string> &v, const std::string &s) { return std::find(v.begin(), v.end(), s) != v.end(); }
+} // namespace
 
 TEST(ServerAccount, TrackAndListCharacters) {
     ensureServer();

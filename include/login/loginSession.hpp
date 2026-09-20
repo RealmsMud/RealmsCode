@@ -40,8 +40,8 @@ struct LoginSession {
     };
     Step step = Step::EntryChoice;
 
-    std::string accountName;      // pending/active account name (also read by char creation's DM check)
-    std::string email;            // email being set/confirmed
-    std::string targetCharacter;  // legacy-login name or claim-target character
-    std::string lockoutPassword;  // site-ban password the entrant must match
+    std::string accountName; // pending/active account name (also read by char creation's DM check)
+    std::string email; // email being set/confirmed
+    std::string targetCharacter; // legacy-login name or claim-target character
+    std::string lockoutPassword; // site-ban password the entrant must match
 };

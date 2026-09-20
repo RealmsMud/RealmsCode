@@ -27,7 +27,7 @@ TEST(Lowercize, ZeroFlagLowersEverything) {
 }
 
 TEST(Lowercize, NullCStringIsNoOp) {
-    char* s = nullptr;
+    char *s = nullptr;
     lowercize(s, 1);
     EXPECT_EQ(s, nullptr);
 }

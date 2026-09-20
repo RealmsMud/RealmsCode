@@ -26,34 +26,34 @@
 #include <nlohmann/json.hpp>
 
 namespace gmcp {
-    struct GmcpMapping {
-        std::string msdpVar;
-        std::string package;
-        std::string key;
-        bool numeric;
-        bool structured;
-    };
-    const std::vector<GmcpMapping>& mappings();
+struct GmcpMapping {
+    std::string msdpVar;
+    std::string package;
+    std::string key;
+    bool numeric;
+    bool structured;
+};
+const std::vector<GmcpMapping> &mappings();
 
-    struct GmcpField {
-        std::string key;
-        std::string value;
-        bool numeric;
-    };
+struct GmcpField {
+    std::string key;
+    std::string value;
+    bool numeric;
+};
 
-    std::string packageForVar(const std::string& msdpVar);
-    std::vector<std::string> varsForPackage(const std::string& package);
-    std::string stripSupportsVersion(const std::string& token);
+std::string packageForVar(const std::string &msdpVar);
+std::vector<std::string> varsForPackage(const std::string &package);
+std::string stripSupportsVersion(const std::string &token);
 
-    nlohmann::json buildPackageBody(const std::vector<GmcpField>& fields);
+nlohmann::json buildPackageBody(const std::vector<GmcpField> &fields);
 
-    struct ParsedMessage {
-        std::string package;
-        nlohmann::json data;
-    };
-    ParsedMessage parseMessage(std::string_view payload);
-    std::set<std::string> parseSupports(const nlohmann::json& arr);
-    nlohmann::json msdpTableToJson(std::string_view msdp);
-    nlohmann::json msdpValueToJson(std::string_view raw);
-    nlohmann::json charStatusVars();
-}
+struct ParsedMessage {
+    std::string package;
+    nlohmann::json data;
+};
+ParsedMessage parseMessage(std::string_view payload);
+std::set<std::string> parseSupports(const nlohmann::json &arr);
+nlohmann::json msdpTableToJson(std::string_view msdp);
+nlohmann::json msdpValueToJson(std::string_view raw);
+nlohmann::json charStatusVars();
+} // namespace gmcp

@@ -24,50 +24,37 @@
 
 namespace Create {
 
-void to_json(nlohmann::json &j, const Option &o) {
-    j = nlohmann::json{{"value", o.value}, {"label", o.label}, {"group", o.group}};
-}
+void to_json(nlohmann::json &j, const Option &o) { j = nlohmann::json{{"value", o.value}, {"label", o.label}, {"group", o.group}}; }
 
 } // namespace Create
 
 namespace Create::Flow {
 
 static std::string inputKindToken(InputKind k) {
-    switch(k) {
-        case InputKind::None:    return "none";
-        case InputKind::Letter:  return "letter";
-        case InputKind::Text:    return "text";
-        case InputKind::Stats:   return "stats";
-        case InputKind::Confirm: return "confirm";
+    switch (k) {
+        case InputKind::None:
+            return "none";
+        case InputKind::Letter:
+            return "letter";
+        case InputKind::Text:
+            return "text";
+        case InputKind::Stats:
+            return "stats";
+        case InputKind::Confirm:
+            return "confirm";
     }
     return "none";
 }
 
-void to_json(nlohmann::json &j, const ViewBlock &b) {
-    j = nlohmann::json{
-        {"kind", b.kind == BlockKind::Art ? "art" : "text"},
-        {"text", b.text},
-        {"lines", b.lines}
-    };
-}
+void to_json(nlohmann::json &j, const ViewBlock &b) { j = nlohmann::json{{"kind", b.kind == BlockKind::Art ? "art" : "text"}, {"text", b.text}, {"lines", b.lines}}; }
 
-void to_json(nlohmann::json &j, const StepView &v) {
-    j = nlohmann::json{
-        {"step", stepToken(v.step)},
-        {"inputKind", inputKindToken(v.inputKind)},
-        {"prompt", v.prompt},
-        {"blocks", v.blocks},
-        {"options", v.options}
-    };
-}
+void to_json(nlohmann::json &j, const StepView &v) { j = nlohmann::json{{"step", stepToken(v.step)}, {"inputKind", inputKindToken(v.inputKind)}, {"prompt", v.prompt}, {"blocks", v.blocks}, {"options", v.options}}; }
 
-void to_json(nlohmann::json &j, const Choice &c) {
-    j = nlohmann::json{{"step", stepToken(c.step)}, {"value", c.value}};
-}
+void to_json(nlohmann::json &j, const Choice &c) { j = nlohmann::json{{"step", stepToken(c.step)}, {"value", c.value}}; }
 
 void from_json(const nlohmann::json &j, Choice &c) {
     const auto step = stepFromToken(j.at("step").get<std::string>());
-    if(!step)
+    if (!step)
         throw std::invalid_argument("unknown creation step token");
     c.step = *step;
     c.value = j.at("value").get<std::string>();

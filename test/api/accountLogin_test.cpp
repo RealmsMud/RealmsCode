@@ -19,21 +19,20 @@ namespace {
 
 constexpr int kTestMaxFailures = 3;
 
-crow::response postLogin(HttpServer& server, const std::string& body,
-                         const std::string& remoteIp = "10.0.0.1", const std::string& xff = "") {
+crow::response postLogin(HttpServer &server, const std::string &body, const std::string &remoteIp = "10.0.0.1", const std::string &xff = "") {
     crow::request req;
     req.url = "/api/account/login";
     req.method = crow::HTTPMethod::Post;
     req.body = body;
     req.remote_ip_address = remoteIp;
-    if(!xff.empty())
+    if (!xff.empty())
         req.headers.emplace("X-Forwarded-For", xff);
     crow::response res;
     server.handle(req, res);
     return res;
 }
 
-std::shared_ptr<Account> seedAccount(const std::string& properName, const std::string& pw, bool banned = false) {
+std::shared_ptr<Account> seedAccount(const std::string &properName, const std::string &pw, bool banned = false) {
     auto acct = std::make_shared<Account>(properName);
     acct->setPassword(pw);
     acct->setBanned(banned);
@@ -49,22 +48,14 @@ struct AccountLogin : ::testing::Test {
         ensureServer();
         server.prepareForTesting();
     }
-    void TearDown() override {
-        gConfig->setTrustXForwardedFor(false);
-    }
+    void TearDown() override { gConfig->setTrustXForwardedFor(false); }
 };
 
-TEST_F(AccountLogin, RejectsMalformedJson) {
-    EXPECT_EQ(postLogin(server, "not json").code, 400);
-}
+TEST_F(AccountLogin, RejectsMalformedJson) { EXPECT_EQ(postLogin(server, "not json").code, 400); }
 
-TEST_F(AccountLogin, RejectsMissingFields) {
-    EXPECT_EQ(postLogin(server, R"({"name":"someacct"})").code, 400);
-}
+TEST_F(AccountLogin, RejectsMissingFields) { EXPECT_EQ(postLogin(server, R"({"name":"someacct"})").code, 400); }
 
-TEST_F(AccountLogin, MissingAccountIs404) {
-    EXPECT_EQ(postLogin(server, R"({"name":"nosuchacctxyz","pw":"whatever"})").code, 404);
-}
+TEST_F(AccountLogin, MissingAccountIs404) { EXPECT_EQ(postLogin(server, R"({"name":"nosuchacctxyz","pw":"whatever"})").code, 404); }
 
 TEST_F(AccountLogin, WrongPasswordIs401) {
     // Account names are stored proper-cased (lowercize(name,1)); the endpoint
@@ -79,10 +70,10 @@ TEST_F(AccountLogin, BannedAccountIs403) {
 }
 
 TEST_F(AccountLogin, ValidLoginReturnsToken) {
-    if(getenv("REALMS_BASE_PATH") == nullptr)
+    if (getenv("REALMS_BASE_PATH") == nullptr)
         GTEST_SKIP() << "recordLogin persists the account, which needs a writable data path";
 
-    const std::string name = "Apiloginok";  // proper-cased; request sends "apiloginok"
+    const std::string name = "Apiloginok"; // proper-cased; request sends "apiloginok"
     seedAccount(name, "goodpass");
     const auto file = (Path::Account / name).replace_extension("json");
     std::filesystem::remove(file);
@@ -97,17 +88,11 @@ TEST_F(AccountLogin, ValidLoginReturnsToken) {
 
 // Body validation: wrong types and out-of-bound lengths never reach the account lookup.
 
-TEST_F(AccountLogin, NonStringNameIs400) {
-    EXPECT_EQ(postLogin(server, R"({"name":123,"pw":"whatever"})").code, 400);
-}
+TEST_F(AccountLogin, NonStringNameIs400) { EXPECT_EQ(postLogin(server, R"({"name":123,"pw":"whatever"})").code, 400); }
 
-TEST_F(AccountLogin, NonStringPasswordIs400) {
-    EXPECT_EQ(postLogin(server, R"({"name":"someacct","pw":false})").code, 400);
-}
+TEST_F(AccountLogin, NonStringPasswordIs400) { EXPECT_EQ(postLogin(server, R"({"name":"someacct","pw":false})").code, 400); }
 
-TEST_F(AccountLogin, EmptyNameIs400) {
-    EXPECT_EQ(postLogin(server, R"({"name":"","pw":"whatever"})").code, 400);
-}
+TEST_F(AccountLogin, EmptyNameIs400) { EXPECT_EQ(postLogin(server, R"({"name":"","pw":"whatever"})").code, 400); }
 
 TEST_F(AccountLogin, OverlongNameIs400) {
     const std::string name(AccountAuth::kMaxNameLen + 1, 'a');
@@ -124,7 +109,7 @@ TEST_F(AccountLogin, OverlongPasswordIs400) {
 TEST_F(AccountLogin, ThrottlesAfterRepeated401) {
     seedAccount("Apithrottleacct", "rightpass");
     const std::string body = R"({"name":"apithrottleacct","pw":"wrongpass"})";
-    for(int i = 0; i < kTestMaxFailures; i++)
+    for (int i = 0; i < kTestMaxFailures; i++)
         EXPECT_EQ(postLogin(server, body).code, 401) << "attempt " << i;
 
     auto res = postLogin(server, body);
@@ -134,21 +119,21 @@ TEST_F(AccountLogin, ThrottlesAfterRepeated401) {
 
 TEST_F(AccountLogin, NotFoundCountsTowardThrottle) {
     const std::string body = R"({"name":"nosuchacctxyz","pw":"whatever"})";
-    for(int i = 0; i < kTestMaxFailures; i++)
+    for (int i = 0; i < kTestMaxFailures; i++)
         EXPECT_EQ(postLogin(server, body).code, 404) << "attempt " << i;
 
     EXPECT_EQ(postLogin(server, body).code, 429);
 }
 
 TEST_F(AccountLogin, BadRequestDoesNotCount) {
-    for(int i = 0; i < kTestMaxFailures * 2; i++)
+    for (int i = 0; i < kTestMaxFailures * 2; i++)
         EXPECT_EQ(postLogin(server, "not json").code, 400) << "attempt " << i;
 
     EXPECT_EQ(postLogin(server, R"({"name":"nosuchacctxyz","pw":"whatever"})").code, 404);
 }
 
 TEST_F(AccountLogin, SuccessClearsFailures) {
-    if(getenv("REALMS_BASE_PATH") == nullptr)
+    if (getenv("REALMS_BASE_PATH") == nullptr)
         GTEST_SKIP() << "recordLogin persists the account, which needs a writable data path";
 
     const std::string name = "Apithrottleclear";
@@ -156,7 +141,7 @@ TEST_F(AccountLogin, SuccessClearsFailures) {
     const auto file = (Path::Account / name).replace_extension("json");
     std::filesystem::remove(file);
 
-    for(int i = 0; i < kTestMaxFailures - 1; i++)
+    for (int i = 0; i < kTestMaxFailures - 1; i++)
         EXPECT_EQ(postLogin(server, R"({"name":"apithrottleclear","pw":"wrongpass"})").code, 401);
     EXPECT_EQ(postLogin(server, R"({"name":"apithrottleclear","pw":"goodpass"})").code, 200);
     EXPECT_EQ(postLogin(server, R"({"name":"apithrottleclear","pw":"wrongpass"})").code, 401);
@@ -166,7 +151,7 @@ TEST_F(AccountLogin, SuccessClearsFailures) {
 
 TEST_F(AccountLogin, KeyedByRemoteIp) {
     const std::string body = R"({"name":"nosuchacctxyz","pw":"whatever"})";
-    for(int i = 0; i < kTestMaxFailures; i++)
+    for (int i = 0; i < kTestMaxFailures; i++)
         postLogin(server, body, "10.0.0.5");
 
     EXPECT_EQ(postLogin(server, body, "10.0.0.5").code, 429);
@@ -175,7 +160,7 @@ TEST_F(AccountLogin, KeyedByRemoteIp) {
 
 TEST_F(AccountLogin, IgnoresXffByDefault) {
     const std::string body = R"({"name":"nosuchacctxyz","pw":"whatever"})";
-    for(int i = 0; i < kTestMaxFailures; i++)
+    for (int i = 0; i < kTestMaxFailures; i++)
         postLogin(server, body, "10.0.0.7", "203.0.113." + std::to_string(i));
 
     // Untrusted: the forged header cannot spread the budget across keys.
@@ -185,7 +170,7 @@ TEST_F(AccountLogin, IgnoresXffByDefault) {
 TEST_F(AccountLogin, HonorsLastXffHopWhenTrusted) {
     gConfig->setTrustXForwardedFor(true);
     const std::string body = R"({"name":"nosuchacctxyz","pw":"whatever"})";
-    for(int i = 0; i < kTestMaxFailures; i++)
+    for (int i = 0; i < kTestMaxFailures; i++)
         postLogin(server, body, "10.0.0.8", "198.51.100.1, 203.0.113.7");
 
     EXPECT_EQ(postLogin(server, body, "10.0.0.8", "198.51.100.2, 203.0.113.7").code, 429);

@@ -32,12 +32,12 @@
 
 class ZoneIndexBuilder {
 public:
-    using Loader  = std::function<std::string(ZoneIndex::Type, const std::string&, int)>;
-    using Scanner = std::function<std::vector<int>(ZoneIndex::Type, const std::string&)>;
+    using Loader = std::function<std::string(ZoneIndex::Type, const std::string &, int)>;
+    using Scanner = std::function<std::vector<int>(ZoneIndex::Type, const std::string &)>;
 
-    explicit ZoneIndexBuilder(ZoneIndex& index, Loader loader = {}, Scanner scanner = {});
+    explicit ZoneIndexBuilder(ZoneIndex &index, Loader loader = {}, Scanner scanner = {});
 
-    void request(ZoneIndex::Type type, const std::string& zone);
+    void request(ZoneIndex::Type type, const std::string &zone);
     void pump(std::chrono::microseconds budget, std::size_t minCount);
 
     [[nodiscard]] bool hasWork() const;
@@ -52,10 +52,10 @@ private:
     struct Key {
         ZoneIndex::Type type;
         std::string zone;
-        bool operator<(const Key& o) const { return std::tie(type, zone) < std::tie(o.type, o.zone); }
+        bool operator<(const Key &o) const { return std::tie(type, zone) < std::tie(o.type, o.zone); }
     };
 
-    ZoneIndex& index;
+    ZoneIndex &index;
     Loader loader;
     Scanner scanner;
     mutable std::mutex mtx;

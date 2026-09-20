@@ -34,7 +34,7 @@ TEST(ZoneIndex, BuiltListOrdersById) {
     std::vector<ZoneSummary> out;
     ASSERT_TRUE(idx.list(ZoneIndex::Type::Room, "misc", out));
     ASSERT_EQ(out.size(), 2u);
-    EXPECT_EQ(out[0].id, 2);            // std::map orders by id
+    EXPECT_EQ(out[0].id, 2); // std::map orders by id
     EXPECT_EQ(out[0].name, "Second");
     EXPECT_EQ(out[1].id, 5);
 }
@@ -56,7 +56,7 @@ TEST(ZoneIndex, RemoveKeepsZoneBuilt) {
     idx.markBuilt(ZoneIndex::Type::Object, "shop");
     idx.remove(ZoneIndex::Type::Object, "shop", 1);
     std::vector<ZoneSummary> out;
-    EXPECT_TRUE(idx.list(ZoneIndex::Type::Object, "shop", out));   // still built
+    EXPECT_TRUE(idx.list(ZoneIndex::Type::Object, "shop", out)); // still built
     EXPECT_TRUE(out.empty());
 }
 

@@ -27,6 +27,6 @@ namespace util {
 // Parse CSV into rows of fields. Quoted fields (") may contain commas; a trailing CR
 // (CRLF input) is tolerated; blank and unparseable lines are skipped. Header handling
 // is the caller's concern.
-std::vector<std::vector<std::string>> parseCsv(std::istream& in);
+std::vector<std::vector<std::string>> parseCsv(std::istream &in);
 
-}
+} // namespace util

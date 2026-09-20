@@ -11,41 +11,38 @@
 
 namespace {
 
-using AccountAuth::NameError;
 using AccountAuth::EmailError;
+using AccountAuth::NameError;
 
 // Single fixture for the whole file: checkName's banned-name filter (parse_name)
 // reads gConfig, and account-resolution/auth ops need the server singleton (the
 // cache seam) too, so SetUp brings up both. Cases that also need real game data
 // on disk (resolve/create) skip inside their bodies, as before.
 struct AccountAuthService : ::testing::Test {
-    void SetUp() override { ensureConfig(); ensureServer(); }
+    void SetUp() override {
+        ensureConfig();
+        ensureServer();
+    }
 };
 
-TEST_F(AccountAuthService, NameAcceptsPlainName) {
-    EXPECT_EQ(AccountAuth::checkName("Tordek"), NameError::Ok);
-}
+TEST_F(AccountAuthService, NameAcceptsPlainName) { EXPECT_EQ(AccountAuth::checkName("Tordek"), NameError::Ok); }
 
 TEST_F(AccountAuthService, NameAcceptsOneHyphenOrApostropheWhenLongEnough) {
     EXPECT_EQ(AccountAuth::checkName("Al-ric"), NameError::Ok);
     EXPECT_EQ(AccountAuth::checkName("Da'ric"), NameError::Ok);
 }
 
-TEST_F(AccountAuthService, NameRejectsEmpty) {
-    EXPECT_EQ(AccountAuth::checkName(""), NameError::FirstNotLetter);
-}
+TEST_F(AccountAuthService, NameRejectsEmpty) { EXPECT_EQ(AccountAuth::checkName(""), NameError::FirstNotLetter); }
 
 TEST_F(AccountAuthService, NameRejectsLeadingNonLetter) {
     EXPECT_EQ(AccountAuth::checkName("1bob"), NameError::FirstNotLetter);
     EXPECT_EQ(AccountAuth::checkName("'bob"), NameError::FirstNotLetter);
 }
 
-TEST_F(AccountAuthService, NameRejectsTooShort) {
-    EXPECT_EQ(AccountAuth::checkName("Bo"), NameError::TooShort);
-}
+TEST_F(AccountAuthService, NameRejectsTooShort) { EXPECT_EQ(AccountAuth::checkName("Bo"), NameError::TooShort); }
 
 TEST_F(AccountAuthService, NameRejectsTooLong) {
-    EXPECT_EQ(AccountAuth::checkName("Abcdefghijklmnopqrst"), NameError::TooLong);  // 20 chars
+    EXPECT_EQ(AccountAuth::checkName("Abcdefghijklmnopqrst"), NameError::TooLong); // 20 chars
 }
 
 TEST_F(AccountAuthService, NameRejectsNonAlphaUnderSix) {
@@ -53,19 +50,13 @@ TEST_F(AccountAuthService, NameRejectsNonAlphaUnderSix) {
     EXPECT_EQ(AccountAuth::checkName("Al-ic"), NameError::NonAlphaNeedsLength);
 }
 
-TEST_F(AccountAuthService, NameRejectsMultipleNonAlpha) {
-    EXPECT_EQ(AccountAuth::checkName("A-b-cd"), NameError::TooManyNonAlpha);
-}
+TEST_F(AccountAuthService, NameRejectsMultipleNonAlpha) { EXPECT_EQ(AccountAuth::checkName("A-b-cd"), NameError::TooManyNonAlpha); }
 
-TEST_F(AccountAuthService, NameRejectsDisallowedCharacter) {
-    EXPECT_EQ(AccountAuth::checkName("Bob_by"), NameError::NonAlphaChar);
-}
+TEST_F(AccountAuthService, NameRejectsDisallowedCharacter) { EXPECT_EQ(AccountAuth::checkName("Bob_by"), NameError::NonAlphaChar); }
 
-TEST_F(AccountAuthService, NameRejectsTrailingNonLetter) {
-    EXPECT_EQ(AccountAuth::checkName("Robby-"), NameError::LastCharsNotLetters);
-}
+TEST_F(AccountAuthService, NameRejectsTrailingNonLetter) { EXPECT_EQ(AccountAuth::checkName("Robby-"), NameError::LastCharsNotLetters); }
 
-static std::shared_ptr<Account> makeAccount(const std::string& name, const std::string& password) {
+static std::shared_ptr<Account> makeAccount(const std::string &name, const std::string &password) {
     auto account = std::make_shared<Account>(name);
     account->setPassword(password);
     return account;
@@ -78,7 +69,7 @@ TEST_F(AccountAuthService, OpsResolveReturnsCachedAccount) {
     auto result = AccountAuth::resolveAccount("resolvehit");
     EXPECT_TRUE(result.found);
     EXPECT_FALSE(result.banned);
-    EXPECT_EQ(result.account, seeded);  // shared instance, no disk
+    EXPECT_EQ(result.account, seeded); // shared instance, no disk
 }
 
 TEST_F(AccountAuthService, OpsResolveMissingAccount) {
@@ -106,8 +97,8 @@ TEST_F(AccountAuthService, OpsVerifyPasswordMatches) {
 }
 
 TEST_F(AccountAuthService, OpsIsValidPasswordBoundaries) {
-    using AccountAuth::kMinPasswordLen;
     using AccountAuth::kMaxPasswordLen;
+    using AccountAuth::kMinPasswordLen;
     EXPECT_FALSE(AccountAuth::isValidPassword(std::string(kMinPasswordLen - 1, 'a')));
     EXPECT_TRUE(AccountAuth::isValidPassword(std::string(kMinPasswordLen, 'a')));
     EXPECT_TRUE(AccountAuth::isValidPassword(std::string(kMaxPasswordLen, 'a')));
@@ -120,7 +111,7 @@ TEST_F(AccountAuthService, OpsCreateAccountFailsOnEmptyName) {
 }
 
 TEST_F(AccountAuthService, OpsCreateAccountRoundtrips) {
-    if(getenv("REALMS_BASE_PATH") == nullptr)
+    if (getenv("REALMS_BASE_PATH") == nullptr)
         GTEST_SKIP() << "needs writable game-data path for Account::save";
 
     const std::string name = "authtestacct";
@@ -161,23 +152,19 @@ TEST_F(AccountAuthService, OpsClaimCharacterLinksToAccount) {
 
 TEST_F(AccountAuthService, OpsClaimCharacterRejectsUnnamed) {
     auto account = std::make_shared<Account>("claimacct2");
-    auto player = makePlayer(CreatureClass::FIGHTER);  // no name set
+    auto player = makePlayer(CreatureClass::FIGHTER); // no name set
 
     EXPECT_FALSE(AccountAuth::claimCharacter(*account, *player));
     EXPECT_TRUE(player->getAccountName().empty());
 }
 
-TEST_F(AccountAuthService, EmailAcceptsBasic) {
-    EXPECT_EQ(AccountAuth::checkEmail("a@b.com"), EmailError::Ok);
-}
+TEST_F(AccountAuthService, EmailAcceptsBasic) { EXPECT_EQ(AccountAuth::checkEmail("a@b.com"), EmailError::Ok); }
 
 TEST_F(AccountAuthService, EmailRejectsMissingAtOrDot) {
     EXPECT_EQ(AccountAuth::checkEmail("abc.com"), EmailError::BadFormat);
     EXPECT_EQ(AccountAuth::checkEmail("a@bcom"), EmailError::BadFormat);
 }
 
-TEST_F(AccountAuthService, EmailRejectsTooLong) {
-    EXPECT_EQ(AccountAuth::checkEmail("a@" + std::string(260, 'b') + ".com"), EmailError::TooLong);
-}
+TEST_F(AccountAuthService, EmailRejectsTooLong) { EXPECT_EQ(AccountAuth::checkEmail("a@" + std::string(260, 'b') + ".com"), EmailError::TooLong); }
 
 } // namespace

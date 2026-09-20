@@ -15,10 +15,7 @@ using namespace std::chrono_literals;
 
 namespace {
 
-ApiLoginThrottle::Settings settings(int maxFailures, std::chrono::seconds window,
-                                    std::chrono::seconds lockout, std::size_t maxEntries = 100) {
-    return ApiLoginThrottle::Settings{maxFailures, window, lockout, maxEntries};
-}
+ApiLoginThrottle::Settings settings(int maxFailures, std::chrono::seconds window, std::chrono::seconds lockout, std::size_t maxEntries = 100) { return ApiLoginThrottle::Settings{maxFailures, window, lockout, maxEntries}; }
 
 TEST(LoginThrottle, AllowsBelowThreshold) {
     ApiLoginThrottle t(settings(3, 60s, 60s));
@@ -29,7 +26,7 @@ TEST(LoginThrottle, AllowsBelowThreshold) {
 
 TEST(LoginThrottle, LocksAtThreshold) {
     ApiLoginThrottle t(settings(3, 60s, 30s));
-    for(int i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
         t.recordFailure("ip");
 
     const int wait = t.lockedFor("ip");
@@ -49,7 +46,7 @@ TEST(LoginThrottle, RetryAfterDecreases) {
 }
 
 TEST(LoginThrottle, WindowExpiryResetsCount) {
-    ApiLoginThrottle t(settings(2, 0s, 60s));   // anything older than 0s falls out of the window
+    ApiLoginThrottle t(settings(2, 0s, 60s)); // anything older than 0s falls out of the window
     t.recordFailure("ip");
     std::this_thread::sleep_for(3ms);
     t.recordFailure("ip");
@@ -86,7 +83,7 @@ TEST(LoginThrottle, KeysAreIsolated) {
 
 TEST(LoginThrottle, DisabledWhenMaxFailuresZero) {
     ApiLoginThrottle t(settings(0, 60s, 60s));
-    for(int i = 0; i < 50; i++)
+    for (int i = 0; i < 50; i++)
         t.recordFailure("ip");
 
     EXPECT_EQ(t.lockedFor("ip"), 0);
@@ -116,17 +113,19 @@ TEST(LoginThrottle, ClearEmptiesAll) {
 TEST(LoginThrottle, ConcurrentAccessNoRace) {
     ApiLoginThrottle t(settings(3, 60s, 60s, 8));
     std::vector<std::thread> ts;
-    for(int n = 0; n < 8; n++)
+    for (int n = 0; n < 8; n++)
         ts.emplace_back([&t, n] {
-            for(int i = 0; i < 5000; i++) {
+            for (int i = 0; i < 5000; i++) {
                 const std::string k = "k" + std::to_string((n * 7 + i) % 16);
                 t.recordFailure(k);
-                (void)t.lockedFor(k);
-                if(i % 4 == 0) t.recordSuccess(k);
-                if(i % 1000 == 0) t.clear();
+                (void) t.lockedFor(k);
+                if (i % 4 == 0)
+                    t.recordSuccess(k);
+                if (i % 1000 == 0)
+                    t.clear();
             }
         });
-    for(auto& th : ts)
+    for (auto &th: ts)
         th.join();
     SUCCEED();
 }

@@ -30,7 +30,7 @@
 #include "structs.hpp"
 #include "apiTestSupport.hpp"
 
-extern const char* dmname[];
+extern const char *dmname[];
 
 namespace {
 
@@ -41,12 +41,7 @@ bool gameConfigReady() {
     static const bool ready = [] {
         ensureConfig();
         ensureServer();
-        const bool ok = gConfig->loadConfig()
-            && gConfig->loadStartLoc()
-            && gConfig->loadSkillGroups() && gConfig->loadSkills()
-            && gConfig->loadDeities()
-            && gConfig->loadClasses()
-            && gConfig->loadRaces();
+        const bool ok = gConfig->loadConfig() && gConfig->loadStartLoc() && gConfig->loadSkillGroups() && gConfig->loadSkills() && gConfig->loadDeities() && gConfig->loadClasses() && gConfig->loadRaces();
         gConfig->loadCalendar();
         return ok;
     }();
@@ -55,11 +50,12 @@ bool gameConfigReady() {
 
 void drainFd(int fd) {
     char buf[8192];
-    while (::read(fd, buf, sizeof(buf)) > 0) {}
+    while (::read(fd, buf, sizeof(buf)) > 0) {
+    }
 }
 
 // The positional telnet letter for a stable Flow value at the given step.
-char letterFor(const CharacterDraft& draft, Step step, const std::string& value) {
+char letterFor(const CharacterDraft &draft, Step step, const std::string &value) {
     const auto options = Flow::options(draft, step);
     for (std::size_t i = 0; i < options.size(); i++)
         if (options[i].value == value)
@@ -73,7 +69,7 @@ struct Wizard {
     int fds[2]{-1, -1};
     std::shared_ptr<Socket> sock;
 
-    explicit Wizard(const std::string& accountName = "wizacct") {
+    explicit Wizard(const std::string &accountName = "wizacct") {
         EXPECT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
         nonBlock(fds[0]);
         nonBlock(fds[1]);
@@ -81,7 +77,7 @@ struct Wizard {
         auto acct = std::make_shared<Account>(accountName);
         gServer->cacheAccount(acct);
         sock->setAccount(acct);
-        startCharacterCreation(sock);   // renders the first prompt (race menu)
+        startCharacterCreation(sock); // renders the first prompt (race menu)
         pump();
     }
     ~Wizard() {
@@ -89,13 +85,13 @@ struct Wizard {
             ::close(fds[1]);
     }
 
-    void send(const std::string& in) {
+    void send(const std::string &in) {
         createPlayer(sock, in);
         pump();
     }
-    void pick(const std::string& value) { send(std::string(1, letterFor(draft(), step(), value))); }
+    void pick(const std::string &value) { send(std::string(1, letterFor(draft(), step(), value))); }
 
-    [[nodiscard]] const CharacterDraft& draft() const { return sock->getCreationDraft(); }
+    [[nodiscard]] const CharacterDraft &draft() const { return sock->getCreationDraft(); }
     [[nodiscard]] Step step() const { return sock->getCreationSession().step; }
 
     // The first letter past the end of the current menu.
@@ -111,10 +107,9 @@ struct Wizard {
     }
 };
 
-std::shared_ptr<Socket> driveWizard(const std::vector<std::string>& inputs,
-                                    const std::string& accountName = "wizacct") {
+std::shared_ptr<Socket> driveWizard(const std::vector<std::string> &inputs, const std::string &accountName = "wizacct") {
     Wizard wizard(accountName);
-    for (const auto& in : inputs)
+    for (const auto &in: inputs)
         wizard.send(in);
     return wizard.sock;
 }
@@ -131,7 +126,7 @@ std::string reservedName(bool onDisk) {
 // and no production subrace is playable, so both paths need injected data.
 struct InjectedRace {
     int id;
-    explicit InjectedRace(int raceId, const std::string& xml) : id(raceId) {
+    explicit InjectedRace(int raceId, const std::string &xml) : id(raceId) {
         xmlDocPtr doc = xmlReadMemory(xml.c_str(), static_cast<int>(xml.size()), nullptr, nullptr, 0);
         EXPECT_NE(doc, nullptr);
         gConfig->races[id] = new RaceData(xmlDocGetRootElement(doc));
@@ -157,7 +152,7 @@ protected:
 };
 
 // Reaches the Prof step as a Human Fighter with self-chosen stats.
-void walkHumanFighter(Wizard& wizard) {
+void walkHumanFighter(Wizard &wizard) {
     wizard.pick(std::to_string(HUMAN));
     wizard.send("m");
     wizard.pick(std::to_string(static_cast<int>(CreatureClass::FIGHTER)));
@@ -170,17 +165,17 @@ void walkHumanFighter(Wizard& wizard) {
 
 TEST_F(CreationWizard, CollectsHumanFighterChoices) {
     auto sock = driveWizard({
-        "e",                // Human
-        "m",                // male
-        "d",                // Fighter
-        "a",                // start location: first option (Highport)
-        "c",                // choose own stats
-        "12 12 12 10 10",   // stats (sum 56)
-        "a",                // bonus stat: STR (Human is a bonus-stat race)
-        "b",                // penalty stat: DEX
+            "e", // Human
+            "m", // male
+            "d", // Fighter
+            "a", // start location: first option (Highport)
+            "c", // choose own stats
+            "12 12 12 10 10", // stats (sum 56)
+            "a", // bonus stat: STR (Human is a bonus-stat race)
+            "b", // penalty stat: DEX
     });
 
-    const CharacterDraft& d = sock->getCreationDraft();
+    const CharacterDraft &d = sock->getCreationDraft();
     EXPECT_EQ(d.race, HUMAN);
     EXPECT_EQ(d.sex, SEX_MALE);
     EXPECT_EQ(d.cClass, CreatureClass::FIGHTER);
@@ -192,27 +187,41 @@ TEST_F(CreationWizard, CollectsHumanFighterChoices) {
     EXPECT_EQ(d.penaltyStat, DEX);
 
     // reaching Prof auto-grants bare-hand
-    EXPECT_NE(std::find(d.weaponSkills.begin(), d.weaponSkills.end(), "bare-hand"),
-              d.weaponSkills.end());
+    EXPECT_NE(std::find(d.weaponSkills.begin(), d.weaponSkills.end(), "bare-hand"), d.weaponSkills.end());
 }
 
 TEST_F(CreationWizard, CollectsWeaponProficiency) {
     auto sock = driveWizard({
-        "e", "m", "d", "a", "c", "12 12 12 10 10", "a", "b",
-        "a",   // first weapon proficiency
+            "e",
+            "m",
+            "d",
+            "a",
+            "c",
+            "12 12 12 10 10",
+            "a",
+            "b",
+            "a", // first weapon proficiency
     });
-    const CharacterDraft& d = sock->getCreationDraft();
-    EXPECT_GE(d.weaponSkills.size(), 2u);   // bare-hand + the pick
+    const CharacterDraft &d = sock->getCreationDraft();
+    EXPECT_GE(d.weaponSkills.size(), 2u); // bare-hand + the pick
 }
 
 TEST_F(CreationWizard, FullWizardMaterializesCharacter) {
     auto sock = driveWizard({
-        "e", "m", "d", "a", "c", "12 12 12 10 10", "a", "b",
-        "a", "b",       // weapon proficiencies (fighter picks two)
-        "Wizfighter",   // name
+            "e",
+            "m",
+            "d",
+            "a",
+            "c",
+            "12 12 12 10 10",
+            "a",
+            "b",
+            "a",
+            "b", // weapon proficiencies (fighter picks two)
+            "Wizfighter", // name
     });
-    const CharacterDraft& d = sock->getCreationDraft();
-    ASSERT_EQ(d.name, "Wizfighter");   // confirms we reached the name step
+    const CharacterDraft &d = sock->getCreationDraft();
+    ASSERT_EQ(d.name, "Wizfighter"); // confirms we reached the name step
 
     Account account{"wizacct"};
     auto p = Create::materialize(d, account);
@@ -225,11 +234,11 @@ TEST_F(CreationWizard, FullWizardMaterializesCharacter) {
 }
 
 TEST_F(CreationWizard, PredefinedStatsPath) {
-    auto sock = driveWizard({ "e", "m", "d", "a", "u" });
-    const CharacterDraft& d = sock->getCreationDraft();
+    auto sock = driveWizard({"e", "m", "d", "a", "u"});
+    const CharacterDraft &d = sock->getCreationDraft();
     EXPECT_EQ(d.cClass, CreatureClass::FIGHTER);
     EXPECT_TRUE(d.usePredefinedStats);
-    EXPECT_GT(d.baseStats[0], 0);   // class defaults were applied
+    EXPECT_GT(d.baseStats[0], 0); // class defaults were applied
 }
 
 // Predefined stats enter the Prof step through a different transition than the custom
@@ -243,7 +252,7 @@ TEST_F(CreationWizard, PredefinedStatsGrantsOnce) {
     wizard.send("u");
 
     ASSERT_EQ(wizard.step(), Step::Prof);
-    const auto& skills = wizard.draft().weaponSkills;
+    const auto &skills = wizard.draft().weaponSkills;
     EXPECT_EQ(std::count(skills.begin(), skills.end(), "bare-hand"), 1);
     const std::set<std::string> unique(skills.begin(), skills.end());
     EXPECT_EQ(unique.size(), skills.size());
@@ -263,13 +272,12 @@ TEST_F(CreationWizard, SecondProfExcludesFirstPick) {
     ASSERT_EQ(wizard.step(), Step::SecondProf);
 
     const auto remaining = Flow::options(wizard.draft(), Step::SecondProf);
-    EXPECT_TRUE(std::none_of(remaining.begin(), remaining.end(),
-                             [&first](const Flow::ViewOption& o) { return o.value == first; }));
+    EXPECT_TRUE(std::none_of(remaining.begin(), remaining.end(), [&first](const Flow::ViewOption &o) { return o.value == first; }));
 
     const std::string second = remaining.front().value;
     wizard.pick(second);
     EXPECT_EQ(wizard.step(), Step::Name);
-    const auto& skills = wizard.draft().weaponSkills;
+    const auto &skills = wizard.draft().weaponSkills;
     EXPECT_EQ(std::count(skills.begin(), skills.end(), first), 1);
     EXPECT_EQ(std::count(skills.begin(), skills.end(), second), 1);
 }
@@ -329,8 +337,7 @@ TEST_F(CreationWizard, InvalidLetterRepromptsWithoutMutation) {
 
 TEST_F(CreationWizard, GenderedSubraceAsksSex) {
     constexpr int kChildId = 99;
-    const InjectedRace child(kChildId,
-        R"(<Race id="99" name="Testkin"><ParentRace>1</ParentRace></Race>)");
+    const InjectedRace child(kChildId, R"(<Race id="99" name="Testkin"><ParentRace>1</ParentRace></Race>)");
 
     Wizard wizard;
     wizard.pick(std::to_string(DWARF));
@@ -347,8 +354,7 @@ TEST_F(CreationWizard, GenderedSubraceAsksSex) {
 
 TEST_F(CreationWizard, UngenderedRaceSkipsSexWithSexNone) {
     constexpr int kRaceId = 98;
-    const InjectedRace ungendered(kRaceId,
-        R"(<Race id="98" name="Testgolem"><Data><Gendered>0</Gendered></Data></Race>)");
+    const InjectedRace ungendered(kRaceId, R"(<Race id="98" name="Testgolem"><Data><Gendered>0</Gendered></Data></Race>)");
 
     Wizard wizard;
     wizard.pick(std::to_string(kRaceId));
@@ -360,12 +366,20 @@ TEST_F(CreationWizard, UngenderedRaceSkipsSexWithSexNone) {
 // A still-free DM name is accepted at the Name step and gated by the DM password.
 TEST_F(CreationWizard, DmNameRoutesToDmPasswordStep) {
     const std::string name = reservedName(false);
-    if(name.empty())
+    if (name.empty())
         GTEST_SKIP() << "every reserved DM name has a player file on disk";
     auto sock = driveWizard({
-        "e", "m", "d", "a", "c", "12 12 12 10 10", "a", "b",
-        "a", "b",
-        name,
+            "e",
+            "m",
+            "d",
+            "a",
+            "c",
+            "12 12 12 10 10",
+            "a",
+            "b",
+            "a",
+            "b",
+            name,
     });
     EXPECT_EQ(sock->getCreationDraft().name, name);
     EXPECT_EQ(sock->getCreationSession().step, Step::DmPassword);
@@ -374,12 +388,20 @@ TEST_F(CreationWizard, DmNameRoutesToDmPasswordStep) {
 
 TEST_F(CreationWizard, ExistingDmNameIsRejectedAtNameStep) {
     const std::string name = reservedName(true);
-    if(name.empty())
+    if (name.empty())
         GTEST_SKIP() << "no reserved DM name has a player file on disk";
     auto sock = driveWizard({
-        "e", "m", "d", "a", "c", "12 12 12 10 10", "a", "b",
-        "a", "b",
-        name,
+            "e",
+            "m",
+            "d",
+            "a",
+            "c",
+            "12 12 12 10 10",
+            "a",
+            "b",
+            "a",
+            "b",
+            name,
     });
     EXPECT_TRUE(sock->getCreationDraft().name.empty());
     EXPECT_EQ(sock->getCreationSession().step, Step::Name);
@@ -399,9 +421,17 @@ TEST_F(CreationWizard, IgnoresInputOutsideCreationState) {
 
 TEST_F(CreationWizard, RejectsBadNameStaysAtNameStep) {
     auto sock = driveWizard({
-        "e", "m", "d", "a", "c", "12 12 12 10 10", "a", "b",
-        "a", "b",
-        "Bo",   // too short -> rejected
+            "e",
+            "m",
+            "d",
+            "a",
+            "c",
+            "12 12 12 10 10",
+            "a",
+            "b",
+            "a",
+            "b",
+            "Bo", // too short -> rejected
     });
     EXPECT_TRUE(sock->getCreationDraft().name.empty());
     EXPECT_NE(sock->getState(), CON_PLAYING);
@@ -412,12 +442,12 @@ TEST_F(CreationWizard, RejectsBadNameStaysAtNameStep) {
 // materialize never ran initialBind for these characters).
 TEST_F(CreationWizard, SingleOptionLocationRecordsDraftKey) {
     Wizard wizard;
-    wizard.pick(std::to_string(MINOTAUR));   // minotaurs start in ruhrdan, nowhere else
+    wizard.pick(std::to_string(MINOTAUR)); // minotaurs start in ruhrdan, nowhere else
     wizard.send("m");
     wizard.pick(std::to_string(static_cast<int>(CreatureClass::FIGHTER)));
 
     EXPECT_EQ(wizard.draft().startLocation, "ruhrdan");
-    EXPECT_EQ(wizard.step(), Step::StatsChoice);   // the Location menu was skipped
+    EXPECT_EQ(wizard.step(), Step::StatsChoice); // the Location menu was skipped
 }
 
 // Regression for the renderWeaponMenu/processWeaponChoice split: CON_CHOSING_WEAPONS still learns the chosen skill.
@@ -437,20 +467,17 @@ TEST_F(CreationWizard, InGameWeaponTrainingLearnsSkill) {
     sock->setState(CON_CHOSING_WEAPONS);
 
     // The menu grants bare-hand before it is built, so it is never offered.
-    const auto knows = [&player](const std::string& name) {
-        return name == "bare-hand" || player->knowsSkill(name);
-    };
-    const auto options = Create::weaponMenuOptions(player->getClass(), player->getSecondClass(),
-                                                   player->getDeity(), player->getLevel(), knows);
+    const auto knows = [&player](const std::string &name) { return name == "bare-hand" || player->knowsSkill(name); };
+    const auto options = Create::weaponMenuOptions(player->getClass(), player->getSecondClass(), player->getDeity(), player->getLevel(), knows);
     ASSERT_FALSE(options.empty());
     const std::string expected = options.front().value;
 
-    convertNewWeaponSkills(sock, "a");   // pick the first listed weapon skill
+    convertNewWeaponSkills(sock, "a"); // pick the first listed weapon skill
     sock->flush();
     drainFd(fds[1]);
     ::close(fds[1]);
 
-    EXPECT_EQ(player->getWeaponTrains(), 0u);   // a train was consumed
+    EXPECT_EQ(player->getWeaponTrains(), 0u); // a train was consumed
     EXPECT_TRUE(player->knowsSkill("bare-hand"));
     EXPECT_TRUE(player->knowsSkill(expected));
 }
@@ -489,11 +516,22 @@ TEST_F(CreationWizard, DoneCommitsCharacterIntoPlay) {
     fs::remove(playerFile);
     fs::remove(acctFile);
 
-    auto sock = driveWizard({
-        "e", "m", "d", "a", "c", "12 12 12 10 10", "a", "b",
-        "a", "b", charName,
-        "",   // continue past the policy screen -> Create::processDone
-    }, acctName);
+    auto sock = driveWizard(
+            {
+                    "e",
+                    "m",
+                    "d",
+                    "a",
+                    "c",
+                    "12 12 12 10 10",
+                    "a",
+                    "b",
+                    "a",
+                    "b",
+                    charName,
+                    "", // continue past the policy screen -> Create::processDone
+            },
+            acctName);
 
     EXPECT_EQ(sock->getState(), CON_PLAYING);
     ASSERT_TRUE(sock->getPlayer());
@@ -504,7 +542,7 @@ TEST_F(CreationWizard, DoneCommitsCharacterIntoPlay) {
     ASSERT_TRUE(acct);
     EXPECT_TRUE(acct->hasCharacter(charName));
 
-    EXPECT_TRUE(fs::exists(playerFile));   // done() persisted the character
+    EXPECT_TRUE(fs::exists(playerFile)); // done() persisted the character
 
     fs::remove(playerFile);
     fs::remove(acctFile);

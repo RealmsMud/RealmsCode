@@ -12,7 +12,7 @@
 #include <gtest/gtest.h>
 
 #include "apiAuthCache.hpp"
-#include "httpServer.hpp"       // apiAuthorizeStaff/apiAuthorizeAccess decls
+#include "httpServer.hpp" // apiAuthorizeStaff/apiAuthorizeAccess decls
 #include "apiTestSupport.hpp"
 
 // Cache mechanics
@@ -20,7 +20,9 @@
 TEST(AuthCache, HitReturnsStored) {
     ApiAuthCache c;
     AuthContext in;
-    in.id = "42"; in.name = "Bane"; in.cClass = CreatureClass::DUNGEONMASTER;
+    in.id = "42";
+    in.name = "Bane";
+    in.cClass = CreatureClass::DUNGEONMASTER;
     c.store("42", in);
 
     AuthContext out;
@@ -36,8 +38,9 @@ TEST(AuthCache, MissOnUnknownKey) {
 }
 
 TEST(AuthCache, ExpiresAfterTtl) {
-    ApiAuthCache c(std::chrono::seconds(0));   // anything older than 0s is stale
-    AuthContext in; in.name = "X";
+    ApiAuthCache c(std::chrono::seconds(0)); // anything older than 0s is stale
+    AuthContext in;
+    in.name = "X";
     c.store("k", in);
     std::this_thread::sleep_for(std::chrono::milliseconds(3));
 
@@ -47,7 +50,8 @@ TEST(AuthCache, ExpiresAfterTtl) {
 
 TEST(AuthCache, InvalidateRemoves) {
     ApiAuthCache c;
-    AuthContext in; in.name = "X";
+    AuthContext in;
+    in.name = "X";
     c.store("k", in);
     c.invalidate("k");
 
@@ -57,7 +61,8 @@ TEST(AuthCache, InvalidateRemoves) {
 
 TEST(AuthCache, ClearEmptiesAll) {
     ApiAuthCache c;
-    AuthContext in; in.name = "X";
+    AuthContext in;
+    in.name = "X";
     c.store("a", in);
     c.store("b", in);
     c.clear();
@@ -72,19 +77,22 @@ TEST(AuthCache, ClearEmptiesAll) {
 TEST(AuthCache, ConcurrentAccessNoRace) {
     ApiAuthCache c;
     std::vector<std::thread> ts;
-    for(int t = 0; t < 8; t++)
+    for (int t = 0; t < 8; t++)
         ts.emplace_back([&c, t] {
-            for(int i = 0; i < 5000; i++) {
+            for (int i = 0; i < 5000; i++) {
                 std::string k = "k" + std::to_string((t * 7 + i) % 16);
-                AuthContext in; in.name = k;
+                AuthContext in;
+                in.name = k;
                 c.store(k, in);
                 AuthContext out;
-                (void)c.lookup(k, out);
-                if(i % 4 == 0) c.invalidate(k);
-                if(i % 1000 == 0) c.clear();
+                (void) c.lookup(k, out);
+                if (i % 4 == 0)
+                    c.invalidate(k);
+                if (i % 1000 == 0)
+                    c.clear();
             }
         });
-    for(auto& th : ts)
+    for (auto &th: ts)
         th.join();
     SUCCEED();
 }
@@ -92,20 +100,18 @@ TEST(AuthCache, ConcurrentAccessNoRace) {
 // AuthContext snapshot authz must answer identically to the live Player.
 
 TEST(AuthCacheDrift, MatchesPlayerAuthz) {
-    struct PCase { CreatureClass cls; std::vector<Range> ranges; };
+    struct PCase {
+        CreatureClass cls;
+        std::vector<Range> ranges;
+    };
     std::vector<PCase> players = {
-        {CreatureClass::FIGHTER, {}},
-        {CreatureClass::CARETAKER, {}},
-        {CreatureClass::DUNGEONMASTER, {}},
-        {CreatureClass::BUILDER, {mkRange("misc", 1, 100)}},
-        {CreatureClass::BUILDER, {}},
+            {CreatureClass::FIGHTER, {}}, {CreatureClass::CARETAKER, {}}, {CreatureClass::DUNGEONMASTER, {}}, {CreatureClass::BUILDER, {mkRange("misc", 1, 100)}}, {CreatureClass::BUILDER, {}},
     };
     std::vector<CatRef> crs = {
-        mkCr("misc", 50), mkCr("misc", 500), mkCr("misc", 0),
-        mkCr("scroll", 1), mkCr("test", 5), mkCr("song", 2),
+            mkCr("misc", 50), mkCr("misc", 500), mkCr("misc", 0), mkCr("scroll", 1), mkCr("test", 5), mkCr("song", 2),
     };
 
-    for(const auto& pc : players) {
+    for (const auto &pc: players) {
         auto p = makePlayer(pc.cls, pc.ranges);
         AuthContext ctx = toAuthContext(p);
 
@@ -113,14 +119,10 @@ TEST(AuthCacheDrift, MatchesPlayerAuthz) {
         EXPECT_EQ(p->isDm(), ctx.isDm()) << "class=" << static_cast<int>(pc.cls);
         EXPECT_EQ(apiAuthorizeStaff(p), apiAuthorizeStaff(ctx)) << "class=" << static_cast<int>(pc.cls);
 
-        for(const auto& cr : crs) {
-            for(bool reading : {true, false}) {
-                EXPECT_EQ(p->checkRangeRestrict(cr, reading), ctx.checkRangeRestrict(cr, reading))
-                    << "class=" << static_cast<int>(pc.cls) << " area=" << cr.area
-                    << " id=" << cr.id << " reading=" << reading;
-                EXPECT_EQ(apiAuthorizeAccess(p, cr, reading), apiAuthorizeAccess(ctx, cr, reading))
-                    << "class=" << static_cast<int>(pc.cls) << " area=" << cr.area
-                    << " id=" << cr.id << " reading=" << reading;
+        for (const auto &cr: crs) {
+            for (bool reading: {true, false}) {
+                EXPECT_EQ(p->checkRangeRestrict(cr, reading), ctx.checkRangeRestrict(cr, reading)) << "class=" << static_cast<int>(pc.cls) << " area=" << cr.area << " id=" << cr.id << " reading=" << reading;
+                EXPECT_EQ(apiAuthorizeAccess(p, cr, reading), apiAuthorizeAccess(ctx, cr, reading)) << "class=" << static_cast<int>(pc.cls) << " area=" << cr.area << " id=" << cr.id << " reading=" << reading;
             }
         }
     }

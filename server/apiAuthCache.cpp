@@ -21,35 +21,35 @@
 #include "catRef.hpp"
 #include "mudObjects/players.hpp"
 
-AuthContext AuthContext::fromPlayer(const std::shared_ptr<Player>& p) {
+AuthContext AuthContext::fromPlayer(const std::shared_ptr<Player> &p) {
     AuthContext ctx;
     ctx.id = p->getId();
     ctx.name = p->getName();
     ctx.cClass = p->getClass();
-    for(int i = 0; i < MAX_BUILDER_RANGE; i++)
+    for (int i = 0; i < MAX_BUILDER_RANGE; i++)
         ctx.bRange[i] = p->bRange[i];
     return ctx;
 }
 
-bool AuthContext::checkRangeRestrict(const CatRef& cr, bool reading) const {
-    return builderRangeRestricted(cClass, bRange, cr, reading);
-}
+bool AuthContext::checkRangeRestrict(const CatRef &cr, bool reading) const { return builderRangeRestricted(cClass, bRange, cr, reading); }
 
-bool ApiAuthCache::lookup(const std::string& key, AuthContext& out) const {
+bool ApiAuthCache::lookup(const std::string &key, AuthContext &out) const {
     std::shared_lock<std::shared_mutex> lock(mtx);
     auto it = entries.find(key);
-    if(it == entries.end()) return false;
-    if(std::chrono::steady_clock::now() - it->second.at > ttl) return false;
+    if (it == entries.end())
+        return false;
+    if (std::chrono::steady_clock::now() - it->second.at > ttl)
+        return false;
     out = it->second.ctx;
     return true;
 }
 
-void ApiAuthCache::store(const std::string& key, const AuthContext& ctx) {
+void ApiAuthCache::store(const std::string &key, const AuthContext &ctx) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     entries[key] = Entry{ctx, std::chrono::steady_clock::now()};
 }
 
-void ApiAuthCache::invalidate(const std::string& key) {
+void ApiAuthCache::invalidate(const std::string &key) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     entries.erase(key);
 }

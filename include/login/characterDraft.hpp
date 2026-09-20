@@ -21,18 +21,18 @@
 #include <string>
 #include <vector>
 
-#include "global.hpp"   // CreatureClass
+#include "global.hpp" // CreatureClass
 
 struct CharacterDraft {
     std::string name;
 
     short race{0};
-    int sex{0};                                   // SEX_NONE / SEX_MALE / SEX_FEMALE
+    int sex{0}; // SEX_NONE / SEX_MALE / SEX_FEMALE
     CreatureClass cClass{CreatureClass::NONE};
     CreatureClass secondClass{CreatureClass::NONE};
     int deity{0};
 
-    std::string startLocation;                    // StartLoc key (gConfig->getStartLoc)
+    std::string startLocation; // StartLoc key (gConfig->getStartLoc)
 
     bool usePredefinedStats{false};
     std::array<int, 5> baseStats{{0, 0, 0, 0, 0}};
@@ -41,5 +41,5 @@ struct CharacterDraft {
 
     std::vector<std::string> weaponSkills;
 
-    bool operator==(const CharacterDraft&) const = default;
+    bool operator==(const CharacterDraft &) const = default;
 };

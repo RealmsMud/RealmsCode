@@ -3,7 +3,7 @@
  */
 #include <gtest/gtest.h>
 
-#include <arpa/telnet.h>   // IAC, SB, SE, WILL, TELQUAL_IS
+#include <arpa/telnet.h> // IAC, SB, SE, WILL, TELQUAL_IS
 #include <span>
 #include <string>
 #include <vector>
@@ -20,31 +20,33 @@ struct TestSocket : public Socket {
     TestSocket() : Socket(-1) {}
     using Socket::decodeBytes;
     using Socket::extractCommands;
-    using Socket::tState;
     using Socket::inBuf;
     using Socket::input;
     using Socket::opts;
+    using Socket::tState;
     using Socket::writeQueue;
 
     // Concatenated outbound bytes (negotiation replies enqueued via writeRaw; doWrite() no-ops with no socket).
     std::string outBytes() const {
         std::string r;
-        for (const auto& chunk : writeQueue) r += chunk;
+        for (const auto &chunk: writeQueue)
+            r += chunk;
         return r;
     }
 
-    std::string decode(const std::vector<unsigned char>& v) {
+    std::string decode(const std::vector<unsigned char> &v) {
         std::string out;
         decodeBytes(std::span<const unsigned char>(v.data(), v.size()), out);
         return out;
     }
     // Full pipeline: decode then queue completed lines.
-    void feed(const std::vector<unsigned char>& v) {
-        extractCommands(decode(v));
-    }
+    void feed(const std::vector<unsigned char> &v) { extractCommands(decode(v)); }
     std::vector<std::string> drain() {
         std::vector<std::string> r;
-        while (!input.empty()) { r.push_back(input.front()); input.pop(); }
+        while (!input.empty()) {
+            r.push_back(input.front());
+            input.pop();
+        }
         return r;
     }
 };
@@ -52,17 +54,19 @@ struct TestSocket : public Socket {
 std::vector<unsigned char> B(std::initializer_list<int> bytes) {
     std::vector<unsigned char> v;
     v.reserve(bytes.size());
-    for (int b : bytes) v.push_back(static_cast<unsigned char>(b));
+    for (int b: bytes)
+        v.push_back(static_cast<unsigned char>(b));
     return v;
 }
 
-std::vector<unsigned char> B(std::string_view s) {
-    return {s.begin(), s.end()};
-}
+std::vector<unsigned char> B(std::string_view s) { return {s.begin(), s.end()}; }
 
 class ProcessInput : public ::testing::Test {
 protected:
-    void SetUp() override { ensureConfig(); ensureServer(); }
+    void SetUp() override {
+        ensureConfig();
+        ensureServer();
+    }
     TestSocket sock;
 };
 
@@ -116,9 +120,9 @@ TEST_F(ProcessInput, LeadingBackspaceOnlyYieldsEmptyCommand) {
 
 // Backspace at the start of a read erases the tail of a previously buffered read.
 TEST_F(ProcessInput, BackspaceReachesIntoPriorRead) {
-    sock.feed(B("ab"));            // buffered, no newline yet
+    sock.feed(B("ab")); // buffered, no newline yet
     ASSERT_TRUE(sock.drain().empty());
-    sock.feed(B("\b\n"));          // backspace deletes the buffered 'b'
+    sock.feed(B("\b\n")); // backspace deletes the buffered 'b'
     EXPECT_EQ(sock.drain(), (std::vector<std::string>{"a"}));
 }
 
@@ -129,23 +133,15 @@ TEST_F(ProcessInput, DoubledIacEmitsSingleByte) {
     EXPECT_EQ(sock.tState, TS::NEG_NONE);
 }
 
-TEST_F(ProcessInput, ClientGoAheadSentinelDropped) {
-    EXPECT_EQ(sock.decode(B({CH_GO_AHEAD, 'h', 'i'})), "hi");
-}
+TEST_F(ProcessInput, ClientGoAheadSentinelDropped) { EXPECT_EQ(sock.decode(B({CH_GO_AHEAD, 'h', 'i'})), "hi"); }
 
 // The fix: these used to emit the byte's DECIMAL value (fmt maps unsigned char to
 // unsigned), e.g. ESC [ A -> "\033[65". They must now pass the raw byte through.
-TEST_F(ProcessInput, MxpEscapeBareEscPassthrough) {
-    EXPECT_EQ(sock.decode(B({0x1b, 'X'})), std::string("\033X"));
-}
+TEST_F(ProcessInput, MxpEscapeBareEscPassthrough) { EXPECT_EQ(sock.decode(B({0x1b, 'X'})), std::string("\033X")); }
 
-TEST_F(ProcessInput, MxpEscapeCsiPassthrough) {
-    EXPECT_EQ(sock.decode(B({0x1b, '[', 'A'})), std::string("\033[A"));
-}
+TEST_F(ProcessInput, MxpEscapeCsiPassthrough) { EXPECT_EQ(sock.decode(B({0x1b, '[', 'A'})), std::string("\033[A")); }
 
-TEST_F(ProcessInput, MxpEscapeCsiOnePassthrough) {
-    EXPECT_EQ(sock.decode(B({0x1b, '[', '1', 'X'})), std::string("\033[1X"));
-}
+TEST_F(ProcessInput, MxpEscapeCsiOnePassthrough) { EXPECT_EQ(sock.decode(B({0x1b, '[', '1', 'X'})), std::string("\033[1X")); }
 
 TEST_F(ProcessInput, MxpSecureHandshakeEnablesMode) {
     // Stop before the terminating newline so parseMXPSecure() is not invoked.
@@ -170,8 +166,10 @@ TEST_F(ProcessInput, Naws255RowsHandlesStraySe) {
 
 TEST_F(ProcessInput, TtypeMttsAppliesCapabilities) {
     std::vector<unsigned char> seq = B({IAC, SB, TTYPE, TELQUAL_IS});
-    for (unsigned char c : B("MTTS 13")) seq.push_back(c);   // ANSI|UTF8|256COLOR
-    for (unsigned char c : B({IAC, SE})) seq.push_back(c);
+    for (unsigned char c: B("MTTS 13"))
+        seq.push_back(c); // ANSI|UTF8|256COLOR
+    for (unsigned char c: B({IAC, SE}))
+        seq.push_back(c);
     sock.feed(seq);
     EXPECT_EQ(sock.getMtts(), 13);
     EXPECT_TRUE(sock.utf8Enabled());
@@ -181,8 +179,10 @@ TEST_F(ProcessInput, TtypeMttsAppliesCapabilities) {
 
 TEST_F(ProcessInput, Ttype256ColorTermSetsXterm256) {
     std::vector<unsigned char> seq = B({IAC, SB, TTYPE, TELQUAL_IS});
-    for (unsigned char c : B("xterm-256color")) seq.push_back(c);
-    for (unsigned char c : B({IAC, SE})) seq.push_back(c);
+    for (unsigned char c: B("xterm-256color"))
+        seq.push_back(c);
+    for (unsigned char c: B({IAC, SE}))
+        seq.push_back(c);
     sock.feed(seq);
     EXPECT_TRUE(sock.opts.xterm256);
 }
@@ -190,7 +190,7 @@ TEST_F(ProcessInput, Ttype256ColorTermSetsXterm256) {
 TEST_F(ProcessInput, DoubledIacSplitAcrossReads) {
     EXPECT_EQ(sock.decode(B({IAC})), "");
     EXPECT_EQ(sock.tState, TS::NEG_IAC);
-    const std::string out = sock.decode(B({IAC}));   // completes the doubled IAC
+    const std::string out = sock.decode(B({IAC})); // completes the doubled IAC
     ASSERT_EQ(out.size(), 1u);
     EXPECT_EQ(static_cast<unsigned char>(out[0]), 255u);
     EXPECT_EQ(sock.tState, TS::NEG_NONE);

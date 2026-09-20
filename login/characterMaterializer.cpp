@@ -27,14 +27,14 @@
 #include "config.hpp"
 #include "flags.hpp"
 #include "global.hpp"
-#include "login.hpp"            // Create::addStartingItem / addStartingWeapon
-#include "login/characterCreationService.hpp"   // Create::computeFinalStats, classForDraft, kStatCount
+#include "login.hpp" // Create::addStartingItem / addStartingWeapon
+#include "login/characterCreationService.hpp" // Create::computeFinalStats, classForDraft, kStatCount
 #include "login/characterDraft.hpp"
 #include "login/characterMaterializer.hpp"
 #include "magic.hpp"
 #include "mud.hpp"
 #include "mudObjects/players.hpp"
-#include "paths.hpp"            // Path::Player, fs
+#include "paths.hpp" // Path::Player, fs
 #include "playerClass.hpp"
 #include "raceData.hpp"
 #include "skillGain.hpp"
@@ -44,54 +44,58 @@
 // startlocs.hpp intentionally not included; initialBind is forward-declared below.
 
 // from areas/startlocs.cpp -- full first-time bind (room, flags, starting guide)
-void initialBind(std::shared_ptr<Player> player, const std::string& str);
+void initialBind(std::shared_ptr<Player> player, const std::string &str);
 
 namespace {
-    // The five primary stats the draft carries, in CrtStats order.
-    constexpr std::array<int, Create::kStatCount> kStats{STR, DEX, CON, INT, PTY};
+// The five primary stats the draft carries, in CrtStats order.
+constexpr std::array<int, Create::kStatCount> kStats{STR, DEX, CON, INT, PTY};
 
-    Stat& stat(const std::shared_ptr<Player>& player, int which) {
-        switch(which) {
-            case STR: return player->strength;
-            case DEX: return player->dexterity;
-            case CON: return player->constitution;
-            case INT: return player->intelligence;
-            default:  return player->piety;   // PTY
-        }
-    }
-
-    // Menu-picked weapon skills start at 1; the race/class auto-grants start at their
-    // configured gained value. The draft carries names only, so re-read the tables here.
-    // Race wins on overlap, matching the old grant order (class skipped known skills).
-    std::map<std::string, int> initialWeaponSkillGains(const CharacterDraft& draft, const RaceData* race) {
-        std::map<std::string, int> gains;
-        const auto collect = [&](std::list<SkillGain*>::const_iterator begin,
-                                 std::list<SkillGain*>::const_iterator end, bool classMode) {
-            for(auto it = begin; it != end; ++it) {
-                SkillGain* sGain = *it;
-                if(!sGain || sGain->getName().empty())
-                    continue;
-                const SkillInfo* skill = gConfig->getSkill(sGain->getName());
-                if(!skill || !skill->getGroup().starts_with("weapons"))
-                    continue;
-                if(classMode && draft.deity && !sGain->deityIsAllowed(draft.deity))
-                    continue;
-                gains.emplace(sGain->getName(), sGain->getGained());
-            }
-        };
-        collect(race->getSkillBegin(), race->getSkillEnd(), false);
-        if(PlayerClass* pClass = Create::classForDraft(draft))
-            collect(pClass->getSkillBegin(), pClass->getSkillEnd(), true);
-        return gains;
+Stat &stat(const std::shared_ptr<Player> &player, int which) {
+    switch (which) {
+        case STR:
+            return player->strength;
+        case DEX:
+            return player->dexterity;
+        case CON:
+            return player->constitution;
+        case INT:
+            return player->intelligence;
+        default:
+            return player->piety; // PTY
     }
 }
 
-static void applyDraftChoices(const std::shared_ptr<Player>& player, const CharacterDraft& draft) {
+// Menu-picked weapon skills start at 1; the race/class auto-grants start at their
+// configured gained value. The draft carries names only, so re-read the tables here.
+// Race wins on overlap, matching the old grant order (class skipped known skills).
+std::map<std::string, int> initialWeaponSkillGains(const CharacterDraft &draft, const RaceData *race) {
+    std::map<std::string, int> gains;
+    const auto collect = [&](std::list<SkillGain *>::const_iterator begin, std::list<SkillGain *>::const_iterator end, bool classMode) {
+        for (auto it = begin; it != end; ++it) {
+            SkillGain *sGain = *it;
+            if (!sGain || sGain->getName().empty())
+                continue;
+            const SkillInfo *skill = gConfig->getSkill(sGain->getName());
+            if (!skill || !skill->getGroup().starts_with("weapons"))
+                continue;
+            if (classMode && draft.deity && !sGain->deityIsAllowed(draft.deity))
+                continue;
+            gains.emplace(sGain->getName(), sGain->getGained());
+        }
+    };
+    collect(race->getSkillBegin(), race->getSkillEnd(), false);
+    if (PlayerClass *pClass = Create::classForDraft(draft))
+        collect(pClass->getSkillBegin(), pClass->getSkillEnd(), true);
+    return gains;
+}
+} // namespace
+
+static void applyDraftChoices(const std::shared_ptr<Player> &player, const CharacterDraft &draft) {
     player->setRace(draft.race);
-    const RaceData* race = gConfig->getRace(draft.race);
+    const RaceData *race = gConfig->getRace(draft.race);
     player->setSize(race->getSize());
     player->initLanguages();
-    for(const auto& effect : race->effects)
+    for (const auto &effect: race->effects)
         player->addPermEffect(effect);
 
     player->setSex(static_cast<Sex>(draft.sex));
@@ -99,15 +103,15 @@ static void applyDraftChoices(const std::shared_ptr<Player>& player, const Chara
     player->setSecondClass(draft.secondClass);
     player->setDeity(draft.deity);
 
-    if(!draft.startLocation.empty())
+    if (!draft.startLocation.empty())
         initialBind(player, draft.startLocation);
 
     const std::array<int, Create::kStatCount> finalStats = Create::computeFinalStats(draft, race);
-    for(size_t i = 0; i < kStats.size(); i++)
+    for (size_t i = 0; i < kStats.size(); i++)
         stat(player, kStats[i]).setInitial(finalStats[i]);
 
     const std::map<std::string, int> gains = initialWeaponSkillGains(draft, race);
-    for(const auto& weapon : draft.weaponSkills) {
+    for (const auto &weapon: draft.weaponSkills) {
         const auto gain = gains.find(weapon);
         player->addSkill(weapon, gain != gains.end() ? gain->second : 1);
         Create::addStartingWeapon(player, weapon);
@@ -115,18 +119,18 @@ static void applyDraftChoices(const std::shared_ptr<Player>& player, const Chara
 }
 
 // does not persist, register, or wire a socket
-static void finishCharacter(const std::shared_ptr<Player>& player, const std::string& name, const Account& account) {
+static void finishCharacter(const std::shared_ptr<Player> &player, const std::string &name, const Account &account) {
     const long t = time(nullptr);
     player->setBirthday();
     player->setCreated();
     player->setName(name);
 
     player->setAccountName(account.getName());
-    player->setPassword("");                 // account handles auth
+    player->setPassword(""); // account handles auth
     player->setFlag(P_PASSWORD_CURRENT);
 
     player->lasttime[LT_AGE].interval = 0;
-    for(int i = 0; i < MAX_LT; i++)
+    for (int i = 0; i < MAX_LT; i++)
         player->lasttime[i].ltime = t;
     // bank interest accrues from lastLogin; leaving it at 0 would pay out since the epoch
     player->setLastLogin(t);
@@ -137,7 +141,7 @@ static void finishCharacter(const std::shared_ptr<Player>& player, const std::st
 
     player->addSkill("defense", 1);
     // Give out parry & block
-    switch(player->getClass()) {
+    switch (player->getClass()) {
         case CreatureClass::ASSASSIN:
         case CreatureClass::BARD:
         case CreatureClass::FIGHTER:
@@ -158,7 +162,7 @@ static void finishCharacter(const std::shared_ptr<Player>& player, const std::st
             break;
     }
     // Give out armor skills here
-    switch(player->getClass()) {
+    switch (player->getClass()) {
         case CreatureClass::BARD:
         case CreatureClass::BERSERKER:
         case CreatureClass::FIGHTER:
@@ -186,22 +190,22 @@ static void finishCharacter(const std::shared_ptr<Player>& player, const std::st
     }
 
     // A few clerics get plate
-    if(player->getClass() == CreatureClass::CLERIC && !player->hasSecondClass()) {
-        if(player->getDeity() == ENOCH || player->getDeity() == ARES || player->getDeity() == GRADIUS) {
+    if (player->getClass() == CreatureClass::CLERIC && !player->hasSecondClass()) {
+        if (player->getDeity() == ENOCH || player->getDeity() == ARES || player->getDeity() == GRADIUS) {
             player->addSkill("plate", 1);
             player->addSkill("chain", 1);
             player->addSkill("scale", 1);
             player->addSkill("ring", 1);
         }
-        if(player->getDeity() == LINOTHAN || player->getDeity() == JAKAR || player->getDeity() == ARACHNUS) {
+        if (player->getDeity() == LINOTHAN || player->getDeity() == JAKAR || player->getDeity() == ARACHNUS) {
             player->addSkill("chain", 1);
             player->addSkill("scale", 1);
             player->addSkill("ring", 1);
         }
     }
 
-    if(player->getClass() != CreatureClass::BERSERKER) {
-        if(player->getCastingType() == Divine) {
+    if (player->getClass() != CreatureClass::BERSERKER) {
+        if (player->getCastingType() == Divine) {
             player->addSkill("healing", 1);
             player->addSkill("destruction", 1);
             player->addSkill("evil", 1);
@@ -233,7 +237,7 @@ static void finishCharacter(const std::shared_ptr<Player>& player, const std::st
         player->addSkill("electric", 1);
     }
 
-    if(player->getClass() == CreatureClass::LICH)
+    if (player->getClass() == CreatureClass::LICH)
         player->learnSpell(S_SAP_LIFE);
 
     Create::addStartingItem(player, "tut", 32);
@@ -250,7 +254,7 @@ static void finishCharacter(const std::shared_ptr<Player>& player, const std::st
     player->setFlag(P_LAG_PROTECTION_SET);
     player->setFlag(P_CLEAR_TARGET_ON_FLEE);
 
-    if(player->getClass() == CreatureClass::BARD)
+    if (player->getClass() == CreatureClass::BARD)
         player->learnSong(SONG_HEAL);
 
     // Class/race/deity auto-granted spells, effects and languages. init() also runs
@@ -259,7 +263,7 @@ static void finishCharacter(const std::shared_ptr<Player>& player, const std::st
     player->initSpellsEffects();
 }
 
-std::shared_ptr<Player> Create::materialize(const CharacterDraft& draft, const Account& account) {
+std::shared_ptr<Player> Create::materialize(const CharacterDraft &draft, const Account &account) {
     auto player = std::make_shared<Player>();
     player->fd = -1;
     // Starting items record setDroppedBy(player) and the first save writes the id, so the
@@ -270,21 +274,21 @@ std::shared_ptr<Player> Create::materialize(const CharacterDraft& draft, const A
     return player;
 }
 
-Create::PersistResult Create::persistNewCharacter(const std::shared_ptr<Player>& player, Account& account) {
-    if(!player || player->getName().empty())
+Create::PersistResult Create::persistNewCharacter(const std::shared_ptr<Player> &player, Account &account) {
+    if (!player || player->getName().empty())
         return {false, "Invalid player."};
 
     // saveToFile, not save(): there is no socket, so Player::save can't resolve the account
     // (it would log an error) and this function saves the account itself below.
-    if(player->saveToFile() != 0)
+    if (player->saveToFile() != 0)
         return {false, "Failed to save the character file."};
 
     const fs::path playerFile = (Path::Player / player->getName()).replace_extension("xml");
-    if(!account.addCharacter(player->getName())) {
+    if (!account.addCharacter(player->getName())) {
         fs::remove(playerFile);
         return {false, "The account cannot hold another character."};
     }
-    if(!account.save()) {
+    if (!account.save()) {
         account.removeCharacter(player->getName());
         fs::remove(playerFile);
         return {false, "Failed to save the account."};
@@ -292,16 +296,16 @@ Create::PersistResult Create::persistNewCharacter(const std::shared_ptr<Player>&
     return {true, ""};
 }
 
-Create::CommitResult Create::commitCharacter(const CharacterDraft& draft, Account& account) {
+Create::CommitResult Create::commitCharacter(const CharacterDraft &draft, Account &account) {
     CommitResult result;
-    if(Player::exists(draft.name)) {
+    if (Player::exists(draft.name)) {
         result.nameTaken = true;
         result.error = "That character name is already taken.";
         return result;
     }
     result.player = Create::materialize(draft, account);
     const PersistResult persisted = persistNewCharacter(result.player, account);
-    if(!persisted.ok) {
+    if (!persisted.ok) {
         result.error = persisted.error;
         result.player = nullptr;
         return result;

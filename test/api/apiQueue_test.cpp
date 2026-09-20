@@ -25,12 +25,10 @@ TEST(ApiQueue, InlineRunsImmediately) {
 TEST(ApiQueue, QueuedDeliveredOnDrain) {
     ApiRequestQueue q;
     crow::response captured;
-    std::thread worker([&] {
-        captured = q.submit([]() { return crow::response(201, "made"); }, std::chrono::seconds(5));
-    });
+    std::thread worker([&] { captured = q.submit([]() { return crow::response(201, "made"); }, std::chrono::seconds(5)); });
 
     // Simulate the main loop draining the queue once per tick.
-    for(int i = 0; i < 200; i++) {
+    for (int i = 0; i < 200; i++) {
         q.drain();
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
@@ -56,11 +54,8 @@ TEST(ApiQueue, InlineJobThrowReturns500) {
 TEST(ApiQueue, QueuedJobThrowReturns500) {
     ApiRequestQueue q;
     crow::response captured;
-    std::thread worker([&] {
-        captured = q.submit([]() -> crow::response { throw std::runtime_error("boom"); },
-                            std::chrono::seconds(5));
-    });
-    for(int i = 0; i < 200; i++) {
+    std::thread worker([&] { captured = q.submit([]() -> crow::response { throw std::runtime_error("boom"); }, std::chrono::seconds(5)); });
+    for (int i = 0; i < 200; i++) {
         q.drain();
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
@@ -72,7 +67,7 @@ TEST(ApiQueue, ConcurrentSubmittersAllComplete) {
     ApiRequestQueue q;
     std::atomic<bool> stop{false};
     std::thread drainer([&] {
-        while(!stop.load()) {
+        while (!stop.load()) {
             q.drain();
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
@@ -82,17 +77,14 @@ TEST(ApiQueue, ConcurrentSubmittersAllComplete) {
     constexpr int N = 32;
     std::vector<std::thread> workers;
     std::vector<crow::response> results(N);
-    for(int i = 0; i < N; i++)
-        workers.emplace_back([&, i] {
-            results[i] = q.submit([i]() { return crow::response(200, std::to_string(i)); },
-                                  std::chrono::seconds(10));
-        });
-    for(auto& w : workers)
+    for (int i = 0; i < N; i++)
+        workers.emplace_back([&, i] { results[i] = q.submit([i]() { return crow::response(200, std::to_string(i)); }, std::chrono::seconds(10)); });
+    for (auto &w: workers)
         w.join();
     stop.store(true);
     drainer.join();
 
-    for(int i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         EXPECT_EQ(results[i].code, 200);
         EXPECT_EQ(results[i].body, std::to_string(i));
     }

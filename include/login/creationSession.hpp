@@ -20,21 +20,21 @@
 
 struct CreationSession {
     enum class Step {
-        DmPassword,    // DM account: verify the DM password before creating
+        DmPassword, // DM account: verify the DM password before creating
         Race,
         SubRace,
         Sex,
         Class,
         Deity,
         Location,
-        StatsChoice,   // roll-your-own vs class predefined
+        StatsChoice, // roll-your-own vs class predefined
         Stats,
         BonusStat,
         PenaltyStat,
         Prof,
         SecondProf,
         Name,
-        Done,          // policy screen shown; next input commits the character
+        Done, // policy screen shown; next input commits the character
     };
     Step step = Step::Race;
 };

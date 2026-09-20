@@ -29,8 +29,8 @@
 class ApiLoginThrottle {
 public:
     struct Settings {
-        int maxFailures = 10;                   // <= 0 disables the throttle
-        std::chrono::seconds window{300};       // failures older than this no longer count
+        int maxFailures = 10; // <= 0 disables the throttle
+        std::chrono::seconds window{300}; // failures older than this no longer count
         std::chrono::seconds lockout{600};
         std::size_t maxEntries = 10000;
     };
@@ -39,9 +39,9 @@ public:
     explicit ApiLoginThrottle(Settings pSettings) : cfg(pSettings) {}
 
     // Seconds remaining (rounded up), 0 when allowed. Drops an entry whose lockout expired.
-    [[nodiscard]] int lockedFor(const std::string& key);
-    void recordFailure(const std::string& key);
-    void recordSuccess(const std::string& key);
+    [[nodiscard]] int lockedFor(const std::string &key);
+    void recordFailure(const std::string &key);
+    void recordSuccess(const std::string &key);
     void clear();
     [[nodiscard]] std::size_t size() const;
 
@@ -52,9 +52,9 @@ private:
         std::chrono::steady_clock::time_point lockedUntil;
     };
 
-    void evict(std::chrono::steady_clock::time_point now);   // caller holds mtx
+    void evict(std::chrono::steady_clock::time_point now); // caller holds mtx
 
-    mutable std::mutex mtx;   // every public call mutates, so a shared_mutex would not pay
+    mutable std::mutex mtx; // every public call mutates, so a shared_mutex would not pay
     std::unordered_map<std::string, Entry> entries;
     Settings cfg;
 };

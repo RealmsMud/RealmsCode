@@ -27,13 +27,8 @@ bool gameConfigReady() {
     static const bool ready = [] {
         ensureConfig();
         ensureServer();
-        const bool ok = gConfig->loadConfig()
-            && gConfig->loadStartLoc()
-            && gConfig->loadSkillGroups() && gConfig->loadSkills()
-            && gConfig->loadDeities()
-            && gConfig->loadClasses()
-            && gConfig->loadRaces();
-        gConfig->loadCalendar();   // setBirthday() reads the calendar
+        const bool ok = gConfig->loadConfig() && gConfig->loadStartLoc() && gConfig->loadSkillGroups() && gConfig->loadSkills() && gConfig->loadDeities() && gConfig->loadClasses() && gConfig->loadRaces();
+        gConfig->loadCalendar(); // setBirthday() reads the calendar
         return ok;
     }();
     return ready;
@@ -45,7 +40,7 @@ CharacterDraft humanFighter() {
     d.race = HUMAN;
     d.sex = SEX_MALE;
     d.cClass = CreatureClass::FIGHTER;
-    d.baseStats = {12, 12, 12, 10, 10};   // sums to 56
+    d.baseStats = {12, 12, 12, 10, 10}; // sums to 56
     return d;
 }
 
@@ -105,8 +100,7 @@ TEST_F(CharacterMaterializer, AssignsPlayerId) {
     const std::string id = p->getId();
     ASSERT_GT(id.size(), 1u);
     EXPECT_EQ(id[0], 'P');
-    EXPECT_TRUE(std::all_of(id.begin() + 1, id.end(),
-                            [](unsigned char c) { return std::isdigit(c) != 0; })) << id;
+    EXPECT_TRUE(std::all_of(id.begin() + 1, id.end(), [](unsigned char c) { return std::isdigit(c) != 0; })) << id;
 }
 
 TEST_F(CharacterMaterializer, StatsMatchComputeFinalStats) {
@@ -152,7 +146,7 @@ TEST_F(CharacterMaterializer, PersistRollsBackWhenAccountFull) {
     CharacterDraft d = humanFighter();
     d.name = "Zzrollbackchar";
     Account acct{"zzrollbackacct"};
-    for(int i = 0; i < acct.getCharacterLimit(); i++)
+    for (int i = 0; i < acct.getCharacterLimit(); i++)
         ASSERT_TRUE(acct.addCharacter("Filler" + std::to_string(i)));
     const fs::path playerFile = (Path::Player / d.name).replace_extension("xml");
     fs::remove(playerFile);
@@ -160,8 +154,8 @@ TEST_F(CharacterMaterializer, PersistRollsBackWhenAccountFull) {
     auto p = Create::materialize(d, acct);
     const Create::PersistResult r = Create::persistNewCharacter(p, acct);
     EXPECT_FALSE(r.ok);
-    EXPECT_FALSE(acct.hasCharacter(d.name));     // membership rolled back / never added
-    EXPECT_FALSE(fs::exists(playerFile));        // the saved player file was removed
+    EXPECT_FALSE(acct.hasCharacter(d.name)); // membership rolled back / never added
+    EXPECT_FALSE(fs::exists(playerFile)); // the saved player file was removed
 }
 
 TEST_F(CharacterMaterializer, CommitRejectsTakenName) {
@@ -169,7 +163,10 @@ TEST_F(CharacterMaterializer, CommitRejectsTakenName) {
     d.name = "Zztakenchar";
     Account acct{"zztakenacct"};
     const fs::path playerFile = (Path::Player / d.name).replace_extension("xml");
-    { std::ofstream stub(playerFile); stub << "<Player/>"; }
+    {
+        std::ofstream stub(playerFile);
+        stub << "<Player/>";
+    }
 
     const Create::CommitResult r = Create::commitCharacter(d, acct);
     EXPECT_FALSE(r.ok);

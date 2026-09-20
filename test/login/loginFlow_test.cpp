@@ -21,7 +21,7 @@ struct TestLoginSocket : public Socket {
 };
 
 // Position the socket at the account/login entry choice (a = account, b = legacy).
-static void startLogin(const std::shared_ptr<Socket>& sock) {
+static void startLogin(const std::shared_ptr<Socket> &sock) {
     sock->getLoginSession().step = LoginSession::Step::EntryChoice;
     sock->setState(LOGIN_ACCOUNT);
 }
@@ -34,11 +34,10 @@ struct LoginFlow : ::testing::Test {
         sock = std::make_shared<TestLoginSocket>();
     }
     void TearDown() override {
-        if(sock) sock->cleanUp();  // satisfy ~Socket's teardown-once invariant
+        if (sock)
+            sock->cleanUp(); // satisfy ~Socket's teardown-once invariant
     }
-    void removeAccountFile(const std::string& name) {
-        std::filesystem::remove((Path::Account / name).replace_extension("json"));
-    }
+    void removeAccountFile(const std::string &name) { std::filesystem::remove((Path::Account / name).replace_extension("json")); }
 };
 
 TEST_F(LoginFlow, EntryChoiceInvalidStaysPut) {
@@ -55,7 +54,7 @@ TEST_F(LoginFlow, AccountNameStoredNormalized) {
 
     startLogin(sock);
     login(sock, "a");
-    login(sock, "zqxnamed");   // typed lowercase; stored proper-cased
+    login(sock, "zqxnamed"); // typed lowercase; stored proper-cased
 
     EXPECT_EQ(sock->getLoginSession().accountName, "Zqxnamed");
     EXPECT_NE(sock->getState(), CON_DISCONNECTING);
@@ -75,7 +74,7 @@ TEST_F(LoginFlow, OverlongAccountNameRejected) {
 TEST_F(LoginFlow, UnknownAccountOffersCreation) {
     startLogin(sock);
     login(sock, "a");
-    login(sock, "zqxunknownacct");  // not cached, not on disk, not a DM name
+    login(sock, "zqxunknownacct"); // not cached, not on disk, not a DM name
 
     // name retained for the create-confirm step
     EXPECT_EQ(sock->getLoginSession().accountName, "Zqxunknownacct");
@@ -107,7 +106,7 @@ TEST_F(LoginFlow, WrongPasswordDisconnects) {
 }
 
 TEST_F(LoginFlow, ValidLoginBindsAccount) {
-    if(getenv("REALMS_BASE_PATH") == nullptr)
+    if (getenv("REALMS_BASE_PATH") == nullptr)
         GTEST_SKIP() << "successful login records lastLogin (Account::save), needs writable path";
 
     auto acct = std::make_shared<Account>("Zqxgoodpw");
@@ -127,16 +126,16 @@ TEST_F(LoginFlow, ValidLoginBindsAccount) {
 }
 
 TEST_F(LoginFlow, CreateAccountWithValidPassword) {
-    if(getenv("REALMS_BASE_PATH") == nullptr)
+    if (getenv("REALMS_BASE_PATH") == nullptr)
         GTEST_SKIP() << "account creation persists (Account::save), needs writable path";
 
     removeAccountFile("Zqxcreated");
 
     startLogin(sock);
     login(sock, "a");
-    login(sock, "zqxcreated");   // unknown -> create
-    login(sock, "yes");          // confirm creation
-    login(sock, "newpass123");   // valid password
+    login(sock, "zqxcreated"); // unknown -> create
+    login(sock, "yes"); // confirm creation
+    login(sock, "newpass123"); // valid password
 
     auto account = sock->getAccount();
     ASSERT_NE(account, nullptr);
@@ -150,7 +149,7 @@ TEST_F(LoginFlow, ShortCreatePasswordReprompts) {
     login(sock, "a");
     login(sock, "zqxshortpw");
     login(sock, "yes");
-    login(sock, "abc");   // too short (<5): re-prompts, no account created
+    login(sock, "abc"); // too short (<5): re-prompts, no account created
 
     EXPECT_EQ(sock->getAccount(), nullptr);
     EXPECT_NE(sock->getState(), CON_DISCONNECTING);
@@ -159,7 +158,7 @@ TEST_F(LoginFlow, ShortCreatePasswordReprompts) {
 TEST_F(LoginFlow, LegacyUnknownCharacterReprompts) {
     startLogin(sock);
     login(sock, "b");
-    login(sock, "zqxnosuchchar");   // no such player on disk
+    login(sock, "zqxnosuchchar"); // no such player on disk
 
     EXPECT_TRUE(sock->getLoginSession().targetCharacter.empty());
     EXPECT_NE(sock->getState(), CON_DISCONNECTING);

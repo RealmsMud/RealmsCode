@@ -35,27 +35,27 @@ struct ZoneSummary {
 class ZoneIndex {
 public:
     enum class Type { Room, Object, Monster, Quest };
-    static const char* typeName(Type t);
+    static const char *typeName(Type t);
 
-    void upsert(Type type, const std::string& zone, int id, const std::string& name);
-    void remove(Type type, const std::string& zone, int id);
+    void upsert(Type type, const std::string &zone, int id, const std::string &name);
+    void remove(Type type, const std::string &zone, int id);
 
-    [[nodiscard]] bool isBuilt(Type type, const std::string& zone) const;
-    [[nodiscard]] bool list(Type type, const std::string& zone, std::vector<ZoneSummary>& out) const;
-    void markBuilt(Type type, const std::string& zone);
-    bool waitUntilBuilt(Type type, const std::string& zone, std::chrono::milliseconds timeout);
-    bool loadFile(Type type, const std::string& zone);
+    [[nodiscard]] bool isBuilt(Type type, const std::string &zone) const;
+    [[nodiscard]] bool list(Type type, const std::string &zone, std::vector<ZoneSummary> &out) const;
+    void markBuilt(Type type, const std::string &zone);
+    bool waitUntilBuilt(Type type, const std::string &zone, std::chrono::milliseconds timeout);
+    bool loadFile(Type type, const std::string &zone);
     void flushDirty();
 
 private:
     struct Key {
         Type type;
         std::string zone;
-        bool operator<(const Key& o) const { return std::tie(type, zone) < std::tie(o.type, o.zone); }
+        bool operator<(const Key &o) const { return std::tie(type, zone) < std::tie(o.type, o.zone); }
     };
 
     mutable std::shared_mutex mtx;
-    mutable std::condition_variable_any buildCv;   // signaled by markBuilt
+    mutable std::condition_variable_any buildCv; // signaled by markBuilt
     std::map<Key, std::map<int, ZoneSummary>> entries;
     std::set<Key> built;
     std::set<Key> dirty;

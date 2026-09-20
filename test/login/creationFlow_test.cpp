@@ -20,7 +20,7 @@
 
 namespace Flow = Create::Flow;
 
-extern const char* dmname[];
+extern const char *dmname[];
 
 namespace {
 
@@ -28,12 +28,7 @@ bool gameConfigReady() {
     static const bool ready = [] {
         ensureConfig();
         ensureServer();
-        const bool ok = gConfig->loadConfig()
-            && gConfig->loadStartLoc()
-            && gConfig->loadSkillGroups() && gConfig->loadSkills()
-            && gConfig->loadDeities()
-            && gConfig->loadClasses()
-            && gConfig->loadRaces();
+        const bool ok = gConfig->loadConfig() && gConfig->loadStartLoc() && gConfig->loadSkillGroups() && gConfig->loadSkills() && gConfig->loadDeities() && gConfig->loadClasses() && gConfig->loadRaces();
         gConfig->loadCalendar();
         return ok;
     }();
@@ -42,37 +37,37 @@ bool gameConfigReady() {
 
 // GTEST_SKIP returns, so the data gate has to expand inside the test body; the JSON
 // cases below must stay runnable without game data.
-#define SKIP_WITHOUT_GAME_DATA()                                                    \
-    do {                                                                            \
-        if(!gameConfigReady())                                                      \
-            GTEST_SKIP() << "game config not available (set REALMS_BASE_PATH)";     \
-    } while(false)
+#define SKIP_WITHOUT_GAME_DATA()                                                                                                                                                                                                               \
+    do {                                                                                                                                                                                                                                       \
+        if (!gameConfigReady())                                                                                                                                                                                                                \
+            GTEST_SKIP() << "game config not available (set REALMS_BASE_PATH)";                                                                                                                                                                \
+    } while (false)
 
 // First reserved DM name with a player file on disk; "" when there is none.
 std::string takenReservedName() {
-    for(int i = 0; dmname[i]; i++)
-        if(Player::exists(dmname[i]))
+    for (int i = 0; dmname[i]; i++)
+        if (Player::exists(dmname[i]))
             return dmname[i];
     return "";
 }
 
 // A sensible input for a step: first legal option for menus, fixed values otherwise.
-std::string valueForStep(const CharacterDraft& d, Flow::Step step) {
+std::string valueForStep(const CharacterDraft &d, Flow::Step step) {
     using S = Flow::Step;
-    if(step == S::Stats)
-        return "12 12 12 10 10";          // sums to 56
-    if(step == S::Name)
+    if (step == S::Stats)
+        return "12 12 12 10 10"; // sums to 56
+    if (step == S::Name)
         return "Flowtestchar";
     const auto opts = Flow::options(d, step);
     return opts.empty() ? "" : opts.front().value;
 }
 
 // Walks the default path up to the Name step.
-bool walkToName(CharacterDraft& draft, const Account& acct) {
+bool walkToName(CharacterDraft &draft, const Account &acct) {
     Flow::Step step = Flow::firstStep();
-    for(int guard = 0; step != Flow::Step::Name && step != Flow::Step::Done && guard < 64; guard++) {
+    for (int guard = 0; step != Flow::Step::Name && step != Flow::Step::Done && guard < 64; guard++) {
         const Flow::AdvanceResult r = Flow::advance(draft, step, valueForStep(draft, step), {.account = &acct});
-        if(!r.ok)
+        if (!r.ok)
             return false;
         step = r.next;
     }
@@ -89,11 +84,10 @@ TEST_F(CreationFlow, WalkReplayMaterialize) {
     Flow::Step step = Flow::firstStep();
 
     int guard = 0;
-    while(step != Flow::Step::Done && guard++ < 64) {
+    while (step != Flow::Step::Done && guard++ < 64) {
         const std::string value = valueForStep(draft, step);
         const Flow::AdvanceResult r = Flow::advance(draft, step, value, {.account = &acct});
-        ASSERT_TRUE(r.ok) << "step=" << Flow::stepToken(step) << " value='" << value
-                          << "' err=" << r.error.message;
+        ASSERT_TRUE(r.ok) << "step=" << Flow::stepToken(step) << " value='" << value << "' err=" << r.error.message;
         path.push_back({step, value});
         step = r.next;
     }
@@ -165,7 +159,7 @@ TEST_F(CreationFlow, CheckEntryOkForFreshAccount) {
 // gate is on the character name, not the account
 TEST_F(CreationFlow, CheckEntryAllowsDmAccount) {
     SKIP_WITHOUT_GAME_DATA();
-    Account acct("Bane");   // a dmname[] entry
+    Account acct("Bane"); // a dmname[] entry
     Flow::EntryContext ec;
     ec.ip = "127.0.0.1";
     EXPECT_TRUE(Flow::checkEntry(acct, ec).ok);
@@ -179,7 +173,7 @@ TEST_F(CreationFlow, AdvanceNameAcceptsFreeName) {
 
     const Flow::AdvanceResult good = Flow::advance(draft, Flow::Step::Name, "Goodmortalname", {.account = &acct});
     EXPECT_TRUE(good.ok) << good.error.message;
-    EXPECT_TRUE(good.done);   // Name -> Done
+    EXPECT_TRUE(good.done); // Name -> Done
 }
 
 // Web rejects a DM name outright. The exists probe is off so the reserved branch is
@@ -190,8 +184,7 @@ TEST_F(CreationFlow, AdvanceNameRejectsDmName) {
     CharacterDraft draft;
     ASSERT_TRUE(walkToName(draft, acct));
 
-    const Flow::AdvanceResult dm = Flow::advance(draft, Flow::Step::Name, dmname[0],
-                                                 {.account = &acct, .checkNameExists = false});
+    const Flow::AdvanceResult dm = Flow::advance(draft, Flow::Step::Name, dmname[0], {.account = &acct, .checkNameExists = false});
     EXPECT_FALSE(dm.ok);
     EXPECT_EQ(dm.error.code, "nameReserved");
 }
@@ -203,9 +196,7 @@ TEST_F(CreationFlow, AdvanceNameRoutesReservedToDmPassword) {
     CharacterDraft draft;
     ASSERT_TRUE(walkToName(draft, acct));
 
-    const Flow::AdvanceResult dm = Flow::advance(draft, Flow::Step::Name, dmname[0],
-                                                 {.account = &acct, .checkNameExists = false,
-                                                  .allowReservedName = true});
+    const Flow::AdvanceResult dm = Flow::advance(draft, Flow::Step::Name, dmname[0], {.account = &acct, .checkNameExists = false, .allowReservedName = true});
     EXPECT_TRUE(dm.ok) << dm.error.message;
     EXPECT_EQ(dm.next, Flow::Step::DmPassword);
     EXPECT_FALSE(dm.done);
@@ -217,15 +208,14 @@ TEST_F(CreationFlow, AdvanceNameRoutesReservedToDmPassword) {
 TEST_F(CreationFlow, AdvanceNameTakenDmNameIsNotReserved) {
     SKIP_WITHOUT_GAME_DATA();
     const std::string name = takenReservedName();
-    if(name.empty())
+    if (name.empty())
         GTEST_SKIP() << "no reserved DM name has a player file on disk";
 
     Account acct("flowdmtaken");
     CharacterDraft draft;
     ASSERT_TRUE(walkToName(draft, acct));
 
-    const Flow::AdvanceResult dm = Flow::advance(draft, Flow::Step::Name, name,
-                                                 {.account = &acct, .allowReservedName = true});
+    const Flow::AdvanceResult dm = Flow::advance(draft, Flow::Step::Name, name, {.account = &acct, .allowReservedName = true});
     EXPECT_FALSE(dm.ok);
     EXPECT_EQ(dm.error.code, "nameTaken");
     EXPECT_TRUE(draft.name.empty());
@@ -234,7 +224,7 @@ TEST_F(CreationFlow, AdvanceNameTakenDmNameIsNotReserved) {
 // The deity tables are bool[DEITY_COUNT]; an option outside that range means an out-of-bounds read.
 TEST_F(CreationFlow, DeityOptionsStayWithinDeityCount) {
     SKIP_WITHOUT_GAME_DATA();
-    for(const int sex : {SEX_MALE, SEX_FEMALE}) {
+    for (const int sex: {SEX_MALE, SEX_FEMALE}) {
         CharacterDraft d;
         d.race = HUMAN;
         d.cClass = CreatureClass::CLERIC;
@@ -242,7 +232,7 @@ TEST_F(CreationFlow, DeityOptionsStayWithinDeityCount) {
 
         const auto opts = Flow::options(d, Flow::Step::Deity);
         ASSERT_FALSE(opts.empty()) << "sex=" << sex;
-        for(const auto& opt : opts) {
+        for (const auto &opt: opts) {
             const int id = std::stoi(opt.value);
             EXPECT_GE(id, 1);
             EXPECT_LT(id, DEITY_COUNT);
@@ -254,26 +244,22 @@ TEST_F(CreationFlow, DeityOptionsStayWithinDeityCount) {
 TEST_F(CreationFlow, LetterStepOptionsAreNonEmptyAndUnique) {
     SKIP_WITHOUT_GAME_DATA();
     using S = Flow::Step;
-    const auto isLetterStep = [](Flow::Step s) {
-        return s == S::Race || s == S::SubRace || s == S::Class || s == S::Deity ||
-               s == S::Location || s == S::Prof || s == S::SecondProf;
-    };
+    const auto isLetterStep = [](Flow::Step s) { return s == S::Race || s == S::SubRace || s == S::Class || s == S::Deity || s == S::Location || s == S::Prof || s == S::SecondProf; };
 
     CharacterDraft draft;
     Flow::Step step = Flow::firstStep();
     int guard = 0;
-    while(step != S::Done && guard++ < 64) {
-        if(isLetterStep(step)) {
+    while (step != S::Done && guard++ < 64) {
+        if (isLetterStep(step)) {
             const auto opts = Flow::options(draft, step);
             ASSERT_FALSE(opts.empty()) << Flow::stepToken(step);
             std::vector<std::string> values;
-            for(const auto& opt : opts) {
+            for (const auto &opt: opts) {
                 EXPECT_FALSE(opt.label.empty()) << Flow::stepToken(step);
                 values.push_back(opt.value);
             }
             std::sort(values.begin(), values.end());
-            EXPECT_EQ(std::adjacent_find(values.begin(), values.end()), values.end())
-                << "duplicate option value at " << Flow::stepToken(step);
+            EXPECT_EQ(std::adjacent_find(values.begin(), values.end()), values.end()) << "duplicate option value at " << Flow::stepToken(step);
         }
         const Flow::AdvanceResult r = Flow::advance(draft, step, valueForStep(draft, step));
         ASSERT_TRUE(r.ok) << Flow::stepToken(step) << ": " << r.error.message;
@@ -285,7 +271,7 @@ TEST_F(CreationFlow, LetterStepOptionsAreNonEmptyAndUnique) {
 TEST_F(CreationFlow, AdvanceRejectsTrailingGarbage) {
     SKIP_WITHOUT_GAME_DATA();
     const CharacterDraft before;
-    for(const char* value : {"5abc", "abc"}) {
+    for (const char *value: {"5abc", "abc"}) {
         CharacterDraft d;
         const Flow::AdvanceResult r = Flow::advance(d, Flow::Step::Race, value);
         EXPECT_FALSE(r.ok) << value;
@@ -306,7 +292,7 @@ TEST_F(CreationFlow, WalkSkipsExistsProbeReplayStaysStrict) {
     std::vector<Flow::Choice> path;
     Flow::Step step = Flow::firstStep();
     int guard = 0;
-    while(step != Flow::Step::Name && step != Flow::Step::Done && guard++ < 64) {
+    while (step != Flow::Step::Name && step != Flow::Step::Done && guard++ < 64) {
         const std::string value = valueForStep(draft, step);
         const Flow::AdvanceResult r = Flow::advance(draft, step, value, {.account = &acct});
         ASSERT_TRUE(r.ok) << Flow::stepToken(step) << ": " << r.error.message;
@@ -317,16 +303,19 @@ TEST_F(CreationFlow, WalkSkipsExistsProbeReplayStaysStrict) {
     path.push_back({Flow::Step::Name, name});
 
     const fs::path playerFile = (fs::path(Path::Player) / name).replace_extension("xml");
-    { std::ofstream stub(playerFile); stub << "<Player/>"; }
+    {
+        std::ofstream stub(playerFile);
+        stub << "<Player/>";
+    }
 
     CharacterDraft relaxed;
     Flow::Step next = Flow::firstStep();
-    EXPECT_TRUE(Flow::walk(path, relaxed, next, &acct, false).ok);   // probe skipped
+    EXPECT_TRUE(Flow::walk(path, relaxed, next, &acct, false).ok); // probe skipped
     EXPECT_EQ(next, Flow::Step::Done);
 
     CharacterDraft strict;
     const Flow::ReplayResult rr = Flow::replay(path, strict, &acct);
-    EXPECT_FALSE(rr.ok);                                             // commit-style replay re-probes
+    EXPECT_FALSE(rr.ok); // commit-style replay re-probes
     EXPECT_EQ(rr.code, "nameTaken");
 
     fs::remove(playerFile);
@@ -372,7 +361,7 @@ TEST_F(CreationFlow, JsonStepViewSerializes) {
     EXPECT_EQ(j.at("inputKind"), "letter");
     EXPECT_EQ(j.at("options").size(), 2u);
     EXPECT_EQ(j.at("options")[0].at("value"), "m");
-    EXPECT_EQ(j.at("options")[0].at("label"), "^WMale^x");   // caret codes preserved
+    EXPECT_EQ(j.at("options")[0].at("label"), "^WMale^x"); // caret codes preserved
     EXPECT_EQ(j.at("blocks")[0].at("kind"), "art");
 }
 

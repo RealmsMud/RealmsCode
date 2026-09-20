@@ -26,7 +26,7 @@ TEST(ServerDns, LookupMiss) {
 TEST(ServerDns, ExpireDropsOldKeepsRecent) {
     ensureServer();
     long now = time(nullptr);
-    long sixteenDays = 60L*60*24*16;
+    long sixteenDays = 60L * 60 * 24 * 16;
     gServer->addCache("203.0.113.100", "old-a.example", now - sixteenDays);
     gServer->addCache("203.0.113.101", "old-b.example", now - sixteenDays);
     gServer->addCache("203.0.113.102", "fresh.example", now);
@@ -35,8 +35,10 @@ TEST(ServerDns, ExpireDropsOldKeepsRecent) {
     EXPECT_GE(removed, 2u);
 
     std::string ip, host;
-    ip = "203.0.113.100"; EXPECT_FALSE(gServer->getDnsCache(ip, host));
-    ip = "203.0.113.102"; host.clear();
+    ip = "203.0.113.100";
+    EXPECT_FALSE(gServer->getDnsCache(ip, host));
+    ip = "203.0.113.102";
+    host.clear();
     EXPECT_TRUE(gServer->getDnsCache(ip, host));
     EXPECT_EQ(host, "fresh.example");
 }

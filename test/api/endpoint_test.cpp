@@ -77,7 +77,7 @@ TEST(Auth, VerifyRejectsMalformedToken) {
     EXPECT_FALSE(apiVerifyJwt("Bearer not.a.real.jwt", userId, name));
 }
 
-static std::string signToken(const std::string& secret, const std::string& issuer, const std::string& userId, const std::string& name, std::chrono::system_clock::time_point exp) {
+static std::string signToken(const std::string &secret, const std::string &issuer, const std::string &userId, const std::string &name, std::chrono::system_clock::time_point exp) {
     return jwt::create()
             .set_type("JWT")
             .set_issuer(issuer)
@@ -145,43 +145,43 @@ TEST(Authz, DmBypassesRanges) {
 }
 
 TEST(Authz, CaretakerNotRangeRestricted) {
-    auto p = makePlayer(CreatureClass::CARETAKER);  // no bRange set
+    auto p = makePlayer(CreatureClass::CARETAKER); // no bRange set
     EXPECT_EQ(apiAuthorizeStaff(p), 0);
     // Only BUILDER is range-checked, so a CT passes regardless of ranges.
     EXPECT_EQ(apiAuthorizeAccess(p, mkCr("misc", 500), false), 0);
 }
 
 TEST(Authz, BuilderInRangeAllowed) {
-    auto p = makePlayer(CreatureClass::BUILDER, { mkRange("misc", 1, 1000) });
+    auto p = makePlayer(CreatureClass::BUILDER, {mkRange("misc", 1, 1000)});
     EXPECT_EQ(apiAuthorizeAccess(p, mkCr("misc", 500), false), 0);
 }
 
 TEST(Authz, BuilderOutOfRangeForbidden) {
-    auto p = makePlayer(CreatureClass::BUILDER, { mkRange("misc", 1, 100) });
+    auto p = makePlayer(CreatureClass::BUILDER, {mkRange("misc", 1, 100)});
     EXPECT_EQ(apiAuthorizeAccess(p, mkCr("misc", 500), false), 403);
 }
 
 TEST(Authz, BuilderReadOnlyAreasReadableNotWritable) {
-    auto p = makePlayer(CreatureClass::BUILDER);  // no ranges
-    EXPECT_EQ(apiAuthorizeAccess(p, mkCr("scroll", 1), true), 0);     // read allowed
-    EXPECT_EQ(apiAuthorizeAccess(p, mkCr("scroll", 1), false), 403);  // write denied
+    auto p = makePlayer(CreatureClass::BUILDER); // no ranges
+    EXPECT_EQ(apiAuthorizeAccess(p, mkCr("scroll", 1), true), 0); // read allowed
+    EXPECT_EQ(apiAuthorizeAccess(p, mkCr("scroll", 1), false), 403); // write denied
 }
 
 TEST(Authz, BuilderZeroIdForbidden) {
-    auto p = makePlayer(CreatureClass::BUILDER, { mkRange("misc", 1, 1000) });
+    auto p = makePlayer(CreatureClass::BUILDER, {mkRange("misc", 1, 1000)});
     EXPECT_EQ(apiAuthorizeAccess(p, mkCr("misc", 0), false), 403);
 }
 
 TEST(Authz, CanBuildObjectsRespectsFlag) {
     EXPECT_FALSE(makePlayer(CreatureClass::BUILDER)->canBuildObjects());
-    EXPECT_TRUE(makePlayer(CreatureClass::BUILDER, {}, { P_BUILDER_OBJS })->canBuildObjects());
+    EXPECT_TRUE(makePlayer(CreatureClass::BUILDER, {}, {P_BUILDER_OBJS})->canBuildObjects());
     EXPECT_TRUE(makePlayer(CreatureClass::CARETAKER)->canBuildObjects());
     EXPECT_FALSE(makePlayer(CreatureClass::FIGHTER)->canBuildObjects());
 }
 
 TEST(Authz, CanBuildMonstersRespectsFlag) {
     EXPECT_FALSE(makePlayer(CreatureClass::BUILDER)->canBuildMonsters());
-    EXPECT_TRUE(makePlayer(CreatureClass::BUILDER, {}, { P_BUILDER_MOBS })->canBuildMonsters());
+    EXPECT_TRUE(makePlayer(CreatureClass::BUILDER, {}, {P_BUILDER_MOBS})->canBuildMonsters());
     EXPECT_TRUE(makePlayer(CreatureClass::CARETAKER)->canBuildMonsters());
     EXPECT_FALSE(makePlayer(CreatureClass::FIGHTER)->canBuildMonsters());
 }

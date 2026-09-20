@@ -18,16 +18,17 @@ namespace {
 
 struct TempFile {
     fs::path path;
-    explicit TempFile(const std::string& tag) : path(fs::temp_directory_path() / ("realms_config_" + tag + ".xml")) {}
-    void write(const std::string& content) const { std::ofstream(path) << content; }
-    ~TempFile() { std::error_code ec; fs::remove(path, ec); }
+    explicit TempFile(const std::string &tag) : path(fs::temp_directory_path() / ("realms_config_" + tag + ".xml")) {}
+    void write(const std::string &content) const { std::ofstream(path) << content; }
+    ~TempFile() {
+        std::error_code ec;
+        fs::remove(path, ec);
+    }
 };
 
 const std::string kEmptyGeneral = "<Config><General/></Config>";
 
-std::string general(const std::string& body) {
-    return "<Config><General>" + body + "</General></Config>";
-}
+std::string general(const std::string &body) { return "<Config><General>" + body + "</General></Config>"; }
 
 struct ConfigXml : ::testing::Test {
     void SetUp() override { ensureConfig(); }
@@ -106,8 +107,6 @@ TEST_F(ConfigXml, HttpPortZeroRoundTrips) {
     EXPECT_EQ(gConfig->getHttpPort(), 0);
 }
 
-TEST_F(ConfigXml, MissingFileFails) {
-    EXPECT_FALSE(gConfig->loadConfigFile(fs::temp_directory_path() / "realms_config_nosuch.xml", true));
-}
+TEST_F(ConfigXml, MissingFileFails) { EXPECT_FALSE(gConfig->loadConfigFile(fs::temp_directory_path() / "realms_config_nosuch.xml", true)); }
 
 } // namespace

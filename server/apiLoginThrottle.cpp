@@ -19,53 +19,53 @@
 #include "apiLoginThrottle.hpp"
 
 namespace {
-    using Clock = std::chrono::steady_clock;
+using Clock = std::chrono::steady_clock;
 
-    constexpr Clock::time_point kNeverLocked{};
-}
+constexpr Clock::time_point kNeverLocked{};
+} // namespace
 
-int ApiLoginThrottle::lockedFor(const std::string& key) {
-    if(cfg.maxFailures <= 0)
+int ApiLoginThrottle::lockedFor(const std::string &key) {
+    if (cfg.maxFailures <= 0)
         return 0;
 
     const std::lock_guard<std::mutex> guard(mtx);
     const auto it = entries.find(key);
-    if(it == entries.end())
+    if (it == entries.end())
         return 0;
 
     const auto now = Clock::now();
-    if(it->second.lockedUntil > now)
+    if (it->second.lockedUntil > now)
         return static_cast<int>(std::chrono::ceil<std::chrono::seconds>(it->second.lockedUntil - now).count());
-    if(it->second.lockedUntil != kNeverLocked)
+    if (it->second.lockedUntil != kNeverLocked)
         entries.erase(it);
     return 0;
 }
 
-void ApiLoginThrottle::recordFailure(const std::string& key) {
-    if(cfg.maxFailures <= 0)
+void ApiLoginThrottle::recordFailure(const std::string &key) {
+    if (cfg.maxFailures <= 0)
         return;
 
     const std::lock_guard<std::mutex> guard(mtx);
     const auto now = Clock::now();
 
     auto it = entries.find(key);
-    if(it == entries.end()) {
-        if(entries.size() >= cfg.maxEntries)
+    if (it == entries.end()) {
+        if (entries.size() >= cfg.maxEntries)
             evict(now);
         it = entries.emplace(key, Entry{0, now, kNeverLocked}).first;
     }
 
-    Entry& entry = it->second;
-    if(now - entry.windowStart > cfg.window) {
+    Entry &entry = it->second;
+    if (now - entry.windowStart > cfg.window) {
         entry.failures = 0;
         entry.windowStart = now;
         entry.lockedUntil = kNeverLocked;
     }
-    if(++entry.failures >= cfg.maxFailures)
+    if (++entry.failures >= cfg.maxFailures)
         entry.lockedUntil = now + cfg.lockout;
 }
 
-void ApiLoginThrottle::recordSuccess(const std::string& key) {
+void ApiLoginThrottle::recordSuccess(const std::string &key) {
     const std::lock_guard<std::mutex> guard(mtx);
     entries.erase(key);
 }
@@ -81,20 +81,20 @@ std::size_t ApiLoginThrottle::size() const {
 }
 
 void ApiLoginThrottle::evict(Clock::time_point now) {
-    for(auto it = entries.begin(); it != entries.end(); ) {
+    for (auto it = entries.begin(); it != entries.end();) {
         const bool unlocked = it->second.lockedUntil == kNeverLocked || it->second.lockedUntil <= now;
-        if(unlocked && now - it->second.windowStart > cfg.window)
+        if (unlocked && now - it->second.windowStart > cfg.window)
             it = entries.erase(it);
         else
             ++it;
     }
-    if(entries.empty() || entries.size() < cfg.maxEntries)
+    if (entries.empty() || entries.size() < cfg.maxEntries)
         return;
 
     // Still full of live entries: the oldest window is the least useful one to keep.
     auto oldest = entries.begin();
-    for(auto it = entries.begin(); it != entries.end(); ++it)
-        if(it->second.windowStart < oldest->second.windowStart)
+    for (auto it = entries.begin(); it != entries.end(); ++it)
+        if (it->second.windowStart < oldest->second.windowStart)
             oldest = it;
     entries.erase(oldest);
 }

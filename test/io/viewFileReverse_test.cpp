@@ -12,8 +12,8 @@
 #include <string>
 
 #include "socket.hpp"
-#include "login.hpp"            // CON_VIEWING_FILE_REVERSE, CON_CHOSING_WEAPONS
-#include "apiTestSupport.hpp"   // makePlayer
+#include "login.hpp" // CON_VIEWING_FILE_REVERSE, CON_CHOSING_WEAPONS
+#include "apiTestSupport.hpp" // makePlayer
 
 namespace {
 
@@ -28,9 +28,12 @@ std::string readAvail(int fd) {
 
 // Run the first page of the reverse pager over `contents`, return the bytes sent to the client.
 // `search` (may be empty) is staged in tempstr[3] exactly as the live command does.
-std::string firstPage(const std::string& contents, const std::string& search) {
-    const char* path = "/tmp/realms_vfr_test.txt";
-    { std::ofstream f(path, std::ios::binary | std::ios::trunc); f << contents; }
+std::string firstPage(const std::string &contents, const std::string &search) {
+    const char *path = "/tmp/realms_vfr_test.txt";
+    {
+        std::ofstream f(path, std::ios::binary | std::ios::trunc);
+        f << contents;
+    }
 
     int fds[2];
     EXPECT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, fds), 0);
@@ -41,8 +44,8 @@ std::string firstPage(const std::string& contents, const std::string& search) {
     sock->setPlayer(makePlayer(CreatureClass::FIGHTER));
     snprintf(sock->tempstr[3], sizeof(sock->tempstr[3]), "%s", search.c_str());
 
-    sock->viewFileReverse(path);            // getParam()==1: first page
-    sock->setState(CON_CHOSING_WEAPONS);    // suppress the prompt in flush()
+    sock->viewFileReverse(path); // getParam()==1: first page
+    sock->setState(CON_CHOSING_WEAPONS); // suppress the prompt in flush()
     sock->flush();
     std::string out = readAvail(fds[1]);
 
@@ -53,10 +56,11 @@ std::string firstPage(const std::string& contents, const std::string& search) {
 }
 
 // 40 lines LINE000..LINE039, '\n'-separated, no trailing newline.
-std::string numberedLines(const std::string& prefix = "") {
+std::string numberedLines(const std::string &prefix = "") {
     std::string s;
     for (int i = 0; i < 40; i++) {
-        if (i) s += '\n';
+        if (i)
+            s += '\n';
         char n[8];
         snprintf(n, sizeof(n), "%03d", i);
         s += prefix + "LINE" + n;
@@ -80,7 +84,7 @@ TEST(ViewFileReverse, NewestFirstAndPageBounds) {
 }
 
 TEST(ViewFileReverse, OverlongSearchNoOverflow) {
-    const std::string longPrefix(100, 'A');         // > the old char[80] search buffer
+    const std::string longPrefix(100, 'A'); // > the old char[80] search buffer
     std::string out = firstPage(numberedLines(longPrefix), longPrefix);
 
     // long lines: one chunk yields fewer than a full screen, but the newest is shown first
