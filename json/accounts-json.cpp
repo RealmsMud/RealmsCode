@@ -33,6 +33,17 @@ void to_json(nlohmann::json &j, const Account &account) {
         {"expEarned", account.getExpEarned()},
         {"expSpent", account.getExpSpent()}
     };
+
+    nlohmann::json upgrades = nlohmann::json::object();
+    for(const auto& def : getAccountUpgradeDefinitions()) {
+        auto level = account.getUpgradeLevel(def.id);
+        if(level > 0) {
+            upgrades[std::string(def.token)] = level;
+        }
+    }
+    if(!upgrades.empty()) {
+        j["upgrades"] = upgrades;
+    }
 }
 
 void from_json(const nlohmann::json &j, Account &account) {
@@ -86,5 +97,19 @@ void from_json(const nlohmann::json &j, Account &account) {
         account.setExpSpent(j.at("expSpent").get<unsigned long long>());
     } else {
         account.setExpSpent(0);
+    }
+
+    account.clearUpgradeLevels();
+    if(j.contains("upgrades")) {
+        const auto& upgrades = j.at("upgrades");
+        if(upgrades.is_object()) {
+            for(auto it = upgrades.begin(); it != upgrades.end(); ++it) {
+                const auto* def = findAccountUpgradeByToken(it.key());
+                if(!def) {
+                    continue;
+                }
+                account.setUpgradeLevel(def->id, it.value().get<unsigned short>());
+            }
+        }
     }
 } 

@@ -23,6 +23,9 @@
 #include <vector>
 #include <ctime>
 #include <memory>
+#include <unordered_map>
+
+#include "accountUpgrades.hpp"
 
 class Player;
 class Socket;
@@ -75,6 +78,13 @@ public:
     void setExpSpent(unsigned long long spent);
     void setVersion(const std::string& v);
 
+    // Upgrades
+    unsigned short getUpgradeLevel(AccountUpgradeId id) const;
+    void setUpgradeLevel(AccountUpgradeId id, unsigned short level);
+    const std::unordered_map<AccountUpgradeId, unsigned short>& getUpgradeLevels() const;
+    void clearUpgradeLevels();
+    unsigned int getUpgradeValue(AccountUpgradeId id) const;
+
     // Character management
     bool addCharacter(const std::string& characterName);
     bool removeCharacter(const std::string& characterName);
@@ -93,6 +103,7 @@ public:
     void printInfoFields(const std::shared_ptr<Socket>& sock) const;
     void printCharacterList(const std::shared_ptr<Player>& player) const;
     void printCharacterList(const std::shared_ptr<Socket>& sock) const;
+    void printUpgradeSummary(const std::shared_ptr<Player>& player) const;
 
 
 private:
@@ -108,6 +119,7 @@ private:
     unsigned long long expEarned;   // Total account experience earned over lifetime
     unsigned long long expSpent;    // Total account experience spent on upgrades, etc.
     std::string version;            // Last game version this account logged in with
+    std::unordered_map<AccountUpgradeId, unsigned short> upgradeLevels; // Account upgrade levels
 
     // Helper functions
     void copyFrom(const Account& other);

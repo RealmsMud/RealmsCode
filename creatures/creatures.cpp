@@ -24,6 +24,7 @@
 #include <sstream>                     // for operator<<, basic_ostream, ost...
 #include <string>                      // for string, operator==, allocator
 
+#include "account.hpp"
 #include "area.hpp"                    // for MapMarker, Area
 #include "calendar.hpp"                // for Calendar
 #include "catRef.hpp"                  // for CatRef
@@ -507,27 +508,49 @@ int Creature::getTotalBulk() const {
 //********************************************************************
 
 int Creature::getMaxBulk() const {
+    int base = 0;
     switch(size) {
     case SIZE_FINE:
-        return(15);
+        base = 15;
+        break;
     case SIZE_DIMINUTIVE:
-        return(45);
+        base = 45;
+        break;
     case SIZE_TINY:
-        return(90);
+        base = 90;
+        break;
     case SIZE_SMALL:
-        return(158);
+        base = 158;
+        break;
     case SIZE_LARGE:
-        return(278);
+        base = 278;
+        break;
     case SIZE_HUGE:
-        return(323);
+        base = 323;
+        break;
     case SIZE_GARGANTUAN:
-        return(368);
+        base = 368;
+        break;
     case SIZE_COLOSSAL:
-        return(413);
+        base = 413;
+        break;
     case SIZE_MEDIUM:
     default:
-        return(210);
+        base = 210;
+        break;
     }
+
+    if(isPlayer()) {
+        auto player = getAsPlayer();
+        if(player && player->hasAccount()) {
+            auto account = gServer->getOrLoadAccount(player->getAccountName());
+            if(account) {
+                base += static_cast<int>(account->getUpgradeValue(AccountUpgradeId::BulkCapacity));
+            }
+        }
+    }
+
+    return base;
 }
 
 //********************************************************************

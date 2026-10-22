@@ -184,6 +184,10 @@ std::shared_ptr<Player> MudObject::getAsPlayer() {
     return(std::dynamic_pointer_cast<Player>(shared_from_this()));
 }
 
+std::shared_ptr<const Player> MudObject::getAsPlayer() const {
+    return(std::dynamic_pointer_cast<const Player>(shared_from_this()));
+}
+
 //***********************************************************************
 //                      getObject
 //***********************************************************************

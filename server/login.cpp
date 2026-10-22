@@ -215,6 +215,17 @@ void login(const std::shared_ptr<Socket>& sock, const std::string& inStr) {
                 sock->disconnect();
                 return;
             }
+            // End LOGIN_GET_ACCOUNT_NAME
+        }
+        case LOGIN_GET_LEGACY_NAME: {
+            std::string charName = str;
+            boost::trim(charName);
+            if(charName.empty()) {
+                sock->askFor("Please enter character name for legacy login: ");
+                return;
+            }
+            lowercize(charName, 1);
+            if(charName.length() >= 25) charName[25] = 0;
 
             sock->print("\n%s? ", sock->tempstr[0]);
             sock->askFor("Did I get that right? (yes/no): ");

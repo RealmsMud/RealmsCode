@@ -65,6 +65,7 @@
 #include "web.hpp"                   // for callWebserver
 #include "xml.hpp"                   // for loadPlayer, loadRoom
 #include "account.hpp"              // for Account
+#include "accountUpgrades.hpp"
 #include "toNum.hpp"
 
 class UniqueRoom;
@@ -1693,6 +1694,62 @@ static int dmAccountCharacters(const std::shared_ptr<Player>& invoker, const std
     return(0);
 }
 
+static void applyUpgradeChangesToOnlinePlayers(const std::string& accountName) {
+    if(!gServer) return;
+
+    auto itConn = gServer->accountConnections.find(accountName);
+    if(itConn == gServer->accountConnections.end()) {
+        return;
+    }
+
+    for(const auto& characterName : itConn->second) {
+        auto onlinePlayer = gServer->findPlayer(characterName);
+        if(onlinePlayer) {
+            onlinePlayer->applyAccountUpgradeBonuses();
+            onlinePlayer->print("^WYour account upgrades have been modified by staff.^x\n");
+        }
+    }
+}
+
+static int dmAccountUpgradeList(const std::shared_ptr<Player>& invoker, const std::shared_ptr<Account>& account) {
+    account->printUpgradeSummary(invoker);
+    return(0);
+}
+
+static int dmAccountUpgradeModify(const std::shared_ptr<Player>& invoker,
+                                  const std::shared_ptr<Account>& account,
+                                  const std::string& upgradeToken,
+                                  unsigned short newRank) {
+    const AccountUpgradeDefinition* def = matchAccountUpgrade(upgradeToken);
+    if(!def) {
+        invoker->print("Unknown upgrade '%s'. Use '*account %s upgrade' to list options.\n",
+                       upgradeToken.c_str(), account->getName().c_str());
+        return(0);
+    }
+
+    unsigned short currentRank = account->getUpgradeLevel(def->id);
+    unsigned short desiredRank = std::min<unsigned int>(newRank, def->maxRank);
+
+    if(desiredRank == currentRank) {
+        invoker->print("No change applied. %s is already at rank %u/%u.\n",
+                       std::string(def->displayName).c_str(), currentRank, def->maxRank);
+        return(0);
+    }
+
+    account->setUpgradeLevel(def->id, desiredRank);
+    if(!account->save()) {
+        invoker->print("^RWarning:^x failed to save account '%s'.\n", account->getName().c_str());
+    }
+
+    applyUpgradeChangesToOnlinePlayers(account->getName());
+
+    auto bonusDesc = describeAccountUpgradeBonus(*def, account->getUpgradeValue(def->id));
+    invoker->print("Set ^W%s^x on ^C%s^x to rank ^G%u/%u^x. New bonus: %s.\n",
+                   std::string(def->displayName).c_str(), account->getName().c_str(),
+                   desiredRank, def->maxRank, bonusDesc.c_str());
+    return(0);
+}
+
 //*********************************************************************
 //                      dmAccount (dispatcher)
 //*********************************************************************
@@ -1704,10 +1761,12 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
 	const char* syntax = "\nSyntax:\n"
-	                     "  *account <accountName> info\n"
-	                     "  *account <accountName> characters\n"
-	                     "  *account <accountName> characters add <playerName>\n"
-	                     "  *account <accountName> characters remove <playerName>\n";
+	                     "  *account <accountName> (i)nfo\n"
+	                     "  *account <accountName> (c)haracters\n"
+	                     "  *account <accountName> (c)haracters (a)dd <playerName>\n"
+	                     "  *account <accountName> (c)haracters (r)emove <playerName>\n"
+	                     "  *account <accountName> (u)pgrade\n"
+	                     "  *account <accountName> (u)pgrade (s)et <upgradeName> <rank>\n";
 
     if(cmnd->num < 3) {
         player->print("%s", syntax);
@@ -1719,9 +1778,15 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
     lowercize(action, 0);
     lowercize(accountName, 1);
 
+    auto account = gServer->getOrLoadAccount(accountName);
+    if(!account) {
+        player->print("Account '%s' does not exist.\n", accountName.c_str());
+        return(0);
+    }
+
     // Partial matching for subcommands
     if(partialMatch(action, "info", 4)) {
-        return dmAccountInfo(player, accountName);
+        return dmAccountInfo(player, account);
     }
     if(partialMatch(action, "characters", 10)) {
 		// Bare "characters" -> just list characters
@@ -1747,6 +1812,39 @@ int dmAccount(const std::shared_ptr<Player>& player, cmd* cmnd) {
 
 		player->print("Unknown subcommand '%s'.%s", subAction.c_str(), syntax);
 		return(0);
+    }
+
+    if(partialMatch(action, "upgrade", 7)) {
+        if(cmnd->num == 3) {
+            return dmAccountUpgradeList(player, account);
+        }
+
+        if(cmnd->num < 5) {
+            player->print("%s", syntax);
+            return(0);
+        }
+
+        std::string subAction = cmnd->str[3];
+        lowercize(subAction, 0);
+
+        if(partialMatch(subAction, "set", 3)) {
+            std::string upgradeName = cmnd->str[4];
+            std::string rankStr = getFullstrText(cmnd->fullstr, 5);
+            if(rankStr.empty()) {
+                player->print("Please provide a rank (>= 0).\n");
+                return(0);
+            }
+            unsigned short rank = static_cast<unsigned short>(std::max(0, toNum<int>(rankStr)));
+            return dmAccountUpgradeModify(player, account, upgradeName, rank);
+        }
+
+        if(partialMatch(subAction, "modify", 6)) {
+            player->print("The 'modify' subcommand has been replaced with 'set'.\n");
+            return(0);
+        }
+
+        player->print("Unknown subcommand '%s'.%s", subAction.c_str(), syntax);
+        return(0);
     }
 
     player->print("Unknown subcommand '%s'.%s", action.c_str(), syntax);

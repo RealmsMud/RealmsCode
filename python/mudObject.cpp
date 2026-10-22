@@ -59,7 +59,7 @@ void init_module_mudObject(py::module &m) {
              "owner"_a=py::none(), "keepApplier"_a=(bool)(false))
         .def("pulseEffects", &MudObject::pulseEffects)
         .def("removeOppositeEffect", &::MudObject::removeOppositeEffect)
-        .def("getPlayer",&MudObject::getAsPlayer, py::return_value_policy::reference)
+        .def("getPlayer", static_cast<std::shared_ptr<Player> (MudObject::*)()>(&MudObject::getAsPlayer), py::return_value_policy::reference)
         .def("getMonster", &MudObject::getAsMonster, py::return_value_policy::reference)
         .def("getObject", &MudObject::getAsObject, py::return_value_policy::reference)
         .def("getExit",&MudObject::getAsExit, py::return_value_policy::reference)
