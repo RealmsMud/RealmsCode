@@ -13,11 +13,7 @@
 
 TEST(QuestRemap, DensePerZoneFromOneByOldId) {
     std::vector<std::pair<CatRef, std::string>> in = {
-        {CatRef("misc", 2), "hp"},
-        {CatRef("misc", 5), "druid"},
-        {CatRef("misc", 1), "misc"},
-        {CatRef("misc", 9), "hp"},
-        {CatRef("misc", 4), "misc"},
+            {CatRef("misc", 2), "hp"}, {CatRef("misc", 5), "druid"}, {CatRef("misc", 1), "misc"}, {CatRef("misc", 9), "hp"}, {CatRef("misc", 4), "misc"},
     };
     auto m = buildQuestRemap(in);
     ASSERT_EQ(m.size(), 5u);
@@ -41,8 +37,8 @@ TEST(QuestRemap, DensePerZoneFromOneByOldId) {
 
 TEST(QuestRemap, ZonesNumberIndependentlyFromOne) {
     std::vector<std::pair<CatRef, std::string>> in = {
-        {CatRef("misc", 100), "a"},
-        {CatRef("misc", 1), "b"},
+            {CatRef("misc", 100), "a"},
+            {CatRef("misc", 1), "b"},
     };
     auto m = buildQuestRemap(in);
     EXPECT_EQ(m.at(CatRef("misc", 100)).area, "a");

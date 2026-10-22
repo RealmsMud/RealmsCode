@@ -30,6 +30,38 @@ TEST(Endpoint, VersionIsPublic) {
     EXPECT_NE(res.body.find("version"), std::string::npos);
 }
 
+// Startup policy: what disables the REST listener, and what only warns.
+
+TEST(HttpConfigUsable, PortZeroIsDisabled) {
+    std::string why;
+    EXPECT_FALSE(apiHttpConfigUsable(0, "a-long-enough-secret-of-32-bytes!", why));
+    EXPECT_NE(why.find("disabled"), std::string::npos);
+}
+
+TEST(HttpConfigUsable, PortAboveRangeIsUnusable) {
+    std::string why;
+    EXPECT_FALSE(apiHttpConfigUsable(70000, "a-long-enough-secret-of-32-bytes!", why));
+    EXPECT_FALSE(why.empty());
+}
+
+TEST(HttpConfigUsable, EmptySecretIsUnusable) {
+    std::string why;
+    EXPECT_FALSE(apiHttpConfigUsable(8080, "", why));
+    EXPECT_NE(why.find("JwtSecret"), std::string::npos);
+}
+
+TEST(HttpConfigUsable, ShortSecretStartsWithWarning) {
+    std::string why;
+    EXPECT_TRUE(apiHttpConfigUsable(8080, "short", why));
+    EXPECT_FALSE(why.empty());
+}
+
+TEST(HttpConfigUsable, GoodConfigHasNoComplaint) {
+    std::string why;
+    EXPECT_TRUE(apiHttpConfigUsable(8080, "a-long-enough-secret-of-32-bytes!", why));
+    EXPECT_TRUE(why.empty());
+}
+
 TEST(Auth, VerifyRejectsMissingHeader) {
     std::string userId, name;
     EXPECT_FALSE(apiVerifyJwt("", userId, name));
@@ -45,7 +77,7 @@ TEST(Auth, VerifyRejectsMalformedToken) {
     EXPECT_FALSE(apiVerifyJwt("Bearer not.a.real.jwt", userId, name));
 }
 
-static std::string signToken(const std::string& secret, const std::string& issuer, const std::string& userId, const std::string& name, std::chrono::system_clock::time_point exp) {
+static std::string signToken(const std::string &secret, const std::string &issuer, const std::string &userId, const std::string &name, std::chrono::system_clock::time_point exp) {
     return jwt::create()
             .set_type("JWT")
             .set_issuer(issuer)
@@ -113,43 +145,43 @@ TEST(Authz, DmBypassesRanges) {
 }
 
 TEST(Authz, CaretakerNotRangeRestricted) {
-    auto p = makePlayer(CreatureClass::CARETAKER);  // no bRange set
+    auto p = makePlayer(CreatureClass::CARETAKER); // no bRange set
     EXPECT_EQ(apiAuthorizeStaff(p), 0);
     // Only BUILDER is range-checked, so a CT passes regardless of ranges.
     EXPECT_EQ(apiAuthorizeAccess(p, mkCr("misc", 500), false), 0);
 }
 
 TEST(Authz, BuilderInRangeAllowed) {
-    auto p = makePlayer(CreatureClass::BUILDER, { mkRange("misc", 1, 1000) });
+    auto p = makePlayer(CreatureClass::BUILDER, {mkRange("misc", 1, 1000)});
     EXPECT_EQ(apiAuthorizeAccess(p, mkCr("misc", 500), false), 0);
 }
 
 TEST(Authz, BuilderOutOfRangeForbidden) {
-    auto p = makePlayer(CreatureClass::BUILDER, { mkRange("misc", 1, 100) });
+    auto p = makePlayer(CreatureClass::BUILDER, {mkRange("misc", 1, 100)});
     EXPECT_EQ(apiAuthorizeAccess(p, mkCr("misc", 500), false), 403);
 }
 
 TEST(Authz, BuilderReadOnlyAreasReadableNotWritable) {
-    auto p = makePlayer(CreatureClass::BUILDER);  // no ranges
-    EXPECT_EQ(apiAuthorizeAccess(p, mkCr("scroll", 1), true), 0);     // read allowed
-    EXPECT_EQ(apiAuthorizeAccess(p, mkCr("scroll", 1), false), 403);  // write denied
+    auto p = makePlayer(CreatureClass::BUILDER); // no ranges
+    EXPECT_EQ(apiAuthorizeAccess(p, mkCr("scroll", 1), true), 0); // read allowed
+    EXPECT_EQ(apiAuthorizeAccess(p, mkCr("scroll", 1), false), 403); // write denied
 }
 
 TEST(Authz, BuilderZeroIdForbidden) {
-    auto p = makePlayer(CreatureClass::BUILDER, { mkRange("misc", 1, 1000) });
+    auto p = makePlayer(CreatureClass::BUILDER, {mkRange("misc", 1, 1000)});
     EXPECT_EQ(apiAuthorizeAccess(p, mkCr("misc", 0), false), 403);
 }
 
 TEST(Authz, CanBuildObjectsRespectsFlag) {
     EXPECT_FALSE(makePlayer(CreatureClass::BUILDER)->canBuildObjects());
-    EXPECT_TRUE(makePlayer(CreatureClass::BUILDER, {}, { P_BUILDER_OBJS })->canBuildObjects());
+    EXPECT_TRUE(makePlayer(CreatureClass::BUILDER, {}, {P_BUILDER_OBJS})->canBuildObjects());
     EXPECT_TRUE(makePlayer(CreatureClass::CARETAKER)->canBuildObjects());
     EXPECT_FALSE(makePlayer(CreatureClass::FIGHTER)->canBuildObjects());
 }
 
 TEST(Authz, CanBuildMonstersRespectsFlag) {
     EXPECT_FALSE(makePlayer(CreatureClass::BUILDER)->canBuildMonsters());
-    EXPECT_TRUE(makePlayer(CreatureClass::BUILDER, {}, { P_BUILDER_MOBS })->canBuildMonsters());
+    EXPECT_TRUE(makePlayer(CreatureClass::BUILDER, {}, {P_BUILDER_MOBS})->canBuildMonsters());
     EXPECT_TRUE(makePlayer(CreatureClass::CARETAKER)->canBuildMonsters());
     EXPECT_FALSE(makePlayer(CreatureClass::FIGHTER)->canBuildMonsters());
 }

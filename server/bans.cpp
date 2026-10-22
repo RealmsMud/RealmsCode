@@ -37,6 +37,7 @@
 #include "proto.hpp"               // for broadcast, isCt, log_immort, logn
 #include "server.hpp"              // for Server, gServer, SocketList
 #include "socket.hpp"              // for Socket
+#include "login/loginSession.hpp"  // for LoginSession
 #include "toNum.hpp"
 
 
@@ -419,21 +420,20 @@ bool Config::deleteBan(int toDel) {
 // a site that is being locked out.  If the site is password locked,
 // then 2 is returned.  If it's completely locked, 1 is returned.  If
 // it's not locked out at all, 0 is returned.
-int Config::isLockedOut( const std::shared_ptr<Socket>& sock ) {
+int Config::isSiteLockedOut(std::string_view ip, std::string_view hostname,
+                            std::string* outPassword, std::string* outSite) {
     bool match = false;
-    int count=0;
-
-    std::list<Ban*>::iterator it;
+    int count = 0;
     Ban* ban = nullptr;
 
-    for(it = bans.begin() ; it != bans.end() ; it++) {
+    for(auto it = bans.begin() ; it != bans.end() ; it++) {
         count++;
         ban = (*it);
         // Better safe than sorry
         if(!ban)
             continue;
-        
-        if(ban->matches(sock->getHostname()) || ban->matches(sock->getIp())) {
+
+        if((!hostname.empty() && ban->matches(hostname)) || (!ip.empty() && ban->matches(ip))) {
             match = true;
             break;
         }
@@ -448,18 +448,31 @@ int Config::isLockedOut( const std::shared_ptr<Socket>& sock ) {
         saveBans();
 
         // See if they're effected by another ban
-        return(isLockedOut(sock));
+        return(isSiteLockedOut(ip, hostname, outPassword, outSite));
     }
+    if(outSite)
+        *outSite = ban->site;
     if(!ban->password.empty()) {
-        strcpy(sock->tempstr[0], ban->password.c_str());
-        return (2);
-    } else {
+        if(outPassword)
+            *outPassword = ban->password;
+        return(2);
+    }
+    return(1);
+}
+
+int Config::isLockedOut( const std::shared_ptr<Socket>& sock ) {
+    std::string password, site;
+    const int result = isSiteLockedOut(sock->getIp(), sock->getHostname(), &password, &site);
+
+    if(result == 2) {
+        sock->getLoginSession().lockoutPassword = password;
+    } else if(result == 1) {
         char buf[1024];
         snprintf(buf, sizeof(buf), "\n\rYour site is locked out.\n\rSend questions to %s.\n\r", questions_to_email);
         sock->write(buf);
-        broadcast(isCt, "^yDenying access to '%s(%s)'", sock->getHostname(), ban->site.c_str());
-        return(1);
+        broadcast(isCt, "^yDenying access to '%s(%s)'", sock->getHostname(), site.c_str());
     }
+    return(result);
 }
 
 // Returns 1 if the site is on the ban list, 0 otherwise

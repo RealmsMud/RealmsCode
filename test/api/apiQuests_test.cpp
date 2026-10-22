@@ -35,8 +35,8 @@ TEST(ApiQuests, ScanAndRead) {
     ASSERT_TRUE(j2.has_value());
     EXPECT_TRUE(j2->value("disabled", false));
 
-    EXPECT_FALSE(apiReadQuestJson("hp", 99, base).has_value());   // missing file
-    EXPECT_TRUE(apiScanQuestIds("nonexistent", base).empty());    // missing zone
+    EXPECT_FALSE(apiReadQuestJson("hp", 99, base).has_value()); // missing file
+    EXPECT_TRUE(apiScanQuestIds("nonexistent", base).empty()); // missing zone
 
     fs::remove_all(base);
 }

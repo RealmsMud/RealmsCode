@@ -2785,7 +2785,7 @@ int dmBackupPlayer(const std::shared_ptr<Player>& player, cmd* cmnd) {
     }
 
 
-    if(target->save(online, LoadType::LS_BACKUP) > 0) {
+    if(target->save(online, LoadType::LS_BACKUP) != 0) {
         player->print("Backup failed.\n");
         return(0);
     }

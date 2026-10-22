@@ -3,7 +3,7 @@
  */
 #include <gtest/gtest.h>
 
-#include <arpa/telnet.h>   // IAC, DO, TELOPT_COMPRESS2
+#include <arpa/telnet.h> // IAC, DO, TELOPT_COMPRESS2
 #include <sys/socket.h>
 #include <unistd.h>
 #include <zlib.h>
@@ -14,7 +14,7 @@
 #include <string>
 
 #include "socket.hpp"
-#include "apiTestSupport.hpp"   // ensureServer
+#include "apiTestSupport.hpp" // ensureServer
 
 namespace {
 
@@ -29,29 +29,28 @@ std::string readAvail(int fd) {
 }
 
 // Inflate a whole MCCP2 stream (deflate w/ Z_SYNC_FLUSH, default window).
-std::string inflateAll(const std::string& in) {
+std::string inflateAll(const std::string &in) {
     z_stream zs{};
     EXPECT_EQ(inflateInit(&zs), Z_OK);
-    zs.next_in = reinterpret_cast<Bytef*>(const_cast<char*>(in.data()));
+    zs.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(in.data()));
     zs.avail_in = static_cast<uInt>(in.size());
     std::string out;
     char buf[16384];
     int ret = Z_OK;
     do {
-        zs.next_out = reinterpret_cast<Bytef*>(buf);
+        zs.next_out = reinterpret_cast<Bytef *>(buf);
         zs.avail_out = sizeof(buf);
         ret = inflate(&zs, Z_NO_FLUSH);
         out.append(buf, sizeof(buf) - zs.avail_out);
-    } while (ret == Z_OK && zs.avail_out == 0);   // refill only while output stays saturated
+    } while (ret == Z_OK && zs.avail_out == 0); // refill only while output stays saturated
     inflateEnd(&zs);
     return out;
 }
 
 // Strip the IAC SB COMPRESS2 IAC SE start marker that precedes the deflate stream.
 std::string stripMccpStart(std::string s) {
-    const unsigned char marker[] = { IAC, SB, TELOPT_COMPRESS2, IAC, SE };
-    if (s.size() >= sizeof(marker) &&
-        std::memcmp(s.data(), marker, sizeof(marker)) == 0)
+    const unsigned char marker[] = {IAC, SB, TELOPT_COMPRESS2, IAC, SE};
+    if (s.size() >= sizeof(marker) && std::memcmp(s.data(), marker, sizeof(marker)) == 0)
         s.erase(0, sizeof(marker));
     return s;
 }
@@ -61,16 +60,17 @@ std::shared_ptr<Socket> makeCompressingSocket(int serverFd, int peerFd) {
     auto sock = std::make_shared<Socket>(serverFd);
     nonBlock(serverFd);
     nonBlock(peerFd);
-    unsigned char neg[] = { IAC, DO, TELOPT_COMPRESS2 };
+    unsigned char neg[] = {IAC, DO, TELOPT_COMPRESS2};
     EXPECT_EQ(::write(peerFd, neg, sizeof(neg)), static_cast<ssize_t>(sizeof(neg)));
-    sock->processInput();       // -> negotiate() -> startCompress()
+    sock->processInput(); // -> negotiate() -> startCompress()
     return sock;
 }
 
 std::string randomBytes(size_t n, unsigned seed) {
     std::mt19937 rng(seed);
     std::string s(n, '\0');
-    for (auto& c : s) c = static_cast<char>(rng() & 0xff);
+    for (auto &c: s)
+        c = static_cast<char>(rng() & 0xff);
     return s;
 }
 
@@ -87,7 +87,7 @@ TEST(Mccp, RoundTripCompressedWrite) {
     for (int i = 0; i < 200; i++)
         payload += "the quick brown fox jumps over the lazy dog\n";
 
-    sock->writeRaw(payload);    // deflate -> fd, process=false (byte-exact)
+    sock->writeRaw(payload); // deflate -> fd, process=false (byte-exact)
     sock->flush();
 
     std::string raw = stripMccpStart(readAvail(fds[1]));
@@ -109,9 +109,9 @@ TEST(Mccp, BackpressureBuffersAndDelivers) {
     auto sock = makeCompressingSocket(fds[0], fds[1]);
     ASSERT_TRUE(sock->mccpEnabled());
 
-    std::string raw = readAvail(fds[1]);   // capture the start marker before it clogs the tiny buffer
+    std::string raw = readAvail(fds[1]); // capture the start marker before it clogs the tiny buffer
 
-    const std::string payload = randomBytes(256 * 1024, 12345u);   // ~incompressible -> exceeds buffers
+    const std::string payload = randomBytes(256 * 1024, 12345u); // ~incompressible -> exceeds buffers
     sock->writeRaw(payload);
 
     // The socket is full, so most compressed output must still be buffered, not dropped.

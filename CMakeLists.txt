@@ -404,16 +404,23 @@ set(COMMON_SOURCE_FILES
     server/swap.cpp
     server/update.cpp
 
+    login/accountAuthService.cpp
+    login/characterCreationService.cpp
+    login/characterMaterializer.cpp
+    login/creationFlow.cpp
+
     server/web.cpp
     server/httpServer.cpp
     server/apiQueue.cpp
     server/apiAuthCache.cpp
+    server/apiLoginThrottle.cpp
     server/apiQuests.cpp
     server/zoneIndex.cpp
     server/zoneIndexBuilder.cpp
     server/http/zones-http.cpp
     server/http/index-http.cpp
     server/http/auth-http.cpp
+    server/http/creation-http.cpp
 
 
     skills/skillCommand.cpp
@@ -443,6 +450,7 @@ set(COMMON_SOURCE_FILES
 
     json/accounts-json.cpp
     json/catref-json.cpp
+    json/creationFlow-json.cpp
     json/effects-json.cpp
     json/hooks-json.cpp
     json/money-json.cpp
@@ -546,10 +554,13 @@ if(REALMS_BUILD_TESTS)
     enable_testing()
     add_executable(RealmsTests
         # REST API (server/http)
+        test/api/accountLogin_test.cpp
         test/api/apiQuests_test.cpp
         test/api/apiQueue_test.cpp
         test/api/authCache_test.cpp
+        test/api/creationHttp_test.cpp
         test/api/endpoint_test.cpp
+        test/api/loginThrottle_test.cpp
         # JSON persistence (json/)
         test/json/questsJson_test.cpp
         test/json/monstersJson_test.cpp
@@ -559,6 +570,7 @@ if(REALMS_BUILD_TESTS)
         test/json/zoneIndexBuilder_test.cpp
         test/json/questRemap_test.cpp
         # XML helpers (xml/)
+        test/xml/configXml_test.cpp
         test/xml/xmlNum_test.cpp
         test/xml/xmlReader_test.cpp
         # Server engine (server/)
@@ -578,11 +590,19 @@ if(REALMS_BUILD_TESTS)
         test/io/socketAsyncBackpressure_test.cpp
         # General utilities (util/)
         test/util/csv_test.cpp
+        test/util/lowercize_test.cpp
         test/util/range_test.cpp
         test/util/md5_test.cpp
         # Game logic
         test/game/commandBase_test.cpp
         test/game/startlocs_test.cpp
+        # Login / character creation (login/)
+        test/login/accountAuthService_test.cpp
+        test/login/characterCreationService_test.cpp
+        test/login/characterMaterializer_test.cpp
+        test/login/creationFlow_test.cpp
+        test/login/creationWizard_test.cpp
+        test/login/loginFlow_test.cpp
     )
     set_property(SOURCE io/socket.cpp APPEND PROPERTY COMPILE_DEFINITIONS _GLIBCXX_ASSERTIONS)
     target_include_directories(RealmsTests PRIVATE ${CMAKE_SOURCE_DIR}/test)

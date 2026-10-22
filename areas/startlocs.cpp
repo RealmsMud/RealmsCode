@@ -16,7 +16,6 @@
  *
  */
 #include <fmt/format.h>                // for format
-#include <stdio.h>                     // for sprintf
 #include <list>                        // for list, operator==, list<>::iter...
 #include <map>                         // for map, operator==, map<>::const_...
 #include <memory>                      // for allocator, allocator_traits<>:...
@@ -33,6 +32,7 @@
 #include "global.hpp"                  // for CreatureClass, CreatureClass::...
 #include "location.hpp"                // for Location
 #include "login.hpp"                   // for addStartingItem
+#include "login/characterCreationService.hpp"  // for Create::startingLocationChoices
 #include "magic.hpp"                   // for checkRefusingMagic, SpellData
 #include "mud.hpp"                     // for DL_TELEP
 #include "mudObjects/areaRooms.hpp"    // for AreaRoom
@@ -76,54 +76,49 @@ void initialBind(std::shared_ptr<Player> player, const std::string &str) {
 }
 
 //*********************************************************************
-//                      startingChoices
+//                      startingLocationChoices
 //*********************************************************************
-// This function will determine the player's starting location.
-// choose = false   return true if we can easily pick their location
-//                  return false if they must choose
-// choose = true    return true if they made a valid selection
-//                  return false if they made an invalid selection
-
-bool startingChoices(std::shared_ptr<Player> player, std::string str, char *location, size_t locationSize, bool choose) {
+// shared by the telnet menu and the headless flow; no Player touched
+std::vector<Create::StartLocOption> Create::startingLocationChoices(short raceId, CreatureClass cClass, int deity) {
+    auto make = [](const std::string& key) {
+        std::string label = key;
+        if(!label.empty())
+            label[0] = up(label[0]);
+        return Create::StartLocOption{key, label};
+    };
 
     // if only one start location is defined, our choices are easy!
-    if (gConfig->start.size() == 1) {
-        auto s = gConfig->start.begin();
-        snprintf(location, locationSize, "%s", (*s).first.c_str());
-        location[0] = up(location[0]);
-        player->bind((*s).second);
-        return (true);
-    }
+    if (gConfig->start.size() == 1)
+        return { make(gConfig->start.begin()->first) };
 
     std::list<std::string> options;
-    int race = player->getRace();
+    int race = raceId;
 
-    // set race equal to their parent race, use player->getRace() if checking
-    // for subraces
+    // set race equal to their parent race, use raceId if checking for subraces
     const RaceData *r = gConfig->getRace(race);
     if (r && r->getParentRace())
         race = r->getParentRace();
 
-    if (player->getClass() == CreatureClass::DRUID) {
+    if (cClass == CreatureClass::DRUID) {
 
         // druidic order overrides all other starting locations
         options.emplace_back("druidwood");
-    } else if (player->getClass() == CreatureClass::LICH) {
-        
+    } else if (cClass == CreatureClass::LICH) {
+
         //for now, all liches start in Highport
         options.emplace_back("highport");
 
-    } else if (player->getDeity() == ENOCH || player->getRace() == SERAPH) {
+    } else if (deity == ENOCH || raceId == SERAPH) {
 
         // religious states
         options.emplace_back("sigil");
 
-    } else if (player->getDeity() == ARAMON || player->getRace() == CAMBION) {
+    } else if (deity == ARAMON || raceId == CAMBION) {
 
         // religious states
         options.emplace_back("caladon");
 
-    } else if (race == HUMAN && player->getClass() == CreatureClass::CLERIC) {
+    } else if (race == HUMAN && cClass == CreatureClass::CLERIC) {
 
         // all other human clerics have to start in HP because
         // Sigil and Caladon are very religious
@@ -180,7 +175,7 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
 
         options.emplace_back("orc");
 
-    } else if (race == ELF || player->getDeity() == LINOTHAN) {
+    } else if (race == ELF || deity == LINOTHAN) {
 
         options.emplace_back("eldinwood");
 
@@ -198,7 +193,7 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
 
     }
 
-    switch (player->getClass()) {
+    switch (cClass) {
         case CreatureClass::RANGER:
             options.emplace_back("druidwood");
             break;
@@ -229,60 +224,19 @@ bool startingChoices(std::shared_ptr<Player> player, std::string str, char *loca
 
     // if the areas aren't open, give them the default starting location,
     // which is the first one on the list
-    if (options.empty())
-        options.push_back(gConfig->getDefaultStartLoc()->getName());
-
-    // OCEANCREST: Dom: HC
-    //options.push_back("oceancrest");
-
-    // if they have no choice, we assign them a location and are done with it
-    if (options.size() == 1) {
-        snprintf(location, locationSize, "%s", options.front().c_str());
-        location[0] = up(location[0]);
-
-        initialBind(player, options.front());
-        return (true);
+    if (options.empty()) {
+        if (const auto def = gConfig->getDefaultStartLoc())
+            options.push_back(def->getName());
+        else
+            return {};   // no startlocs configured: degenerate, Location step rejects all input
     }
 
-
-    std::list<std::string>::iterator it;
-    int i = 0;
-
-
-    // we don't need to make any choices - we need to show them what they can choose
-    if (!choose) {
-        std::ostringstream oStr;
-        char opt = 'A';
-        for (it = options.begin(); it != options.end(); it++) {
-            if (i)
-                oStr << "     ";
-            i++;
-
-            snprintf(location, locationSize, "%s", (*it).c_str());
-            location[0] = up(location[0]);
-
-            oStr << "[^W" << (opt++) << "^x] " << location;
-        }
-        snprintf(location, locationSize, "%s", oStr.str().c_str());
-        return (false);
-    }
-
-    // determine where they want to start
-    int choice = low(str[0]) - 'a' + 1;
-
-    for (it = options.begin(); it != options.end(); it++) {
-        if (++i == choice) {
-            snprintf(location, locationSize, "%s", (*it).c_str());
-            location[0] = up(location[0]);
-
-            initialBind(player, *it);
-            return (true);
-        }
-    }
-
-    return (false);
+    std::vector<Create::StartLocOption> out;
+    out.reserve(options.size());
+    for (const auto& key : options)
+        out.push_back(make(key));
+    return out;
 }
-
 
 //*********************************************************************
 //                      dmStartLocs

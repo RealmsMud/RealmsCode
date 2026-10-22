@@ -3,29 +3,29 @@
  */
 #include <gtest/gtest.h>
 
-#include <arpa/telnet.h>   // IAC, SB, SE
+#include <arpa/telnet.h> // IAC, SB, SE
 #include <string>
 
-#include "socket.hpp"      // telnet::TELOPT_GMCP, MSDP_* delimiters
+#include "socket.hpp" // telnet::TELOPT_GMCP, MSDP_* delimiters
 #include "gmcp.hpp"
-#include "gmcpEvents.hpp"  // gmcp::commTypeChannel
+#include "gmcpEvents.hpp" // gmcp::commTypeChannel
 #include "communication.hpp" // COM_* types
-#include "flags.hpp"       // P_HIDDEN, P_DM_INVIS, O_HIDDEN, O_SCENERY
-#include "proto.hpp"       // roomPlayerVisible, listObjectSee
+#include "flags.hpp" // P_HIDDEN, P_DM_INVIS, O_HIDDEN, O_SCENERY
+#include "proto.hpp" // roomPlayerVisible, listObjectSee
 #include "mudObjects/objects.hpp"
 #include "mudObjects/players.hpp"
 #include "../apiTestSupport.hpp"
 
 namespace {
-    // Build MSDP byte runs with the telnet:: delimiter macros.
-    std::string msdp(unsigned char b) { return std::string(1, static_cast<char>(b)); }
-    std::string var(const std::string& k) { return msdp(MSDP_VAR) + k; }
-    std::string val(const std::string& v) { return msdp(MSDP_VAL) + v; }
-    const std::string TOPEN  = msdp(MSDP_TABLE_OPEN);
-    const std::string TCLOSE = msdp(MSDP_TABLE_CLOSE);
-    const std::string AOPEN  = msdp(MSDP_ARRAY_OPEN);
-    const std::string ACLOSE = msdp(MSDP_ARRAY_CLOSE);
-}
+// Build MSDP byte runs with the telnet:: delimiter macros.
+std::string msdp(unsigned char b) { return std::string(1, static_cast<char>(b)); }
+std::string var(const std::string &k) { return msdp(MSDP_VAR) + k; }
+std::string val(const std::string &v) { return msdp(MSDP_VAL) + v; }
+const std::string TOPEN = msdp(MSDP_TABLE_OPEN);
+const std::string TCLOSE = msdp(MSDP_TABLE_CLOSE);
+const std::string AOPEN = msdp(MSDP_ARRAY_OPEN);
+const std::string ACLOSE = msdp(MSDP_ARRAY_CLOSE);
+} // namespace
 
 TEST(Gmcp, FrameWrapsAndEscapes) {
     std::string f = telnet::subnegotiate(TELOPT_GMCP, "Core.Ping");
@@ -33,9 +33,9 @@ TEST(Gmcp, FrameWrapsAndEscapes) {
     EXPECT_EQ(static_cast<unsigned char>(f[0]), static_cast<unsigned char>(IAC));
     EXPECT_EQ(static_cast<unsigned char>(f[1]), static_cast<unsigned char>(SB));
     EXPECT_EQ(static_cast<unsigned char>(f[2]), static_cast<unsigned char>(TELOPT_GMCP));
-    EXPECT_EQ(static_cast<unsigned char>(f[f.size()-2]), static_cast<unsigned char>(IAC));
+    EXPECT_EQ(static_cast<unsigned char>(f[f.size() - 2]), static_cast<unsigned char>(IAC));
     EXPECT_EQ(static_cast<unsigned char>(f.back()), static_cast<unsigned char>(SE));
-    EXPECT_EQ(f.substr(3, f.size()-5), "Core.Ping");
+    EXPECT_EQ(f.substr(3, f.size() - 5), "Core.Ping");
 }
 
 TEST(Gmcp, FrameDoublesIacInPayload) {
@@ -43,7 +43,7 @@ TEST(Gmcp, FrameDoublesIacInPayload) {
     payload.push_back(static_cast<char>(0xFF));
     payload += "b";
     std::string f = telnet::subnegotiate(TELOPT_GMCP, payload);
-    std::string mid = f.substr(3, f.size()-5);
+    std::string mid = f.substr(3, f.size() - 5);
     std::string expected = "a";
     expected.push_back(static_cast<char>(0xFF));
     expected.push_back(static_cast<char>(0xFF));
@@ -66,8 +66,10 @@ TEST(Gmcp, EscapeIacDoubles) {
 
 TEST(Gmcp, BuildCharVitals) {
     nlohmann::json body = gmcp::buildPackageBody({
-        {"hp", "50", true}, {"maxhp", "100", true},
-        {"mp", "20", true}, {"maxmp", "40", true},
+            {"hp", "50", true},
+            {"maxhp", "100", true},
+            {"mp", "20", true},
+            {"maxmp", "40", true},
     });
     EXPECT_TRUE(body["hp"].is_number());
     EXPECT_EQ(body["hp"], 50);
@@ -123,9 +125,7 @@ TEST(Gmcp, MsdpTableToJson) {
 }
 
 TEST(Gmcp, MsdpTableNested) {
-    std::string exits = var("EXITS") + val("") + TOPEN
-                        + var("north") + val("") + TOPEN + var("NUM") + val("6") + TCLOSE
-                        + TCLOSE;
+    std::string exits = var("EXITS") + val("") + TOPEN + var("north") + val("") + TOPEN + var("NUM") + val("6") + TCLOSE + TCLOSE;
     std::string t = TOPEN + var("NUM") + val("5") + exits + TCLOSE;
     nlohmann::json j = gmcp::msdpTableToJson(t);
     EXPECT_EQ(j["NUM"], "5");
@@ -133,17 +133,13 @@ TEST(Gmcp, MsdpTableNested) {
 }
 
 TEST(Gmcp, MsdpArrayOfScalars) {
-    std::string t = TOPEN + var("EFFECTS") + val("") + AOPEN
-                    + val("Blind") + val("Poisoned") + ACLOSE + TCLOSE;
+    std::string t = TOPEN + var("EFFECTS") + val("") + AOPEN + val("Blind") + val("Poisoned") + ACLOSE + TCLOSE;
     nlohmann::json j = gmcp::msdpTableToJson(t);
     EXPECT_EQ(j["EFFECTS"], (nlohmann::json{"Blind", "Poisoned"}));
 }
 
 TEST(Gmcp, MsdpNumericKeyedMembers) {
-    std::string members = var("MEMBERS") + val("") + TOPEN
-                          + var("1") + val("") + TOPEN + var("NAME") + val("Bob") + TCLOSE
-                          + var("2") + val("") + TOPEN + var("NAME") + val("Sue") + TCLOSE
-                          + TCLOSE;
+    std::string members = var("MEMBERS") + val("") + TOPEN + var("1") + val("") + TOPEN + var("NAME") + val("Bob") + TCLOSE + var("2") + val("") + TOPEN + var("NAME") + val("Sue") + TCLOSE + TCLOSE;
     std::string t = TOPEN + members + TCLOSE;
     nlohmann::json j = gmcp::msdpTableToJson(t);
     ASSERT_TRUE(j["MEMBERS"].is_object());
@@ -176,34 +172,34 @@ TEST(Gmcp, CommTypeChannelNames) {
 
 TEST(Gmcp, RoomPlayerVisibleHidesHiddenFromMortal) {
     auto viewer = makePlayer(CreatureClass::FIGHTER);
-    auto plain  = makePlayer(CreatureClass::FIGHTER);
+    auto plain = makePlayer(CreatureClass::FIGHTER);
     auto hidden = makePlayer(CreatureClass::FIGHTER);
     hidden->setFlag(P_HIDDEN);
 
     EXPECT_TRUE(roomPlayerVisible(viewer, plain));
     EXPECT_FALSE(roomPlayerVisible(viewer, hidden));
-    EXPECT_TRUE(roomPlayerVisible(viewer, hidden, 100));  // magical hidden-sight reveals
+    EXPECT_TRUE(roomPlayerVisible(viewer, hidden, 100)); // magical hidden-sight reveals
 }
 
 TEST(Gmcp, RoomPlayerVisibleHidesDmInvisFromMortal) {
     auto mortal = makePlayer(CreatureClass::FIGHTER);
-    auto staff  = makePlayer(CreatureClass::CARETAKER);
+    auto staff = makePlayer(CreatureClass::CARETAKER);
     staff->setFlag(P_DM_INVIS);
 
     EXPECT_FALSE(roomPlayerVisible(mortal, staff));
-    EXPECT_TRUE(roomPlayerVisible(staff, mortal));  // staff sees everyone
+    EXPECT_TRUE(roomPlayerVisible(staff, mortal)); // staff sees everyone
 }
 
 TEST(Gmcp, ListObjectSeeHidesHiddenAndScenery) {
-    auto viewer  = makePlayer(CreatureClass::FIGHTER);
-    auto plain   = std::make_shared<Object>();
-    auto hidden  = std::make_shared<Object>();
+    auto viewer = makePlayer(CreatureClass::FIGHTER);
+    auto plain = std::make_shared<Object>();
+    auto hidden = std::make_shared<Object>();
     auto scenery = std::make_shared<Object>();
     hidden->setFlag(O_HIDDEN);
     scenery->setFlag(O_SCENERY);
 
     EXPECT_TRUE(listObjectSee(viewer, plain, false));
     EXPECT_FALSE(listObjectSee(viewer, hidden, false));
-    EXPECT_TRUE(listObjectSee(viewer, hidden, true));  // showAll reveals hidden
+    EXPECT_TRUE(listObjectSee(viewer, hidden, true)); // showAll reveals hidden
     EXPECT_FALSE(listObjectSee(viewer, scenery, false));
 }

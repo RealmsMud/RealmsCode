@@ -30,7 +30,7 @@ TEST(ServerActiveList, AddIsIdempotent) {
 
 TEST(ServerActiveList, ExpiredEntryNotActive) {
     ensureServer();
-    Monster* raw = nullptr;
+    Monster *raw = nullptr;
     {
         auto m = std::make_shared<Monster>();
         raw = m.get();

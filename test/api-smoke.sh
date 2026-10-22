@@ -17,6 +17,12 @@
 #   RUN_SOAK          set to 1 to run the concurrency soak (skipped by default)
 #   SOAK_SECONDS      soak duration                    (default 15)
 #   SOAK_CONCURRENCY  parallel soak workers            (default 20)
+#   RUN_THROTTLE      set to 1 to run the login-throttle section (skipped by default)
+#   TRUST_XFF         set to 1 to confirm the server has <TrustXForwardedFor>yes</TrustXForwardedFor>;
+#                     without it the throttle section is skipped, since the lockout would
+#                     otherwise land on this host's own address
+#   THROTTLE_IP       forwarded address to lock out     (default 203.0.113.7, TEST-NET-3)
+#   MAX_LOGIN_FAILURES  server's <MaxLoginFailures>      (default 10)
 #
 # Entity lists/details are self-deriving: it lists each type in ZONE and GETs the
 # first id, so you don't pass ids. Uses python3 for JSON parsing.
@@ -28,6 +34,9 @@ ZONE="${ZONE:-misc}"
 RUN_SOAK="${RUN_SOAK:-}"
 SOAK_SECONDS="${SOAK_SECONDS:-15}"
 SOAK_CONCURRENCY="${SOAK_CONCURRENCY:-20}"
+RUN_THROTTLE="${RUN_THROTTLE:-}"
+THROTTLE_IP="${THROTTLE_IP:-203.0.113.7}"
+MAX_LOGIN_FAILURES="${MAX_LOGIN_FAILURES:-10}"
 BODY=/tmp/api-smoke.body
 
 pass=0; fail=0
@@ -150,6 +159,30 @@ if [ -n "$TOKEN" ]; then
         expect 200 GET /api/version "server still alive after soak"
     else
         echo "  SKIP  concurrency soak (set RUN_SOAK=1 to run)"
+    fi
+fi
+
+# Runs last: it leaves THROTTLE_IP locked out for <LoginLockoutTime>.
+if [ -n "$RUN_THROTTLE" ] && [ "$RUN_THROTTLE" != "0" ]; then
+    if [ "${TRUST_XFF:-}" != "1" ]; then
+        echo "  SKIP  login throttle (set TRUST_XFF=1 once the server trusts X-Forwarded-For)"
+    else
+        echo "== Login throttle (X-Forwarded-For: $THROTTLE_IP) =="
+        bad='{"name":"nosuchacctzzz","pw":"whatever"}'
+        i=0; last=""
+        while [ "$i" -le "$MAX_LOGIN_FAILURES" ]; do
+            last="$(status POST /api/account/login -H 'Content-Type: application/json' \
+                    -H "X-Forwarded-For: $THROTTLE_IP" -d "$bad")"
+            i=$((i+1))
+        done
+        if [ "$last" = "429" ]; then ok "login throttled after $MAX_LOGIN_FAILURES failures -> 429"
+        else no "login not throttled after $MAX_LOGIN_FAILURES failures (last -> $last, want 429)"; fi
+
+        retry="$(curl -s -D - -o /dev/null -X POST -H 'Content-Type: application/json' \
+                 -H "X-Forwarded-For: $THROTTLE_IP" -d "$bad" "$API_BASE/api/account/login" \
+                 | tr -d '\r' | awk 'tolower($1)=="retry-after:"{print $2}')"
+        if [ -n "$retry" ]; then ok "429 carries Retry-After (${retry}s)"
+        else no "429 missing Retry-After header"; fi
     fi
 fi
 

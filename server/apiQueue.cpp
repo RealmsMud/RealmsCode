@@ -19,10 +19,10 @@
 #include "apiQueue.hpp"
 
 crow::response ApiRequestQueue::submit(Job job, std::chrono::milliseconds timeout) {
-    if(inlineMode) {
+    if (inlineMode) {
         try {
             return job();
-        } catch(...) {
+        } catch (...) {
             return crow::response(crow::status::INTERNAL_SERVER_ERROR);
         }
     }
@@ -36,7 +36,7 @@ crow::response ApiRequestQueue::submit(Job job, std::chrono::milliseconds timeou
     }
 
     // timed-out job still runs on drain; its promise is abandoned
-    if(fut.wait_for(timeout) != std::future_status::ready)
+    if (fut.wait_for(timeout) != std::future_status::ready)
         return crow::response(crow::status::SERVICE_UNAVAILABLE);
 
     return fut.get();
@@ -49,13 +49,13 @@ void ApiRequestQueue::drain() {
         batch.swap(pending);
     }
 
-    for(auto& p : batch) {
+    for (auto &p: batch) {
         try {
             p.promise.set_value(p.job());
-        } catch(...) {
+        } catch (...) {
             try {
                 p.promise.set_value(crow::response(crow::status::INTERNAL_SERVER_ERROR));
-            } catch(...) {
+            } catch (...) {
                 // promise already satisfied/abandoned; nothing to do
             }
         }

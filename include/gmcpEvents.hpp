@@ -31,20 +31,20 @@ class Object;
 class Player;
 
 namespace gmcp {
-    void onInventoryAdd(const std::shared_ptr<Player>& player, const std::shared_ptr<Object>& obj);
-    void onInventoryRemove(const std::shared_ptr<Player>& player, const std::shared_ptr<Object>& obj);
-    void onRoomItemAdd(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Object>& obj);
-    void onRoomItemRemove(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Object>& obj);
+void onInventoryAdd(const std::shared_ptr<Player> &player, const std::shared_ptr<Object> &obj);
+void onInventoryRemove(const std::shared_ptr<Player> &player, const std::shared_ptr<Object> &obj);
+void onRoomItemAdd(const std::shared_ptr<BaseRoom> &room, const std::shared_ptr<Object> &obj);
+void onRoomItemRemove(const std::shared_ptr<BaseRoom> &room, const std::shared_ptr<Object> &obj);
 
-    void onRoomEnter(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Player>& who);
-    void onRoomLeave(const std::shared_ptr<BaseRoom>& room, const std::shared_ptr<Player>& who);
+void onRoomEnter(const std::shared_ptr<BaseRoom> &room, const std::shared_ptr<Player> &who);
+void onRoomLeave(const std::shared_ptr<BaseRoom> &room, const std::shared_ptr<Player> &who);
 
-    void onEffectAdd(MudObject* parent, EffectInfo* ei);
-    void onEffectRemove(MudObject* parent, EffectInfo* ei);
+void onEffectAdd(MudObject *parent, EffectInfo *ei);
+void onEffectRemove(MudObject *parent, EffectInfo *ei);
 
-    void onChannelText(const std::shared_ptr<Player>& recipient, std::string_view channel, std::string_view talker, std::string_view text);
-    std::string commTypeChannel(int type);
-    nlohmann::json commChannelList(const std::shared_ptr<Player>& player);
+void onChannelText(const std::shared_ptr<Player> &recipient, std::string_view channel, std::string_view talker, std::string_view text);
+std::string commTypeChannel(int type);
+nlohmann::json commChannelList(const std::shared_ptr<Player> &player);
 
-    void markRoomDirty(const std::shared_ptr<Player>& player);
-}
+void markRoomDirty(const std::shared_ptr<Player> &player);
+} // namespace gmcp

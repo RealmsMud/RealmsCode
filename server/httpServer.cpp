@@ -16,6 +16,8 @@
  *
  */
 
+#include <chrono>
+#include <cstddef>
 #include <thread>
 
 #include <crow.h>
@@ -34,10 +36,49 @@
 
 using json = nlohmann::json;
 
+namespace {
+    constexpr int kMaxPort = 65535;
+    constexpr std::size_t kMinSecretLen = 32;   // HS256 wants >= 256 bits of key
+
+    ApiLoginThrottle::Settings throttleSettingsFromConfig() {
+        return ApiLoginThrottle::Settings{
+            .maxFailures = gConfig->getMaxLoginFailures(),
+            .window = std::chrono::seconds(gConfig->getLoginFailureWindow()),
+            .lockout = std::chrono::seconds(gConfig->getLoginLockoutTime())
+        };
+    }
+}
+
+bool apiHttpConfigUsable(int port, const std::string& secret, std::string& why) {
+    if(port <= 0) {
+        why = "HttpPort=0 (disabled)";
+        return false;
+    }
+    if(port > kMaxPort) {
+        why = fmt::format("HttpPort={} is out of range", port);
+        return false;
+    }
+    if(secret.empty()) {
+        why = "JwtSecret is empty";
+        return false;
+    }
+    if(secret.size() < kMinSecretLen)
+        why = fmt::format("JwtSecret is only {} bytes; use at least {}", secret.size(), kMinSecretLen);
+    return true;
+}
+
 bool Server::initHttpServer() {
-    httpServer = new HttpServer(gConfig->getHttpPort());
-    if(!httpServer)
-        throw std::runtime_error("WTF httpserver!");
+    std::string why;
+    if(!apiHttpConfigUsable(gConfig->getHttpPort(), gConfig->getJwtSecret(), why)) {
+        std::clog << "HTTP Server NOT started: " << why << std::endl;
+        return false;
+    }
+    if(!why.empty())
+        std::clog << "HTTP Server warning: " << why << std::endl;
+    if(!gConfig->getTrustXForwardedFor())
+        std::clog << "TrustXForwardedFor is off: throttle keys on the direct peer" << std::endl;
+
+    httpServer = new HttpServer(gConfig->getHttpPort(), throttleSettingsFromConfig());
     return true;
 }
 
@@ -51,7 +92,7 @@ void Server::invalidateApiAuth(const std::string& id, const std::string& name) {
 }
 
 
-HttpServer::HttpServer(int pPort) {
+HttpServer::HttpServer(int pPort, ApiLoginThrottle::Settings throttleSettings) : loginThrottle(throttleSettings) {
     app.signal_clear();
     port = pPort;
 
@@ -66,6 +107,8 @@ HttpServer::HttpServer(int pPort) {
 
 
     registerAuth();
+    registerAccountAuth();
+    registerCreation();
     registerZones();
     registerIndex();
 

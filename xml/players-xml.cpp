@@ -381,8 +381,10 @@ int Player::saveToFile(LoadType saveType) {
         snprintf(filename, sizeof(filename), "%s/%s.xml", Path::Player.c_str(), getCName());
     }
 
-    xml::saveFile(filename, xmlDoc);
+    const int saved = xml::saveFile(filename, xmlDoc);
     xmlFreeDoc(xmlDoc);
+    if(saved < 0)
+        return(-1);
 
     if(gServer)
         gServer->invalidateApiAuth(getId(), getName());

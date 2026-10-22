@@ -583,6 +583,11 @@ int RaceData::getSave(int save) const { return(saves[save]); }
 
 bool RaceData::allowedClass(int cls) const { return(classes[cls]); }
 
+// The deity tables are bool[DEITY_COUNT]; callers pass unvalidated ids.
+static bool deityInRange(int dty) {
+    return dty > 0 && dty < DEITY_COUNT;
+}
+
 //*********************************************************************
 //                      allowedDeity
 //*********************************************************************
@@ -599,25 +604,25 @@ bool RaceData::allowedDeity(CreatureClass cls, CreatureClass cls2, int dty) cons
 //                      allowedMultiClericDeity
 //*********************************************************************
 
-bool RaceData::allowedMultiClericDeity(int dty) const { return(multiClerDeities[dty]); }
+bool RaceData::allowedMultiClericDeity(int dty) const { return(deityInRange(dty) && multiClerDeities[dty]); }
 
 //*********************************************************************
 //                      allowedClericDeity
 //*********************************************************************
 
-bool RaceData::allowedClericDeity(int dty) const { return(clerDeities[dty]); }
+bool RaceData::allowedClericDeity(int dty) const { return(deityInRange(dty) && clerDeities[dty]); }
 
 //*********************************************************************
 //                      allowedPaladinDeity
 //*********************************************************************
 
-bool RaceData::allowedPaladinDeity(int dty) const { return(palDeities[dty]); }
+bool RaceData::allowedPaladinDeity(int dty) const { return(deityInRange(dty) && palDeities[dty]); }
 
 //*********************************************************************
 //                      allowedDeathknightDeity
 //*********************************************************************
 
-bool RaceData::allowedDeathknightDeity(int dty) const { return(dkDeities[dty]); }
+bool RaceData::allowedDeathknightDeity(int dty) const { return(deityInRange(dty) && dkDeities[dty]); }
 
 //*********************************************************************
 //                      getId

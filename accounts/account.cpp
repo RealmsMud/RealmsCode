@@ -33,6 +33,7 @@
 #include "xml.hpp"
 #include "config.hpp"
 #include "proto.hpp"
+#include "login/accountAuthService.hpp"   // password length bounds
 
 namespace fs = std::filesystem;
 
@@ -356,9 +357,8 @@ int Account::getCharacterCount() const {
 
 
 bool Account::isValidPassword(const std::string& password) {
-    // Same validation as used elsewhere in the codebase
-    return password.length() >= 5 && password.length() <= 35;
-} 
+    return password.length() >= AccountAuth::kMinPasswordLen && password.length() <= AccountAuth::kMaxPasswordLen;
+}
 
 //*********************************************************************
 //                      UI Helpers

@@ -24,7 +24,7 @@ TEST(Csv, QuotedFieldWithComma) {
     ASSERT_EQ(r.size(), 1u);
     ASSERT_EQ(r[0].size(), 3u);
     EXPECT_EQ(r[0][0], "88");
-    EXPECT_EQ(r[0][1], "Cut Away, Cut Away");   // comma stays inside the quoted field
+    EXPECT_EQ(r[0][1], "Cut Away, Cut Away"); // comma stays inside the quoted field
     EXPECT_EQ(r[0][2], "dcarnival");
 }
 
@@ -32,7 +32,7 @@ TEST(Csv, SkipsBlankLinesAndToleratesCrlf) {
     std::istringstream in("a,b\r\n\r\n1,2\r\n");
     auto r = util::parseCsv(in);
     ASSERT_EQ(r.size(), 2u);
-    EXPECT_EQ(r[0][1], "b");                     // trailing CR stripped
+    EXPECT_EQ(r[0][1], "b"); // trailing CR stripped
     EXPECT_EQ(r[1][0], "1");
 }
 

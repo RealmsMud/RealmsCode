@@ -30,8 +30,8 @@
 // The REST API reads quests straight from the per-zone JSON store (Path::Zone/<zone>/quests/),
 // independent of the in-game XML store (gConfig->quests). `base` is injectable for tests.
 
-std::filesystem::path apiQuestJsonPath(const std::string& zone, int id, const std::filesystem::path& base = Path::Zone);
+std::filesystem::path apiQuestJsonPath(const std::string &zone, int id, const std::filesystem::path &base = Path::Zone);
 
-std::vector<int> apiScanQuestIds(const std::string& zone, const std::filesystem::path& base = Path::Zone);
+std::vector<int> apiScanQuestIds(const std::string &zone, const std::filesystem::path &base = Path::Zone);
 
-std::optional<nlohmann::json> apiReadQuestJson(const std::string& zone, int id, const std::filesystem::path& base = Path::Zone);
+std::optional<nlohmann::json> apiReadQuestJson(const std::string &zone, int id, const std::filesystem::path &base = Path::Zone);

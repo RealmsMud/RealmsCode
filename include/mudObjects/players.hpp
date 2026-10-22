@@ -453,6 +453,10 @@ public:
 
     void courageous();
     void init();
+    // Class/race/deity auto-granted spells, permanent effects and languages for the
+    // current level. Idempotent; called by init() on every login and by character
+    // creation so a freshly-made (never-logged-in) character is complete on disk.
+    void initSpellsEffects();
     void uninit();
     void checkEffectsWearingOff();
     void update();

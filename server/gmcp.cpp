@@ -20,55 +20,55 @@
 
 #include <cctype>
 
-#include "socket.hpp"      // MSDP_* delimiters
+#include "socket.hpp" // MSDP_* delimiters
 
 namespace gmcp {
 
-const std::vector<GmcpMapping>& mappings() {
+const std::vector<GmcpMapping> &mappings() {
     static const std::vector<GmcpMapping> table = {
-        {"HEALTH",             "Char.Vitals", "hp",           true,  false},
-        {"HEALTH_MAX",         "Char.Vitals", "maxhp",        true,  false},
-        {"MANA",               "Char.Vitals", "mp",           true,  false},
-        {"MANA_MAX",           "Char.Vitals", "maxmp",        true,  false},
-        {"EXPERIENCE",         "Char.Vitals", "xp",           true,  false},
-        {"EXPERIENCE_MAX",     "Char.Vitals", "maxxp",        true,  false},
-        {"EXPERIENCE_TNL",     "Char.Vitals", "tnl",          true,  false},
-        {"EXPERIENCE_TNL_MAX", "Char.Vitals", "maxtnl",       true,  false},
-        {"LEVEL",              "Char.Status", "level",        true,  false},
-        {"CLASS",              "Char.Status", "class",        false, false},
-        {"RACE",               "Char.Status", "race",         false, false},
-        {"WIMPY",              "Char.Status", "wimpy",        true,  false},
-        {"MONEY",              "Char.Status", "gold",         false, false},
-        {"BANK",               "Char.Status", "bank",         false, false},
-        {"ARMOR",              "Char.Status", "armor",        true,  false},
-        {"ARMOR_ABSORB",       "Char.Status", "armor_absorb", true,  false},
-        {"TARGET",             "Char.Status", "target",       false, false},
-        {"TARGET_ID",          "Char.Status", "target_id",    false, false},
-        {"TARGET_HEALTH",      "Char.Status", "target_hp",    true,  false},
-        {"TARGET_HEALTH_MAX",  "Char.Status", "target_maxhp", true,  false},
-        {"CHARACTER_NAME",     "Char.Name",   "name",         false, false},
-        {"ROOM",               "Room.Info",   "",             false, true},
-        {"GROUP",              "Char.Group",  "",             false, true},
+            {"HEALTH", "Char.Vitals", "hp", true, false},
+            {"HEALTH_MAX", "Char.Vitals", "maxhp", true, false},
+            {"MANA", "Char.Vitals", "mp", true, false},
+            {"MANA_MAX", "Char.Vitals", "maxmp", true, false},
+            {"EXPERIENCE", "Char.Vitals", "xp", true, false},
+            {"EXPERIENCE_MAX", "Char.Vitals", "maxxp", true, false},
+            {"EXPERIENCE_TNL", "Char.Vitals", "tnl", true, false},
+            {"EXPERIENCE_TNL_MAX", "Char.Vitals", "maxtnl", true, false},
+            {"LEVEL", "Char.Status", "level", true, false},
+            {"CLASS", "Char.Status", "class", false, false},
+            {"RACE", "Char.Status", "race", false, false},
+            {"WIMPY", "Char.Status", "wimpy", true, false},
+            {"MONEY", "Char.Status", "gold", false, false},
+            {"BANK", "Char.Status", "bank", false, false},
+            {"ARMOR", "Char.Status", "armor", true, false},
+            {"ARMOR_ABSORB", "Char.Status", "armor_absorb", true, false},
+            {"TARGET", "Char.Status", "target", false, false},
+            {"TARGET_ID", "Char.Status", "target_id", false, false},
+            {"TARGET_HEALTH", "Char.Status", "target_hp", true, false},
+            {"TARGET_HEALTH_MAX", "Char.Status", "target_maxhp", true, false},
+            {"CHARACTER_NAME", "Char.Name", "name", false, false},
+            {"ROOM", "Room.Info", "", false, true},
+            {"GROUP", "Char.Group", "", false, true},
     };
     return table;
 }
 
-std::string packageForVar(const std::string& msdpVar) {
-    for (const auto& m : mappings())
+std::string packageForVar(const std::string &msdpVar) {
+    for (const auto &m: mappings())
         if (m.msdpVar == msdpVar)
             return m.package;
     return "";
 }
 
-std::vector<std::string> varsForPackage(const std::string& package) {
+std::vector<std::string> varsForPackage(const std::string &package) {
     std::vector<std::string> out;
-    for (const auto& m : mappings())
+    for (const auto &m: mappings())
         if (m.package == package)
             out.push_back(m.msdpVar);
     return out;
 }
 
-std::string stripSupportsVersion(const std::string& token) {
+std::string stripSupportsVersion(const std::string &token) {
     auto pos = token.find_last_of(' ');
     if (pos == std::string::npos || pos + 1 >= token.size())
         return token;
@@ -78,9 +78,9 @@ std::string stripSupportsVersion(const std::string& token) {
     return token.substr(0, pos);
 }
 
-nlohmann::json buildPackageBody(const std::vector<GmcpField>& fields) {
+nlohmann::json buildPackageBody(const std::vector<GmcpField> &fields) {
     nlohmann::json body = nlohmann::json::object();
-    for (const auto& f : fields) {
+    for (const auto &f: fields) {
         if (f.numeric) {
             try {
                 size_t pos = 0;
@@ -89,7 +89,8 @@ nlohmann::json buildPackageBody(const std::vector<GmcpField>& fields) {
                     body[f.key] = n;
                     continue;
                 }
-            } catch (const std::exception&) {}
+            } catch (const std::exception &) {
+            }
         }
         body[f.key] = f.value;
     }
@@ -110,23 +111,21 @@ ParsedMessage parseMessage(std::string_view payload) {
     return m;
 }
 
-std::set<std::string> parseSupports(const nlohmann::json& arr) {
+std::set<std::string> parseSupports(const nlohmann::json &arr) {
     std::set<std::string> out;
     if (arr.is_array())
-        for (const auto& e : arr)
+        for (const auto &e: arr)
             if (e.is_string())
                 out.insert(stripSupportsVersion(e.get<std::string>()));
     return out;
 }
 
 namespace {
-    bool isMsdpDelim(unsigned char c) {
-        return c >= MSDP_VAR && c <= MSDP_ARRAY_CLOSE;
-    }
+    bool isMsdpDelim(unsigned char c) { return c >= MSDP_VAR && c <= MSDP_ARRAY_CLOSE; }
 
-    nlohmann::json parseValue(std::string_view s, size_t& i);
+    nlohmann::json parseValue(std::string_view s, size_t &i);
 
-    std::string parseScalar(std::string_view s, size_t& i) {
+    std::string parseScalar(std::string_view s, size_t &i) {
         std::string out;
         while (i < s.size() && !isMsdpDelim(static_cast<unsigned char>(s[i])))
             out.push_back(s[i++]);
@@ -134,7 +133,7 @@ namespace {
     }
 
     // i is positioned just past MSDP_TABLE_OPEN.
-    nlohmann::json parseTable(std::string_view s, size_t& i) {
+    nlohmann::json parseTable(std::string_view s, size_t &i) {
         nlohmann::json obj = nlohmann::json::object();
         while (i < s.size() && static_cast<unsigned char>(s[i]) != MSDP_TABLE_CLOSE) {
             if (static_cast<unsigned char>(s[i]) == MSDP_VAR) {
@@ -156,7 +155,7 @@ namespace {
     }
 
     // i is positioned just past MSDP_ARRAY_OPEN.
-    nlohmann::json parseArray(std::string_view s, size_t& i) {
+    nlohmann::json parseArray(std::string_view s, size_t &i) {
         nlohmann::json arr = nlohmann::json::array();
         while (i < s.size() && static_cast<unsigned char>(s[i]) != MSDP_ARRAY_CLOSE) {
             if (static_cast<unsigned char>(s[i]) == MSDP_VAL) {
@@ -171,15 +170,21 @@ namespace {
         return arr;
     }
 
-    nlohmann::json parseValue(std::string_view s, size_t& i) {
+    nlohmann::json parseValue(std::string_view s, size_t &i) {
         if (i >= s.size())
             return std::string();
         unsigned char c = static_cast<unsigned char>(s[i]);
-        if (c == MSDP_TABLE_OPEN) { ++i; return parseTable(s, i); }
-        if (c == MSDP_ARRAY_OPEN) { ++i; return parseArray(s, i); }
+        if (c == MSDP_TABLE_OPEN) {
+            ++i;
+            return parseTable(s, i);
+        }
+        if (c == MSDP_ARRAY_OPEN) {
+            ++i;
+            return parseArray(s, i);
+        }
         return parseScalar(s, i);
     }
-}
+} // namespace
 
 nlohmann::json msdpTableToJson(std::string_view msdp) {
     size_t i = 0;
@@ -194,19 +199,19 @@ nlohmann::json msdpValueToJson(std::string_view raw) {
 
 nlohmann::json charStatusVars() {
     return {
-        {"level",        "Level"},
-        {"class",        "Class"},
-        {"race",         "Race"},
-        {"wimpy",        "Wimpy"},
-        {"gold",         "Gold"},
-        {"bank",         "Bank"},
-        {"armor",        "Armor"},
-        {"armor_absorb", "Armor Absorb"},
-        {"target",       "Target"},
-        {"target_id",    "Target ID"},
-        {"target_hp",    "Target Health"},
-        {"target_maxhp", "Target Max Health"},
+            {"level", "Level"},
+            {"class", "Class"},
+            {"race", "Race"},
+            {"wimpy", "Wimpy"},
+            {"gold", "Gold"},
+            {"bank", "Bank"},
+            {"armor", "Armor"},
+            {"armor_absorb", "Armor Absorb"},
+            {"target", "Target"},
+            {"target_id", "Target ID"},
+            {"target_hp", "Target Health"},
+            {"target_maxhp", "Target Max Health"},
     };
 }
 
-}
+} // namespace gmcp

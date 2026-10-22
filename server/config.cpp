@@ -227,13 +227,23 @@ void Config::reset(bool reload) {
     for(LottoTicket* ticket : tickets) {
         delete ticket;
     }
+    tickets.clear();    // a reload re-parses the Lottery section into this vector
 
     logDbType="";
     logDbUser="";
     logDbPass="";
     logDbDatabase="";
     botToken="";
-    
+
+    httpPort = 8080;
+    jwtSecret = "";
+    jwtIssuer = "";
+    maxLoginFailures = 10;
+    loginFailureWindow = 300;
+    loginLockoutTime = 600;
+    trustXForwardedFor = false;
+
+
     // the following settings aren't cleared on reload
     if(reload)
         return;
@@ -252,7 +262,6 @@ void Config::reset(bool reload) {
     calendar = nullptr;
     proxyManager = nullptr;
 
-    tickets.clear();
     defaultArea = "misc";
     swapping = roomSearchFailure = txtOnCrash = false;
 }

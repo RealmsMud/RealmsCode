@@ -17,10 +17,12 @@
  */
 #include <chrono>
 #include <memory>
+#include <string>
 
 #include <crow.h>
 #include <fmt/format.h>
 #include <jwt-cpp/jwt.h>
+#include <boost/algorithm/string/trim.hpp>
 
 #include "config.hpp"
 #include "httpServer.hpp"
@@ -30,6 +32,8 @@
 #include "proto.hpp"                // for lowercize
 #include "mudObjects/players.hpp"   // for Player
 #include "xml.hpp"                  // for loadPlayer
+#include "account.hpp"              // for Account
+#include "login/accountAuthService.hpp"  // for AccountAuth
 
 using json = nlohmann::json;
 
@@ -37,7 +41,7 @@ bool apiVerifyJwt(const std::string& authHeader, std::string& outUserId, std::st
     try {
         if(authHeader.size() < 8)               // strlen("Bearer ") + 1
             return false;
-        std::string token = authHeader.substr(7);
+        const std::string token = authHeader.substr(7);
 
         auto decoded = jwt::decode(token);
         jwt::verify()
@@ -52,6 +56,93 @@ bool apiVerifyJwt(const std::string& authHeader, std::string& outUserId, std::st
     } catch(...) {
         return false;
     }
+}
+
+bool apiVerifyAccountJwt(const std::string& authHeader, std::string& outAccountName) {
+    try {
+        if(authHeader.size() < 8)               // strlen("Bearer ") + 1
+            return false;
+        const std::string token = authHeader.substr(7);
+
+        auto decoded = jwt::decode(token);
+        jwt::verify()
+            .allow_algorithm(jwt::algorithm::hs256{gConfig->getJwtSecret()})
+            .with_issuer(gConfig->getJwtIssuer())
+            .verify(decoded);
+
+        if(!decoded.has_payload_claim("type") ||
+           decoded.get_payload_claim("type").as_string() != "account")
+            return false;
+        outAccountName = decoded.get_subject();
+        return !outAccountName.empty();
+    } catch(...) {
+        return false;
+    }
+}
+
+namespace {
+    auto jwtBuilder() {
+        auto now = std::chrono::system_clock::now();
+        return jwt::create()
+                .set_type("JWT")
+                .set_issuer(gConfig->getJwtIssuer())
+                .set_issued_at(now)
+                .set_expires_at(now + std::chrono::hours(12));
+    }
+}
+
+std::string apiMintAccountToken(const std::string& accountName) {
+    return jwtBuilder()
+            .set_subject(accountName)
+            .set_payload_claim("type", jwt::claim(std::string("account")))
+            .sign(jwt::algorithm::hs256{gConfig->getJwtSecret()});
+}
+
+std::string apiMintPlayerToken(const std::string& userId, const std::string& name) {
+    return jwtBuilder()
+            .set_payload_claim("userId", jwt::claim(userId))
+            .set_payload_claim("name", jwt::claim(name))
+            .sign(jwt::algorithm::hs256{gConfig->getJwtSecret()});
+}
+
+std::optional<nlohmann::json> apiParseJsonBody(const std::string& body,
+                                               std::initializer_list<ApiField> requiredStrings) {
+    nlohmann::json in;
+    try {
+        in = nlohmann::json::parse(body);
+    } catch(...) {
+        return std::nullopt;
+    }
+    for(const auto& field : requiredStrings) {
+        const auto it = in.find(std::string(field.name));
+        if(it == in.end() || !it->is_string())
+            return std::nullopt;
+        const std::string& value = it->get_ref<const std::string&>();
+        if(value.empty() || (field.maxLen && value.size() > field.maxLen))
+            return std::nullopt;
+    }
+    return in;
+}
+
+std::string apiClientIp(const crow::request& req) {
+    if(!gConfig || !gConfig->getTrustXForwardedFor())
+        return req.remote_ip_address;
+
+    const std::string xff = req.get_header_value("X-Forwarded-For");
+    const auto comma = xff.rfind(',');
+    std::string hop = comma == std::string::npos ? xff : xff.substr(comma + 1);
+    boost::trim(hop);
+    return hop.empty() ? req.remote_ip_address : hop;
+}
+
+int apiGateAccount(const std::string& accountName, std::shared_ptr<Account>& out) {
+    auto resolved = AccountAuth::resolveAccount(accountName);
+    if(!resolved.found)
+        return crow::status::UNAUTHORIZED;
+    if(resolved.banned)
+        return crow::status::FORBIDDEN;
+    out = resolved.account;
+    return 0;
 }
 
 std::shared_ptr<Player> apiResolvePlayer(const std::string& id, const std::string& name) {
@@ -88,11 +179,11 @@ int apiAuthorizeAccess(const std::shared_ptr<Player>& player, const CatRef& cr, 
 }
 
 bool apiResolveAuth(ApiAuthCache& cache, const std::string& id, const std::string& name, AuthContext& out) {
-    std::string key = !id.empty() ? id : name;
+    const std::string key = !id.empty() ? id : name;
     if(!key.empty() && cache.lookup(key, out))
         return true;
 
-    std::shared_ptr<Player> player = apiResolvePlayer(id, name);
+    const std::shared_ptr<Player> player = apiResolvePlayer(id, name);
     if(!player)
         return false;
 
@@ -132,28 +223,49 @@ crow::response HttpServer::submitAuthorized(const crow::request& req,
         AuthContext actx;
         if(!apiResolveAuth(apiAuthCache, uid, uname, actx))
             return crow::response(401);
-        if(int s = authorize(actx))
+        if(const int s = authorize(actx))
             return crow::response(s);
         return work(actx);
     });
+}
+
+crow::response HttpServer::submitThrottled(const crow::request& req, ApiRequestQueue::Job job,
+                                           bool (*isFailure)(int code)) {
+    const std::string ip = apiClientIp(req);
+    if(const int wait = loginThrottle.lockedFor(ip); wait > 0) {
+        crow::response res(crow::status::TOO_MANY_REQUESTS);
+        res.add_header("Retry-After", std::to_string(wait));
+        return res;
+    }
+
+    crow::response res = apiQueue.submit(std::move(job));
+    if(isFailure(res.code))
+        loginThrottle.recordFailure(ip);
+    else if(res.code == static_cast<int>(crow::status::OK))
+        loginThrottle.recordSuccess(ip);
+    return res;
+}
+
+namespace {
+    // 400/500/503 stay neutral: malformed and overloaded are not credential guesses.
+    bool credentialFailure(int code) {
+        return code == crow::status::UNAUTHORIZED || code == crow::status::FORBIDDEN ||
+               code == crow::status::NOT_FOUND;
+    }
 }
 
 void HttpServer::registerAuth() {
 
     CROW_ROUTE(app, "/api/auth/login").methods("POST"_method)
             ([this](const crow::request &req) {
-                return apiQueue.submit([body = req.body]() -> crow::response {
-                    json in;
-                    try {
-                        in = json::parse(body);
-                    } catch(...) {
-                        return crow::response(crow::status::BAD_REQUEST);
-                    }
-                    if(!in.contains("name") || !in.contains("pw"))
+                return submitThrottled(req, [body = req.body]() -> crow::response {
+                    const auto in = apiParseJsonBody(body, {{"name", AccountAuth::kMaxNameLen},
+                                                            {"pw", AccountAuth::kMaxPasswordLen}});
+                    if(!in)
                         return crow::response(crow::status::BAD_REQUEST);
 
-                    std::string name = in["name"];
-                    std::string pw = in["pw"];
+                    std::string name = (*in)["name"].get<std::string>();
+                    const std::string pw = (*in)["pw"].get<std::string>();
                     lowercize(name, 1);
 
                     std::shared_ptr<Player> player = gServer->findPlayer(name);
@@ -165,21 +277,11 @@ void HttpServer::registerAuth() {
                     if(!player->isStaff())          // editor is staff-only
                         return crow::response(crow::status::FORBIDDEN);
 
-                    auto now = std::chrono::system_clock::now();
-                    std::string token = jwt::create()
-                            .set_type("JWT")
-                            .set_issuer(gConfig->getJwtIssuer())
-                            .set_issued_at(now)
-                            .set_expires_at(now + std::chrono::hours(12))
-                            .set_payload_claim("userId", jwt::claim(player->getId()))
-                            .set_payload_claim("name", jwt::claim(player->getName()))
-                            .sign(jwt::algorithm::hs256{gConfig->getJwtSecret()});
-
                     json j;
-                    j["token"] = token;
+                    j["token"] = apiMintPlayerToken(player->getId(), player->getName());
                     j["name"] = player->getName();
                     return crow::response(to_string(j));
-                });
+                }, credentialFailure);
             });
 
     // Smoke-test route: echoes the resolved staff identity.
@@ -191,7 +293,7 @@ void HttpServer::registerAuth() {
                             AuthContext actx;
                             if(!apiResolveAuth(apiAuthCache, id, name, actx))
                                 return crow::response(401);
-                            if(int s = apiAuthorizeStaff(actx))
+                            if(const int s = apiAuthorizeStaff(actx))
                                 return crow::response(s);
                             json j;
                             j["userId"] = actx.id;
@@ -200,4 +302,37 @@ void HttpServer::registerAuth() {
                             return crow::response(to_string(j));
                         });
                     });
+}
+
+void HttpServer::registerAccountAuth() {
+
+    CROW_ROUTE(app, "/api/account/login").methods("POST"_method)
+            ([this](const crow::request &req) {
+                return submitThrottled(req, [body = req.body]() -> crow::response {
+                    const auto in = apiParseJsonBody(body, {{"name", AccountAuth::kMaxNameLen},
+                                                            {"pw", AccountAuth::kMaxPasswordLen}});
+                    if(!in)
+                        return crow::response(crow::status::BAD_REQUEST);
+
+                    std::string name = (*in)["name"].get<std::string>();
+                    const std::string pw = (*in)["pw"].get<std::string>();
+                    lowercize(name, 1);
+
+                    auto resolved = AccountAuth::resolveAccount(name);
+                    if(!resolved.found)
+                        return crow::response(crow::status::NOT_FOUND);
+                    if(resolved.banned)
+                        return crow::response(crow::status::FORBIDDEN);
+                    if(!AccountAuth::verifyPassword(*resolved.account, pw))
+                        return crow::response(crow::status::UNAUTHORIZED);
+
+                    AccountAuth::recordLogin(*resolved.account);
+
+                    json j;
+                    // Distinguished from the player editor token by claim shape (type=account, no userId); no aud claim.
+                    j["token"] = apiMintAccountToken(resolved.account->getName());
+                    j["account"] = resolved.account->getName();
+                    return crow::response(to_string(j));
+                }, credentialFailure);
+            });
 }

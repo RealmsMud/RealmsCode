@@ -27,3 +27,19 @@ namespace boost {
     void to_json(nlohmann::json &j, const boost::dynamic_bitset<> &b);
     void from_json(const nlohmann::json &j, boost::dynamic_bitset<> &b);
 }
+
+// Character-creation flow wire types (see login/creationFlow.hpp). Defined in
+// json/creationFlow-json.cpp; in namespace Create::Flow for ADL.
+namespace Create {
+    struct Option;   // Flow::ViewOption aliases this, so ADL lands here
+    void to_json(nlohmann::json &j, const Option &o);
+}
+namespace Create::Flow {
+    struct StepView;
+    struct ViewBlock;
+    struct Choice;
+    void to_json(nlohmann::json &j, const StepView &v);
+    void to_json(nlohmann::json &j, const ViewBlock &b);
+    void to_json(nlohmann::json &j, const Choice &c);
+    void from_json(const nlohmann::json &j, Choice &c);
+}

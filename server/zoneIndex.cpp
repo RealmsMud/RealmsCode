@@ -29,21 +29,23 @@
 
 using json = nlohmann::json;
 
-const char* ZoneIndex::typeName(Type t) {
-    switch(t) {
-        case Type::Room:    return "rooms";
-        case Type::Object:  return "objects";
-        case Type::Monster: return "monsters";
-        case Type::Quest:   return "quests";
+const char *ZoneIndex::typeName(Type t) {
+    switch (t) {
+        case Type::Room:
+            return "rooms";
+        case Type::Object:
+            return "objects";
+        case Type::Monster:
+            return "monsters";
+        case Type::Quest:
+            return "quests";
     }
     return "unknown";
 }
 
-static std::filesystem::path indexFilePath(ZoneIndex::Type type, const std::string& zone) {
-    return Path::Zone / zone / (std::string(ZoneIndex::typeName(type)) + ".index.json");
-}
+static std::filesystem::path indexFilePath(ZoneIndex::Type type, const std::string &zone) { return Path::Zone / zone / (std::string(ZoneIndex::typeName(type)) + ".index.json"); }
 
-void ZoneIndex::upsert(Type type, const std::string& zone, int id, const std::string& name) {
+void ZoneIndex::upsert(Type type, const std::string &zone, int id, const std::string &name) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     Key key{type, zone};
     entries[key][id] = ZoneSummary{id, name};
@@ -51,34 +53,34 @@ void ZoneIndex::upsert(Type type, const std::string& zone, int id, const std::st
     // does not mark built: a single save is not a full enumeration
 }
 
-void ZoneIndex::remove(Type type, const std::string& zone, int id) {
+void ZoneIndex::remove(Type type, const std::string &zone, int id) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     Key key{type, zone};
     auto it = entries.find(key);
-    if(it == entries.end())
+    if (it == entries.end())
         return;
     it->second.erase(id);
     dirty.insert(key);
 }
 
-bool ZoneIndex::isBuilt(Type type, const std::string& zone) const {
+bool ZoneIndex::isBuilt(Type type, const std::string &zone) const {
     std::shared_lock<std::shared_mutex> lock(mtx);
     return built.count(Key{type, zone}) != 0;
 }
 
-bool ZoneIndex::list(Type type, const std::string& zone, std::vector<ZoneSummary>& out) const {
+bool ZoneIndex::list(Type type, const std::string &zone, std::vector<ZoneSummary> &out) const {
     std::shared_lock<std::shared_mutex> lock(mtx);
     Key key{type, zone};
-    if(built.count(key) == 0)
+    if (built.count(key) == 0)
         return false;
     auto it = entries.find(key);
-    if(it != entries.end())
-        for(const auto& [id, s] : it->second)
+    if (it != entries.end())
+        for (const auto &[id, s]: it->second)
             out.push_back(s);
     return true;
 }
 
-void ZoneIndex::markBuilt(Type type, const std::string& zone) {
+void ZoneIndex::markBuilt(Type type, const std::string &zone) {
     {
         std::unique_lock<std::shared_mutex> lock(mtx);
         built.insert(Key{type, zone});
@@ -86,16 +88,16 @@ void ZoneIndex::markBuilt(Type type, const std::string& zone) {
     buildCv.notify_all();
 }
 
-bool ZoneIndex::waitUntilBuilt(Type type, const std::string& zone, std::chrono::milliseconds timeout) {
+bool ZoneIndex::waitUntilBuilt(Type type, const std::string &zone, std::chrono::milliseconds timeout) {
     Key key{type, zone};
-    std::unique_lock<std::shared_mutex> lock(mtx);   // exclusive; waiters are rare
+    std::unique_lock<std::shared_mutex> lock(mtx); // exclusive; waiters are rare
     return buildCv.wait_for(lock, timeout, [&] { return built.count(key) != 0; });
 }
 
-bool ZoneIndex::loadFile(Type type, const std::string& zone) {
+bool ZoneIndex::loadFile(Type type, const std::string &zone) {
     std::filesystem::path f = indexFilePath(type, zone);
     std::error_code ec;
-    if(!std::filesystem::exists(f, ec))
+    if (!std::filesystem::exists(f, ec))
         return false;
     try {
         std::ifstream ifs(f);
@@ -103,15 +105,15 @@ bool ZoneIndex::loadFile(Type type, const std::string& zone) {
         {
             std::unique_lock<std::shared_mutex> lock(mtx);
             Key key{type, zone};
-            auto& m = entries[key];
-            for(const auto& e : j) {
+            auto &m = entries[key];
+            for (const auto &e: j) {
                 int id = e.at("id").get<int>();
                 m[id] = ZoneSummary{id, e.value("name", std::string())};
             }
             built.insert(key);
         }
         buildCv.notify_all();
-    } catch(...) {
+    } catch (...) {
         return false;
     }
     return true;
@@ -121,28 +123,28 @@ void ZoneIndex::flushDirty() {
     std::vector<std::pair<Key, std::vector<ZoneSummary>>> toWrite;
     {
         std::unique_lock<std::shared_mutex> lock(mtx);
-        if(dirty.empty())
+        if (dirty.empty())
             return;
-        for(const auto& key : dirty) {
+        for (const auto &key: dirty) {
             std::vector<ZoneSummary> v;
             auto it = entries.find(key);
-            if(it != entries.end())
-                for(const auto& [id, s] : it->second)
+            if (it != entries.end())
+                for (const auto &[id, s]: it->second)
                     v.push_back(s);
             toWrite.emplace_back(key, std::move(v));
         }
         dirty.clear();
     }
 
-    for(const auto& [key, v] : toWrite) {
+    for (const auto &[key, v]: toWrite) {
         std::filesystem::path f = indexFilePath(key.type, key.zone);
         std::error_code ec;
         std::filesystem::create_directories(f.parent_path(), ec);
         json j = json::array();
-        for(const auto& s : v)
+        for (const auto &s: v)
             j.push_back({{"id", s.id}, {"name", s.name}});
         std::ofstream out(f);
-        if(out)
+        if (out)
             out << std::setw(2) << j << std::endl;
     }
 }

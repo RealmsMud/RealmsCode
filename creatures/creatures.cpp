@@ -983,10 +983,13 @@ int Player::save(bool updateTime, LoadType saveType) {
 //        }
 //    }
 
+    // 0 = saved, nonzero = failed; matches saveToFile.
     if(getName().empty())
-        return(1);
-    if(saveToFile(saveType) < 0)
+        return(-1);
+    if(saveToFile(saveType) < 0) {
         std::clog << "*** ERROR: saveXml!\n";
+        return -1;
+    }
 
     // Save account if player has one
     if(hasAccount()) {

@@ -32,6 +32,8 @@
 //**********************************************************************
 
 const DeityData* Config::getDeity(int id) const {
+    if(deities.empty()) return nullptr;
+
     auto it = deities.find(id);
 
     if(it == deities.end())

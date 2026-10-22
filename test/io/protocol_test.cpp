@@ -6,7 +6,7 @@
  */
 #include <gtest/gtest.h>
 
-#include <arpa/telnet.h>   // IAC, SB, SE, WILL
+#include <arpa/telnet.h> // IAC, SB, SE, WILL
 #include <string>
 
 #include "socket.hpp"
@@ -14,15 +14,15 @@
 // A buffer ending on a bare IAC must not read inStr[size()] (string_view OOB).
 TEST(StripTelnet, TrailingBareIacDoesNotOverread) {
     std::string buf = "hi";
-    buf.push_back(static_cast<char>(IAC));      // dangling IAC, no following byte
-    EXPECT_EQ(Socket::stripTelnet(buf), "hi");  // partial negotiation dropped, text kept
+    buf.push_back(static_cast<char>(IAC)); // dangling IAC, no following byte
+    EXPECT_EQ(Socket::stripTelnet(buf), "hi"); // partial negotiation dropped, text kept
 }
 
 TEST(StripTelnet, UnterminatedSbDoesNotOverread) {
     std::string buf = "x";
     buf.push_back(static_cast<char>(IAC));
     buf.push_back(static_cast<char>(SB));
-    buf.push_back(static_cast<char>(TELOPT_MSDP));  // SB opened, never closed
+    buf.push_back(static_cast<char>(TELOPT_MSDP)); // SB opened, never closed
     EXPECT_EQ(Socket::stripTelnet(buf), "x");
 }
 
@@ -37,19 +37,17 @@ TEST(StripTelnet, CompleteNegotiationStripped) {
 
 TEST(NeedsPrompt, TrailingBareIacDoesNotOverread) {
     std::string buf;
-    buf.push_back(static_cast<char>(IAC));       // only a dangling IAC
-    EXPECT_FALSE(Socket::needsPrompt(buf));      // nothing but (incomplete) telnet
+    buf.push_back(static_cast<char>(IAC)); // only a dangling IAC
+    EXPECT_FALSE(Socket::needsPrompt(buf)); // nothing but (incomplete) telnet
 }
 
-TEST(NeedsPrompt, PlainTextNeedsPrompt) {
-    EXPECT_TRUE(Socket::needsPrompt(std::string("hello")));
-}
+TEST(NeedsPrompt, PlainTextNeedsPrompt) { EXPECT_TRUE(Socket::needsPrompt(std::string("hello"))); }
 
 // parseForOutput is a member; a default-reset Socket(-1) is global-free.
 TEST(ParseForOutput, LiteralFFIsDoubled) {
     Socket sock(-1);
     std::string in = "a";
-    in.push_back(static_cast<char>(0xFF));       // literal IAC byte in output
+    in.push_back(static_cast<char>(0xFF)); // literal IAC byte in output
     in += "b";
     std::string expected = "a";
     expected.push_back(static_cast<char>(0xFF));
@@ -60,7 +58,7 @@ TEST(ParseForOutput, LiteralFFIsDoubled) {
 
 TEST(ParseForOutput, TrailingCaretDoesNotOverread) {
     Socket sock(-1);
-    EXPECT_EQ(sock.parseForOutput(std::string("hi^")), "hi");  // dangling caret dropped, no over-read
+    EXPECT_EQ(sock.parseForOutput(std::string("hi^")), "hi"); // dangling caret dropped, no over-read
 }
 
 TEST(ParseForOutput, NewlineBecomesCrlf) {
@@ -70,7 +68,7 @@ TEST(ParseForOutput, NewlineBecomesCrlf) {
 
 // promptGoAhead selects the raw marker (single IAC, never doubled).
 TEST(PromptGoAhead, GaForNegotiatedClient) {
-    std::string out = telnet::promptGoAhead(/*eor*/false, /*dumb*/false);
+    std::string out = telnet::promptGoAhead(/*eor*/ false, /*dumb*/ false);
     std::string expected;
     expected.push_back(static_cast<char>(IAC));
     expected.push_back(static_cast<char>(GA));
@@ -78,20 +76,18 @@ TEST(PromptGoAhead, GaForNegotiatedClient) {
 }
 
 TEST(PromptGoAhead, EorWhenEnabled) {
-    std::string out = telnet::promptGoAhead(/*eor*/true, /*dumb*/false);
+    std::string out = telnet::promptGoAhead(/*eor*/ true, /*dumb*/ false);
     std::string expected;
     expected.push_back(static_cast<char>(IAC));
     expected.push_back(static_cast<char>(EOR));
     EXPECT_EQ(out, expected);
 }
 
-TEST(PromptGoAhead, EmptyForDumbClient) {
-    EXPECT_EQ(telnet::promptGoAhead(/*eor*/false, /*dumb*/true), "");
-}
+TEST(PromptGoAhead, EmptyForDumbClient) { EXPECT_EQ(telnet::promptGoAhead(/*eor*/ false, /*dumb*/ true), ""); }
 
 // parseForOutput recognizes the sentinel and (default reset state: dumb) drops it.
 TEST(ParseForOutput, GoAheadDumbEmitsNothing) {
-    Socket sock(-1);                                 // reset(): dumb=true, eor=false
+    Socket sock(-1); // reset(): dumb=true, eor=false
     EXPECT_EQ(sock.parseForOutput(std::string("hi") + GO_AHEAD), "hi");
 }
 
@@ -106,24 +102,18 @@ TEST(EscapeIAC, DoublesFF) {
     EXPECT_EQ(telnet::escapeIAC(in), out);
 }
 
-TEST(EscapeIAC, NoFFUnchanged) {
-    EXPECT_EQ(telnet::escapeIAC(std::string("plain")), "plain");
-}
+TEST(EscapeIAC, NoFFUnchanged) { EXPECT_EQ(telnet::escapeIAC(std::string("plain")), "plain"); }
 
 namespace {
-    // Assert exact "var"/"val" byte runs inside the MSSP payload.
-    std::string msspVar(const std::string& name) {
-        return std::string(1, static_cast<char>(MSSP_VAR)) + name;
-    }
-    std::string msspVal(const std::string& v) {
-        return std::string(1, static_cast<char>(MSSP_VAL)) + v;
-    }
-}
+// Assert exact "var"/"val" byte runs inside the MSSP payload.
+std::string msspVar(const std::string &name) { return std::string(1, static_cast<char>(MSSP_VAR)) + name; }
+std::string msspVal(const std::string &v) { return std::string(1, static_cast<char>(MSSP_VAL)) + v; }
+} // namespace
 
 TEST(Mssp, PayloadReportsConfiguredPortOnly) {
-    std::string p = telnet::buildMsspPayload(/*players*/3, /*uptime*/1700000000L,
-                                             /*port*/3333, /*classes*/10,
-                                             /*races*/12, /*skills*/50);
+    std::string p = telnet::buildMsspPayload(/*players*/ 3, /*uptime*/ 1700000000L,
+                                             /*port*/ 3333, /*classes*/ 10,
+                                             /*races*/ 12, /*skills*/ 50);
     EXPECT_NE(p.find(msspVar("PORT") + msspVal("3333")), std::string::npos);
     // The old hardcoded telnet port 23 is gone. ("3333" starts with '3', so it
     // cannot match MSSP_VAL + "23".)
@@ -150,9 +140,9 @@ TEST(Mssp, PayloadIsWrappedInSubnegotiation) {
     std::string p = telnet::buildMsspPayload(0, 1L, 3333, 1, 1, 1);
     ASSERT_GE(p.size(), 5u);
     EXPECT_EQ(static_cast<unsigned char>(p.front()), static_cast<unsigned char>(IAC));
-    EXPECT_EQ(static_cast<unsigned char>(p[1]),      static_cast<unsigned char>(SB));
-    EXPECT_EQ(static_cast<unsigned char>(p[p.size()-2]), static_cast<unsigned char>(IAC));
-    EXPECT_EQ(static_cast<unsigned char>(p.back()),      static_cast<unsigned char>(SE));
+    EXPECT_EQ(static_cast<unsigned char>(p[1]), static_cast<unsigned char>(SB));
+    EXPECT_EQ(static_cast<unsigned char>(p[p.size() - 2]), static_cast<unsigned char>(IAC));
+    EXPECT_EQ(static_cast<unsigned char>(p.back()), static_cast<unsigned char>(SE));
 }
 
 TEST(ParseMtts, ExtractsBits) {
@@ -182,22 +172,20 @@ TEST(MttsCaps, DecodesSetBits) {
 }
 
 TEST(CharsetFrame, RequestBytesExact) {
-    const unsigned char expected[] = {
-        IAC, SB, TELOPT_CHARSET, 1, ' ', 'U', 'T', 'F', '-', '8', IAC, SE, '\0'
-    };
+    const unsigned char expected[] = {IAC, SB, TELOPT_CHARSET, 1, ' ', 'U', 'T', 'F', '-', '8', IAC, SE, '\0'};
     for (size_t i = 0; i < sizeof(expected); i++)
         EXPECT_EQ(telnet::charset_utf8[i], expected[i]) << "byte " << i;
 }
 
 TEST(NewEnvironFrame, SendAllBytesExact) {
-    const unsigned char expected[] = { IAC, SB, TELOPT_NEW_ENVIRON, TELQUAL_SEND, IAC, SE, '\0' };
+    const unsigned char expected[] = {IAC, SB, TELOPT_NEW_ENVIRON, TELQUAL_SEND, IAC, SE, '\0'};
     for (size_t i = 0; i < sizeof(expected); i++)
         EXPECT_EQ(telnet::sb_new_environ_send[i], expected[i]) << "byte " << i;
 }
 
 TEST(SkipTelnetSeq, DanglingIacConsumesToEnd) {
     std::string buf = "x";
-    buf.push_back(static_cast<char>(IAC));           // IAC at index 1, nothing after
+    buf.push_back(static_cast<char>(IAC)); // IAC at index 1, nothing after
     EXPECT_EQ(Socket::skipTelnetSeq(buf, 1), buf.size());
 }
 
@@ -207,7 +195,7 @@ TEST(SkipTelnetSeq, OptionCommandIsThreeBytes) {
     buf.push_back(static_cast<char>(WILL));
     buf.push_back(static_cast<char>(TELOPT_MSDP));
     buf += "tail";
-    EXPECT_EQ(Socket::skipTelnetSeq(buf, 0), 3u);     // past IAC WILL <opt>
+    EXPECT_EQ(Socket::skipTelnetSeq(buf, 0), 3u); // past IAC WILL <opt>
 }
 
 TEST(SkipTelnetSeq, SubnegotiationRunsPastSe) {
@@ -219,7 +207,7 @@ TEST(SkipTelnetSeq, SubnegotiationRunsPastSe) {
     buf.push_back(static_cast<char>(IAC));
     buf.push_back(static_cast<char>(SE));
     buf += "rest";
-    EXPECT_EQ(Socket::skipTelnetSeq(buf, 0), buf.size() - 4);  // index of 'r' in "rest"
+    EXPECT_EQ(Socket::skipTelnetSeq(buf, 0), buf.size() - 4); // index of 'r' in "rest"
 }
 
 TEST(SkipTelnetSeq, UnterminatedSubnegotiationConsumesToEnd) {
@@ -232,13 +220,16 @@ TEST(SkipTelnetSeq, UnterminatedSubnegotiationConsumesToEnd) {
 }
 
 TEST(NewEnviron, DecodesMnesUservars) {
-    std::vector<unsigned char> sb = { TELQUAL_IS };
-    auto put = [&](unsigned char tag, const std::string& s) {
+    std::vector<unsigned char> sb = {TELQUAL_IS};
+    auto put = [&](unsigned char tag, const std::string &s) {
         sb.push_back(tag);
-        for (char c : s) sb.push_back(static_cast<unsigned char>(c));
+        for (char c: s)
+            sb.push_back(static_cast<unsigned char>(c));
     };
-    put(ENV_USERVAR, "CLIENT_NAME"); put(NEW_ENV_VALUE, "MUDLET");
-    put(ENV_USERVAR, "MTTS");        put(NEW_ENV_VALUE, "271");
+    put(ENV_USERVAR, "CLIENT_NAME");
+    put(NEW_ENV_VALUE, "MUDLET");
+    put(ENV_USERVAR, "MTTS");
+    put(NEW_ENV_VALUE, "271");
     auto m = telnet::decodeNewEnviron(sb);
     EXPECT_EQ(m["CLIENT_NAME"], "MUDLET");
     EXPECT_EQ(m["MTTS"], "271");

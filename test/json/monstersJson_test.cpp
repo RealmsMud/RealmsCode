@@ -23,7 +23,7 @@ TEST(MonsterJson, BlankMonsterHasExpectedShape) {
     ASSERT_TRUE(j.is_object());
     EXPECT_EQ(j.at("name").get<std::string>(), "Test Mob");
     EXPECT_TRUE(j.contains("info"));
-    EXPECT_FALSE(j.contains("area"));            // dropped; info already carries area
+    EXPECT_FALSE(j.contains("area")); // dropped; info already carries area
 
     EXPECT_EQ(j.at("keys").size(), 3u);
     EXPECT_EQ(j.at("moveTypes").size(), 3u);
@@ -35,7 +35,7 @@ TEST(MonsterJson, BlankMonsterHasExpectedShape) {
 }
 
 // Authored monster keys present regardless of load mode.
-static void expectAuthoredMonsterKeys(const json& j) {
+static void expectAuthoredMonsterKeys(const json &j) {
     EXPECT_TRUE(j.contains("version"));
 
     ASSERT_TRUE(j.contains("jail"));
@@ -109,7 +109,7 @@ TEST(MonsterJson, PrototypeModeHasAuthoredKeysButNoInstanceData) {
 
     expectAuthoredMonsterKeys(j);
 
-    EXPECT_FALSE(j.contains("id"));          // instance id omitted in prototype mode
+    EXPECT_FALSE(j.contains("id")); // instance id omitted in prototype mode
     EXPECT_FALSE(j.contains("daily"));
     EXPECT_FALSE(j.contains("lasttime"));
     EXPECT_FALSE(j.contains("inventory"));
@@ -127,7 +127,7 @@ TEST(MonsterJson, FullModeIncludesIdAndInstanceData) {
     json j;
     to_json(j, *mon, LoadType::LS_FULL);
 
-    EXPECT_TRUE(j.contains("id"));           // instance id present in full mode
+    EXPECT_TRUE(j.contains("id")); // instance id present in full mode
 
     ASSERT_TRUE(j.contains("daily"));
     EXPECT_EQ(j.at("daily").size(), 20u);

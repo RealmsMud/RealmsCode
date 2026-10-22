@@ -18,6 +18,7 @@
 
 #pragma once
 #include <memory>
+#include <string>
 
 class Player;
 class Socket;
@@ -63,56 +64,16 @@ typedef enum {
     CON_CHANGE_PASSWORD_FINISH,
     CON_PASSWORD_END,
 
-    // Login States
+    // LOGIN_START/END bound setState's range routing; PAUSE_SCREEN has its own handler
     LOGIN_START,
     LOGIN_DNS_LOOKUP,
-    LOGIN_GET_COLOR,
     LOGIN_PAUSE_SCREEN,
-    LOGIN_GET_LOCKOUT_PASSWORD,
-    LOGIN_ENTRY_CHOICE,
-    LOGIN_GET_ACCOUNT_NAME,
-    LOGIN_GET_ACCOUNT_DM_PASSWORD,
-    LOGIN_CHECK_CREATE_ACCOUNT,
-    LOGIN_GET_ACCOUNT_PASSWORD,
-    LOGIN_GET_ACCOUNT_CREATE_PASSWORD,
-    LOGIN_GET_LEGACY_NAME,
-    LOGIN_ACCOUNT_MENU,
-    LOGIN_CLAIM_CHARACTER,
-    LOGIN_CLAIM_PASSWORD,
-    LOGIN_SET_EMAIL,
-    LOGIN_SET_EMAIL_CONFIRM,
-    LOGIN_LEGACY_PASSWORD,
+    LOGIN_ACCOUNT,
     LOGIN_END,
 
-    // Creation States
+    // CREATE_START/END bound setState range routing
     CREATE_START,
-    CREATE_NEW_CHARACTER,
-    CREATE_GET_DM_PASSWORD,
-    CREATE_CHECK_LOCKED_OUT,
-    CREATE_GET_SEX,
-    CREATE_GET_RACE,
-    CREATE_GET_SUBRACE,
-    CREATE_GET_CLASS,
-    CREATE_GET_DEITY,
-    CREATE_START_LOC,
-    CREATE_START_CUSTOM,
-    CREATE_GET_STATS_CHOICE,
-    CREATE_GET_STATS,
-    CREATE_GET_PROF,
-    CREATE_GET_ALIGNMENT,
-    CREATE_GET_NAME,
-    CREATE_BONUS_STAT,
-    CREATE_PENALTY_STAT,
-    CREATE_SECOND_PROF,
-    CREATE_DONE,
-
-    CUSTOM_COMMUNITY,
-    CUSTOM_FAMILY,
-    CUSTOM_SOCIAL,
-    CUSTOM_EDUCATION,
-    CUSTOM_HEIGHT,
-    CUSTOM_WEIGHT,
-
+    CREATE_CHARACTER,
     CREATE_END,
 
     // gambling
@@ -137,59 +98,39 @@ typedef enum {
 //*********************************************************************
 //                      Create
 //*********************************************************************
-// The work functions in this namespace return false if they fail to get
-// the information they want and the user should not progress further.
-//
-// the createCharacter function should determine what order everything
-// is called in, the individual functions should only do the work that
-// belongs to them.
-//
-// each work function has 2 settings - doPrint and doWork.
-//
+// createPlayer decodes the telnet letter, calls Flow::advance, then renders the next step;
+// the render* below are print-only and set the wizard cursor.
 namespace Create {
-    const int doPrint=1;
-    const int doWork=2;
-    bool addInitialClassRaceWeaponSkills(const std::shared_ptr<Socket>& sock);
+    struct InitialSkills;
+
     void addStartingItem(const std::shared_ptr<Player>& player, const std::string &area, int id, bool wear=true, bool skipUseCheck=false, int num=1);
     void addStartingWeapon(const std::shared_ptr<Player>& player, const std::string &weapon);
 
-    // work functions
-    bool getSex(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getRace(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getSubRace(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    void renderSex(const std::shared_ptr<Socket>& sock);
+    void renderRace(const std::shared_ptr<Socket>& sock);
+    void renderSubRace(const std::shared_ptr<Socket>& sock);
     void finishRace(const std::shared_ptr<Socket>& sock);
-    bool getClass(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getDeity(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getLocation(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
-    bool getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getStats(const std::shared_ptr<Socket>& sock, std::string str, int mode);
+    void renderClass(const std::shared_ptr<Socket>& sock);
+    void renderDeity(const std::shared_ptr<Socket>& sock);
+    void renderLocation(const std::shared_ptr<Socket>& sock);
+    void renderStatsChoice(const std::shared_ptr<Socket>& sock);
+    void renderStats(const std::shared_ptr<Socket>& sock);
     void finishStats(const std::shared_ptr<Socket>& sock);
-    bool getBonusStat(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getPenaltyStat(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool handleWeapon(const std::shared_ptr<Socket>& sock, int mode, char ch);
-    bool getProf(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getSecondProf(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getName(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
-    void done(const std::shared_ptr<Socket>& sock, const std::string &str, int mode);
-
-    // character customization functions
-    bool startCustom(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getCommunity(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getFamily(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getSocial(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getEducation(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getHeight(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-    bool getWeight(const std::shared_ptr<Socket>& sock, std::string str, int mode);
-
-    void doFamily(const std::shared_ptr<Player>& player, int mode);
-    int calcHeight(int race, int mode);
-    int calcWeight(int race, int mode);
+    void renderBonusStat(const std::shared_ptr<Socket>& sock);
+    void renderPenaltyStat(const std::shared_ptr<Socket>& sock);
+    void renderProf(const std::shared_ptr<Socket>& sock, const InitialSkills& granted);
+    void renderSecondProf(const std::shared_ptr<Socket>& sock);
+    void renderName(const std::shared_ptr<Socket>& sock);
+    void renderDmPassword(const std::shared_ptr<Socket>& sock);
+    void renderDone(const std::shared_ptr<Socket>& sock);
+    void processDone(const std::shared_ptr<Socket>& sock, const std::string& str);
 }
 
 // Various login functions
 void convertNewWeaponSkills(const std::shared_ptr<Socket>& sock, const std::string& str);
 void login(const std::shared_ptr<Socket>& sock, const std::string& inStr);
 void createPlayer(const std::shared_ptr<Socket>& sock, const std::string& str);
+void startCharacterCreation(const std::shared_ptr<Socket>& sock);
 void showAccountMenu(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account);
 void doSurname(const std::shared_ptr<Socket>& sock, const std::string& str);
 void doTitle(const std::shared_ptr<Socket>& sock, const std::string& str);

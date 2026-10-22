@@ -21,6 +21,6 @@
 #include <filesystem>
 
 namespace platform {
-    // Absolute directory containing the running executable. Falls back to the current working directory if resolution fails.
-    std::filesystem::path executableDir();
-}
+// Absolute directory containing the running executable. Falls back to the current working directory if resolution fails.
+std::filesystem::path executableDir();
+} // namespace platform

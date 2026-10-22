@@ -23,25 +23,25 @@
 
 namespace util {
 
-std::vector<std::vector<std::string>> parseCsv(std::istream& in) {
+std::vector<std::vector<std::string>> parseCsv(std::istream &in) {
     std::vector<std::vector<std::string>> rows;
     // empty escape set: treat backslashes literally; comma separator; double-quote quoting
     const boost::escaped_list_separator<char> sep("", ",", "\"");
 
     std::string line;
-    while(std::getline(in, line)) {
-        if(!line.empty() && line.back() == '\r')
+    while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r')
             line.pop_back();
-        if(line.empty())
+        if (line.empty())
             continue;
         try {
             boost::tokenizer<boost::escaped_list_separator<char>> tok(line, sep);
             rows.emplace_back(tok.begin(), tok.end());
-        } catch(const std::exception&) {
+        } catch (const std::exception &) {
             // skip a malformed line rather than abort the whole parse
         }
     }
     return rows;
 }
 
-}
+} // namespace util

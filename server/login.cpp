@@ -16,81 +16,78 @@
  *
  */
 
-#include <fcntl.h>                               // for open, O_RDONLY
-#include <fmt/format.h>                          // for format
-#include <strings.h>                             // for strncasecmp
-#include <unistd.h>                              // for close, read
-#include <boost/algorithm/string/predicate.hpp>  // for contains
-#include <boost/algorithm/string/trim.hpp>       // for trim
-#include <cctype>                                // for isalpha, tolower
-#include <cstdio>                                // for sprintf
-#include <cstdlib>                               // for atoi
-#include <cstring>                               // for strcpy, strchr
-#include <ctime>                                 // for time
-#include <iomanip>                               // for operator<<, setw
-#include <list>                                  // for list, operator==
-#include <locale>                                // for locale
-#include <map>                                   // for operator==, _Rb_tree...
-#include <set>                                   // for set<>::iterator
-#include <sstream>                               // for char_traits, operator<<
-#include <string>                                // for string, allocator
-#include <string_view>                           // for operator==, string_view
-#include <type_traits>                           // for add_const<>::type
-#include <utility>                               // for pair, tuple_element<...
+#include <fmt/format.h> // for format
+#include <strings.h> // for strncasecmp
+#include <boost/algorithm/string/trim.hpp> // for trim
+#include <algorithm> // for find_if, transform, min
+#include <array> // for array
+#include <cctype> // for isalpha, tolower
+#include <cstddef> // for size_t
+#include <ctime> // for time
+#include <fstream> // for ifstream
+#include <iomanip> // for operator<<, setw
+#include <locale> // for locale
+#include <span> // for span
+#include <sstream> // for char_traits, operator<<
+#include <string> // for string, allocator
+#include <string_view> // for operator==, string_view
+#include <vector> // for vector
 
-#include "catRef.hpp"                            // for CatRef
-#include "cmd.hpp"                               // for cmd
-#include "commands.hpp"                          // for parse, cmdReconnect
-#include "config.hpp"                            // for Config, gConfig, Rac...
-#include "creatureStreams.hpp"                   // for Streamable, ColorOff
-#include "deityData.hpp"                         // for DeityData
-#include "flags.hpp"                             // for P_HARDCORE, O_STARTING
-#include "global.hpp"                            // for CreatureClass, Creat...
-#include "lasttime.hpp"                          // for lasttime
-#include "location.hpp"                          // for Location
-#include "login.hpp"                             // for doPrint, doWork, CON...
-#include "magic.hpp"                             // for Divine, S_SAP_LIFE
-#include "money.hpp"                             // for Money
-#include "mud.hpp"                               // for LT_AGE, MAX_LT, SONG...
-#include "mudObjects/container.hpp"              // for ObjectSet
-#include "mudObjects/creatures.hpp"              // for CustomCrt, Creature
-#include "mudObjects/objects.hpp"                // for Object
-#include "mudObjects/players.hpp"                // for Player
-#include "paths.hpp"                             // for Config, CreateHelp
-#include "playerClass.hpp"                       // for PlayerClass
-#include "proto.hpp"                             // for low, get_class_string
-#include "raceData.hpp"                          // for RaceData
-#include "random.hpp"                            // for Random
-#include "server.hpp"                            // for Server, gServer
-#include "socket.hpp"                            // for Socket
-#include "stats.hpp"                             // for Stat
-#include "structs.hpp"                           // for SEX_FEMALE, SEX_MALE
-#include "xml.hpp"                               // for loadPlayer, loadObject
-#include "deityData.hpp"                         // for Deity names
-#include "account.hpp"                           // for Account
+#include "catRef.hpp" // for CatRef
+#include "cmd.hpp" // for cmd
+#include "commands.hpp" // for parse, cmdReconnect
+#include "config.hpp" // for Config, gConfig, Rac...
+#include "creatureStreams.hpp" // for Streamable, ColorOff
+#include "deityData.hpp" // for DeityData
+#include "flags.hpp" // for P_HARDCORE, O_STARTING
+#include "global.hpp" // for CreatureClass, Creat...
+#include "location.hpp" // for Location
+#include "login.hpp" // for CON_*/LOGIN_*/CREATE_* states
+#include "login/accountAuthService.hpp" // for AccountAuth::checkName
+#include "login/characterDraft.hpp" // for CharacterDraft
+#include "login/characterCreationService.hpp" // for Create:: validators
+#include "login/characterMaterializer.hpp" // for Create::materialize
+#include "login/creationFlow.hpp" // for Create::Flow
+#include "login/creationSession.hpp" // for CreationSession
+#include "login/loginSession.hpp" // for LoginSession
+#include "money.hpp" // for Money
+#include "mudObjects/container.hpp" // for ObjectSet
+#include "mudObjects/creatures.hpp" // for CustomCrt, Creature
+#include "mudObjects/objects.hpp" // for Object
+#include "mudObjects/players.hpp" // for Player
+#include "paths.hpp" // for Config, CreateHelp
+#include "playerClass.hpp" // for PlayerClass
+#include "proto.hpp" // for low, get_class_string
+#include "raceData.hpp" // for RaceData
+#include "server.hpp" // for Server, gServer
+#include "socket.hpp" // for Socket
+#include "stats.hpp" // for Stat
+#include "structs.hpp" // for SEX_FEMALE, SEX_MALE
+#include "xml.hpp" // for loadPlayer, loadObject
+#include "account.hpp" // for Account
 
 class StartLoc;
 
 // Forward declarations for account login functions
-std::shared_ptr<Account> validateAndGetAccount(const std::shared_ptr<Socket>& sock);
-void showAccountMenu(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account);
-void handleAccountMenuCommand(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& str);
-void handleCharacterClaim(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& str);
-bool loadCharacterForPlay(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& charName);
+std::shared_ptr<Account> validateAndGetAccount(const std::shared_ptr<Socket> &sock);
+void showAccountMenu(const std::shared_ptr<Socket> &sock, std::shared_ptr<Account> account);
+void handleAccountMenuCommand(const std::shared_ptr<Socket> &sock, std::shared_ptr<Account> account, const std::string &str);
+void handleCharacterClaim(const std::shared_ptr<Socket> &sock, std::shared_ptr<Account> account, const std::string &str);
+bool loadCharacterForPlay(const std::shared_ptr<Socket> &sock, std::shared_ptr<Account> account, const std::string &charName);
 
-char allowedClassesStr[static_cast<int>(CreatureClass::CLASS_COUNT) + 4][16] =
-    { "Assassin", "Berserker", "Cleric", "Fighter",
-      "Mage", "Paladin", "Ranger", "Thief", "Pureblood", "Monk", "Death Knight",
-      "Druid", "Lich", "Werewolf", "Bard", "Rogue", "Figh/Mage", "Figh/Thief",
-      "Cler/Ass", "Mage/Thief", "Thief/Mage", "Cler/Figh", "Mage/Ass"
-    };
+namespace {
+const constexpr char *kPromptAccountName = "Please enter account name: ";
+const constexpr char *kPromptLegacyName = "Please enter character name for legacy login: ";
+const constexpr char *kPromptEmail = "Enter new email address (or press enter to clear): ";
+const constexpr char *kPromptConfirmName = "Did I get that right? (yes/no): ";
+} // namespace
 
 //*********************************************************************
 //                      cmdReconnect
 //*********************************************************************
 
-int cmdReconnect(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    std::shared_ptr<Socket> sock = player->getSock();
+int cmdReconnect(const std::shared_ptr<Player> &player, cmd *cmnd) {
+    const std::shared_ptr<Socket> sock = player->getSock();
 
     player->print("\n\nReconnecting.\n\n\n");
     player->save(true);
@@ -99,47 +96,52 @@ int cmdReconnect(const std::shared_ptr<Player>& player, cmd* cmnd) {
     gServer->clearPlayer(player);
     sock->clearPlayer();
     sock->reconnect();
-    return(0);
+    return (0);
 }
 
-bool Player::checkProxyAccess(const std::shared_ptr<Player>& proxy) {
-    if(!proxy)
-        return(false);
+bool Player::checkProxyAccess(const std::shared_ptr<Player> &proxy) {
+    if (!proxy)
+        return (false);
 
     // Only a DM can proxy a DM
-    if(this->isDm() && !proxy->isDm())
-        return(false);
+    if (this->isDm() && !proxy->isDm())
+        return (false);
 
     // A DM can proxy anybody
-    if(proxy->isDm())
-        return(true);
+    if (proxy->isDm())
+        return (true);
 
-    return(gConfig->hasProxyAccess(proxy, Containable::downcasted_shared_from_this<Player>()));
+    return (gConfig->hasProxyAccess(proxy, Containable::downcasted_shared_from_this<Player>()));
 }
 //*********************************************************************
 //                      login
 //*********************************************************************
-// This function is the first function that gets input from a player when
-// they log in. It asks for the player's name and password, and performs
-// the according function calls.
 
-void login(const std::shared_ptr<Socket>& sock, const std::string& inStr) {
-    std::shared_ptr<Player> player=nullptr;
-    std::shared_ptr<Account> account=nullptr;
-    if(!sock) {
+static void enterLogin(const std::shared_ptr<Socket> &sock, LoginSession::Step step) {
+    sock->getLoginSession().step = step;
+    sock->setState(LOGIN_ACCOUNT);
+}
+
+void login(const std::shared_ptr<Socket> &sock, const std::string &inStr) {
+    std::shared_ptr<Account> account = nullptr;
+    if (!sock) {
         std::clog << "**** ERORR: Null socket in login.\n";
         return;
     }
 
     std::string str = inStr;
 
-    switch(sock->getState()) {
-        case LOGIN_DNS_LOOKUP: {
-            sock->print("Still performing DNS lookup, please be patient!\n");
-            return;
-        }
-        case LOGIN_GET_LOCKOUT_PASSWORD: {
-            if(str != sock->tempstr[0]) {
+    if (sock->getState() == LOGIN_DNS_LOOKUP) {
+        sock->print("Still performing DNS lookup, please be patient!\n");
+        return;
+    }
+
+    using Step = LoginSession::Step;
+    LoginSession &session = sock->getLoginSession();
+
+    switch (session.step) {
+        case Step::LockoutPassword: {
+            if (str != session.lockoutPassword) {
                 sock->disconnect();
                 return;
             }
@@ -147,323 +149,307 @@ void login(const std::shared_ptr<Socket>& sock, const std::string& inStr) {
             sock->print("\n  ^Wa^x) Create or Login into an account");
             sock->print("\n  ^Wb^x) Login in with a character name directly (Legacy)");
             sock->askFor("\n\nEnter choice (a/b): ");
-            sock->setState(LOGIN_ENTRY_CHOICE);
+            enterLogin(sock, Step::EntryChoice);
             return;
-            // End LOGIN_GET_LOCKOUT_PASSWORD
         }
-        case LOGIN_ENTRY_CHOICE: {
+        case Step::EntryChoice: {
             std::string choice = str;
             boost::trim(choice);
-            if(choice.empty()) {
+            if (choice.empty()) {
                 sock->askFor("Enter choice (a/b): ");
                 return;
             }
-            char c = std::tolower(choice[0]);
-            if(c == 'a') {
-                sock->askFor("Please enter account name: ");
-                sock->setState(LOGIN_GET_ACCOUNT_NAME);
+            const char c = std::tolower(choice[0]);
+            if (c == 'a') {
+                sock->askFor(kPromptAccountName);
+                enterLogin(sock, Step::AccountName);
                 return;
-            } else if(c == 'b') {
-                sock->askFor("Please enter character name for legacy login: ");
-                sock->setState(LOGIN_GET_LEGACY_NAME);
+            } else if (c == 'b') {
+                sock->askFor(kPromptLegacyName);
+                enterLogin(sock, Step::LegacyName);
                 return;
             } else {
                 sock->askFor("Please enter A or B: ");
                 return;
             }
         }
-        case LOGIN_GET_ACCOUNT_NAME: {
+        case Step::AccountName: {
             lowercize(str, 1);
-            if(str.length() >= 25)
-                str[25] = 0;
-                
-            if(!nameIsAllowed(str, sock)) {
-                sock->askFor("Please enter account name: ");
+            if (!nameIsAllowed(str, sock)) {
+                sock->askFor(kPromptAccountName);
                 return;
             }
-            
-            strcpy(sock->tempstr[0], str.c_str()); // Store account name
-            
-            if(!Account::load(str, account)) {
-                if(isdm(sock->tempstr[0])) {
+
+            session.accountName = str;
+
+            auto resolved = AccountAuth::resolveAccount(str);
+            account = resolved.account;
+            if (!resolved.found) {
+                if (isdm(str)) {
                     sock->print("\nYou must enter a password to create that account.\n");
                     sock->echoOff();
                     sock->askFor("Please enter password: ");
-                    sock->setState(LOGIN_GET_ACCOUNT_DM_PASSWORD);
+                    enterLogin(sock, Step::AccountDmPassword);
                     return;
                 }
                 sock->print("\n%s? ", str.c_str());
-                sock->askFor("Did I get that right? (yes/no): ");
-                sock->setState(LOGIN_CHECK_CREATE_ACCOUNT);
+                sock->askFor(kPromptConfirmName);
+                enterLogin(sock, Step::CheckCreateAccount);
                 return;
             } else {
-                if(account->isBanned()) {
-                    sock->print("Account is banned: %s\n", account->getBanReason().c_str());
+                if (resolved.banned) {
+                    sock->print("Account is banned: %s\n", resolved.banReason.c_str());
                     sock->disconnect();
                     return;
                 }
                 sock->echoOff();
                 sock->askFor("Please enter account password: ");
-                sock->setState(LOGIN_GET_ACCOUNT_PASSWORD);
+                enterLogin(sock, Step::AccountPassword);
                 return;
             }
-            // End LOGIN_GET_ACCOUNT_NAME
         }
-        case LOGIN_GET_ACCOUNT_DM_PASSWORD: {
+        case Step::AccountDmPassword: {
             sock->echoOn();
-            if(str != gConfig->getDmPass()) {
+            if (str != gConfig->getDmPass()) {
                 sock->disconnect();
                 return;
             }
 
-            sock->print("\n%s? ", sock->tempstr[0]);
-            sock->askFor("Did I get that right? (yes/no): ");
-            sock->setState(LOGIN_CHECK_CREATE_ACCOUNT);
+            sock->print("\n%s? ", session.accountName.c_str());
+            sock->askFor(kPromptConfirmName);
+            enterLogin(sock, Step::CheckCreateAccount);
             return;
-            // End LOGIN_GET_ACCOUNT_DM_PASSWORD
         }
-        case LOGIN_GET_LEGACY_NAME: {
+        case Step::LegacyName: {
             std::string charName = str;
             boost::trim(charName);
-            if(charName.empty()) {
-                sock->askFor("Please enter character name for legacy login: ");
+            if (charName.empty()) {
+                sock->askFor(kPromptLegacyName);
                 return;
             }
             lowercize(charName, 1);
-            if(charName.length() >= 25) charName[25] = 0;
 
-            std::shared_ptr<Player> player;
-            if(!loadPlayer(charName, player)) {
+            auto lookup = AccountAuth::lookupLegacyCharacter(charName);
+            if (!lookup.found) {
                 sock->print("Character '%s' does not exist.\n", charName.c_str());
-                sock->askFor("Please enter character name for legacy login: ");
+                sock->askFor(kPromptLegacyName);
                 return;
             }
-            if(!player->getAccountName().empty()) {
+            if (lookup.alreadyClaimed) {
                 sock->print("Character '%s' is already claimed by an account.\n", charName.c_str());
                 sock->print("Please login using the account system instead of legacy login.\n");
-                sock->askFor("Please enter account name: ");
-                sock->setState(LOGIN_GET_ACCOUNT_NAME);
+                sock->askFor(kPromptAccountName);
+                enterLogin(sock, Step::AccountName);
                 return;
             }
-            strcpy(sock->tempstr[1], charName.c_str());
+            session.targetCharacter = charName;
             sock->print("Legacy login for character '%s'.\n", charName.c_str());
             sock->echoOff();
             sock->askFor("Please enter character password: ");
-            sock->setState(LOGIN_LEGACY_PASSWORD);
+            enterLogin(sock, Step::LegacyPassword);
             return;
         }
-        case LOGIN_CHECK_CREATE_ACCOUNT: {
-            if(str[0] != 'y' && str[0] != 'Y') {
-                sock->tempstr[0][0] = 0;
-                sock->askFor("Please enter account name: ");
-                sock->setState(LOGIN_GET_ACCOUNT_NAME);
+        case Step::CheckCreateAccount: {
+            if (str[0] != 'y' && str[0] != 'Y') {
+                session.accountName.clear();
+                sock->askFor(kPromptAccountName);
+                enterLogin(sock, Step::AccountName);
                 return;
             } else {
                 sock->print("\nCreating new account...\n");
-                sock->print("Please set a password for new account '%s': \n", sock->tempstr[0]);
-                sock->setState(LOGIN_GET_ACCOUNT_CREATE_PASSWORD);
+                sock->askFor(fmt::format("Please set a password for new account '{}': ", session.accountName).c_str());
+                sock->echoOff();
+                enterLogin(sock, Step::AccountCreatePassword);
                 return;
             }
-            // End LOGIN_CHECK_CREATE_ACCOUNT
         }
-        case LOGIN_GET_ACCOUNT_PASSWORD: {
+        case Step::AccountPassword: {
             sock->echoOn();
-            if(!Account::load(sock->tempstr[0], account) || !account->isPassword(str)) {
+            const std::string &accountName = session.accountName;
+            account = AccountAuth::resolveAccount(accountName).account;
+            if (!account || !AccountAuth::verifyPassword(*account, str)) {
                 sock->write("\n\rIncorrect.\n\r");
-                logn("log.incorrect", fmt::format("Invalid account password({}) for {} from {}\n", str, sock->tempstr[0], sock->getHostname()).c_str());
+                logn("log.incorrect", fmt::format("Invalid account password for {} from {}\n", accountName, sock->getHostname()).c_str());
                 sock->disconnect();
                 return;
             } else {
-                account->updateLastLogin();
-                account->save();
+                AccountAuth::recordLogin(*account);
                 sock->setAccount(account);
                 // Show character selection
                 showAccountMenu(sock, account);
                 return;
             }
-            // End LOGIN_GET_ACCOUNT_PASSWORD
         }
-        case LOGIN_GET_ACCOUNT_CREATE_PASSWORD: {
+        case Step::AccountCreatePassword: {
             sock->echoOn();
-            
-            if(!Account::isValidPassword(str)) {
+
+            const std::string &accountName = session.accountName;
+            if (!AccountAuth::isValidPassword(str)) {
                 sock->print("\nPassword must be between 5 and 35 characters.\n");
-                sock->print("Please set a password for new account '%s': \n", sock->tempstr[0]);
+                sock->askFor(fmt::format("Please set a password for new account '{}': ", accountName).c_str());
                 sock->echoOff();
-                sock->setState(LOGIN_GET_ACCOUNT_CREATE_PASSWORD);
+                enterLogin(sock, Step::AccountCreatePassword);
                 return;
             }
-            
-            // Create the account
-            std::string accountName = sock->tempstr[0];
-            account = std::make_shared<Account>(accountName);
-            account->setPassword(str);
-            account->setCreated(time(nullptr));
-            account->updateLastLogin();
-            
-            if(!account->save()) {
+
+            account = AccountAuth::createAccount(accountName, str);
+            if (!account) {
                 sock->print("Error creating account. Please try again.\n");
-                sock->askFor("Please enter account name: ");
-                sock->setState(LOGIN_GET_ACCOUNT_NAME);
+                sock->askFor(kPromptAccountName);
+                enterLogin(sock, Step::AccountName);
                 return;
             }
-            
+
             sock->print("\n^GAccount '%s' created successfully!^x\n", accountName.c_str());
             sock->setAccount(account);
             showAccountMenu(sock, account);
             return;
-            // End LOGIN_GET_ACCOUNT_CREATE_PASSWORD
         }
-        case LOGIN_ACCOUNT_MENU: {
+        case Step::AccountMenu: {
             account = validateAndGetAccount(sock);
-            if(!account) return;
+            if (!account)
+                return;
 
             handleAccountMenuCommand(sock, account, str);
             return;
-            // End LOGIN_ACCOUNT_MENU
         }
-        case LOGIN_CLAIM_CHARACTER: {
+        case Step::ClaimCharacter: {
             account = validateAndGetAccount(sock);
-            if(!account) return;
-            
+            if (!account)
+                return;
+
             handleCharacterClaim(sock, account, str);
             return;
-            // End LOGIN_CLAIM_CHARACTER
         }
-        case LOGIN_CLAIM_PASSWORD: {
+        case Step::ClaimPassword: {
             sock->echoOn();
             account = validateAndGetAccount(sock);
-            if(!account) return;
+            if (!account)
+                return;
 
-            std::string charName = sock->tempstr[1];
-            
+            const std::string charName = session.targetCharacter;
+
             // Load the character to verify password
             std::shared_ptr<Player> player;
-            if(!loadPlayer(charName, player)) {
+            if (!loadPlayer(charName, player)) {
                 sock->print("Error: Character no longer exists!\n");
                 showAccountMenu(sock, account);
                 return;
             }
-            
+
             // Check password
-            if(!player->isPassword(str)) {
+            if (!AccountAuth::verifyCharacterPassword(*player, str)) {
                 sock->print("\n^RIncorrect password for character '%s'.^x\n", charName.c_str());
                 sock->print("Character claim failed.\n");
                 showAccountMenu(sock, account);
                 return;
             }
-            
+
             // Success! Claim the character
-            if(!account->addCharacter(charName)) {
+            if (!AccountAuth::claimCharacter(*account, *player)) {
                 sock->print("Error: Could not add character to account.\n");
                 showAccountMenu(sock, account);
                 return;
             }
-            
-            // Update the character's account name
-            player->setAccountName(account->getName());
             player->save();
             account->save();
-            
+
             sock->print("\n^GCharacter '%s' has been successfully claimed!^x\n", charName.c_str());
             sock->print("The character is now linked to your account.\n");
             showAccountMenu(sock, account);
             return;
-            // End LOGIN_CLAIM_PASSWORD
         }
-        case LOGIN_SET_EMAIL: {
+        case Step::SetEmail: {
             account = validateAndGetAccount(sock);
-            if(!account) return;
-            
+            if (!account)
+                return;
+
             std::string email = str;
             boost::trim(email);
-            
+
             // Empty string clears the email
-            if(email.empty()) {
+            if (email.empty()) {
                 account->setEmail("");
                 account->save();
                 sock->print("^GEmail address cleared.^x\n");
                 showAccountMenu(sock, account);
                 return;
             }
-            
-            // Basic email validation
-            if(email.find('@') == std::string::npos || email.find('.') == std::string::npos) {
-                sock->print("^RInvalid email format. Please enter a valid email address.^x\n");
-                sock->askFor("Enter new email address (or press enter to clear): ");
-                return;
+
+            switch (AccountAuth::checkEmail(email)) {
+                case AccountAuth::EmailError::BadFormat:
+                    sock->print("^RInvalid email format. Please enter a valid email address.^x\n");
+                    sock->askFor(kPromptEmail);
+                    return;
+                case AccountAuth::EmailError::TooLong:
+                    sock->print("^REmail address too long (maximum 255 characters).^x\n");
+                    sock->askFor(kPromptEmail);
+                    return;
+                case AccountAuth::EmailError::Ok:
+                    break;
             }
-            
-            if(email.length() > 255) {
-                sock->print("^REmail address too long (maximum 255 characters).^x\n");
-                sock->askFor("Enter new email address (or press enter to clear): ");
-                return;
-            }
-            
-            // Store the email temporarily for confirmation
-            strcpy(sock->tempstr[2], email.c_str());
+
+            session.email = email;
             sock->print("Confirm email address: ^C%s^x\n", email.c_str());
             sock->askFor("Is this correct? (y/n): ");
-            sock->setState(LOGIN_SET_EMAIL_CONFIRM);
+            enterLogin(sock, Step::SetEmailConfirm);
             return;
-            // End LOGIN_SET_EMAIL
         }
-        case LOGIN_SET_EMAIL_CONFIRM: {
+        case Step::SetEmailConfirm: {
             account = validateAndGetAccount(sock);
-            if(!account) return;
-            
-            if(str.empty() || (str[0] != 'y' && str[0] != 'Y')) {
+            if (!account)
+                return;
+
+            if (str.empty() || (str[0] != 'y' && str[0] != 'Y')) {
                 sock->print("Email not set.\n");
                 showAccountMenu(sock, account);
                 return;
             }
-            
+
             // Set and save the email
-            std::string email = sock->tempstr[2];
+            const std::string email = session.email;
             account->setEmail(email);
             account->save();
-            
+
             sock->print("^GEmail address set to: ^C%s^x^G.^x\n", email.c_str());
             showAccountMenu(sock, account);
             return;
-            // End LOGIN_SET_EMAIL_CONFIRM
         }
-        case LOGIN_LEGACY_PASSWORD: {
+        case Step::LegacyPassword: {
             sock->echoOn();
-            std::string charName = sock->tempstr[1];
-            
+            std::string charName = session.targetCharacter;
+
             // Load the character
             std::shared_ptr<Player> player;
-            if(!loadPlayer(charName, player)) {
+            if (!loadPlayer(charName, player)) {
                 sock->print("\n^RCharacter '%s' does not exist.^x\n", charName.c_str());
-                sock->askFor("Please enter character name for legacy login: ");
-                sock->setState(LOGIN_GET_LEGACY_NAME);
+                sock->askFor(kPromptLegacyName);
+                enterLogin(sock, Step::LegacyName);
                 return;
             }
-            
+
             // Check password
-            if(!player->isPassword(str)) {
+            if (!AccountAuth::verifyCharacterPassword(*player, str)) {
                 sock->print("\n^RIncorrect.^x\n");
-                logn("log.incorrect", fmt::format("Invalid legacy password({}) for {} from {}\n", str, charName, sock->getHostname()).c_str());
+                logn("log.incorrect", fmt::format("Invalid legacy password for {} from {}\n", charName, sock->getHostname()).c_str());
                 sock->disconnect();
                 return;
             }
-            
+
             // Success! Log the player in directly
             sock->print("\n^GLegacy login successful!^x\n");
-            
+
             // Update last login time
             player->setLastLogin(time(nullptr));
-            
+
             // Set up the socket and player connection
             sock->setPlayer(player);
             player->fd = -1;
-            
+
             // Complete the login process
             sock->finishLogin();
-            
+
             return;
-            // End LOGIN_LEGACY_PASSWORD
         }
     }
 }
@@ -472,14 +458,14 @@ void login(const std::shared_ptr<Socket>& sock, const std::string& inStr) {
 //                    showAccountMenu
 //*********************************************************************
 
-void showAccountMenu(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account) {
+void showAccountMenu(const std::shared_ptr<Socket> &sock, std::shared_ptr<Account> account) {
     sock->print("\n\n^W~~~~~~~ Account Menu ~~~~~~~^x\n\n");
     account->printInfoFields(sock);
-    
+
     // Show command options
     sock->print("^WCommands:^x\n");
     sock->print("  ^W%-15s^x - Create a new character", "^c(c)^Wreate^x");
-    if(account->canCreateCharacter()) {
+    if (account->canCreateCharacter()) {
         sock->print("\n");
     } else {
         sock->print(" ^R(limit reached)^x\n");
@@ -489,82 +475,78 @@ void showAccountMenu(const std::shared_ptr<Socket>& sock, std::shared_ptr<Accoun
     sock->print("  ^W%-15s^x - Claim a legacy character\n", "^c(cl)^Waim^x");
     sock->print("  ^W%-15s^x - Set email address\n", "^c(e)^Wmail^x");
     sock->print("  ^W%-15s^x - Disconnect\n", "^c(q)^Wuit^x");
-    
-    const auto& characters = account->getCharacterNames();
+
+    const auto &characters = account->getCharacterNames();
     if (characters.empty()) {
         sock->askFor("\nEnter a command: ");
     } else {
         sock->askFor("\nEnter a command, or a character name to play: ");
     }
 
-    sock->setState(LOGIN_ACCOUNT_MENU);
+    enterLogin(sock, LoginSession::Step::AccountMenu);
 }
 
 //*********************************************************************
 //                    handleAccountMenuCommand
 //*********************************************************************
 
-void handleAccountMenuCommand(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& str) {
-    if(str.empty()) {
+void handleAccountMenuCommand(const std::shared_ptr<Socket> &sock, std::shared_ptr<Account> account, const std::string &str) {
+    if (str.empty()) {
         showAccountMenu(sock, account);
         return;
     }
-    
+
     std::string input = str;
     std::transform(input.begin(), input.end(), input.begin(), ::tolower);
     boost::trim(input);
-    
-    const auto& characters = account->getCharacterNames();
-    
+
+    const auto &characters = account->getCharacterNames();
+
     // Extract just the command word (first word) for proper matching
     std::string command;
-    size_t spacePos = input.find(' ');
-    if(spacePos != std::string::npos) {
+    const size_t spacePos = input.find(' ');
+    if (spacePos != std::string::npos) {
         command = input.substr(0, spacePos);
     } else {
         command = input;
     }
-    
+
     // Handle "create" command with partial matching
-    if(command.length() >= 1 && !strncasecmp(command.c_str(), "create", std::min(command.length(), 6UL))) {
-        if(!account->canCreateCharacter()) {
-            sock->print("^RYou have reached your character limit (%d/%d).^x\n", 
-                       account->getCharacterCount(), account->getCharacterLimit());
+    if (command.length() >= 1 && !strncasecmp(command.c_str(), "create", std::min(command.length(), 6UL))) {
+        if (!account->canCreateCharacter()) {
+            sock->print("^RYou have reached your character limit (%d/%d).^x\n", account->getCharacterCount(), account->getCharacterLimit());
             sock->print("You must delete a character before creating a new one.\n\n");
             showAccountMenu(sock, account);
             return;
         }
-        
+
         // Check if IP has reached max connections
-        if(gServer->checkDouble(sock, false)) {
+        if (gServer->checkDouble(sock, false)) {
             sock->print("^RMaximum number of characters already connected.\n");
             sock->print("Please disconnect one of your other characters first.\n\n");
             showAccountMenu(sock, account);
             return;
         }
         sock->print("\nCreating new character...");
-        sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command.");
-        sock->askFor("\nHit return to continue: ");
-        sock->setState(CREATE_NEW_CHARACTER);
+        sock->print("\nTo get help at any time during creation use the \"^Whelp^x\" command.\n");
+        startCharacterCreation(sock);
         return;
     }
-    
+
     // Handle "list" command with partial matching
-    if(command.length() >= 1 && !strncasecmp(command.c_str(), "list", std::min(command.length(), 4UL))) {
+    if (command.length() >= 1 && !strncasecmp(command.c_str(), "list", std::min(command.length(), 4UL))) {
         account->printCharacterList(sock);
-        if(account->getCharacterNames().empty())
+        if (account->getCharacterNames().empty())
             sock->askFor("\nEnter a command: ");
         else
             sock->askFor("\nEnter a command, or a character name to play: ");
-        // Stay in LOGIN_ACCOUNT_MENU state to return to menu
         return;
     }
-    
+
     // Handle "claim" command with partial matching
-    if(command.length() >= 2 && !strncasecmp(command.c_str(), "claim", std::min(command.length(), 5UL))) {
-        if(!account->canCreateCharacter()) {
-            sock->print("^RYou have reached your character limit (%d/%d).^x\n", 
-                       account->getCharacterCount(), account->getCharacterLimit());
+    if (command.length() >= 2 && !strncasecmp(command.c_str(), "claim", std::min(command.length(), 5UL))) {
+        if (!account->canCreateCharacter()) {
+            sock->print("^RYou have reached your character limit (%d/%d).^x\n", account->getCharacterCount(), account->getCharacterLimit());
             sock->print("You cannot claim additional characters.\n");
             sock->askFor("Press ^W<Enter>^x to continue: ");
             showAccountMenu(sock, account);
@@ -574,30 +556,30 @@ void handleAccountMenuCommand(const std::shared_ptr<Socket>& sock, std::shared_p
         sock->print("Enter the name of the character you wish to claim.\n");
         sock->print("This character must have existed before the account system was implemented.\n");
         sock->askFor("Character name: ");
-        sock->setState(LOGIN_CLAIM_CHARACTER);
+        enterLogin(sock, LoginSession::Step::ClaimCharacter);
         return;
     }
-    
+
     // Handle "email" command with partial matching
-    if(command.length() >= 1 && !strncasecmp(command.c_str(), "email", std::min(command.length(), 5UL))) {
-        if(!account->getEmail().empty()) {
+    if (command.length() >= 1 && !strncasecmp(command.c_str(), "email", std::min(command.length(), 5UL))) {
+        if (!account->getEmail().empty()) {
             sock->print("Current email: %s\n", account->getEmail().c_str());
         }
-        sock->askFor("Enter new email address (or press enter to clear): ");
-        sock->setState(LOGIN_SET_EMAIL);
+        sock->askFor(kPromptEmail);
+        enterLogin(sock, LoginSession::Step::SetEmail);
         return;
     }
-    
+
     // Handle "quit" command with partial matching
-    if(command.length() >= 1 && !strncasecmp(command.c_str(), "quit", std::min(command.length(), 4UL))) {
+    if (command.length() >= 1 && !strncasecmp(command.c_str(), "quit", std::min(command.length(), 4UL))) {
         sock->print("Goodbye!\n");
         sock->disconnect();
         return;
     }
-    
+
     // Handle character name login
     // First check if IP has reached max connections
-    if(gServer->checkDouble(sock, false)) {
+    if (gServer->checkDouble(sock, false)) {
         sock->print("^RMaximum number of characters already connected.\n");
         sock->print("Please disconnect one of your other characters first.\n\n");
         showAccountMenu(sock, account);
@@ -605,55 +587,55 @@ void handleAccountMenuCommand(const std::shared_ptr<Socket>& sock, std::shared_p
     }
 
     std::string foundChar;
-    for(const auto& accountChar : characters) {
-        if(strcasecmp(accountChar.c_str(), input.c_str()) == 0) {
+    for (const auto &accountChar: characters) {
+        if (strcasecmp(accountChar.c_str(), input.c_str()) == 0) {
             foundChar = accountChar;
             break;
         }
     }
-    
-    if(!foundChar.empty()) {
+
+    if (!foundChar.empty()) {
         // Load and play the character from our account
-        if(loadCharacterForPlay(sock, account, foundChar)) {
+        if (loadCharacterForPlay(sock, account, foundChar)) {
             sock->finishLogin();
         }
         return;
     }
-    
+
     // Character not in our account - check if it exists and if we have proxy access
     // Format the character name properly (capitalize first letter)
     std::string formattedInput = input;
     lowercize(formattedInput, 1);
-    
+
     std::shared_ptr<Player> player = nullptr;
-    if(loadPlayer(formattedInput, player)) {
+    if (loadPlayer(formattedInput, player)) {
         // Check if any of our account's characters has proxy access to this character
         std::shared_ptr<Player> proxyGranter = nullptr;
-        
-        for(const auto& accountCharName : characters) {
+
+        for (const auto &accountCharName: characters) {
             std::shared_ptr<Player> accountChar = nullptr;
-            if(loadPlayer(accountCharName, accountChar)) {
-                if(player->checkProxyAccess(accountChar)) {
+            if (loadPlayer(accountCharName, accountChar)) {
+                if (player->checkProxyAccess(accountChar)) {
                     proxyGranter = accountChar;
                     break;
                 }
             }
         }
-        
-        if(proxyGranter) {
+
+        if (proxyGranter) {
             // Set up the proxy relationship
             player->setProxy(proxyGranter);
-            
+
             // Set up the socket for the player
             player->fd = -1;
             sock->setPlayer(player);
-            
+
             sock->print("Loading %s (using %s as proxy)...\n", player->getName().c_str(), proxyGranter->getName().c_str());
             sock->finishLogin();
             return;
         }
     }
-    
+
     // Invalid command
     sock->print("Invalid command or character name '%s'.\n", input.c_str());
     showAccountMenu(sock, account);
@@ -663,10 +645,10 @@ void handleAccountMenuCommand(const std::shared_ptr<Socket>& sock, std::shared_p
 //                    loadCharacterForPlay
 //*********************************************************************
 
-bool loadCharacterForPlay(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& charName) {
+bool loadCharacterForPlay(const std::shared_ptr<Socket> &sock, std::shared_ptr<Account> account, const std::string &charName) {
     // Verify character still exists and belongs to this account
     std::shared_ptr<Player> player;
-    if(!loadPlayer(charName, player)) {
+    if (!loadPlayer(charName, player)) {
         sock->print("Character '%s' no longer exists!\n", charName.c_str());
         // Remove from account
         account->removeCharacter(charName);
@@ -674,25 +656,25 @@ bool loadCharacterForPlay(const std::shared_ptr<Socket>& sock, std::shared_ptr<A
         showAccountMenu(sock, account);
         return false;
     }
-    
+
     // Check if character belongs to this account (migration support)
-    if(player->getAccountName() != account->getName()) {
+    if (player->getAccountName() != account->getName()) {
         // Update player's account name
         player->setAccountName(account->getName());
         player->save();
     }
-    
+
     // Load character for login
     sock->setPlayer(player);
     player->fd = -1;
-    
+
     return true;
 }
 
 // Helper function to validate account exists and is loaded, returns account or nullptr if invalid (handles error)
-std::shared_ptr<Account> validateAndGetAccount(const std::shared_ptr<Socket>& sock) {
+std::shared_ptr<Account> validateAndGetAccount(const std::shared_ptr<Socket> &sock) {
     std::shared_ptr<Account> account = sock->getAccount();
-    if(!account) {
+    if (!account) {
         sock->print("Error: No account found!\n");
         sock->disconnect();
         return nullptr;
@@ -701,30 +683,29 @@ std::shared_ptr<Account> validateAndGetAccount(const std::shared_ptr<Socket>& so
 }
 
 void Socket::finishLogin() {
-    char    charName[25];
-
     auto player = getPlayer();
+    const std::string charName = player->getName();
 
-    strcpy(charName, player->getCName());
     auto sThis = shared_from_this();
     gServer->checkDuplicateName(sThis, true);
-    if(gServer->checkDouble(sThis)) {
+    if (gServer->checkDouble(sThis)) {
         return;
     }
 
 
-    std::string proxyName = player->getProxyName();
-    std::string proxyId = player->getProxyId();
+    const std::string proxyName = player->getProxyName();
+    const std::string proxyId = player->getProxyId();
     player = nullptr;
     myPlayer = nullptr;
 
-    if(!loadPlayer(charName, player)) {
+    if (!loadPlayer(charName, player)) {
         askFor("Player no longer exists!\n\nPlease enter account name: ");
-        setState(LOGIN_GET_ACCOUNT_NAME);
+        getLoginSession().step = LoginSession::Step::AccountName;
+        setState(LOGIN_ACCOUNT);
         return;
     }
     player->setProxy(proxyName, proxyId);
-    if(player->flagIsSet(P_HARDCORE)) {
+    if (player->flagIsSet(P_HARDCORE)) {
         const StartLoc *location = gConfig->getStartLoc("highport");
         player->bind(location);
         // put them in the docks: hp.100
@@ -733,7 +714,6 @@ void Socket::finishLogin() {
         // remove all their stuff
         player->coins.zero();
         player->objects.clear();
-
     }
 
     setPlayer(player);
@@ -744,7 +724,7 @@ void Socket::finishLogin() {
     registerPlayer();
     setState(CON_PLAYING);
 
-    if(player->flagIsSet(P_HARDCORE)) {
+    if (player->flagIsSet(P_HARDCORE)) {
         player->clearFlag(P_HARDCORE);
         player->print("\n\n\n");
         player->print("You wake up on the shores of Derlith, completely naked...\n");
@@ -763,1276 +743,691 @@ void Socket::finishLogin() {
     }
 }
 
-// Blah I know it's a big hack...fix it later if you don't like it
-
-int setPlyClass(const std::shared_ptr<Socket>& sock, int cClass) {
-    // Make sure they both start off at 0
-    sock->getPlayer()->setClass(CreatureClass::NONE);
-    sock->getPlayer()->setSecondClass(CreatureClass::NONE);
-    // Define's BASE as first # to interpret as multi class
-    // Increment this when a class is added
-
-    switch(cClass) {
-    case static_cast<int>(CreatureClass::ASSASSIN):
-    case static_cast<int>(CreatureClass::BARD):
-    case static_cast<int>(CreatureClass::BERSERKER):
-    case static_cast<int>(CreatureClass::CLERIC):
-    case static_cast<int>(CreatureClass::DEATHKNIGHT):
-    case static_cast<int>(CreatureClass::DRUID):
-    case static_cast<int>(CreatureClass::FIGHTER):
-    case static_cast<int>(CreatureClass::LICH):
-    case static_cast<int>(CreatureClass::MAGE):
-    case static_cast<int>(CreatureClass::MONK):
-    case static_cast<int>(CreatureClass::PALADIN):
-    case static_cast<int>(CreatureClass::RANGER):
-    case static_cast<int>(CreatureClass::ROGUE):
-    case static_cast<int>(CreatureClass::THIEF):
-    case static_cast<int>(CreatureClass::PUREBLOOD):
-    case static_cast<int>(CreatureClass::WEREWOLF):
-        sock->getPlayer()->setClass(static_cast<CreatureClass>(cClass));
-        break;
-    case MULTI_BASE + 0:
-        sock->getPlayer()->setClass(CreatureClass::FIGHTER);
-        sock->getPlayer()->setSecondClass(CreatureClass::MAGE);
-        break;
-    case MULTI_BASE + 1:
-        sock->getPlayer()->setClass(CreatureClass::FIGHTER);
-        sock->getPlayer()->setSecondClass(CreatureClass::THIEF);
-        break;
-    case MULTI_BASE + 2:
-        sock->getPlayer()->setClass(CreatureClass::CLERIC);
-        sock->getPlayer()->setSecondClass(CreatureClass::ASSASSIN);
-        break;
-    case MULTI_BASE + 3:
-        sock->getPlayer()->setClass(CreatureClass::MAGE);
-        sock->getPlayer()->setSecondClass(CreatureClass::THIEF);
-        break;
-    case MULTI_BASE + 4:
-        sock->getPlayer()->setClass(CreatureClass::THIEF);
-        sock->getPlayer()->setSecondClass(CreatureClass::MAGE);
-        break;
-    case MULTI_BASE + 5:
-        sock->getPlayer()->setClass(CreatureClass::CLERIC);
-        sock->getPlayer()->setSecondClass(CreatureClass::FIGHTER);
-        break;
-    case MULTI_BASE + 6:
-        sock->getPlayer()->setClass(CreatureClass::MAGE);
-        sock->getPlayer()->setSecondClass(CreatureClass::ASSASSIN);
-        break;
-    default:
-        break;
-    }
-    return(0);
-}
-
-
 //*********************************************************************
-//                      setPlyDeity
+//                      doCreateHelp
 //*********************************************************************
 
-void setPlyDeity(const std::shared_ptr<Socket>& sock, int deity) {
+void doCreateHelp(const std::shared_ptr<Socket> &sock, std::string_view str) {
+    cmd cmnd;
+    parse(str, &cmnd);
 
-    switch(deity) {
-        case ARAMON:
-        case CERIS:
-        case ENOCH:
-        case GRADIUS:
-        case ARES:
-        case KAMIRA:
-        case LINOTHAN:
-        case MARA:
-        case JAKAR:
-        case ARACHNUS:
-            break;
-        default:
-            deity = 0;
-            break;
+    if (cmnd.num < 2) {
+        sock->viewFile((Path::CreateHelp / "helpfile.txt").string());
+        return;
     }
 
-    sock->getPlayer()->setDeity(deity);
+    const std::string_view topic(cmnd.str[1]);
+    if (topic.find('/') != std::string_view::npos) {
+        sock->print("You may not use slashes or backslashes.\n");
+        return;
+    }
+    sock->viewFile((Path::CreateHelp / (std::string(topic) + ".txt")).string());
 }
 
+//*********************************************************************
+//                      startCharacterCreation
+//*********************************************************************
+
+static void enterCreate(const std::shared_ptr<Socket> &sock, CreationSession::Step step) {
+    sock->getCreationSession().step = step;
+    sock->setState(CREATE_CHARACTER);
+}
+
+void startCharacterCreation(const std::shared_ptr<Socket> &sock) {
+    sock->resetCreationDraft();
+    sock->resetCreationSession();
+    sock->print("\n");
+    // The wizard derefs entries from all four tables; refuse up front rather than
+    // null-check every render step.
+    if (gConfig->isCharCreationDisabled() || gConfig->races.empty() || gConfig->classes.empty() || gConfig->deities.empty() || gConfig->start.empty()) {
+        sock->print("Character creation is temporarily unavailable.\n");
+        if (auto account = sock->getAccount())
+            showAccountMenu(sock, account);
+        else
+            sock->reconnect();
+        return;
+    }
+    // The DM gate is keyed on the chosen name, not the account; lockout 2 already proved
+    // its password at connection entry (Socket::checkLockOut -> Step::LockoutPassword).
+    if (gConfig->isLockedOut(sock) == 1) {
+        sock->disconnect();
+        return;
+    }
+    Create::renderRace(sock);
+}
 
 //*********************************************************************
 //                      createPlayer
 //*********************************************************************
-// This function allows a new player to create their character.
 
-void doCreateHelp(const std::shared_ptr<Socket>& sock, std::string_view str) {
-    cmd cmnd;
-    parse(str, &cmnd);
+namespace {
+using Step = CreationSession::Step;
+namespace Flow = Create::Flow;
 
-    std::string helpfile;
-    if(cmnd.num < 2) {
-        helpfile = std::string(Path::CreateHelp) + "/helpfile.txt";
-        sock->viewFile(helpfile);
-        return;
-    }
+// Steps whose telnet input is a positional letter into Flow::options().
+constexpr bool isLetterStep(Step step) { return step == Step::Race || step == Step::SubRace || step == Step::Class || step == Step::Deity || step == Step::Location || step == Step::Prof || step == Step::SecondProf; }
 
-    if(strchr(cmnd.str[1], '/')!=nullptr) {
-        sock->print("You may not use slashes or backslashes.\n");
-        return;
-    }
-    helpfile = std::string(Path::CreateHelp) + "/" + cmnd.str[1] + ".txt";
-    sock->viewFile(helpfile);
+struct Decoded {
+    std::string value;
+    std::string label;
+};
 
+// Werewolf/monk innate skills: telnet renders them as their own block and echoes
+// nothing when they are picked.
+bool isInnateWeapon(const std::string &value) { return value == "claw" || value == "bare-hand"; }
+
+// Non-alphabetic or out-of-range input decodes to an empty value, so advance()
+// rejects it with the step's own error rather than a second copy of the bounds.
+Decoded decodeInput(const CharacterDraft &draft, Step step, const std::string &str) {
+    if (!isLetterStep(step))
+        return {str, ""};
+    if (str.empty() || !std::isalpha(static_cast<unsigned char>(str[0])))
+        return {};
+    const auto options = Flow::options(draft, step);
+    const auto idx = static_cast<std::size_t>(low(str[0]) - 'a');
+    if (idx >= options.size())
+        return {};
+    return {options[idx].value, options[idx].label};
 }
 
-void createPlayer(const std::shared_ptr<Socket>& sock, const std::string& str) {
+void printStartLocation(const std::shared_ptr<Socket> &sock, const CharacterDraft &draft) {
+    const auto options = Flow::options(draft, Step::Location);
+    const auto it = std::find_if(options.begin(), options.end(), [&draft](const Flow::ViewOption &o) { return o.value == draft.startLocation; });
+    sock->print("\n\nYour starting location is: ");
+    sock->print("\n   %s\n\n", it != options.end() ? it->label.c_str() : draft.startLocation.c_str());
+}
 
-    switch(sock->getState()) {
-    case CREATE_NEW_CHARACTER:
-    case CREATE_GET_DM_PASSWORD:
-        break;
-    default:
-        if(str.starts_with("help")) {
-            doCreateHelp(sock, str);
-            return;
+// Post-transition confirmation copy; reads the already-mutated draft.
+void confirmChoice(const std::shared_ptr<Socket> &sock, const CharacterDraft &draft, Step step, Step next, const Decoded &picked) {
+    switch (step) {
+        case Step::Race:
+            if (next != Step::SubRace) // a parent race is confirmed after the subrace pick
+                Create::finishRace(sock);
+            break;
+        case Step::SubRace:
+            Create::finishRace(sock);
+            break;
+        case Step::Sex:
+            sock->printColor(draft.sex == SEX_FEMALE ? "You are now ^Wfemale^x.\n" : "You are now ^Wmale^x.\n");
+            break;
+        case Step::Class:
+            sock->printColor("Your chosen class: ^W%s\n", getFullClassName(draft.cClass, draft.secondClass).c_str());
+            break;
+        case Step::Deity: {
+            const DeityData *deity = gConfig->getDeity(draft.deity);
+            sock->printColor("Your chosen deity: ^W%s\n", deity ? deity->getName().c_str() : "none");
+            break;
         }
-        break;
+        case Step::StatsChoice:
+            if (next == Step::Stats)
+                sock->print("You have chosen to select your own stats.\n");
+            break;
+        case Step::Prof:
+        case Step::SecondProf:
+            if (!isInnateWeapon(picked.value))
+                sock->bprint(fmt::format("You have learned how to use ^W{}^x.\n", picked.label));
+            break;
+        default:
+            break;
     }
-    switch(sock->getState()) {
-    case CREATE_NEW_CHARACTER:
-        {
-            std::shared_ptr<Player> target = sock->getPlayer();
-            sock->print("\n");
-            if(target) {
-                gServer->clearPlayer(target->getName());
-            }
-            target = std::make_shared<Player>();
-
-            target->fd = -1;
-
-            target->setSock(sock);
-            sock->setPlayer(target);
-
-            target->defineColors();
-        }
-        if(isdm(sock->tempstr[0])) {
-            sock->print("\nYou must enter a password to create that character.\n");
-            sock->print("Please enter password: ");
-            gServer->processOutput();
-            sock->setState(CREATE_GET_DM_PASSWORD);
-            return;
-        } else
-            goto no_pass;
-        // End CREATE_NEW_CHARACTER
-    case CREATE_GET_DM_PASSWORD:
-        if(str != gConfig->getDmPass()) {
-            sock->disconnect();
-            return;
-        }
-
-    case CREATE_CHECK_LOCKED_OUT:
-no_pass:
-        if(gConfig->isLockedOut(sock) == 1) {
-            sock->disconnect();
-            return;
-        }
-
-        Create::getRace(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_GET_RACE:
-
-        if(!Create::getRace(sock, str, Create::doWork))
-            return;
-        if( gConfig->getRace(sock->getPlayer()->getRace())->isParent() &&
-            Create::getSubRace(sock, str, Create::doPrint)
-        )
-            return;
-        Create::getSex(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_GET_SUBRACE:
-
-        if(!Create::getSubRace(sock, str, Create::doWork))
-            return;
-        Create::getClass(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_GET_SEX:
-
-        if(!Create::getSex(sock, str, Create::doWork))
-            return;
-        Create::getClass(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_GET_CLASS:
-
-        if(!Create::getClass(sock, str, Create::doWork))
-            return;
-
-        if(gConfig->classes[get_class_string(static_cast<int>(sock->getPlayer()->getClass()))]->needsDeity())
-            Create::getDeity(sock, str, Create::doPrint);
-        else if(Create::getLocation(sock, str, Create::doPrint))
-            Create::getStatsChoice(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_GET_DEITY:
-
-        if(!Create::getDeity(sock, str, Create::doWork))
-            return;
-        if(Create::getLocation(sock, str, Create::doPrint))
-            Create::getStatsChoice(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_START_LOC:
-
-        if(!Create::getLocation(sock, str, Create::doWork))
-            return;
-        Create::getStatsChoice(sock, str, Create::doPrint);
-        return;
-    case CREATE_GET_STATS_CHOICE:
-        if(!Create::getStatsChoice(sock, str, Create::doWork))
-            return;
+    // The start location is settled either by an explicit pick or by the auto-resolve
+    // on leaving Class/Deity without a Location menu.
+    if (step == Step::Location || ((step == Step::Class || step == Step::Deity) && next != Step::Deity && next != Step::Location))
+        printStartLocation(sock, draft);
+    if (next == Step::Prof) // stats are final once Prof is entered, on every path
         Create::finishStats(sock);
-        Create::startCustom(sock, str, Create::doPrint);
-        return;
+}
 
-    case CREATE_GET_STATS:
-
-        if(!Create::getStats(sock, str, Create::doWork))
-            return;
-
-        if(gConfig->getRace(sock->getPlayer()->getRace())->bonusStat())
-            Create::getBonusStat(sock, str, Create::doPrint);
-        else {
-            Create::finishStats(sock);
-            Create::startCustom(sock, str, Create::doPrint);
-        }
-        return;
-
-    case CREATE_BONUS_STAT:
-
-        if(!Create::getBonusStat(sock, str, Create::doWork))
-            return;
-        Create::getPenaltyStat(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_PENALTY_STAT:
-
-        if(!Create::getPenaltyStat(sock, str, Create::doWork))
-            return;
-        Create::startCustom(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_START_CUSTOM:
-
-        if(Create::startCustom(sock, str, Create::doWork))
-            Create::getCommunity(sock, str, Create::doPrint);
-        else
-            Create::getProf(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_GET_PROF:
-
-        if(!Create::getProf(sock, str, Create::doWork))
-            return;
-        if(gConfig->classes[get_class_string(static_cast<int>(sock->getPlayer()->getClass()))]->numProfs()==2)
-            Create::getSecondProf(sock, str, Create::doPrint);
-        else
-            Create::getName(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_SECOND_PROF:
-
-        if(!Create::getSecondProf(sock, str, Create::doWork))
-            return;
-        Create::getName(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_GET_NAME:
-
-        if(!Create::getName(sock, str, Create::doWork))
-            return;
-        Create::done(sock, str, Create::doPrint);
-        return;
-
-    case CREATE_DONE:
-
-        Create::done(sock, str, Create::doWork);
-        return;
-
-
-
-
-    // handle character customization here:
-    case CUSTOM_COMMUNITY:
-
-        if(!Create::getCommunity(sock, str, Create::doWork))
-            return;
-        Create::getFamily(sock, str, Create::doPrint);
-        return;
-
-    case CUSTOM_FAMILY:
-
-        if(!Create::getFamily(sock, str, Create::doWork))
-            return;
-        Create::getSocial(sock, str, Create::doPrint);
-        return;
-
-    case CUSTOM_SOCIAL:
-
-        if(!Create::getSocial(sock, str, Create::doWork))
-            return;
-        Create::getEducation(sock, str, Create::doPrint);
-        return;
-
-    case CUSTOM_EDUCATION:
-
-        if(!Create::getEducation(sock, str, Create::doWork))
-            return;
-        Create::getHeight(sock, str, Create::doPrint);
-        return;
-
-    case CUSTOM_HEIGHT:
-
-        if(!Create::getHeight(sock, str, Create::doWork))
-            return;
-        Create::getWeight(sock, str, Create::doPrint);
-        return;
-
-    case CUSTOM_WEIGHT:
-
-        if(!Create::getWeight(sock, str, Create::doWork))
-            return;
-        Create::getStats(sock, str, Create::doPrint);
-        return;
-
+// Every render* sets the wizard cursor (enterCreate) itself.
+void renderStep(const std::shared_ptr<Socket> &sock, Step step, const Create::InitialSkills &granted) {
+    switch (step) {
+        case Step::Race:
+            Create::renderRace(sock);
+            break;
+        case Step::SubRace:
+            Create::renderSubRace(sock);
+            break;
+        case Step::Sex:
+            Create::renderSex(sock);
+            break;
+        case Step::Class:
+            Create::renderClass(sock);
+            break;
+        case Step::Deity:
+            Create::renderDeity(sock);
+            break;
+        case Step::Location:
+            Create::renderLocation(sock);
+            break;
+        case Step::StatsChoice:
+            Create::renderStatsChoice(sock);
+            break;
+        case Step::Stats:
+            Create::renderStats(sock);
+            break;
+        case Step::BonusStat:
+            Create::renderBonusStat(sock);
+            break;
+        case Step::PenaltyStat:
+            Create::renderPenaltyStat(sock);
+            break;
+        case Step::Prof:
+            Create::renderProf(sock, granted);
+            break;
+        case Step::SecondProf:
+            Create::renderSecondProf(sock);
+            break;
+        case Step::Name:
+            Create::renderName(sock);
+            break;
+        case Step::DmPassword:
+            Create::renderDmPassword(sock);
+            break;
+        case Step::Done:
+            Create::renderDone(sock);
+            break;
     }
 }
 
+// The Flow message is the telnet copy; a format rejection prints on its own line
+// (it may carry more than one), everything else leads the re-prompt.
+void printNameError(const std::shared_ptr<Socket> &sock, const Flow::StepError &error) {
+    if (error.code == "nameBadFormat") {
+        sock->print("%s\n", error.message.c_str());
+        sock->askFor("Please choose a character name: ");
+        return;
+    }
+    sock->askFor(fmt::format("\n{} Choose a character name: ", error.message).c_str());
+}
+
+// Race/Class/Deity redraw the whole menu; the rest re-prompt in place.
+void rejectInput(const std::shared_ptr<Socket> &sock, Step step, const std::string &str, const Flow::StepError &error) {
+    switch (step) {
+        case Step::Race:
+            renderStep(sock, step, {});
+            return;
+        case Step::Class:
+        case Step::Deity:
+            sock->printColor("Invalid selection: ^W%s\n", str.c_str());
+            renderStep(sock, step, {});
+            return;
+        case Step::SubRace:
+            sock->askFor("Choose one: ");
+            return;
+        case Step::Sex:
+            sock->askFor("[^WM^x] Male or [^WF^x] Female: ");
+            return;
+        case Step::Location:
+            sock->print("Invalid selection.\n");
+            sock->askFor(": ");
+            return;
+        case Step::StatsChoice:
+            sock->askFor(": ");
+            return;
+        case Step::Stats:
+            sock->print("%s\n", error.message.c_str());
+            sock->askFor(": ");
+            return;
+        case Step::BonusStat:
+        case Step::PenaltyStat:
+            sock->askFor("\nChoose one: ");
+            return;
+        case Step::Prof:
+            sock->print("Choose a weapon skill:\n");
+            sock->askFor(": ");
+            return;
+        case Step::SecondProf:
+            sock->print("Pick a second proficiency!\n");
+            sock->askFor(": ");
+            return;
+        case Step::Name:
+            printNameError(sock, error);
+            return;
+        default:
+            return;
+    }
+}
+} // namespace
+
+void createPlayer(const std::shared_ptr<Socket> &sock, const std::string &str) {
+    // Socket::restoreState calls this after the pager from any state (mail, room edit, bank).
+    if (sock->getState() != CREATE_CHARACTER)
+        return;
+    const Step step = sock->getCreationSession().step;
+
+    // "help" works at any step except the DM-password gate.
+    if (step != Step::DmPassword && str.starts_with("help")) {
+        doCreateHelp(sock, str);
+        return;
+    }
+
+    // Two telnet-only steps stay outside the FSM: the DM-password gate owns the socket
+    // echo and the disconnect, and Done is the commit. processDone re-checks Player::exists.
+    if (step == Step::DmPassword) {
+        sock->echoOn();
+        if (str != gConfig->getDmPass()) {
+            sock->disconnect();
+            return;
+        }
+        Create::renderDone(sock);
+        return;
+    }
+    if (step == Step::Done) {
+        Create::processDone(sock, str);
+        return;
+    }
+
+    CharacterDraft &draft = sock->getCreationDraft();
+    if (str.empty()) {
+        renderStep(sock, step, {}); // Socket::restoreState re-enters the step after the pager
+        return;
+    }
+
+    const Decoded in = decodeInput(draft, step, str);
+    const Flow::AdvanceResult result = Flow::advance(draft, step, in.value, {.account = sock->getAccount().get(), .allowReservedName = true});
+    if (!result.ok) {
+        rejectInput(sock, step, str, result.error);
+        return;
+    }
+    confirmChoice(sock, draft, step, result.next, in);
+    renderStep(sock, result.next, result.granted);
+}
 
 
 //*********************************************************************
 //                      addStartingItem
 //*********************************************************************
 
-void Create::addStartingItem(const std::shared_ptr<Player>& player, const std::string &area, int id, bool wear, bool skipUseCheck, int num) {
+void Create::addStartingItem(const std::shared_ptr<Player> &player, const std::string &area, int id, bool wear, bool skipUseCheck, int num) {
     CatRef cr;
     cr.setArea(area);
     cr.id = id;
 
-    for(int i=0; i<num; i++) {
-        std::shared_ptr<Object>  object=nullptr;
-        if(loadObject(cr, object)) {
+    for (int i = 0; i < num; i++) {
+        std::shared_ptr<Object> object = nullptr;
+        if (loadObject(cr, object)) {
             object->setFlag(O_STARTING);
             // if they can't use it, don't even give it to them
-            if(!skipUseCheck && !player->canUse(object, true)) {
+            if (!skipUseCheck && !player->canUse(object, true)) {
                 continue;
             } else {
                 object->setDroppedBy(player, "PlayerCreation");
                 player->addObj(object);
-                if(wear)
+                if (wear)
                     player->equip(object, false);
             }
         }
     }
 }
 
-//****************************************************************************************************************
-//                      addInitialClassRaceWeaponSkills
-//****************************************************************************************************************
-// This function will initialize any weapon skills defined for races/classes in the races.xml or classes.xml files.
-// It will remove any it finds from the initial weapon choice menu on character creation.
-// It will also add starting weapons for any weapon skill it finds to the new player's inventory.
-
-bool Create::addInitialClassRaceWeaponSkills(const std::shared_ptr<Socket>& sock) {
-    std::string initialRaceWeaponsString = "", initialClassWeaponsString = "";
-    short foundRaceSkills=0, foundClassSkills=0;
-    std::string playerClassName = !sock->getPlayer()->hasSecondClass() ? get_class_string(static_cast<int>(sock->getPlayer()->getClass())) : 
-                                                                        getFullClassName(sock->getPlayer()->getClass(), sock->getPlayer()->getSecondClass());
-    
-    const RaceData* rData = gConfig->getRace(sock->getPlayer()->getRace());
-    PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
-
-    sock->getPlayer()->getAsCreature()->getInitialRaceWeaponSkills(rData->getSkillBegin(), rData->getSkillEnd(), initialRaceWeaponsString, foundRaceSkills);
-    if(foundRaceSkills > 0)
-        sock->printColor("^yAs race ^c%s^y, you already know the following initial weapon skill%s: ^W%s\n",
-                            gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str(), foundRaceSkills>1?"s":"", initialRaceWeaponsString.c_str());
-
-    sock->getPlayer()->getAsCreature()->getInitialClassWeaponSkills(pClass->getSkillBegin(), pClass->getSkillEnd(), initialClassWeaponsString, foundClassSkills);
-    if(foundClassSkills > 0) {
-        if(sock->getPlayer()->getClass()==CreatureClass::CLERIC || sock->getPlayer()->getClass()==CreatureClass::PALADIN || sock->getPlayer()->getClass()==CreatureClass::DEATHKNIGHT)
-            sock->printColor("^yAs a ^c%s of %s^y, you already know the following initial weapon skill%s: ^W%s\n", playerClassName.c_str(), 
-                                                                    gConfig->getDeity(sock->getPlayer()->getDeity())->getName().c_str(), foundClassSkills>1?"s":"", initialClassWeaponsString.c_str());
-        else
-            sock->printColor("^yAs class ^c%s^y, you already know the following initial weapon skill%s: ^W%s\n", 
-                                            playerClassName.c_str(), foundClassSkills>1?"s":"", initialClassWeaponsString.c_str());
-    }
-
-    return(foundRaceSkills>0 || foundClassSkills>0);
-}
-
 //*********************************************************************
 //                      addStartingWeapon
 //*********************************************************************
 
-void Create::addStartingWeapon(const std::shared_ptr<Player>& player, const std::string &weapon) {
-    if(weapon == "sword")
+void Create::addStartingWeapon(const std::shared_ptr<Player> &player, const std::string &weapon) {
+    if (weapon == "sword")
         Create::addStartingItem(player, "tut", 28, false);
-    else if(weapon == "great-sword")
+    else if (weapon == "great-sword")
         Create::addStartingItem(player, "tut", 21, false);
-    else if(weapon == "polearm")
+    else if (weapon == "polearm")
         Create::addStartingItem(player, "tut", 24, false);
-    else if(weapon == "whip")
+    else if (weapon == "whip")
         Create::addStartingItem(player, "tut", 29, false);
-    else if(weapon == "rapier")
+    else if (weapon == "rapier")
         Create::addStartingItem(player, "tut", 25, false);
-    else if(weapon == "spear")
+    else if (weapon == "spear")
         Create::addStartingItem(player, "tut", 26, false);
-    else if(weapon == "axe")
+    else if (weapon == "axe")
         Create::addStartingItem(player, "tut", 14, false);
-    else if(weapon == "great-axe")
+    else if (weapon == "great-axe")
         Create::addStartingItem(player, "tut", 18, false);
-    else if(weapon == "dagger")
+    else if (weapon == "dagger")
         Create::addStartingItem(player, "tut", 17, false);
-    else if(weapon == "staff")
+    else if (weapon == "staff")
         Create::addStartingItem(player, "tut", 27, false);
-    else if(weapon == "mace")
+    else if (weapon == "mace")
         Create::addStartingItem(player, "tut", 23, false);
-    else if(weapon == "great-mace")
+    else if (weapon == "great-mace")
         Create::addStartingItem(player, "tut", 20, false);
-    else if(weapon == "club")
+    else if (weapon == "club")
         Create::addStartingItem(player, "tut", 16, false);
-    else if(weapon == "hammer")
+    else if (weapon == "hammer")
         Create::addStartingItem(player, "tut", 22, false);
-    else if(weapon == "great-hammer")
+    else if (weapon == "great-hammer")
         Create::addStartingItem(player, "tut", 19, false);
-    else if(weapon == "bow")
+    else if (weapon == "bow")
         Create::addStartingItem(player, "tut", 15, false);
-    else if(weapon == "crossbow")
+    else if (weapon == "crossbow")
         Create::addStartingItem(player, "tut", 30, false);
-    else if(weapon == "thrown")
+    else if (weapon == "thrown")
         Create::addStartingItem(player, "tut", 31, false);
-    else if(weapon == "knife")
+    else if (weapon == "knife")
         Create::addStartingItem(player, "tut", 43, false);
-    else if(weapon == "arcane-weapon")
+    else if (weapon == "arcane-weapon")
         Create::addStartingItem(player, "tut", 44, false);
-    else if(weapon == "divine-weapon")
+    else if (weapon == "divine-weapon")
         Create::addStartingItem(player, "tut", 45, false);
-    else if(weapon == "flail")
+    else if (weapon == "flail")
         Create::addStartingItem(player, "tut", 46, false);
-    else if(weapon == "sling")
+    else if (weapon == "sling")
         Create::addStartingItem(player, "tut", 47, false);
-    
-}
-
-
-//
-// work functions
-//
-
-
-
-
-//*********************************************************************
-//                      getSex
-//*********************************************************************
-
-bool Create::getSex(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    const RaceData* rdata = gConfig->getRace(sock->getPlayer()->getRace());
-    if(!rdata->isGendered()) {
-        sock->getPlayer()->setSex(SEX_NONE);
-        return(true);
-    }
-
-    if(mode == Create::doPrint) {
-
-        sock->askFor("Do you wish to be [^WM^x] Male or [^WF^x] Female? ");
-        sock->setState(CREATE_GET_SEX);
-
-    } else if(mode == Create::doWork) {
-
-        if(low(str[0]) == 'f') {
-            sock->getPlayer()->setSex(SEX_FEMALE);
-            sock->printColor("You are now ^Wfemale^x.\n");
-        } else if(low(str[0]) == 'm') {
-            sock->getPlayer()->setSex(SEX_MALE);
-            sock->printColor("You are now ^Wmale^x.\n");
-        } else {
-            sock->askFor("[^WM^x] Male or [^WF^x] Female: ");
-            sock->setState(CREATE_GET_SEX);
-            return(false);
-        }
-
-    }
-    return(true);
 }
 
 //*********************************************************************
-//                      getRace
+//                      renderSex
 //*********************************************************************
 
-#define FBUF    800
+void Create::renderSex(const std::shared_ptr<Socket> &sock) {
+    sock->askFor("Do you wish to be [^WM^x] Male or [^WF^x] Female? ");
+    enterCreate(sock, CreationSession::Step::Sex);
+}
 
-bool Create::getRace(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    RaceDataMap choices;
-    RaceDataMap::iterator it;
-    int k=0;
+//*********************************************************************
+//                      renderRace
+//*********************************************************************
 
-    // figure out what they can play
-    for(it = gConfig->races.begin() ; it != gConfig->races.end() ; it++) {
-        // if not playable, skip
-        // if sub race, skip, they'll choose when they pick parent race
-        if((*it).second->isPlayable() && !(*it).second->getParentRace())
-            choices[k++] = (*it).second;
-    }
+void Create::renderRace(const std::shared_ptr<Socket> &sock) {
+    const auto choices = Flow::options(sock->getCreationDraft(), Step::Race);
 
-    if(mode == Create::doPrint) {
+    sock->viewFile((Path::Config / "race_menu.0.txt").string());
 
-        char file[80];
-        int ff=0;
-
-        // show them the race menu header
-        snprintf(file, sizeof(file), "%s/race_menu.0.txt", Path::Config.c_str());
-        sock->viewFile(file);
-
-        // show them the main race menu
-        snprintf(file, sizeof(file), "%s/race_menu.1.txt", Path::Config.c_str());
-        char    buf[FBUF + 1];
-
-        ff = open(file, O_RDONLY, 0);
-        k=0;
-        if(ff < 0) {
-            // we can't load the file? just give them a menu
-
-            for(it = choices.begin() ; it != choices.end() ; it++) {
-                sock->printColor("[^W%1c^x] %-16s\n", k + 65, (*it).second->getName().c_str());
+    // race_menu.1.txt is art with one playable race interleaved after each of its lines.
+    std::ifstream menu(Path::Config / "race_menu.1.txt");
+    std::size_t k = 0;
+    if (!menu.is_open()) {
+        for (const auto &opt: choices)
+            sock->printColor("[^W%1c^x] %-16s\n", static_cast<int>(k++) + 'A', opt.label.c_str());
+    } else {
+        std::string line;
+        while (std::getline(menu, line)) {
+            if (!line.empty() && line.back() == '\r')
+                line.pop_back();
+            sock->printColor("%s", line.c_str());
+            if (k < choices.size()) {
+                sock->printColor("[^W%1c^x] %-16s", static_cast<int>(k) + 'A', choices[k].label.c_str());
                 k++;
             }
-
-            return(false);
-        } else {
-            // display them the file
-            int     i=0, l=0, n=0;  //, line=0;
-            //long  offset=0;
-            zero(buf, sizeof(buf));
-
-            while(true) {
-                n = read(ff, buf, FBUF);
-                l = 0;
-                for(i=0; i<n; i++) {
-                    if(buf[i] == '\n') {
-                        buf[i] = 0;
-                        if(i != 0 && buf[i-1] == '\r')
-                            buf[i-1] = 0;
-                        //line++;
-                        sock->printColor("%s", &buf[l]);
-
-                        // print out the next playable race
-                        if(choices.find(k) != choices.end()) {
-                            sock->printColor("[^W%1c^x] %-16s", k + 65, choices[k]->getName().c_str());
-                            k++;
-                        }
-                        sock->print("\n");
-                        //offset += (i - l + 1);
-                        l = i + 1;
-                    }
-                }
-                if(l != n) {
-                    sock->printColor("%s", &buf[l]);
-                    //offset += (i - l);
-                }
-                if(n < FBUF) {
-                    close(ff);
-                    break;
-                }
-            }
+            sock->print("\n");
         }
-        sock->print("\n\n\n");
-
-        sock->askFor("Choose one: ");
-        sock->setState(CREATE_GET_RACE);
-
-    } else if(mode == Create::doWork) {
-        k = low(str[0]) - 'a';
-
-        if(choices.find(k) != choices.end()) {
-            sock->getPlayer()->setRace(choices[k]->getId());
-        } else {
-            Create::getRace(sock, "", Create::doPrint);
-            sock->setState(CREATE_GET_RACE);
-            return(false);
-        }
-        if(!sock->getPlayer()->getRace())
-            return(false);
-        if(!gConfig->getRace(sock->getPlayer()->getRace())->isParent())
-            Create::finishRace(sock);
     }
-    return(true);
+    sock->print("\n\n\n");
+
+    sock->askFor("Choose one: ");
+    enterCreate(sock, CreationSession::Step::Race);
 }
 
 //*********************************************************************
-//                      getSubRace
+//                      renderSubRace
 //*********************************************************************
 
-bool Create::getSubRace(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    RaceDataMap choices;
-    RaceDataMap::iterator it;
-    int k=0;
+void Create::renderSubRace(const std::shared_ptr<Socket> &sock) {
+    std::ostringstream oStr;
+    oStr.setf(std::ios::left, std::ios::adjustfield);
+    oStr.imbue(std::locale(""));
+    oStr << "\nChoose a sub race:\n";
 
-    // figure out what they can play
-    for(it = gConfig->races.begin() ; it != gConfig->races.end() ; it++) {
-        if( (*it).second->isPlayable() &&
-            (   (*it).second->getId() == sock->getPlayer()->getRace() ||
-                (*it).second->getParentRace() == sock->getPlayer()->getRace()
-            )
-        )
-            choices[k++] = (*it).second;
+    int k = 0;
+    for (const auto &opt: Flow::options(sock->getCreationDraft(), Step::SubRace)) {
+        if (k % 2 == 0)
+            oStr << "\n" << std::setw(20) << " ";
+        const char c = ++k + 64;
+        oStr << "[^W" << c << "^x] " << std::setw(16) << opt.label;
     }
 
-    k=0;
-    if(mode == Create::doPrint) {
-        std::ostringstream oStr;
-        char c;
-        bool    hasChildren = false;
-
-        // set left aligned
-        oStr.setf(std::ios::left, std::ios::adjustfield);
-        oStr.imbue(std::locale(""));
-
-        oStr << "\nChoose a sub race:\n";
-
-        for(it = choices.begin() ; it != choices.end() ; it++) {
-            // self doesn't count when counting children
-            if((*it).second->getId() != sock->getPlayer()->getRace())
-                hasChildren = true;
-
-            if(k%2==0)
-                oStr << "\n" << std::setw(20) << " ";
-            c = ++k + 64;
-            oStr << "[^W" << c << "^x] " << std::setw(16) << (*it).second->getName();
-        }
-
-        // if there's no children, none of the subraces are playable,
-        // so they have to choose the parent
-        if(!hasChildren) {
-            Create::finishRace(sock);
-            return(false);
-        }
-
-        sock->printColor("%s\n\n", oStr.str().c_str());
-
-        sock->askFor("Choose one: ");
-        sock->setState(CREATE_GET_SUBRACE);
-
-    } else if(mode == Create::doWork) {
-
-        k = low(str[0]) - 'a';
-
-        if(choices.find(k) != choices.end()) {
-            sock->getPlayer()->setRace(choices[k]->getId());
-            Create::finishRace(sock);
-            return(true);
-        }
-        return(false);
-    }
-    return(true);
+    sock->printColor("%s\n\n", oStr.str().c_str());
+    sock->askFor("Choose one: ");
+    enterCreate(sock, CreationSession::Step::SubRace);
 }
 
 //*********************************************************************
 //                      finishRace
 //*********************************************************************
+// Display only; materialize applies race size/languages/effects.
 
-void Create::finishRace(const std::shared_ptr<Socket>& sock) {
-    const RaceData* race = gConfig->getRace(sock->getPlayer()->getRace());
-
+void Create::finishRace(const std::shared_ptr<Socket> &sock) {
+    const RaceData *race = gConfig->getRace(sock->getCreationDraft().race);
     sock->printColor("\nYour chosen race: ^W%s^x\n\n", race->getName().c_str());
-    sock->getPlayer()->setSize(race->getSize());
-    sock->getPlayer()->initLanguages();
-
-    std::list<std::string>::const_iterator it;
-    for(it = race->effects.begin() ; it != race->effects.end() ; it++) {
-        sock->getPlayer()->addPermEffect((*it));
-    }
 }
 
 //*********************************************************************
-//                      getClass
+//                      renderClass
 //*********************************************************************
 
-bool Create::getClass(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    int     l=0, k=0;
-    if(mode == Create::doPrint) {
+namespace {
+constexpr std::size_t kClassMenuLabelCount = 23;
 
-        sock->print("   ____________\n");
-        sock->print("  /------------\\            VVVVVVVVVVVVVVVV\n");
-        sock->print(" // ___    ___ \\\\   %12s:  Choose A Class\n", gConfig->getRace(sock->getPlayer()->getRace())->getName().c_str());
-        sock->print(" \\_/   \\  /   \\_/           ^^^^^^^^^^^^^^^^\n");
-        sock->print(" ______/  \\__________________________________________________\n");
-        sock->print("<______    ________\\\\\\\\_____\\\\\\\\_____\\\\\\\\_____\\\\\\\\_____\\\\\\\\__]\n");
-        sock->print("  _    \\  /    _\n");
-        sock->print(" / \\___/  \\___/ \\\n");
-        sock->print(" \\\\____________//\n");
-        sock->print("  `------------'"," ");
+// Telnet-only abbreviations, indexed by class menu code - 1; the multiclass tail must
+// track resolveClassPair's MULTI_BASE order. data() is NUL-terminated: all literals.
+constexpr std::array<std::string_view, kClassMenuLabelCount> kClassMenuLabels{"Assassin", "Berserker", "Cleric", "Fighter", "Mage",      "Paladin",    "Ranger",   "Thief",      "Pureblood",  "Monk",      "Death Knight", "Druid",
+                                                                              "Lich",     "Werewolf",  "Bard",   "Rogue",   "Figh/Mage", "Figh/Thief", "Cler/Ass", "Mage/Thief", "Thief/Mage", "Cler/Figh", "Mage/Ass"};
+static_assert(kClassMenuLabelCount == static_cast<std::size_t>(CLASS_COUNT_MULT) - 1, "one telnet class label per class menu code");
 
-        for(l=1, k=0; l<CLASS_COUNT_MULT; l++) {
-            if(gConfig->getRace(sock->getPlayer()->getRace())->allowedClass(l)) {
-                if(k%2==0)
-                    sock->print("\n%20s", " ");
-                sock->printColor("[^W%1c^x] %-16s", ++k + 64, allowedClassesStr[l-1]);
-            }
-        }
+const char *classMenuLabel(const std::string &value) {
+    const auto idx = static_cast<std::size_t>(std::stoi(value)) - 1;
+    return idx < kClassMenuLabels.size() ? kClassMenuLabels[idx].data() : "";
+}
+} // namespace
 
-        sock->print("\n                                                         |\\\n");
-        sock->print("                                                         <<\\         _\n");
-        sock->print("                                                          / \\       //\n");
-        sock->print(" .--------------------------------------------------------{o}______/|\n");
-        sock->print("<       -===========================================:::{*}///////////]\n");
-        sock->print(" `--------------------------------------------------------{o}~~~~~~\\|\n");
-        sock->print("                                                          \\ /       \\\\\n");
-        sock->print("                                                         <</         -\n");
-        sock->print("                                                         |/\n");
-        sock->askFor("Choose one: ");
-        sock->setState(CREATE_GET_CLASS);
+void Create::renderClass(const std::shared_ptr<Socket> &sock) {
+    sock->print("%s", Create::classBannerTop(gConfig->getRace(sock->getCreationDraft().race)->getName()).c_str());
 
-    } else if(mode == Create::doWork) {
-
-        int     i=0;
-        if(!isalpha(str[0]))
-            i = -1;
-        else
-            i = up(str[0]) - 64;
-
-        for(l=1, k=0; l<CLASS_COUNT_MULT; l++) {
-            if(gConfig->getRace(sock->getPlayer()->getRace())->allowedClass(l)) {
-                k++;
-                if(k == i)
-                    setPlyClass(sock, l);
-            }
-        }
-        if(sock->getPlayer()->getClass() != CreatureClass::NONE) {
-            if(sock->getPlayer()->hasSecondClass())
-                sock->printColor("Your chosen class: ^W%s/%s\n", get_class_string(static_cast<int>(sock->getPlayer()->getClass())),
-                                 get_class_string(static_cast<int>(sock->getPlayer()->getSecondClass())));
-            else
-                sock->printColor("Your chosen class: ^W%s\n", get_class_string(static_cast<int>(sock->getPlayer()->getClass())));
-        }
-        if(sock->getPlayer()->getClass() == CreatureClass::NONE) {
-            sock->printColor("Invalid selection: ^W%s\n", str.c_str());
-            Create::getClass(sock, "", Create::doPrint);
-
-            sock->setState(CREATE_GET_CLASS);
-            return(false);
-        }
-
+    int k = 0;
+    for (const auto &opt: Flow::options(sock->getCreationDraft(), Step::Class)) {
+        if (k % 2 == 0)
+            sock->print("\n%20s", " ");
+        sock->printColor("[^W%1c^x] %-16s", ++k + 64, classMenuLabel(opt.value));
     }
-    return(true);
+
+    sock->print("%s", Create::classBannerBottom().c_str());
+    sock->askFor("Choose one: ");
+    enterCreate(sock, CreationSession::Step::Class);
 }
 
 //*********************************************************************
-//                      getDeity
+//                      renderDeity
 //*********************************************************************
 
-bool Create::getDeity(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    int     l=0, k=0;
-    const RaceData* race = gConfig->getRace(sock->getPlayer()->getRace());
-    if(mode == Create::doPrint) {
+void Create::renderDeity(const std::shared_ptr<Socket> &sock) {
+    const CharacterDraft &draft = sock->getCreationDraft();
 
+    if (draft.cClass == CreatureClass::CLERIC)
+        sock->print("Note: Clerics of Linothan must be male. Clerics of Mara must be female.\n\n");
+    sock->print("Please choose a deity:\n");
 
-        if(sock->getPlayer()->getClass() == CreatureClass::CLERIC)
-            sock->print("Note: Clerics of Linothan must be male. Clerics of Mara must be female.\n\n");
-        sock->print("Please choose a deity:\n");
-
-        for(l=1, k=0 ; l<DEITY_COUNT ; l++) {
-            if(race->allowedDeity(sock->getPlayer()->getClass(), sock->getPlayer()->getSecondClass(), l)) {
-                
-                //Gender restrict for Mara, Arachnus, Linothan clerics
-                if( sock->getPlayer()->getClass() == CreatureClass::CLERIC &&
-                    ((sock->getPlayer()->flagIsSet(P_MALE) && l == MARA) ||
-                        (sock->getPlayer()->flagIsSet(P_MALE) && l == ARACHNUS) ||
-                            (!sock->getPlayer()->flagIsSet(P_MALE) && l == LINOTHAN)))
-                    continue;
-
-                if(k%2==0)
-                    sock->print("\n%20s", " ");
-                sock->printColor("[^W%1c^x] %-16s", ++k + 64, gConfig->getDeity(l)->getName().c_str());
-            }
-        }
-        sock->askFor("\n\nChoose one: ");
-
-        sock->setState(CREATE_GET_DEITY);
-
-    } else if(mode == Create::doWork) {
-
-        int     i=0;
-        if(!isalpha(str[0]))
-            i = -1;
-        else
-            i = up(str[0]) - 64;
-
-        for(l=1, k=0; l < static_cast<int>(CreatureClass::CLASS_COUNT)+4; l++) {
-
-            //Gender restrict for Mara, Arachnus, Linothan clerics
-                if( sock->getPlayer()->getClass() == CreatureClass::CLERIC &&
-                    ((sock->getPlayer()->flagIsSet(P_MALE) && l == MARA) ||
-                        (sock->getPlayer()->flagIsSet(P_MALE) && l == ARACHNUS) ||
-                            (!sock->getPlayer()->flagIsSet(P_MALE) && l == LINOTHAN)))
-                    continue;
-
-            if(race->allowedDeity(sock->getPlayer()->getClass(),
-                                  sock->getPlayer()->getSecondClass(), l)) {
-                k++;
-                if(k == i)
-                    setPlyDeity(sock, l);
-            }
-        }
-
-        if(sock->getPlayer()->getDeity())
-            sock->printColor("Your chosen deity: ^W%s\n", gConfig->getDeity(sock->getPlayer()->getDeity())->getName().c_str());
-        else {
-            sock->printColor("Invalid selection: ^W%s\n", str.c_str());
-            Create::getDeity(sock, "", Create::doPrint);
-
-            sock->setState(CREATE_GET_DEITY);
-            return(false);
-        }
-
+    int k = 0;
+    for (const auto &opt: Flow::options(draft, Step::Deity)) {
+        if (k % 2 == 0)
+            sock->print("\n%20s", " ");
+        sock->printColor("[^W%1c^x] %-16s", ++k + 64, opt.label.c_str());
     }
-    return(true);
+    sock->askFor("\n\nChoose one: ");
+    enterCreate(sock, CreationSession::Step::Deity);
 }
 
 //*********************************************************************
-//                      getLocation
+//                      renderLocation
 //*********************************************************************
 
-// from startlocs.cpp
-bool startingChoices(std::shared_ptr<Player> player, std::string str, char* location, size_t locationSize, bool choose);
-
-bool Create::getLocation(const std::shared_ptr<Socket>& sock, const std::string &str, int mode) {
-    char location[256];
-    if(mode == Create::doPrint) {
-
-        if(!startingChoices(sock->getPlayer(), str, location, sizeof(location), false)) {
-            sock->print("\n\nPlease choose a starting location:");
-            sock->printColor("\n   %s\n\n", location);
-
-            // OCENCREAST: Dom: HC
-            //sock->printColor("^YCaution:^x If you choose Oceancrest as a starting location, you will\n");
-            //sock->printColor("automatically be entered into the tournament. See the forum for details.\n");
-            //sock->printColor("^Yhttp://forums.rohonline.net/topic/1655/\n\n");
-            sock->askFor(": ");
-
-            sock->setState(CREATE_START_LOC);
-            return(false);
-        }
-
-    } else if(mode == Create::doWork) {
-
-        if(!startingChoices(sock->getPlayer(), str, location, sizeof(location), true)) {
-            sock->print("Invalid selection.\n");
-            sock->askFor(": ");
-
-            sock->setState(CREATE_START_LOC);
-            return(false);
-        }
-
+void Create::renderLocation(const std::shared_ptr<Socket> &sock) {
+    std::ostringstream menu;
+    char opt = 'A';
+    for (const auto &o: Flow::options(sock->getCreationDraft(), Step::Location)) {
+        if (opt != 'A')
+            menu << "     ";
+        menu << "[^W" << opt++ << "^x] " << o.label;
     }
-
-    sock->print("\n\nYour starting location is: ");
-    sock->print("\n   %s\n\n", location);
-    return(true);
+    sock->print("\n\nPlease choose a starting location:");
+    sock->printColor("\n   %s\n\n", menu.str().c_str());
+    sock->askFor(": ");
+    enterCreate(sock, CreationSession::Step::Location);
 }
 
 //*********************************************************************
-//                      startCustom
+//                      renderStatsChoice
 //*********************************************************************
 
-bool Create::startCustom(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    // still in progress! bypass for now
-    return(getProf(sock, str, mode));
-
-    if(mode == Create::doPrint) {
-
-        sock->printColor("\nFor more customization options, press [^WM^x].\n");
-        sock->print("To continue with your character, press enter.\n");
-
-        sock->askFor(": ");
-
-        sock->setState(CREATE_START_CUSTOM);
-
-    } else if(mode == Create::doWork) {
-
-        if(str[0] != 'm' && str[0] != 'M') {
-            // randomly customize them
-            return(false);
-        }
-
-    }
-    return(true);
-}
-//*********************************************************************
-//                      getStatsChoice
-//*********************************************************************
-
-bool Create::getStatsChoice(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
-        PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
-        if(!pClass || !pClass->hasDefaultStats()) {
-            Create::getStats(sock, str, Create::doPrint);
-            return(false);
-        }
-
-        sock->print("\nFor character stats, you may:\n");
-
-        sock->printColor("\n[^WC^x]hoose your own stats");
-        sock->printColor("\n[^WU^x]se predefined stats provided by the mud");
-
-        sock->print("\n\nNote: For beginners that are unfamiliar with game mechanics, it is highly recommended to use predefined stats to reduce the learning curve.\n");
-
-        sock->askFor(": ");
-
-        sock->setState(CREATE_GET_STATS_CHOICE);
-
-    } else if(mode == Create::doWork) {
-        boost::trim(str);
-        if (str.length() > 0) {
-            if(tolower(str.at(0)) == 'c') {
-                sock->print("You have chosen to select your own stats.\n");
-                Create::getStats(sock, "", Create::doPrint);
-                // We've set the next state so don't change it after we return
-                return(false);
-            } else if(tolower(str.at(0)) == 'u') {
-                PlayerClass *pClass = gConfig->classes[sock->getPlayer()->getClassString()];
-                if(!pClass) {
-                    Create::getStats(sock, str, Create::doPrint);
-                    return(false);
-                }
-                pClass->setDefaultStats(sock->getPlayer());
-
-                // Continue on with character creation
-                return(true);
-            }
-        }
-
-        sock->askFor(": ");
-        sock->setState(CREATE_GET_STATS_CHOICE);
-    }
-    return(false);
+void Create::renderStatsChoice(const std::shared_ptr<Socket> &sock) {
+    sock->print("\nFor character stats, you may:\n");
+    sock->printColor("\n[^WC^x]hoose your own stats");
+    sock->printColor("\n[^WU^x]se predefined stats provided by the mud");
+    sock->print("\n\nNote: For beginners that are unfamiliar with game mechanics, it is highly recommended to use predefined stats to reduce the learning curve.\n");
+    sock->askFor(": ");
+    enterCreate(sock, CreationSession::Step::StatsChoice);
 }
 
-
 //*********************************************************************
-//                      getStats
+//                      renderStats
 //*********************************************************************
 
-bool Create::getStats(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
-
-        sock->print("\nYou have 56 points to distribute among your 5 stats. Please enter your 5");
-        sock->print("\nnumbers in the following order: Strength, Dexterity, Constitution,");
-        sock->print("\nIntelligence, Piety.  No stat may be smaller than 3 or larger than 18.");
-        sock->print("\nUse the following format: ## ## ## ## ##\n\n");
-
-        sock->askFor(": ");
-
-        sock->setState(CREATE_GET_STATS);
-
-    } else if(mode == Create::doWork) {
-
-        int     i=0, l=0, k=0, sum=0, num[5], n = str.length();
-
-        for(i=0; i<=n; i++) {
-            if(str[i]==' ' || str[i]==0) {
-                str[i] = 0;
-                num[k++] = atoi(&str[l]);
-                l = i+1;
-            }
-            if(k>4)
-                break;
-        }
-        if(k<5) {
-            sock->print("Please enter all 5 numbers.\n");
-            sock->askFor(": ");
-
-            sock->setState(CREATE_GET_STATS);
-            return(false);
-        }
-
-        for(i=0; i<5; i++) {
-            if(num[i] < 3 || num[i] > 18) {
-                sock->print("No stats < 3 or > 18 please.\n");
-                sock->print(": ");
-                sock->setState(CREATE_GET_STATS);
-                return(false);
-            }
-            sum += num[i];
-        }
-
-        if(sum != 56) {
-            sock->print("Stat total must equal 56 points, yours totaled %d.\n", sum);
-            sock->print(": ");
-            sock->setState(CREATE_GET_STATS);
-            return(false);
-        }
-
-        sock->getPlayer()->strength.setInitial(num[0] * 10);
-        sock->getPlayer()->dexterity.setInitial(num[1] * 10);
-        sock->getPlayer()->constitution.setInitial(num[2] * 10);
-        sock->getPlayer()->intelligence.setInitial(num[3] * 10);
-        sock->getPlayer()->piety.setInitial(num[4] * 10);
-
-    }
-    return(true);
+void Create::renderStats(const std::shared_ptr<Socket> &sock) {
+    sock->print("\nYou have %d points to distribute among your %zu stats. Please enter your %zu", Create::kStatTotal, Create::kStatCount, Create::kStatCount);
+    sock->print("\nnumbers in the following order: Strength, Dexterity, Constitution,");
+    sock->print("\nIntelligence, Piety.  No stat may be smaller than %d or larger than %d.", Create::kMinStat, Create::kMaxStat);
+    sock->print("\nUse the following format: ## ## ## ## ##\n\n");
+    sock->askFor(": ");
+    enterCreate(sock, CreationSession::Step::Stats);
 }
 
 //*********************************************************************
 //                      finishStats
 //*********************************************************************
+// Display only; computed from the draft, no Player.
 
-void Create::finishStats(const std::shared_ptr<Socket>& sock) {
-    std::shared_ptr<Player> ply = sock->getPlayer();
-    ply->strength.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(STR));
-    ply->dexterity.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(DEX));
-    ply->constitution.addInitial(  gConfig->getRace(ply->getRace())->getStatAdj(CON));
-    ply->intelligence.addInitial(  gConfig->getRace(ply->getRace())->getStatAdj(INT));
-    ply->piety.addInitial( gConfig->getRace(ply->getRace())->getStatAdj(PTY));
-
-    ply->strength.setInitial(std::max<int>(10, ply->strength.getInitial()));
-    ply->dexterity.setInitial(std::max<int>(10, ply->dexterity.getInitial()));
-    ply->constitution.setInitial(std::max<int>(10, ply->constitution.getInitial()));
-    ply->intelligence.setInitial(std::max<int>(10, ply->intelligence.getInitial()));
-    ply->piety.setInitial(std::max<int>(10, ply->piety.getInitial()));
-
-    sock->print("Your stats: %d %d %d %d %d\n",
-        ply->strength.getMax(),
-        ply->dexterity.getMax(),
-        ply->constitution.getMax(),
-        ply->intelligence.getMax(),
-        ply->piety.getMax());
+void Create::finishStats(const std::shared_ptr<Socket> &sock) {
+    const CharacterDraft &draft = sock->getCreationDraft();
+    const std::array<int, 5> fs = Create::computeFinalStats(draft, gConfig->getRace(draft.race));
+    sock->print("Your stats: %d %d %d %d %d\n", fs[0], fs[1], fs[2], fs[3], fs[4]);
 }
 
 //*********************************************************************
-//                      getBonusStat
+//                      renderBonusStat
 //*********************************************************************
 
-bool Create::getBonusStat(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
-
-        sock->print("\nRaise which stat?\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n : ");
-        sock->setState(CREATE_BONUS_STAT);
-
-    } else if(mode == Create::doWork) {
-
-        switch(low(str[0])) {
-        case 'a':
-            sock->getPlayer()->strength.addInitial(10);
-            break;
-        case 'b':
-            sock->getPlayer()->dexterity.addInitial(10);
-            break;
-        case 'c':
-            sock->getPlayer()->constitution.addInitial(10);
-            break;
-        case 'd':
-            sock->getPlayer()->intelligence.addInitial(10);
-            break;
-        case 'e':
-            sock->getPlayer()->piety.addInitial(10);
-            break;
-        default:
-            sock->print("\nChoose one: ");
-            sock->setState(CREATE_BONUS_STAT);
-            return(false);
-        }
-
-    }
-    return(true);
+void Create::renderBonusStat(const std::shared_ptr<Socket> &sock) {
+    sock->print("\nRaise which stat?\n[A] Strength, [B] Dexterity, [C] Constitution, [D] Intelligence, or [E] Piety.\n");
+    sock->askFor(" : ");
+    enterCreate(sock, CreationSession::Step::BonusStat);
 }
 
 //*********************************************************************
-//                      getPenaltyStat
+//                      renderPenaltyStat
 //*********************************************************************
 
-bool Create::getPenaltyStat(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
-
-        sock->printColor("\nChoose your stat to lower:\n[^WA^x] Strength, [^WB^x] Dexterity, [^WC^x] Constitution, [^WD^x] Intelligence, or [^WE^x] Piety.\n : ");
-        sock->setState(CREATE_PENALTY_STAT);
-
-    } else if(mode == Create::doWork) {
-
-        switch(low(str[0])) {
-        case 'a':
-            sock->getPlayer()->strength.addInitial(-10);
-            break;
-        case 'b':
-            sock->getPlayer()->dexterity.addInitial(-10);
-            break;
-        case 'c':
-            sock->getPlayer()->constitution.addInitial(-10);
-            break;
-        case 'd':
-            sock->getPlayer()->intelligence.addInitial(-10);
-            break;
-        case 'e':
-            sock->getPlayer()->piety.addInitial(-10);
-            break;
-        default:
-            sock->print("\nChoose one: ");
-            sock->setState(CREATE_PENALTY_STAT);
-            return(false);
-        }
-    }
-    return(true);
+void Create::renderPenaltyStat(const std::shared_ptr<Socket> &sock) {
+    sock->printColor("\nChoose your stat to lower:\n[^WA^x] Strength, [^WB^x] Dexterity, [^WC^x] Constitution, [^WD^x] Intelligence, or [^WE^x] Piety.\n");
+    sock->askFor(" : ");
+    enterCreate(sock, CreationSession::Step::PenaltyStat);
 }
 
-
 //*********************************************************************
-//                      handleWeapon
+//                      renderWeaponMenu
 //*********************************************************************
 
-bool Create::handleWeapon(const std::shared_ptr<Socket>& sock, int mode, char ch) {
-    int     i=0;
+namespace {
+bool isInnateWeaponMenu(std::span<const Create::Option> options) { return options.size() == 1 && isInnateWeapon(options.front().value); }
 
-    if(!isalpha(ch))
-        i = -1;
-    else
-        i = up(ch) - 64;
-
-    if(mode == Create::doPrint) {
-        if(sock->getPlayer()->getClass() == CreatureClass::WEREWOLF) {
-            sock->printColor("\n\n^WSlashing Weapons^x\n     [^WA^x] Claws\n");
-            return(true);
-        } else if(sock->getPlayer()->getClass() == CreatureClass::MONK) {
-            sock->printColor("\n\n^WCrushing Weapons^x\n     [^WA^x] Bare-Handed\n");
-            return(true);
-        }
-    } else {
-        if(sock->getPlayer()->getClass() == CreatureClass::WEREWOLF && low(ch) == 'a') {
-            sock->getPlayer()->setSkill("claw", 1);
-            return(true);
-        } else if(sock->getPlayer()->getClass() == CreatureClass::MONK && low(ch) == 'a') {
-            sock->getPlayer()->setSkill("bare-hand", 1);
-            return(true);
-        } else if(sock->getPlayer()->getClass() == CreatureClass::MONK || sock->getPlayer()->getClass() == CreatureClass::WEREWOLF) {
-            sock->print("Choose a weapon skill:\n");
-            sock->setState(CREATE_GET_PROF);
-            return(false);
-        }
+// Print-only: the grid for an already-built option list, bucketed by group header.
+void renderWeaponMenu(const std::shared_ptr<Socket> &sock, std::span<const Create::Option> options) {
+    if (isInnateWeaponMenu(options)) {
+        sock->printColor("\n\n^W%s^x\n     [^WA^x] %s\n", options.front().group.c_str(), options.front().label.c_str());
+        return;
     }
-    if(!sock->getPlayer()->knowsSkill("bare-hand"))
-        sock->getPlayer()->addSkill("bare-hand", 1);
-
-
-
-
 
     int k = 0, n = 0;
-    for(const auto& [curGroup, curGroupDisplay] : gConfig->skillGroups) {
-        if(!curGroup.starts_with("weapons") || curGroup.length() <= 7)
-            continue;
-
-        if(sock->getPlayer()->getClass() == CreatureClass::CLERIC && sock->getPlayer()->getDeity() == CERIS) {
-            if(boost::contains(curGroup, "slashing") || boost::contains(curGroup, "piercing"))
-                continue;
-        }
-
-        if(mode == Create::doPrint) {
-            sock->bprint(fmt::format("^W\n\n{}", curGroupDisplay));
+    std::string lastGroup;
+    for (const auto &opt: options) {
+        if (opt.group != lastGroup) {
+            sock->bprint(fmt::format("^W\n\n{}", opt.group));
             n = 0;
+            lastGroup = opt.group;
         }
-        for(const auto& [skillName, curSkill] : gConfig->skills) {
-            if(curSkill.getGroup() != curGroup)
-                continue;
-
-            if(curSkill.getName() == "claw")
-                continue;
-
-            if(sock->getPlayer()->getClass() == CreatureClass::CLERIC && sock->getPlayer()->getDeity() == CERIS)
-                if(curSkill.getName() == "whip")
-                    continue;
-
-            if(sock->getPlayer()->knowsSkill(curSkill.getName()))
-                continue;
-
-            if(sock->getPlayer()->getLevel() < 4 && ((curSkill.getName() == "arcane-weapon" || curSkill.getName() == "divine-weapon")))
-                continue;
-
-            if ((!(sock->getPlayer()->getClass() == CreatureClass::MAGE ||
-                sock->getPlayer()->getClass() == CreatureClass::LICH ||
-                sock->getPlayer()->getClass() == CreatureClass::BARD ||
-                sock->getPlayer()->getSecondClass() == CreatureClass::MAGE))
-                && curSkill.getName() == "arcane-weapon")
-                    continue;
-
-            if ((!(sock->getPlayer()->getClass() == CreatureClass::CLERIC ||
-                sock->getPlayer()->getClass() == CreatureClass::PALADIN ||
-                sock->getPlayer()->getClass() == CreatureClass::DRUID ||
-                sock->getPlayer()->getClass() == CreatureClass::DEATHKNIGHT))
-                && curSkill.getName() == "divine-weapon")
-                    continue;
-
-            
-
-            if(mode == Create::doPrint) {
-                if(n++%2==0)
-                    sock->print("\n%5s", " ");
-
-                sock->bprint(fmt::format("[^W{:1}^x] {:<30}", (char)(++k + 64), curSkill.getDisplayName()));
-            } else {
-                if(i == ++k) {
-                    sock->getPlayer()->addSkill(curSkill.getName(),1);
-                    Create::addStartingWeapon(sock->getPlayer(), curSkill.getName());
-                    sock->bprint(fmt::format("You have learned how to use ^W{}^x.\n", curSkill.getDisplayName()));
-                    return(true);
-                }
-            }
-        }
+        if (n++ % 2 == 0)
+            sock->print("\n%5s", " ");
+        sock->bprint(fmt::format("[^W{:1}^x] {:<30}", static_cast<char>(++k + 64), opt.label));
     }
-    if(mode == Create::doPrint) {
-        return k != 0;
-    }
-    return(false);
 }
+
+// In-game weapon training: the same menu the Prof step builds, sourced from the live player.
+std::vector<Create::Option> playerWeaponOptions(const std::shared_ptr<Player> &player) {
+    const auto knows = [&player](const std::string &name) { return player->knowsSkill(name); };
+    return Create::weaponMenuOptions(player->getClass(), player->getSecondClass(), player->getDeity(), player->getLevel(), knows);
+}
+
+// Monks and werewolves train their innate skill instead; everyone else gets bare-hand
+// before the menu is built, so it never shows up as a choice.
+void ensureBareHand(const std::shared_ptr<Player> &player) {
+    if (player->getClass() == CreatureClass::MONK || player->getClass() == CreatureClass::WEREWOLF)
+        return;
+    if (!player->knowsSkill("bare-hand"))
+        player->addSkill("bare-hand", 1);
+}
+
+bool renderPlayerWeaponMenu(const std::shared_ptr<Socket> &sock) {
+    const std::shared_ptr<Player> player = sock->getPlayer();
+    ensureBareHand(player);
+    const auto options = playerWeaponOptions(player);
+    renderWeaponMenu(sock, options);
+    return !options.empty();
+}
+
+bool processWeaponChoice(const std::shared_ptr<Socket> &sock, char ch) {
+    const std::shared_ptr<Player> player = sock->getPlayer();
+    ensureBareHand(player);
+    const auto options = playerWeaponOptions(player);
+    const std::size_t idx = std::isalpha(static_cast<unsigned char>(ch)) ? static_cast<std::size_t>(low(ch) - 'a') : options.size();
+    if (idx >= options.size()) {
+        if (isInnateWeaponMenu(options))
+            sock->print("Choose a weapon skill:\n");
+        return false;
+    }
+    player->addSkill(options[idx].value, 1);
+    Create::addStartingWeapon(player, options[idx].value);
+    if (!isInnateWeapon(options[idx].value))
+        sock->bprint(fmt::format("You have learned how to use ^W{}^x.\n", options[idx].label));
+    return true;
+}
+} // namespace
 
 //*********************************************************************
 //                      cmdWeapons
 //*********************************************************************
 
-int cmdWeapons(const std::shared_ptr<Player>& player, cmd* cmnd) {
-    if(player->getWeaponTrains() < 1) {
+int cmdWeapons(const std::shared_ptr<Player> &player, cmd *cmnd) {
+    if (player->getWeaponTrains() < 1) {
         *player << "You don't have any weapon trains left!\n";
-        return(0);
+        return (0);
     }
 
-//  if(!player->getParent()->findWeaponsTrainer()) {
-//      player->print("You can't find anyone here to train you in weapon skills!\n");
-//      return(0);
-//  }
+    *player << ColorOn << fmt::format("You have ^W{}^x weapon skills to choose.\n", player->getWeaponTrains()) << ColorOff;
 
-    *player << ColorOn <<fmt::format("You have ^W{}^x weapon skills to choose.\n", player->getWeaponTrains()) << ColorOff;
-
-    if(!Create::handleWeapon(player->getSock(), Create::doPrint, '\0')) {
+    if (!renderPlayerWeaponMenu(player->getSock())) {
         *player << "\n\nSorry, couldn't find any weapon skills you don't know that you can learn.\n";
-        return(0);
+        return (0);
     }
     player->getSock()->setState(CON_CHOSING_WEAPONS);
     player->getSock()->askFor("\n(0 to exit): ");
-    return(0);
+    return (0);
 }
 
 //*********************************************************************
 //                      convertNewWeaponSkills
 //*********************************************************************
 
-void convertNewWeaponSkills(const std::shared_ptr<Socket>& sock, const std::string& str) {
-    if(!isalpha(str[0])) {
+void convertNewWeaponSkills(const std::shared_ptr<Socket> &sock, const std::string &str) {
+    if (str.empty() || !std::isalpha(static_cast<unsigned char>(str[0]))) {
         sock->setState(CON_PLAYING);
         return;
     }
 
-    if(Create::handleWeapon(sock, Create::doWork, str[0])) {
+    if (processWeaponChoice(sock, str[0])) {
         sock->getPlayer()->subWeaponTrains(1);
-        if(sock->getPlayer()->getWeaponTrains() == 0) {
+        if (sock->getPlayer()->getWeaponTrains() == 0) {
             sock->print("Exiting weapon skill selector.\n");
             sock->setState(CON_PLAYING);
             return;
         } else {
             sock->print("You have %d weapon skill(s) left to choose.", sock->getPlayer()->getWeaponTrains());
-            if(!Create::handleWeapon(sock, Create::doPrint, str[0])) {
+            if (!renderPlayerWeaponMenu(sock)) {
                 sock->print("\n\nSorry, couldn't find any weapon skills you don't know that you can learn.\n");
                 sock->setState(CON_PLAYING);
                 return;
@@ -2045,333 +1440,143 @@ void convertNewWeaponSkills(const std::shared_ptr<Socket>& sock, const std::stri
 }
 
 //*********************************************************************
-//                      getProf
+//                      renderProf
 //*********************************************************************
 
-bool Create::getProf(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
+namespace {
+// Print-only half of the old addInitialClassRaceWeaponSkills: Flow::enterProf already
+// granted the skills. Returns whether the Prof menu is an "additional" pick.
+bool printGrantedSkills(const std::shared_ptr<Socket> &sock, const CharacterDraft &draft, const Create::InitialSkills &skills) {
+    const RaceData *rData = gConfig->getRace(draft.race);
+    if (rData && skills.raceCount > 0)
+        sock->printColor("^yAs race ^c%s^y, you already know the following initial weapon skill%s: ^W%s\n", rData->getName().c_str(), skills.raceCount > 1 ? "s" : "", skills.raceSkills.c_str());
 
-    bool additionalWeapons=false;
-
-    if(mode == Create::doPrint) {
-
-        additionalWeapons = Create::addInitialClassRaceWeaponSkills(sock);
-
-        if(gConfig->classes[get_class_string(sock->getPlayer()->getClassInt())]->numProfs() > 1) {
-            sock->print("\nPick %d %sweapon skills:", gConfig->classes[get_class_string(sock->getPlayer()->getClassInt())]->numProfs(), additionalWeapons?"additional ":"");
-        } else {
-            sock->print("\nChoose %s weapon skill:",additionalWeapons?"an additional":"a");
-        }
-
-        Create::handleWeapon(sock, mode, str[0]);
-        sock->askFor("\n: ");
-        sock->setState(CREATE_GET_PROF);
-
-    } else if(mode == Create::doWork) {
-
-        if(Create::handleWeapon(sock, mode, str[0]))
-            return(true);
-        else {
-            sock->print("Choose a weapon skill:\n");
-            sock->setState(CREATE_GET_PROF);
-            return(false);
-        }
+    if (skills.classCount > 0) {
+        const std::string playerClassName = getFullClassName(draft.cClass, draft.secondClass);
+        const DeityData *deity = gConfig->getDeity(draft.deity);
+        if (deity && (draft.cClass == CreatureClass::CLERIC || draft.cClass == CreatureClass::PALADIN || draft.cClass == CreatureClass::DEATHKNIGHT))
+            sock->printColor("^yAs a ^c%s of %s^y, you already know the following initial weapon skill%s: ^W%s\n", playerClassName.c_str(), deity->getName().c_str(), skills.classCount > 1 ? "s" : "", skills.classSkills.c_str());
+        else
+            sock->printColor("^yAs class ^c%s^y, you already know the following initial weapon skill%s: ^W%s\n", playerClassName.c_str(), skills.classCount > 1 ? "s" : "", skills.classSkills.c_str());
     }
 
-    return(true);
+    return skills.raceCount > 0 || skills.classCount > 0;
+}
+
+// The "additional" infix survives the pager's re-render, where granted is empty: at the
+// Prof step the draft holds only the auto-grants plus the implicit bare-hand.
+bool hasGrantedWeaponSkills(const CharacterDraft &draft) {
+    return std::any_of(draft.weaponSkills.begin(), draft.weaponSkills.end(), [](const std::string &skill) { return skill != "bare-hand"; });
+}
+} // namespace
+
+void Create::renderProf(const std::shared_ptr<Socket> &sock, const Create::InitialSkills &granted) {
+    const CharacterDraft &draft = sock->getCreationDraft();
+    const bool printed = printGrantedSkills(sock, draft, granted);
+    const bool additionalWeapons = printed || hasGrantedWeaponSkills(draft);
+
+    PlayerClass *pClass = Create::classForDraft(draft);
+    const int profs = pClass ? pClass->numProfs() : 1;
+    if (profs > 1)
+        sock->print("\nPick %d %sweapon skills:", profs, additionalWeapons ? "additional " : "");
+    else
+        sock->print("\nChoose %s weapon skill:", additionalWeapons ? "an additional" : "a");
+
+    renderWeaponMenu(sock, Flow::options(draft, Step::Prof));
+    sock->askFor("\n: ");
+    enterCreate(sock, CreationSession::Step::Prof);
 }
 
 //*********************************************************************
-//                      getSecondProf
+//                      renderSecondProf
 //*********************************************************************
 
-bool Create::getSecondProf(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
-
-        Create::handleWeapon(sock, mode, str[0]);
-
-        sock->print("\nPick a second proficiency:\n");
-        sock->askFor(": ");
-        sock->setState(CREATE_SECOND_PROF);
-
-    } else if(mode == Create::doWork) {
-
-        if(Create::handleWeapon(sock, mode, str[0]))
-            return(true);
-        else {
-            sock->print("Pick a second proficiency!\n");
-            sock->askFor(": ");
-            sock->setState(CREATE_SECOND_PROF);
-            return(false);
-        }
-
-    }
-    return(true);
+void Create::renderSecondProf(const std::shared_ptr<Socket> &sock) {
+    renderWeaponMenu(sock, Flow::options(sock->getCreationDraft(), Step::SecondProf));
+    sock->print("\nPick a second proficiency:\n");
+    sock->askFor(": ");
+    enterCreate(sock, CreationSession::Step::SecondProf);
 }
 
 //*********************************************************************
-//                      getName
+//                      renderName
 //*********************************************************************
 
-bool Create::getName(const std::shared_ptr<Socket>& sock, const std::string &str, int mode) {
-    if(mode == Create::doPrint) {
-
-        sock->print("\nYou must now choose a name for your character.\n");
-        sock->print("Your character name should be appropriate for a fantasy setting.\n");
-        sock->print("Names that are offensive, reference real-world people/places,\n");
-        sock->print("or are otherwise inappropriate may be changed by staff.\n\n");
-        sock->print("Please choose a character name: ");
-
-        sock->setState(CREATE_GET_NAME);
-
-    } else if(mode == Create::doWork) {
-
-        // Store the name in tempstr[0] for validation and use
-        std::string charName = str;
-        boost::trim(charName);
-        
-        if(charName.empty()) {
-            sock->print("\nName cannot be empty. Choose a character name: ");
-            sock->setState(CREATE_GET_NAME);
-            return(false);
-        }
-        
-        if(charName.length() > 20) {
-            sock->print("\nName too long (max 20 characters). Choose a character name: ");
-            sock->setState(CREATE_GET_NAME);
-            return(false);
-        }
-        
-        // Capitalize the name properly (first letter uppercase, rest lowercase)
-        lowercize(charName, 1);
-        
-        if(!nameIsAllowed(charName, sock)) {
-            sock->setState(CREATE_GET_NAME);
-            return(false);
-        }
-        
-        // Check if character already exists
-        if(Player::exists(charName)) {
-            sock->print("\nThat character name is already taken. Choose a character name: ");
-            sock->setState(CREATE_GET_NAME);
-            return(false);
-        }
-        
-        // Check if character is already in the account
-        std::shared_ptr<Account> account = sock->getAccount();
-        if(account && account->hasCharacter(charName)) {
-            sock->print("\nYou already have a character with that name. Choose a character name: ");
-            sock->setState(CREATE_GET_NAME);
-            return(false);
-        }
-        
-        // Store the properly capitalized name for later use
-        strcpy(sock->tempstr[0], charName.c_str());
-
-    }
-    return(true);
+void Create::renderName(const std::shared_ptr<Socket> &sock) {
+    sock->print("\nYou must now choose a name for your character.\n");
+    sock->print("Your character name should be appropriate for a fantasy setting.\n");
+    sock->print("Names that are offensive, reference real-world people/places,\n");
+    sock->print("or are otherwise inappropriate may be changed by staff.\n\n");
+    sock->askFor("Please choose a character name: ");
+    enterCreate(sock, CreationSession::Step::Name);
 }
 
 //*********************************************************************
-//                      done
+//                      renderDmPassword
 //*********************************************************************
 
-void Create::done(const std::shared_ptr<Socket>& sock, const std::string &str, int mode) {
+void Create::renderDmPassword(const std::shared_ptr<Socket> &sock) {
+    sock->print("\nYou must enter a password to create that character.\n");
+    sock->echoOff();
+    sock->askFor("Please enter password: ");
+    enterCreate(sock, CreationSession::Step::DmPassword);
+}
 
-    if(mode == Create::doPrint) {
+//*********************************************************************
+//                      renderDone
+//*********************************************************************
 
-        char file[80];
-        snprintf(file, sizeof(file), "%s/policy_login.txt", Path::Config.c_str());
-        sock->viewFile(file);
+void Create::renderDone(const std::shared_ptr<Socket> &sock) {
+    sock->viewFile((Path::Config / "policy_login.txt").string());
 
-        sock->print("[Press Enter to Continue]");
-        sock->setState(CREATE_DONE);
+    sock->askFor("[Press Enter to Continue]");
+    enterCreate(sock, CreationSession::Step::Done);
+}
 
-    } else if(mode == Create::doWork) {
-        std::shared_ptr<Player> player = sock->getPlayer();
-        long t = time(nullptr);
-        int i=0;
-
-        player->setBirthday();
-        player->setCreated();
-
-        // Set character name from what user entered
-        player->setName(sock->tempstr[0]);
-
-        if(gServer->checkDuplicateName(sock, false))
-            return;
-        if(gServer->checkDouble(sock))
-            return;
-        
-        // Additional check (name validation was already done in getName())
-        if(Player::exists(player->getName())) {
-            sock->printColor("\n\n^ySorry, that player already exists.^x\n\n\n");
-            sock->reconnect();
-            return;
-        }
-        
-        // Link character to account system
-        std::shared_ptr<Account> account = sock->getAccount();
-        if(account) {
-            // Set the character's account name
-            player->setAccountName(account->getName());
-            // Characters don't need individual passwords in account system
-            // Keep existing password field empty or use a placeholder
-            player->setPassword(""); // Clear any password - account handles auth
-            player->setFlag(P_PASSWORD_CURRENT);
-        } else {
-            sock->print("Error: No account found during character creation!\n");
-            sock->reconnect();
-            return;
-        }
-
-        player->lasttime[LT_AGE].interval = 0;
-
-        for(i=0; i<MAX_LT; i++)
-            player->lasttime[i].ltime = t;
-
-        // Moved here so con affects a level 1's hp
-        player->adjustStats();
-        player->upLevel();
-
-        player->addSkill("defense", 1);
-        // Give out parry & block
-        switch(player->getClass()) {
-        // These classes get block + parry
-            case CreatureClass::ASSASSIN:
-            case CreatureClass::BARD:
-            case CreatureClass::FIGHTER:
-            case CreatureClass::RANGER:
-            case CreatureClass::ROGUE:
-            case CreatureClass::PALADIN:
-            case CreatureClass::DEATHKNIGHT:
-                player->addSkill("block", 1);
-                // fall through for parry
-            case CreatureClass::THIEF:
-                player->addSkill("parry", 1);
-                break;
-            case CreatureClass::BERSERKER:
-                player->addSkill("block", 1);
-                // Zerkers are more brute force than finnese...no parry
-                break;
-            default:
-                break;
-        }
-        // Give out armor skills here
-        switch(player->getClass()) {
-            case CreatureClass::BARD:
-            case CreatureClass::BERSERKER:
-            case CreatureClass::FIGHTER:
-            case CreatureClass::PALADIN:
-            case CreatureClass::DEATHKNIGHT:
-            case CreatureClass::RANGER:
-                player->addSkill("plate", 1);
-                player->addSkill("chain", 1);
-                player->addSkill("scale", 1);
-                player->addSkill("ring", 1);
-            case CreatureClass::ASSASSIN:
-            case CreatureClass::THIEF:
-            case CreatureClass::ROGUE:
-            case CreatureClass::PUREBLOOD:
-            case CreatureClass::DRUID:
-            case CreatureClass::CLERIC:
-                player->addSkill("leather", 1);
-            case CreatureClass::MAGE:
-            case CreatureClass::MONK:
-            case CreatureClass::LICH:
-            case CreatureClass::WEREWOLF:
-            default:
-                player->addSkill("cloth", 1);
-                break;
-        }
-
-        // A few clerics get plate
-        if(player->getClass() == CreatureClass::CLERIC && !player->hasSecondClass()) {
-            if(player->getDeity() == ENOCH || player->getDeity() == ARES || player->getDeity() == GRADIUS) {
-                player->addSkill("plate", 1);
-                player->addSkill("chain", 1);
-                player->addSkill("scale", 1);
-                player->addSkill("ring", 1);
-            }
-            if (player->getDeity() == LINOTHAN || player->getDeity() == JAKAR || player->getDeity() == ARACHNUS) {
-                player->addSkill("chain", 1);
-                player->addSkill("scale", 1);
-                player->addSkill("ring", 1);
-            }
-        }
-
-        // TODO: Dom: make this mage only
-        if(player->getClass() !=  CreatureClass::BERSERKER) {
-            if(player->getCastingType() == Divine) {
-                player->addSkill("healing", 1);
-                player->addSkill("destruction", 1);
-                player->addSkill("evil", 1);
-                player->addSkill("knowledge", 1);
-                player->addSkill("protection", 1);
-                player->addSkill("augmentation", 1);
-                player->addSkill("travel", 1);
-                player->addSkill("creation", 1);
-                player->addSkill("trickery", 1);
-                player->addSkill("good", 1);
-                player->addSkill("nature", 1);
-            } else {
-                player->addSkill("abjuration", 1);
-                player->addSkill("conjuration", 1);
-                player->addSkill("divination", 1);
-                player->addSkill("enchantment", 1);
-                player->addSkill("evocation", 1);
-                player->addSkill("illusion", 1);
-                player->addSkill("necromancy", 1);
-                player->addSkill("translocation", 1);
-                player->addSkill("transmutation", 1);
-            }
-
-            player->addSkill("fire", 1);
-            player->addSkill("water", 1);
-            player->addSkill("earth", 1);
-            player->addSkill("air", 1);
-            player->addSkill("cold", 1);
-            player->addSkill("electric", 1);
-        }
-
-        if(player->getClass() == CreatureClass::LICH)
-            player->learnSpell(S_SAP_LIFE);
-
-        Create::addStartingItem(player, "tut", 32);
-        Create::addStartingItem(player, "tut", 33);
-        Create::addStartingItem(player, "tut", 34);
-        Create::addStartingItem(player, "tut", 35);
-        Create::addStartingItem(player, "tut", 36);
-        Create::addStartingItem(player, "tut", 37);
-        Create::addStartingItem(player, "tut", 38);
-        Create::addStartingItem(player, "tut", 39);
-        Create::addStartingItem(player, "tut", 40);
-
-        Create::addStartingItem(player, "tut", 42, false, true, 3);
-
-        player->fd = sock->getFd();
-        player->setSock(sock);
-        sock->setPlayer(player);
-        player->init();
-
-        sock->print("\n");
-
-        player->setFlag(P_LAG_PROTECTION_SET);
-        player->setFlag(P_CLEAR_TARGET_ON_FLEE);
-
-        if(player->getClass() == CreatureClass::BARD)
-            player->learnSong(SONG_HEAL);
-            
-        // Add character to account (account was already validated above)
-        account->addCharacter(player->getName());
-        account->save();
-
-        player->save(true);
-        sock->registerPlayer();
-
-        sock->print("Type 'welcome' at prompt to get more info on the game\nand help you get started.\n");
-
-        sock->setState(CON_PLAYING);
+void Create::processDone(const std::shared_ptr<Socket> &sock, const std::string &str) {
+    const std::shared_ptr<Account> account = sock->getAccount();
+    if (!account) {
+        sock->print("Error: No account found during character creation!\n");
+        sock->reconnect();
+        return;
     }
+
+    const CharacterDraft &draft = sock->getCreationDraft();
+
+    // The Name step already validated; guard the on-disk existence.
+    if (Player::exists(draft.name)) {
+        sock->printColor("\n\n^ySorry, that player already exists.^x\n\n\n");
+        sock->reconnect();
+        return;
+    }
+
+    // The duplicate/multi-connection checks handle their own cleanup and messaging.
+    const std::shared_ptr<Player> player = Create::materialize(draft, *account);
+    sock->setPlayer(player);
+
+    if (gServer->checkDuplicateName(sock, false))
+        return;
+    if (gServer->checkDouble(sock))
+        return;
+
+    player->fd = sock->getFd();
+    player->setSock(sock);
+    player->defineColors();
+    player->init();
+
+    sock->print("\n");
+
+    const Create::PersistResult persisted = Create::persistNewCharacter(player, *account);
+    if (!persisted.ok) {
+        sock->printColor("\n\n^ySorry, your character could not be saved: %s^x\n\n\n", persisted.error.c_str());
+        sock->reconnect();
+        return;
+    }
+    sock->registerPlayer();
+
+    sock->print("Type 'welcome' at prompt to get more info on the game\nand help you get started.\n");
+
+    sock->setState(CON_PLAYING);
 }
 
 //*********************************************************************
@@ -2392,25 +1597,25 @@ void Creature::adjustStats() {
     piety.setInitial(piety.getCur());
 
 
-    if(deity) {
-        switch(deity) {
-        case ARAMON:
-        case ARACHNUS:
-            alignment = (P_BOTTOM_REDDISH+P_TOP_REDDISH)/2;
-            break;
-        case ENOCH:
-        case LINOTHAN:
-        case MARA:
-        case KAMIRA:
-            alignment = (P_BOTTOM_BLUISH+P_TOP_BLUISH)/2;
-            break;
-        default:
-            break;
+    if (deity) {
+        switch (deity) {
+            case ARAMON:
+            case ARACHNUS:
+                alignment = (P_BOTTOM_REDDISH + P_TOP_REDDISH) / 2;
+                break;
+            case ENOCH:
+            case LINOTHAN:
+            case MARA:
+            case KAMIRA:
+                alignment = (P_BOTTOM_BLUISH + P_TOP_BLUISH) / 2;
+                break;
+            default:
+                break;
         }
     }
 
-    if(cClass == CreatureClass::LICH)
-        alignment = (P_BOTTOM_REDDISH+P_TOP_REDDISH)/2;
+    if (cClass == CreatureClass::LICH)
+        alignment = (P_BOTTOM_REDDISH + P_TOP_REDDISH) / 2;
 }
 
 //*********************************************************************
@@ -2423,460 +1628,62 @@ CustomCrt::CustomCrt() {
 }
 
 //*********************************************************************
-//                      getCommunity
-//*********************************************************************
-
-bool Create::getCommunity(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
-
-        sock->print("\nYour Community\n\n");
-        // these match up with the defines in CustomCrt
-        sock->printColor("   [^Wa^x] You lived in the wilderness, shunning contact with most of your community.\n");
-        sock->printColor("   [^Wb^x] Your home was a small hamlet far from major cities.\n");
-        sock->printColor("   [^Wc^x] You lived in village that saw a fair amount of trading.\n");
-        sock->printColor("   [^Wd^x] The large town you grew up in was fairly well known.\n");
-        sock->printColor("   [^We^x] You grew up in a major city.\n\n");
-
-        sock->askFor(": ");
-
-        sock->setState(CUSTOM_COMMUNITY);
-
-    } else if(mode == Create::doWork) {
-
-        switch(str[0]) {
-        case 'a':
-        case 'b':
-        case 'c':
-        case 'd':
-        case 'e':
-            // these match up with the defines in CustomCrt, so we can just assign
-            sock->getPlayer()->custom.community = str[0]-'a'+1;
-            break;
-        default:
-            sock->printColor("Invalid selection: ^W%s\n", str.c_str());
-            sock->askFor("Choose one: ");
-
-            sock->setState(CUSTOM_COMMUNITY);
-            return(false);
-        }
-
-    }
-    return(true);
-}
-
-//*********************************************************************
-//                      doFamily
-//*********************************************************************
-
-void Create::doFamily(const std::shared_ptr<Player>& player, int mode) {
-
-    if(mode == 1) {
-        player->custom.parents = CustomCrt::PARENTS_UNKNOWN;
-        return;
-    }
-
-    // siblings
-    int i = 0;
-    if(mode == 3)
-        i = Random::get(1,3);
-    else if(mode == 4)
-        i = Random::get(4, 10);
-
-    while(i) {
-        if(Random::get(0,1))
-            player->custom.sisters++;
-        else
-            player->custom.brothers++;
-        i--;
-    }
-
-    switch(Random::get(1,6)) {
-    case 1:
-        player->custom.parents = CustomCrt::PARENTS_DEAD;
-        break;
-    case 2:
-        player->custom.parents = CustomCrt::PARENTS_MOTHER_DEAD;
-        break;
-    case 3:
-        player->custom.parents = CustomCrt::PARENTS_FATHER_DEAD;
-        break;
-    // 50% chance of them being alive
-    default:
-        player->custom.parents = CustomCrt::PARENTS_ALIVE;
-        break;
-    }
-}
-
-//*********************************************************************
-//                      getFamily
-//*********************************************************************
-
-bool Create::getFamily(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
-
-        sock->print("\nYour Family\n\n");
-        sock->printColor("   [^Wa^x] You were orphaned as a child and have no family.\n");
-        sock->printColor("   [^Wb^x] You are an only child.\n");
-        sock->printColor("   [^Wc^x] You grew up in a small family with 1-3 siblings.\n");
-        sock->printColor("   [^Wd^x] The grew up in a large family with 4-10 siblings.\n\n");
-
-        sock->askFor(": ");
-
-        sock->setState(CUSTOM_FAMILY);
-
-    } else if(mode == Create::doWork) {
-
-        switch(str[0]) {
-        case 'a':
-        case 'b':
-        case 'c':
-        case 'd':
-            doFamily(sock->getPlayer(), str[0]-'a'+1);
-            break;
-        default:
-            sock->printColor("Invalid selection: ^W%s\n", str.c_str());
-            sock->askFor("Choose one: ");
-
-            sock->setState(CUSTOM_FAMILY);
-            return(false);
-        }
-
-    }
-    return(true);
-}
-
-//*********************************************************************
-//                      getSocial
-//*********************************************************************
-
-bool Create::getSocial(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    CustomCrt *custom = &sock->getPlayer()->custom;
-
-    if(mode == Create::doPrint) {
-
-        sock->print("\nYour Social Status\n\n");
-        if(custom->parents == CustomCrt::PARENTS_UNKNOWN)
-            sock->printColor("   [^Wa^x] You were an outcast in society.\n");
-        else
-            sock->printColor("   [^Wa^x] You and your family were outcasts in society.\n");
-
-        if(custom->community != CustomCrt::COMMUNITY_OUTCAST) {
-            sock->printColor("   [^Wb^x] You were considered a criminal (justly so or not).\n");
-            sock->printColor("   [^Wc^x] You grew up poor and on the lowest rungs of society.\n");
-            sock->printColor("   [^Wd^x] You had to work hard to provide for yourself, but were able to manage.\n");
-
-            if(custom->community != CustomCrt::COMMUNITY_HAMLET) {
-                if(custom->parents == CustomCrt::PARENTS_UNKNOWN)
-                    sock->printColor("   [^We^x] Your life was easier than most as you were fairly well off.\n");
-                else
-                    sock->printColor("   [^We^x] Your life was easier than most as you and your family were fairly well off.\n");
-
-                if(custom->community != CustomCrt::COMMUNITY_VILLAGE && custom->parents != CustomCrt::PARENTS_UNKNOWN) {
-                    sock->printColor("   [^Wf^x] You and your family were well off in society and did not need to worry about much.\n");
-                    sock->printColor("   [^Wg^x] Being of noble descent, you and your family were well known in the community.\n");
-                }
-            }
-        }
-        sock->print("\n");
-
-        sock->askFor(": ");
-
-        sock->setState(CUSTOM_SOCIAL);
-
-    } else if(mode == Create::doWork) {
-
-        if( (str[0] > 'a' && custom->community == CustomCrt::COMMUNITY_OUTCAST) ||
-            (str[0] > 'd' && custom->community == CustomCrt::COMMUNITY_HAMLET) ||
-            (str[0] > 'e' && (custom->community == CustomCrt::COMMUNITY_VILLAGE || custom->parents == CustomCrt::PARENTS_UNKNOWN))
-        )
-            str[0] = 'z';
-
-        switch(str[0]) {
-        case 'a':
-        case 'b':
-        case 'c':
-        case 'd':
-        case 'e':
-        case 'f':
-        case 'g':
-            custom->social = str[0]-'a'+1;
-            break;
-        default:
-            sock->printColor("Invalid selection: ^W%s\n", str.c_str());
-            sock->askFor("Choose one: ");
-
-            sock->setState(CUSTOM_SOCIAL);
-            return(false);
-        }
-
-    }
-    return(true);
-}
-
-//*********************************************************************
-//                      getEducation
-//*********************************************************************
-
-bool Create::getEducation(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    CustomCrt *custom = &sock->getPlayer()->custom;
-
-    if(mode == Create::doPrint) {
-
-        sock->print("\nYour Education\n\n");
-        sock->printColor("   [^Wa^x] You have no formal education.\n");
-
-        if(custom->community != CustomCrt::COMMUNITY_OUTCAST && custom->social != CustomCrt::SOCIAL_OUTCAST) {
-            sock->printColor("   [^Wb^x] You trained as an apprentice to a trader, crafstman, or farmer.\n");
-            sock->printColor("   [^Wc^x] You attended a local school and received a basic education.\n");
-
-            if(custom->community != CustomCrt::COMMUNITY_HAMLET && custom->social > CustomCrt::SOCIAL_LOWER) {
-                sock->printColor("   [^Wd^x] You received a decent education or were tutored in several subject areas.\n");
-                sock->printColor("   [^We^x] You attended a large university and received an official degree.\n");
-            }
-
-        }
-
-        sock->askFor(": ");
-
-        sock->setState(CUSTOM_EDUCATION);
-
-    } else if(mode == Create::doWork) {
-
-        if( (str[0] > 'a' && (custom->community == CustomCrt::COMMUNITY_OUTCAST || custom->social == CustomCrt::SOCIAL_OUTCAST)) ||
-            (str[0] > 'c' && (custom->community == CustomCrt::COMMUNITY_HAMLET || custom->social <= CustomCrt::SOCIAL_LOWER))
-        )
-            str[0] = 'z';
-
-        switch(str[0]) {
-        case 'a':
-        case 'b':
-        case 'c':
-        case 'd':
-        case 'e':
-            custom->education = str[0]-'a'+1;
-            break;
-        default:
-            sock->printColor("Invalid selection: ^W%s\n", str.c_str());
-            sock->askFor("Choose one: ");
-
-            sock->setState(CUSTOM_EDUCATION);
-            return(false);
-        }
-
-    }
-    return(true);
-}
-
-//*********************************************************************
-//                      calcHeight
-//*********************************************************************
-
-int Create::calcHeight(int race, int mode) {
-    switch(mode) {
-    case 1:     // shorter
-        return(Random::get(1,50));
-    case 3:     // taller
-        return(Random::get(100,150));
-    default:    // normal
-        return(Random::get(50,100));
-    }
-}
-
-//*********************************************************************
-//                      getHeight
-//*********************************************************************
-
-bool Create::getHeight(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
-
-        sock->print("\nYour Height\n\n");
-        sock->printColor("   [^Wa^x] You are shorter than most members of your race.\n");
-        sock->printColor("   [^Wb^x] Your height is average.\n");
-        sock->printColor("   [^Wc^x] You are taller than most members of your race.\n\n");
-
-        sock->askFor(": ");
-
-        sock->setState(CUSTOM_HEIGHT);
-
-    } else if(mode == Create::doWork) {
-
-        switch(str[0]) {
-        case 'a':
-        case 'b':
-        case 'c':
-            sock->getPlayer()->custom.height = Create::calcHeight(sock->getPlayer()->getRace(), str[0]-'a'+1);
-            break;
-        default:
-            sock->printColor("Invalid selection: ^W%s\n", str.c_str());
-            sock->askFor("Choose one: ");
-
-            sock->setState(CUSTOM_HEIGHT);
-            return(false);
-        }
-
-    }
-    return(true);
-}
-
-//*********************************************************************
-//                      calcWeight
-//*********************************************************************
-
-int Create::calcWeight(int race, int mode) {
-    switch(mode) {
-    case 1:     // thinner
-        return(Random::get(1,50));
-    case 3:     // stockier
-        return(Random::get(100,150));
-    default:    // normal
-        return(Random::get(50,100));
-    }
-}
-
-//*********************************************************************
-//                      getWeight
-//*********************************************************************
-
-bool Create::getWeight(const std::shared_ptr<Socket>& sock, std::string str, int mode) {
-    if(mode == Create::doPrint) {
-
-        sock->print("\nYour Weight\n\n");
-        sock->printColor("   [^Wa^x] You are thinner than most members of your race.\n");
-        sock->printColor("   [^Wb^x] Your weight is average.\n");
-        sock->printColor("   [^Wc^x] You are heavier than most members of your race.\n\n");
-
-        sock->askFor(": ");
-
-        sock->setState(CUSTOM_WEIGHT);
-
-    } else if(mode == Create::doWork) {
-
-        switch(str[0]) {
-        case 'a':
-        case 'b':
-        case 'c':
-            sock->getPlayer()->custom.weight = Create::calcWeight(sock->getPlayer()->getRace(), str[0]-'a'+1);
-            break;
-        default:
-            sock->printColor("Invalid selection: ^W%s\n", str.c_str());
-            sock->askFor("Choose one: ");
-
-            sock->setState(CUSTOM_WEIGHT);
-            return(false);
-        }
-
-    }
-    return(true);
-}
-
-//*********************************************************************
 //                      nameIsAllowed
 //*********************************************************************
-// Return: Is the name allowed? true/false
-// Parameters:
-//  str:  The name we're testing
-//  sock: The socket to print error messages to
 
-bool nameIsAllowed(std::string str, const std::shared_ptr<Socket>& sock) {
-    int i=0, nonalpha=0, len = str.length();
-
-    if(!isalpha(str[0])) {
-        sock->print("The first character of your name must be a letter.\n");
-        return(false);
-    }
-
-    if(len < 3) {
-        sock->print("Name must be at least 3 characters.\n");
-        return(false);
-    }
-    if(len >= 20) {
-        sock->print("Name must be less than 20 characters.\n");
-        return(false);
-    }
-
-    for(i=0; i< len; i++)
-        if(!isalpha(str[i]))
-            nonalpha++;
-
-    if(nonalpha && len < 6) {
-        sock->print("Name must be at least 6 characters in order to contain a - or '.\n");
-        return(false);
-    }
-
-    if(nonalpha > 1) {
-        sock->print("May not have more than one non-alpha character in your name.\n");
-        return(false);
-    }
-
-    // Check each character - allow only letters, apostrophes, and hyphens
-    for(i=0; i<len; i++) {
-        if(!isalpha(str[i]) && str[i] != '\'' && str[i] != '-') {
-            sock->print("Name must be alphabetic.\n");
-            sock->print("It may only contain the non-alpha characters ' and -.\n");
-            return(false);
-        }
-    }
-
-    // First character must be a letter (already checked above)
-    // Last two characters must be letters
-    if( str[len-1] == '\'' || str[len-1] == '-' ||
-        (len > 1 && (str[len-2] == '\'' || str[len-2] == '-'))) {
-        sock->print("The last two characters of your name must be letters.\n");
-        return(false);
-    }
-
-    if(!parse_name(str)) {
-        sock->print("That name is not allowed.\n");
-        return(false);
-    }
-    return(true);
+bool nameIsAllowed(std::string str, const std::shared_ptr<Socket> &sock) {
+    const AccountAuth::NameError error = AccountAuth::checkName(str);
+    if (error == AccountAuth::NameError::Ok)
+        return (true);
+    sock->print("%s\n", AccountAuth::nameErrorMessage(error).c_str());
+    return (false);
 }
 
 //*********************************************************************
 //                    handleCharacterClaim
 //*********************************************************************
 
-void handleCharacterClaim(const std::shared_ptr<Socket>& sock, std::shared_ptr<Account> account, const std::string& str) {
+void handleCharacterClaim(const std::shared_ptr<Socket> &sock, std::shared_ptr<Account> account, const std::string &str) {
     std::string charName = str;
     boost::trim(charName);
-    
-    if(charName.empty()) {
+
+    if (charName.empty()) {
         sock->print("You must enter a character name.\n");
         showAccountMenu(sock, account);
         return;
     }
-    
+
     // Format the character name properly (capitalize first letter)
     lowercize(charName, 1);
-    
+
     // Check if character exists
     std::shared_ptr<Player> player;
-    if(!loadPlayer(charName, player)) {
+    if (!loadPlayer(charName, player)) {
         sock->print("Character '%s' does not exist.\n", charName.c_str());
         showAccountMenu(sock, account);
         return;
     }
-    
+
     // Check if character is already claimed by an account
-    if(!player->getAccountName().empty()) {
+    if (!player->getAccountName().empty()) {
         sock->print("Character '%s' is already claimed by an account.\n", charName.c_str());
         sock->print("Only unclaimed legacy characters can be claimed.\n");
         showAccountMenu(sock, account);
         return;
     }
-    
+
     // Check if we already have this character in our account somehow
-    if(account->hasCharacter(charName)) {
+    if (account->hasCharacter(charName)) {
         sock->print("Character '%s' is already in your account.\n", charName.c_str());
         showAccountMenu(sock, account);
         return;
     }
-    
+
     // Store the character name for the password verification step
-    strcpy(sock->tempstr[1], charName.c_str());
-    
+    sock->getLoginSession().targetCharacter = charName;
+
     sock->print("\nTo claim character '%s', you must verify ownership by entering the character's password.\n", charName.c_str());
     sock->echoOff();
     sock->askFor("Character password: ");
-    sock->setState(LOGIN_CLAIM_PASSWORD);
+    enterLogin(sock, LoginSession::Step::ClaimPassword);
 }

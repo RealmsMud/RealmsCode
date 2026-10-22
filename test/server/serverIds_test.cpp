@@ -11,8 +11,8 @@
 #include "apiTestSupport.hpp"
 
 namespace {
-long idNum(const std::string& id) { return std::stol(id.substr(1)); }
-}
+long idNum(const std::string &id) { return std::stol(id.substr(1)); }
+} // namespace
 
 TEST(ServerIds, MonsterIdFormatAndIncrement) {
     ensureServer();
@@ -33,7 +33,7 @@ TEST(ServerIds, ObjectAndPlayerPrefixes) {
 TEST(ServerIds, LookupRejectsWrongPrefixAndEmpty) {
     ensureServer();
     EXPECT_EQ(gServer->lookupObjId(""), nullptr);
-    EXPECT_EQ(gServer->lookupObjId("P5"), nullptr);   // player id, not an object
+    EXPECT_EQ(gServer->lookupObjId("P5"), nullptr); // player id, not an object
     EXPECT_EQ(gServer->lookupPlyId("O5"), nullptr);
     EXPECT_EQ(gServer->lookupCrtId("O5"), nullptr);
     EXPECT_EQ(gServer->lookupObjId("O999999999"), nullptr); // unregistered

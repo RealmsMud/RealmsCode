@@ -24,33 +24,31 @@
 
 namespace fs = std::filesystem;
 
-std::filesystem::path apiQuestJsonPath(const std::string& zone, int id, const fs::path& base) {
-    return base / zone / "quests" / (std::to_string(id) + ".json");
-}
+std::filesystem::path apiQuestJsonPath(const std::string &zone, int id, const fs::path &base) { return base / zone / "quests" / (std::to_string(id) + ".json"); }
 
-std::vector<int> apiScanQuestIds(const std::string& zone, const fs::path& base) {
+std::vector<int> apiScanQuestIds(const std::string &zone, const fs::path &base) {
     std::vector<int> ids;
     fs::path dir = base / zone / "quests";
     std::error_code ec;
-    if(!fs::is_directory(dir, ec))
+    if (!fs::is_directory(dir, ec))
         return ids;
-    for(const auto& e : fs::directory_iterator(dir)) {
-        if(e.path().extension() != ".json")
+    for (const auto &e: fs::directory_iterator(dir)) {
+        if (e.path().extension() != ".json")
             continue;
         int id = std::atoi(e.path().stem().string().c_str());
-        if(id > 0)
+        if (id > 0)
             ids.push_back(id);
     }
     return ids;
 }
 
-std::optional<nlohmann::json> apiReadQuestJson(const std::string& zone, int id, const fs::path& base) {
+std::optional<nlohmann::json> apiReadQuestJson(const std::string &zone, int id, const fs::path &base) {
     std::ifstream ifs(apiQuestJsonPath(zone, id, base));
-    if(!ifs)
+    if (!ifs)
         return std::nullopt;
     try {
         return nlohmann::json::parse(ifs);
-    } catch(...) {
+    } catch (...) {
         return std::nullopt;
     }
 }

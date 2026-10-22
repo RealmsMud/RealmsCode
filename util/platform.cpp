@@ -20,11 +20,11 @@
 #include <filesystem>
 
 #ifdef __APPLE__
-#include <mach-o/dyld.h>            // for _NSGetExecutablePath
+#include <mach-o/dyld.h> // for _NSGetExecutablePath
 #include <vector>
 #else
-#include <climits>                  // for PATH_MAX
-#include <unistd.h>                 // for readlink
+#include <climits> // for PATH_MAX
+#include <unistd.h> // for readlink
 #endif
 
 namespace fs = std::filesystem;
@@ -32,15 +32,15 @@ namespace fs = std::filesystem;
 fs::path platform::executableDir() {
 #ifdef __APPLE__
     uint32_t size = 0;
-    _NSGetExecutablePath(nullptr, &size);   // first call reports the buffer size needed
+    _NSGetExecutablePath(nullptr, &size); // first call reports the buffer size needed
     std::vector<char> buf(size);
-    if(_NSGetExecutablePath(buf.data(), &size) != 0)
+    if (_NSGetExecutablePath(buf.data(), &size) != 0)
         return fs::current_path();
     return fs::weakly_canonical(fs::path(buf.data())).parent_path();
 #else
     char buf[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
-    if(len == -1)
+    if (len == -1)
         return fs::current_path();
     buf[len] = '\0';
     return fs::path(buf).parent_path();

@@ -103,6 +103,10 @@ bool PlayerClass::setDefaultStats(std::shared_ptr<Player> player) {
 
     return(true);
 }
+std::array<short, 5> PlayerClass::getDefaultBaseStats() const {
+    return {baseStrength, baseDexterity, baseConstitution, baseIntelligence, basePiety};
+}
+
 //*********************************************************************
 //                      checkAutomaticStats
 //*********************************************************************
