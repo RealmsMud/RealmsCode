@@ -29,7 +29,7 @@ Provide existing application/data directories and these readable files under
 |-|-|
 | REALMS_WEB_IMAGE | realms-web:php8.4.27 |
 | REALMS_WEB_NAME | realms-web |
-| REALMS_WEB_ROOT | /home/realms/realms/www |
+| REALMS_WEB_ROOT | /home/realms/www |
 | REALMS_WEB_DATA | /home/realms/realms |
 | REALMS_WEB_CONFIG | /home/realms/realms/RealmsCode/docker/web/conf |
 | REALMS_WEB_BIND_ADDRESS | Empty: all host interfaces |

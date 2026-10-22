@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-web_root=${REALMS_WEB_ROOT:-/home/realms/realms/www}
+web_root=${REALMS_WEB_ROOT:-/home/realms/www}
 game_data=${REALMS_WEB_DATA:-/home/realms/realms}
 config_dir=${REALMS_WEB_CONFIG:-/home/realms/realms/RealmsCode/docker/web/conf}
 bind_address=${REALMS_WEB_BIND_ADDRESS:-}
